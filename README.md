@@ -40,11 +40,11 @@ Este projeto foi desenvolvido com o Firebase Studio e serve como um exemplo robu
 
 1.  Clone o repositório:
     ```bash
-    git clone <URL_DO_REPOSITÓRIO>
+    git clone git@github.com:Advansoftware/FinWise.git
     ```
 2.  Navegue até o diretório do projeto:
     ```bash
-    cd finwise-dashboard
+    cd FinWise
     ```
 3.  Instale as dependências:
     ```bash
@@ -70,10 +70,13 @@ npm run dev
 
 Abra [http://localhost:9002](http://localhost:9002) no seu navegador para ver a aplicação em funcionamento.
 
+## Contribuição
+
+Ficamos felizes com o seu interesse em contribuir! Por favor, consulte nosso [`CONTRIBUTING.md`](./CONTRIBUTING.md) para diretrizes detalhadas sobre como participar do projeto.
+
 ## Estrutura do Projeto
 
 Para entender mais sobre a arquitetura, padrões de código e como o Firebase está integrado, consulte os seguintes documentos:
 
 - [`ARCHITECTURE.md`](./ARCHITECTURE.md): Detalhes sobre a estrutura de pastas e a lógica dos componentes.
-- [`CONTRIBUTING.md`](./CONTRIBUTING.md): Diretrizes para contribuir com o projeto.
 - [`FIREBASE.md`](./FIREBASE.md): Explicação aprofundada da integração com o Firebase.
