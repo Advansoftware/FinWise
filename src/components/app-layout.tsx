@@ -15,11 +15,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const pathname = usePathname();
 
-  // Landing page is public, auth pages handle their own layout
-  const isPublicPage = pathname === '/';
-  const isAuthPage = pathname === '/login' || pathname === '/signup';
+  const isPublicOrAuthPage = ['/', '/login', '/signup'].includes(pathname);
 
-  if (loading && !isPublicPage) {
+  if (loading && !isPublicOrAuthPage) {
     return (
       <AnimatePresence>
         <motion.div
@@ -47,7 +45,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (isPublicPage || isAuthPage) {
+  if (isPublicOrAuthPage) {
     return <>{children}</>;
   }
 
@@ -57,16 +55,14 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   }
   
   const getPageTitle = () => {
-    switch (pathname) {
-      case '/dashboard': return 'Painel';
-      case '/transactions': return 'Transações';
-      case '/categories': return 'Categorias';
-      case '/import': return 'Importar';
-      case '/settings': return 'Configurações';
-      case '/profile': return 'Perfil';
-      case '/billing': return 'Assinatura';
-      default: return 'Painel';
-    }
+    if (pathname.startsWith('/dashboard')) return 'Painel';
+    if (pathname.startsWith('/transactions')) return 'Transações';
+    if (pathname.startsWith('/categories')) return 'Categorias';
+    if (pathname.startsWith('/import')) return 'Importar';
+    if (pathname.startsWith('/settings')) return 'Configurações';
+    if (pathname.startsWith('/profile')) return 'Perfil';
+    if (pathname.startsWith('/billing')) return 'Assinatura';
+    return 'Painel';
   }
 
 

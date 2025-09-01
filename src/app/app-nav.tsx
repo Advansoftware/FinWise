@@ -28,7 +28,7 @@ export function AppNav() {
                             <TooltipTrigger asChild>
                                  <SidebarMenuButton 
                                     href={item.href} 
-                                    isActive={pathname === item.href}
+                                    isActive={pathname.startsWith(item.href)}
                                 >
                                     <div className="flex items-center justify-center w-full">
                                       <item.icon className="h-4 w-4 shrink-0" />
