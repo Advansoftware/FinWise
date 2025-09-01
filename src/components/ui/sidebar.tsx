@@ -146,6 +146,7 @@ const SidebarProvider = React.forwardRef<
               className
             )}
             ref={ref}
+            data-state={state}
             {...props}
           >
             {children}
@@ -197,7 +198,7 @@ const Sidebar = React.forwardRef<
     return (
       <aside
         ref={ref}
-        className={cn("group hidden md:flex flex-col text-sidebar-foreground transition-all duration-300 ease-in-out border-r", 
+        className={cn("group fixed left-0 top-0 z-20 hidden h-svh md:flex flex-col text-sidebar-foreground transition-all duration-300 ease-in-out border-r", 
         state === 'expanded' ? 'w-[--sidebar-width]' : 'w-[--sidebar-width-icon]',
         className)}
         data-state={state}

@@ -39,7 +39,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await login(values.email, values.password);
-      // O redirecionamento agora é tratado exclusivamente pelo AuthProvider.
+      // O redirecionamento agora é tratado pelo AuthProvider/layout.
     } catch (error: any) {
       toast({
         variant: 'destructive',
@@ -55,7 +55,7 @@ export default function LoginPage() {
     setIsGoogleLoading(true);
     try {
         await signInWithGoogle();
-        // O redirecionamento é tratado pelo AuthProvider
+        // O redirecionamento é tratado pelo AuthProvider/layout
     } catch (error: any) {
          toast({
             variant: 'destructive',
