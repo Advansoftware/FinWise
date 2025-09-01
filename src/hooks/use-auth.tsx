@@ -24,7 +24,7 @@ import {
 } from 'firebase/auth';
 import { getFirebase } from '@/lib/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { useRouter, usePathname } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 interface AuthContextType {
   user: User | null;
@@ -55,7 +55,6 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const router = useRouter();
   const pathname = usePathname();
   const { auth, db } = getFirebase();
 
@@ -69,17 +68,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [auth]);
 
   const handleAuthRedirect = useCallback(() => {
+      if (typeof window === 'undefined') return;
+
       if (loading) return;
       
       const isAuthPage = pathname === '/login' || pathname === '/signup';
       const isPublicPage = pathname === '/';
-
-      if (!user && !isAuthPage && !isPublicPage) {
-          router.push('/login');
-      } else if (user && (isAuthPage || isPublicPage)) {
-          router.push('/dashboard');
+      
+      if (user) {
+        // If user is logged in, and they are on a public/auth page, redirect them to dashboard.
+        if (isAuthPage || isPublicPage) {
+            window.location.href = '/dashboard';
+        }
+      } else {
+        // If user is not logged in, and they are on a private page, redirect them to login.
+        if (!isAuthPage && !isPublicPage) {
+            window.location.href = '/login';
+        }
       }
-  }, [user, loading, pathname, router]);
+  }, [user, loading, pathname]);
 
   useEffect(() => {
     handleAuthRedirect();
@@ -107,7 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await signOut(auth);
-    router.push('/');
+    window.location.href = '/';
   };
 
   const signInWithGoogle = async () => {
