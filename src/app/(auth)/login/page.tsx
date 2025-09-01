@@ -14,7 +14,7 @@ import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
 import { Logo } from '@/components/logo';
-import { ResetPasswordDialog } from './reset-password-dialog';
+import { ResetPasswordDialog } from '../reset-password-dialog';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Por favor, insira um email válido.' }),
