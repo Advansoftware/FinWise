@@ -1,9 +1,11 @@
+
 'use client';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Check } from 'lucide-react';
 import Link from 'next/link';
+import { Logo } from '@/components/logo';
 
 const plans = [
   {
@@ -33,7 +35,7 @@ const plans = [
       'Suporte prioritário por e-mail',
     ],
     cta: 'Assinar Pro',
-    href: '#',
+    href: '/billing',
     recommended: true,
   },
   {
@@ -49,28 +51,20 @@ const plans = [
       'Suporte dedicado com gerente de conta',
     ],
     cta: 'Assinar Empresarial',
-    href: '#',
+    href: '/billing',
   },
 ];
 
 
 export default function LandingPage() {
-  const handleSubscription = (planName: string) => {
-    // TODO: Implementar a lógica de integração com o Google Pay.
-    // Esta função seria o ponto de partida para chamar o SDK do Google Pay,
-    // passando os detalhes do plano (preço, recorrência). Após o pagamento
-    // bem-sucedido, o backend seria notificado para atualizar o plano do
-    // usuário no Firestore.
-    if (planName === 'Básico') {
-        return; // No action for free plan signup, handled by link
-    }
-    alert(`Iniciando fluxo de assinatura para o plano ${planName}. A integração real com o Google Pay é necessária.`);
-  };
-
+  
   return (
     <div className="flex flex-col min-h-screen bg-background">
       <header className="p-4 flex justify-between items-center border-b">
-         <h1 className="text-2xl font-bold text-primary">FinWise</h1>
+         <div className="flex items-center gap-2">
+            <Logo className="w-8 h-8"/>
+            <h1 className="text-2xl font-bold text-primary">FinWise</h1>
+         </div>
          <div>
             <Button variant="ghost" asChild>
                 <Link href="/login">Login</Link>
@@ -124,8 +118,8 @@ export default function LandingPage() {
                         </ul>
                     </CardContent>
                     <CardFooter>
-                        <Button className="w-full" variant={plan.recommended ? 'default' : 'outline'} onClick={() => handleSubscription(plan.name)} asChild={plan.name === 'Básico'}>
-                          {plan.name === 'Básico' ? <Link href={plan.href}>{plan.cta}</Link> : plan.cta}
+                         <Button className="w-full" variant={plan.recommended ? 'default' : 'outline'} asChild>
+                           <Link href={plan.href}>{plan.cta}</Link>
                         </Button>
                     </CardFooter>
                     </Card>

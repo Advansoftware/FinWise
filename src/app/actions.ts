@@ -1,10 +1,11 @@
+
 'use server';
 
 import { generateSpendingTip, SpendingTipInput } from '@/ai/flows/ai-powered-spending-tips';
 import { chatWithTransactions, ChatInput as ChatInputFlow } from '@/ai/flows/chat-with-transactions';
 import { Transaction, AISettings } from '@/lib/types';
 import { getFirebase } from '@/lib/firebase';
-import { collection, addDoc, getDocs, doc, getDoc, setDoc, query, where, Timestamp } from "firebase/firestore";
+import { collection, addDoc, getDocs, doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
 import { headers } from 'next/headers';
 import { getFirebaseAdmin } from '@/lib/firebase-admin';
 

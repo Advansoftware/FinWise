@@ -1,4 +1,3 @@
-
 'use client';
 
 import {
@@ -13,7 +12,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/use-auth';
-import { LogOut, User, Settings, CreditCard, UserCircle, Gem } from 'lucide-react';
+import { LogOut, User, Settings, Gem, UserCircle } from 'lucide-react';
 import Link from 'next/link';
 
 export function UserNav() {
@@ -70,7 +69,7 @@ export function UserNav() {
           <DropdownMenuItem asChild>
             <Link href="/settings">
                 <Settings className="mr-2 h-4 w-4" />
-                <span>Configurações de IA</span>
+                <span>Configurações</span>
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>

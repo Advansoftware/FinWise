@@ -20,12 +20,13 @@ export function useTransactions() {
 
 
   const loadTransactions = useCallback(async () => {
-    // Don't start loading if we already are, or if auth is still loading.
-    if (isLoading || authLoading) return;
+    // Don't start loading if auth is still loading.
+    if (authLoading) return;
     
     setIsLoading(true);
     try {
       // getTransactions will now throw an error if the user is not authenticated.
+      // This is caught below.
       const transactions = await getTransactions();
       setAllTransactions(transactions);
     } catch (error) {
@@ -36,19 +37,18 @@ export function useTransactions() {
     } finally {
       setIsLoading(false);
     }
-  }, [authLoading, isLoading]);
+  }, [authLoading]);
 
   useEffect(() => {
     // Only attempt to load transactions if we have a user.
-    if (user) {
+    // If there is no user, the AppLayout will redirect to /login.
+    if (user && !authLoading) {
       loadTransactions();
-    } else if (!authLoading && !user) {
-      // If auth is done and there's no user, stop loading and clear transactions.
-      setIsLoading(false);
-      setAllTransactions([]);
+    } else if (!user && !authLoading) {
+        // If auth is done and there's no user, stop loading and clear transactions.
+        setIsLoading(false);
+        setAllTransactions([]);
     }
-    // We want this to run when the user's auth state is confirmed.
-    // loadTransactions is memoized and will prevent re-fetches.
   }, [user, authLoading, loadTransactions]);
 
   const { categories, subcategories } = useMemo(() => {

@@ -1,4 +1,3 @@
-// src/app/dashboard/layout.tsx
 'use client';
 
 import { useAuth } from "@/hooks/use-auth";
@@ -12,16 +11,20 @@ import { ChatAssistant } from "@/components/chat/chat-assistant";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
+    // If auth is done loading and there is NO user,
+    // redirect them to the login page.
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
 
+  // While loading or if there's no user, show a full-screen loader.
+  // This prevents a flash of the dashboard.
   if (loading || !user) {
     return (
        <div className="flex items-center justify-center h-screen bg-background">
@@ -33,6 +36,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     );
   }
   
+  // If loading is complete and we have a user, render the dashboard layout.
   return (
       <SidebarProvider>
         <Sidebar>
