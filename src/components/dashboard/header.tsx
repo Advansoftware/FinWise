@@ -9,7 +9,7 @@ export function Header() {
       <h1 className="text-3xl font-bold tracking-tight text-primary">Painel</h1>
       <div className="flex items-center space-x-2">
         <ScanQRCodeDialog>
-          <Button>
+          <Button variant="outline">
             <QrCode className="mr-2 h-4 w-4" /> Escanear Fatura
           </Button>
         </ScanQRCodeDialog>

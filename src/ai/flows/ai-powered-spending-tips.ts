@@ -16,6 +16,7 @@ const SpendingTipInputSchema = z.object({
     .describe(
       'Uma string contendo os dados de gastos do usuário, incluindo categorias, valores e frequência.'
     ),
+  model: z.string().optional().describe('Opcional. O nome do modelo Ollama a ser usado.'),
 });
 export type SpendingTipInput = z.infer<typeof SpendingTipInputSchema>;
 
@@ -28,26 +29,28 @@ export async function generateSpendingTip(input: SpendingTipInput): Promise<Spen
   return generateSpendingTipFlow(input);
 }
 
-const prompt = ai.definePrompt({
-  name: 'spendingTipPrompt',
-  input: {schema: SpendingTipInputSchema},
-  output: {schema: SpendingTipOutputSchema},
-  model: 'ollama/llama3',
-  prompt: `Você é um consultor financeiro pessoal. Analise os dados de gastos do usuário e forneça uma única dica acionável para reduzir despesas.
-
-Dados de Gastos: {{{spendingData}}}
-
-Dica: `,
-});
-
 const generateSpendingTipFlow = ai.defineFlow(
   {
     name: 'generateSpendingTipFlow',
     inputSchema: SpendingTipInputSchema,
     outputSchema: SpendingTipOutputSchema,
   },
-  async input => {
-    const {output} = await prompt(input);
+  async ({ spendingData, model }) => {
+    const modelToUse = model ? `ollama/${model}` : 'ollama/llama3';
+    
+    const prompt = ai.definePrompt({
+      name: 'spendingTipPrompt',
+      input: {schema: z.object({spendingData: z.string()})},
+      output: {schema: SpendingTipOutputSchema},
+      model: modelToUse,
+      prompt: `Você é um consultor financeiro pessoal. Analise os dados de gastos do usuário e forneça uma única dica acionável para reduzir despesas.
+
+Dados de Gastos: {{{spendingData}}}
+
+Dica: `,
+    });
+
+    const {output} = await prompt({spendingData});
     return output!;
   }
 );

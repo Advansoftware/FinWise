@@ -1,6 +1,6 @@
 "use client";
 
-import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
+import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface SpendingChartProps {
@@ -16,24 +16,26 @@ export function SpendingChart({ data }: SpendingChartProps) {
       <CardContent className="pl-2">
         <ResponsiveContainer width="100%" height={350}>
           <BarChart data={data}>
+             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border) / 0.5)" />
             <XAxis
               dataKey="name"
-              stroke="#888888"
+              stroke="hsl(var(--muted-foreground))"
               fontSize={12}
               tickLine={false}
               axisLine={false}
             />
             <YAxis
-              stroke="#888888"
+              stroke="hsl(var(--muted-foreground))"
               fontSize={12}
               tickLine={false}
               axisLine={false}
               tickFormatter={(value) => `R$${value}`}
             />
             <Tooltip
-              cursor={{ fill: 'hsl(var(--muted))' }}
+              cursor={{ fill: 'hsl(var(--primary) / 0.1)' }}
               contentStyle={{ 
-                background: 'hsl(var(--background))', 
+                background: 'hsl(var(--background) / 0.8)',
+                backdropFilter: 'blur(4px)',
                 border: '1px solid hsl(var(--border))', 
                 borderRadius: 'var(--radius)'
               }}

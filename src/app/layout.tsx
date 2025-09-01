@@ -4,6 +4,7 @@ import { SidebarProvider, Sidebar, SidebarHeader, SidebarMenu, SidebarMenuItem, 
 import { Home, BarChart2, History, Settings, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/toaster';
+import { AppNav } from '@/components/app-nav';
 
 export const metadata: Metadata = {
   title: 'FinWise Dashboard',
@@ -16,7 +17,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" className="dark">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -28,38 +29,13 @@ export default function RootLayout({
             <SidebarContent>
               <SidebarHeader>
                 <div className="flex items-center gap-2">
-                  <Button variant="ghost" size="icon" className="text-primary hover:bg-accent -ml-2">
+                   <Button variant="ghost" size="icon" className="text-primary hover:bg-accent -ml-2">
                     <Wallet className="size-5" />
                   </Button>
                   <h2 className="text-lg font-semibold text-primary">FinWise</h2>
                 </div>
               </SidebarHeader>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton href="#" isActive>
-                    <Home />
-                    Painel
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton href="#">
-                    <History />
-                    Transações
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton href="#">
-                    <BarChart2 />
-                    Relatórios
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton href="#">
-                    <Settings />
-                    Configurações
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
+              <AppNav />
             </SidebarContent>
           </Sidebar>
           <SidebarInset>

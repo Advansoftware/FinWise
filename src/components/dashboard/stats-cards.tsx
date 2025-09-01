@@ -1,26 +1,29 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Beer, DollarSign, TrendingUp, Wallet } from "lucide-react";
+import { DollarSign, TrendingUp, Wallet, Package } from "lucide-react";
 import { Transaction } from "@/lib/types";
 
 interface StatsCardsProps {
   transactions: Transaction[];
+  selectedItem: string;
 }
 
-export function StatsCards({ transactions }: StatsCardsProps) {
+export function StatsCards({ transactions, selectedItem }: StatsCardsProps) {
   const totalSpending = transactions.reduce((sum, t) => sum + t.amount, 0);
   const thisMonthSpending = totalSpending; 
 
-  const topCategory = transactions
+  const topCategoryMap = transactions
     .reduce((acc, t) => {
         acc[t.category] = (acc[t.category] || 0) + t.amount;
         return acc;
     }, {} as Record<string, number>);
 
-  const topCategoryName = Object.keys(topCategory).length > 0 
-    ? Object.keys(topCategory).reduce((a, b) => topCategory[a] > topCategory[b] ? a : b)
+  const topCategoryName = Object.keys(topCategoryMap).length > 0 
+    ? Object.keys(topCategoryMap).reduce((a, b) => topCategoryMap[a] > topCategoryMap[b] ? a : b)
     : 'N/A';
-
-  const beerSpending = topCategory['Cerveja'] || 0;
+  
+  const selectedItemSpending = transactions
+    .filter(t => t.item === selectedItem)
+    .reduce((sum, t) => sum + t.amount, 0);
 
   return (
     <>
@@ -36,12 +39,12 @@ export function StatsCards({ transactions }: StatsCardsProps) {
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Este Mês</CardTitle>
+          <CardTitle className="text-sm font-medium">Gasto no Período</CardTitle>
           <Wallet className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-2xl font-bold">R$ {thisMonthSpending.toFixed(2)}</div>
-          <p className="text-xs text-muted-foreground">Gasto atual para o período</p>
+          <p className="text-xs text-muted-foreground">Soma das transações filtradas</p>
         </CardContent>
       </Card>
       <Card>
@@ -56,12 +59,12 @@ export function StatsCards({ transactions }: StatsCardsProps) {
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Índice Cerveja</CardTitle>
-          <Beer className="h-4 w-4 text-muted-foreground" />
+          <CardTitle className="text-sm font-medium">Gasto com {selectedItem}</CardTitle>
+          <Package className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">R$ {beerSpending.toFixed(2)}</div>
-          <p className="text-xs text-muted-foreground">Valor gasto com cerveja</p>
+          <div className="text-2xl font-bold">R$ {selectedItemSpending.toFixed(2)}</div>
+          <p className="text-xs text-muted-foreground">Valor gasto no item selecionado</p>
         </CardContent>
       </Card>
     </>

@@ -3,10 +3,10 @@
 import { generateSpendingTip, SpendingTipInput } from '@/ai/flows/ai-powered-spending-tips';
 import { Transaction } from '@/lib/types';
 
-export async function getSpendingTip(transactions: Transaction[]) {
+export async function getSpendingTip(transactions: Transaction[], model?: string) {
   try {
     const spendingData = JSON.stringify(transactions, null, 2);
-    const input: SpendingTipInput = { spendingData };
+    const input: SpendingTipInput = { spendingData, model };
     const result = await generateSpendingTip(input);
     return result.tip;
   } catch (error) {
