@@ -23,26 +23,22 @@ import { auth, db } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useRouter, usePathname } from 'next/navigation';
 
-// This is a simplified way to pass the auth token to server actions.
-// In a production app, you might use a dedicated library or a more robust fetch wrapper.
-const setAuthToken = (token: string | null) => {
-  if (typeof window !== 'undefined') {
-    (window as any).__FIREBASE_ID_TOKEN__ = token;
-  }
+// Este objeto é um fallback para garantir que o fetch funcione no lado do servidor
+// onde 'window' não existe. As Server Actions usarão o token de qualquer maneira.
+const fetchWrapper = {
+    originalFetch: typeof window !== 'undefined' ? window.fetch : () => Promise.reject(new Error('fetch is not available')),
+    idToken: null as string | null,
 };
 
-const originalFetch = typeof window !== 'undefined' ? window.fetch : () => Promise.reject(new Error('fetch is not available'));
-
+// Intercepta o fetch global para injetar o token de autenticação.
 if (typeof window !== 'undefined') {
     window.fetch = async (input, init) => {
-        const token = (window as any).__FIREBASE_ID_TOKEN__;
-        if (token) {
-            const headers = new Headers(init?.headers);
-            headers.set('Authorization', `Bearer ${token}`);
-            const newInit = { ...init, headers };
-            return originalFetch(input, newInit);
+        const headers = new Headers(init?.headers);
+        if (fetchWrapper.idToken) {
+            headers.set('Authorization', `Bearer ${fetchWrapper.idToken}`);
         }
-        return originalFetch(input, init);
+        const newInit = { ...init, headers };
+        return fetchWrapper.originalFetch(input, newInit);
     };
 }
 
@@ -76,8 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
       setUser(user);
-      const token = user ? await user.getIdToken() : null;
-      setAuthToken(token);
+      fetchWrapper.idToken = user ? await user.getIdToken(true) : null; // Força a atualização do token
       setLoading(false);
     });
 
@@ -119,9 +114,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = async () => {
-    setUser(null);
-    setAuthToken(null);
     await signOut(auth);
+    fetchWrapper.idToken = null; // Limpa o token no logout
+    setUser(null);
   };
 
   const signInWithGoogle = async () => {

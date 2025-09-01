@@ -3,7 +3,7 @@ import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 
-const firebaseConfig = {
+export const firebaseConfig = {
   projectId: "finwise-dashboard-3qmzc",
   appId: "1:216465784716:web:e38afa3ea4af0096cae0a9",
   storageBucket: "finwise-dashboard-3qmzc.firebasestorage.app",

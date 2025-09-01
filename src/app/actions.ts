@@ -6,9 +6,7 @@ import { Transaction, AISettings } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, getDoc, setDoc, query, where, Timestamp } from "firebase/firestore";
 import { headers } from 'next/headers';
-import {getAuth} from 'firebase-admin/auth';
-import { adminApp } from '@/lib/firebase-admin';
-
+import { adminAuth } from '@/lib/firebase-admin';
 
 async function getUserId() {
     const authorization = headers().get('Authorization');
@@ -19,16 +17,10 @@ async function getUserId() {
             return null;
         }
         try {
-            // Ensure admin app is initialized before calling getAuth
-            if (!adminApp) {
-                console.error("Admin App not initialized!");
-                return null;
-            }
-            const decodedToken = await getAuth(adminApp).verifyIdToken(idToken);
+            const decodedToken = await adminAuth.verifyIdToken(idToken);
             return decodedToken.uid;
         } catch (error) {
             console.error("Token validation error:", error);
-            // Handle specific error codes, e.g., token expired
             if ((error as any).code === 'auth/id-token-expired') {
                  console.log("Token expired.");
             }
@@ -54,7 +46,6 @@ export async function getAISettings(): Promise<AISettings> {
     if (docSnap.exists()) {
         return docSnap.data() as AISettings;
     } else {
-        // Return default settings if none are found in Firestore
         return { provider: 'ollama', ollamaModel: 'llama3', openAIModel: 'gpt-3.5-turbo' };
     }
 }
@@ -67,8 +58,6 @@ export async function saveAISettings(settings: AISettings): Promise<void> {
 
 export async function getOllamaModels(): Promise<string[]> {
   try {
-    // This fetch needs to happen from the user's browser to the local Ollama instance,
-    // not from the server. This action should ideally be called from a client component.
     const response = await fetch('http://127.0.0.1:11434/api/tags', { cache: 'no-store' });
     if (!response.ok) {
       console.error('Ollama is not running or not accessible at http://127.0.0.1:11434');
@@ -98,8 +87,6 @@ export async function getSpendingTip(transactions: Transaction[]) {
   }
 }
 
-// We redefine the ChatInput type for the action to exclude the settings,
-// as we will fetch them on the server.
 export type ChatInputAction = Omit<ChatInputFlow, 'settings'>;
 
 export async function getChatbotResponse(input: ChatInputAction) {
@@ -143,7 +130,6 @@ export async function getTransactions(): Promise<Transaction[]> {
         transactions.push({ 
             id: doc.id, 
             ...data,
-            // Firestore stores Timestamps, we convert to ISO string for the client
             date: (data.date as Timestamp).toDate().toISOString() 
         } as Transaction);
     });
@@ -154,7 +140,7 @@ export async function addTransaction(transaction: Omit<Transaction, 'id'>): Prom
     const transactionsCollection = await getTransactionsCollectionRef();
     const docRef = await addDoc(transactionsCollection, {
         ...transaction,
-        date: new Date(transaction.date) // Convert date string back to JS Date object for Firestore
+        date: new Date(transaction.date)
     });
     return docRef.id;
 }
