@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from "@/hooks/use-auth";
@@ -43,7 +44,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <SidebarHeader>
              <div className="flex items-center gap-2">
                 <Logo />
-                <span className="text-lg font-semibold group-data-[state=collapsed]:hidden">FinWise</span>
+                <span className="text-lg font-semibold group-data-[state=expanded]:hidden">FinWise</span>
              </div>
           </SidebarHeader>
           <SidebarContent>
