@@ -1,14 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { mockTransactions } from '@/lib/data';
 import { Transaction } from '@/lib/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { CategoryIcon } from '@/components/icons';
 import { Badge } from '@/components/ui/badge';
+import { getTransactions } from '@/app/actions';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const categoryColors: Record<string, string> = {
     Supermercado: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
@@ -21,7 +22,23 @@ const categoryColors: Record<string, string> = {
 
 
 export default function TransactionsPage() {
-  const [transactions] = useState<Transaction[]>(mockTransactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    async function loadTransactions() {
+      setIsLoading(true);
+      try {
+        const fetchedTransactions = await getTransactions();
+        setTransactions(fetchedTransactions);
+      } catch (error) {
+        console.error("Failed to fetch transactions:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadTransactions();
+  }, []);
 
   return (
     <main className="flex-1 space-y-4 p-4 md:p-8 pt-6 bg-background/50">
@@ -36,6 +53,15 @@ export default function TransactionsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {isLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+              <Skeleton className="h-12 w-full" />
+            </div>
+          ) : (
           <Table>
             <TableHeader>
               <TableRow>
@@ -66,6 +92,7 @@ export default function TransactionsPage() {
               ))}
             </TableBody>
           </Table>
+          )}
         </CardContent>
       </Card>
     </main>

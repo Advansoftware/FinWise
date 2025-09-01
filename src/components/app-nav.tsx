@@ -2,12 +2,13 @@
 
 import { usePathname } from 'next/navigation';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
-import { Home, History, Settings, FolderKanban } from 'lucide-react';
+import { Home, History, Settings, FolderKanban, Upload } from 'lucide-react';
 
 const navItems = [
     { href: '/', label: 'Painel', icon: Home },
     { href: '/transactions', label: 'Transações', icon: History },
     { href: '/categories', label: 'Categorias', icon: FolderKanban },
+    { href: '/import', label: 'Importar', icon: Upload },
     { href: '/settings', label: 'Configurações', icon: Settings },
 ];
 
