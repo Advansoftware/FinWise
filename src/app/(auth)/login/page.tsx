@@ -10,9 +10,11 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Wallet } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { Separator } from '@/components/ui/separator';
+import { Logo } from '@/components/logo';
+import { ResetPasswordDialog } from './reset-password-dialog';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Por favor, insira um email válido.' }),
@@ -42,7 +44,7 @@ export default function LoginPage() {
       toast({
         variant: 'destructive',
         title: 'Erro de Login',
-        description: error.message || 'Ocorreu um erro. Tente novamente.',
+        description: 'Email ou senha inválidos.',
       });
     } finally {
       setIsLoading(false);
@@ -68,7 +70,9 @@ export default function LoginPage() {
   return (
     <Card>
       <CardHeader className="text-center">
-        <Wallet className="mx-auto h-8 w-8 text-primary"/>
+        <div className="mx-auto h-12 w-12">
+            <Logo />
+        </div>
         <CardTitle>Bem-vindo de volta!</CardTitle>
         <CardDescription>Faça login para acessar seu painel financeiro.</CardDescription>
       </CardHeader>
@@ -93,7 +97,14 @@ export default function LoginPage() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Senha</FormLabel>
+                  <div className="flex items-center justify-between">
+                    <FormLabel>Senha</FormLabel>
+                    <ResetPasswordDialog>
+                        <button type="button" className="text-sm font-medium text-primary hover:underline focus:outline-none">
+                            Esqueceu sua senha?
+                        </button>
+                    </ResetPasswordDialog>
+                  </div>
                   <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} />
                   </FormControl>

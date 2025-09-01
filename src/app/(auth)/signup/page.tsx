@@ -10,8 +10,9 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Wallet } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { Logo } from '@/components/logo';
 
 const formSchema = z.object({
   name: z.string().min(1, { message: 'O nome é obrigatório.' }),
@@ -45,10 +46,14 @@ export default function SignupPage() {
       await signup(values.email, values.password, values.name);
       // O redirecionamento é tratado pelo AuthProvider
     } catch (error: any) {
+      let description = 'Ocorreu um erro. Tente novamente.';
+      if (error.code === 'auth/email-already-in-use') {
+        description = 'Este endereço de e-mail já está em uso.';
+      }
       toast({
         variant: 'destructive',
         title: 'Erro ao Criar Conta',
-        description: error.message || 'Ocorreu um erro. Tente novamente.',
+        description: description,
       });
     } finally {
       setIsLoading(false);
@@ -58,7 +63,9 @@ export default function SignupPage() {
   return (
     <Card>
       <CardHeader className="text-center">
-        <Wallet className="mx-auto h-8 w-8 text-primary"/>
+        <div className="mx-auto h-12 w-12">
+            <Logo />
+        </div>
         <CardTitle>Crie sua Conta</CardTitle>
         <CardDescription>É rápido e fácil. Comece a organizar suas finanças.</CardDescription>
       </CardHeader>
