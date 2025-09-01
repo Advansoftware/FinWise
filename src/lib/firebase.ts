@@ -4,12 +4,12 @@ import { getAuth } from "firebase/auth";
 
 
 export const firebaseConfig = {
-  projectId: "finwise-dashboard-3qmzc",
-  appId: "1:216465784716:web:e38afa3ea4af0096cae0a9",
-  storageBucket: "finwise-dashboard-3qmzc.firebasestorage.app",
-  apiKey: "AIzaSyB1W3mcMXcCIV58HlKz76U6y6P83F6AQqQ",
-  authDomain: "finwise-dashboard-3qmzc.firebaseapp.com",
-  messagingSenderId: "216465784716"
+  "projectId": "finwise-dashboard-3qmzc",
+  "appId": "1:216465784716:web:e38afa3ea4af0096cae0a9",
+  "storageBucket": "finwise-dashboard-3qmzc.firebasestorage.app",
+  "apiKey": "AIzaSyB1W3mcMXcCIV58HlKz76U6y6P83F6AQqQ",
+  "authDomain": "finwise-dashboard-3qmzc.firebaseapp.com",
+  "messagingSenderId": "216465784716"
 };
 
 // Initialize Firebase
