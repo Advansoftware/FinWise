@@ -2,10 +2,12 @@ import * as admin from 'firebase-admin';
 
 // Em um ambiente do Firebase App Hosting, as credenciais da conta de serviço
 // são injetadas automaticamente no ambiente.
-// Chamar initializeApp() sem argumentos fará com que o SDK as encontre.
+// Usar admin.credential.applicationDefault() é a forma mais robusta de encontrá-las.
 if (!admin.apps.length) {
   try {
-    admin.initializeApp();
+    admin.initializeApp({
+      credential: admin.credential.applicationDefault(),
+    });
   } catch (e) {
     console.error('Firebase admin initialization error', e);
   }
