@@ -1,12 +1,29 @@
+"use client";
+
+import { useState } from "react";
 import { Header } from "@/components/dashboard/header";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { SpendingChart } from "@/components/dashboard/spending-chart";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 import { AITipCard } from "@/components/dashboard/ai-tip-card";
 import { mockTransactions } from "@/lib/data";
+import { DateRangePicker } from "@/components/dashboard/date-range-picker";
+import { DateRange } from "react-day-picker";
+import { subDays } from "date-fns";
 
 export default function DashboardPage() {
-  const categoryTotals = mockTransactions.reduce((acc, t) => {
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: subDays(new Date(), 29),
+    to: new Date(),
+  });
+
+  const filteredTransactions = mockTransactions.filter((t) => {
+    if (!dateRange?.from || !dateRange?.to) return true;
+    const transactionDate = new Date(t.date);
+    return transactionDate >= dateRange.from && transactionDate <= dateRange.to;
+  });
+
+  const categoryTotals = filteredTransactions.reduce((acc, t) => {
     acc[t.category] = (acc[t.category] || 0) + t.amount;
     return acc;
   }, {} as Record<string, number>);
@@ -15,22 +32,25 @@ export default function DashboardPage() {
     name,
     total,
   }));
-  
+
   return (
     <main className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <Header />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <DateRangePicker onUpdate={setDateRange} initialDate={dateRange} />
+      </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatsCards />
+        <StatsCards transactions={filteredTransactions} />
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
         <div className="col-span-12 md:col-span-4">
           <SpendingChart data={chartData} />
         </div>
         <div className="col-span-12 md:col-span-3">
-          <RecentTransactions />
+          <RecentTransactions transactions={filteredTransactions} />
         </div>
         <div className="col-span-12">
-            <AITipCard />
+            <AITipCard transactions={filteredTransactions} />
         </div>
       </div>
     </main>

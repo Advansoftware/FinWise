@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TransactionCategory } from "@/lib/types";
 
-const categories: TransactionCategory[] = ["Groceries", "Transport", "Entertainment", "Utilities", "Beer", "Dining", "Health"];
+const categories: TransactionCategory[] = ["Supermercado", "Transporte", "Entretenimento", "Contas", "Cerveja", "Restaurante", "Saúde"];
 
 export function AddTransactionSheet({ children }: { children: React.ReactNode }) {
   return (
@@ -23,9 +23,9 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
       <SheetTrigger asChild>{children}</SheetTrigger>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>Add a New Transaction</SheetTitle>
+          <SheetTitle>Adicionar Nova Transação</SheetTitle>
           <SheetDescription>
-            Enter the details of your purchase below. Click save when you're done.
+            Insira os detalhes da sua compra abaixo. Clique em salvar quando terminar.
           </SheetDescription>
         </SheetHeader>
         <div className="grid gap-4 py-4">
@@ -33,27 +33,27 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
             <Label htmlFor="item" className="text-right">
               Item
             </Label>
-            <Input id="item" placeholder="e.g., Coffee" className="col-span-3" />
+            <Input id="item" placeholder="ex: Café" className="col-span-3" />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="amount" className="text-right">
-              Amount
+              Valor
             </Label>
-            <Input id="amount" type="number" placeholder="e.g., 4.50" className="col-span-3" />
+            <Input id="amount" type="number" placeholder="ex: 4.50" className="col-span-3" />
           </div>
            <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="date" className="text-right">
-              Date
+              Data
             </Label>
             <Input id="date" type="date" className="col-span-3" defaultValue={new Date().toISOString().slice(0, 10)} />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="category" className="text-right">
-              Category
+              Categoria
             </Label>
              <Select>
               <SelectTrigger className="col-span-3">
-                <SelectValue placeholder="Select a category" />
+                <SelectValue placeholder="Selecione uma categoria" />
               </SelectTrigger>
               <SelectContent>
                 {categories.map(category => (
@@ -64,7 +64,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
           </div>
         </div>
         <SheetFooter>
-          <Button type="submit">Save Transaction</Button>
+          <Button type="submit">Salvar Transação</Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>

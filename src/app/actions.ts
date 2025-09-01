@@ -1,16 +1,16 @@
 'use server';
 
 import { generateSpendingTip, SpendingTipInput } from '@/ai/flows/ai-powered-spending-tips';
-import { mockTransactions } from '@/lib/data';
+import { Transaction } from '@/lib/types';
 
-export async function getSpendingTip() {
+export async function getSpendingTip(transactions: Transaction[]) {
   try {
-    const spendingData = JSON.stringify(mockTransactions, null, 2);
+    const spendingData = JSON.stringify(transactions, null, 2);
     const input: SpendingTipInput = { spendingData };
     const result = await generateSpendingTip(input);
     return result.tip;
   } catch (error) {
     console.error(error);
-    return "Sorry, I couldn't generate a tip right now. Please try again later.";
+    return "Desculpe, não consegui gerar uma dica agora. Por favor, tente novamente mais tarde.";
   }
 }

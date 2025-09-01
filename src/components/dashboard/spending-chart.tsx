@@ -11,7 +11,7 @@ export function SpendingChart({ data }: SpendingChartProps) {
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle>Spending by Category</CardTitle>
+        <CardTitle>Gastos por Categoria</CardTitle>
       </CardHeader>
       <CardContent className="pl-2">
         <ResponsiveContainer width="100%" height={350}>
@@ -28,7 +28,7 @@ export function SpendingChart({ data }: SpendingChartProps) {
               fontSize={12}
               tickLine={false}
               axisLine={false}
-              tickFormatter={(value) => `$${value}`}
+              tickFormatter={(value) => `R$${value}`}
             />
             <Tooltip
               cursor={{ fill: 'hsl(var(--muted))' }}
@@ -37,6 +37,7 @@ export function SpendingChart({ data }: SpendingChartProps) {
                 border: '1px solid hsl(var(--border))', 
                 borderRadius: 'var(--radius)'
               }}
+              formatter={(value: number) => `R$${value.toFixed(2)}`}
             />
             <Bar dataKey="total" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
           </BarChart>

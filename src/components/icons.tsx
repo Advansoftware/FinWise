@@ -5,19 +5,19 @@ export function CategoryIcon({ category, className }: { category: TransactionCat
   const iconProps = { className: className || "h-4 w-4 text-muted-foreground" };
   
   switch (category) {
-    case "Groceries":
+    case "Supermercado":
       return <ShoppingCart {...iconProps} />;
-    case "Transport":
+    case "Transporte":
       return <Car {...iconProps} />;
-    case "Entertainment":
+    case "Entretenimento":
       return <Film {...iconProps} />;
-    case "Utilities":
+    case "Contas":
       return <Home {...iconProps} />;
-    case "Beer":
+    case "Cerveja":
       return <Beer {...iconProps} />;
-    case "Dining":
+    case "Restaurante":
       return <Utensils {...iconProps} />;
-    case "Health":
+    case "Saúde":
       return <HeartPulse {...iconProps} />;
     default:
       return null;

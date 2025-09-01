@@ -14,13 +14,13 @@ const SpendingTipInputSchema = z.object({
   spendingData: z
     .string()
     .describe(
-      'A string containing the user spending data, including categories, amounts, and frequency.'
+      'Uma string contendo os dados de gastos do usuário, incluindo categorias, valores e frequência.'
     ),
 });
 export type SpendingTipInput = z.infer<typeof SpendingTipInputSchema>;
 
 const SpendingTipOutputSchema = z.object({
-  tip: z.string().describe('A personalized tip to reduce expenses.'),
+  tip: z.string().describe('Uma dica personalizada para reduzir despesas.'),
 });
 export type SpendingTipOutput = z.infer<typeof SpendingTipOutputSchema>;
 
@@ -32,11 +32,12 @@ const prompt = ai.definePrompt({
   name: 'spendingTipPrompt',
   input: {schema: SpendingTipInputSchema},
   output: {schema: SpendingTipOutputSchema},
-  prompt: `You are a personal finance advisor. Analyze the user's spending data and provide a single, actionable tip to reduce expenses.
+  model: 'ollama/llama3',
+  prompt: `Você é um consultor financeiro pessoal. Analise os dados de gastos do usuário e forneça uma única dica acionável para reduzir despesas.
 
-Spending Data: {{{spendingData}}}
+Dados de Gastos: {{{spendingData}}}
 
-Tip: `,
+Dica: `,
 });
 
 const generateSpendingTipFlow = ai.defineFlow(

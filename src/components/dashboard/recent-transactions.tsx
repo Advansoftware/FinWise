@@ -1,16 +1,20 @@
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { mockTransactions } from "@/lib/data";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { CategoryIcon } from "../icons";
+import { Transaction } from "@/lib/types";
 
-export function RecentTransactions() {
-  const recentTransactions = mockTransactions.slice(0, 5);
+interface RecentTransactionsProps {
+  transactions: Transaction[];
+}
+
+export function RecentTransactions({ transactions }: RecentTransactionsProps) {
+  const recentTransactions = transactions.slice(0, 5);
 
   return (
     <Card className="h-full">
       <CardHeader>
-        <CardTitle>Recent Transactions</CardTitle>
-        <CardDescription>You made {mockTransactions.length} transactions this month.</CardDescription>
+        <CardTitle>Transações Recentes</CardTitle>
+        <CardDescription>Você fez {transactions.length} transações neste período.</CardDescription>
       </CardHeader>
       <CardContent>
         <div className="space-y-6">
@@ -26,7 +30,7 @@ export function RecentTransactions() {
                 <p className="text-sm text-muted-foreground">{transaction.category}</p>
               </div>
               <div className="ml-auto font-medium text-right">
-                -${transaction.amount.toFixed(2)}
+                -R$ {transaction.amount.toFixed(2)}
               </div>
             </div>
           ))}

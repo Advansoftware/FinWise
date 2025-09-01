@@ -7,7 +7,7 @@ import { Toaster } from '@/components/ui/toaster';
 
 export const metadata: Metadata = {
   title: 'FinWise Dashboard',
-  description: 'Manage your finances with ease.',
+  description: 'Gerencie suas finanças com facilidade.',
 };
 
 export default function RootLayout({
@@ -16,7 +16,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="pt-BR">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
@@ -38,25 +38,25 @@ export default function RootLayout({
                 <SidebarMenuItem>
                   <SidebarMenuButton href="#" isActive>
                     <Home />
-                    Dashboard
+                    Painel
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton href="#">
                     <History />
-                    Transactions
+                    Transações
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton href="#">
                     <BarChart2 />
-                    Reports
+                    Relatórios
                   </SidebarMenuButton>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
                   <SidebarMenuButton href="#">
                     <Settings />
-                    Settings
+                    Configurações
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
