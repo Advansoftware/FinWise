@@ -16,15 +16,15 @@ export default function AuthLayout({
   const router = useRouter();
 
   useEffect(() => {
-    // If auth is done loading and there IS a user,
-    // they don't belong on login/signup, so redirect them away.
+    // Se a autenticação terminou e HÁ um usuário,
+    // ele não pertence às páginas de login/cadastro, então redirecione.
     if (!loading && user) {
       router.push('/dashboard');
     }
   }, [user, loading, router]);
 
-  // While loading, or if a user is found, show a loader
-  // to prevent a flash of the login form.
+  // Enquanto carrega, ou se um usuário for encontrado, mostre um loader
+  // para evitar um flash do formulário de autenticação.
   if (loading || user) {
     return (
       <div className="flex min-h-screen flex-col items-center justify-center p-4">
@@ -36,7 +36,7 @@ export default function AuthLayout({
     );
   }
 
-  // If loading is finished and there's no user, show the auth form.
+  // Se o carregamento terminou e não há usuário, mostre o formulário de autenticação.
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-4">
       <div className="w-full max-w-sm">

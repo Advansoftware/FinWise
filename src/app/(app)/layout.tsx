@@ -17,15 +17,15 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
   useEffect(() => {
-    // If auth is done loading and there is NO user,
-    // redirect them to the login page.
+    // Se a autenticação terminou e NÃO HÁ usuário,
+    // redirecione-os para a página de login.
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
 
-  // While loading or if there's no user, show a full-screen loader.
-  // This prevents a flash of the dashboard.
+  // Enquanto carrega ou se não houver usuário, mostre uma tela de carregamento em tela cheia.
+  // Isso evita um flash do painel.
   if (loading || !user) {
     return (
        <div className="flex items-center justify-center h-screen bg-background">
@@ -37,7 +37,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
   
-  // If loading is complete and we have a user, render the dashboard layout.
+  // Se o carregamento estiver completo e tivermos um usuário, renderize o layout do painel.
   return (
       <SidebarProvider>
         <Sidebar>
@@ -61,7 +61,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                     <Logo className="w-8 h-8"/>
                 </div>
                 <div className="flex-1">
-                    {/* Page Title could go here */}
+                    {/* O título da página pode ir aqui */}
                 </div>
                 <UserNav />
             </header>

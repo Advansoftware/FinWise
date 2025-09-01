@@ -17,8 +17,8 @@ export default function RootLayout({
   return (
     <html lang="pt-BR" className="dark" style={{fontFamily: "var(--font-inter)"}}>
       <head>
-        <title>FinWise Dashboard</title>
-        <meta name="description" content="Gerencie suas finanças com facilidade." />
+        <title>FinWise - Seu Dashboard Financeiro Inteligente</title>
+        <meta name="description" content="Controle suas finanças com inteligência. O FinWise é o seu assistente financeiro pessoal." />
         <meta name="manifest" content="/manifest.json" />
         <meta name="theme-color" content="#09090B" />
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png"></link>
@@ -32,3 +32,4 @@ export default function RootLayout({
     </html>
   );
 }
+
