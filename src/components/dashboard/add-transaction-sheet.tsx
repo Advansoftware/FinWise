@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   Sheet,
   SheetContent,
@@ -8,16 +9,80 @@ import {
   SheetDescription,
   SheetFooter,
   SheetTrigger,
+  SheetClose,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { TransactionCategory } from "@/lib/types";
+import { Transaction, TransactionCategory } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
+import { addTransaction } from "@/app/actions";
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+
 
 const categories: TransactionCategory[] = ["Supermercado", "Transporte", "Entretenimento", "Contas", "Restaurante", "Saúde"];
 
 export function AddTransactionSheet({ children }: { children: React.ReactNode }) {
+  const [item, setItem] = useState('');
+  const [amount, setAmount] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [category, setCategory] = useState<TransactionCategory | ''>('');
+  const [subcategory, setSubcategory] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { toast } = useToast();
+  const router = useRouter();
+
+
+  const handleSubmit = async () => {
+    if (!item || !amount || !date || !category) {
+        toast({
+            variant: "destructive",
+            title: "Campos obrigatórios",
+            description: "Por favor, preencha todos os campos obrigatórios.",
+        });
+        return;
+    }
+    
+    setIsSubmitting(true);
+    try {
+        const newTransaction: Omit<Transaction, 'id'> = {
+            item,
+            amount: parseFloat(amount),
+            date,
+            category,
+            subcategory: subcategory || undefined,
+        };
+        await addTransaction(newTransaction);
+
+        toast({
+            title: "Sucesso!",
+            description: "Sua transação foi adicionada.",
+        });
+
+        // Reset form
+        setItem('');
+        setAmount('');
+        setDate(new Date().toISOString().slice(0, 10));
+        setCategory('');
+        setSubcategory('');
+
+        // Revalidate data on the page
+        router.refresh();
+        
+    } catch (error) {
+        console.error(error);
+        toast({
+            variant: "destructive",
+            title: "Erro",
+            description: "Não foi possível adicionar a transação. Tente novamente.",
+        });
+    } finally {
+        setIsSubmitting(false);
+    }
+  }
+
   return (
     <Sheet>
       <SheetTrigger asChild>{children}</SheetTrigger>
@@ -33,31 +98,31 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
             <Label htmlFor="item" className="text-right">
               Item
             </Label>
-            <Input id="item" placeholder="ex: Café" className="col-span-3" />
+            <Input id="item" placeholder="ex: Café" className="col-span-3" value={item} onChange={(e) => setItem(e.target.value)} />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="amount" className="text-right">
               Valor
             </Label>
-            <Input id="amount" type="number" placeholder="ex: 4.50" className="col-span-3" />
+            <Input id="amount" type="number" placeholder="ex: 4.50" className="col-span-3" value={amount} onChange={(e) => setAmount(e.target.value)} />
           </div>
            <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="date" className="text-right">
               Data
             </Label>
-            <Input id="date" type="date" className="col-span-3" defaultValue={new Date().toISOString().slice(0, 10)} />
+            <Input id="date" type="date" className="col-span-3" value={date} onChange={(e) => setDate(e.target.value)} />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="category" className="text-right">
               Categoria
             </Label>
-             <Select>
+             <Select value={category} onValueChange={(value) => setCategory(value as TransactionCategory)}>
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Selecione uma categoria" />
               </SelectTrigger>
               <SelectContent>
-                {categories.map(category => (
-                  <SelectItem key={category} value={category}>{category}</SelectItem>
+                {categories.map(cat => (
+                  <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -66,11 +131,16 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
             <Label htmlFor="subcategory" className="text-right">
               Subcategoria
             </Label>
-            <Input id="subcategory" placeholder="ex: Bebidas (Opcional)" className="col-span-3" />
+            <Input id="subcategory" placeholder="ex: Bebidas (Opcional)" className="col-span-3" value={subcategory} onChange={(e) => setSubcategory(e.target.value)} />
           </div>
         </div>
         <SheetFooter>
-          <Button type="submit">Salvar Transação</Button>
+            <SheetClose asChild>
+                <Button onClick={handleSubmit} disabled={isSubmitting}>
+                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Salvar Transação
+                </Button>
+            </SheetClose>
         </SheetFooter>
       </SheetContent>
     </Sheet>
