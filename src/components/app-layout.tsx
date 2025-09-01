@@ -17,6 +17,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
 
   const isPublicOrAuthPage = ['/', '/login', '/signup'].includes(pathname);
 
+  // While loading, and it's not a public page, show a full-screen loader.
   if (loading && !isPublicOrAuthPage) {
     return (
       <AnimatePresence>
@@ -45,15 +46,20 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
+  // If loading is finished, but there's no user on a protected page, redirect.
+  if (!loading && !user && !isPublicOrAuthPage) {
+     if (typeof window !== 'undefined') {
+      window.location.href = '/login';
+    }
+    return null; // Render nothing while redirecting
+  }
+
+  // If it's a public page, just render the children without the main app layout.
   if (isPublicOrAuthPage) {
     return <>{children}</>;
   }
 
-  if (!user) {
-    // AuthProvider should handle the redirect, but this is a fallback.
-    return null;
-  }
-  
+  // If we reach here, the user is authenticated, and we can render the full app layout.
   const getPageTitle = () => {
     if (pathname.startsWith('/dashboard')) return 'Painel';
     if (pathname.startsWith('/transactions')) return 'Transações';

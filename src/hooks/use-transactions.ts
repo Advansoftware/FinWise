@@ -16,15 +16,10 @@ export function useTransactions() {
   });
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('all');
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
 
   const loadTransactions = useCallback(async () => {
-    if (!user) {
-        setAllTransactions([]);
-        setIsLoading(false);
-        return;
-    };
     setIsLoading(true);
     try {
       const transactions = await getTransactions();
@@ -35,11 +30,18 @@ export function useTransactions() {
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, []);
 
   useEffect(() => {
-    loadTransactions();
-  }, [loadTransactions]);
+    // We only load transactions when the auth state is no longer loading and we have a user
+    if (!authLoading && user) {
+        loadTransactions();
+    } else if (!authLoading && !user) {
+        // If auth is done and there's no user, we stop loading and clear transactions
+        setIsLoading(false);
+        setAllTransactions([]);
+    }
+  }, [authLoading, user, loadTransactions]);
 
   const { categories, subcategories } = useMemo(() => {
     const categoriesSet = new Set<TransactionCategory>();

@@ -11,26 +11,26 @@ import { getFirebaseAdmin } from '@/lib/firebase-admin';
 
 async function getUserId() {
     const authorization = headers().get('Authorization');
-    if (authorization) {
-        const idToken = authorization.split('Bearer ')[1];
-        if (!idToken || idToken === 'null' || idToken === 'undefined') {
-            console.log("No ID token found in auth header");
-            return null;
-        }
-        try {
-            const { auth } = getFirebaseAdmin();
-            const decodedToken = await auth.verifyIdToken(idToken);
-            return decodedToken.uid;
-        } catch (error) {
-            console.error("Token validation error:", error);
-            if ((error as any).code === 'auth/id-token-expired') {
-                 console.log("Token expired.");
-            }
-            return null;
-        }
+    if (!authorization) {
+        throw new Error('Authorization header not found. User is not authenticated.');
     }
-     console.log("No Authorization header found");
-    return null;
+    
+    const idToken = authorization.split('Bearer ')[1];
+    if (!idToken || idToken === 'null' || idToken === 'undefined') {
+        throw new Error('ID token not found in Authorization header. User is not authenticated.');
+    }
+    
+    try {
+        const { auth } = getFirebaseAdmin();
+        const decodedToken = await auth.verifyIdToken(idToken, true);
+        if (!decodedToken.uid) {
+           throw new Error('Invalid token: UID missing.');
+        }
+        return decodedToken.uid;
+    } catch (error) {
+        console.error("Token validation error:", error);
+        throw new Error(`User authentication failed: ${(error as Error).message}`);
+    }
 }
 
 
@@ -38,8 +38,7 @@ async function getUserId() {
 
 async function getSettingsDocRef() {
     const userId = await getUserId();
-    if (!userId) throw new Error("User not authenticated for getSettingsDocRef");
-    const { db: clientDb } = getFirebase(); // Usar o DB do cliente para operações do cliente
+    const { db: clientDb } = getFirebase(); 
     return doc(clientDb, "users", userId, "settings", "ai");
 }
 
@@ -114,18 +113,12 @@ export async function getChatbotResponse(input: ChatInputAction) {
 
 async function getTransactionsCollectionRef() {
     const userId = await getUserId();
-    if (!userId) throw new Error("User not authenticated for getTransactionsCollectionRef");
     const { db: clientDb } = getFirebase(); // Usar o DB do cliente
     return collection(clientDb, "users", userId, "transactions");
 }
 
 
 export async function getTransactions(): Promise<Transaction[]> {
-    const userId = await getUserId();
-    if (!userId) {
-        console.log("No user ID, returning empty transactions array.");
-        return [];
-    }
     const transactionsCollection = await getTransactionsCollectionRef();
     const querySnapshot = await getDocs(transactionsCollection);
     const transactions: Transaction[] = [];

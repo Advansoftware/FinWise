@@ -6,7 +6,6 @@ import {
   useState,
   useEffect,
   ReactNode,
-  useCallback,
 } from 'react';
 import {
   onIdTokenChanged,
@@ -24,7 +23,6 @@ import {
 } from 'firebase/auth';
 import { getFirebase } from '@/lib/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
-import { usePathname } from 'next/navigation';
 
 interface AuthContextType {
   user: User | null;
@@ -55,42 +53,24 @@ const AuthContext = createContext<AuthContextType>({
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const pathname = usePathname();
   const { auth, db } = getFirebase();
 
   useEffect(() => {
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
       setUser(user);
       setLoading(false);
+      
+      // On successful login or state change, redirect to dashboard if on a public page
+      if (user) {
+        const publicPages = ['/', '/login', '/signup'];
+        if (publicPages.includes(window.location.pathname)) {
+          window.location.href = '/dashboard';
+        }
+      }
     });
 
     return () => unsubscribe();
   }, [auth]);
-
-  const handleAuthRedirect = useCallback(() => {
-      if (typeof window === 'undefined') return;
-
-      if (loading) return;
-      
-      const isAuthPage = pathname === '/login' || pathname === '/signup';
-      const isPublicPage = pathname === '/';
-      
-      if (user) {
-        // If user is logged in, and they are on a public/auth page, redirect them to dashboard.
-        if (isAuthPage || isPublicPage) {
-            window.location.href = '/dashboard';
-        }
-      } else {
-        // If user is not logged in, and they are on a private page, redirect them to login.
-        if (!isAuthPage && !isPublicPage) {
-            window.location.href = '/login';
-        }
-      }
-  }, [user, loading, pathname]);
-
-  useEffect(() => {
-    handleAuthRedirect();
-  }, [handleAuthRedirect]);
 
   const login = (email: string, pass: string) => {
     return signInWithEmailAndPassword(auth, email, pass);
@@ -100,13 +80,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
     await updateProfile(userCredential.user, { displayName: name });
     
-    // Create a user document in Firestore with a "Básico" plan
     await setDoc(doc(db, "users", userCredential.user.uid), {
         uid: userCredential.user.uid,
         displayName: name,
         email: email,
         createdAt: new Date(),
-        plan: 'Básico' // Default plan
+        plan: 'Básico'
     });
 
     return userCredential;
@@ -130,7 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             displayName: userCredential.user.displayName,
             email: userCredential.user.email,
             createdAt: new Date(),
-            plan: 'Básico' // Default plan
+            plan: 'Básico'
         });
     }
 
@@ -144,10 +123,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateUserProfile = async (name: string) => {
     if (!auth.currentUser) throw new Error("User not authenticated");
     await updateProfile(auth.currentUser, { displayName: name });
-    // Also update in firestore
+    
     const userDocRef = doc(db, "users", auth.currentUser.uid);
     await setDoc(userDocRef, { displayName: name }, { merge: true });
-    // Trigger a state update to reflect the change
+    
     setUser({ ...auth.currentUser });
   }
 
@@ -161,7 +140,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!auth.currentUser) throw new Error("User not authenticated");
     await updatePassword(auth.currentUser, password);
   }
-
 
   const value = {
     user,
