@@ -17,7 +17,7 @@ function UploadPlaceholder() {
                 <input id="dropzone-file" type="file" className="hidden" />
             </label>
         </div>
-    )
+    );
 }
 
 export default function ImportPage() {
