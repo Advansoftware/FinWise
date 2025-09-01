@@ -1,12 +1,11 @@
 import * as admin from 'firebase-admin';
 
-const serviceAccount = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
-
+// Em um ambiente do Firebase App Hosting, as credenciais da conta de serviço
+// são injetadas automaticamente no ambiente.
+// Chamar initializeApp() sem argumentos fará com que o SDK as encontre.
 if (!admin.apps.length) {
   try {
-    admin.initializeApp({
-      credential: admin.credential.cert(JSON.parse(serviceAccount!)),
-    });
+    admin.initializeApp();
   } catch (e) {
     console.error('Firebase admin initialization error', e);
   }
