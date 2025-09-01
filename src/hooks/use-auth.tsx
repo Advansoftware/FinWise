@@ -38,7 +38,7 @@ if (typeof window !== 'undefined') {
             headers.set('Authorization', `Bearer ${fetchWrapper.idToken}`);
         }
         const newInit = { ...init, headers };
-        return fetchWrapper.originalFetch(input, newInit);
+        return fetchWrapper.originalFetch.call(window, input, newInit);
     };
 }
 
