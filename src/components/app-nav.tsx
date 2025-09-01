@@ -26,8 +26,10 @@ export function AppNav() {
                          <Tooltip>
                             <TooltipTrigger asChild>
                                  <SidebarMenuButton href={item.href} isActive={pathname === item.href}>
-                                    <item.icon />
-                                    <span className="group-data-[state=collapsed]:hidden">{item.label}</span>
+                                    <div className="flex items-center justify-center w-full">
+                                      <item.icon className="h-4 w-4 shrink-0" />
+                                      <span className="flex-1 ml-2 truncate group-data-[state=collapsed]:hidden">{item.label}</span>
+                                    </div>
                                 </SidebarMenuButton>
                             </TooltipTrigger>
                             {state === 'collapsed' && (
