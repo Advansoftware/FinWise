@@ -1,21 +1,24 @@
 {
-  "name": "FinWise Dashboard",
+  "name": "FinWise - Dashboard Financeiro",
   "short_name": "FinWise",
-  "description": "Gerencie suas finanças com facilidade.",
-  "start_url": "/",
-  "display": "standalone",
-  "background_color": "#09090B",
-  "theme_color": "#09090B",
+  "description": "Seu dashboard de finanças pessoais moderno, construído com Next.js, TypeScript e IA.",
   "icons": [
     {
-      "src": "/icon-192x192.png",
+      "src": "/icons/icon-192x192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
-      "src": "/icon-512x512.png",
+      "src": "/icons/icon-512x512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
-  ]
+  ],
+  "theme_color": "#09090B",
+  "background_color": "#09090B",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait"
 }

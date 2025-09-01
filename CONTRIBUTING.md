@@ -16,9 +16,10 @@ A forma mais comum de contribuição é através de Pull Requests (PRs). Siga os
     git checkout -b minha-nova-feature
     ```
 4.  **Faça suas Alterações**: Implemente sua funcionalidade ou corrija o bug.
-5.  **Commit suas Alterações**: Escreva uma mensagem de commit clara e concisa.
+5.  **Commit suas Alterações**: Escreva uma mensagem de commit clara e concisa. Use o padrão [Conventional Commits](https://www.conventionalcommits.org/).
     ```bash
     git commit -m "feat: Adiciona funcionalidade X"
+    git commit -m "fix: Corrige bug na renderização do gráfico"
     ```
 6.  **Envie para seu Fork**:
     ```bash
@@ -28,12 +29,12 @@ A forma mais comum de contribuição é através de Pull Requests (PRs). Siga os
 
 ## Padrões de Código
 
-- **TypeScript**: Todo o código deve ser escrito em TypeScript. Utilize tipagens fortes sempre que possível.
-- **ESLint & Prettier**: O projeto está configurado com ESLint para garantir a qualidade do código e Prettier para a formatação. Certifique-se de que seu código segue as regras configuradas.
+- **TypeScript**: Todo o código deve ser escrito em TypeScript. Utilize tipagens fortes sempre que possível, aproveitando os tipos definidos em `src/lib/types.ts`.
+- **ESLint & Prettier**: O projeto está configurado com ESLint para garantir a qualidade do código e Prettier para a formatação. Certifique-se de que seu código segue as regras configuradas rodando `npm run lint` antes de commitar.
 - **Nomenclatura**:
   - **Componentes**: Use PascalCase (ex: `MyComponent.tsx`).
   - **Hooks**: Use camelCase com o prefixo `use` (ex: `useTransactions.ts`).
-  - **Arquivos de API/Actions**: Use kebab-case (ex: `get-spending-tip.ts`).
+  - **Arquivos de Fluxos/Ações**: Use kebab-case (ex: `get-spending-tip.ts`).
 - **Comentários**: Adicione comentários apenas quando a lógica for complexa e não for autoexplicativa.
 
 ## Processo de Revisão de Pull Request

@@ -1,24 +1,46 @@
-// This is a basic service worker. It's recommended to use a library like Workbox for more complex scenarios.
+// This is a basic service worker for PWA functionality.
 
-self.addEventListener('install', (event) => {
-  console.log('Service worker installing...');
-  // Add a call to skipWaiting here if you want the new service worker to activate immediately.
+const CACHE_NAME = 'finwise-cache-v1';
+const urlsToCache = [
+  '/',
+  '/transactions',
+  '/categories',
+  '/import',
+  '/settings',
+  '/manifest.json',
+  '/icons/icon-192x192.png',
+  '/icons/icon-512x512.png'
+];
+
+self.addEventListener('install', event => {
+  // Perform install steps
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then(cache => {
+        console.log('Opened cache');
+        return cache.addAll(urlsToCache);
+      })
+  );
   self.skipWaiting();
 });
 
-self.addEventListener('activate', (event) => {
-  console.log('Service worker activating...');
+self.addEventListener('fetch', event => {
+  event.respondWith(
+    caches.match(event.request)
+      .then(response => {
+        // Cache hit - return response
+        if (response) {
+          return response;
+        }
+        return fetch(event.request);
+      }
+    )
+  );
 });
 
-self.addEventListener('fetch', (event) => {
-  // We are letting the browser handle all fetch requests.
-  // The offline persistence is handled by Firebase Firestore SDK.
-  // For full offline capability of the app shell (HTML, CSS, JS), you would need a caching strategy here.
-});
 
-// Listen for messages from the client to trigger the update
 self.addEventListener('message', (event) => {
-    if (event.data && event.data.type === 'SKIP_WAITING') {
-      self.skipWaiting();
-    }
-  });
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});

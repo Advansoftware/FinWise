@@ -10,13 +10,12 @@ Este projeto foi desenvolvido com o Firebase Studio e serve como um exemplo robu
 - **Visualização de Dados**: Gráficos interativos que ajudam a entender seus padrões de gastos ao longo do tempo.
 - **Gerenciamento de Transações**: Adicione, visualize e filtre suas transações com facilidade.
 - **Categorização Inteligente**: Organize suas despesas com categorias e subcategorias personalizáveis.
-- **Importação Flexível**:
-  - **OCR de Notas Fiscais**: Tire uma foto de uma nota fiscal e a IA extrairá as informações para você.
-  - **Importação de CSV**: Envie extratos bancários em formato CSV com um mapeador de colunas inteligente.
-  - **Importação de OFX**: Suporte para o formato padrão de extratos financeiros.
-- **Dicas Financeiras com IA**: Receba dicas personalizadas geradas por IA com base nos seus hábitos de consumo.
+- **Configuração de IA Flexível**: Escolha entre múltiplos provedores de IA (Ollama, Google AI, OpenAI) e configure modelos diretamente na interface.
+- **Assistente de Chat com IA**: Converse com um assistente inteligente que analisa suas transações em tempo real para responder perguntas e fornecer insights.
+- **OCR de Notas Fiscais**: Tire uma foto de uma nota fiscal e a IA extrairá as informações para você.
 - **Progressive Web App (PWA)**: Instale o aplicativo no seu desktop ou celular e use-o offline.
 - **Sincronização Offline**: Todas as alterações feitas sem conexão são salvas localmente e sincronizadas automaticamente quando a internet é restabelecida.
+- **Atualização da PWA**: Seja notificado quando uma nova versão do aplicativo estiver disponível, com um botão para atualizar instantaneamente.
 - **Design Moderno**: Interface inspirada em designs de fintechs modernas, com tema escuro e foco na experiência do usuário.
 
 ## Tech Stack
@@ -26,7 +25,7 @@ Este projeto foi desenvolvido com o Firebase Studio e serve como um exemplo robu
 - **Estilização**: [Tailwind CSS](https://tailwindcss.com/)
 - **Componentes de UI**: [ShadCN/UI](https://ui.shadcn.com/)
 - **Banco de Dados**: [Cloud Firestore](https://firebase.google.com/docs/firestore) (com suporte offline)
-- **Inteligência Artificial**: [Genkit (Firebase AI)](https://firebase.google.com/docs/genkit)
+- **Inteligência Artificial**: [Genkit (Firebase AI)](https://firebase.google.com/docs/genkit) com suporte a Ollama, Google AI e OpenAI.
 - **Gráficos**: [Recharts](https://recharts.org/)
 - **Deployment**: [Firebase App Hosting](https://firebase.google.com/docs/hosting)
 
@@ -55,6 +54,11 @@ Este projeto foi desenvolvido com o Firebase Studio e serve como um exemplo robu
 ### Configuração do Firebase
 
 Este projeto é configurado para usar o Firebase. As credenciais já estão incluídas no arquivo `src/lib/firebase.ts`. Quando executado pela primeira vez, ele se conectará a um projeto Firebase provisionado.
+
+### Configuração de IA (Opcional)
+
+- **Ollama**: Se você planeja usar o Ollama, certifique-se de que ele esteja instalado e em execução em sua máquina local. O aplicativo buscará automaticamente os modelos disponíveis.
+- **Google AI / OpenAI**: Para usar esses provedores, você precisará de uma chave de API. Vá para a página de **Configurações** no aplicativo para inserir e salvar suas chaves com segurança no Firestore.
 
 ### Executando o Aplicativo
 
