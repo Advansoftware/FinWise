@@ -55,7 +55,7 @@ export default function ImportPage() {
                               <CardDescription>
                                   Envie uma imagem (PNG, JPG) ou PDF da sua nota fiscal para extrair as transações.
                               </CardDescription>
-                          </Header>
+                          </CardHeader>
                           <CardContent>
                              <UploadPlaceholder />
                           </CardContent>
