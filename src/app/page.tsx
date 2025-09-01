@@ -27,8 +27,7 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <main className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <Header />
+      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Skeleton className="h-10 md:col-span-2" />
           <Skeleton className="h-10" />
@@ -44,14 +43,13 @@ export default function DashboardPage() {
           <Skeleton className="col-span-12 lg:col-span-3 h-[418px]" />
           <Skeleton className="col-span-12 h-36" />
         </div>
-      </main>
+      </div>
     )
   }
 
 
   return (
-    <main className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-      <Header />
+    <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="md:col-span-2">
             <DateRangePicker onUpdate={setDateRange} initialDate={dateRange} />
@@ -86,6 +84,6 @@ export default function DashboardPage() {
             <AITipCard transactions={filteredTransactions} />
         </div>
       </div>
-    </main>
+    </div>
   );
 }

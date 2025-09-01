@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarContent, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
-import { Home, BarChart2, History, Settings, Wallet } from 'lucide-react';
+import { Home, BarChart2, History, Settings, Wallet, PanelLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/toaster';
 import { AppNav } from '@/components/app-nav';
@@ -24,28 +24,34 @@ export default function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <SidebarProvider>
+        <SidebarProvider defaultOpen={false}>
           <Sidebar>
             <SidebarContent>
               <SidebarHeader>
-                <div className="flex items-center gap-2">
-                   <Button variant="ghost" size="icon" className="text-primary hover:bg-accent -ml-2">
-                    <Wallet className="size-5" />
-                  </Button>
-                  <h2 className="text-lg font-semibold text-foreground">FinWise</h2>
+                <div className="flex items-center justify-between">
+                   <div className="flex items-center gap-2">
+                        <Button variant="ghost" size="icon" className="text-primary hover:bg-accent -ml-2 h-8 w-8">
+                            <Wallet className="size-5" />
+                        </Button>
+                        <h2 className="text-lg font-semibold text-foreground">FinWise</h2>
+                   </div>
+                   <SidebarTrigger className="hidden md:flex" />
                 </div>
               </SidebarHeader>
               <AppNav />
             </SidebarContent>
           </Sidebar>
           <SidebarInset>
-            <div className="md:hidden p-4 flex justify-between items-center bg-card/80 backdrop-blur-sm border-b">
-                <div className="flex items-center gap-2">
+            <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6">
+                <div className="flex items-center gap-2 md:hidden">
+                    <SidebarTrigger />
                     <Wallet className="size-6 text-primary" />
                     <h2 className="text-xl font-bold text-foreground">FinWise</h2>
                 </div>
-                <SidebarTrigger />
-            </div>
+                <div className="hidden md:flex text-lg font-semibold">
+                    Painel
+                </div>
+            </header>
             {children}
           </SidebarInset>
         </SidebarProvider>
