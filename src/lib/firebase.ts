@@ -1,7 +1,6 @@
-import { initializeApp, getApps } from "firebase/app";
-import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
-import { getAuth } from "firebase/auth";
-
+import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
+import { getFirestore, enableIndexedDbPersistence, Firestore } from "firebase/firestore";
+import { getAuth, Auth } from "firebase/auth";
 
 export const firebaseConfig = {
   "projectId": "finwise-dashboard-3qmzc",
@@ -12,30 +11,32 @@ export const firebaseConfig = {
   "messagingSenderId": "216465784716"
 };
 
-// Initialize Firebase
-let app;
-if (!getApps().length) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApps()[0];
+interface FirebaseServices {
+  app: FirebaseApp;
+  auth: Auth;
+  db: Firestore;
 }
 
-const db = getFirestore(app);
-const auth = getAuth(app);
+function getFirebase(): FirebaseServices {
+  const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+  const auth = getAuth(app);
+  const db = getFirestore(app);
 
+  try {
+    enableIndexedDbPersistence(db)
+      .catch((err) => {
+        if (err.code == 'failed-precondition') {
+          console.warn('Falha na pré-condição da persistência. Múltiplas abas abertas?');
+        } else if (err.code == 'unimplemented') {
+          console.warn('O navegador atual não suporta persistência offline.');
+        }
+      });
+  } catch (error) {
+      console.error("Erro ao habilitar persistência: ", error);
+  }
 
-// Enable offline persistence
-try {
-  enableIndexedDbPersistence(db)
-    .catch((err) => {
-      if (err.code == 'failed-precondition') {
-        console.warn('Falha na pré-condição da persistência. Múltiplas abas abertas?');
-      } else if (err.code == 'unimplemented') {
-        console.warn('O navegador atual não suporta persistência offline.');
-      }
-    });
-} catch (error) {
-    console.error("Erro ao habilitar persistência: ", error);
+  return { app, auth, db };
 }
 
-export { db, auth };
+// Export a single function to get initialized services
+export { getFirebase };

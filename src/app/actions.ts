@@ -3,7 +3,7 @@
 import { generateSpendingTip, SpendingTipInput } from '@/ai/flows/ai-powered-spending-tips';
 import { chatWithTransactions, ChatInput as ChatInputFlow } from '@/ai/flows/chat-with-transactions';
 import { Transaction, AISettings } from '@/lib/types';
-import { db } from '@/lib/firebase';
+import { getFirebase } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, getDoc, setDoc, query, where, Timestamp } from "firebase/firestore";
 import { headers } from 'next/headers';
 import { adminAuth, adminDb } from '@/lib/firebase-admin';
@@ -38,6 +38,7 @@ async function getUserId() {
 async function getSettingsDocRef() {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated for getSettingsDocRef");
+    const { db } = getFirebase();
     return doc(db, "users", userId, "settings", "ai");
 }
 
@@ -113,6 +114,7 @@ export async function getChatbotResponse(input: ChatInputAction) {
 async function getTransactionsCollectionRef() {
     const userId = await getUserId();
     if (!userId) throw new Error("User not authenticated for getTransactionsCollectionRef");
+    const { db } = getFirebase();
     return collection(db, "users", userId, "transactions");
 }
 

@@ -19,7 +19,7 @@ import {
   User,
   sendPasswordResetEmail,
 } from 'firebase/auth';
-import { auth, db } from '@/lib/firebase';
+import { getFirebase } from '@/lib/firebase';
 import { doc, setDoc } from 'firebase/firestore';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -68,6 +68,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
+  const { auth, db } = getFirebase(); // Get initialized services
 
   useEffect(() => {
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
@@ -77,7 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [auth]);
 
   const handleAuthRedirect = useCallback(() => {
       if (loading) return;
