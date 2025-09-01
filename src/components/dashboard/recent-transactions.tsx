@@ -15,7 +15,7 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
   const recentTransactions = transactions.slice(0, 7);
 
   return (
-    <Card className="h-full flex flex-col bg-gradient-to-br from-card to-muted/30">
+    <Card className="h-full flex flex-col">
       <CardHeader>
         <CardTitle>Transações Recentes</CardTitle>
         <CardDescription>Você tem {transactions.length} transações neste período.</CardDescription>
@@ -27,7 +27,7 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
                 {recentTransactions.map((transaction) => (
                     <div key={transaction.id} className="flex items-center">
                         <Avatar className="h-9 w-9">
-                            <AvatarFallback className="bg-primary/10 border border-primary/20 text-primary">
+                            <AvatarFallback className="bg-secondary border border-border text-foreground">
                                 <CategoryIcon category={transaction.category} />
                             </AvatarFallback>
                         </Avatar>

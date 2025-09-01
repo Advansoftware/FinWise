@@ -27,7 +27,7 @@ export default function DashboardPage() {
 
   if (isLoading) {
     return (
-      <main className="flex-1 space-y-4 p-4 md:p-8 pt-6 bg-background/50">
+      <main className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <Header />
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <Skeleton className="h-10 md:col-span-2" />
@@ -50,7 +50,7 @@ export default function DashboardPage() {
 
 
   return (
-    <main className="flex-1 space-y-4 p-4 md:p-8 pt-6 bg-background/50">
+    <main className="flex-1 space-y-4 p-4 md:p-8 pt-6">
       <Header />
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <div className="md:col-span-2">

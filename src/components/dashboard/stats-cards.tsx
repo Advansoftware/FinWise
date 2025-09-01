@@ -8,7 +8,10 @@ interface StatsCardsProps {
 }
 
 const generateSparklineData = (transactions: Transaction[]) => {
-    if (transactions.length < 2) return [];
+    if (transactions.length < 2) {
+        const singleValue = transactions.length === 1 ? transactions[0].amount : 0;
+        return [{ total: 0 }, { total: singleValue }];
+    };
 
     const sorted = transactions.sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
     const dailyTotals: {[key: string]: number} = {};
@@ -26,14 +29,23 @@ const ChartSparkline = ({ data, positive = false }: { data: any[], positive?: bo
         <AreaChart data={data}>
             <defs>
                 <linearGradient id={positive ? "colorPositive" : "colorNegative"} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={positive ? "hsl(var(--primary))" : "hsl(var(--destructive))"} stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor={positive ? "hsl(var(--primary))" : "hsl(var(--destructive))"} stopOpacity={0}/>
+                    <stop offset="5%" stopColor={positive ? "hsl(var(--chart-1))" : "hsl(var(--destructive))"} stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor={positive ? "hsl(var(--chart-1))" : "hsl(var(--destructive))"} stopOpacity={0}/>
                 </linearGradient>
             </defs>
+            <Tooltip
+              cursor={false}
+              contentStyle={{ 
+                background: 'hsl(var(--background) / 0.8)',
+                backdropFilter: 'blur(4px)',
+                border: '1px solid hsl(var(--border))', 
+                borderRadius: 'var(--radius)'
+              }}
+             />
             <Area 
                 type="monotone" 
                 dataKey="total" 
-                stroke={positive ? "hsl(var(--primary))" : "hsl(var(--destructive))"}
+                stroke={positive ? "hsl(var(--chart-1))" : "hsl(var(--destructive))"}
                 strokeWidth={2}
                 fillOpacity={1} 
                 fill={`url(#${positive ? "colorPositive" : "colorNegative"})`}
@@ -67,7 +79,7 @@ export function StatsCards({ transactions }: StatsCardsProps) {
 
   return (
     <>
-      <Card className="bg-gradient-to-br from-card to-muted/30">
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Gasto no Período</CardTitle>
           <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -75,12 +87,12 @@ export function StatsCards({ transactions }: StatsCardsProps) {
         <CardContent>
           <div className="text-2xl font-bold">R$ {totalSpending.toFixed(2)}</div>
           <p className="text-xs text-muted-foreground">Soma das transações filtradas</p>
-           <div className="mt-2">
+           <div className="mt-2 h-[40px]">
              <ChartSparkline data={sparklineData} />
            </div>
         </CardContent>
       </Card>
-      <Card className="bg-gradient-to-br from-card to-muted/30">
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Principal Categoria</CardTitle>
           <TrendingUp className="h-4 w-4 text-muted-foreground" />
@@ -91,14 +103,14 @@ export function StatsCards({ transactions }: StatsCardsProps) {
           <p className="text-xs text-muted-foreground">Sua maior área de despesa</p>
         </CardContent>
       </Card>
-      <Card className="bg-gradient-to-br from-card to-muted/30">
+      <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">Menor Categoria</CardTitle>
           <TrendingDown className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
           <div className="text-xl font-bold">{leastCategoryName}</div>
-           <div className="text-lg font-semibold text-green-400">R$ {leastCategoryValue.toFixed(2)}</div>
+           <div className="text-lg font-semibold text-emerald-400">R$ {leastCategoryValue.toFixed(2)}</div>
           <p className="text-xs text-muted-foreground">Sua menor área de despesa</p>
         </CardContent>
       </Card>

@@ -32,17 +32,17 @@ export default function RootLayout({
                    <Button variant="ghost" size="icon" className="text-primary hover:bg-accent -ml-2">
                     <Wallet className="size-5" />
                   </Button>
-                  <h2 className="text-lg font-semibold text-primary">FinWise</h2>
+                  <h2 className="text-lg font-semibold text-foreground">FinWise</h2>
                 </div>
               </SidebarHeader>
               <AppNav />
             </SidebarContent>
           </Sidebar>
           <SidebarInset>
-            <div className="md:hidden p-4 flex justify-between items-center bg-card border-b">
+            <div className="md:hidden p-4 flex justify-between items-center bg-card/80 backdrop-blur-sm border-b">
                 <div className="flex items-center gap-2">
                     <Wallet className="size-6 text-primary" />
-                    <h2 className="text-xl font-bold text-primary">FinWise</h2>
+                    <h2 className="text-xl font-bold text-foreground">FinWise</h2>
                 </div>
                 <SidebarTrigger />
             </div>

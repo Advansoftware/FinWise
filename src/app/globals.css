@@ -8,39 +8,39 @@ body {
 
 @layer base {
   :root {
-    --background: 210 20% 10%;
-    --foreground: 0 0% 98%;
-    --card: 210 20% 12%;
-    --card-foreground: 0 0% 98%;
-    --popover: 210 20% 10%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 260 90% 70%;
-    --primary-foreground: 210 20% 15%;
-    --secondary: 210 20% 18%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 210 20% 18%;
-    --muted-foreground: 0 0% 63.9%;
-    --accent: 260 90% 70%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 210 20% 25%;
-    --input: 210 20% 25%;
-    --ring: 260 90% 70%;
-    --chart-1: 260 90% 70%;
-    --chart-2: 320 90% 70%;
-    --chart-3: 197 37% 24%;
+    --background: 224 71% 4%;
+    --foreground: 210 40% 98%;
+    --card: 224 71% 6%;
+    --card-foreground: 210 40% 98%;
+    --popover: 224 71% 4%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 262 84% 60%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217 33% 17%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 217 33% 17%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217 33% 25%;
+    --input: 217 33% 25%;
+    --ring: 262 84% 60%;
+    --chart-1: 262 84% 60%;
+    --chart-2: 166 84% 60%;
+    --chart-3: 343 84% 60%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
     --radius: 0.5rem;
-    --sidebar-background: 210 20% 12%;
+    --sidebar-background: 224 71% 4%;
     --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 0 0% 98%;
     --sidebar-primary-foreground: 210 20% 15%;
-    --sidebar-accent: 210 20% 18%;
+    --sidebar-accent: 217 33% 17%;
     --sidebar-accent-foreground: 0 0% 98%;
-    --sidebar-border: 210 20% 25%;
-    --sidebar-ring: 260 90% 70%;
+    --sidebar-border: 217 33% 25%;
+    --sidebar-ring: 262 84% 60%;
   }
 
   .light {
@@ -85,7 +85,7 @@ body {
   }
   body {
     @apply bg-background text-foreground;
-    background-image: radial-gradient(circle at 1px 1px, hsl(var(--border)) 1px, transparent 0);
-    background-size: 2rem 2rem;
+    background-color: hsl(var(--background));
+    background-image: radial-gradient(ellipse 80% 80% at 50% -20%,rgba(120,119,198,0.3),hsla(0,0%,100%,0));
   }
 }

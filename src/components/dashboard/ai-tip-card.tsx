@@ -35,7 +35,7 @@ export function AITipCard({ transactions }: AITipCardProps) {
   }, [transactions]);
 
   return (
-    <Card className="bg-gradient-to-tr from-primary/10 via-card to-card border-primary/20">
+    <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary animate-pulse" />
