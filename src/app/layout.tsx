@@ -1,13 +1,8 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
-import { Wallet } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { AuthProvider } from '@/hooks/use-auth';
+import { AppLayout } from '@/components/app-layout';
 import { Toaster } from '@/components/ui/toaster';
-import { AppNav } from '@/components/app-nav';
-import { PWAUpdater } from '@/components/pwa-updater';
-import { ChatAssistant } from '@/components/chat/chat-assistant';
-
 
 export const metadata: Metadata = {
   title: 'FinWise Dashboard',
@@ -30,39 +25,11 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png"></link>
       </head>
       <body className="font-body antialiased">
-        <PWAUpdater />
-        <SidebarProvider defaultOpen={true}>
-          <Sidebar>
-            <SidebarContent>
-              <SidebarHeader>
-                <div className="flex items-center justify-between">
-                   <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="icon" className="text-primary hover:bg-accent -ml-2 h-8 w-8">
-                            <Wallet className="size-5" />
-                        </Button>
-                        <h2 className="text-lg font-semibold text-foreground group-data-[state=collapsed]:hidden">FinWise</h2>
-                   </div>
-                   <SidebarTrigger className="hidden md:flex" />
-                </div>
-              </SidebarHeader>
-              <AppNav />
-            </SidebarContent>
-          </Sidebar>
-          <SidebarInset>
-            <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6">
-                <div className="flex items-center gap-2 md:hidden">
-                    <SidebarTrigger />
-                    <Wallet className="size-6 text-primary" />
-                    <h2 className="text-xl font-bold text-foreground">FinWise</h2>
-                </div>
-                <div className="hidden md:flex text-lg font-semibold">
-                    Painel
-                </div>
-            </header>
+        <AuthProvider>
+          <AppLayout>
             {children}
-            <ChatAssistant />
-          </SidebarInset>
-        </SidebarProvider>
+          </AppLayout>
+        </AuthProvider>
         <Toaster />
       </body>
     </html>

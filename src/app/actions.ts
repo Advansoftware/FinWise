@@ -4,14 +4,42 @@ import { generateSpendingTip, SpendingTipInput } from '@/ai/flows/ai-powered-spe
 import { chatWithTransactions, ChatInput as ChatInputFlow } from '@/ai/flows/chat-with-transactions';
 import { Transaction, AISettings } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, doc, getDoc, setDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, doc, getDoc, setDoc, query, where } from "firebase/firestore";
+import { headers } from 'next/headers';
+import {getAuth} from 'firebase-admin/auth';
+import { adminApp } from '@/lib/firebase-admin';
+
+
+async function getUserId() {
+    const authorization = headers().get('Authorization');
+    if (authorization) {
+        const idToken = authorization.split('Bearer ')[1];
+        if (!idToken || idToken === 'null' || idToken === 'undefined') {
+            return null;
+        }
+        try {
+            const decodedToken = await getAuth(adminApp).verifyIdToken(idToken);
+            return decodedToken.uid;
+        } catch (error) {
+            console.error("Token validation error:", error);
+            return null;
+        }
+    }
+    return null;
+}
+
 
 // --- AI Settings Actions ---
 
-const settingsDocRef = doc(db, "settings", "ai");
+async function getSettingsDocRef() {
+    const userId = await getUserId();
+    if (!userId) throw new Error("User not authenticated");
+    return doc(db, "users", userId, "settings", "ai");
+}
 
 export async function getAISettings(): Promise<AISettings> {
-    const docSnap = await getDoc(settingsDocRef);
+    const settingsRef = await getSettingsDocRef();
+    const docSnap = await getDoc(settingsRef);
     if (docSnap.exists()) {
         return docSnap.data() as AISettings;
     } else {
@@ -21,7 +49,8 @@ export async function getAISettings(): Promise<AISettings> {
 }
 
 export async function saveAISettings(settings: AISettings): Promise<void> {
-    await setDoc(settingsDocRef, settings);
+    const settingsRef = await getSettingsDocRef();
+    await setDoc(settingsRef, settings);
 }
 
 
@@ -80,8 +109,16 @@ export async function getChatbotResponse(input: ChatInputAction) {
 
 // --- Transaction Actions ---
 
+async function getTransactionsCollectionRef() {
+    const userId = await getUserId();
+    if (!userId) throw new Error("User not authenticated");
+    return collection(db, "users", userId, "transactions");
+}
+
+
 export async function getTransactions(): Promise<Transaction[]> {
-    const querySnapshot = await getDocs(collection(db, "transactions"));
+    const transactionsCollection = await getTransactionsCollectionRef();
+    const querySnapshot = await getDocs(transactionsCollection);
     const transactions: Transaction[] = [];
     querySnapshot.forEach((doc) => {
         const data = doc.data();
@@ -96,7 +133,8 @@ export async function getTransactions(): Promise<Transaction[]> {
 }
 
 export async function addTransaction(transaction: Omit<Transaction, 'id'>): Promise<string> {
-    const docRef = await addDoc(collection(db, "transactions"), {
+    const transactionsCollection = await getTransactionsCollectionRef();
+    const docRef = await addDoc(transactionsCollection, {
         ...transaction,
         date: new Date(transaction.date) // Convert date string back to JS Date object for Firestore
     });

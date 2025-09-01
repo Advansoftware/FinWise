@@ -1,5 +1,7 @@
 import { initializeApp, getApps } from "firebase/app";
-import { getFirestore, enableIndexedDbPersistence, onSnapshot, collection, query, disableNetwork, enableNetwork } from "firebase/firestore";
+import { getFirestore, enableIndexedDbPersistence } from "firebase/firestore";
+import { getAuth } from "firebase/auth";
+
 
 const firebaseConfig = {
   projectId: "finwise-dashboard-3qmzc",
@@ -19,18 +21,12 @@ if (!getApps().length) {
 }
 
 const db = getFirestore(app);
+const auth = getAuth(app);
+
 
 // Enable offline persistence
 try {
   enableIndexedDbPersistence(db)
-    .then(() => {
-      console.log('Persistência offline habilitada.');
-      // Forçar a sincronização inicial
-      const unsub = onSnapshot(query(collection(db, 'transactions')), () => {
-        console.log('Sincronização inicial completa.');
-        unsub(); 
-      });
-    })
     .catch((err) => {
       if (err.code == 'failed-precondition') {
         console.warn('Falha na pré-condição da persistência. Múltiplas abas abertas?');
@@ -42,9 +38,4 @@ try {
     console.error("Erro ao habilitar persistência: ", error);
 }
 
-// Funções para controle manual da rede (opcional)
-const forceOffline = () => disableNetwork(db);
-const forceOnline = () => enableNetwork(db);
-
-
-export { db, forceOffline, forceOnline };
+export { db, auth };

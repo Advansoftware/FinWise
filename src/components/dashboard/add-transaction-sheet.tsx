@@ -19,8 +19,8 @@ import { Transaction, TransactionCategory } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { addTransaction } from "@/app/actions";
 import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
 import { SingleDatePicker } from "../single-date-picker";
+import { useTransactions } from "@/hooks/use-transactions";
 
 
 const categories: TransactionCategory[] = ["Supermercado", "Transporte", "Entretenimento", "Contas", "Restaurante", "Saúde"];
@@ -33,7 +33,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
   const [subcategory, setSubcategory] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const router = useRouter();
+  const { refreshTransactions } = useTransactions();
 
 
   const handleSubmit = async () => {
@@ -61,8 +61,8 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
             title: "Sucesso!",
             description: "Sua transação foi adicionada.",
         });
-
-        // Reset form
+        
+        // Reset form and close sheet
         setItem('');
         setAmount('');
         setDate(new Date());
@@ -70,7 +70,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
         setSubcategory('');
 
         // Revalidate data on the page
-        router.refresh();
+        await refreshTransactions();
         
     } catch (error) {
         console.error(error);

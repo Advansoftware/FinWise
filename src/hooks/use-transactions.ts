@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { DateRange } from "react-day-picker";
 import { subDays } from "date-fns";
 import { Transaction, TransactionCategory } from "@/lib/types";
 import { getTransactions } from "@/app/actions";
+import { useAuth } from "./use-auth";
 
 export function useTransactions() {
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
@@ -15,22 +16,30 @@ export function useTransactions() {
   });
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('all');
+  const { user } = useAuth();
+
+
+  const loadTransactions = useCallback(async () => {
+    if (!user) {
+        setAllTransactions([]);
+        setIsLoading(false);
+        return;
+    };
+    setIsLoading(true);
+    try {
+      const transactions = await getTransactions();
+      setAllTransactions(transactions);
+    } catch (error) {
+      console.error("Failed to fetch transactions:", error);
+      setAllTransactions([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
 
   useEffect(() => {
-    async function loadTransactions() {
-      setIsLoading(true);
-      try {
-        const transactions = await getTransactions();
-        setAllTransactions(transactions);
-      } catch (error) {
-        console.error("Failed to fetch transactions:", error);
-        // You could add a toast notification here
-      } finally {
-        setIsLoading(false);
-      }
-    }
     loadTransactions();
-  }, []);
+  }, [loadTransactions]);
 
   const { categories, subcategories } = useMemo(() => {
     const categoriesSet = new Set<TransactionCategory>();
@@ -114,5 +123,6 @@ export function useTransactions() {
     availableSubcategories,
     selectedSubcategory,
     setSelectedSubcategory,
+    refreshTransactions: loadTransactions,
   };
 }
