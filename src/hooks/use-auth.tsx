@@ -18,9 +18,11 @@ import {
   GoogleAuthProvider,
   User,
   sendPasswordResetEmail,
+  reauthenticateWithCredential,
+  EmailAuthProvider
 } from 'firebase/auth';
 import { getFirebase } from '@/lib/firebase';
-import { doc, setDoc } from 'firebase/firestore';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { useRouter, usePathname } from 'next/navigation';
 
 // Este objeto é um fallback para garantir que o fetch funcione no lado do servidor
@@ -32,13 +34,15 @@ const fetchWrapper = {
 
 // Intercepta o fetch global para injetar o token de autenticação.
 if (typeof window !== 'undefined') {
+    const originalFetch = window.fetch;
     window.fetch = async (input, init) => {
         const headers = new Headers(init?.headers);
         if (fetchWrapper.idToken) {
             headers.set('Authorization', `Bearer ${fetchWrapper.idToken}`);
         }
         const newInit = { ...init, headers };
-        return fetchWrapper.originalFetch.call(window, input, newInit);
+        // Chame o fetch original com o contexto correto
+        return originalFetch.call(window, input, newInit);
     };
 }
 
@@ -51,6 +55,9 @@ interface AuthContextType {
   logout: () => Promise<void>;
   signInWithGoogle: () => Promise<any>;
   sendPasswordReset: (email: string) => Promise<void>;
+  updateUserProfile: (name: string) => Promise<void>;
+  reauthenticate: (password: string) => Promise<void>;
+  updateUserPassword: (password: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -61,6 +68,9 @@ const AuthContext = createContext<AuthContextType>({
   logout: async () => {},
   signInWithGoogle: async () => {},
   sendPasswordReset: async () => {},
+  updateUserProfile: async () => {},
+  reauthenticate: async () => {},
+  updateUserPassword: async () => {},
 });
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -73,7 +83,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
       setUser(user);
-      fetchWrapper.idToken = user ? await user.getIdToken(true) : null; // Força a atualização do token
+       if (user) {
+        fetchWrapper.idToken = await user.getIdToken();
+      } else {
+        fetchWrapper.idToken = null;
+      }
       setLoading(false);
     });
 
@@ -117,21 +131,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     await signOut(auth);
     fetchWrapper.idToken = null; // Limpa o token no logout
-    setUser(null);
   };
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     const userCredential = await signInWithPopup(auth, provider);
 
-    // Create user doc if it's a new user
     const userDocRef = doc(db, "users", userCredential.user.uid);
-     await setDoc(userDocRef, {
-        uid: userCredential.user.uid,
-        displayName: userCredential.user.displayName,
-        email: userCredential.user.email,
-        createdAt: new Date(),
-    }, { merge: true });
+    const userDocSnap = await getDoc(userDocRef);
+
+    if (!userDocSnap.exists()) {
+        await setDoc(userDocRef, {
+            uid: userCredential.user.uid,
+            displayName: userCredential.user.displayName,
+            email: userCredential.user.email,
+            createdAt: new Date(),
+        });
+    }
 
     return userCredential;
   };
@@ -139,6 +155,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const sendPasswordReset = (email: string) => {
     return sendPasswordResetEmail(auth, email);
   }
+
+  const updateUserProfile = async (name: string) => {
+    if (!auth.currentUser) throw new Error("User not authenticated");
+    await updateProfile(auth.currentUser, { displayName: name });
+    // Trigger a state update to reflect the change
+    setUser({ ...auth.currentUser });
+  }
+
+  const reauthenticate = async (password: string) => {
+    if (!auth.currentUser || !auth.currentUser.email) throw new Error("User not authenticated or email is missing");
+    const credential = EmailAuthProvider.credential(auth.currentUser.email, password);
+    await reauthenticateWithCredential(auth.currentUser, credential);
+  }
+
+  const updateUserPassword = async (password: string) => {
+    if (!auth.currentUser) throw new Error("User not authenticated");
+    const { updateUserPassword: firebaseUpdatePassword } = await import("firebase/auth");
+    await firebaseUpdatePassword(auth.currentUser, password);
+  }
+
 
   const value = {
     user,
@@ -148,6 +184,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     logout,
     signInWithGoogle,
     sendPasswordReset,
+    updateUserProfile,
+    reauthenticate,
+    updateUserPassword
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
