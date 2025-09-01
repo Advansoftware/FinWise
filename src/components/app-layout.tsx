@@ -5,9 +5,9 @@ import { useAuth } from '@/hooks/use-auth';
 import { PWAUpdater } from './pwa-updater';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarTrigger, SidebarInset } from './ui/sidebar';
 import { Button } from './ui/button';
-import { AppNav } from './app-nav';
+import { AppNav } from '../app/app-nav';
 import { ChatAssistant } from './chat/chat-assistant';
-import { UserNav } from './user-nav';
+import { UserNav } from '../app/user-nav';
 import { Logo } from './logo';
 import { AnimatePresence, motion } from 'framer-motion';
 
@@ -57,7 +57,6 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   }
   
   const getPageTitle = () => {
-    // Note: The new root is the dashboard at /dashboard
     switch (pathname) {
       case '/dashboard': return 'Painel';
       case '/transactions': return 'Transações';

@@ -61,6 +61,9 @@ export default function LandingPage() {
     // passando os detalhes do plano (preço, recorrência). Após o pagamento
     // bem-sucedido, o backend seria notificado para atualizar o plano do
     // usuário no Firestore.
+    if (planName === 'Básico') {
+        return; // No action for free plan signup, handled by link
+    }
     alert(`Iniciando fluxo de assinatura para o plano ${planName}. A integração real com o Google Pay é necessária.`);
   };
 
@@ -78,8 +81,8 @@ export default function LandingPage() {
          </div>
       </header>
 
-      <main className="flex-1 flex flex-col items-center justify-center p-4 text-center">
-        <section className="py-20 md:py-32">
+      <main className="flex-1">
+        <section className="py-20 md:py-32 text-center">
           <div className="container px-4 md:px-6">
             <div className="max-w-3xl mx-auto">
               <h1 className="text-4xl md:text-6xl font-extrabold tracking-tighter text-primary mb-4">
@@ -121,11 +124,11 @@ export default function LandingPage() {
                         </ul>
                     </CardContent>
                     <CardFooter>
-                        <Button className="w-full" variant={plan.recommended ? 'default' : 'outline'} onClick={() => handleSubscription(plan.name)}>
-                         {plan.cta}
+                        <Button className="w-full" variant={plan.recommended ? 'default' : 'outline'} onClick={() => handleSubscription(plan.name)} asChild={plan.name === 'Básico'}>
+                          {plan.name === 'Básico' ? <Link href={plan.href}>{plan.cta}</Link> : plan.cta}
                         </Button>
                     </CardFooter>
-                    </Card>>
+                    </Card>
                 ))}
                 </div>
             </div>
