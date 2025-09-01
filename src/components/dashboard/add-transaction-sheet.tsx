@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { addTransaction } from "@/app/actions";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { SingleDatePicker } from "../single-date-picker";
 
 
 const categories: TransactionCategory[] = ["Supermercado", "Transporte", "Entretenimento", "Contas", "Restaurante", "Saúde"];
@@ -27,7 +28,7 @@ const categories: TransactionCategory[] = ["Supermercado", "Transporte", "Entret
 export function AddTransactionSheet({ children }: { children: React.ReactNode }) {
   const [item, setItem] = useState('');
   const [amount, setAmount] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState<Date | undefined>(new Date());
   const [category, setCategory] = useState<TransactionCategory | ''>('');
   const [subcategory, setSubcategory] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -50,7 +51,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
         const newTransaction: Omit<Transaction, 'id'> = {
             item,
             amount: parseFloat(amount),
-            date,
+            date: date.toISOString(),
             category,
             subcategory: subcategory || undefined,
         };
@@ -64,7 +65,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
         // Reset form
         setItem('');
         setAmount('');
-        setDate(new Date().toISOString().slice(0, 10));
+        setDate(new Date());
         setCategory('');
         setSubcategory('');
 
@@ -110,7 +111,9 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
             <Label htmlFor="date" className="text-right">
               Data
             </Label>
-            <Input id="date" type="date" className="col-span-3" value={date} onChange={(e) => setDate(e.target.value)} />
+            <div className="col-span-3">
+              <SingleDatePicker date={date} setDate={setDate} />
+            </div>
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="category" className="text-right">
