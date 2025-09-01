@@ -19,8 +19,7 @@ export function AITipCard({ transactions }: AITipCardProps) {
   const fetchTip = () => {
     startTransition(async () => {
       setTip(""); // Clear previous tip
-      const model = localStorage.getItem('ollama_model') || 'llama3';
-      const newTip = await getSpendingTip(transactions, model);
+      const newTip = await getSpendingTip(transactions);
       setTip(newTip);
     });
   };

@@ -9,6 +9,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { ModelReference } from 'genkit/model';
 
 const SpendingTipInputSchema = z.object({
   spendingData: z
@@ -16,7 +17,8 @@ const SpendingTipInputSchema = z.object({
     .describe(
       'Uma string contendo os dados de gastos do usuário, incluindo categorias, valores e frequência.'
     ),
-  model: z.string().optional().describe('Opcional. O nome do modelo Ollama a ser usado.'),
+  provider: z.string().describe('O provedor de IA a ser usado (ex: ollama, googleai).'),
+  model: z.string().optional().describe('Opcional. O nome do modelo ou a chave de API.'),
 });
 export type SpendingTipInput = z.infer<typeof SpendingTipInputSchema>;
 
@@ -35,15 +37,28 @@ const generateSpendingTipFlow = ai.defineFlow(
     inputSchema: SpendingTipInputSchema,
     outputSchema: SpendingTipOutputSchema,
   },
-  async ({ spendingData, model }) => {
-    const modelToUse = model ? `ollama/${model}` : 'ollama/llama3';
+  async ({ spendingData, provider, model }) => {
     
+    let modelToUse: ModelReference;
+
+    if (provider === 'ollama') {
+      modelToUse = `ollama/${model || 'llama3'}`;
+    } else if (provider === 'googleai') {
+        // Para o Google AI, o 'model' conteria a API Key, 
+        // mas aqui vamos usar um modelo padrão como gemini-pro.
+        // A lógica de API Key seria tratada na configuração do plugin do Genkit,
+        // mas por enquanto, vamos assumir que está configurado.
+      modelToUse = 'googleai/gemini-1.5-flash';
+    } else {
+      throw new Error(`Provedor de IA desconhecido: ${provider}`);
+    }
+
     const prompt = ai.definePrompt({
       name: 'spendingTipPrompt',
       input: {schema: z.object({spendingData: z.string()})},
       output: {schema: SpendingTipOutputSchema},
       model: modelToUse,
-      prompt: `Você é um consultor financeiro pessoal. Analise os dados de gastos do usuário e forneça uma única dica acionável para reduzir despesas.
+      prompt: `Você é um consultor financeiro pessoal. Analise os dados de gastos do usuário e forneça uma única dica acionável para reduzir despesas. Seja breve, direto e amigável.
 
 Dados de Gastos: {{{spendingData}}}
 

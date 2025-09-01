@@ -13,3 +13,11 @@ export interface Category {
   name: TransactionCategory;
   subcategories: string[];
 }
+
+export type AIProvider = 'ollama' | 'googleai';
+
+export interface AISettings {
+  provider: AIProvider;
+  ollamaModel?: string;
+  googleAIApiKey?: string;
+}
