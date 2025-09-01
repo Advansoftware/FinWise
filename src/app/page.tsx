@@ -11,14 +11,13 @@ import { DateRangePicker } from "@/components/dashboard/date-range-picker";
 import { DateRange } from "react-day-picker";
 import { subDays } from "date-fns";
 import { ItemFilter } from "@/components/dashboard/item-filter";
-import { Transaction } from "@/lib/types";
 
 export default function DashboardPage() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 29),
     to: new Date(),
   });
-  const [selectedItem, setSelectedItem] = useState<string>('Cerveja');
+  const [selectedItem, setSelectedItem] = useState<string>('all');
 
   const filteredTransactions = mockTransactions.filter((t) => {
     if (!dateRange?.from || !dateRange?.to) return true;
@@ -36,28 +35,30 @@ export default function DashboardPage() {
     total,
   }));
   
-  const allItems = [...new Set(mockTransactions.map(t => t.item))];
+  const allItems = ['all', ...new Set(mockTransactions.map(t => t.category))];
 
   return (
     <main className="flex-1 space-y-4 p-4 md:p-8 pt-6 bg-background/50">
       <Header />
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <DateRangePicker onUpdate={setDateRange} initialDate={dateRange} />
-        <ItemFilter 
-          items={allItems} 
-          selectedItem={selectedItem}
-          onItemSelected={setSelectedItem}
-        />
+        <div className="md:col-span-2">
+            <ItemFilter 
+              items={allItems} 
+              selectedItem={selectedItem}
+              onItemSelected={setSelectedItem}
+            />
+        </div>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatsCards transactions={filteredTransactions} selectedItem={selectedItem} />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <StatsCards transactions={filteredTransactions} />
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
-        <div className="col-span-12 md:col-span-4">
+        <div className="col-span-12 lg:col-span-4">
           <SpendingChart data={chartData} />
         </div>
-        <div className="col-span-12 md:col-span-3">
-          <RecentTransactions transactions={filteredTransactions} />
+        <div className="col-span-12 lg:col-span-3">
+          <RecentTransactions transactions={filteredTransactions.filter(t => selectedItem === 'all' || t.category === selectedItem)} />
         </div>
         <div className="col-span-12">
             <AITipCard transactions={filteredTransactions} />

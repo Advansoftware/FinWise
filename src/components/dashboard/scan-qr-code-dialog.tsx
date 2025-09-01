@@ -8,22 +8,55 @@ import {
   DialogDescription,
   DialogFooter,
   DialogTrigger,
+  DialogClose
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Upload } from "lucide-react";
-import { useRef, useState, useEffect } from 'react';
+import { Loader2, Upload } from "lucide-react";
+import { useRef, useState, useEffect, useCallback } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { extractReceiptInfo } from "@/ai/flows/extract-receipt-info";
+import { Skeleton } from "../ui/skeleton";
+import { Badge } from "../ui/badge";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
 
 export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
     const { toast } = useToast();
     const isMobile = useIsMobile();
     const videoRef = useRef<HTMLVideoElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
+    const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [receiptImage, setReceiptImage] = useState<string | null>(null);
+    const [extractedData, setExtractedData] = useState<any>(null);
+    const [isProcessing, setIsProcessing] = useState(false);
+
+    const resetState = () => {
+        setReceiptImage(null);
+        setExtractedData(null);
+        setIsProcessing(false);
+        stopCamera();
+    };
+
+    const stopCamera = useCallback(() => {
+        if (videoRef.current && videoRef.current.srcObject) {
+            const stream = videoRef.current.srcObject as MediaStream;
+            stream.getTracks().forEach(track => track.stop());
+            videoRef.current.srcObject = null;
+        }
+    }, []);
+
+    const handleDialogOpenChange = (open: boolean) => {
+        setIsDialogOpen(open);
+        if (!open) {
+            resetState();
+        }
+    };
 
     useEffect(() => {
-        if (isMobile) {
+        if (isMobile && isDialogOpen) {
             const getCameraPermission = async () => {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
@@ -35,71 +68,190 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                 } catch (error) {
                     console.error('Error accessing camera:', error);
                     setHasCameraPermission(false);
-                    toast({
-                        variant: 'destructive',
-                        title: 'Acesso à Câmera Negado',
-                        description: 'Por favor, habilite as permissões de câmera nas configurações do seu navegador para usar este aplicativo.',
-                    });
                 }
             };
-
             getCameraPermission();
-            
-            return () => {
-                if (videoRef.current && videoRef.current.srcObject) {
-                    const stream = videoRef.current.srcObject as MediaStream;
-                    stream.getTracks().forEach(track => track.stop());
-                }
+        }
+        return () => {
+           if(isDialogOpen) stopCamera();
+        }
+    }, [isMobile, isDialogOpen, stopCamera]);
+
+    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setReceiptImage(reader.result as string);
+                processImage(reader.result as string);
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const handleCapture = () => {
+        if (videoRef.current) {
+            const canvas = document.createElement('canvas');
+            canvas.width = videoRef.current.videoWidth;
+            canvas.height = videoRef.current.videoHeight;
+            const context = canvas.getContext('2d');
+            if(context) {
+                context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+                const dataUrl = canvas.toDataURL('image/jpeg');
+                setReceiptImage(dataUrl);
+                stopCamera();
+                processImage(dataUrl);
             }
         }
-    }, [isMobile, toast]);
+    };
 
-
-  return (
-    <Dialog>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
-        <DialogHeader>
-          <DialogTitle>Escanear QR Code da Fatura</DialogTitle>
-          <DialogDescription>
-            {isMobile 
-                ? "Aponte a câmera para o QR code da sua fatura."
-                : "Faça o upload da imagem do QR code da sua fatura para adicionar a transação automaticamente."
+    const processImage = async (imageData: string) => {
+        setIsProcessing(true);
+        setExtractedData(null);
+        try {
+            const result = await extractReceiptInfo({ photoDataUri: imageData });
+            setExtractedData(result);
+            if (!result.isValid) {
+                 toast({
+                    variant: 'destructive',
+                    title: 'Nota Inválida',
+                    description: 'A imagem não parece ser uma nota fiscal válida. Tente outra imagem.',
+                });
             }
-          </DialogDescription>
-        </DialogHeader>
-        <div className="grid gap-4 py-4">
-            {isMobile ? (
-                <div className="flex flex-col items-center justify-center w-full">
-                    <video ref={videoRef} className="w-full aspect-video rounded-md" autoPlay muted playsInline />
-                    {hasCameraPermission === false && (
-                         <div className="mt-4 w-full">
-                            <Alert variant="destructive">
-                                <AlertTitle>Acesso à Câmera Necessário</AlertTitle>
-                                <AlertDescription>
-                                    Por favor, permita o acesso à câmera para usar este recurso.
-                                </AlertDescription>
-                            </Alert>
+        } catch (error) {
+            console.error(error);
+            toast({
+                variant: 'destructive',
+                title: 'Erro ao Processar',
+                description: 'Não foi possível extrair as informações da imagem. Tente novamente.',
+            });
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+    
+    const renderExtractedData = () => {
+        if (!extractedData) return null;
+        return (
+            <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                    <h3 className="font-semibold">Itens Extraídos</h3>
+                     <Badge variant={extractedData.isValid ? 'default' : 'destructive'} className="bg-green-500/20 text-green-300 border-green-500/30">
+                        {extractedData.isValid ? 'Nota Válida' : 'Nota Inválida'}
+                    </Badge>
+                </div>
+                {extractedData.items?.map((item: any, index: number) => (
+                    <div key={index} className="grid grid-cols-3 gap-2 items-center p-2 rounded-md bg-muted/50">
+                        <Input className="col-span-2" defaultValue={item.item} placeholder="Item"/>
+                        <Input type="number" step="0.01" defaultValue={item.amount} placeholder="Valor"/>
+                    </div>
+                ))}
+                 <div className="grid grid-cols-2 gap-4">
+                     <div className="space-y-1">
+                        <Label>Total</Label>
+                        <Input type="number" step="0.01" defaultValue={extractedData.totalAmount} placeholder="Total" />
+                     </div>
+                      <div className="space-y-1">
+                        <Label>Data</Label>
+                        <Input type="date" defaultValue={extractedData.date} placeholder="Data" />
+                     </div>
+                </div>
+            </div>
+        )
+    };
+    
+    const renderProcessingSkeleton = () => (
+        <div className="space-y-4">
+            <Skeleton className="h-8 w-1/3" />
+            <div className="space-y-2">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+                <Skeleton className="h-10 w-full" />
+                <Skeleton className="h-10 w-full" />
+            </div>
+        </div>
+    )
+
+    return (
+        <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
+            <DialogTrigger asChild>{children}</DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Escanear Nota Fiscal</DialogTitle>
+                    <DialogDescription>
+                        {isMobile
+                            ? "Aponte a câmera para a nota fiscal ou envie uma imagem."
+                            : "Faça upload da imagem da nota fiscal para adicionar as transações."
+                        }
+                    </DialogDescription>
+                </DialogHeader>
+
+                <div className="py-4">
+                    {!receiptImage ? (
+                        <>
+                            {isMobile ? (
+                                <div className="flex flex-col items-center justify-center w-full space-y-4">
+                                    <div className="relative w-full">
+                                        <video ref={videoRef} className="w-full aspect-video rounded-md bg-muted" autoPlay muted playsInline />
+                                        <div className="absolute inset-0 border-4 border-dashed border-primary/50 rounded-md m-4"></div>
+                                    </div>
+                                    {hasCameraPermission === false && (
+                                        <Alert variant="destructive">
+                                            <AlertTitle>Acesso à Câmera Necessário</AlertTitle>
+                                            <AlertDescription>
+                                                Permita o acesso à câmera para usar este recurso.
+                                            </AlertDescription>
+                                        </Alert>
+                                    )}
+                                    <div className="w-full flex items-center gap-2">
+                                        <div className="h-px flex-1 bg-border"/>
+                                        <span className="text-xs text-muted-foreground">OU</span>
+                                        <div className="h-px flex-1 bg-border"/>
+                                    </div>
+                                    <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>
+                                        <Upload className="mr-2 h-4 w-4" /> Enviar Imagem
+                                    </Button>
+                                </div>
+                            ) : (
+                                <div className="flex items-center justify-center w-full">
+                                    <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-64 border-2 border-primary/30 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/80 transition-colors">
+                                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                            <Upload className="w-8 h-8 mb-4 text-primary" />
+                                            <p className="mb-2 text-sm text-foreground"><span className="font-semibold text-primary">Clique para enviar</span> ou arraste e solte</p>
+                                            <p className="text-xs text-muted-foreground">PNG, JPG, ou PDF</p>
+                                        </div>
+                                        <input ref={fileInputRef} id="dropzone-file" type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileChange} />
+                                    </label>
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <div className="space-y-4">
+                            <img src={receiptImage} alt="Pré-visualização da nota" className="rounded-md max-h-60 w-auto mx-auto" />
+                            {isProcessing ? renderProcessingSkeleton() : renderExtractedData()}
                         </div>
                     )}
+                     <input ref={fileInputRef} id="mobile-file-input" type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
                 </div>
-            ) : (
-                <div className="flex items-center justify-center w-full">
-                    <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/80">
-                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                            <Upload className="w-8 h-8 mb-4 text-muted-foreground" />
-                            <p className="mb-2 text-sm text-muted-foreground"><span className="font-semibold">Clique para enviar</span> ou arraste e solte</p>
-                            <p className="text-xs text-muted-foreground">PNG, JPG, ou GIF</p>
-                        </div>
-                        <input id="dropzone-file" type="file" className="hidden" />
-                    </label>
-                </div>
-            )}
-        </div>
-        <DialogFooter>
-          <Button type="submit">{isMobile ? 'Escanear' : 'Enviar e Escanear'}</Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
+
+                <DialogFooter className="gap-2 sm:gap-0">
+                     <Button variant="ghost" onClick={() => setReceiptImage(null)} disabled={!receiptImage || isProcessing}>
+                        Tentar Novamente
+                    </Button>
+                    {isMobile && !receiptImage ? (
+                        <Button onClick={handleCapture} disabled={hasCameraPermission === false || isProcessing}>
+                            {isProcessing ? <Loader2 className="animate-spin" /> : "Capturar"}
+                        </Button>
+                    ) : extractedData ? (
+                         <DialogClose asChild>
+                            <Button>Salvar Transações</Button>
+                        </DialogClose>
+                    ) : null}
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    );
 }
