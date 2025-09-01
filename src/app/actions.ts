@@ -4,7 +4,7 @@ import { generateSpendingTip, SpendingTipInput } from '@/ai/flows/ai-powered-spe
 import { chatWithTransactions, ChatInput as ChatInputFlow } from '@/ai/flows/chat-with-transactions';
 import { Transaction, AISettings } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs, doc, getDoc, setDoc, query, where } from "firebase/firestore";
+import { collection, addDoc, getDocs, doc, getDoc, setDoc, query, where, Timestamp } from "firebase/firestore";
 import { headers } from 'next/headers';
 import {getAuth} from 'firebase-admin/auth';
 import { adminApp } from '@/lib/firebase-admin';
@@ -15,16 +15,27 @@ async function getUserId() {
     if (authorization) {
         const idToken = authorization.split('Bearer ')[1];
         if (!idToken || idToken === 'null' || idToken === 'undefined') {
+            console.log("No ID token found in auth header");
             return null;
         }
         try {
+            // Ensure admin app is initialized before calling getAuth
+            if (!adminApp) {
+                console.error("Admin App not initialized!");
+                return null;
+            }
             const decodedToken = await getAuth(adminApp).verifyIdToken(idToken);
             return decodedToken.uid;
         } catch (error) {
             console.error("Token validation error:", error);
+            // Handle specific error codes, e.g., token expired
+            if ((error as any).code === 'auth/id-token-expired') {
+                 console.log("Token expired.");
+            }
             return null;
         }
     }
+     console.log("No Authorization header found");
     return null;
 }
 
@@ -33,7 +44,7 @@ async function getUserId() {
 
 async function getSettingsDocRef() {
     const userId = await getUserId();
-    if (!userId) throw new Error("User not authenticated");
+    if (!userId) throw new Error("User not authenticated for getSettingsDocRef");
     return doc(db, "users", userId, "settings", "ai");
 }
 
@@ -56,6 +67,8 @@ export async function saveAISettings(settings: AISettings): Promise<void> {
 
 export async function getOllamaModels(): Promise<string[]> {
   try {
+    // This fetch needs to happen from the user's browser to the local Ollama instance,
+    // not from the server. This action should ideally be called from a client component.
     const response = await fetch('http://127.0.0.1:11434/api/tags', { cache: 'no-store' });
     if (!response.ok) {
       console.error('Ollama is not running or not accessible at http://127.0.0.1:11434');
@@ -111,12 +124,17 @@ export async function getChatbotResponse(input: ChatInputAction) {
 
 async function getTransactionsCollectionRef() {
     const userId = await getUserId();
-    if (!userId) throw new Error("User not authenticated");
+    if (!userId) throw new Error("User not authenticated for getTransactionsCollectionRef");
     return collection(db, "users", userId, "transactions");
 }
 
 
 export async function getTransactions(): Promise<Transaction[]> {
+    const userId = await getUserId();
+    if (!userId) {
+        console.log("No user ID, returning empty transactions array.");
+        return [];
+    }
     const transactionsCollection = await getTransactionsCollectionRef();
     const querySnapshot = await getDocs(transactionsCollection);
     const transactions: Transaction[] = [];
@@ -126,7 +144,7 @@ export async function getTransactions(): Promise<Transaction[]> {
             id: doc.id, 
             ...data,
             // Firestore stores Timestamps, we convert to ISO string for the client
-            date: data.date.toDate().toISOString() 
+            date: (data.date as Timestamp).toDate().toISOString() 
         } as Transaction);
     });
     return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
