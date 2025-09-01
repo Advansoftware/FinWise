@@ -2,11 +2,23 @@
 
 import * as admin from 'firebase-admin';
 
-// Garante que a inicialização ocorra apenas uma vez.
-if (!admin.apps.length) {
-  admin.initializeApp();
+// Função para obter a instância inicializada do Firebase Admin.
+// Isso evita condições de corrida na inicialização.
+function getFirebaseAdmin() {
+  if (!admin.apps.length) {
+    try {
+      admin.initializeApp();
+    } catch (error) {
+      console.error('Firebase admin initialization error:', error);
+      // Lança um erro mais descritivo para facilitar a depuração.
+      throw new Error('Failed to initialize Firebase Admin SDK. Check server logs for details.');
+    }
+  }
+  return {
+    auth: admin.auth(),
+    db: admin.firestore(),
+  };
 }
 
-// Exporta as instâncias de serviço do Admin SDK.
-export const adminAuth = admin.auth();
-export const adminDb = admin.firestore();
+// Exporta a função em vez das instâncias diretas.
+export { getFirebaseAdmin };
