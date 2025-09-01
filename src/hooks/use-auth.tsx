@@ -19,33 +19,12 @@ import {
   User,
   sendPasswordResetEmail,
   reauthenticateWithCredential,
-  EmailAuthProvider
+  EmailAuthProvider,
+  updatePassword
 } from 'firebase/auth';
 import { getFirebase } from '@/lib/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { useRouter, usePathname } from 'next/navigation';
-
-// Este objeto é um fallback para garantir que o fetch funcione no lado do servidor
-// onde 'window' não existe. As Server Actions usarão o token de qualquer maneira.
-const fetchWrapper = {
-    originalFetch: typeof window !== 'undefined' ? window.fetch : () => Promise.reject(new Error('fetch is not available')),
-    idToken: null as string | null,
-};
-
-// Intercepta o fetch global para injetar o token de autenticação.
-if (typeof window !== 'undefined') {
-    const originalFetch = window.fetch;
-    window.fetch = async (input, init) => {
-        const headers = new Headers(init?.headers);
-        if (fetchWrapper.idToken) {
-            headers.set('Authorization', `Bearer ${fetchWrapper.idToken}`);
-        }
-        const newInit = { ...init, headers };
-        // Chame o fetch original com o contexto correto
-        return originalFetch.call(window, input, newInit);
-    };
-}
-
 
 interface AuthContextType {
   user: User | null;
@@ -78,16 +57,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
-  const { auth, db } = getFirebase(); // Get initialized services
+  const { auth, db } = getFirebase();
 
   useEffect(() => {
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
       setUser(user);
-       if (user) {
-        fetchWrapper.idToken = await user.getIdToken();
-      } else {
-        fetchWrapper.idToken = null;
-      }
       setLoading(false);
     });
 
@@ -96,12 +70,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const handleAuthRedirect = useCallback(() => {
       if (loading) return;
+      
       const isAuthPage = pathname === '/login' || pathname === '/signup';
+      const isPublicPage = pathname === '/';
 
-      if (!user && !isAuthPage) {
+      if (!user && !isAuthPage && !isPublicPage) {
           router.push('/login');
-      } else if (user && isAuthPage) {
-          router.push('/');
+      } else if (user && (isAuthPage || isPublicPage)) {
+          router.push('/dashboard');
       }
   }, [user, loading, pathname, router]);
 
@@ -117,12 +93,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
     await updateProfile(userCredential.user, { displayName: name });
     
-    // Create a user document in Firestore
+    // Create a user document in Firestore with a "Básico" plan
     await setDoc(doc(db, "users", userCredential.user.uid), {
         uid: userCredential.user.uid,
         displayName: name,
         email: email,
         createdAt: new Date(),
+        plan: 'Básico' // Default plan
     });
 
     return userCredential;
@@ -130,7 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await signOut(auth);
-    fetchWrapper.idToken = null; // Limpa o token no logout
+    router.push('/');
   };
 
   const signInWithGoogle = async () => {
@@ -146,6 +123,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             displayName: userCredential.user.displayName,
             email: userCredential.user.email,
             createdAt: new Date(),
+            plan: 'Básico' // Default plan
         });
     }
 
@@ -159,6 +137,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const updateUserProfile = async (name: string) => {
     if (!auth.currentUser) throw new Error("User not authenticated");
     await updateProfile(auth.currentUser, { displayName: name });
+    // Also update in firestore
+    const userDocRef = doc(db, "users", auth.currentUser.uid);
+    await setDoc(userDocRef, { displayName: name }, { merge: true });
     // Trigger a state update to reflect the change
     setUser({ ...auth.currentUser });
   }
@@ -171,8 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateUserPassword = async (password: string) => {
     if (!auth.currentUser) throw new Error("User not authenticated");
-    const { updateUserPassword: firebaseUpdatePassword } = await import("firebase/auth");
-    await firebaseUpdatePassword(auth.currentUser, password);
+    await updatePassword(auth.currentUser, password);
   }
 
 

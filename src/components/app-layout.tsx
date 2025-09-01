@@ -15,9 +15,11 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const pathname = usePathname();
 
+  // Landing page is public, auth pages handle their own layout
+  const isPublicPage = pathname === '/';
   const isAuthPage = pathname === '/login' || pathname === '/signup';
 
-  if (loading) {
+  if (loading && !isPublicPage) {
     return (
       <AnimatePresence>
         <motion.div
@@ -45,7 +47,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (isAuthPage) {
+  if (isPublicPage || isAuthPage) {
     return <>{children}</>;
   }
 
@@ -55,12 +57,15 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
   }
   
   const getPageTitle = () => {
+    // Note: The new root is the dashboard at /dashboard
     switch (pathname) {
-      case '/': return 'Painel';
+      case '/dashboard': return 'Painel';
       case '/transactions': return 'Transações';
       case '/categories': return 'Categorias';
       case '/import': return 'Importar';
       case '/settings': return 'Configurações';
+      case '/profile': return 'Perfil';
+      case '/billing': return 'Assinatura';
       default: return 'Painel';
     }
   }
