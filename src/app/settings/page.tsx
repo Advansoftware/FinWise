@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { getOllamaModels, saveAISettings, getAISettings } from '@/app/actions';
+import { getOllamaModels } from '@/app/actions';
 import { AISettings, AIProvider } from '@/lib/types';
 
 export default function SettingsPage() {
@@ -22,22 +22,25 @@ export default function SettingsPage() {
     async function loadInitialSettings() {
       setIsLoading(true);
       try {
-        const [loadedSettings, models] = await Promise.all([
-          getAISettings(),
-          getOllamaModels()
-        ]);
-        
-        setSettings(loadedSettings || { provider: 'ollama', ollamaModel: 'llama3' });
-        
-        if(models.length > 0) {
+        // Load settings from localStorage
+        const storedSettings = localStorage.getItem('ai-settings');
+        const loadedSettings = storedSettings 
+            ? JSON.parse(storedSettings) 
+            : { provider: 'ollama', ollamaModel: 'llama3' }; // Default settings
+        setSettings(loadedSettings);
+
+        // Fetch Ollama models from the server action
+        const models = await getOllamaModels();
+        if (models.length > 0) {
             setOllamaModels(models);
         } else if (loadedSettings?.provider === 'ollama') {
-            toast({
+             toast({
                 variant: 'destructive',
                 title: 'Erro de Conexão com Ollama',
                 description: 'Não foi possível buscar os modelos do Ollama. Verifique se o serviço está em execução.',
             });
         }
+
       } catch (error) {
         console.error('Falha ao carregar configurações:', error);
         toast({
@@ -53,13 +56,14 @@ export default function SettingsPage() {
     loadInitialSettings();
   }, [toast]);
 
-  const handleSave = async () => {
+  const handleSave = () => {
     setIsSaving(true);
     try {
-      await saveAISettings(settings as AISettings);
+      // Save settings to localStorage
+      localStorage.setItem('ai-settings', JSON.stringify(settings));
       toast({
         title: 'Configurações Salvas!',
-        description: 'Suas configurações de IA foram salvas no banco de dados.',
+        description: 'Suas configurações de IA foram salvas localmente no seu navegador.',
       });
     } catch (error) {
        console.error('Falha ao salvar configurações:', error);
@@ -95,7 +99,7 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle>Provedor de Inteligência Artificial</CardTitle>
           <CardDescription>
-            Escolha e configure o serviço de IA que você deseja usar para as funcionalidades inteligentes do FinWise.
+            Escolha e configure o serviço de IA que você deseja usar para as funcionalidades inteligentes do FinWise. Suas configurações são salvas localmente.
           </CardDescription>
         </CardHeader>
         <CardContent>

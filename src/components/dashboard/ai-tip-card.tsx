@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw, Sparkles } from "lucide-react";
 import { getSpendingTip } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
-import { Transaction } from "@/lib/types";
+import { Transaction, AISettings } from "@/lib/types";
 
 interface AITipCardProps {
     transactions: Transaction[];
@@ -15,23 +15,37 @@ interface AITipCardProps {
 export function AITipCard({ transactions }: AITipCardProps) {
   const [tip, setTip] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [aiSettings, setAiSettings] = useState<AISettings | null>(null);
+
+  useEffect(() => {
+    // Settings are now loaded from localStorage on the client-side
+    const storedSettings = localStorage.getItem('ai-settings');
+    if (storedSettings) {
+      setAiSettings(JSON.parse(storedSettings));
+    } else {
+      // Default settings if nothing is stored
+      setAiSettings({ provider: 'ollama', ollamaModel: 'llama3' });
+    }
+  }, []);
 
   const fetchTip = () => {
+    if (!aiSettings) return;
+
     startTransition(async () => {
       setTip(""); // Clear previous tip
-      const newTip = await getSpendingTip(transactions);
+      const newTip = await getSpendingTip(transactions, aiSettings);
       setTip(newTip);
     });
   };
 
   useEffect(() => {
-    if (transactions.length > 0) {
+    if (transactions.length > 0 && aiSettings) {
         fetchTip();
-    } else {
+    } else if (transactions.length === 0) {
         setTip("Não há dados de transação suficientes para gerar uma dica.");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transactions]);
+  }, [transactions, aiSettings]);
 
   return (
     <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
@@ -44,7 +58,7 @@ export function AITipCard({ transactions }: AITipCardProps) {
             variant="ghost"
             size="icon"
             onClick={fetchTip}
-            disabled={isPending || transactions.length === 0}
+            disabled={isPending || transactions.length === 0 || !aiSettings}
             className="text-primary/70 hover:bg-primary/10 hover:text-primary rounded-full"
         >
             <RefreshCw className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
