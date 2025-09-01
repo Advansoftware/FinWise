@@ -9,9 +9,7 @@ import { Bot, Send, Sparkles, X, Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTransactions } from '@/hooks/use-transactions';
 import { getChatbotResponse } from '@/app/actions';
-import { AISettings } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { Badge } from '../ui/badge';
 
 interface Message {
     role: 'user' | 'model';
@@ -31,18 +29,8 @@ export function ChatAssistant() {
     const [input, setInput] = useState('');
     const [isPending, startTransition] = useTransition();
     const { allTransactions } = useTransactions();
-    const [aiSettings, setAiSettings] = useState<AISettings | null>(null);
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const { toast } = useToast();
-
-    useEffect(() => {
-        const storedSettings = localStorage.getItem('ai-settings');
-        if (storedSettings) {
-            setAiSettings(JSON.parse(storedSettings));
-        } else {
-             setAiSettings({ provider: 'ollama', ollamaModel: 'llama3', openAIModel: 'gpt-3.5-turbo' });
-        }
-    }, [isOpen]);
 
     useEffect(() => {
         // Scroll to bottom when new messages are added
@@ -58,17 +46,6 @@ export function ChatAssistant() {
     const handleSubmit = (prompt: string = input) => {
         if (!prompt.trim()) return;
 
-        if (!aiSettings || 
-            (aiSettings.provider === 'googleai' && !aiSettings.googleAIApiKey) ||
-            (aiSettings.provider === 'openai' && !aiSettings.openAIApiKey)) {
-            toast({
-                variant: 'destructive',
-                title: 'Configuração de IA Incompleta',
-                description: 'Por favor, configure seu provedor de IA e chave de API na página de Configurações.',
-            });
-            return;
-        }
-
         const newUserMessage: Message = { role: 'user', content: prompt };
         setMessages(prev => [...prev, newUserMessage]);
         setInput('');
@@ -78,7 +55,6 @@ export function ChatAssistant() {
                 history: messages,
                 prompt: prompt,
                 transactions: allTransactions,
-                settings: aiSettings,
             });
             const newModelMessage: Message = { role: 'model', content: response };
             setMessages(prev => [...prev, newModelMessage]);

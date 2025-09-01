@@ -1,23 +1,34 @@
 'use server';
 
 import { generateSpendingTip, SpendingTipInput } from '@/ai/flows/ai-powered-spending-tips';
-import { chatWithTransactions, ChatInput } from '@/ai/flows/chat-with-transactions';
+import { chatWithTransactions, ChatInput as ChatInputFlow } from '@/ai/flows/chat-with-transactions';
 import { Transaction, AISettings } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { collection, addDoc, getDocs } from "firebase/firestore";
+import { collection, addDoc, getDocs, doc, getDoc, setDoc } from "firebase/firestore";
 
 // --- AI Settings Actions ---
 
-/**
- * Fetches the list of available models from the local Ollama server.
- * This is a server action and runs on the server, but is called from the client.
- */
+const settingsDocRef = doc(db, "settings", "ai");
+
+export async function getAISettings(): Promise<AISettings> {
+    const docSnap = await getDoc(settingsDocRef);
+    if (docSnap.exists()) {
+        return docSnap.data() as AISettings;
+    } else {
+        // Return default settings if none are found in Firestore
+        return { provider: 'ollama', ollamaModel: 'llama3', openAIModel: 'gpt-3.5-turbo' };
+    }
+}
+
+export async function saveAISettings(settings: AISettings): Promise<void> {
+    await setDoc(settingsDocRef, settings);
+}
+
+
 export async function getOllamaModels(): Promise<string[]> {
   try {
-    // This fetch is made from the server running the Next.js app, not the client browser.
-    const response = await fetch('http://127.0.0.1:11434/api/tags');
+    const response = await fetch('http://127.0.0.1:11434/api/tags', { cache: 'no-store' });
     if (!response.ok) {
-      // This error will be logged on the server.
       console.error('Ollama is not running or not accessible at http://127.0.0.1:11434');
       return [];
     }
@@ -25,7 +36,6 @@ export async function getOllamaModels(): Promise<string[]> {
     return data.models.map((model: any) => model.name.replace(':latest', ''));
   } catch (error) {
     console.error('Failed to fetch Ollama models:', error);
-    // Return empty array to the client, the client-side will handle the user notification.
     return [];
   }
 }
@@ -33,21 +43,33 @@ export async function getOllamaModels(): Promise<string[]> {
 
 // --- AI Actions ---
 
-export async function getSpendingTip(transactions: Transaction[], settings: AISettings) {
+export async function getSpendingTip(transactions: Transaction[]) {
   try {
+    const settings = await getAISettings();
     const spendingData = JSON.stringify(transactions, null, 2);
     const input: SpendingTipInput = { spendingData, settings };
     const result = await generateSpendingTip(input);
     return result.tip;
   } catch (error) {
     console.error(error);
-    return "Desculpe, não consegui gerar uma dica agora. Por favor, tente novamente mais tarde.";
+    return "Desculpe, não consegui gerar uma dica agora. Verifique suas configurações de IA e tente novamente.";
   }
 }
 
-export async function getChatbotResponse(input: ChatInput) {
+// We redefine the ChatInput type for the action to exclude the settings,
+// as we will fetch them on the server.
+export type ChatInputAction = Omit<ChatInputFlow, 'settings'>;
+
+export async function getChatbotResponse(input: ChatInputAction) {
     try {
-        const result = await chatWithTransactions(input);
+        const settings = await getAISettings();
+        if ((settings.provider === 'googleai' && !settings.googleAIApiKey) ||
+            (settings.provider === 'openai' && !settings.openAIApiKey)) {
+            return "Por favor, configure sua chave de API na página de Configurações para usar o assistente de IA.";
+        }
+        
+        const fullInput: ChatInputFlow = { ...input, settings };
+        const result = await chatWithTransactions(fullInput);
         return result.response;
     } catch (error) {
         console.error("Error in getChatbotResponse:", error);

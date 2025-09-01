@@ -11,6 +11,8 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { ModelReference } from 'genkit/model';
 import { AISettings, Transaction } from '@/lib/types';
+import {googleAI} from '@genkit-ai/googleai';
+import {openAI} from 'genkitx-openai';
 
 
 const ChatInputSchema = z.object({
@@ -43,13 +45,20 @@ const chatWithTransactionsFlow = ai.defineFlow(
   async ({ history, prompt, transactions, settings }) => {
 
     let modelToUse: ModelReference;
+    let providerPlugins: any[] = [];
 
     switch (settings.provider) {
         case 'googleai':
             modelToUse = 'googleai/gemini-1.5-flash';
+             if (settings.googleAIApiKey) {
+                providerPlugins.push(googleAI({apiKey: settings.googleAIApiKey}));
+            }
             break;
         case 'openai':
             modelToUse = settings.openAIModel === 'gpt-4' ? 'openai/gpt-4' : 'openai/gpt-3.5-turbo';
+             if (settings.openAIApiKey) {
+                providerPlugins.push(openAI({apiKey: settings.openAIApiKey}));
+            }
             break;
         case 'ollama':
             modelToUse = `ollama/${settings.ollamaModel || 'llama3'}`;
@@ -58,10 +67,14 @@ const chatWithTransactionsFlow = ai.defineFlow(
             throw new Error(`Unknown AI provider: ${settings.provider}`);
     }
 
+    const dynamicAi = ai.configure({
+        plugins: providerPlugins
+    });
+
     const transactionData = JSON.stringify(transactions, null, 2);
     const currentDate = new Date().toISOString().split('T')[0];
 
-    const model = ai.getGenerator(modelToUse)!;
+    const model = dynamicAi.getGenerator(modelToUse)!;
     
     const {output} = await model.generate({
         system: `You are FinWise, an expert financial assistant. Your role is to analyze a user's transaction data and answer their questions clearly and concisely.

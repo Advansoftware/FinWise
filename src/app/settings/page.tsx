@@ -8,11 +8,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
-import { getOllamaModels } from '@/app/actions';
+import { getOllamaModels, getAISettings, saveAISettings } from '@/app/actions';
 import { AISettings, AIProvider, OpenAIModel } from '@/lib/types';
 
 export default function SettingsPage() {
-  const [settings, setSettings] = useState<Partial<AISettings>>({});
+  const [settings, setSettings] = useState<AISettings>({ 
+    provider: 'ollama', 
+    ollamaModel: 'llama3', 
+    openAIModel: 'gpt-3.5-turbo' 
+  });
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -22,15 +26,10 @@ export default function SettingsPage() {
     async function loadInitialSettings() {
       setIsLoading(true);
       try {
-        // Load settings from localStorage
-        const storedSettings = localStorage.getItem('ai-settings');
-        const loadedSettings: AISettings = storedSettings 
-            ? JSON.parse(storedSettings) 
-            : { provider: 'ollama', ollamaModel: 'llama3', openAIModel: 'gpt-3.5-turbo' }; // Default settings
+        const loadedSettings = await getAISettings();
         setSettings(loadedSettings);
 
         if (loadedSettings.provider === 'ollama') {
-            // Fetch Ollama models from the server action
             const models = await getOllamaModels();
             if (models.length > 0) {
                 setOllamaModels(models);
@@ -42,13 +41,12 @@ export default function SettingsPage() {
                 });
             }
         }
-
       } catch (error) {
         console.error('Falha ao carregar configurações:', error);
         toast({
           variant: 'destructive',
           title: 'Erro ao Carregar',
-          description: 'Não foi possível carregar as configurações de IA.',
+          description: 'Não foi possível carregar as configurações de IA do banco de dados.',
         });
       } finally {
         setIsLoading(false);
@@ -58,7 +56,7 @@ export default function SettingsPage() {
     loadInitialSettings();
   }, [toast]);
 
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSaving(true);
     // Basic validation
     if (settings.provider === 'googleai' && !settings.googleAIApiKey) {
@@ -73,11 +71,10 @@ export default function SettingsPage() {
     }
 
     try {
-      // Save settings to localStorage
-      localStorage.setItem('ai-settings', JSON.stringify(settings));
+      await saveAISettings(settings);
       toast({
         title: 'Configurações Salvas!',
-        description: 'Suas configurações de IA foram salvas localmente no seu navegador.',
+        description: 'Suas configurações de IA foram salvas no banco de dados.',
       });
     } catch (error) {
        console.error('Falha ao salvar configurações:', error);
@@ -104,11 +101,13 @@ export default function SettingsPage() {
 };
 
   const handleApiKeyChange = (provider: 'googleai' | 'openai') => (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (provider === 'googleai') {
-        setSettings(prev => ({ ...prev, googleAIApiKey: e.target.value }));
-      } else {
-        setSettings(prev => ({ ...prev, openAIApiKey: e.target.value }));
-      }
+      const { value } = e.target;
+      setSettings(prev => {
+        if (provider === 'googleai') {
+            return { ...prev, googleAIApiKey: value };
+        }
+        return { ...prev, openAIApiKey: value };
+      });
   }
 
 
@@ -121,7 +120,7 @@ export default function SettingsPage() {
         <CardHeader>
           <CardTitle>Provedor de Inteligência Artificial</CardTitle>
           <CardDescription>
-            Escolha e configure o serviço de IA que você deseja usar para as funcionalidades inteligentes do FinWise. Suas configurações são salvas localmente.
+            Escolha e configure o serviço de IA que você deseja usar para as funcionalidades inteligentes do FinWise. Suas chaves são salvas de forma segura.
           </CardDescription>
         </CardHeader>
         <CardContent>

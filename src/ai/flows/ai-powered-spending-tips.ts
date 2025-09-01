@@ -11,6 +11,9 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { ModelReference } from 'genkit/model';
 import { AISettings } from '@/lib/types';
+import {googleAI} from '@genkit-ai/googleai';
+import {openAI} from 'genkitx-openai';
+
 
 const SpendingTipInputSchema = z.object({
   spendingData: z
@@ -40,13 +43,20 @@ const generateSpendingTipFlow = ai.defineFlow(
   async ({ spendingData, settings }) => {
     
     let modelToUse: ModelReference;
+    let providerPlugins: any[] = [];
 
     switch (settings.provider) {
         case 'googleai':
             modelToUse = 'googleai/gemini-1.5-flash';
+            if (settings.googleAIApiKey) {
+                providerPlugins.push(googleAI({apiKey: settings.googleAIApiKey}));
+            }
             break;
         case 'openai':
             modelToUse = settings.openAIModel === 'gpt-4' ? 'openai/gpt-4' : 'openai/gpt-3.5-turbo';
+            if (settings.openAIApiKey) {
+                providerPlugins.push(openAI({apiKey: settings.openAIApiKey}));
+            }
             break;
         case 'ollama':
             modelToUse = `ollama/${settings.ollamaModel || 'llama3'}`;
@@ -55,24 +65,29 @@ const generateSpendingTipFlow = ai.defineFlow(
             throw new Error(`Unknown AI provider: ${settings.provider}`);
     }
 
-    const prompt = ai.definePrompt({
-      name: 'spendingTipPrompt',
-      input: {schema: z.object({spendingData: z.string()})},
-      output: {schema: SpendingTipOutputSchema},
-      model: modelToUse,
-      prompt: `You are a personal finance advisor. Analyze the user's spending data and provide a single, actionable tip to reduce expenses. Be brief, direct, and friendly.
+    // Configure Genkit dynamically for this flow execution
+    const dynamicAi = ai.configure({
+        plugins: providerPlugins
+    });
+
+    const model = dynamicAi.getGenerator(modelToUse)!;
+
+    const {output} = await model.generate({
+        prompt: `You are a personal finance advisor. Analyze the user's spending data and provide a single, actionable tip to reduce expenses. Be brief, direct, and friendly.
 
 Spending Data (JSON format):
 \`\`\`json
-{{{spendingData}}}
+${spendingData}
 \`\`\`
 
 Based on this data, provide one clear, concise tip.
 
 Tip: `,
+        output: {
+            schema: SpendingTipOutputSchema,
+        }
     });
 
-    const {output} = await prompt({spendingData});
     return output!;
   }
 );

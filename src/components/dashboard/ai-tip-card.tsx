@@ -6,8 +6,7 @@ import { Button } from "@/components/ui/button";
 import { RefreshCw, Sparkles } from "lucide-react";
 import { getSpendingTip } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
-import { Transaction, AISettings } from "@/lib/types";
-import { useToast } from "@/hooks/use-toast";
+import { Transaction } from "@/lib/types";
 
 interface AITipCardProps {
     transactions: Transaction[];
@@ -16,55 +15,23 @@ interface AITipCardProps {
 export function AITipCard({ transactions }: AITipCardProps) {
   const [tip, setTip] = useState("");
   const [isPending, startTransition] = useTransition();
-  const [aiSettings, setAiSettings] = useState<AISettings | null>(null);
-  const { toast } = useToast();
-
-  useEffect(() => {
-    // Settings are now loaded from localStorage on the client-side
-    const storedSettings = localStorage.getItem('ai-settings');
-    if (storedSettings) {
-      setAiSettings(JSON.parse(storedSettings));
-    } else {
-      // Default settings if nothing is stored
-      setAiSettings({ provider: 'ollama', ollamaModel: 'llama3', openAIModel: 'gpt-3.5-turbo' });
-    }
-  }, []);
 
   const fetchTip = () => {
-    if (!aiSettings) {
-        toast({
-            variant: 'destructive',
-            title: 'Configuração de IA não encontrada',
-            description: 'Por favor, defina seu provedor de IA na página de Configurações.',
-        });
-        return;
-    }
-     if ( (aiSettings.provider === 'googleai' && !aiSettings.googleAIApiKey) ||
-          (aiSettings.provider === 'openai' && !aiSettings.openAIApiKey) ) {
-        toast({
-            variant: 'destructive',
-            title: 'Chave de API Ausente',
-            description: `Por favor, insira sua chave de API para ${aiSettings.provider} na página de Configurações.`,
-        });
-        return;
-    }
-
-
     startTransition(async () => {
       setTip(""); // Clear previous tip
-      const newTip = await getSpendingTip(transactions, aiSettings);
+      const newTip = await getSpendingTip(transactions);
       setTip(newTip);
     });
   };
 
   useEffect(() => {
-    if (transactions.length > 0 && aiSettings) {
+    if (transactions.length > 0) {
         fetchTip();
-    } else if (transactions.length === 0) {
+    } else {
         setTip("Não há dados de transação suficientes para gerar uma dica.");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transactions, aiSettings]);
+  }, [transactions]);
 
   return (
     <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
@@ -77,7 +44,7 @@ export function AITipCard({ transactions }: AITipCardProps) {
             variant="ghost"
             size="icon"
             onClick={fetchTip}
-            disabled={isPending || transactions.length === 0 || !aiSettings}
+            disabled={isPending || transactions.length === 0}
             className="text-primary/70 hover:bg-primary/10 hover:text-primary rounded-full"
         >
             <RefreshCw className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`} />

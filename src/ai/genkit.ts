@@ -2,12 +2,12 @@ import {genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
 import {openAI} from 'genkitx-openai';
 
+// AI plugins are configured dynamically within each flow based on settings from Firestore.
+// The initial configuration here can be minimal.
 export const ai = genkit({
   plugins: [
     googleAI(),
-    openAI({
-        apiKey: process.env.OPENAI_API_KEY,
-    }),
+    openAI(),
   ],
   logLevel: 'debug',
   enableTracingAndMetrics: true,
