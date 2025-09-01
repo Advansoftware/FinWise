@@ -15,7 +15,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TransactionCategory } from "@/lib/types";
 
-const categories: TransactionCategory[] = ["Supermercado", "Transporte", "Entretenimento", "Contas", "Cerveja", "Restaurante", "Saúde"];
+const categories: TransactionCategory[] = ["Supermercado", "Transporte", "Entretenimento", "Contas", "Restaurante", "Saúde"];
 
 export function AddTransactionSheet({ children }: { children: React.ReactNode }) {
   return (
@@ -61,6 +61,12 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                 ))}
               </SelectContent>
             </Select>
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="subcategory" className="text-right">
+              Subcategoria
+            </Label>
+            <Input id="subcategory" placeholder="ex: Bebidas (Opcional)" className="col-span-3" />
           </div>
         </div>
         <SheetFooter>

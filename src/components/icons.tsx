@@ -1,5 +1,5 @@
 import type { TransactionCategory } from "@/lib/types";
-import { Beer, Car, Film, HeartPulse, Home, ShoppingCart, Utensils } from "lucide-react";
+import { Beef, Beer, Car, Film, HeartPulse, Home, ShoppingCart, Utensils } from "lucide-react";
 
 export function CategoryIcon({ category, className }: { category: TransactionCategory, className?: string }) {
   const iconProps = { className: className || "h-4 w-4 text-muted-foreground" };
@@ -13,8 +13,6 @@ export function CategoryIcon({ category, className }: { category: TransactionCat
       return <Film {...iconProps} />;
     case "Contas":
       return <Home {...iconProps} />;
-    case "Cerveja":
-      return <Beer {...iconProps} />;
     case "Restaurante":
       return <Utensils {...iconProps} />;
     case "Saúde":

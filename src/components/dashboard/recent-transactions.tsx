@@ -33,7 +33,10 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
                         </Avatar>
                     <div className="ml-4 space-y-1">
                         <p className="text-sm font-medium leading-none">{transaction.item}</p>
-                        <p className="text-sm text-muted-foreground">{transaction.category}</p>
+                        <p className="text-sm text-muted-foreground">
+                            {transaction.category}
+                            {transaction.subcategory && ` / ${transaction.subcategory}`}
+                        </p>
                     </div>
                     <div className="ml-auto font-medium text-right text-red-400">
                         -R$ {transaction.amount.toFixed(2)}
