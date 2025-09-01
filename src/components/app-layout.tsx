@@ -62,7 +62,7 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     if (pathname.startsWith('/settings')) return 'Configurações';
     if (pathname.startsWith('/profile')) return 'Perfil';
     if (pathname.startsWith('/billing')) return 'Assinatura';
-    return 'Painel';
+    return 'Painel'; // Fallback title
   }
 
 
