@@ -39,7 +39,7 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await login(values.email, values.password);
-      // O redirecionamento é tratado pelo AuthProvider
+      // O redirecionamento agora é tratado exclusivamente pelo AuthProvider.
     } catch (error: any) {
       toast({
         variant: 'destructive',
