@@ -20,28 +20,36 @@ export function useTransactions() {
 
 
   const loadTransactions = useCallback(async () => {
+    // Don't start loading if we already are, or if auth is still loading.
+    if (isLoading || authLoading) return;
+    
     setIsLoading(true);
     try {
+      // getTransactions will now throw an error if the user is not authenticated.
       const transactions = await getTransactions();
       setAllTransactions(transactions);
     } catch (error) {
-      console.error("Failed to fetch transactions:", error);
-      setAllTransactions([]);
+      // This will catch auth errors from getTransactions, so we don't need to show a toast.
+      // The user will be redirected to the login page by the AppLayout.
+      console.error("Failed to fetch transactions (likely due to auth):", error);
+      setAllTransactions([]); // Clear transactions on error
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [authLoading, isLoading]);
 
   useEffect(() => {
-    // We only load transactions when the auth state is no longer loading and we have a user
-    if (!authLoading && user) {
-        loadTransactions();
+    // Only attempt to load transactions if we have a user.
+    if (user) {
+      loadTransactions();
     } else if (!authLoading && !user) {
-        // If auth is done and there's no user, we stop loading and clear transactions
-        setIsLoading(false);
-        setAllTransactions([]);
+      // If auth is done and there's no user, stop loading and clear transactions.
+      setIsLoading(false);
+      setAllTransactions([]);
     }
-  }, [authLoading, user, loadTransactions]);
+    // We want this to run when the user's auth state is confirmed.
+    // loadTransactions is memoized and will prevent re-fetches.
+  }, [user, authLoading, loadTransactions]);
 
   const { categories, subcategories } = useMemo(() => {
     const categoriesSet = new Set<TransactionCategory>();

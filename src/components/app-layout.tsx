@@ -1,3 +1,4 @@
+
 'use client';
 
 import { usePathname } from 'next/navigation';
@@ -10,12 +11,23 @@ import { ChatAssistant } from './chat/chat-assistant';
 import { UserNav } from '../app/user-nav';
 import { Logo } from './logo';
 import { AnimatePresence, motion } from 'framer-motion';
+import { useEffect } from 'react';
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const pathname = usePathname();
 
   const isPublicOrAuthPage = ['/', '/login', '/signup'].includes(pathname);
+
+  useEffect(() => {
+    // This effect handles redirection on the client side.
+    if (!loading && !user && !isPublicOrAuthPage) {
+      // If loading is finished, user is not logged in, and we are on a protected page,
+      // redirect to the login page.
+      window.location.href = '/login';
+    }
+  }, [loading, user, isPublicOrAuthPage, pathname]);
+
 
   // While loading, and it's not a public page, show a full-screen loader.
   if (loading && !isPublicOrAuthPage) {
@@ -46,12 +58,9 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // If loading is finished, but there's no user on a protected page, redirect.
-  if (!loading && !user && !isPublicOrAuthPage) {
-     if (typeof window !== 'undefined') {
-      window.location.href = '/login';
-    }
-    return null; // Render nothing while redirecting
+  // If loading is finished, but there's no user on a protected page, render nothing while redirecting.
+  if (!user && !isPublicOrAuthPage) {
+    return null; // Render nothing, the useEffect above will handle the redirect.
   }
 
   // If it's a public page, just render the children without the main app layout.
