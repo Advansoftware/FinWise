@@ -1,2 +1,2 @@
-// This file is deprecated. The main app layout logic has been moved to /src/app/(app)/layout.tsx.
-// This file is kept to prevent build errors from stale imports but will be removed.
+// This file is deprecated and has been removed.
+// The main app layout logic is now located in /src/app/(pages)/layout.tsx.
