@@ -59,14 +59,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
       setUser(user);
       setLoading(false);
-      
-      // On successful login or state change, redirect to dashboard if on a public page
-      if (user) {
-        const publicPages = ['/', '/login', '/signup'];
-        if (publicPages.includes(window.location.pathname)) {
-          window.location.href = '/dashboard';
-        }
-      }
     });
 
     return () => unsubscribe();
@@ -93,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await signOut(auth);
-    window.location.href = '/';
+    window.location.href = '/login';
   };
 
   const signInWithGoogle = async () => {
@@ -127,7 +119,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const userDocRef = doc(db, "users", auth.currentUser.uid);
     await setDoc(userDocRef, { displayName: name }, { merge: true });
     
-    setUser({ ...auth.currentUser });
+    // Create a new object to trigger re-render
+    setUser(auth.currentUser ? { ...auth.currentUser } : null);
   }
 
   const reauthenticate = async (password: string) => {
