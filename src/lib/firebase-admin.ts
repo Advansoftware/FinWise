@@ -1,17 +1,9 @@
 'use server';
+// Este arquivo está sendo preterido. A inicialização do admin será feita
+// diretamente no arquivo de actions para garantir a inicialização correta.
+// Manter o arquivo evita erros de importação em outros locais, mas ele não será mais o responsável pela inicialização.
+
 import * as admin from 'firebase-admin';
 
-// Este é o método mais robusto para inicialização no lado do servidor em ambientes Google.
-// O SDK encontrará as credenciais automaticamente sem a necessidade de arquivos .env ou JSON.
-if (!admin.apps.length) {
-  try {
-    admin.initializeApp();
-  } catch (error) {
-    console.error('Firebase admin initialization error:', error);
-    // Lançamos um erro claro para facilitar a depuração, caso as credenciais ainda falhem.
-    throw new Error('Failed to initialize Firebase Admin SDK. Check the service account credentials.');
-  }
-}
-
-export const adminAuth = admin.auth();
-export const adminDb = admin.firestore();
+export const adminAuth = admin.auth;
+export const adminDb = admin.firestore;

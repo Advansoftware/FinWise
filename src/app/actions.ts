@@ -1,12 +1,23 @@
 'use server';
 
+import * as admin from 'firebase-admin';
 import { generateSpendingTip, SpendingTipInput } from '@/ai/flows/ai-powered-spending-tips';
 import { chatWithTransactions, ChatInput as ChatInputFlow } from '@/ai/flows/chat-with-transactions';
 import { Transaction, AISettings } from '@/lib/types';
-import { db } from '@/lib/firebase';
+import { db, firebaseConfig } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, getDoc, setDoc, query, where, Timestamp } from "firebase/firestore";
 import { headers } from 'next/headers';
-import { adminAuth } from '@/lib/firebase-admin';
+
+// Garante que o Firebase Admin seja inicializado apenas uma vez no ambiente do servidor.
+if (!admin.apps.length) {
+  try {
+    admin.initializeApp({
+      credential: admin.credential.cert(firebaseConfig)
+    });
+  } catch (error) {
+    console.error('Firebase admin initialization error in actions.ts:', error);
+  }
+}
 
 async function getUserId() {
     const authorization = headers().get('Authorization');
@@ -17,7 +28,7 @@ async function getUserId() {
             return null;
         }
         try {
-            const decodedToken = await adminAuth.verifyIdToken(idToken);
+            const decodedToken = await admin.auth().verifyIdToken(idToken);
             return decodedToken.uid;
         } catch (error) {
             console.error("Token validation error:", error);
