@@ -29,7 +29,7 @@ export default function SettingsPage() {
         const loadedSettings = await getAISettings();
         setSettings(loadedSettings);
 
-        if (loadedSettings.provider === 'ollama') {
+        if (loadedSettings.provider === 'ollama' || settings.provider === 'ollama') {
             const models = await getOllamaModels();
             if (models.length > 0) {
                 setOllamaModels(models);
@@ -54,7 +54,7 @@ export default function SettingsPage() {
     }
 
     loadInitialSettings();
-  }, [toast]);
+  }, [toast, settings.provider]);
 
   const handleSave = async () => {
     setIsSaving(true);
