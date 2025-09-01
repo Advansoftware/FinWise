@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import { getOllamaModels } from '@/app/actions';
-import { AISettings, AIProvider } from '@/lib/types';
+import { AISettings, AIProvider, OpenAIModel } from '@/lib/types';
 
 export default function SettingsPage() {
   const [settings, setSettings] = useState<Partial<AISettings>>({});
@@ -24,21 +24,23 @@ export default function SettingsPage() {
       try {
         // Load settings from localStorage
         const storedSettings = localStorage.getItem('ai-settings');
-        const loadedSettings = storedSettings 
+        const loadedSettings: AISettings = storedSettings 
             ? JSON.parse(storedSettings) 
-            : { provider: 'ollama', ollamaModel: 'llama3' }; // Default settings
+            : { provider: 'ollama', ollamaModel: 'llama3', openAIModel: 'gpt-3.5-turbo' }; // Default settings
         setSettings(loadedSettings);
 
-        // Fetch Ollama models from the server action
-        const models = await getOllamaModels();
-        if (models.length > 0) {
-            setOllamaModels(models);
-        } else if (loadedSettings?.provider === 'ollama') {
-             toast({
-                variant: 'destructive',
-                title: 'Erro de Conexão com Ollama',
-                description: 'Não foi possível buscar os modelos do Ollama. Verifique se o serviço está em execução.',
-            });
+        if (loadedSettings.provider === 'ollama') {
+            // Fetch Ollama models from the server action
+            const models = await getOllamaModels();
+            if (models.length > 0) {
+                setOllamaModels(models);
+            } else {
+                toast({
+                    variant: 'destructive',
+                    title: 'Erro de Conexão com Ollama',
+                    description: 'Não foi possível buscar os modelos do Ollama. Verifique se o serviço está em execução.',
+                });
+            }
         }
 
       } catch (error) {
@@ -58,6 +60,18 @@ export default function SettingsPage() {
 
   const handleSave = () => {
     setIsSaving(true);
+    // Basic validation
+    if (settings.provider === 'googleai' && !settings.googleAIApiKey) {
+        toast({ variant: "destructive", title: "Chave de API do Google AI é obrigatória." });
+        setIsSaving(false);
+        return;
+    }
+    if (settings.provider === 'openai' && !settings.openAIApiKey) {
+        toast({ variant: "destructive", title: "Chave de API da OpenAI é obrigatória." });
+        setIsSaving(false);
+        return;
+    }
+
     try {
       // Save settings to localStorage
       localStorage.setItem('ai-settings', JSON.stringify(settings));
@@ -81,12 +95,20 @@ export default function SettingsPage() {
     setSettings(prev => ({ ...prev, provider }));
   };
   
-  const handleModelChange = (model: string) => {
+  const handleOllamaModelChange = (model: string) => {
       setSettings(prev => ({ ...prev, ollamaModel: model }));
   };
+  
+  const handleOpenAIModelChange = (model: OpenAIModel) => {
+    setSettings(prev => ({ ...prev, openAIModel: model }));
+};
 
-  const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setSettings(prev => ({ ...prev, googleAIApiKey: e.target.value }));
+  const handleApiKeyChange = (provider: 'googleai' | 'openai') => (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (provider === 'googleai') {
+        setSettings(prev => ({ ...prev, googleAIApiKey: e.target.value }));
+      } else {
+        setSettings(prev => ({ ...prev, openAIApiKey: e.target.value }));
+      }
   }
 
 
@@ -118,7 +140,8 @@ export default function SettingsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="ollama">Ollama (Local)</SelectItem>
-                    <SelectItem value="googleai">Google AI</SelectItem>
+                    <SelectItem value="googleai">Google AI (Gemini)</SelectItem>
+                    <SelectItem value="openai">OpenAI (GPT)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -126,7 +149,7 @@ export default function SettingsPage() {
              {settings.provider === 'ollama' && (
                 <div className="space-y-2 animate-in fade-in">
                     <Label htmlFor="ollama-model">Modelo Ollama</Label>
-                    <Select value={settings.ollamaModel} onValueChange={handleModelChange} disabled={ollamaModels.length === 0}>
+                    <Select value={settings.ollamaModel} onValueChange={handleOllamaModelChange} disabled={ollamaModels.length === 0}>
                         <SelectTrigger id="ollama-model">
                             <SelectValue placeholder={ollamaModels.length > 0 ? "Selecione um modelo" : "Nenhum modelo Ollama encontrado"} />
                         </SelectTrigger>
@@ -147,10 +170,37 @@ export default function SettingsPage() {
                     <Input 
                         id="google-api-key" 
                         type="password" 
-                        placeholder="Cole sua chave de API aqui"
+                        placeholder="Cole sua chave de API do Google AI Studio aqui"
                         value={settings.googleAIApiKey || ''}
-                        onChange={handleApiKeyChange}
+                        onChange={handleApiKeyChange('googleai')}
                     />
+                 </div>
+            )}
+
+            {settings.provider === 'openai' && (
+                 <div className="space-y-4 animate-in fade-in">
+                    <div className="space-y-2">
+                        <Label htmlFor="openai-model">Modelo OpenAI</Label>
+                        <Select value={settings.openAIModel} onValueChange={(value) => handleOpenAIModelChange(value as OpenAIModel)}>
+                            <SelectTrigger id="openai-model">
+                                <SelectValue placeholder="Selecione um modelo" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                                <SelectItem value="gpt-4">GPT-4</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label htmlFor="openai-api-key">Chave de API da OpenAI</Label>
+                        <Input 
+                            id="openai-api-key" 
+                            type="password" 
+                            placeholder="Cole sua chave de API da OpenAI aqui"
+                            value={settings.openAIApiKey || ''}
+                            onChange={handleApiKeyChange('openai')}
+                        />
+                    </div>
                  </div>
             )}
 

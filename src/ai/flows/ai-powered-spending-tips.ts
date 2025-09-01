@@ -10,20 +10,20 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import { ModelReference } from 'genkit/model';
+import { AISettings } from '@/lib/types';
 
 const SpendingTipInputSchema = z.object({
   spendingData: z
     .string()
     .describe(
-      'Uma string contendo os dados de gastos do usuário, incluindo categorias, valores e frequência.'
+      'A JSON string of the user\'s spending data, including categories, amounts, and frequency.'
     ),
-  provider: z.string().describe('O provedor de IA a ser usado (ex: ollama, googleai).'),
-  model: z.string().optional().describe('Opcional. O nome do modelo ou a chave de API.'),
+  settings: z.custom<AISettings>()
 });
 export type SpendingTipInput = z.infer<typeof SpendingTipInputSchema>;
 
 const SpendingTipOutputSchema = z.object({
-  tip: z.string().describe('Uma dica personalizada para reduzir despesas.'),
+  tip: z.string().describe('A single, actionable tip to reduce expenses.'),
 });
 export type SpendingTipOutput = z.infer<typeof SpendingTipOutputSchema>;
 
@@ -37,20 +37,22 @@ const generateSpendingTipFlow = ai.defineFlow(
     inputSchema: SpendingTipInputSchema,
     outputSchema: SpendingTipOutputSchema,
   },
-  async ({ spendingData, provider, model }) => {
+  async ({ spendingData, settings }) => {
     
     let modelToUse: ModelReference;
 
-    if (provider === 'ollama') {
-      modelToUse = `ollama/${model || 'llama3'}`;
-    } else if (provider === 'googleai') {
-        // Para o Google AI, o 'model' conteria a API Key, 
-        // mas aqui vamos usar um modelo padrão como gemini-pro.
-        // A lógica de API Key seria tratada na configuração do plugin do Genkit,
-        // mas por enquanto, vamos assumir que está configurado.
-      modelToUse = 'googleai/gemini-1.5-flash';
-    } else {
-      throw new Error(`Provedor de IA desconhecido: ${provider}`);
+    switch (settings.provider) {
+        case 'googleai':
+            modelToUse = 'googleai/gemini-1.5-flash';
+            break;
+        case 'openai':
+            modelToUse = settings.openAIModel === 'gpt-4' ? 'openai/gpt-4' : 'openai/gpt-3.5-turbo';
+            break;
+        case 'ollama':
+            modelToUse = `ollama/${settings.ollamaModel || 'llama3'}`;
+            break;
+        default:
+            throw new Error(`Unknown AI provider: ${settings.provider}`);
     }
 
     const prompt = ai.definePrompt({
@@ -58,11 +60,16 @@ const generateSpendingTipFlow = ai.defineFlow(
       input: {schema: z.object({spendingData: z.string()})},
       output: {schema: SpendingTipOutputSchema},
       model: modelToUse,
-      prompt: `Você é um consultor financeiro pessoal. Analise os dados de gastos do usuário e forneça uma única dica acionável para reduzir despesas. Seja breve, direto e amigável.
+      prompt: `You are a personal finance advisor. Analyze the user's spending data and provide a single, actionable tip to reduce expenses. Be brief, direct, and friendly.
 
-Dados de Gastos: {{{spendingData}}}
+Spending Data (JSON format):
+\`\`\`json
+{{{spendingData}}}
+\`\`\`
 
-Dica: `,
+Based on this data, provide one clear, concise tip.
+
+Tip: `,
     });
 
     const {output} = await prompt({spendingData});

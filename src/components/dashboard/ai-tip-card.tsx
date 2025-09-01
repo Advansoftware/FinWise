@@ -7,6 +7,7 @@ import { RefreshCw, Sparkles } from "lucide-react";
 import { getSpendingTip } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
 import { Transaction, AISettings } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
 
 interface AITipCardProps {
     transactions: Transaction[];
@@ -16,6 +17,7 @@ export function AITipCard({ transactions }: AITipCardProps) {
   const [tip, setTip] = useState("");
   const [isPending, startTransition] = useTransition();
   const [aiSettings, setAiSettings] = useState<AISettings | null>(null);
+  const { toast } = useToast();
 
   useEffect(() => {
     // Settings are now loaded from localStorage on the client-side
@@ -24,12 +26,29 @@ export function AITipCard({ transactions }: AITipCardProps) {
       setAiSettings(JSON.parse(storedSettings));
     } else {
       // Default settings if nothing is stored
-      setAiSettings({ provider: 'ollama', ollamaModel: 'llama3' });
+      setAiSettings({ provider: 'ollama', ollamaModel: 'llama3', openAIModel: 'gpt-3.5-turbo' });
     }
   }, []);
 
   const fetchTip = () => {
-    if (!aiSettings) return;
+    if (!aiSettings) {
+        toast({
+            variant: 'destructive',
+            title: 'Configuração de IA não encontrada',
+            description: 'Por favor, defina seu provedor de IA na página de Configurações.',
+        });
+        return;
+    }
+     if ( (aiSettings.provider === 'googleai' && !aiSettings.googleAIApiKey) ||
+          (aiSettings.provider === 'openai' && !aiSettings.openAIApiKey) ) {
+        toast({
+            variant: 'destructive',
+            title: 'Chave de API Ausente',
+            description: `Por favor, insira sua chave de API para ${aiSettings.provider} na página de Configurações.`,
+        });
+        return;
+    }
+
 
     startTransition(async () => {
       setTip(""); // Clear previous tip

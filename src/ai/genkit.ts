@@ -1,16 +1,12 @@
 import {genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
+import {openai} from 'genkitx-openai';
 
 export const ai = genkit({
   plugins: [
-    googleAI({
-      models: {
-        'ollama/llama3': {
-          type: 'ollama',
-          model: 'llama3',
-          serverAddress: 'http://127.0.0.1:11434',
-        },
-      },
+    googleAI(),
+    openai({
+        apiKey: process.env.OPENAI_API_KEY,
     }),
   ],
   logLevel: 'debug',

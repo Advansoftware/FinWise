@@ -1,6 +1,7 @@
 'use server';
 
 import { generateSpendingTip, SpendingTipInput } from '@/ai/flows/ai-powered-spending-tips';
+import { chatWithTransactions, ChatInput } from '@/ai/flows/chat-with-transactions';
 import { Transaction, AISettings } from '@/lib/types';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, getDocs } from "firebase/firestore";
@@ -30,18 +31,12 @@ export async function getOllamaModels(): Promise<string[]> {
 }
 
 
-// --- Tip Generation Action ---
+// --- AI Actions ---
 
 export async function getSpendingTip(transactions: Transaction[], settings: AISettings) {
   try {
     const spendingData = JSON.stringify(transactions, null, 2);
-
-    const input: SpendingTipInput = { 
-        spendingData, 
-        provider: settings.provider,
-        model: settings.provider === 'ollama' ? settings.ollamaModel : settings.googleAIApiKey
-    };
-
+    const input: SpendingTipInput = { spendingData, settings };
     const result = await generateSpendingTip(input);
     return result.tip;
   } catch (error) {
@@ -49,6 +44,17 @@ export async function getSpendingTip(transactions: Transaction[], settings: AISe
     return "Desculpe, não consegui gerar uma dica agora. Por favor, tente novamente mais tarde.";
   }
 }
+
+export async function getChatbotResponse(input: ChatInput) {
+    try {
+        const result = await chatWithTransactions(input);
+        return result.response;
+    } catch (error) {
+        console.error("Error in getChatbotResponse:", error);
+        return "Desculpe, ocorreu um erro ao processar sua pergunta. Verifique suas configurações de IA e tente novamente.";
+    }
+}
+
 
 // --- Transaction Actions ---
 

@@ -1,11 +1,13 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { SidebarProvider, Sidebar, SidebarHeader, SidebarMenu, SidebarMenuItem, SidebarMenuButton, SidebarContent, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
-import { Home, BarChart2, History, Settings, Wallet, PanelLeft } from 'lucide-react';
+import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarTrigger, SidebarInset } from '@/components/ui/sidebar';
+import { Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Toaster } from '@/components/ui/toaster';
 import { AppNav } from '@/components/app-nav';
 import { PWAUpdater } from '@/components/pwa-updater';
+import { ChatAssistant } from '@/components/chat/chat-assistant';
+
 
 export const metadata: Metadata = {
   title: 'FinWise Dashboard',
@@ -38,7 +40,7 @@ export default function RootLayout({
                         <Button variant="ghost" size="icon" className="text-primary hover:bg-accent -ml-2 h-8 w-8">
                             <Wallet className="size-5" />
                         </Button>
-                        <h2 className="text-lg font-semibold text-foreground">FinWise</h2>
+                        <h2 className="text-lg font-semibold text-foreground group-data-[state=collapsed]:hidden">FinWise</h2>
                    </div>
                    <SidebarTrigger className="hidden md:flex" />
                 </div>
@@ -58,6 +60,7 @@ export default function RootLayout({
                 </div>
             </header>
             {children}
+            <ChatAssistant />
           </SidebarInset>
         </SidebarProvider>
         <Toaster />
