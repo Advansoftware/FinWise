@@ -2,6 +2,7 @@
 'use server';
 
 import * as admin from 'firebase-admin';
+import { firebaseConfig } from './firebase';
 
 // Armazena a instância inicializada para evitar múltiplas inicializações.
 let adminInstance: admin.app.App | null = null;
@@ -19,15 +20,15 @@ function getFirebaseAdminApp(): admin.app.App {
   }
   
   try {
-    // A configuração é buscada automaticamente pelas variáveis de ambiente
-    // padrão do Firebase (FIREBASE_CONFIG) quando em um ambiente de servidor do Google.
-    // Para desenvolvimento local, você deve configurar as credenciais via
-    // GOOGLE_APPLICATION_CREDENTIALS.
-    adminInstance = admin.initializeApp();
+    // Inicializa o Admin SDK com a configuração do projeto,
+    // que é suficiente para o nosso ambiente de desenvolvimento.
+    adminInstance = admin.initializeApp({
+      projectId: firebaseConfig.projectId,
+    });
   } catch (error) {
     console.error('Firebase admin initialization error:', error);
     // Lança um erro mais descritivo para facilitar a depuração.
-    throw new Error('Failed to initialize Firebase Admin SDK. Check server logs or GOOGLE_APPLICATION_CREDENTIALS environment variable for details.');
+    throw new Error('Failed to initialize Firebase Admin SDK. Check server logs for details.');
   }
 
   return adminInstance;
@@ -35,5 +36,3 @@ function getFirebaseAdminApp(): admin.app.App {
 
 // Exporta a função em vez das instâncias diretas.
 export { getFirebaseAdminApp };
-
-    
