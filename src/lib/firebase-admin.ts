@@ -8,7 +8,8 @@ let adminApp: admin.app.App;
 
 /**
  * Initializes and returns the Firebase Admin App instance.
- * It now handles both GOOGLE_APPLICATION_CREDENTIALS and raw JSON from env vars.
+ * It handles reading credentials from a file specified by GOOGLE_APPLICATION_CREDENTIALS
+ * and correctly formats the private key to avoid parsing errors.
  */
 export function getAdminApp(): admin.app.App {
   if (adminApp) {
@@ -42,6 +43,7 @@ export function getAdminApp(): admin.app.App {
     }
     
     // Fallback to default initialization if the file doesn't exist or path not set
+    // This might work in environments like Google Cloud Run where credentials are auto-injected
     adminApp = admin.initializeApp();
 
   } catch(error: any) {
