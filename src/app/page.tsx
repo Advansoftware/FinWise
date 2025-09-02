@@ -1,6 +1,8 @@
 
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { ArrowRight, BarChart, Bot, LayoutDashboard, Wallet, Check } from "lucide-react";
 import Link from "next/link";
@@ -9,6 +11,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from '@/components/ui/skeleton';
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -23,7 +26,30 @@ const featureVariants = {
 };
 
 export default function Page() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+    // Se o estado de autenticação não estiver carregando e o usuário existir, redireciona.
+    if (!loading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, loading, router]);
+  
+  // Enquanto o estado de autenticação está sendo verificado, mostra um skeleton/spinner
+  // para evitar um flash da página de login antes do redirecionamento.
+  if (loading || user) {
+    return (
+      <div className="flex flex-col min-h-screen items-center justify-center">
+         <div className="container mx-auto px-4 py-20 sm:py-32 flex flex-col items-center">
+            <Skeleton className="h-16 w-3/4 mb-6" />
+            <Skeleton className="h-8 w-1/2 mb-8" />
+            <Skeleton className="h-12 w-48 mb-16" />
+            <Skeleton className="h-[400px] w-full max-w-5xl" />
+        </div>
+      </div>
+    )
+  }
   
   return (
     <div className="flex flex-col min-h-screen bg-background text-foreground overflow-x-hidden">
@@ -236,3 +262,5 @@ export default function Page() {
     </div>
   );
 }
+
+    
