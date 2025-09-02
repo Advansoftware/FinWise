@@ -123,10 +123,14 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     if (!user) throw new Error("User not authenticated");
     const { db } = getFirebase();
     const transactionsCollection = collection(db, "users", user.uid, "transactions");
+    
+    // Ensure date is a JavaScript Date object before sending to Firestore
+    const dateObject = new Date(transaction.date);
+
     await addDoc(transactionsCollection, {
         ...transaction,
         amount: Math.abs(transaction.amount),
-        date: new Date(transaction.date)
+        date: dateObject
     });
   }
 
