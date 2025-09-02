@@ -6,7 +6,7 @@ import { UploadCloud, File, X, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Transaction } from '@/lib/types';
-import { useTransactions } from '@/hooks/use-transactions';
+import { useTransactions } from "@/hooks/use-transactions.tsx";
 
 type ParsedTransaction = Omit<Transaction, 'id'>;
 

@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Bot, Send, Sparkles, X, Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useTransactions } from '@/hooks/use-transactions';
+import { useTransactions } from "@/hooks/use-transactions.tsx";
 import { getChatbotResponse } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 

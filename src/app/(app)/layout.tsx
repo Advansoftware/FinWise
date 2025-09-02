@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ChatAssistant } from "@/components/chat/chat-assistant";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
-import { TransactionsProvider } from "@/hooks/use-transactions";
+import { TransactionsProvider } from "@/hooks/use-transactions.tsx";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();

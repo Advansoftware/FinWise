@@ -1,6 +1,6 @@
 // src/app/(app)/categories/page.tsx
 'use client';
-import { useTransactions } from "@/hooks/use-transactions";
+import { useTransactions } from "@/hooks/use-transactions.tsx";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { TransactionCategory } from "@/lib/types";

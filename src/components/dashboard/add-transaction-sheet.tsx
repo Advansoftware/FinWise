@@ -19,7 +19,7 @@ import { Transaction, TransactionCategory } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { SingleDatePicker } from "../single-date-picker";
-import { useTransactions } from "@/hooks/use-transactions";
+import { useTransactions } from "@/hooks/use-transactions.tsx";
 
 
 const categories: TransactionCategory[] = ["Supermercado", "Transporte", "Entretenimento", "Contas", "Restaurante", "Saúde"];

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useMemo, useEffect, useCallback, createContext, useContext, ReactNode } from "react";
@@ -5,7 +6,7 @@ import { DateRange } from "react-day-picker";
 import { subDays } from "date-fns";
 import { Transaction, TransactionCategory } from "@/lib/types";
 import { getTransactions, addTransaction as addTransactionAction } from "@/app/actions";
-import { useAuth } from "./use-auth"; // Import useAuth
+import { useAuth } from "./use-auth"; 
 
 interface TransactionsContextType {
   allTransactions: Transaction[];
@@ -28,7 +29,7 @@ interface TransactionsContextType {
 const TransactionsContext = createContext<TransactionsContextType | undefined>(undefined);
 
 export function TransactionsProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth(); // Use the hook to get the user
+  const { user } = useAuth();
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -39,7 +40,11 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('all');
   
   const loadTransactions = useCallback(async () => {
-    if (!user) return;
+    if (!user) {
+        setAllTransactions([]);
+        setIsLoading(false);
+        return;
+    };
     
     setIsLoading(true);
     try {
@@ -55,13 +60,8 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   useEffect(() => {
-    if (user) {
-        loadTransactions();
-    } else {
-        setIsLoading(false);
-        setAllTransactions([]);
-    }
-  }, [user, loadTransactions]);
+    loadTransactions();
+  }, [loadTransactions]);
   
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     if(!user) throw new Error("User not authenticated");

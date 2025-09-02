@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { PlusCircle, ScanLine } from "lucide-react";
-import { useTransactions } from "@/hooks/use-transactions";
+import { useTransactions } from "@/hooks/use-transactions.tsx";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { ItemFilter } from "@/components/dashboard/item-filter";
 import { DateRangePicker } from "@/components/dashboard/date-range-picker";

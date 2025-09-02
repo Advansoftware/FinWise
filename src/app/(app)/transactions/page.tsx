@@ -2,7 +2,7 @@
 'use client';
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { useTransactions } from "@/hooks/use-transactions";
+import { useTransactions } from "@/hooks/use-transactions.tsx";
 import { columns } from "@/components/transactions/columns";
 import { DataTable } from "@/components/transactions/data-table";
 
