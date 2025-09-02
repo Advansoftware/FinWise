@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -31,12 +32,15 @@ export default function ImportPage() {
     const [isParsing, setIsParsing] = useState(false);
     
     const { toast } = useToast();
-    const { addTransaction, refreshAllData } = useTransactions();
+    const { addTransaction } = useTransactions();
 
     const handleFileChange = (selectedFile: File | null) => {
         if (!selectedFile) return;
 
-        if (!['text/csv', 'application/vnd.ms-excel', 'application/ofx', 'text/ofx'].includes(selectedFile.type) && !selectedFile.name.endsWith('.ofx')) {
+        const isCsv = selectedFile.type.includes('csv') || selectedFile.name.endsWith('.csv');
+        const isOfx = ['application/ofx', 'text/ofx'].includes(selectedFile.type) || selectedFile.name.endsWith('.ofx');
+
+        if (!isCsv && !isOfx) {
             toast({ variant: 'destructive', title: 'Arquivo Inválido', description: 'Por favor, selecione um arquivo .csv ou .ofx' });
             return;
         }
@@ -47,13 +51,19 @@ export default function ImportPage() {
         reader.onload = (e) => {
             const content = e.target?.result as string;
             setFileContent(content);
-            if (selectedFile.type.includes('csv') || selectedFile.name.endsWith('.csv')) {
+            if (isCsv) {
                 parseCsv(content);
             } else {
                 parseOfx(content);
             }
         };
-        reader.readAsText(selectedFile, 'latin1'); // latin1 for better OFX compatibility
+
+        // Use a codificação correta para cada tipo de arquivo
+        if (isCsv) {
+            reader.readAsText(selectedFile, 'UTF-8');
+        } else {
+            reader.readAsText(selectedFile, 'latin1'); // OFX files often use this encoding
+        }
     };
 
     const parseCsv = (content: string) => {
@@ -122,7 +132,6 @@ export default function ImportPage() {
                 await addTransaction(transaction);
             }
             toast({ title: 'Sucesso!', description: `${transactionsToImport.length} transações importadas.` });
-            await refreshAllData();
             handleReset();
         } catch (error) {
             toast({ variant: 'destructive', title: 'Erro na Importação', description: 'Não foi possível importar as transações.' });
@@ -249,3 +258,4 @@ export default function ImportPage() {
         </div>
     );
 }
+
