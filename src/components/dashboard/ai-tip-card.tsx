@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect, useTransition } from "react";
@@ -7,7 +8,6 @@ import { RefreshCw, Sparkles } from "lucide-react";
 import { getSpendingTip } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
 import { Transaction } from "@/lib/types";
-import { useAuth } from "@/hooks/use-auth";
 
 interface AITipCardProps {
     transactions: Transaction[];
@@ -16,26 +16,22 @@ interface AITipCardProps {
 export function AITipCard({ transactions }: AITipCardProps) {
   const [tip, setTip] = useState("");
   const [isPending, startTransition] = useTransition();
-  const { user } = useAuth();
 
-  const fetchTip = () => {
-    if (!user) return;
+  const fetchTip = useCallback(() => {
+    if (transactions.length === 0) {
+      setTip("Não há dados de transação suficientes para gerar uma dica.");
+      return;
+    }
     startTransition(async () => {
       setTip(""); // Clear previous tip
-      const idToken = await user.getIdToken();
-      const newTip = await getSpendingTip(idToken, transactions);
+      const newTip = await getSpendingTip(transactions);
       setTip(newTip);
     });
-  };
+  }, [transactions]);
 
   useEffect(() => {
-    if (transactions.length > 0) {
-        fetchTip();
-    } else {
-        setTip("Não há dados de transação suficientes para gerar uma dica.");
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transactions, user]);
+    fetchTip();
+  }, [fetchTip]);
 
   return (
     <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
@@ -70,3 +66,5 @@ export function AITipCard({ transactions }: AITipCardProps) {
     </Card>
   );
 }
+
+    

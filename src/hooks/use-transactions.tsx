@@ -6,7 +6,6 @@ import { DateRange } from "react-day-picker";
 import { subDays } from "date-fns";
 import { Transaction, TransactionCategory } from "@/lib/types";
 import { getTransactions, addTransaction as addTransactionAction, getCategories, saveCategories, deleteTransactionsByCategory } from "@/app/actions";
-import { useAuth } from "./use-auth"; 
 import { useToast } from "./use-toast";
 
 type CategoryMap = Partial<Record<TransactionCategory, string[]>>;
@@ -36,7 +35,6 @@ interface TransactionsContextType {
 const TransactionsContext = createContext<TransactionsContextType | undefined>(undefined);
 
 export function TransactionsProvider({ children }: { children: ReactNode }) {
-  const { user } = useAuth();
   const { toast } = useToast();
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [categoryMap, setCategoryMap] = useState<CategoryMap>({});
@@ -49,19 +47,11 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('all');
   
   const refreshAllData = useCallback(async () => {
-    if (!user) {
-        setAllTransactions([]);
-        setCategoryMap({});
-        setIsLoading(false);
-        return;
-    };
-    
     setIsLoading(true);
     try {
-      const idToken = await user.getIdToken();
       const [transactions, categories] = await Promise.all([
-        getTransactions(idToken),
-        getCategories(idToken)
+        getTransactions(),
+        getCategories()
       ]);
       setAllTransactions(transactions);
       setCategoryMap(categories);
@@ -77,16 +67,14 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [user, toast]);
+  }, [toast]);
 
   useEffect(() => {
     refreshAllData();
   }, [refreshAllData]);
   
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
-    if(!user) throw new Error("User not authenticated");
-    const idToken = await user.getIdToken();
-    await addTransactionAction(idToken, transaction);
+    await addTransactionAction(transaction);
     await refreshAllData();
   }
 
@@ -100,26 +88,22 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   
   // --- Category Management ---
   const addCategory = async (categoryName: TransactionCategory) => {
-    if(!user) return;
     if (categories.includes(categoryName)) {
       toast({ variant: "destructive", title: "Categoria já existe" });
       return;
     }
     const newCategoryMap = { ...categoryMap, [categoryName]: [] };
-    const idToken = await user.getIdToken();
-    await saveCategories(idToken, newCategoryMap);
+    await saveCategories(newCategoryMap);
     await refreshAllData();
   };
 
   const deleteCategory = async (categoryName: TransactionCategory) => {
-     if(!user) return;
      const newCategoryMap = { ...categoryMap };
      delete newCategoryMap[categoryName];
-     const idToken = await user.getIdToken();
      await Promise.all([
-       saveCategories(idToken, newCategoryMap),
+       saveCategories(newCategoryMap),
        // Optional: delete transactions of this category
-       // deleteTransactionsByCategory(idToken, categoryName) 
+       // deleteTransactionsByCategory(categoryName) 
      ]);
      await refreshAllData();
      if (selectedCategory === categoryName) {
@@ -128,7 +112,6 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   };
 
   const addSubcategory = async (categoryName: TransactionCategory, subcategoryName: string) => {
-    if(!user) return;
     const subs = categoryMap[categoryName] || [];
     if (subs.includes(subcategoryName)) {
        toast({ variant: "destructive", title: "Subcategoria já existe" });
@@ -138,20 +121,17 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       ...categoryMap, 
       [categoryName]: [...subs, subcategoryName].sort() 
     };
-    const idToken = await user.getIdToken();
-    await saveCategories(idToken, newCategoryMap);
+    await saveCategories(newCategoryMap);
     await refreshAllData();
   }
 
   const deleteSubcategory = async (categoryName: TransactionCategory, subcategoryName: string) => {
-    if(!user) return;
     const subs = categoryMap[categoryName] || [];
     const newCategoryMap = {
       ...categoryMap,
       [categoryName]: subs.filter(s => s !== subcategoryName)
     };
-    const idToken = await user.getIdToken();
-    await saveCategories(idToken, newCategoryMap);
+    await saveCategories(newCategoryMap);
     await refreshAllData();
   }
 
@@ -235,3 +215,5 @@ export function useTransactions() {
   }
   return context;
 }
+
+    

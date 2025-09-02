@@ -1,3 +1,4 @@
+
 /**
  * @fileoverview This file initializes and a new Genkit AI toolkit instance.
  * It sets up plugins for different AI providers like Google AI and Ollama,
@@ -16,7 +17,7 @@ let ai: ReturnType<typeof genkit>;
 let initPromise: Promise<void> | null = null;
 
 async function initialize() {
-  // Evita re-inicialização
+  // Avoid re-initialization
   if (ai) return;
 
   const settings = await getAISettings();
@@ -36,10 +37,10 @@ async function initialize() {
     settings.openAIApiKey &&
     settings.openAIModel
   ) {
-    plugins.push(openai({apiKey: settings.openAIApiKey}));
+    plugins.push(openai({apiKey: settings.openAIApiKey, model: settings.openAIModel}));
   } else {
-    // Se nenhum provedor estiver configurado, não adicione nenhum plugin.
-    // A UI irá guiar o usuário para a página de configurações.
+    // If no provider is configured, do not add any plugins.
+    // The UI will guide the user to the settings page.
   }
 
   ai = genkit({
@@ -57,10 +58,12 @@ export async function getAI(): Promise<ReturnType<typeof genkit>> {
     initPromise = initialize();
   }
   await initPromise;
-  // Se a inicialização falhou (por exemplo, sem plugins), o `ai` pode não ter sido definido.
-  // Criamos uma instância vazia para evitar que a aplicação quebre.
+  // If initialization failed (e.g., no plugins), `ai` might not be defined.
+  // We create an empty instance to prevent the app from crashing.
   if (!ai) {
     ai = genkit();
   }
   return ai;
 }
+
+    

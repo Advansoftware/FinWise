@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -10,34 +11,18 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { useAuth } from '@/hooks/use-auth';
-import { LogOut, User, Settings, Gem, UserCircle } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Settings, Gem, UserCircle, Users } from 'lucide-react';
 import Link from 'next/link';
 
 export function UserNav() {
-  const { user, logout } = useAuth();
-
-  if (!user) {
-    return null;
-  }
-
-  const getInitials = (name: string) => {
-    const names = name.split(' ');
-    const initials = names.map((n) => n[0]).join('');
-    return initials.slice(0, 2).toUpperCase();
-  };
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-9 w-9">
-            <AvatarImage
-              src={user.photoURL || ''}
-              alt={user.displayName || 'Avatar do usuário'}
-            />
-            <AvatarFallback>{user.displayName ? getInitials(user.displayName) : <User />}</AvatarFallback>
+            <AvatarFallback><Users /></AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
@@ -45,10 +30,10 @@ export function UserNav() {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">
-              {user.displayName}
+              Usuário Anônimo
             </p>
             <p className="text-xs leading-none text-muted-foreground">
-              {user.email}
+              Para uma experiência completa, crie uma conta.
             </p>
           </div>
         </DropdownMenuLabel>
@@ -73,12 +58,9 @@ export function UserNav() {
             </Link>
           </DropdownMenuItem>
         </DropdownMenuGroup>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={logout}>
-          <LogOut className="mr-2 h-4 w-4" />
-          Sair
-        </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
   );
 }
+
+    

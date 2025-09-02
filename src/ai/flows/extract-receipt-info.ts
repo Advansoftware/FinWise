@@ -1,38 +1,16 @@
+
 'use server';
 /**
  * @fileOverview An AI flow to extract structured information from receipt images.
  *
  * - extractReceiptInfo - A function that handles the receipt information extraction process.
- * - ReceiptInfoInput - The input type for the extractReceiptInfo function.
- * - ReceiptInfoOutput - The return type for the extractReceiptInfo function.
  */
 import {getAI} from '@/ai/genkit';
 import {z} from 'genkit';
-
-const ReceiptItemSchema = z.object({
-  item: z.string().describe('The name of the purchased item.'),
-  amount: z.number().describe('The price of the item.'),
-});
-
-const ReceiptInfoInputSchema = z.object({
-  photoDataUri: z
-    .string()
-    .describe(
-      "A photo of a receipt, as a data URI that must include a MIME type and use Base64 encoding. Expected format: 'data:<mimetype>;base64,<encoded_data>'."
-    ),
-});
-export type ReceiptInfoInput = z.infer<typeof ReceiptInfoInputSchema>;
-
-const ReceiptInfoOutputSchema = z.object({
-  isValid: z.boolean().describe('Whether the image appears to be a valid receipt.'),
-  items: z.array(ReceiptItemSchema).describe('An array of items found on the receipt.'),
-  totalAmount: z.number().optional().describe('The total amount of the receipt.'),
-  date: z.string().optional().describe('The date of the receipt in YYYY-MM-DD format.'),
-});
-export type ReceiptInfoOutput = z.infer<typeof ReceiptInfoOutputSchema>;
+import { ReceiptInfoInputSchema, ReceiptInfoOutputSchema } from '../ai-types';
 
 
-export const extractReceiptInfo = async (input: ReceiptInfoInput) => {
+export const extractReceiptInfo = async (input: z.infer<typeof ReceiptInfoInputSchema>) => {
   const ai = await getAI();
   const prompt = ai.definePrompt({
     name: 'extractReceiptInfoPrompt',
@@ -52,5 +30,10 @@ Receipt Image: {{media url=photoDataUri}}`,
   });
 
   const {output} = await prompt(input);
-  return output!;
+  if (!output) {
+    throw new Error("Failed to extract receipt info.");
+  }
+  return output;
 };
+
+    

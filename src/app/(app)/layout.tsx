@@ -1,42 +1,16 @@
+
 'use client';
 
-import { useAuth } from "@/hooks/use-auth";
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { UserNav } from "../user-nav";
 import { Logo } from "@/components/logo";
 import { AppNav } from "../app-nav";
 import { PWAUpdater } from "@/components/pwa-updater";
-import { Skeleton } from "@/components/ui/skeleton";
 import { ChatAssistant } from "@/components/chat/chat-assistant";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { TransactionsProvider } from "@/hooks/use-transactions";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    // Se a autenticação terminou e NÃO HÁ usuário,
-    // redirecione-os para a página de login.
-    if (!loading && !user) {
-      router.push('/login');
-    }
-  }, [user, loading, router]);
-
-  // Enquanto carrega ou se não houver usuário, mostre uma tela de carregamento em tela cheia.
-  // Isso evita um flash do painel.
-  if (loading || !user) {
-    return (
-       <div className="flex items-center justify-center h-screen bg-background">
-          <div className="flex flex-col items-center gap-4">
-             <Logo className="h-12 w-12 text-primary" />
-             <Skeleton className="h-4 w-48" />
-          </div>
-       </div>
-    );
-  }
   
   // Se o carregamento estiver completo e tivermos um usuário, renderize o layout do painel.
   return (
@@ -83,3 +57,5 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       </TransactionsProvider>
   );
 }
+
+    

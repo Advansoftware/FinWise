@@ -1,26 +1,15 @@
+
 'use server';
 /**
  * @fileOverview An AI-powered spending tips flow.
  *
  * - generateSpendingTip - A function that generates personalized spending tips based on user spending habits.
- * - SpendingTipInput - The input type for the generateSpendingTip function.
- * - SpendingTipOutput - The return type for the generateSpendingTip function.
  */
 import { getAI } from '@/ai/genkit';
 import { z } from 'genkit';
+import { SpendingTipInputSchema, SpendingTipOutputSchema } from '../ai-types';
 
-const SpendingTipInputSchema = z.object({
-  transactions: z.string().describe('A JSON string representing an array of user transactions.'),
-});
-export type SpendingTipInput = z.infer<typeof SpendingTipInputSchema>;
-
-const SpendingTipOutputSchema = z.object({
-  tip: z.string().describe('A personalized, actionable spending tip.'),
-});
-export type SpendingTipOutput = z.infer<typeof SpendingTipOutputSchema>;
-
-
-export const generateSpendingTip = async (input: SpendingTipInput) => {
+export const generateSpendingTip = async (input: z.infer<typeof SpendingTipInputSchema>) => {
     const ai = await getAI();
     const prompt = ai.definePrompt({
         name: 'generateSpendingTipPrompt',
@@ -40,5 +29,10 @@ export const generateSpendingTip = async (input: SpendingTipInput) => {
     });
     
     const { output } = await prompt(input);
-    return output!;
+    if (!output) {
+        throw new Error("Failed to generate spending tip.");
+    }
+    return output;
 };
+
+    

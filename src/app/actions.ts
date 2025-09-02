@@ -1,56 +1,50 @@
+
 'use server';
 
+import { cookies } from 'next/headers';
 import { Transaction, AISettings, TransactionCategory } from '@/lib/types';
 import { getFirebase } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, getDoc, setDoc, Timestamp, writeBatch, query, where, deleteDoc } from "firebase/firestore";
-import { getFirebaseAdmin } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
 import { getAI } from '@/ai/genkit';
 import { z } from 'zod';
+import { generateSpendingTip } from '@/ai/flows/ai-powered-spending-tips';
+import { chatWithTransactions } from '@/ai/flows/chat-with-transactions';
+import { extractReceiptInfo } from '@/ai/flows/extract-receipt-info';
+import { suggestCategoryForItem } from '@/ai/flows/suggest-category';
+import { ChatInput, ReceiptInfoInput, ReceiptInfoOutput, SuggestCategoryInput, SuggestCategoryOutput } from './ai-types';
 
-import { generateSpendingTip, SpendingTipInput, SpendingTipOutput } from '@/ai/flows/ai-powered-spending-tips';
-import { chatWithTransactions, ChatInput } from '@/ai/flows/chat-with-transactions';
-import { extractReceiptInfo, ReceiptInfoInput, ReceiptInfoOutput } from '@/ai/flows/extract-receipt-info';
-import { suggestCategoryForItem, SuggestCategoryInput, SuggestCategoryOutput } from '@/ai/flows/suggest-category';
 
-
-async function getUserId(idToken: string) {
-    if (!idToken || idToken === 'null' || idToken === 'undefined') {
-        throw new Error('ID token not found. User is not authenticated.');
+// This is a placeholder for a real user authentication system.
+// In a real app, you'd get the user ID from the session or token.
+const getUserId = () => {
+    const cookieStore = cookies();
+    let userId = cookieStore.get('finwise_user_id')?.value;
+    if (!userId) {
+        userId = `user_${Date.now()}_${Math.random().toString(36).substring(2, 10)}`;
+        cookieStore.set('finwise_user_id', userId, { maxAge: 60 * 60 * 24 * 365 }); // 1 year
     }
-    
-    try {
-        const { auth } = getFirebaseAdmin();
-        const decodedToken = await auth.verifyIdToken(idToken, true);
-        if (!decodedToken.uid) {
-           throw new Error('Invalid token: UID missing.');
-        }
-        return decodedToken.uid;
-    } catch (error) {
-        console.error("Token validation error:", error);
-        throw new Error(`User authentication failed: ${(error as Error).message}`);
-    }
+    return userId;
 }
 
 
 // --- AI Settings Actions ---
 
-async function getSettingsCollectionRef(idToken: string) {
-    const userId = await getUserId(idToken);
+async function getSettingsCollectionRef() {
+    const userId = getUserId();
     const { db: clientDb } = getFirebase(); 
     return collection(clientDb, "users", userId, "settings");
 }
 
-export async function getAISettings(idToken?: string): Promise<AISettings> {
+export async function getAISettings(): Promise<AISettings> {
     const defaultSettings: AISettings = { 
         provider: 'ollama', 
         ollamaModel: 'llama3', 
         ollamaServerAddress: 'http://127.0.0.1:11434',
         openAIModel: 'gpt-3.5-turbo' 
     };
-    if (!idToken) return defaultSettings;
     
-    const settingsRef = doc(collection(await getSettingsCollectionRef(idToken)), 'ai');
+    const settingsRef = doc(await getSettingsCollectionRef(), 'ai');
     const docSnap = await getDoc(settingsRef);
     if (docSnap.exists()) {
         return { ...defaultSettings, ...docSnap.data() } as AISettings;
@@ -59,8 +53,8 @@ export async function getAISettings(idToken?: string): Promise<AISettings> {
     }
 }
 
-export async function saveAISettings(idToken: string, settings: AISettings): Promise<void> {
-    const settingsRef = doc(collection(await getSettingsCollectionRef(idToken)), 'ai');
+export async function saveAISettings(settings: AISettings): Promise<void> {
+    const settingsRef = doc(await getSettingsCollectionRef(), 'ai');
     await setDoc(settingsRef, settings);
     revalidatePath('/(app)/settings', 'page');
 }
@@ -84,7 +78,7 @@ export async function getOllamaModels(serverAddress: string): Promise<string[]> 
 
 // --- AI Actions ---
 
-export async function getSpendingTip(idToken: string, transactions: Transaction[]): Promise<string> {
+export async function getSpendingTip(transactions: Transaction[]): Promise<string> {
   try {
     const result = await generateSpendingTip({ transactions: JSON.stringify(transactions, null, 2) });
     return result.tip;
@@ -94,7 +88,7 @@ export async function getSpendingTip(idToken: string, transactions: Transaction[
   }
 }
 
-export async function getFinancialProfile(idToken: string, transactions: Transaction[]): Promise<string> {
+export async function getFinancialProfile(transactions: Transaction[]): Promise<string> {
     const ai = await getAI();
     const FinancialProfileInputSchema = z.object({
       transactions: z.string().describe('A JSON string representing an array of user transactions.'),
@@ -129,7 +123,7 @@ export async function getFinancialProfile(idToken: string, transactions: Transac
 const AnalyzeTransactionsOutputSchema = z.object({
   analysis: z.string().describe('A brief, insightful analysis of the provided transactions. Identify patterns, anomalies, or suggestions for recategorization. The output must be in markdown format and in Brazilian Portuguese.'),
 });
-export async function analyzeTransactions(idToken: string, transactions: Transaction[]): Promise<string> {
+export async function analyzeTransactions(transactions: Transaction[]): Promise<string> {
   const ai = await getAI();
   const prompt = ai.definePrompt({
     name: 'analyzeTransactionsPrompt',
@@ -151,9 +145,9 @@ Transactions:
   }
 }
 
-export async function getChatbotResponse(idToken: string, input: ChatInput) {
+export async function getChatbotResponse(input: ChatInput) {
     try {
-        const settings = await getAISettings(idToken);
+        const settings = await getAISettings();
         if ((settings.provider === 'googleai' && !settings.googleAIApiKey) ||
             (settings.provider === 'openai' && !settings.openAIApiKey)) {
             return "Por favor, configure sua chave de API na página de Configurações para usar o assistente de IA.";
@@ -170,15 +164,15 @@ export async function getChatbotResponse(idToken: string, input: ChatInput) {
 
 // --- Transaction Actions ---
 
-async function getTransactionsCollectionRef(idToken: string) {
-    const userId = await getUserId(idToken);
+async function getTransactionsCollectionRef() {
+    const userId = getUserId();
     const { db: clientDb } = getFirebase();
     return collection(clientDb, "users", userId, "transactions");
 }
 
 
-export async function getTransactions(idToken: string): Promise<Transaction[]> {
-    const transactionsCollection = await getTransactionsCollectionRef(idToken);
+export async function getTransactions(): Promise<Transaction[]> {
+    const transactionsCollection = await getTransactionsCollectionRef();
     const querySnapshot = await getDocs(transactionsCollection);
     const transactions: Transaction[] = [];
     querySnapshot.forEach((doc) => {
@@ -192,8 +186,8 @@ export async function getTransactions(idToken: string): Promise<Transaction[]> {
     return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 
-export async function addTransaction(idToken: string, transaction: Omit<Transaction, 'id'>): Promise<string> {
-    const transactionsCollection = await getTransactionsCollectionRef(idToken);
+export async function addTransaction(transaction: Omit<Transaction, 'id'>): Promise<string> {
+    const transactionsCollection = await getTransactionsCollectionRef();
     const docRef = await addDoc(transactionsCollection, {
         ...transaction,
         amount: Math.abs(transaction.amount),
@@ -206,20 +200,20 @@ export async function addTransaction(idToken: string, transaction: Omit<Transact
 
 // --- Category Actions ---
 
-async function getCategoriesDocRef(idToken: string) {
-    const userId = await getUserId(idToken);
+async function getCategoriesDocRef() {
+    const userId = getUserId();
     const { db: clientDb } = getFirebase();
     return doc(clientDb, "users", userId, "settings", "categories");
 }
 
-export async function getCategories(idToken: string): Promise<Partial<Record<TransactionCategory, string[]>>> {
-    const docRef = await getCategoriesDocRef(idToken);
+export async function getCategories(): Promise<Partial<Record<TransactionCategory, string[]>>> {
+    const docRef = await getCategoriesDocRef();
     const docSnap = await getDoc(docRef);
     if (docSnap.exists()) {
         return docSnap.data();
     } else {
         // Default categories
-        return {
+        const defaultCategories = {
             "Supermercado": ["Mercearia", "Feira", "Açougue"],
             "Transporte": ["Combustível", "Uber/99", "Metrô/Ônibus"],
             "Restaurante": ["Almoço", "Jantar", "Café"],
@@ -227,17 +221,20 @@ export async function getCategories(idToken: string): Promise<Partial<Record<Tra
             "Entretenimento": ["Cinema", "Show", "Streaming"],
             "Saúde": ["Farmácia", "Consulta"],
         };
+        // Save default categories for the new user
+        await saveCategories(defaultCategories);
+        return defaultCategories;
     }
 }
 
-export async function saveCategories(idToken: string, categories: Partial<Record<TransactionCategory, string[]>>) {
-    const docRef = await getCategoriesDocRef(idToken);
+export async function saveCategories(categories: Partial<Record<TransactionCategory, string[]>>) {
+    const docRef = await getCategoriesDocRef();
     await setDoc(docRef, categories);
     revalidatePath('/(app)/categories', 'page');
 }
 
-export async function deleteTransactionsByCategory(idToken: string, category: TransactionCategory) {
-    const transactionsCollection = await getTransactionsCollectionRef(idToken);
+export async function deleteTransactionsByCategory(category: TransactionCategory) {
+    const transactionsCollection = await getTransactionsCollectionRef();
     const q = query(transactionsCollection, where("category", "==", category));
     const querySnapshot = await getDocs(q);
     const batch = writeBatch(transactionsCollection.firestore);
@@ -250,5 +247,8 @@ export async function deleteTransactionsByCategory(idToken: string, category: Tr
 
 
 // --- Export AI flow wrappers ---
+// We re-export these from a central place to be used in client components.
 export { extractReceiptInfo, suggestCategoryForItem };
 export type { ReceiptInfoInput, ReceiptInfoOutput, SuggestCategoryInput, SuggestCategoryOutput };
+
+    

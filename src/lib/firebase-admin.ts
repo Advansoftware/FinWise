@@ -1,39 +1,39 @@
+
 'use server';
 
 import * as admin from 'firebase-admin';
-import { firebaseConfig } from './firebase';
 
 // Armazena a instância inicializada para evitar múltiplas inicializações.
-let adminInstance: { auth: admin.auth.Auth, db: admin.firestore.Firestore } | null = null;
+let adminInstance: admin.app.App | null = null;
 
 // Função para obter a instância inicializada do Firebase Admin.
 // Isso evita condições de corrida na inicialização.
-function getFirebaseAdmin() {
+function getFirebaseAdminApp(): admin.app.App {
   if (adminInstance) {
     return adminInstance;
   }
 
-  if (!admin.apps.length) {
-    try {
-      // Inicializa o SDK Admin com o projectId, que é suficiente para
-      // validar tokens de ID na maioria dos ambientes.
-      admin.initializeApp({
-        projectId: firebaseConfig.projectId,
-      });
-    } catch (error) {
-      console.error('Firebase admin initialization error:', error);
-      // Lança um erro mais descritivo para facilitar a depuração.
-      throw new Error('Failed to initialize Firebase Admin SDK. Check server logs for details.');
-    }
+  if (admin.apps.length > 0) {
+    adminInstance = admin.app();
+    return adminInstance;
   }
-
-  adminInstance = {
-    auth: admin.auth(),
-    db: admin.firestore(),
-  };
+  
+  try {
+    // A configuração é buscada automaticamente pelas variáveis de ambiente
+    // padrão do Firebase (FIREBASE_CONFIG) quando em um ambiente de servidor do Google.
+    // Para desenvolvimento local, você deve configurar as credenciais via
+    // GOOGLE_APPLICATION_CREDENTIALS.
+    adminInstance = admin.initializeApp();
+  } catch (error) {
+    console.error('Firebase admin initialization error:', error);
+    // Lança um erro mais descritivo para facilitar a depuração.
+    throw new Error('Failed to initialize Firebase Admin SDK. Check server logs or GOOGLE_APPLICATION_CREDENTIALS environment variable for details.');
+  }
 
   return adminInstance;
 }
 
 // Exporta a função em vez das instâncias diretas.
-export { getFirebaseAdmin };
+export { getFirebaseAdminApp };
+
+    

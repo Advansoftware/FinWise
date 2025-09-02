@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -37,18 +38,7 @@ interface AuthContextType {
   updateUserPassword: (password: string) => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({
-  user: null,
-  loading: true,
-  login: async () => {},
-  signup: async () => {},
-  logout: async () => {},
-  signInWithGoogle: async () => {},
-  sendPasswordReset: async () => {},
-  updateUserProfile: async () => {},
-  reauthenticate: async () => {},
-  updateUserPassword: async () => {},
-});
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -127,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!auth.currentUser || !auth.currentUser.email) throw new Error("User not authenticated or email is missing");
     const credential = EmailAuthProvider.credential(auth.currentUser.email, password);
     await reauthenticateWithCredential(auth.currentUser, credential);
-  }
+a  }
 
   const updateUserPassword = async (password: string) => {
     if (!auth.currentUser) throw new Error("User not authenticated");
@@ -157,3 +147,5 @@ export function useAuth() {
   }
   return context;
 }
+
+    

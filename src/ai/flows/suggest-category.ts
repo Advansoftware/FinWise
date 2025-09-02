@@ -1,28 +1,16 @@
+
 'use server';
 /**
  * @fileOverview An AI flow to suggest a category and subcategory for a given item name.
  *
  * - suggestCategoryForItem - A function that handles the category suggestion process.
- * - SuggestCategoryInput - The input type for the suggestCategoryForItem function.
- * - SuggestCategoryOutput - The return type for the suggestCategoryForItem function.
  */
 import {getAI} from '@/ai/genkit';
 import {z} from 'genkit';
-
-const SuggestCategoryInputSchema = z.object({
-  itemName: z.string().describe('The name of the item to be categorized.'),
-  existingCategories: z.array(z.string()).describe('A list of existing categories to choose from.'),
-});
-export type SuggestCategoryInput = z.infer<typeof SuggestCategoryInputSchema>;
-
-const SuggestCategoryOutputSchema = z.object({
-  category: z.string().describe('The suggested category for the item.'),
-  subcategory: z.string().optional().describe('The suggested subcategory for the item (can be a new one).'),
-});
-export type SuggestCategoryOutput = z.infer<typeof SuggestCategoryOutputSchema>;
+import { SuggestCategoryInputSchema, SuggestCategoryOutputSchema } from '../ai-types';
 
 
-export const suggestCategoryForItem = async (input: SuggestCategoryInput) => {
+export const suggestCategoryForItem = async (input: z.infer<typeof SuggestCategoryInputSchema>) => {
   const ai = await getAI();
   const prompt = ai.definePrompt({
     name: 'suggestCategoryPrompt',
@@ -43,5 +31,10 @@ If the item is "Gasolina", the category should be "Transporte" and subcategory "
   });
 
   const {output} = await prompt(input);
-  return output!;
+  if (!output) {
+    throw new Error("Failed to suggest category.");
+  }
+  return output;
 };
+
+    

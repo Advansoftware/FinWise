@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useTransition } from "react";
@@ -14,7 +15,6 @@ import { Button } from "@/components/ui/button";
 import { Wand2, Loader2 } from "lucide-react";
 import { Transaction } from "@/lib/types";
 import { analyzeTransactions } from "@/app/actions";
-import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "../ui/scroll-area";
 import ReactMarkdown from 'react-markdown';
@@ -27,16 +27,14 @@ export function AnalyzeTransactionsDialog({ transactions }: AnalyzeTransactionsD
     const [isOpen, setIsOpen] = useState(false);
     const [analysis, setAnalysis] = useState("");
     const [isAnalyzing, startAnalyzing] = useTransition();
-    const { user } = useAuth();
     const { toast } = useToast();
 
     const handleAnalysis = async () => {
-        if (!user || transactions.length === 0) return;
+        if (transactions.length === 0) return;
         
         startAnalyzing(async () => {
             try {
-                const idToken = await user.getIdToken();
-                const result = await analyzeTransactions(idToken, transactions);
+                const result = await analyzeTransactions(transactions);
                 setAnalysis(result);
             } catch (error) {
                 console.error("Analysis error:", error);
@@ -76,3 +74,5 @@ export function AnalyzeTransactionsDialog({ transactions }: AnalyzeTransactionsD
         </Dialog>
     )
 }
+
+    

@@ -1,12 +1,11 @@
+
 "use client";
 
-import { useState, useEffect, useTransition } from "react";
+import { useState, useEffect, useTransition, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Sparkles } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
-import { Transaction } from "@/lib/types";
-import { useAuth } from "@/hooks/use-auth";
 import { useTransactions } from "@/hooks/use-transactions";
 import { getFinancialProfile } from "@/app/actions";
 import { Separator } from "../ui/separator";
@@ -14,27 +13,23 @@ import { Separator } from "../ui/separator";
 export function FinancialProfileCard() {
   const [profile, setProfile] = useState("");
   const [isPending, startTransition] = useTransition();
-  const { user } = useAuth();
   const { allTransactions } = useTransactions();
 
-  const fetchProfile = () => {
-    if (!user || allTransactions.length === 0) return;
+  const fetchProfile = useCallback(() => {
+    if (allTransactions.length === 0) {
+      setProfile("Não há dados de transação suficientes para gerar seu perfil.");
+      return;
+    }
     startTransition(async () => {
       setProfile(""); // Clear previous profile
-      const idToken = await user.getIdToken();
-      const newProfile = await getFinancialProfile(idToken, allTransactions);
+      const newProfile = await getFinancialProfile(allTransactions);
       setProfile(newProfile);
     });
-  };
+  }, [allTransactions]);
 
   useEffect(() => {
-    if (allTransactions.length > 0) {
-        fetchProfile();
-    } else {
-        setProfile("Não há dados de transação suficientes para gerar seu perfil.");
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [allTransactions, user]);
+    fetchProfile();
+  }, [fetchProfile]);
 
   return (
     <Card className="h-full bg-card/50 backdrop-blur-sm border-primary/20">
@@ -74,3 +69,5 @@ export function FinancialProfileCard() {
     </Card>
   );
 }
+
+    

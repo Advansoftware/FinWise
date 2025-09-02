@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect, useTransition } from 'react';
@@ -10,12 +11,7 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useTransactions } from "@/hooks/use-transactions";
 import { getChatbotResponse } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/hooks/use-auth';
-
-interface Message {
-    role: 'user' | 'model';
-    content: string;
-}
+import { Message } from '@/ai/ai-types';
 
 const suggestionPrompts = [
     "Quanto gastei com Supermercado este mês?",
@@ -32,7 +28,6 @@ export function ChatAssistant() {
     const { allTransactions } = useTransactions();
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const { toast } = useToast();
-    const { user } = useAuth();
 
     useEffect(() => {
         // Scroll to bottom when new messages are added
@@ -46,15 +41,14 @@ export function ChatAssistant() {
 
 
     const handleSubmit = (prompt: string = input) => {
-        if (!prompt.trim() || !user) return;
+        if (!prompt.trim()) return;
 
         const newUserMessage: Message = { role: 'user', content: prompt };
         setMessages(prev => [...prev, newUserMessage]);
         setInput('');
 
         startTransition(async () => {
-            const idToken = await user.getIdToken();
-            const response = await getChatbotResponse(idToken, {
+            const response = await getChatbotResponse({
                 history: messages,
                 prompt: prompt,
                 transactions: allTransactions,
@@ -157,3 +151,5 @@ export function ChatAssistant() {
         </>
     );
 }
+
+    

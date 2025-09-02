@@ -1,6 +1,7 @@
+
 'use client';
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState, useTransition, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -13,7 +14,6 @@ import { AISettings } from "@/lib/types";
 import { saveAISettings, getAISettings, getOllamaModels } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, RefreshCw } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 
 const aiSettingsSchema = z.object({
@@ -43,7 +43,7 @@ export default function SettingsPage() {
     const provider = form.watch("provider");
     const ollamaAddress = form.watch("ollamaServerAddress");
 
-    const fetchOllamaModels = () => {
+    const fetchOllamaModels = useCallback(() => {
         const address = form.getValues("ollamaServerAddress");
         if (!address) {
             toast({ variant: 'destructive', title: 'Endereço do Servidor Ollama Necessário' });
@@ -68,7 +68,7 @@ export default function SettingsPage() {
                 });
             }
         });
-    }
+    }, [form, toast, startFetchingOllama]);
 
     useEffect(() => {
         const loadSettings = async () => {
@@ -77,11 +77,8 @@ export default function SettingsPage() {
                 const settings = await getAISettings();
                 form.reset(settings);
                 if (settings.provider === 'ollama' && settings.ollamaServerAddress) {
-                    // Kick off a fetch for models based on saved settings
-                    startFetchingOllama(async () => {
-                        const models = await getOllamaModels(settings.ollamaServerAddress!);
-                        setOllamaModels(models);
-                    });
+                    // Automatically fetch models if ollama is the saved provider
+                    fetchOllamaModels();
                 }
             } catch (error) {
                 console.error("Failed to load AI settings:", error);
@@ -93,8 +90,7 @@ export default function SettingsPage() {
             }
         };
         loadSettings();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user, form.reset]);
+    }, [user, form, toast, fetchOllamaModels]);
 
     const onSubmit = async (data: z.infer<typeof aiSettingsSchema>) => {
         if (!user) {
@@ -106,8 +102,10 @@ export default function SettingsPage() {
             await saveAISettings(data);
             toast({
                 title: "Configurações Salvas!",
-                description: "Suas configurações de IA foram atualizadas com sucesso.",
+                description: "Suas configurações de IA foram atualizadas com sucesso. A página será recarregada para aplicar as mudanças.",
             });
+            // Recarrega a página para garantir que a nova configuração de IA seja carregada no servidor
+            setTimeout(() => window.location.reload(), 1500); 
         } catch (error) {
             toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível salvar as configurações.' });
         } finally {
@@ -248,4 +246,22 @@ export default function SettingsPage() {
                                                 <Input type="password" placeholder="Cole sua chave de API aqui" {...field} />
                                             </FormControl>
                                             <FormMessage />
-                                            </F...
+                                            </FormItem>
+                                        )}
+                                    />
+                                </>
+                            )}
+
+                            <Button type="submit" disabled={isSaving}>
+                                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                                Salvar Configurações
+                            </Button>
+                        </form>
+                    </Form>
+                </CardContent>
+            </Card>
+        </div>
+    );
+}
+
+    

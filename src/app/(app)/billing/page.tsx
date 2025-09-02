@@ -1,11 +1,10 @@
+
 // src/app/(app)/billing/page.tsx
 'use client';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from "@/hooks/use-auth";
 import { CheckCircle2 } from "lucide-react";
-import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 
 const plans = [
@@ -17,6 +16,7 @@ const plans = [
             "Dashboard com insights básicos",
             "Criação manual de transações",
             "Gerenciamento de categorias",
+            "Análise com IA (até 10 por dia)",
         ],
         cta: "Seu Plano Atual",
         isCurrent: true,
@@ -30,6 +30,7 @@ const plans = [
             "Assistente com IA para dicas financeiras",
             "Escanear notas fiscais (OCR)",
             "Importação de extratos bancários",
+            "Análises com IA ilimitadas",
             "Suporte prioritário",
         ],
         cta: "Fazer Upgrade",
@@ -39,14 +40,8 @@ const plans = [
 
 
 export default function BillingPage() {
-    const { user, loading } = useAuth();
     
-    // Supondo que o plano do usuário venha do objeto 'user' ou de um documento do Firestore
     const currentUserPlan = 'Básico'; 
-
-    if (loading) {
-        return <BillingSkeleton />
-    }
 
     return (
         <div className="flex flex-col gap-6">
@@ -91,18 +86,4 @@ export default function BillingPage() {
     )
 }
 
-
-function BillingSkeleton() {
-    return (
-        <div className="flex flex-col gap-6">
-            <div>
-                <Skeleton className="h-10 w-64 mb-2" />
-                <Skeleton className="h-4 w-96" />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <Skeleton className="h-96" />
-                <Skeleton className="h-96" />
-            </div>
-        </div>
-    )
-}
+    

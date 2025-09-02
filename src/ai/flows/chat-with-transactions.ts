@@ -1,35 +1,17 @@
+
 'use server';
 /**
  * @fileOverview A conversational AI flow for answering questions about financial transactions.
  *
  * - chatWithTransactions - A function that handles the conversational process.
- * - ChatInput - The input type for the chat function.
- * - ChatOutput - The return type for the chat function.
  */
 
 import { getAI } from '@/ai/genkit';
 import { z } from 'genkit';
-
-const MessageSchema = z.object({
-    role: z.enum(['user', 'model']),
-    content: z.string(),
-});
-
-const ChatInputSchema = z.object({
-    history: z.array(MessageSchema).describe('The conversation history.'),
-    prompt: z.string().describe('The latest user prompt.'),
-    transactions: z.array(z.any()).describe("A JSON array of the user's financial transactions."),
-});
-export type ChatInput = z.infer<typeof ChatInputSchema>;
+import { ChatInputSchema, ChatOutputSchema } from '../ai-types';
 
 
-const ChatOutputSchema = z.object({
-    response: z.string().describe('The AI-generated response to the user.'),
-});
-export type ChatOutput = z.infer<typeof ChatOutputSchema>;
-
-
-export const chatWithTransactions = async (input: ChatInput) => {
+export const chatWithTransactions = async (input: z.infer<typeof ChatInputSchema>) => {
     const ai = await getAI();
     const prompt = ai.definePrompt({
         name: 'chatWithTransactionsPrompt',
@@ -58,5 +40,10 @@ Your answer:
     });
 
     const { output } = await prompt(input);
-    return output!;
+    if (!output) {
+      throw new Error("AI failed to provide a response.");
+    }
+    return output;
 };
+
+    
