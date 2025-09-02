@@ -1,33 +1,19 @@
 
 'use server';
 
-import { Transaction, AISettings, TransactionCategory } from '@/lib/types';
-import { getAI, clearAISettingsCache } from '@/ai/genkit';
+import { Transaction, AISettings } from '@/lib/types';
+import { getAI } from '@/ai/genkit';
 import { z } from 'zod';
 import { generateSpendingTip } from '@/ai/flows/ai-powered-spending-tips';
 import { chatWithTransactions } from '@/ai/flows/chat-with-transactions';
 import { extractReceiptInfo } from '@/ai/flows/extract-receipt-info';
 import { suggestCategoryForItem } from '@/ai/flows/suggest-category';
 import { ChatInput, ReceiptInfoInput, ReceiptInfoOutput, SuggestCategoryInput, SuggestCategoryOutput } from './ai/ai-types';
-import { getFirebase } from '@/lib/firebase-server';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { getFirebase } from "@/lib/firebase"; // Note: This will be the client SDK, but it's safe in actions.
+import { doc, getDoc } from 'firebase/firestore';
 
 
-// --- AI Settings Actions ---
-
-export async function saveAISettings(userId: string, settings: AISettings) {
-    if (!userId) {
-        throw new Error("Usuário não autenticado.");
-    }
-    const { db } = getFirebase();
-    const settingsRef = doc(db, "users", userId, "settings", "ai");
-    await setDoc(settingsRef, settings); 
-    
-    clearAISettingsCache(userId);
-};
-
-
-// This function is now only used on the server side by getAI
+// This function is now only used on the server side by getAI in genkit.ts
 export async function getAISettings(userId: string): Promise<AISettings> {
     const { db } = getFirebase();
     
@@ -45,6 +31,7 @@ export async function getAISettings(userId: string): Promise<AISettings> {
     try {
       const docSnap = await getDoc(settingsRef);
        if (docSnap.exists()) {
+        // Correctly merge: user's saved settings override the defaults.
         return { ...defaultSettings, ...docSnap.data() } as AISettings;
       }
     } catch(e) {

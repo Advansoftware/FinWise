@@ -16,7 +16,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, RefreshCw } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { getFirebase } from "@/lib/firebase";
-import { doc, getDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { clearAISettingsCache } from "@/ai/genkit";
 
 const aiSettingsSchema = z.object({
   provider: z.enum(["ollama", "googleai", "openai"]),
@@ -121,8 +122,12 @@ export default function SettingsPage() {
                 settingsToSave.openAIModel = data.openAIModel;
                 settingsToSave.openAIApiKey = data.openAIApiKey;
             }
+            
+            const { db } = getFirebase();
+            const settingsRef = doc(db, "users", user.uid, "settings", "ai");
+            await setDoc(settingsRef, settingsToSave);
 
-            await saveAISettings(user.uid, settingsToSave as AISettings);
+            clearAISettingsCache(user.uid);
 
             toast({
                 title: "Configurações Salvas!",
@@ -249,7 +254,7 @@ export default function SettingsPage() {
                                                 <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Selecione um modelo OpenAI" />
-                                                </SelectTrigger>
+                                                </Trigger>
                                                 </FormControl>
                                                 <SelectContent>
                                                     <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
