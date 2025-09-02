@@ -5,10 +5,8 @@
  *
  * - generateSpendingTip - A function that generates personalized spending tips based on user spending habits.
  */
-import { ai } from '@/ai/genkit';
 import { SpendingTipInputSchema, SpendingTipOutputSchema } from '../ai-types';
 import type { SpendingTipInput } from '../ai-types';
-import { genkit } from 'genkit';
 import { createConfiguredAI, getModelReference } from '../genkit';
 import { AISettings } from '@/lib/types';
 
