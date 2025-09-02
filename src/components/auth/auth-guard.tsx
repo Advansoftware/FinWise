@@ -8,6 +8,8 @@ import { Loader2 } from 'lucide-react';
 import { Logo } from '../logo';
 
 const PROTECTED_ROOT = '/dashboard';
+const PUBLIC_ROOT = '/';
+const LOGIN_ROOT = '/login';
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -23,21 +25,31 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     setIsChecking(true);
 
     const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/signup');
-    const isProtectedRoute = !isAuthRoute && pathname !== '/';
-
-    // If on a protected route and not logged in, redirect to login.
-    if (isProtectedRoute && !user) {
-      router.replace('/login');
-      return;
+    const isProtectedRoute = !isAuthRoute && pathname !== PUBLIC_ROOT;
+    
+    // If user is logged in
+    if (user) {
+        // and tries to access an auth route (login/signup), redirect to dashboard
+        if (isAuthRoute) {
+            router.replace(PROTECTED_ROOT);
+            return;
+        }
+        // and tries to access the landing page, redirect to dashboard
+        if (pathname === PUBLIC_ROOT) {
+            router.replace(PROTECTED_ROOT);
+            return;
+        }
+    } 
+    // If user is NOT logged in
+    else {
+        // and tries to access a protected route, redirect to login
+        if (isProtectedRoute) {
+            router.replace(LOGIN_ROOT);
+            return;
+        }
     }
 
-    // If on an auth route and logged in, redirect to the dashboard.
-    if (isAuthRoute && user) {
-      router.replace(PROTECTED_ROOT);
-      return;
-    }
-
-    // If everything is fine, stop checking and show the page.
+    // If none of the above, stop checking and show the page.
     setIsChecking(false);
 
   }, [user, loading, router, pathname]);

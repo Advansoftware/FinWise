@@ -29,15 +29,8 @@ export default function Page() {
   const { user, loading } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    // Se o estado de autenticação não estiver carregando e o usuário existir, redireciona.
-    if (!loading && user) {
-      router.push('/dashboard');
-    }
-  }, [user, loading, router]);
-  
-  // Enquanto o estado de autenticação está sendo verificado, mostra um skeleton/spinner
-  // para evitar um flash da página de login antes do redirecionamento.
+  // O AuthGuard agora lida com o redirecionamento, mas mantemos um estado de carregamento
+  // para evitar o flash da página de login antes que o AuthGuard decida.
   if (loading || user) {
     return (
       <div className="flex flex-col min-h-screen items-center justify-center">
