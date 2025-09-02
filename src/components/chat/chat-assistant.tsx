@@ -13,6 +13,7 @@ import { getChatbotResponse } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Message } from '@/ai/ai-types';
 import { useAuth } from '@/hooks/use-auth';
+import { Badge } from '../ui/badge';
 
 const suggestionPrompts = [
     "Quanto gastei com Supermercado este mês?",
@@ -102,6 +103,7 @@ export function ChatAssistant() {
                                 <div className="flex items-center gap-2">
                                     <Bot className="text-primary" />
                                     <CardTitle className="text-lg">Assistente FinWise</CardTitle>
+                                    {messages.length > 0 && <Badge variant="secondary">{messages.length}</Badge>}
                                 </div>
                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsOpen(false)}>
                                     <X className="h-4 w-4" />

@@ -8,7 +8,7 @@
 import { SuggestCategoryInputSchema, SuggestCategoryOutputSchema } from '../ai-types';
 import type { SuggestCategoryInput } from '../ai-types';
 import { createConfiguredAI, getModelReference } from '../genkit';
-import { AISettings } from '@/lib/types';
+import { AICredential } from '@/lib/types';
 
 
 const promptTemplate = `You are a personal finance assistant. Your task is to categorize a spending item.
@@ -24,9 +24,9 @@ If the item is "Maçãs", the category should be "Supermercado" and subcategory 
 If the item is "Gasolina", the category should be "Transporte" and subcategory "Combustível".
 `;
 
-export async function suggestCategoryForItem(input: SuggestCategoryInput, settings: AISettings) {
-    const configuredAI = createConfiguredAI(settings);
-    const model = getModelReference(settings);
+export async function suggestCategoryForItem(input: SuggestCategoryInput, credential: AICredential) {
+    const configuredAI = createConfiguredAI(credential);
+    const model = getModelReference(credential);
     
     const suggestCategoryPrompt = configuredAI.definePrompt({
         name: 'suggestCategoryPrompt',

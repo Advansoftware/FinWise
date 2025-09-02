@@ -3,10 +3,12 @@
  * For server actions, use the functions in actions.ts instead
  */
 
-import { AISettings } from '@/lib/types';
+import { AICredential } from '@/lib/types';
 
 // Default AI settings
-export const DEFAULT_AI_SETTINGS: AISettings = {
+export const DEFAULT_AI_CREDENTIAL: AICredential = {
+  id: 'default-fallback',
+  name: 'Default Fallback Ollama',
   provider: 'ollama',
   ollamaModel: 'llama3',
   ollamaServerAddress: 'http://127.0.0.1:11434',
@@ -15,7 +17,7 @@ export const DEFAULT_AI_SETTINGS: AISettings = {
 
 // Cache for AI settings
 interface CacheEntry {
-  settings: AISettings;
+  credential: AICredential;
   timestamp: number;
 }
 
@@ -37,19 +39,19 @@ export function clearAISettingsCache(userId?: string): void {
  * Gets AI settings for the current authenticated user (client-side only)
  * For server actions, import getAISettings from actions.ts instead
  */
-export async function getCurrentUserAISettings(): Promise<AISettings> {
+export async function getActiveAICredentialForCurrentUser(): Promise<AICredential> {
   try {
     if (typeof window === 'undefined') {
       // Server-side, return defaults
-      return DEFAULT_AI_SETTINGS;
+      return DEFAULT_AI_CREDENTIAL;
     }
 
     // Client-side logic would go here
     // For now, return defaults
-    return DEFAULT_AI_SETTINGS;
+    return DEFAULT_AI_CREDENTIAL;
   } catch (error) {
     console.error("Error getting current user AI settings:", error);
-    return DEFAULT_AI_SETTINGS;
+    return DEFAULT_AI_CREDENTIAL;
   }
 }
 
@@ -80,7 +82,7 @@ export function getCacheStats() {
       userId,
       timestamp: entry.timestamp,
       age: Date.now() - entry.timestamp,
-      provider: entry.settings.provider
+      provider: entry.credential.provider
     }))
   };
 }

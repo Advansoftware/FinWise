@@ -1,7 +1,7 @@
 
 'use server';
 
-import { Transaction, AISettings } from '@/lib/types';
+import { Transaction, AICredential } from '@/lib/types';
 import { z } from 'zod';
 import { generateSpendingTip } from '@/ai/flows/ai-powered-spending-tips';
 import { chatWithTransactions } from '@/ai/flows/chat-with-transactions';
@@ -22,7 +22,9 @@ import { createConfiguredAI, getModelReference } from '@/ai/genkit';
 import { getAdminApp } from '@/lib/firebase-admin';
 
 // Default AI settings for fallback ONLY.
-const DEFAULT_AI_SETTINGS: AISettings = {
+const DEFAULT_AI_CREDENTIAL: AICredential = {
+  id: 'default-fallback',
+  name: 'Default Fallback Ollama',
   provider: 'ollama',
   ollamaModel: 'llama3',
   ollamaServerAddress: 'http://127.0.0.1:11434',
@@ -30,10 +32,10 @@ const DEFAULT_AI_SETTINGS: AISettings = {
 };
 
 // Server action to get AI settings using Admin SDK
-export async function getAISettings(userId: string): Promise<AISettings> {
+export async function getActiveAICredential(userId: string): Promise<AICredential> {
   if (!userId) {
-    console.warn("getAISettings called without a userId. Returning default settings.");
-    return DEFAULT_AI_SETTINGS;
+    console.warn("getActiveAICredential called without a userId. Returning default settings.");
+    return DEFAULT_AI_CREDENTIAL;
   }
 
   try {
@@ -42,16 +44,22 @@ export async function getAISettings(userId: string): Promise<AISettings> {
     const docSnap = await settingsRef.get();
 
     if (docSnap.exists) {
-      // Merge saved settings with defaults to ensure all fields are present
-      return { ...DEFAULT_AI_SETTINGS, ...docSnap.data() } as AISettings;
+        const settings = docSnap.data();
+        if (settings && settings.activeCredentialId && settings.credentials) {
+            const activeCredential = settings.credentials.find((c: AICredential) => c.id === settings.activeCredentialId);
+            if (activeCredential) {
+                // Merge with defaults to ensure all fields are present
+                return { ...DEFAULT_AI_CREDENTIAL, ...activeCredential };
+            }
+        }
     }
     
-    // No settings saved for this user, return defaults
-    return DEFAULT_AI_SETTINGS;
+    // No active/valid credential found for this user, return defaults
+    return DEFAULT_AI_CREDENTIAL;
   } catch (error) {
     console.error("Error getting AI settings from Firestore with Admin SDK:", error);
     // In case of error (e.g., permissions), return defaults to avoid breaking the app
-    return DEFAULT_AI_SETTINGS;
+    return DEFAULT_AI_CREDENTIAL;
   }
 }
 
@@ -60,10 +68,10 @@ export async function getAISettings(userId: string): Promise<AISettings> {
 
 export async function getSpendingTip(transactions: Transaction[], userId: string): Promise<string> {
   try {
-    const settings = await getAISettings(userId);
+    const credential = await getActiveAICredential(userId);
     const result = await generateSpendingTip({
       transactions: JSON.stringify(transactions, null, 2)
-    }, settings);
+    }, credential);
 
     return result.tip;
   } catch (error) {
@@ -74,9 +82,9 @@ export async function getSpendingTip(transactions: Transaction[], userId: string
 
 export async function getFinancialProfile(transactions: Transaction[], userId: string): Promise<string> {
   try {
-    const settings = await getAISettings(userId);
-    const configuredAI = createConfiguredAI(settings);
-    const modelRef = getModelReference(settings);
+    const credential = await getActiveAICredential(userId);
+    const configuredAI = createConfiguredAI(credential);
+    const modelRef = getModelReference(credential);
 
     const prompt = configuredAI.definePrompt({
       name: 'financialProfilePrompt',
@@ -105,9 +113,9 @@ User's transactions:
 
 export async function analyzeTransactions(transactions: Transaction[], userId: string): Promise<string> {
   try {
-    const settings = await getAISettings(userId);
-    const configuredAI = createConfiguredAI(settings);
-    const modelRef = getModelReference(settings);
+    const credential = await getActiveAICredential(userId);
+    const configuredAI = createConfiguredAI(credential);
+    const modelRef = getModelReference(credential);
 
     const prompt = configuredAI.definePrompt({
       name: 'analyzeTransactionsPrompt',
@@ -131,8 +139,8 @@ Transactions:
 
 export async function getChatbotResponse(input: ChatInput, userId: string): Promise<string> {
   try {
-    const settings = await getAISettings(userId);
-    const result = await chatWithTransactions(input, settings);
+    const credential = await getActiveAICredential(userId);
+    const result = await chatWithTransactions(input, credential);
     return result.response;
   } catch (error) {
     console.error("Error in getChatbotResponse:", error);
@@ -145,11 +153,11 @@ export async function getChatbotResponse(input: ChatInput, userId: string): Prom
 }
 
 export async function extractReceiptInfoAction(input: ReceiptInfoInput, userId: string): Promise<ReceiptInfoOutput> {
-    const settings = await getAISettings(userId);
-    return extractReceiptInfo(input, settings);
+    const credential = await getActiveAICredential(userId);
+    return extractReceiptInfo(input, credential);
 }
 
 export async function suggestCategoryForItemAction(input: SuggestCategoryInput, userId: string): Promise<SuggestCategoryOutput> {
-    const settings = await getAISettings(userId);
-    return suggestCategoryForItem(input, settings);
+    const credential = await getActiveAICredential(userId);
+    return suggestCategoryForItem(input, credential);
 }

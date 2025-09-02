@@ -1,177 +1,116 @@
 
+// src/app/(app)/settings/page.tsx
 'use client';
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Loader2, RefreshCw } from "lucide-react";
 import { useAISettings } from "@/hooks/use-ai-settings";
 import { Skeleton } from "@/components/ui/skeleton";
+import { MoreVertical, Trash2, Edit, PlusCircle, CheckCircle, Radio, Sparkles } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
+import { AISettingsDialog } from "@/components/settings/ai-settings-dialog";
 
 export default function SettingsPage() {
     const {
-        form,
-        isSaving,
         isLoading,
-        isFetchingOllama,
-        ollamaModels,
-        provider,
-        ollamaAddress,
-        fetchOllamaModels,
-        onSubmit,
+        credentials,
+        activeCredentialId,
+        handleActivate,
+        handleDelete,
+        handleOpenDialog,
+        isDialogOpen,
+        setIsDialogOpen,
+        editingCredential
     } = useAISettings();
 
     if (isLoading) {
-        return <SettingsSkeleton />
+        return <SettingsSkeleton />;
     }
 
     return (
         <div className="flex flex-col gap-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Configurações de IA</h1>
-                <p className="text-muted-foreground">Gerencie os modelos e provedores de Inteligência Artificial.</p>
+             <AISettingsDialog isOpen={isDialogOpen} setIsOpen={setIsDialogOpen} initialData={editingCredential} />
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Configurações de IA</h1>
+                    <p className="text-muted-foreground">Gerencie suas credenciais e configurações dos provedores de IA.</p>
+                </div>
+                <Button onClick={() => handleOpenDialog(null)}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Nova Credencial
+                </Button>
             </div>
             
             <Card>
-                 <CardHeader>
-                    <CardTitle>Provedor de IA</CardTitle>
-                    <CardDescription>Escolha qual serviço de IA você deseja usar para os recursos inteligentes.</CardDescription>
+                <CardHeader>
+                    <CardTitle>Credenciais Salvas</CardTitle>
+                    <CardDescription>Gerencie suas chaves de API e configurações. A credencial ativa será usada para todos os recursos de IA.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Form {...form}>
-                        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-lg">
-                             <FormField
-                                control={form.control}
-                                name="provider"
-                                render={({ field }) => (
-                                    <FormItem>
-                                    <FormLabel>Provedor</FormLabel>
-                                    <Select onValueChange={field.onChange} value={field.value}>
-                                        <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Selecione um provedor de IA" />
-                                        </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                        <SelectItem value="ollama">Ollama (Local/Remoto)</SelectItem>
-                                        <SelectItem value="googleai">Google AI</SelectItem>
-                                        <SelectItem value="openai">OpenAI</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                    </FormItem>
-                                )}
-                                />
-                            
-                            {provider === 'ollama' && (
-                                <>
-                                 <FormField
-                                    control={form.control}
-                                    name="ollamaServerAddress"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>Endereço do Servidor Ollama</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="http://127.0.0.1:11434" {...field} />
-                                        </FormControl>
-                                        <FormDescription>A URL onde o seu servidor Ollama está acessível.</FormDescription>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                    />
-                                <FormField
-                                    control={form.control}
-                                    name="ollamaModel"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>Modelo Ollama</FormLabel>
-                                        <div className="flex gap-2">
-                                            <Select onValueChange={field.onChange} value={field.value || ''} disabled={isFetchingOllama || ollamaModels.length === 0}>
-                                                <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder={ollamaModels.length > 0 ? "Selecione um modelo" : "Nenhum modelo encontrado"} />
-                                                </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                {ollamaModels.map(model => (
-                                                    <SelectItem key={model} value={model}>{model}</SelectItem>
-                                                ))}
-                                                </SelectContent>
-                                            </Select>
-                                            <Button type="button" variant="ghost" size="icon" onClick={fetchOllamaModels} disabled={isFetchingOllama || !ollamaAddress}>
-                                                <RefreshCw className={`h-4 w-4 ${isFetchingOllama ? 'animate-spin': ''}`} />
-                                            </Button>
+                    <div className="space-y-4">
+                        {credentials.length > 0 ? credentials.map(cred => {
+                             const isActive = cred.id === activeCredentialId;
+                             return (
+                                <div key={cred.id} className={`flex items-center p-4 rounded-lg border ${isActive ? 'border-primary bg-primary/5' : ''}`}>
+                                    <div className="flex-1 space-y-1">
+                                        <div className="flex items-center gap-2">
+                                            {isActive ? <CheckCircle className="h-5 w-5 text-primary"/> : <Radio className="h-5 w-5 text-muted-foreground"/>}
+                                            <p className="font-semibold">{cred.name}</p>
+                                            <Badge variant="secondary">{cred.provider}</Badge>
                                         </div>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                                </>
-                            )}
-
-                             {provider === 'googleai' && (
-                                <FormField
-                                    control={form.control}
-                                    name="googleAIApiKey"
-                                    render={({ field }) => (
-                                        <FormItem>
-                                        <FormLabel>Chave de API - Google AI</FormLabel>
-                                        <FormControl>
-                                            <Input type="password" placeholder="Cole sua chave de API aqui" {...field} value={field.value || ''} />
-                                        </FormControl>
-                                        <FormMessage />
-                                        </FormItem>
-                                    )}
-                                />
-                            )}
-
-                            {provider === 'openai' && (
-                                <>
-                                    <FormField
-                                        control={form.control}
-                                        name="openAIModel"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                            <FormLabel>Modelo OpenAI</FormLabel>
-                                            <Select onValueChange={field.onChange} value={field.value}>
-                                                <FormControl>
-                                                <SelectTrigger>
-                                                    <SelectValue placeholder="Selecione um modelo OpenAI" />
-                                                </SelectTrigger>
-                                                </FormControl>
-                                                <SelectContent>
-                                                    <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
-                                                    <SelectItem value="gpt-4">GPT-4</SelectItem>
-                                                </SelectContent>
-                                            </Select>
-                                            <FormMessage />
-                                            </FormItem>
+                                        <p className="text-sm text-muted-foreground pl-7">
+                                            {cred.provider === 'ollama' && `Modelo: ${cred.ollamaModel} @ ${cred.ollamaServerAddress}`}
+                                            {cred.provider === 'googleai' && `Google AI (Gemini)`}
+                                            {cred.provider === 'openai' && `Modelo: ${cred.openAIModel}`}
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {!isActive && (
+                                            <Button variant="ghost" size="sm" onClick={() => handleActivate(cred.id)}>Ativar</Button>
                                         )}
-                                    />
-                                    <FormField
-                                        control={form.control}
-                                        name="openAIApiKey"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                            <FormLabel>Chave de API - OpenAI</FormLabel>
-                                            <FormControl>
-                                                <Input type="password" placeholder="Cole sua chave de API aqui" {...field} value={field.value || ''} />
-                                            </FormControl>
-                                            <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </>
-                            )}
-
-                            <Button type="submit" disabled={isSaving}>
-                                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                                Salvar Configurações
-                            </Button>
-                        </form>
-                    </Form>
+                                         <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                    <MoreVertical className="h-4 w-4"/>
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent>
+                                                 <DropdownMenuItem onClick={() => handleOpenDialog(cred)}>
+                                                    <Edit className="mr-2 h-4 w-4"/> Editar
+                                                 </DropdownMenuItem>
+                                                  <AlertDialog>
+                                                        <AlertDialogTrigger asChild>
+                                                             <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-400 focus:bg-destructive/10">
+                                                                <Trash2 className="mr-2 h-4 w-4"/>Excluir
+                                                            </DropdownMenuItem>
+                                                        </AlertDialogTrigger>
+                                                        <AlertDialogContent>
+                                                            <AlertDialogHeader>
+                                                                <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                                                                <AlertDialogDescription>
+                                                                    Esta ação não pode ser desfeita. Isso excluirá permanentemente a credencial "{cred.name}".
+                                                                </AlertDialogDescription>
+                                                            </AlertDialogHeader>
+                                                            <AlertDialogFooter>
+                                                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                                <AlertDialogAction onClick={() => handleDelete(cred.id)} className="bg-destructive hover:bg-destructive/90">Excluir</AlertDialogAction>
+                                                            </AlertDialogFooter>
+                                                        </AlertDialogContent>
+                                                    </AlertDialog>
+                                            </DropdownMenuContent>
+                                         </DropdownMenu>
+                                    </div>
+                                </div>
+                             )
+                        }) : (
+                            <div className="text-center py-12 text-muted-foreground">
+                                <Sparkles className="mx-auto h-8 w-8 mb-2" />
+                                <p>Nenhuma credencial de IA configurada.</p>
+                                <p className="text-sm">Clique em "Nova Credencial" para começar a usar os recursos inteligentes.</p>
+                            </div>
+                        )}
+                    </div>
                 </CardContent>
             </Card>
         </div>
@@ -182,29 +121,22 @@ export default function SettingsPage() {
 function SettingsSkeleton() {
     return (
         <div className="flex flex-col gap-6">
-            <div>
-                <Skeleton className="h-10 w-64 mb-2" />
-                <Skeleton className="h-4 w-96" />
+            <div className="flex justify-between items-center">
+                <div>
+                    <Skeleton className="h-10 w-64 mb-2" />
+                    <Skeleton className="h-4 w-96" />
+                </div>
+                 <Skeleton className="h-10 w-36" />
             </div>
             <Card>
                 <CardHeader>
                     <Skeleton className="h-8 w-48 mb-2" />
                     <Skeleton className="h-4 w-full" />
                 </CardHeader>
-                <CardContent className="space-y-6 max-w-lg">
-                    <div className="space-y-2">
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-10 w-full" />
-                    </div>
-                     <div className="space-y-2">
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-10 w-full" />
-                    </div>
-                     <div className="space-y-2">
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-10 w-full" />
-                    </div>
-                    <Skeleton className="h-10 w-40" />
+                <CardContent className="space-y-4">
+                   <Skeleton className="h-20 w-full" />
+                   <Skeleton className="h-20 w-full" />
+                   <Skeleton className="h-20 w-full" />
                 </CardContent>
             </Card>
         </div>

@@ -8,7 +8,7 @@
 import { SpendingTipInputSchema, SpendingTipOutputSchema } from '../ai-types';
 import type { SpendingTipInput } from '../ai-types';
 import { createConfiguredAI, getModelReference } from '../genkit';
-import { AISettings } from '@/lib/types';
+import { AICredential } from '@/lib/types';
 
 const promptTemplate = `You are a friendly and encouraging financial advisor.
 Analyze the following JSON data of a user's recent transactions and provide ONE concise, actionable, and positive tip to help them improve their spending habits.
@@ -22,9 +22,9 @@ User's transactions:
 {{{transactions}}}
 `;
 
-export async function generateSpendingTip(input: SpendingTipInput, settings: AISettings) {
-    const configuredAI = createConfiguredAI(settings);
-    const model = getModelReference(settings);
+export async function generateSpendingTip(input: SpendingTipInput, credential: AICredential) {
+    const configuredAI = createConfiguredAI(credential);
+    const model = getModelReference(credential);
     
     const prompt = configuredAI.definePrompt({
         name: 'generateSpendingTipPrompt',

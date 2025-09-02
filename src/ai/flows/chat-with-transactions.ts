@@ -3,12 +3,12 @@
 
 import { ChatInput, ChatOutputSchema, ChatInputSchema } from '@/ai/ai-types';
 import { createConfiguredAI, getModelReference } from '@/ai/genkit';
-import { AISettings } from '@/lib/types';
+import { AICredential } from '@/lib/types';
 import { ZodTypeAny } from 'zod';
 
-export async function chatWithTransactions(input: ChatInput, settings: AISettings) {
-    const configuredAI = createConfiguredAI(settings);
-    const modelRef = getModelReference(settings);
+export async function chatWithTransactions(input: ChatInput, credential: AICredential) {
+    const configuredAI = createConfiguredAI(credential);
+    const modelRef = getModelReference(credential);
 
     const chatWithTransactionsPrompt = configuredAI.definePrompt({
         name: 'chatWithTransactionsPrompt',

@@ -8,7 +8,7 @@
 import { ReceiptInfoInputSchema, ReceiptInfoOutputSchema } from '../ai-types';
 import type { ReceiptInfoInput } from '../ai-types';
 import { createConfiguredAI, getModelReference } from '../genkit';
-import { AISettings } from '@/lib/types';
+import { AICredential } from '@/lib/types';
 
 
 const promptTemplate = `You are an expert OCR system specializing in extracting information from receipts.
@@ -24,10 +24,10 @@ If the image is not a receipt, set isValid to false and leave other fields empty
 Receipt Image: {{media url=photoDataUri}}`;
 
 
-export async function extractReceiptInfo(input: ReceiptInfoInput, settings: AISettings) {
-    const configuredAI = createConfiguredAI(settings);
+export async function extractReceiptInfo(input: ReceiptInfoInput, credential: AICredential) {
+    const configuredAI = createConfiguredAI(credential);
     // Para extração de imagem, sempre usar um modelo com capacidade de visão.
-    const model = settings.provider === 'openai' ? 'openai/gpt-4-vision-preview' : 'googleai/gemini-1.5-flash-latest';
+    const model = credential.provider === 'openai' ? 'openai/gpt-4-vision-preview' : 'googleai/gemini-1.5-flash-latest';
     
     const extractReceiptInfoPrompt = configuredAI.definePrompt({
         name: 'extractReceiptInfoPrompt',

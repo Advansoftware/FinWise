@@ -17,13 +17,21 @@ export interface Category {
 }
 
 export type AIProvider = 'ollama' | 'googleai' | 'openai';
-export type OpenAIModel = 'gpt-3.5-turbo' | 'gpt-4';
+export type OpenAIModel = 'gpt-3.5-turbo' | 'gpt-4' | 'gpt-4-vision-preview';
 
-export interface AISettings {
+export interface AICredential {
+  id: string;
+  name: string; // User-defined name for the credential
   provider: AIProvider;
   ollamaModel?: string;
   ollamaServerAddress?: string;
   googleAIApiKey?: string;
   openAIModel?: OpenAIModel;
   openAIApiKey?: string;
+}
+
+// This is the shape of the entire settings object stored in Firestore
+export interface AISettings {
+  credentials: AICredential[];
+  activeCredentialId: string | null;
 }

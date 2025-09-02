@@ -6,7 +6,7 @@
 import { genkit, type Genkit } from 'genkit';
 import { ollama } from 'genkitx-ollama';
 import { openAI } from 'genkitx-openai';
-import { AISettings } from '@/lib/types';
+import { AICredential } from '@/lib/types';
 import { googleAI } from '@genkit-ai/googleai';
 
 /**
@@ -26,36 +26,36 @@ export const ai = genkit({
 /**
  * Creates appropriate plugins based on AI settings
  */
-export function createAIPlugins(settings: AISettings): any[] {
+export function createAIPlugins(credential: AICredential): any[] {
     const plugins: any[] = [];
 
-    switch (settings.provider) {
+    switch (credential.provider) {
         case 'ollama':
-            if (settings.ollamaModel) {
+            if (credential.ollamaModel) {
                 plugins.push(
                     ollama({
-                        models: [{ name: settings.ollamaModel }],
-                        serverAddress: settings.ollamaServerAddress || 'http://127.0.0.1:11434',
+                        models: [{ name: credential.ollamaModel }],
+                        serverAddress: credential.ollamaServerAddress || 'http://127.0.0.1:11434',
                     })
                 );
             }
             break;
 
         case 'googleai':
-            if (settings.googleAIApiKey) {
+            if (credential.googleAIApiKey) {
                  plugins.push(
                     googleAI({
-                        apiKey: settings.googleAIApiKey,
+                        apiKey: credential.googleAIApiKey,
                     })
                 );
             }
             break;
 
         case 'openai':
-            if (settings.openAIApiKey && settings.openAIModel) {
+            if (credential.openAIApiKey && credential.openAIModel) {
                 plugins.push(
                     openAI({
-                        apiKey: settings.openAIApiKey,
+                        apiKey: credential.openAIApiKey,
                     })
                 );
             }
@@ -78,15 +78,15 @@ export function createAIPlugins(settings: AISettings): any[] {
 /**
  * Gets the model reference based on settings
  */
-export function getModelReference(settings: AISettings): string {
-    switch (settings.provider) {
+export function getModelReference(credential: AICredential): string {
+    switch (credential.provider) {
         case 'ollama':
-            return `ollama/${settings.ollamaModel || 'llama3'}`;
+            return `ollama/${credential.ollamaModel || 'llama3'}`;
          case 'googleai':
             // Não precisa de um modelo específico, o Gemini Pro é usado por padrão
             return `googleai/gemini-1.5-flash-latest`;
         case 'openai':
-            return `openai/${settings.openAIModel || 'gpt-3.5-turbo'}`;
+            return `openai/${credential.openAIModel || 'gpt-3.5-turbo'}`;
         default:
             return 'ollama/llama3'; // fallback
     }
@@ -95,22 +95,22 @@ export function getModelReference(settings: AISettings): string {
 /**
  * Creates a configured Genkit instance with the specified settings
  */
-export function createConfiguredAI(settings: AISettings): Genkit {
-    const plugins = createAIPlugins(settings);
+export function createConfiguredAI(credential: AICredential): Genkit {
+    const plugins = createAIPlugins(credential);
     return genkit({ plugins });
 }
 
 /**
  * Validates AI settings
  */
-export function validateAISettings(settings: AISettings): boolean {
-    switch (settings.provider) {
+export function validateAISettings(credential: AICredential): boolean {
+    switch (credential.provider) {
         case 'ollama':
-            return !!settings.ollamaModel;
+            return !!credential.ollamaModel;
         case 'googleai':
-            return !!settings.googleAIApiKey;
+            return !!credential.googleAIApiKey;
         case 'openai':
-            return !!(settings.openAIApiKey && settings.openAIModel);
+            return !!(credential.openAIApiKey && credential.openAIModel);
         default:
             return false;
     }
@@ -119,14 +119,14 @@ export function validateAISettings(settings: AISettings): boolean {
 /**
  * Gets model configuration string for display/logging
  */
-export function getModelConfigString(settings: AISettings): string {
-    switch (settings.provider) {
+export function getModelConfigString(credential: AICredential): string {
+    switch (credential.provider) {
         case 'ollama':
-            return `Ollama (${settings.ollamaModel}) @ ${settings.ollamaServerAddress}`;
+            return `Ollama (${credential.ollamaModel}) @ ${credential.ollamaServerAddress}`;
         case 'googleai':
             return `Google AI (Gemini)`;
         case 'openai':
-            return `OpenAI (${settings.openAIModel})`;
+            return `OpenAI (${credential.openAIModel})`;
         default:
             return 'Unknown provider';
     }
