@@ -8,7 +8,6 @@
  */
 import {getAI} from '@/ai/genkit';
 import {z} from 'genkit';
-import { TransactionCategory } from '@/lib/types';
 
 const SuggestCategoryInputSchema = z.object({
   itemName: z.string().describe('The name of the item to be categorized.'),

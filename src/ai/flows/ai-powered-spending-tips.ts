@@ -9,12 +9,12 @@
 import { getAI } from '@/ai/genkit';
 import { z } from 'genkit';
 
-export const SpendingTipInputSchema = z.object({
+const SpendingTipInputSchema = z.object({
   transactions: z.string().describe('A JSON string representing an array of user transactions.'),
 });
 export type SpendingTipInput = z.infer<typeof SpendingTipInputSchema>;
 
-export const SpendingTipOutputSchema = z.object({
+const SpendingTipOutputSchema = z.object({
   tip: z.string().describe('A personalized, actionable spending tip.'),
 });
 export type SpendingTipOutput = z.infer<typeof SpendingTipOutputSchema>;

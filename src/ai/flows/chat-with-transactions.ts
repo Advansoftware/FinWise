@@ -8,7 +8,6 @@
  */
 
 import { getAI } from '@/ai/genkit';
-import { Transaction } from '@/lib/types';
 import { z } from 'genkit';
 
 const MessageSchema = z.object({
@@ -16,7 +15,7 @@ const MessageSchema = z.object({
     content: z.string(),
 });
 
-export const ChatInputSchema = z.object({
+const ChatInputSchema = z.object({
     history: z.array(MessageSchema).describe('The conversation history.'),
     prompt: z.string().describe('The latest user prompt.'),
     transactions: z.array(z.any()).describe("A JSON array of the user's financial transactions."),
@@ -24,7 +23,7 @@ export const ChatInputSchema = z.object({
 export type ChatInput = z.infer<typeof ChatInputSchema>;
 
 
-export const ChatOutputSchema = z.object({
+const ChatOutputSchema = z.object({
     response: z.string().describe('The AI-generated response to the user.'),
 });
 export type ChatOutput = z.infer<typeof ChatOutputSchema>;
