@@ -12,7 +12,7 @@ import {z} from 'zod';
 import { ModelReference } from 'genkit/model';
 import { AISettings, Transaction } from '@/lib/types';
 import {googleAI} from '@genkit-ai/googleai';
-import {openAI} from 'genkitx-openai';
+import {openAI} from 'genkitx-openai/openai';
 
 
 const ChatInputSchema = z.object({

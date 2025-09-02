@@ -12,7 +12,7 @@ import {z} from 'zod';
 import { ModelReference } from 'genkit/model';
 import { AISettings } from '@/lib/types';
 import {googleAI} from '@genkit-ai/googleai';
-import {openAI} from 'genkitx-openai';
+import {openAI} from 'genkitx-openai/openai';
 
 
 const SpendingTipInputSchema = z.object({

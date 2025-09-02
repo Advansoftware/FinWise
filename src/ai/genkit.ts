@@ -1,6 +1,6 @@
 import {genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
-import {openAI} from 'genkitx-openai/openai';
+import {openAI} from 'genkitx-openai';
 
 // AI plugins are configured dynamically within each flow based on settings from Firestore.
 // The initial configuration here can be minimal.
