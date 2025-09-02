@@ -223,7 +223,7 @@ export default function SettingsPage() {
                                                 <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Selecione um modelo OpenAI" />
-                                                </Trigger>
+                                                </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
                                                     <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
