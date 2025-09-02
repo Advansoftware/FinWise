@@ -49,6 +49,11 @@ export function DataTable<TData, TValue>({
           sorting,
           columnFilters
         },
+        initialState: {
+            pagination: {
+                pageSize: 8,
+            }
+        }
   });
 
   return (
@@ -63,48 +68,50 @@ export function DataTable<TData, TValue>({
           className="max-w-sm"
         />
       </div>
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => {
-                return (
-                  <TableHead key={header.id}>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </TableHead>
-                );
-              })}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                data-state={row.getIsSelected() && 'selected'}
-              >
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
-                ))}
-              </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                Nenhum resultado encontrado.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
+      <div className="overflow-auto">
+        <Table>
+            <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => {
+                    return (
+                    <TableHead key={header.id} className="p-2">
+                        {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                            )}
+                    </TableHead>
+                    );
+                })}
+                </TableRow>
+            ))}
+            </TableHeader>
+            <TableBody>
+            {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => (
+                <TableRow
+                    key={row.id}
+                    data-state={row.getIsSelected() && 'selected'}
+                >
+                    {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id} className="p-2">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                    ))}
+                </TableRow>
+                ))
+            ) : (
+                <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                    Nenhum resultado encontrado.
+                </TableCell>
+                </TableRow>
+            )}
+            </TableBody>
+        </Table>
+      </div>
        <div className="flex items-center justify-end space-x-2 p-4">
         <Button
           variant="outline"

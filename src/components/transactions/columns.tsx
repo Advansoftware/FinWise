@@ -29,14 +29,26 @@ export const columns: ColumnDef<Transaction>[] = [
     accessorKey: 'category',
     header: 'Categoria',
     cell: ({ row }) => {
-      const category = row.getValue('category') as string;
+      const category = row.original.category;
+      const subcategory = row.original.subcategory;
       return (
-        <Badge variant="outline" className="flex items-center gap-2 w-fit">
-          <CategoryIcon category={category as any} className="h-4 w-4 text-muted-foreground" />
-          <span className="capitalize">{category}</span>
-        </Badge>
+         <div className="flex flex-col gap-1">
+            <Badge variant="outline" className="flex items-center gap-2 w-fit">
+                <CategoryIcon category={category as any} className="h-4 w-4 text-muted-foreground" />
+                <span className="capitalize">{category}</span>
+            </Badge>
+            {subcategory && <Badge variant="secondary" className="w-fit">{subcategory}</Badge>}
+        </div>
       );
     },
+  },
+    {
+    accessorKey: 'quantity',
+    header: () => <div className="text-center">Qtd.</div>,
+    cell: ({ row }) => {
+        const quantity = row.getValue('quantity');
+        return <div className="text-center">{quantity ? String(quantity) : '1'}</div>
+    }
   },
   {
     accessorKey: 'date',
