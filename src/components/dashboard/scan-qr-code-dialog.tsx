@@ -214,6 +214,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                                     <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>
                                         <Upload className="mr-2 h-4 w-4" /> Enviar Imagem
                                     </Button>
+                                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                                 </div>
                             ) : (
                                 <div className="flex items-center justify-center w-full">
@@ -234,7 +235,6 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                             {isProcessing ? renderProcessingSkeleton() : renderExtractedData()}
                         </div>
                     )}
-                     <input ref={fileInputRef} id="mobile-file-input" type="file" accept="image/*" capture="environment" className="hidden" onChange={handleFileChange} />
                 </div>
 
                 <DialogFooter className="gap-2 sm:gap-0">
