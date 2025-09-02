@@ -55,6 +55,29 @@ Este projeto foi desenvolvido com o Firebase Studio e serve como um exemplo robu
 
 Este projeto é configurado para usar o Firebase. As credenciais já estão incluídas no arquivo `src/lib/firebase.ts`. Quando executado pela primeira vez, ele se conectará a um projeto Firebase provisionado.
 
+**IMPORTANTE: Configurando as Regras de Segurança do Firestore**
+
+Para que o aplicativo funcione, você **DEVE** configurar as regras de segurança do Cloud Firestore para permitir que os usuários acessem seus próprios dados.
+
+1.  Acesse o **Console do Firebase** e selecione seu projeto.
+2.  Vá para **Build > Cloud Firestore**.
+3.  Se você ainda não o fez, clique em **Criar banco de dados** e siga as instruções para ativá-lo.
+4.  Vá para a aba **Regras**.
+5.  Substitua o conteúdo existente pelas seguintes regras:
+    ```
+    rules_version = '2';
+    service cloud.firestore {
+      match /databases/{database}/documents {
+        // Permite que um usuário leia e escreva apenas em seus próprios documentos
+        match /users/{userId}/{document=**} {
+          allow read, write: if request.auth != null && request.auth.uid == userId;
+        }
+      }
+    }
+    ```
+6.  Clique em **Publicar**. Após alguns instantes, o aplicativo terá as permissões corretas.
+
+
 ### Configuração de IA (Opcional)
 
 - **Ollama**: Se você planeja usar o Ollama, certifique-se de que ele esteja instalado e em execução em sua máquina local. O aplicativo buscará automaticamente os modelos disponíveis.
