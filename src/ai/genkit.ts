@@ -25,6 +25,8 @@ async function initialize() {
   if (settings.provider === 'googleai' && settings.googleAIApiKey) {
     plugins.push(googleAI({apiKey: settings.googleAIApiKey}));
   } else if (settings.provider === 'ollama' && settings.ollamaModel) {
+    // Apenas configure o Ollama se explicitamente selecionado.
+    // Em um ambiente de produção/PWA, isso não funcionará a menos que o servidor tenha acesso.
     plugins.push(
       ollama({
         model: settings.ollamaModel,
@@ -38,11 +40,9 @@ async function initialize() {
   ) {
     plugins.push(openai({apiKey: settings.openAIApiKey}));
   } else {
-    // Default to Ollama if no provider is set, to avoid crashing on start.
-    // The UI will prompt the user to configure the AI provider.
-    plugins.push(
-      ollama({model: 'llama3', serverAddress: 'http://127.0.0.1:11434'})
-    );
+    // Se nenhum provedor estiver configurado, não adicione nenhum plugin.
+    // A UI irá guiar o usuário para a página de configurações.
+    // Isso evita que a aplicação quebre tentando contatar um localhost inexistente.
   }
 
   ai = genkit({
