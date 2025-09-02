@@ -5,15 +5,13 @@
  *
  * - extractReceiptInfo - A function that handles the receipt information extraction process.
  */
-import {ai, getPlugins} from '@/ai/genkit';
 import { ReceiptInfoInputSchema, ReceiptInfoOutputSchema } from '../ai-types';
 import type { ReceiptInfoInput } from '../ai-types';
+import { createConfiguredAI, getModelReference } from '../genkit';
+import { AISettings } from '@/lib/types';
 
-const extractReceiptInfoPrompt = ai.definePrompt({
-  name: 'extractReceiptInfoPrompt',
-  input: {schema: ReceiptInfoInputSchema},
-  output: {schema: ReceiptInfoOutputSchema},
-  prompt: `You are an expert OCR system specializing in extracting information from receipts.
+
+const promptTemplate = `You are an expert OCR system specializing in extracting information from receipts.
 You MUST reply in Brazilian Portuguese.
 Analyze the provided image and extract the following information:
 1. Determine if the image is a valid receipt.
@@ -23,23 +21,25 @@ Analyze the provided image and extract the following information:
 
 If the image is not a receipt, set isValid to false and leave other fields empty.
 
-Receipt Image: {{media url=photoDataUri}}`,
-});
+Receipt Image: {{media url=photoDataUri}}`;
 
-export const extractReceiptInfo = ai.defineFlow({
-    name: 'extractReceiptInfo',
-    inputSchema: ReceiptInfoInputSchema,
-    outputSchema: ReceiptInfoOutputSchema
-}, async (input) => {
-    const { output } = await extractReceiptInfoPrompt(input, {
-        plugins: await getPlugins(),
+
+export async function extractReceiptInfo(input: ReceiptInfoInput, settings: AISettings) {
+    const configuredAI = createConfiguredAI(settings);
+    // Para extração de imagem, sempre usar um modelo com capacidade de visão.
+    const model = settings.provider === 'openai' ? 'openai/gpt-4-vision-preview' : 'googleai/gemini-1.5-flash-latest';
+    
+    const extractReceiptInfoPrompt = configuredAI.definePrompt({
+        name: 'extractReceiptInfoPrompt',
+        input: {schema: ReceiptInfoInputSchema},
+        output: {schema: ReceiptInfoOutputSchema},
+        model: model,
+        prompt: promptTemplate,
     });
+
+    const { output } = await extractReceiptInfoPrompt(input);
     if (!output) {
         throw new Error("Failed to extract receipt info.");
     }
     return output;
-});
-
-export async function extractReceiptInfoAction(input: ReceiptInfoInput) {
-    return extractReceiptInfo(input);
 }

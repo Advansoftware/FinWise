@@ -35,6 +35,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { suggestCategoryForItemAction } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 
 export default function CategoriesPage() {
@@ -56,6 +57,7 @@ export default function CategoriesPage() {
     const [newSubcategoryName, setNewSubcategoryName] = useState("");
     const [editingCategory, setEditingCategory] = useState<TransactionCategory | null>(null);
     const { toast } = useToast();
+    const { user } = useAuth();
 
     if (isLoading) {
         return <CategoriesSkeleton />
@@ -68,11 +70,11 @@ export default function CategoriesPage() {
     };
     
     const handleAISuggestion = () => {
-        if(!itemName) return;
+        if(!itemName || !user) return;
         setSuggestion(null);
         startSuggesting(async () => {
              try {
-                const result = await suggestCategoryForItemAction({ itemName, existingCategories: categories });
+                const result = await suggestCategoryForItemAction({ itemName, existingCategories: categories }, user.uid);
                 setSuggestion(result);
             } catch (error) {
                 console.error("Error fetching AI suggestion:", error);
@@ -108,7 +110,7 @@ export default function CategoriesPage() {
                  <div className="flex gap-2 items-center">
                     <Dialog>
                         <DialogTrigger asChild>
-                            <Button variant="outline"><Wand2 className="mr-2 h-4 w-4"/>Sugerir por IA</Button>
+                            <Button variant="outline" disabled={!user}><Wand2 className="mr-2 h-4 w-4"/>Sugerir por IA</Button>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
@@ -141,7 +143,7 @@ export default function CategoriesPage() {
                     </Dialog>
                     <Dialog>
                         <DialogTrigger asChild>
-                            <Button><PlusCircle className="mr-2 h-4 w-4" /> Nova Categoria</Button>
+                            <Button disabled={!user}><PlusCircle className="mr-2 h-4 w-4" /> Nova Categoria</Button>
                         </DialogTrigger>
                          <DialogContent>
                             <DialogHeader>
@@ -244,7 +246,7 @@ export default function CategoriesPage() {
                         </CardContent>
                     </Card>
                 ))}
-                {categories.length === 0 && (
+                {categories.length === 0 && !isLoading && (
                     <Card className="md:col-span-3">
                         <CardContent className="p-8 text-center text-muted-foreground">
                            <p>Nenhuma categoria encontrada.</p>

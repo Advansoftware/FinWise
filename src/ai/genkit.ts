@@ -7,6 +7,7 @@ import { genkit, type Genkit } from 'genkit';
 import { ollama } from 'genkitx-ollama';
 import { openAI } from 'genkitx-openai';
 import { AISettings } from '@/lib/types';
+import { googleAI } from '@genkit-ai/googleai';
 
 /**
  * The global Genkit instance.
@@ -35,6 +36,16 @@ export function createAIPlugins(settings: AISettings): any[] {
                     ollama({
                         models: [{ name: settings.ollamaModel }],
                         serverAddress: settings.ollamaServerAddress || 'http://127.0.0.1:11434',
+                    })
+                );
+            }
+            break;
+
+        case 'googleai':
+            if (settings.googleAIApiKey) {
+                 plugins.push(
+                    googleAI({
+                        apiKey: settings.googleAIApiKey,
                     })
                 );
             }
@@ -71,6 +82,9 @@ export function getModelReference(settings: AISettings): string {
     switch (settings.provider) {
         case 'ollama':
             return `ollama/${settings.ollamaModel || 'llama3'}`;
+         case 'googleai':
+            // Não precisa de um modelo específico, o Gemini Pro é usado por padrão
+            return `googleai/gemini-1.5-flash-latest`;
         case 'openai':
             return `openai/${settings.openAIModel || 'gpt-3.5-turbo'}`;
         default:
@@ -81,14 +95,9 @@ export function getModelReference(settings: AISettings): string {
 /**
  * Creates a configured Genkit instance with the specified settings
  */
-export function createConfiguredAI(settings: AISettings): Genkit & { modelRef: string } {
+export function createConfiguredAI(settings: AISettings): Genkit {
     const plugins = createAIPlugins(settings);
-    const modelRef = getModelReference(settings);
-
-    const configuredAI = genkit({ plugins });
-
-    // Adiciona a referência do modelo para uso nas chamadas
-    return Object.assign(configuredAI, { modelRef });
+    return genkit({ plugins });
 }
 
 /**
@@ -98,6 +107,8 @@ export function validateAISettings(settings: AISettings): boolean {
     switch (settings.provider) {
         case 'ollama':
             return !!settings.ollamaModel;
+        case 'googleai':
+            return !!settings.googleAIApiKey;
         case 'openai':
             return !!(settings.openAIApiKey && settings.openAIModel);
         default:
@@ -112,6 +123,8 @@ export function getModelConfigString(settings: AISettings): string {
     switch (settings.provider) {
         case 'ollama':
             return `Ollama (${settings.ollamaModel}) @ ${settings.ollamaServerAddress}`;
+        case 'googleai':
+            return `Google AI (Gemini)`;
         case 'openai':
             return `OpenAI (${settings.openAIModel})`;
         default:

@@ -22,6 +22,12 @@ const aiSettingsSchema = z.object({
 
 type AISettingsForm = z.infer<typeof aiSettingsSchema>;
 
+const DEFAULT_VALUES: AISettingsForm = {
+    provider: "ollama",
+    ollamaServerAddress: "http://127.0.0.1:11434",
+    openAIModel: "gpt-3.5-turbo",
+};
+
 export function useAISettings() {
     const { toast } = useToast();
     const { user } = useAuth();
@@ -32,11 +38,7 @@ export function useAISettings() {
 
     const form = useForm<AISettingsForm>({
         resolver: zodResolver(aiSettingsSchema),
-        defaultValues: {
-            provider: "ollama",
-            ollamaServerAddress: "http://127.0.0.1:11434",
-            openAIModel: "gpt-3.5-turbo",
-        },
+        defaultValues: DEFAULT_VALUES,
     });
 
     const provider = form.watch("provider");
@@ -85,9 +87,12 @@ export function useAISettings() {
     useEffect(() => {
         const loadSettings = async () => {
             if (!user) {
+                // Se não há usuário, não há o que carregar, então para o loading.
+                // O formulário já tem os valores padrão.
                 setIsLoading(false);
                 return;
             };
+
             setIsLoading(true);
             const { db } = getFirebase();
             const settingsRef = doc(db, "users", user.uid, "settings", "ai");
@@ -97,13 +102,12 @@ export function useAISettings() {
                  if (docSnap.exists()) {
                     const settings = docSnap.data() as AISettings;
                     form.reset(settings);
-                    if (settings.provider === 'ollama' && (settings.ollamaModel || ollamaModels.length === 0)) {
-                       await fetchOllamaModels();
+                    if (settings.provider === 'ollama') {
+                       // Não busca modelos automaticamente ao carregar para evitar chamadas desnecessárias
+                       // O usuário pode clicar no botão de refresh se precisar.
                     }
                 } else {
-                    if(form.getValues("provider") === 'ollama') {
-                        await fetchOllamaModels();
-                    }
+                    // Nenhuma configuração salva, formulário permanece com os padrões
                 }
             } catch (error) {
                 console.error("Failed to load AI settings:", error);
@@ -117,7 +121,7 @@ export function useAISettings() {
             }
         };
         loadSettings();
-    }, [user, toast]); 
+    }, [user, toast, form]); 
 
     const onSubmit = async (data: AISettingsForm) => {
         if (!user) {
@@ -127,6 +131,7 @@ export function useAISettings() {
 
         setIsSaving(true);
         
+        // Garante que apenas os campos relevantes para o provedor sejam salvos
         const settingsToSave: Partial<AISettings> = { provider: data.provider };
         
         if (data.provider === 'ollama') {
@@ -142,7 +147,8 @@ export function useAISettings() {
         try {
             const { db } = getFirebase();
             const settingsRef = doc(db, "users", user.uid, "settings", "ai");
-            await setDoc(settingsRef, settingsToSave);
+            // Usar merge: true para não sobrescrever campos não relacionados
+            await setDoc(settingsRef, settingsToSave, { merge: true });
 
             toast({
                 title: "Configurações Salvas!",
@@ -157,13 +163,12 @@ export function useAISettings() {
         }
     };
     
-    // Watch for provider changes to fetch ollama models if needed
-    const watchedProvider = form.watch('provider');
+    // Efeito para buscar modelos Ollama apenas quando o usuário explicitamente seleciona Ollama
     useEffect(() => {
-        if (watchedProvider === 'ollama') {
+        if (provider === 'ollama' && form.formState.isDirty) { // Apenas se o usuário mudou o campo
             fetchOllamaModels();
         }
-    }, [watchedProvider, fetchOllamaModels]);
+    }, [provider, fetchOllamaModels, form.formState.isDirty]);
 
     return {
         form,

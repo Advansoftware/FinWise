@@ -18,6 +18,7 @@ import { analyzeTransactions } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "../ui/scroll-area";
 import ReactMarkdown from 'react-markdown';
+import { useAuth } from "@/hooks/use-auth";
 
 interface AnalyzeTransactionsDialogProps {
     transactions: Transaction[];
@@ -28,13 +29,14 @@ export function AnalyzeTransactionsDialog({ transactions }: AnalyzeTransactionsD
     const [analysis, setAnalysis] = useState("");
     const [isAnalyzing, startAnalyzing] = useTransition();
     const { toast } = useToast();
+    const { user } = useAuth();
 
     const handleAnalysis = async () => {
-        if (transactions.length === 0) return;
+        if (transactions.length === 0 || !user) return;
         
         startAnalyzing(async () => {
             try {
-                const result = await analyzeTransactions(transactions);
+                const result = await analyzeTransactions(transactions, user.uid);
                 setAnalysis(result);
             } catch (error) {
                 console.error("Analysis error:", error);
@@ -46,7 +48,7 @@ export function AnalyzeTransactionsDialog({ transactions }: AnalyzeTransactionsD
     return (
         <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if(!open) setAnalysis("")}}>
             <DialogTrigger asChild>
-                <Button variant="outline" size="sm" onClick={() => handleAnalysis()}>
+                <Button variant="outline" size="sm" onClick={() => handleAnalysis()} disabled={!user}>
                     <Wand2 className="mr-2 h-4 w-4" />
                     Analisar com IA ({transactions.length})
                 </Button>
@@ -74,5 +76,3 @@ export function AnalyzeTransactionsDialog({ transactions }: AnalyzeTransactionsD
         </Dialog>
     )
 }
-
-    

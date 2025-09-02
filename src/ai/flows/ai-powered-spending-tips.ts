@@ -5,15 +5,14 @@
  *
  * - generateSpendingTip - A function that generates personalized spending tips based on user spending habits.
  */
-import { ai, getPlugins } from '@/ai/genkit';
+import { ai } from '@/ai/genkit';
 import { SpendingTipInputSchema, SpendingTipOutputSchema } from '../ai-types';
 import type { SpendingTipInput } from '../ai-types';
+import { genkit } from 'genkit';
+import { createConfiguredAI, getModelReference } from '../genkit';
+import { AISettings } from '@/lib/types';
 
-const generateSpendingTipPrompt = ai.definePrompt({
-    name: 'generateSpendingTipPrompt',
-    input: { schema: SpendingTipInputSchema },
-    output: { schema: SpendingTipOutputSchema },
-    prompt: `You are a friendly and encouraging financial advisor.
+const promptTemplate = `You are a friendly and encouraging financial advisor.
 Analyze the following JSON data of a user's recent transactions and provide ONE concise, actionable, and positive tip to help them improve their spending habits.
 Focus on the largest spending category or a recurring pattern.
 The response should be in Brazilian Portuguese.
@@ -23,26 +22,23 @@ Example: "Percebi que a maior parte dos seus gastos foi em restaurantes. Que tal
 
 User's transactions:
 {{{transactions}}}
-`,
-});
+`;
 
-export const generateSpendingTip = ai.defineFlow(
-    {
-        name: 'generateSpendingTip',
-        inputSchema: SpendingTipInputSchema,
-        outputSchema: SpendingTipOutputSchema
-    },
-    async (input) => {
-        const { output } = await generateSpendingTipPrompt(input, {
-            plugins: await getPlugins(),
-        });
-        if (!output) {
-            throw new Error("Failed to generate spending tip.");
-        }
-        return output;
+export async function generateSpendingTip(input: SpendingTipInput, settings: AISettings) {
+    const configuredAI = createConfiguredAI(settings);
+    const model = getModelReference(settings);
+    
+    const prompt = configuredAI.definePrompt({
+        name: 'generateSpendingTipPrompt',
+        input: { schema: SpendingTipInputSchema },
+        output: { schema: SpendingTipOutputSchema },
+        model: model,
+        prompt: promptTemplate
+    });
+
+    const { output } = await prompt(input);
+    if (!output) {
+        throw new Error("Failed to generate spending tip.");
     }
-);
-
-export async function generateSpendingTipAction(input: SpendingTipInput) {
-    return generateSpendingTip(input);
+    return output;
 }

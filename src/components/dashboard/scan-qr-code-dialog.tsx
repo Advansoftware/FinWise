@@ -23,6 +23,7 @@ import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { useTransactions } from "@/hooks/use-transactions";
 import { Transaction } from "@/lib/types";
+import { useAuth } from "@/hooks/use-auth";
 
 
 export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
@@ -37,6 +38,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
     const [isProcessing, startProcessing] = useTransition();
     const [isSaving, startSaving] = useTransition();
     const { addTransaction, categories, subcategories } = useTransactions();
+    const { user } = useAuth();
 
     const resetState = () => {
         setReceiptImage(null);
@@ -110,10 +112,14 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
     };
 
     const processImage = async (imageData: string) => {
+        if (!user) {
+            toast({ variant: 'destructive', title: 'Erro de Autenticação', description: 'Você precisa estar logado.'});
+            return;
+        }
         setExtractedData(null);
         startProcessing(async () => {
             try {
-                const result = await extractReceiptInfoAction({ photoDataUri: imageData });
+                const result = await extractReceiptInfoAction({ photoDataUri: imageData }, user.uid);
                 setExtractedData(result);
                 if (!result.isValid) {
                      toast({

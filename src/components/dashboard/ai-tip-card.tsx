@@ -8,6 +8,7 @@ import { RefreshCw, Sparkles } from "lucide-react";
 import { getSpendingTip } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
 import { Transaction } from "@/lib/types";
+import { useAuth } from "@/hooks/use-auth";
 
 interface AITipCardProps {
     transactions: Transaction[];
@@ -16,22 +17,27 @@ interface AITipCardProps {
 export function AITipCard({ transactions }: AITipCardProps) {
   const [tip, setTip] = useState("");
   const [isPending, startTransition] = useTransition();
+  const { user } = useAuth();
 
   const fetchTip = useCallback(() => {
+    if (!user) return; // Não fazer nada se o usuário não estiver logado
+
     if (transactions.length === 0) {
       setTip("Não há dados de transação suficientes para gerar uma dica.");
       return;
     }
     startTransition(async () => {
       setTip(""); // Clear previous tip
-      const newTip = await getSpendingTip(transactions);
+      const newTip = await getSpendingTip(transactions, user.uid);
       setTip(newTip);
     });
-  }, [transactions]);
+  }, [transactions, user]);
 
   useEffect(() => {
-    fetchTip();
-  }, [fetchTip]);
+    if(user) { // Apenas buscar a dica se o usuário estiver logado
+      fetchTip();
+    }
+  }, [fetchTip, user]);
 
   return (
     <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
@@ -44,14 +50,14 @@ export function AITipCard({ transactions }: AITipCardProps) {
             variant="ghost"
             size="icon"
             onClick={fetchTip}
-            disabled={isPending || transactions.length === 0}
+            disabled={isPending || transactions.length === 0 || !user}
             className="text-primary/70 hover:bg-primary/10 hover:text-primary rounded-full"
         >
             <RefreshCw className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
         </Button>
       </CardHeader>
       <CardContent>
-        {isPending || (tip === "" && transactions.length > 0) ? (
+        {isPending || (tip === "" && transactions.length > 0 && user) ? (
            <div className="space-y-2 pt-2">
             <Skeleton className="h-4 w-full bg-primary/10" />
             <Skeleton className="h-4 w-4/5 bg-primary/10" />

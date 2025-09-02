@@ -1,12 +1,11 @@
 'use server';
 
 import { Transaction, AISettings } from '@/lib/types';
-import { ai, createConfiguredAI, getModelReference } from '@/ai/genkit';
 import { z } from 'zod';
-import { generateSpendingTipAction } from '@/ai/flows/ai-powered-spending-tips';
-import { chatWithTransactionsAction } from '@/ai/flows/chat-with-transactions';
-import { extractReceiptInfoAction } from '@/ai/flows/extract-receipt-info';
-import { suggestCategoryForItemAction } from '@/ai/flows/suggest-category';
+import { generateSpendingTip } from '@/ai/flows/ai-powered-spending-tips';
+import { chatWithTransactions } from '@/ai/flows/chat-with-transactions';
+import { extractReceiptInfo } from '@/ai/flows/extract-receipt-info';
+import { suggestCategoryForItem } from '@/ai/flows/suggest-category';
 import {
   ChatInput,
   ReceiptInfoInput,
@@ -20,8 +19,12 @@ import {
 } from '@/ai/ai-types';
 import { getFirebase } from "@/lib/firebase";
 import { doc, getDoc } from 'firebase/firestore';
+import { createConfiguredAI, getModelReference } from '@/ai/genkit';
+import { User } from 'firebase/auth';
+import { getAuth } from 'firebase-admin/auth';
+import { getAdminApp } from '@/lib/firebase-admin';
 
-// Default AI settings - duplicated here to avoid import issues
+// Default AI settings
 const DEFAULT_AI_SETTINGS: AISettings = {
   provider: 'ollama',
   ollamaModel: 'llama3',
@@ -32,6 +35,7 @@ const DEFAULT_AI_SETTINGS: AISettings = {
 // Server action to get AI settings
 export async function getAISettings(userId: string): Promise<AISettings> {
   if (!userId) {
+    console.warn("getAISettings called without a userId. Returning default settings.");
     return DEFAULT_AI_SETTINGS;
   }
 
@@ -47,20 +51,20 @@ export async function getAISettings(userId: string): Promise<AISettings> {
     return DEFAULT_AI_SETTINGS;
   } catch (error) {
     console.error("Error getting AI settings from Firestore:", error);
+    // Em caso de erro (ex: permissão), retorna o padrão para não quebrar a aplicação
     return DEFAULT_AI_SETTINGS;
   }
 }
 
+
 // --- AI Actions ---
 
-export async function getSpendingTip(transactions: Transaction[], userId?: string): Promise<string> {
+export async function getSpendingTip(transactions: Transaction[], userId: string): Promise<string> {
   try {
-    const settings = userId ? await getAISettings(userId) : DEFAULT_AI_SETTINGS;
-    console.log('Getting spending tip with settings:', settings);
-
-    const result = await generateSpendingTipAction({
+    const settings = await getAISettings(userId);
+    const result = await generateSpendingTip({
       transactions: JSON.stringify(transactions, null, 2)
-    });
+    }, settings);
 
     return result.tip;
   } catch (error) {
@@ -69,13 +73,11 @@ export async function getSpendingTip(transactions: Transaction[], userId?: strin
   }
 }
 
-export async function getFinancialProfile(transactions: Transaction[], userId?: string): Promise<string> {
+export async function getFinancialProfile(transactions: Transaction[], userId: string): Promise<string> {
   try {
-    const settings = userId ? await getAISettings(userId) : DEFAULT_AI_SETTINGS;
+    const settings = await getAISettings(userId);
     const configuredAI = createConfiguredAI(settings);
     const modelRef = getModelReference(settings);
-
-    console.log('Financial profile - Model reference:', modelRef);
 
     const prompt = configuredAI.definePrompt({
       name: 'financialProfilePrompt',
@@ -102,13 +104,11 @@ User's transactions:
   }
 }
 
-export async function analyzeTransactions(transactions: Transaction[], userId?: string): Promise<string> {
+export async function analyzeTransactions(transactions: Transaction[], userId: string): Promise<string> {
   try {
-    const settings = userId ? await getAISettings(userId) : DEFAULT_AI_SETTINGS;
+    const settings = await getAISettings(userId);
     const configuredAI = createConfiguredAI(settings);
     const modelRef = getModelReference(settings);
-
-    console.log('Analyze transactions - Model reference:', modelRef);
 
     const prompt = configuredAI.definePrompt({
       name: 'analyzeTransactionsPrompt',
@@ -130,25 +130,27 @@ Transactions:
   }
 }
 
-export async function getChatbotResponse(input: ChatInput, userId?: string): Promise<string> {
+export async function getChatbotResponse(input: ChatInput, userId: string): Promise<string> {
   try {
-    console.log('Getting chatbot response for user:', userId);
-    console.log('Chat input:', {
-      historyLength: input.history?.length || 0,
-      prompt: input.prompt,
-      transactionsLength: input.transactions?.length || 0
-    });
-
-    const result = await chatWithTransactionsAction(input, userId);
-    console.log('Chatbot response received:', result);
+    const settings = await getAISettings(userId);
+    const result = await chatWithTransactions(input, settings);
     return result.response;
   } catch (error) {
     console.error("Error in getChatbotResponse:", error);
+    const errorMessage = error instanceof Error ? error.message : "Erro desconhecido.";
+    if (errorMessage.includes("ECONNREFUSED")){
+       return "Não foi possível conectar ao servidor Ollama. Verifique se ele está em execução e acessível.";
+    }
     return "Desculpe, ocorreu um erro ao processar sua pergunta. Verifique suas configurações de IA e tente novamente.";
   }
 }
 
-// --- Export AI flow wrappers ---
-// We re-export these from a central place to be used in client components.
-export { extractReceiptInfoAction, suggestCategoryForItemAction };
-export type { ReceiptInfoInput, ReceiptInfoOutput, SuggestCategoryInput, SuggestCategoryOutput };
+export async function extractReceiptInfoAction(input: ReceiptInfoInput, userId: string): Promise<ReceiptInfoOutput> {
+    const settings = await getAISettings(userId);
+    return extractReceiptInfo(input, settings);
+}
+
+export async function suggestCategoryForItemAction(input: SuggestCategoryInput, userId: string): Promise<SuggestCategoryOutput> {
+    const settings = await getAISettings(userId);
+    return suggestCategoryForItem(input, settings);
+}

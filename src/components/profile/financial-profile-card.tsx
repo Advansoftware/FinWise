@@ -9,27 +9,33 @@ import { Skeleton } from "../ui/skeleton";
 import { useTransactions } from "@/hooks/use-transactions";
 import { getFinancialProfile } from "@/app/actions";
 import { Separator } from "../ui/separator";
+import { useAuth } from "@/hooks/use-auth";
 
 export function FinancialProfileCard() {
   const [profile, setProfile] = useState("");
   const [isPending, startTransition] = useTransition();
   const { allTransactions } = useTransactions();
+  const { user } = useAuth();
 
   const fetchProfile = useCallback(() => {
+    if (!user) return;
+
     if (allTransactions.length === 0) {
       setProfile("Não há dados de transação suficientes para gerar seu perfil.");
       return;
     }
     startTransition(async () => {
       setProfile(""); // Clear previous profile
-      const newProfile = await getFinancialProfile(allTransactions);
+      const newProfile = await getFinancialProfile(allTransactions, user.uid);
       setProfile(newProfile);
     });
-  }, [allTransactions]);
+  }, [allTransactions, user]);
 
   useEffect(() => {
-    fetchProfile();
-  }, [fetchProfile]);
+    if(user) {
+        fetchProfile();
+    }
+  }, [fetchProfile, user]);
 
   return (
     <Card className="h-full bg-card/50 backdrop-blur-sm border-primary/20">
@@ -43,7 +49,7 @@ export function FinancialProfileCard() {
                 variant="ghost"
                 size="icon"
                 onClick={fetchProfile}
-                disabled={isPending || allTransactions.length === 0}
+                disabled={isPending || allTransactions.length === 0 || !user}
                 className="text-primary/70 hover:bg-primary/10 hover:text-primary rounded-full h-8 w-8"
             >
                 <RefreshCw className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
@@ -53,7 +59,7 @@ export function FinancialProfileCard() {
       </CardHeader>
       <CardContent>
         <Separator className="mb-4" />
-        {isPending || (profile === "" && allTransactions.length > 0) ? (
+        {isPending || (profile === "" && allTransactions.length > 0 && user) ? (
            <div className="space-y-3 pt-2">
             <Skeleton className="h-5 w-3/5 bg-primary/10" />
             <Skeleton className="h-4 w-full bg-primary/10" />
