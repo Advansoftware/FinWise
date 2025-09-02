@@ -13,7 +13,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, Upload } from "lucide-react";
-import { useRef, useState, useEffect, useCallback } from 'react';
+import { useRef, useState, useEffect, useCallback, useTransition } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { extractReceiptInfo } from "@/ai/flows/extract-receipt-info";
@@ -21,6 +21,9 @@ import { Skeleton } from "../ui/skeleton";
 import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
+import { useTransactions } from "@/hooks/use-transactions";
+import { Transaction } from "@/lib/types";
+
 
 export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
     const { toast } = useToast();
@@ -31,12 +34,13 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [receiptImage, setReceiptImage] = useState<string | null>(null);
     const [extractedData, setExtractedData] = useState<any>(null);
-    const [isProcessing, setIsProcessing] = useState(false);
+    const [isProcessing, startProcessing] = useTransition();
+    const [isSaving, startSaving] = useTransition();
+    const { addTransaction, categories, subcategories } = useTransactions();
 
     const resetState = () => {
         setReceiptImage(null);
         setExtractedData(null);
-        setIsProcessing(false);
         stopCamera();
     };
 
@@ -106,29 +110,62 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
     };
 
     const processImage = async (imageData: string) => {
-        setIsProcessing(true);
         setExtractedData(null);
-        try {
-            const result = await extractReceiptInfo({ photoDataUri: imageData });
-            setExtractedData(result);
-            if (!result.isValid) {
-                 toast({
+        startProcessing(async () => {
+            try {
+                const result = await extractReceiptInfo({ photoDataUri: imageData });
+                setExtractedData(result);
+                if (!result.isValid) {
+                     toast({
+                        variant: 'destructive',
+                        title: 'Nota Inválida',
+                        description: 'A imagem não parece ser uma nota fiscal válida. Tente outra imagem.',
+                    });
+                }
+            } catch (error) {
+                console.error(error);
+                toast({
                     variant: 'destructive',
-                    title: 'Nota Inválida',
-                    description: 'A imagem não parece ser uma nota fiscal válida. Tente outra imagem.',
+                    title: 'Erro ao Processar',
+                    description: 'Não foi possível extrair as informações da imagem. Verifique suas configurações de IA.',
                 });
             }
-        } catch (error) {
-            console.error(error);
-            toast({
-                variant: 'destructive',
-                title: 'Erro ao Processar',
-                description: 'Não foi possível extrair as informações da imagem. Tente novamente.',
-            });
-        } finally {
-            setIsProcessing(false);
-        }
+        });
     };
+
+    const handleSaveTransactions = () => {
+        if (!extractedData || !extractedData.items || extractedData.items.length === 0) return;
+        
+        startSaving(async () => {
+            try {
+                const transactionPromises = extractedData.items.map((item: any) => {
+                     const newTransaction: Omit<Transaction, 'id'> = {
+                        item: item.item,
+                        amount: parseFloat(item.amount),
+                        date: extractedData.date ? new Date(extractedData.date).toISOString() : new Date().toISOString(),
+                        category: "Supermercado", // Categoria padrão
+                    };
+                    return addTransaction(newTransaction);
+                });
+                
+                await Promise.all(transactionPromises);
+
+                toast({
+                    title: "Sucesso!",
+                    description: `${extractedData.items.length} transações foram salvas.`,
+                });
+                handleDialogOpenChange(false);
+
+            } catch (error) {
+                 console.error(error);
+                 toast({
+                    variant: 'destructive',
+                    title: 'Erro ao Salvar',
+                    description: 'Não foi possível salvar as transações.',
+                });
+            }
+        });
+    }
     
     const renderExtractedData = () => {
         if (!extractedData) return null;
@@ -136,7 +173,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
             <div className="space-y-4">
                 <div className="flex justify-between items-center">
                     <h3 className="font-semibold">Itens Extraídos</h3>
-                     <Badge variant={extractedData.isValid ? 'default' : 'destructive'} className="bg-green-500/20 text-green-300 border-green-500/30">
+                     <Badge variant={extractedData.isValid ? 'default' : 'destructive'} className={extractedData.isValid ? "bg-green-500/20 text-green-300 border-green-500/30" : ""}>
                         {extractedData.isValid ? 'Nota Válida' : 'Nota Inválida'}
                     </Badge>
                 </div>
@@ -238,17 +275,18 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                 </div>
 
                 <DialogFooter className="gap-2 sm:gap-0">
-                     <Button variant="ghost" onClick={() => setReceiptImage(null)} disabled={!receiptImage || isProcessing}>
+                     <Button variant="ghost" onClick={() => setReceiptImage(null)} disabled={!receiptImage || isProcessing || isSaving}>
                         Tentar Novamente
                     </Button>
                     {isMobile && !receiptImage ? (
                         <Button onClick={handleCapture} disabled={hasCameraPermission === false || isProcessing}>
                             {isProcessing ? <Loader2 className="animate-spin" /> : "Capturar"}
                         </Button>
-                    ) : extractedData ? (
-                         <DialogClose asChild>
-                            <Button>Salvar Transações</Button>
-                        </DialogClose>
+                    ) : extractedData?.isValid ? (
+                         <Button onClick={handleSaveTransactions} disabled={isSaving || isProcessing}>
+                            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                            Salvar Transações
+                        </Button>
                     ) : null}
                 </DialogFooter>
             </DialogContent>

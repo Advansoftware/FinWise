@@ -7,9 +7,10 @@ import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Bot, Send, Sparkles, X, Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useTransactions } from "@/hooks/use-transactions.tsx";
+import { useTransactions } from "@/hooks/use-transactions";
 import { getChatbotResponse } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/hooks/use-auth';
 
 interface Message {
     role: 'user' | 'model';
@@ -31,6 +32,7 @@ export function ChatAssistant() {
     const { allTransactions } = useTransactions();
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const { toast } = useToast();
+    const { user } = useAuth();
 
     useEffect(() => {
         // Scroll to bottom when new messages are added
@@ -44,14 +46,15 @@ export function ChatAssistant() {
 
 
     const handleSubmit = (prompt: string = input) => {
-        if (!prompt.trim()) return;
+        if (!prompt.trim() || !user) return;
 
         const newUserMessage: Message = { role: 'user', content: prompt };
         setMessages(prev => [...prev, newUserMessage]);
         setInput('');
 
         startTransition(async () => {
-            const response = await getChatbotResponse({
+            const idToken = await user.getIdToken();
+            const response = await getChatbotResponse(idToken, {
                 history: messages,
                 prompt: prompt,
                 transactions: allTransactions,

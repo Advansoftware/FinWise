@@ -11,18 +11,29 @@ import { CategoryIcon } from '../icons';
 
 export const columns: ColumnDef<Transaction>[] = [
   {
-    accessorKey: 'item',
+    accessorKey: 'date',
     header: ({ column }) => {
       return (
         <Button
           variant="ghost"
+          size="sm"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+          className="-ml-4"
         >
-          Item
-          <ArrowUpDown className="ml-2 h-4 w-4" />
+          Data
+          <ArrowUpDown className="ml-2 h-3 w-3" />
         </Button>
       );
     },
+    cell: ({ row }) => {
+      const date = new Date(row.getValue('date'));
+      return <div className="text-left text-xs whitespace-nowrap">{format(date, 'dd/MM/yy', { locale: ptBR })}</div>;
+    },
+    size: 50,
+  },
+  {
+    accessorKey: 'item',
+    header: 'Item',
     cell: ({ row }) => <div className="font-medium">{row.getValue('item')}</div>,
   },
   {
@@ -30,43 +41,32 @@ export const columns: ColumnDef<Transaction>[] = [
     header: 'Categoria',
     cell: ({ row }) => {
       const category = row.original.category;
-      const subcategory = row.original.subcategory;
       return (
-         <div className="flex flex-col gap-1">
-            <Badge variant="outline" className="flex items-center gap-2 w-fit">
-                <CategoryIcon category={category as any} className="h-4 w-4 text-muted-foreground" />
-                <span className="capitalize">{category}</span>
-            </Badge>
-            {subcategory && <Badge variant="secondary" className="w-fit">{subcategory}</Badge>}
-        </div>
+         <Badge variant="outline" className="flex items-center justify-center gap-1 w-fit">
+            <CategoryIcon category={category as any} className="h-3 w-3 text-muted-foreground" />
+            <span className="capitalize">{category}</span>
+        </Badge>
       );
     },
+    size: 100,
   },
-    {
+  {
+    accessorKey: 'subcategory',
+    header: 'Subcategoria',
+    cell: ({ row }) => {
+      const subcategory = row.original.subcategory;
+      return subcategory ? <Badge variant="secondary" className="w-fit">{subcategory}</Badge> : null
+    },
+    size: 100,
+  },
+  {
     accessorKey: 'quantity',
     header: () => <div className="text-center">Qtd.</div>,
     cell: ({ row }) => {
         const quantity = row.getValue('quantity');
         return <div className="text-center">{quantity ? String(quantity) : '1'}</div>
-    }
-  },
-  {
-    accessorKey: 'date',
-    header: ({ column }) => {
-      return (
-        <Button
-          variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-        >
-          Data
-          <ArrowUpDown className="ml-2 h-4 w-4" />
-        </Button>
-      );
     },
-    cell: ({ row }) => {
-      const date = new Date(row.getValue('date'));
-      return <div className="text-left">{format(date, 'dd/MM/yyyy', { locale: ptBR })}</div>;
-    },
+    size: 20,
   },
   {
     accessorKey: 'amount',
@@ -75,10 +75,12 @@ export const columns: ColumnDef<Transaction>[] = [
         <div className="text-right">
             <Button
                 variant="ghost"
+                size="sm"
                 onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+                className="-mr-4"
                 >
                 Valor
-                <ArrowUpDown className="ml-2 h-4 w-4" />
+                <ArrowUpDown className="ml-2 h-3 w-3" />
             </Button>
         </div>
       );
@@ -90,7 +92,8 @@ export const columns: ColumnDef<Transaction>[] = [
         currency: 'BRL',
       }).format(amount);
 
-      return <div className="text-right font-medium text-red-400">{formatted}</div>;
+      return <div className="text-right font-medium text-red-400 whitespace-nowrap">{formatted}</div>;
     },
+    size: 50,
   },
 ];

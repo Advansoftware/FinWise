@@ -5,8 +5,11 @@ import { useState, useMemo, useEffect, useCallback, createContext, useContext, R
 import { DateRange } from "react-day-picker";
 import { subDays } from "date-fns";
 import { Transaction, TransactionCategory } from "@/lib/types";
-import { getTransactions, addTransaction as addTransactionAction } from "@/app/actions";
+import { getTransactions, addTransaction as addTransactionAction, getCategories, saveCategories, deleteTransactionsByCategory } from "@/app/actions";
 import { useAuth } from "./use-auth"; 
+import { useToast } from "./use-toast";
+
+type CategoryMap = Partial<Record<TransactionCategory, string[]>>;
 
 interface TransactionsContextType {
   allTransactions: Transaction[];
@@ -16,21 +19,27 @@ interface TransactionsContextType {
   dateRange: DateRange | undefined;
   setDateRange: (range: DateRange | undefined) => void;
   categories: TransactionCategory[];
-  subcategories: Partial<Record<TransactionCategory, string[]>>;
+  subcategories: CategoryMap;
   selectedCategory: string;
   handleCategoryChange: (category: string) => void;
   availableSubcategories: string[];
   selectedSubcategory: string;
   setSelectedSubcategory: (subcategory: string) => void;
-  refreshTransactions: () => Promise<void>;
+  refreshAllData: () => Promise<void>;
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
+  addCategory: (categoryName: TransactionCategory) => Promise<void>;
+  deleteCategory: (categoryName: TransactionCategory) => Promise<void>;
+  addSubcategory: (categoryName: TransactionCategory, subcategoryName: string) => Promise<void>;
+  deleteSubcategory: (categoryName: TransactionCategory, subcategoryName: string) => Promise<void>;
 }
 
 const TransactionsContext = createContext<TransactionsContextType | undefined>(undefined);
 
 export function TransactionsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
+  const { toast } = useToast();
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
+  const [categoryMap, setCategoryMap] = useState<CategoryMap>({});
   const [isLoading, setIsLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: subDays(new Date(), 29),
@@ -39,9 +48,10 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('all');
   
-  const loadTransactions = useCallback(async () => {
+  const loadData = useCallback(async () => {
     if (!user) {
         setAllTransactions([]);
+        setCategoryMap({});
         setIsLoading(false);
         return;
     };
@@ -49,51 +59,102 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     try {
       const idToken = await user.getIdToken();
-      const transactions = await getTransactions(idToken);
+      const [transactions, categories] = await Promise.all([
+        getTransactions(idToken),
+        getCategories(idToken)
+      ]);
       setAllTransactions(transactions);
+      setCategoryMap(categories);
     } catch (error) {
-      console.error("Failed to fetch transactions:", error);
+      console.error("Failed to fetch data:", error);
       setAllTransactions([]);
+      setCategoryMap({});
+       toast({
+        variant: "destructive",
+        title: "Erro ao carregar dados",
+        description: "Não foi possível buscar suas informações. Tente novamente mais tarde.",
+      });
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user, toast]);
 
   useEffect(() => {
-    loadTransactions();
-  }, [loadTransactions]);
+    loadData();
+  }, [loadData]);
   
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     if(!user) throw new Error("User not authenticated");
     const idToken = await user.getIdToken();
     await addTransactionAction(idToken, transaction);
-    await loadTransactions();
+    await loadData();
   }
 
   const { categories, subcategories } = useMemo(() => {
-    const categoriesSet = new Set<TransactionCategory>();
-    const subcategoriesMap: Partial<Record<TransactionCategory, Set<string>>> = {};
-
-    allTransactions.forEach(t => {
-      categoriesSet.add(t.category);
-      if (t.subcategory) {
-        if (!subcategoriesMap[t.category]) {
-          subcategoriesMap[t.category] = new Set();
-        }
-        subcategoriesMap[t.category]!.add(t.subcategory);
-      }
-    });
-
-    const subcategoriesAsArray: Partial<Record<TransactionCategory, string[]>> = {};
-    for (const cat in subcategoriesMap) {
-      subcategoriesAsArray[cat as TransactionCategory] = Array.from(subcategoriesMap[cat as TransactionCategory]!);
-    }
-
+    const categoryNames = Object.keys(categoryMap) as TransactionCategory[];
     return {
-      categories: Array.from(categoriesSet).sort(),
-      subcategories: subcategoriesAsArray
+      categories: categoryNames.sort(),
+      subcategories: categoryMap
     };
-  }, [allTransactions]);
+  }, [categoryMap]);
+  
+  // --- Category Management ---
+  const addCategory = async (categoryName: TransactionCategory) => {
+    if(!user) return;
+    if (categories.includes(categoryName)) {
+      toast({ variant: "destructive", title: "Categoria já existe" });
+      return;
+    }
+    const newCategoryMap = { ...categoryMap, [categoryName]: [] };
+    const idToken = await user.getIdToken();
+    await saveCategories(idToken, newCategoryMap);
+    setCategoryMap(newCategoryMap);
+  };
+
+  const deleteCategory = async (categoryName: TransactionCategory) => {
+     if(!user) return;
+     const newCategoryMap = { ...categoryMap };
+     delete newCategoryMap[categoryName];
+     const idToken = await user.getIdToken();
+     await Promise.all([
+       saveCategories(idToken, newCategoryMap),
+       // Optional: delete transactions of this category
+       // deleteTransactionsByCategory(idToken, categoryName) 
+     ]);
+     setCategoryMap(newCategoryMap);
+     if (selectedCategory === categoryName) {
+       setSelectedCategory('all');
+     }
+  };
+
+  const addSubcategory = async (categoryName: TransactionCategory, subcategoryName: string) => {
+    if(!user) return;
+    const subs = categoryMap[categoryName] || [];
+    if (subs.includes(subcategoryName)) {
+       toast({ variant: "destructive", title: "Subcategoria já existe" });
+       return;
+    }
+    const newCategoryMap = { 
+      ...categoryMap, 
+      [categoryName]: [...subs, subcategoryName].sort() 
+    };
+    const idToken = await user.getIdToken();
+    await saveCategories(idToken, newCategoryMap);
+    setCategoryMap(newCategoryMap);
+  }
+
+  const deleteSubcategory = async (categoryName: TransactionCategory, subcategoryName: string) => {
+    if(!user) return;
+    const subs = categoryMap[categoryName] || [];
+    const newCategoryMap = {
+      ...categoryMap,
+      [categoryName]: subs.filter(s => s !== subcategoryName)
+    };
+    const idToken = await user.getIdToken();
+    await saveCategories(idToken, newCategoryMap);
+    setCategoryMap(newCategoryMap);
+  }
+
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
@@ -152,8 +213,12 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     availableSubcategories,
     selectedSubcategory,
     setSelectedSubcategory,
-    refreshTransactions: loadTransactions,
-    addTransaction
+    refreshAllData: loadData,
+    addTransaction,
+    addCategory,
+    deleteCategory,
+    addSubcategory,
+    deleteSubcategory,
   };
 
   return (

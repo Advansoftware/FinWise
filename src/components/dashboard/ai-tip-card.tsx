@@ -7,6 +7,7 @@ import { RefreshCw, Sparkles } from "lucide-react";
 import { getSpendingTip } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
 import { Transaction } from "@/lib/types";
+import { useAuth } from "@/hooks/use-auth";
 
 interface AITipCardProps {
     transactions: Transaction[];
@@ -15,11 +16,14 @@ interface AITipCardProps {
 export function AITipCard({ transactions }: AITipCardProps) {
   const [tip, setTip] = useState("");
   const [isPending, startTransition] = useTransition();
+  const { user } = useAuth();
 
   const fetchTip = () => {
+    if (!user) return;
     startTransition(async () => {
       setTip(""); // Clear previous tip
-      const newTip = await getSpendingTip(transactions);
+      const idToken = await user.getIdToken();
+      const newTip = await getSpendingTip(idToken, transactions);
       setTip(newTip);
     });
   };
@@ -31,7 +35,7 @@ export function AITipCard({ transactions }: AITipCardProps) {
         setTip("Não há dados de transação suficientes para gerar uma dica.");
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transactions]);
+  }, [transactions, user]);
 
   return (
     <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
