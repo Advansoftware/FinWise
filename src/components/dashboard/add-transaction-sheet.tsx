@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Sheet,
   SheetContent,
@@ -9,7 +9,6 @@ import {
   SheetTitle,
   SheetDescription,
   SheetFooter,
-  SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -22,8 +21,6 @@ import { SingleDatePicker } from "../single-date-picker";
 import { useTransactions } from "@/hooks/use-transactions.tsx";
 
 
-const categories: TransactionCategory[] = ["Supermercado", "Transporte", "Entretenimento", "Contas", "Restaurante", "Saúde"];
-
 export function AddTransactionSheet({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [item, setItem] = useState('');
@@ -33,8 +30,9 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
   const [category, setCategory] = useState<TransactionCategory | ''>('');
   const [subcategory, setSubcategory] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
   const { toast } = useToast();
-  const { addTransaction } = useTransactions();
+  const { addTransaction, categories, subcategories } = useTransactions();
 
   const resetForm = () => {
     setItem('');
@@ -44,6 +42,16 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
     setCategory('');
     setSubcategory('');
   };
+  
+  const handleCategoryChange = (value: TransactionCategory) => {
+    setCategory(value);
+    setSubcategory(''); // Reset subcategory when category changes
+  }
+  
+  const availableSubcategories = useMemo(() => {
+      if (!category) return [];
+      return subcategories[category] || [];
+  }, [category, subcategories]);
 
   const handleSubmit = async () => {
     if (!item || !amount || !date || !category) {
@@ -89,7 +97,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetTrigger asChild onClick={() => setIsOpen(true)}>{children}</SheetTrigger>
+      <SheetTrigger asChild>{children}</SheetTrigger>
       <SheetContent>
         <SheetHeader>
           <SheetTitle>Adicionar Nova Transação</SheetTitle>
@@ -128,7 +136,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
             <Label htmlFor="category" className="text-right">
               Categoria
             </Label>
-             <Select value={category} onValueChange={(value) => setCategory(value as TransactionCategory)}>
+             <Select value={category} onValueChange={(value) => handleCategoryChange(value as TransactionCategory)}>
               <SelectTrigger className="col-span-3">
                 <SelectValue placeholder="Selecione uma categoria" />
               </SelectTrigger>
@@ -143,7 +151,16 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
             <Label htmlFor="subcategory" className="text-right">
               Subcategoria
             </Label>
-            <Input id="subcategory" placeholder="ex: Bebidas (Opcional)" className="col-span-3" value={subcategory} onChange={(e) => setSubcategory(e.target.value)} />
+             <Select value={subcategory} onValueChange={setSubcategory} disabled={!category || availableSubcategories.length === 0}>
+                <SelectTrigger className="col-span-3">
+                    <SelectValue placeholder={availableSubcategories.length > 0 ? "Selecione uma subcategoria" : "Nenhuma subcategoria"} />
+                </SelectTrigger>
+                <SelectContent>
+                    {availableSubcategories.map(sub => (
+                        <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                    ))}
+                </SelectContent>
+             </Select>
           </div>
         </div>
         <SheetFooter>
