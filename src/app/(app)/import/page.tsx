@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Transaction } from '@/lib/types';
 import { useTransactions } from "@/hooks/use-transactions";
 import Papa from 'papaparse';
-import { toJs } from 'ofx-js';
+import { default as toJs } from 'ofx-js';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { format } from 'date-fns';
