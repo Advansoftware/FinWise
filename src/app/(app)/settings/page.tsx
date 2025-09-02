@@ -173,7 +173,7 @@ export default function SettingsPage() {
                                         <FormItem>
                                         <FormLabel>Modelo Ollama</FormLabel>
                                         <div className="flex gap-2">
-                                            <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value} disabled={isFetchingOllama || ollamaModels.length === 0}>
+                                            <Select onValueChange={field.onChange} value={field.value} disabled={isFetchingOllama || ollamaModels.length === 0}>
                                                 <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder={ollamaModels.length > 0 ? "Selecione um modelo" : "Nenhum modelo encontrado"} />
