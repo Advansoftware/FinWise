@@ -1,3 +1,4 @@
+
 'use server';
 
 import { Transaction, AISettings, TransactionCategory } from '@/lib/types';
@@ -8,14 +9,26 @@ import { chatWithTransactions } from '@/ai/flows/chat-with-transactions';
 import { extractReceiptInfo } from '@/ai/flows/extract-receipt-info';
 import { suggestCategoryForItem } from '@/ai/flows/suggest-category';
 import { ChatInput, ReceiptInfoInput, ReceiptInfoOutput, SuggestCategoryInput, SuggestCategoryOutput } from './ai/ai-types';
+import { getFirebase } from '@/lib/firebase-server';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 
 
 // --- AI Settings Actions ---
 
+export async function saveAISettings(userId: string, settings: AISettings) {
+    if (!userId) {
+        throw new Error("Usuário não autenticado.");
+    }
+    const { db } = getFirebase();
+    const settingsRef = doc(db, "users", userId, "settings", "ai");
+    await setDoc(settingsRef, settings); 
+    
+    clearAISettingsCache(userId);
+};
+
+
 // This function is now only used on the server side by getAI
 export async function getAISettings(userId: string): Promise<AISettings> {
-    const { getFirestore, doc, getDoc } = await import('firebase/firestore');
-    const { getFirebase } = await import('@/lib/firebase-server');
     const { db } = getFirebase();
     
     const defaultSettings: AISettings = { 

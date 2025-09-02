@@ -11,13 +11,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AISettings } from "@/lib/types";
-import { getOllamaModels } from "@/app/actions";
+import { getOllamaModels, saveAISettings } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, RefreshCw } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { getFirebase } from "@/lib/firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { clearAISettingsCache } from "@/ai/genkit";
+import { doc, getDoc } from "firebase/firestore";
 
 const aiSettingsSchema = z.object({
   provider: z.enum(["ollama", "googleai", "openai"]),
@@ -100,17 +99,6 @@ export default function SettingsPage() {
         loadSettings();
     }, [user, form, toast, fetchOllamaModels]);
 
-    const saveAISettings = async (userId: string, settings: AISettings) => {
-        if (!userId) {
-            throw new Error("Usuário não autenticado.");
-        }
-        const { db } = getFirebase();
-        const settingsRef = doc(db, "users", userId, "settings", "ai");
-        await setDoc(settingsRef, settings); 
-        
-        clearAISettingsCache(userId);
-    };
-
 
     const onSubmit = async (data: z.infer<typeof aiSettingsSchema>) => {
         if (!user) {
@@ -119,6 +107,7 @@ export default function SettingsPage() {
         }
         setIsSaving(true);
         try {
+            // Limpa o objeto de configurações para salvar apenas os dados relevantes
             const settingsToSave: Partial<AISettings> = {
                 provider: data.provider,
             };
