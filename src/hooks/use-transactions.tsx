@@ -5,9 +5,10 @@ import { useState, useMemo, useEffect, useCallback, createContext, useContext, R
 import { DateRange } from "react-day-picker";
 import { subDays } from "date-fns";
 import { Transaction, TransactionCategory } from "@/lib/types";
-import { getTransactions, addTransaction as addTransactionAction, getCategories, saveCategories, deleteTransactionsByCategory } from "@/app/actions";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
+import { getFirebase } from "@/lib/firebase";
+import { collection, getDocs, doc, getDoc, setDoc, addDoc, Timestamp, query, where, writeBatch, deleteDoc } from "firebase/firestore";
 import { FirebaseError } from "firebase/app";
 
 type CategoryMap = Partial<Record<TransactionCategory, string[]>>;
@@ -55,6 +56,43 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
         return;
     };
     setIsLoading(true);
+
+    const { db } = getFirebase();
+    const getTransactions = async (userId: string) => {
+        const transactionsCollection = collection(db, "users", userId, "transactions");
+        const querySnapshot = await getDocs(transactionsCollection);
+        const transactions: Transaction[] = [];
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            transactions.push({ 
+                id: doc.id, 
+                ...data,
+                date: (data.date as Timestamp).toDate().toISOString() 
+            } as Transaction);
+        });
+        return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    }
+
+    const getCategories = async (userId: string) => {
+        const docRef = doc(db, "users", userId, "settings", "categories");
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            return docSnap.data() as Partial<Record<TransactionCategory, string[]>>;
+        } else {
+            const defaultCategories = {
+                "Supermercado": ["Mercearia", "Feira", "Açougue"],
+                "Transporte": ["Combustível", "Uber/99", "Metrô/Ônibus"],
+                "Restaurante": ["Almoço", "Jantar", "Café"],
+                "Contas": ["Aluguel", "Luz", "Água", "Internet"],
+                "Entretenimento": ["Cinema", "Show", "Streaming"],
+                "Saúde": ["Farmácia", "Consulta"],
+            };
+            await setDoc(docRef, defaultCategories);
+            return defaultCategories;
+        }
+    }
+
+
     try {
       const [transactions, categories] = await Promise.all([
         getTransactions(user.uid),
@@ -89,7 +127,13 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     if (!user) throw new Error("User not authenticated");
-    await addTransactionAction(user.uid, transaction);
+    const { db } = getFirebase();
+    const transactionsCollection = collection(db, "users", user.uid, "transactions");
+    await addDoc(transactionsCollection, {
+        ...transaction,
+        amount: Math.abs(transaction.amount),
+        date: new Date(transaction.date)
+    });
     await refreshAllData();
   }
 
@@ -101,6 +145,12 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     };
   }, [categoryMap]);
   
+  const saveCategories = async (userId: string, categories: CategoryMap) => {
+      const { db } = getFirebase();
+      const docRef = doc(db, "users", userId, "settings", "categories");
+      await setDoc(docRef, categories);
+  };
+
   // --- Category Management ---
   const addCategory = async (categoryName: TransactionCategory) => {
     if (!user) throw new Error("User not authenticated");
@@ -117,11 +167,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     if (!user) throw new Error("User not authenticated");
      const newCategoryMap = { ...categoryMap };
      delete newCategoryMap[categoryName];
-     await Promise.all([
-       saveCategories(user.uid, newCategoryMap),
-       // Optional: delete transactions of this category
-       // deleteTransactionsByCategory(user.uid, categoryName) 
-     ]);
+     await saveCategories(user.uid, newCategoryMap);
      await refreshAllData();
      if (selectedCategory === categoryName) {
        setSelectedCategory('all');

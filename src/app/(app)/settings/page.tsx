@@ -11,10 +11,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AISettings } from "@/lib/types";
-import { saveAISettings, getAISettings, getOllamaModels } from "@/app/actions";
+import { getOllamaModels } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, RefreshCw } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { getFirebase } from "@/lib/firebase";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { clearAISettingsCache } from "@/ai/genkit";
 
 const aiSettingsSchema = z.object({
   provider: z.enum(["ollama", "googleai", "openai"]),
@@ -73,11 +76,17 @@ export default function SettingsPage() {
     useEffect(() => {
         const loadSettings = async () => {
             if (!user) return;
+            const { db } = getFirebase();
+            const settingsRef = doc(db, "users", user.uid, "settings", "ai");
+
             try {
-                const settings = await getAISettings(user.uid);
-                form.reset(settings);
-                if (settings.provider === 'ollama' && settings.ollamaServerAddress) {
-                    fetchOllamaModels();
+                const docSnap = await getDoc(settingsRef);
+                 if (docSnap.exists()) {
+                    const settings = docSnap.data() as AISettings;
+                    form.reset(settings);
+                    if (settings.provider === 'ollama' && settings.ollamaServerAddress) {
+                        fetchOllamaModels();
+                    }
                 }
             } catch (error) {
                 console.error("Failed to load AI settings:", error);
@@ -91,6 +100,18 @@ export default function SettingsPage() {
         loadSettings();
     }, [user, form, toast, fetchOllamaModels]);
 
+    const saveAISettings = async (userId: string, settings: AISettings) => {
+        if (!userId) {
+            throw new Error("Usuário não autenticado.");
+        }
+        const { db } = getFirebase();
+        const settingsRef = doc(db, "users", userId, "settings", "ai");
+        await setDoc(settingsRef, settings); 
+        
+        clearAISettingsCache(userId);
+    };
+
+
     const onSubmit = async (data: z.infer<typeof aiSettingsSchema>) => {
         if (!user) {
             toast({ variant: 'destructive', title: 'Erro', description: 'Você precisa estar logado para salvar as configurações.' });
@@ -98,7 +119,6 @@ export default function SettingsPage() {
         }
         setIsSaving(true);
         try {
-            // Clean up the settings object to only include relevant fields for the selected provider
             const settingsToSave: Partial<AISettings> = {
                 provider: data.provider,
             };

@@ -1,9 +1,6 @@
-
 'use server';
 
 import { Transaction, AISettings, TransactionCategory } from '@/lib/types';
-import { getFirebase as getFirebaseAdmin } from '@/lib/firebase-server';
-import { revalidatePath } from 'next/cache';
 import { getAI, clearAISettingsCache } from '@/ai/genkit';
 import { z } from 'zod';
 import { generateSpendingTip } from '@/ai/flows/ai-powered-spending-tips';
@@ -11,19 +8,16 @@ import { chatWithTransactions } from '@/ai/flows/chat-with-transactions';
 import { extractReceiptInfo } from '@/ai/flows/extract-receipt-info';
 import { suggestCategoryForItem } from '@/ai/flows/suggest-category';
 import { ChatInput, ReceiptInfoInput, ReceiptInfoOutput, SuggestCategoryInput, SuggestCategoryOutput } from './ai/ai-types';
-import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, Timestamp, query, where, writeBatch } from 'firebase/firestore';
-
-
-// --- Firebase Server Instance ---
-const getDb = () => {
-    const { db } = getFirebaseAdmin();
-    return db;
-};
 
 
 // --- AI Settings Actions ---
 
+// This function is now only used on the server side by getAI
 export async function getAISettings(userId: string): Promise<AISettings> {
+    const { getFirestore, doc, getDoc } = await import('firebase/firestore');
+    const { getFirebase } = await import('@/lib/firebase-server');
+    const { db } = getFirebase();
+    
     const defaultSettings: AISettings = { 
         provider: 'ollama', 
         ollamaModel: 'llama3', 
@@ -33,7 +27,6 @@ export async function getAISettings(userId: string): Promise<AISettings> {
     
     if (!userId) return defaultSettings;
     
-    const db = getDb();
     const settingsRef = doc(db, "users", userId, "settings", "ai");
 
     try {
@@ -45,20 +38,6 @@ export async function getAISettings(userId: string): Promise<AISettings> {
       console.error("Error getting AI settings from Firestore:", e);
     }
     return defaultSettings;
-}
-
-export async function saveAISettings(userId: string, settings: AISettings): Promise<void> {
-    if (!userId) {
-        throw new Error("Usuário não autenticado.");
-    }
-    const db = getDb();
-    const settingsRef = doc(db, "users", userId, "settings", "ai");
-    await setDoc(settingsRef, settings); 
-    
-    // Clear the cache for this user to apply settings immediately
-    clearAISettingsCache(userId);
-
-    revalidatePath('/(app)/settings', 'page');
 }
 
 
@@ -149,13 +128,6 @@ Transactions:
 
 export async function getChatbotResponse(input: ChatInput) {
     try {
-        // Since this is a server action now, we need a userId to get settings
-        const settings = await getAISettings(input.transactions[0]?.userId || '');
-        if ((settings.provider === 'googleai' && !settings.googleAIApiKey) ||
-            (settings.provider === 'openai' && !settings.openAIApiKey)) {
-            return "Por favor, configure sua chave de API na página de Configurações para usar o assistente de IA.";
-        }
-        
         const result = await chatWithTransactions(input);
         return result.response;
     } catch (error) {
@@ -163,97 +135,6 @@ export async function getChatbotResponse(input: ChatInput) {
         return "Desculpe, ocorreu um erro ao processar sua pergunta. Verifique suas configurações de IA e tente novamente.";
     }
 }
-
-
-// --- Transaction Actions ---
-
-async function getTransactionsCollectionRef(userId: string) {
-    if (!userId) throw new Error("User ID required");
-    const db = getDb();
-    return collection(db, "users", userId, "transactions");
-}
-
-
-export async function getTransactions(userId: string): Promise<Transaction[]> {
-    if (!userId) return [];
-    const transactionsCollection = await getTransactionsCollectionRef(userId);
-    const querySnapshot = await getDocs(transactionsCollection);
-    const transactions: Transaction[] = [];
-    querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        transactions.push({ 
-            id: doc.id, 
-            ...data,
-            date: (data.date as Timestamp).toDate().toISOString() 
-        } as Transaction);
-    });
-    return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-}
-
-export async function addTransaction(userId: string, transaction: Omit<Transaction, 'id'>): Promise<string> {
-    if (!userId) throw new Error("User ID required");
-    const transactionsCollection = await getTransactionsCollectionRef(userId);
-    const docRef = await addDoc(transactionsCollection, {
-        ...transaction,
-        amount: Math.abs(transaction.amount),
-        date: new Date(transaction.date)
-    });
-    revalidatePath('/(app)', 'layout');
-    return docRef.id;
-}
-
-
-// --- Category Actions ---
-
-async function getCategoriesDocRef(userId: string) {
-    if (!userId) throw new Error("User ID required");
-    const db = getDb();
-    return doc(db, "users", userId, "settings", "categories");
-}
-
-export async function getCategories(userId: string): Promise<Partial<Record<TransactionCategory, string[]>>> {
-    if (!userId) return {};
-    const docRef = await getCategoriesDocRef(userId);
-    const docSnap = await getDoc(docRef);
-    if (docSnap.exists()) {
-        return docSnap.data() as Partial<Record<TransactionCategory, string[]>>;
-    } else {
-        // Default categories
-        const defaultCategories = {
-            "Supermercado": ["Mercearia", "Feira", "Açougue"],
-            "Transporte": ["Combustível", "Uber/99", "Metrô/Ônibus"],
-            "Restaurante": ["Almoço", "Jantar", "Café"],
-            "Contas": ["Aluguel", "Luz", "Água", "Internet"],
-            "Entretenimento": ["Cinema", "Show", "Streaming"],
-            "Saúde": ["Farmácia", "Consulta"],
-        };
-        // Save default categories for the new user
-        await saveCategories(userId, defaultCategories);
-        return defaultCategories;
-    }
-}
-
-export async function saveCategories(userId: string, categories: Partial<Record<TransactionCategory, string[]>>) {
-    if (!userId) throw new Error("User ID required");
-    const docRef = await getCategoriesDocRef(userId);
-    await setDoc(docRef, categories);
-    revalidatePath('/(app)/categories', 'page');
-}
-
-export async function deleteTransactionsByCategory(userId: string, category: TransactionCategory) {
-    if (!userId) throw new Error("User ID required");
-    const db = getDb();
-    const transactionsCollection = await getTransactionsCollectionRef(userId);
-    const q = query(transactionsCollection, where("category", "==", category));
-    const querySnapshot = await getDocs(q);
-    const batch = writeBatch(db);
-    querySnapshot.forEach(doc => {
-        batch.delete(doc.ref);
-    });
-    await batch.commit();
-    revalidatePath('/(app)', 'layout');
-}
-
 
 // --- Export AI flow wrappers ---
 // We re-export these from a central place to be used in client components.

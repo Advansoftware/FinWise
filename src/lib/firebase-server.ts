@@ -1,8 +1,8 @@
 
-import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
-import { getFirestore, Firestore } from "firebase/firestore";
-import { getAuth, Auth } from "firebase/auth";
+import { initializeApp, getApps, getApp, FirebaseApp } from "firebase-admin/app";
+import { getFirestore, Firestore } from "firebase-admin/firestore";
 import { firebaseConfig } from "./firebase";
+import { credential } from "firebase-admin";
 
 interface FirebaseServerServices {
   app: FirebaseApp;
@@ -11,6 +11,7 @@ interface FirebaseServerServices {
 
 let firebaseServerServices: FirebaseServerServices | null = null;
 
+
 // This function initializes Firebase for a SERVER environment.
 // It's crucial that this is only imported and used in 'use server' files (like actions).
 function getFirebase(): FirebaseServerServices {
@@ -18,7 +19,14 @@ function getFirebase(): FirebaseServerServices {
     return firebaseServerServices;
   }
 
-  const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+  // This is the robust way to initialize for server-side environments like Cloud Functions, App Engine, etc.
+  const app = !getApps().length
+    ? initializeApp({
+        credential: credential.applicationDefault(),
+        projectId: firebaseConfig.projectId,
+      })
+    : getApp();
+
   const db = getFirestore(app);
 
   firebaseServerServices = { app, db };
