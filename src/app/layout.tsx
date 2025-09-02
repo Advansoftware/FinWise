@@ -4,6 +4,7 @@
 import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { Inter } from 'next/font/google';
+import { AuthProvider } from '@/hooks/use-auth';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -23,11 +24,11 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/icons/icon-192x192.png"></link>
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
-          {children}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
           <Toaster />
       </body>
     </html>
   );
 }
-
-    
