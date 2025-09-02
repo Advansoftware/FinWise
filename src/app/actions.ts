@@ -1,4 +1,3 @@
-
 'use server';
 
 import { generateSpendingTip, SpendingTipInput } from '@/ai/flows/ai-powered-spending-tips';

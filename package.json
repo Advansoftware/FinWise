@@ -1,4 +1,3 @@
-
 {
   "name": "finwise-v2",
   "version": "2.0.0",
@@ -9,10 +8,11 @@
     "start": "next start",
     "lint": "next lint",
     "genkit:start": "genkit start --port 10001",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "postinstall": "patch-package"
   },
   "dependencies": {
-    "@genkit-ai/googleai": "^1.14.1",
+    "@genkit-ai/googleai": "1.14.1",
     "@genkit-ai/next": "^1.14.1",
     "genkitx-openai": "latest",
     "@hookform/resolvers": "^4.1.3",
@@ -45,7 +45,7 @@
     "embla-carousel-react": "^8.6.0",
     "firebase": "^11.9.1",
     "framer-motion": "^11.5.1",
-    "genkit": "^1.14.1",
+    "genkit": "1.14.1",
     "lucide-react": "^0.475.0",
     "next": "14.2.3",
     "patch-package": "^8.0.0",
