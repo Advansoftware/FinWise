@@ -1,10 +1,6 @@
+
 // src/lib/firebase-admin.ts
 import * as admin from 'firebase-admin';
-
-// As variáveis de ambiente, incluindo a chave da conta de serviço,
-// são injetadas pelo ambiente de hospedagem ou carregadas do .env.local
-// durante o desenvolvimento local.
-const serviceAccountString = process.env.FIREBASE_SERVICE_ACCOUNT_KEY;
 
 let adminApp: admin.app.App;
 
@@ -12,27 +8,25 @@ export function getAdminApp(): admin.app.App {
   if (adminApp) {
     return adminApp;
   }
+
+  // Quando executando no ambiente do Firebase/Google Cloud, o SDK automaticamente
+  // usa a variável de ambiente GOOGLE_APPLICATION_CREDENTIALS (que aponta para um arquivo)
+  // ou as credenciais padrão do ambiente para se inicializar.
+  // Não é necessário ler a variável ou fazer o parse do JSON manualmente.
   
-  if (!serviceAccountString) {
-    console.error('FATAL ERROR: A variável de ambiente FIREBASE_SERVICE_ACCOUNT_KEY não está definida.');
-    throw new Error('A variável de ambiente FIREBASE_SERVICE_ACCOUNT_KEY não está definida.');
-  }
-
-  try {
-    const serviceAccount = JSON.parse(serviceAccountString);
-
-    if (admin.apps.length > 0) {
-      adminApp = admin.app();
-    } else {
-      adminApp = admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-      });
+  if (admin.apps.length > 0) {
+    adminApp = admin.app();
+  } else {
+    // A inicialização sem argumentos funciona quando as variáveis de ambiente
+    // (GOOGLE_APPLICATION_CREDENTIALS ou outras do gcloud) estão configuradas.
+    try {
+      adminApp = admin.initializeApp();
+    } catch(error: any) {
+        console.error("Falha ao inicializar o Firebase Admin SDK.", error);
+        console.error("Verifique se as variáveis de ambiente (GOOGLE_APPLICATION_CREDENTIALS) estão configuradas corretamente no seu ambiente de execução.");
+        throw new Error("Não foi possível inicializar o Firebase Admin. Consulte os logs do servidor.");
     }
-  } catch (error: any) {
-    console.error('Erro ao fazer parse da chave da conta de serviço ou ao inicializar o Admin App:', error.message);
-    throw new Error('Falha ao inicializar o Firebase Admin. Verifique a FIREBASE_SERVICE_ACCOUNT_KEY.');
   }
-
 
   return adminApp;
 }
