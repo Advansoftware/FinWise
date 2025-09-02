@@ -1,45 +1,48 @@
-
 // src/lib/firebase-admin.ts
 import * as admin from 'firebase-admin';
-import serviceAccountCredentials from '../../firebase-credentials.json';
 
 let adminApp: admin.app.App;
 
 /**
  * Initializes and returns the Firebase Admin App instance.
- * It imports the credentials directly from the JSON file and
- * correctly formats the private key to avoid parsing errors.
+ * Uses GOOGLE_APPLICATION_CREDENTIALS environment variable for authentication.
  */
 export function getAdminApp(): admin.app.App {
   if (adminApp) {
     return adminApp;
   }
-  
+
   if (admin.apps.length > 0) {
     adminApp = admin.app();
     return adminApp;
   }
 
   try {
-    // Type assertion to treat the imported JSON as a ServiceAccount object
-    const serviceAccount = serviceAccountCredentials as admin.ServiceAccount;
-
-    // **CRUCIAL FIX**: Replace literal '\\n' with actual newlines
-    if (serviceAccount.private_key) {
-        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+    // Verificar se a variável de ambiente está definida
+    if (!process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+      throw new Error('GOOGLE_APPLICATION_CREDENTIALS não está definida no ambiente.');
     }
 
+    // O Firebase Admin SDK automaticamente usa GOOGLE_APPLICATION_CREDENTIALS
+    // quando nenhuma credencial é especificada explicitamente
     adminApp = admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount)
+      // Opcionalmente, você pode especificar o projectId explicitamente
+      // projectId: 'finwise-dashboard-3qmzc'
     });
-    
-  } catch(error: any) {
-    console.error("Falha ao inicializar o Firebase Admin SDK.", error);
+
+    console.log('Firebase Admin SDK inicializado com sucesso usando GOOGLE_APPLICATION_CREDENTIALS.');
+
+  } catch (error: any) {
+    console.error('Falha ao inicializar o Firebase Admin SDK.', error);
+
     if (error.code === 'app/invalid-credential') {
-        console.error("O erro 'app/invalid-credential' geralmente ocorre devido a uma formatação incorreta da chave privada no arquivo de credenciais.");
-        console.error("Verifique se a 'private_key' no seu firebase-credentials.json está correta.");
+      console.error("Erro de credenciais inválidas. Soluções possíveis:");
+      console.error("1. Verifique se GOOGLE_APPLICATION_CREDENTIALS aponta para um arquivo JSON válido");
+      console.error("2. Baixe um novo arquivo de credenciais do Firebase Console");
+      console.error("3. Certifique-se de que o arquivo existe no caminho especificado");
     }
-    throw new Error("Não foi possível inicializar o Firebase Admin. Consulte os logs do servidor.");
+
+    throw new Error(`Não foi possível inicializar o Firebase Admin: ${error.message}`);
   }
 
   return adminApp;
