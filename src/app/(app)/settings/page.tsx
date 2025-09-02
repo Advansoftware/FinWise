@@ -11,13 +11,12 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDes
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AISettings } from "@/lib/types";
-import { getOllamaModels, saveAISettings } from "@/app/actions";
+import { getOllamaModels } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, RefreshCw } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { getFirebase } from "@/lib/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { clearAISettingsCache } from "@/ai/genkit";
 
 const aiSettingsSchema = z.object({
   provider: z.enum(["ollama", "googleai", "openai"]),
@@ -108,32 +107,14 @@ export default function SettingsPage() {
         }
         setIsSaving(true);
         try {
-            // Limpa o objeto de configurações para salvar apenas os dados relevantes
-            const settingsToSave: Partial<AISettings> = {
-                provider: data.provider,
-            };
-
-            if (data.provider === 'ollama') {
-                settingsToSave.ollamaModel = data.ollamaModel;
-                settingsToSave.ollamaServerAddress = data.ollamaServerAddress;
-            } else if (data.provider === 'googleai') {
-                settingsToSave.googleAIApiKey = data.googleAIApiKey;
-            } else if (data.provider === 'openai') {
-                settingsToSave.openAIModel = data.openAIModel;
-                settingsToSave.openAIApiKey = data.openAIApiKey;
-            }
-            
             const { db } = getFirebase();
             const settingsRef = doc(db, "users", user.uid, "settings", "ai");
-            await setDoc(settingsRef, settingsToSave);
-
-            clearAISettingsCache(user.uid);
+            await setDoc(settingsRef, data);
 
             toast({
                 title: "Configurações Salvas!",
-                description: "Suas configurações de IA foram atualizadas com sucesso. A página será recarregada para aplicar as mudanças.",
+                description: "Suas configurações de IA foram atualizadas com sucesso.",
             });
-            setTimeout(() => window.location.reload(), 1500); 
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : 'Não foi possível salvar as configurações.';
             toast({ variant: 'destructive', title: 'Erro', description: errorMessage });
