@@ -8,7 +8,7 @@ import { Transaction, TransactionCategory } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { getFirebase } from "@/lib/firebase";
-import { collection, getDocs, doc, getDoc, setDoc, addDoc, Timestamp, query, where, writeBatch, deleteDoc } from "firebase/firestore";
+import { collection, doc, setDoc, addDoc, Timestamp, onSnapshot, Unsubscribe, deleteDoc } from "firebase/firestore";
 import { FirebaseError } from "firebase/app";
 
 type CategoryMap = Partial<Record<TransactionCategory, string[]>>;
@@ -27,7 +27,6 @@ interface TransactionsContextType {
   availableSubcategories: string[];
   selectedSubcategory: string;
   setSelectedSubcategory: (subcategory: string) => void;
-  refreshAllData: () => Promise<void>;
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
   addCategory: (categoryName: TransactionCategory) => Promise<void>;
   deleteCategory: (categoryName: TransactionCategory) => Promise<void>;
@@ -50,80 +49,69 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('all');
   
-  const refreshAllData = useCallback(async () => {
+  useEffect(() => {
     if (!user) {
-        setIsLoading(false);
-        return;
-    };
+      setIsLoading(false);
+      setAllTransactions([]);
+      setCategoryMap({});
+      return;
+    }
+
     setIsLoading(true);
-
     const { db } = getFirebase();
-    const getTransactions = async (userId: string) => {
-        const transactionsCollection = collection(db, "users", userId, "transactions");
-        const querySnapshot = await getDocs(transactionsCollection);
-        const transactions: Transaction[] = [];
-        querySnapshot.forEach((doc) => {
-            const data = doc.data();
-            transactions.push({ 
-                id: doc.id, 
-                ...data,
-                date: (data.date as Timestamp).toDate().toISOString() 
-            } as Transaction);
-        });
-        return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-    }
+    
+    // Real-time listener for transactions
+    const transactionsCollection = collection(db, "users", user.uid, "transactions");
+    const unsubscribeTransactions = onSnapshot(transactionsCollection, (querySnapshot) => {
+      const transactions: Transaction[] = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        transactions.push({ 
+          id: doc.id, 
+          ...data,
+          date: (data.date as Timestamp).toDate().toISOString() 
+        } as Transaction);
+      });
+      setAllTransactions(transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+      setIsLoading(false);
+    }, (error) => {
+       console.error("Failed to fetch transactions:", error);
+       toast({ variant: "destructive", title: "Erro ao Carregar Transações" });
+       setIsLoading(false);
+    });
 
-    const getCategories = async (userId: string) => {
-        const docRef = doc(db, "users", userId, "settings", "categories");
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-            return docSnap.data() as Partial<Record<TransactionCategory, string[]>>;
-        } else {
-            const defaultCategories = {
-                "Supermercado": ["Mercearia", "Feira", "Açougue"],
-                "Transporte": ["Combustível", "Uber/99", "Metrô/Ônibus"],
-                "Restaurante": ["Almoço", "Jantar", "Café"],
-                "Contas": ["Aluguel", "Luz", "Água", "Internet"],
-                "Entretenimento": ["Cinema", "Show", "Streaming"],
-                "Saúde": ["Farmácia", "Consulta"],
-            };
-            await setDoc(docRef, defaultCategories);
-            return defaultCategories;
-        }
-    }
-
-
-    try {
-      const [transactions, categories] = await Promise.all([
-        getTransactions(user.uid),
-        getCategories(user.uid)
-      ]);
-      setAllTransactions(transactions);
-      setCategoryMap(categories);
-    } catch (error) {
-        console.error("Failed to fetch data:", error);
-        setAllTransactions([]);
-        setCategoryMap({});
-
+    // Real-time listener for categories
+    const categoriesDocRef = doc(db, "users", user.uid, "settings", "categories");
+    const unsubscribeCategories = onSnapshot(categoriesDocRef, async (docSnap) => {
+      if (docSnap.exists()) {
+        setCategoryMap(docSnap.data() as CategoryMap);
+      } else {
+         const defaultCategories = {
+            "Supermercado": ["Mercearia", "Feira", "Açougue"],
+            "Transporte": ["Combustível", "Uber/99", "Metrô/Ônibus"],
+            "Restaurante": ["Almoço", "Jantar", "Café"],
+            "Contas": ["Aluguel", "Luz", "Água", "Internet"],
+            "Entretenimento": ["Cinema", "Show", "Streaming"],
+            "Saúde": ["Farmácia", "Consulta"],
+        };
+        await setDoc(categoriesDocRef, defaultCategories);
+        setCategoryMap(defaultCategories);
+      }
+    }, (error) => {
         let description = "Não foi possível buscar suas informações. Tente novamente mais tarde.";
         if (error instanceof FirebaseError && error.code === 'permission-denied') {
             description = "Acesso ao banco de dados negado. Verifique se o Cloud Firestore foi ativado em seu projeto Firebase e se as regras de segurança permitem leitura e escrita para usuários autenticados."
         }
-        
-        toast({
-            variant: "destructive",
-            title: "Erro ao Carregar Dados",
-            description,
-            duration: 10000,
-        });
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user, toast]);
+        toast({ variant: "destructive", title: "Erro ao Carregar Categorias", description, duration: 10000 });
+    });
 
-  useEffect(() => {
-    refreshAllData();
-  }, [refreshAllData]);
+
+    // Cleanup function to unsubscribe when component unmounts or user changes
+    return () => {
+      unsubscribeTransactions();
+      unsubscribeCategories();
+    };
+  }, [user, toast]);
   
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     if (!user) throw new Error("User not authenticated");
@@ -134,7 +122,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
         amount: Math.abs(transaction.amount),
         date: new Date(transaction.date)
     });
-    await refreshAllData();
+    // No need to refresh, onSnapshot handles it
   }
 
   const { categories, subcategories } = useMemo(() => {
@@ -145,10 +133,11 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     };
   }, [categoryMap]);
   
-  const saveCategories = async (userId: string, categories: CategoryMap) => {
+  const saveCategories = async (userId: string, newCategories: CategoryMap) => {
       const { db } = getFirebase();
       const docRef = doc(db, "users", userId, "settings", "categories");
-      await setDoc(docRef, categories);
+      await setDoc(docRef, newCategories);
+      // No need to refresh, onSnapshot handles it
   };
 
   // --- Category Management ---
@@ -160,7 +149,6 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     }
     const newCategoryMap = { ...categoryMap, [categoryName]: [] };
     await saveCategories(user.uid, newCategoryMap);
-    await refreshAllData();
   };
 
   const deleteCategory = async (categoryName: TransactionCategory) => {
@@ -168,7 +156,6 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
      const newCategoryMap = { ...categoryMap };
      delete newCategoryMap[categoryName];
      await saveCategories(user.uid, newCategoryMap);
-     await refreshAllData();
      if (selectedCategory === categoryName) {
        setSelectedCategory('all');
      }
@@ -186,7 +173,6 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       [categoryName]: [...subs, subcategoryName].sort() 
     };
     await saveCategories(user.uid, newCategoryMap);
-    await refreshAllData();
   }
 
   const deleteSubcategory = async (categoryName: TransactionCategory, subcategoryName: string) => {
@@ -197,7 +183,6 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       [categoryName]: subs.filter(s => s !== subcategoryName)
     };
     await saveCategories(user.uid, newCategoryMap);
-    await refreshAllData();
   }
 
 
@@ -258,7 +243,6 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     availableSubcategories,
     selectedSubcategory,
     setSelectedSubcategory,
-    refreshAllData: refreshAllData,
     addTransaction,
     addCategory,
     deleteCategory,
