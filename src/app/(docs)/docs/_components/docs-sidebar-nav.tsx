@@ -1,3 +1,4 @@
+
 // src/app/(docs)/docs/_components/docs-sidebar-nav.tsx
 
 'use client';
@@ -18,6 +19,7 @@ export function DocSidebarNav({ items }: DocsSidebarNavProps) {
 
     return items.length ? (
         <nav className="w-full">
+            <h3 className="font-semibold mb-2 px-2">Documentação</h3>
             {items.map((item) => (
                 <Link
                     key={item.slug}
@@ -25,7 +27,7 @@ export function DocSidebarNav({ items }: DocsSidebarNavProps) {
                     className={cn(
                         'flex w-full items-center rounded-md p-2 hover:bg-muted/50 capitalize',
                         {
-                            'bg-muted/80 font-semibold': pathname === `/docs/${item.slug}`,
+                            'bg-muted/80 font-semibold text-primary': pathname === `/docs/${item.slug}`,
                         }
                     )}
                 >
