@@ -1,7 +1,7 @@
 'use server';
 
-import { generateSpendingTip, SpendingTipInput, SpendingTipOutput, SpendingTipInputSchema, SpendingTipOutputSchema } from '@/ai/flows/ai-powered-spending-tips';
-import { chatWithTransactions, ChatInput as ChatInputFlow } from '@/ai/flows/chat-with-transactions';
+import { generateSpendingTip, SpendingTipInput, SpendingTipOutput } from '@/ai/flows/ai-powered-spending-tips';
+import { chatWithTransactions, ChatInput } from '@/ai/flows/chat-with-transactions';
 import { Transaction, AISettings, TransactionCategory } from '@/lib/types';
 import { getFirebase } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, getDoc, setDoc, Timestamp, writeBatch, query, where, deleteDoc } from "firebase/firestore";
@@ -9,6 +9,8 @@ import { getFirebaseAdmin } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
 import { getAI } from '@/ai/genkit';
 import { z } from 'zod';
+import { extractReceiptInfo, ReceiptInfoInput, ReceiptInfoOutput } from '@/ai/flows/extract-receipt-info';
+import { suggestCategoryForItem, SuggestCategoryInput, SuggestCategoryOutput } from '@/ai/flows/suggest-category';
 
 
 async function getUserId(idToken: string) {
@@ -39,7 +41,12 @@ async function getSettingsCollectionRef(idToken: string) {
 }
 
 export async function getAISettings(idToken?: string): Promise<AISettings> {
-    const defaultSettings: AISettings = { provider: 'ollama', ollamaModel: 'llama3', openAIModel: 'gpt-3.5-turbo' };
+    const defaultSettings: AISettings = { 
+        provider: 'ollama', 
+        ollamaModel: 'llama3', 
+        ollamaServerAddress: 'http://127.0.0.1:11434',
+        openAIModel: 'gpt-3.5-turbo' 
+    };
     if (!idToken) return defaultSettings;
     
     const settingsRef = doc(collection(await getSettingsCollectionRef(idToken)), 'ai');
@@ -58,11 +65,11 @@ export async function saveAISettings(idToken: string, settings: AISettings): Pro
 }
 
 
-export async function getOllamaModels(): Promise<string[]> {
+export async function getOllamaModels(serverAddress: string): Promise<string[]> {
   try {
-    const response = await fetch('http://127.0.0.1:11434/api/tags', { cache: 'no-store' });
+    const response = await fetch(`${serverAddress}/api/tags`, { cache: 'no-store' });
     if (!response.ok) {
-      console.error('Ollama is not running or not accessible at http://1227.0.0.1:11434');
+      console.error(`Ollama is not running or not accessible at ${serverAddress}`);
       return [];
     }
     const data = await response.json();
@@ -144,9 +151,7 @@ Transactions:
   }
 }
 
-export type ChatInputAction = Omit<ChatInputFlow, 'settings'>;
-
-export async function getChatbotResponse(idToken: string, input: ChatInputAction) {
+export async function getChatbotResponse(idToken: string, input: ChatInput) {
     try {
         const settings = await getAISettings(idToken);
         if ((settings.provider === 'googleai' && !settings.googleAIApiKey) ||
@@ -154,8 +159,7 @@ export async function getChatbotResponse(idToken: string, input: ChatInputAction
             return "Por favor, configure sua chave de API na página de Configurações para usar o assistente de IA.";
         }
         
-        const fullInput: ChatInputFlow = { ...input };
-        const result = await chatWithTransactions(fullInput);
+        const result = await chatWithTransactions(input);
         return result.response;
     } catch (error) {
         console.error("Error in getChatbotResponse:", error);
@@ -243,3 +247,8 @@ export async function deleteTransactionsByCategory(idToken: string, category: Tr
     await batch.commit();
     revalidatePath('/(app)', 'layout');
 }
+
+
+// --- Export AI flow wrappers ---
+export { extractReceiptInfo, suggestCategoryForItem };
+export type { ReceiptInfoInput, ReceiptInfoOutput, SuggestCategoryInput, SuggestCategoryOutput };

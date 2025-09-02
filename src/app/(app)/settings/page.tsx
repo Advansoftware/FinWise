@@ -6,7 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { AISettings } from "@/lib/types";
@@ -19,6 +19,7 @@ import { useAuth } from "@/hooks/use-auth";
 const aiSettingsSchema = z.object({
   provider: z.enum(["ollama", "googleai", "openai"]),
   ollamaModel: z.string().optional(),
+  ollamaServerAddress: z.string().url({ message: "Por favor, insira uma URL válida." }).optional(),
   googleAIApiKey: z.string().optional(),
   openAIModel: z.enum(["gpt-3.5-turbo", "gpt-4"]).optional(),
   openAIApiKey: z.string().optional(),
@@ -36,20 +37,26 @@ export default function SettingsPage() {
         resolver: zodResolver(aiSettingsSchema),
         defaultValues: {
             provider: "ollama",
+            ollamaServerAddress: "http://127.0.0.1:11434"
         },
     });
 
     const provider = form.watch("provider");
+    const ollamaAddress = form.watch("ollamaServerAddress");
 
     const fetchOllamaModels = () => {
+        if (!ollamaAddress) {
+            toast({ variant: 'destructive', title: 'Endereço do Servidor Ollama Necessário' });
+            return;
+        }
         startFetchingOllama(async () => {
-            const models = await getOllamaModels();
+            const models = await getOllamaModels(ollamaAddress);
             setOllamaModels(models);
             if (models.length === 0) {
                  toast({
                     variant: 'destructive',
                     title: 'Ollama não encontrado',
-                    description: 'Não foi possível conectar ao Ollama. Certifique-se de que ele está em execução.',
+                    description: `Não foi possível conectar ao Ollama em ${ollamaAddress}. Verifique o endereço e se o serviço está em execução.`,
                 });
             }
         });
@@ -57,19 +64,25 @@ export default function SettingsPage() {
 
     useEffect(() => {
         const loadSettings = async () => {
-            if (!user) return;
+            if (!user) {
+                setIsLoading(false);
+                return
+            };
             setIsLoading(true);
             const idToken = await user.getIdToken();
             const settings = await getAISettings(idToken);
-            form.reset(settings);
-            if (settings.provider === 'ollama') {
+            form.reset({
+                ...settings,
+                ollamaServerAddress: settings.ollamaServerAddress || 'http://127.0.0.1:11434'
+            });
+            if (settings.provider === 'ollama' && settings.ollamaServerAddress) {
                fetchOllamaModels();
             }
             setIsLoading(false);
         };
         loadSettings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [form, user]);
+    }, [user]);
 
     const onSubmit = async (data: z.infer<typeof aiSettingsSchema>) => {
         if (!user) {
@@ -86,10 +99,6 @@ export default function SettingsPage() {
         setIsSaving(false);
     };
 
-    if (isLoading) {
-        return <SettingsSkeleton />
-    }
-
     return (
         <div className="flex flex-col gap-6">
             <div>
@@ -103,6 +112,7 @@ export default function SettingsPage() {
                     <CardDescription>Escolha qual serviço de IA você deseja usar para os recursos inteligentes.</CardDescription>
                 </CardHeader>
                 <CardContent>
+                    {isLoading ? <SettingsFormSkeleton /> : (
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-lg">
                              <FormField
@@ -118,7 +128,7 @@ export default function SettingsPage() {
                                         </SelectTrigger>
                                         </FormControl>
                                         <SelectContent>
-                                        <SelectItem value="ollama">Ollama (Local)</SelectItem>
+                                        <SelectItem value="ollama">Ollama (Local/Remoto)</SelectItem>
                                         <SelectItem value="googleai">Google AI</SelectItem>
                                         <SelectItem value="openai">OpenAI</SelectItem>
                                         </SelectContent>
@@ -129,6 +139,21 @@ export default function SettingsPage() {
                                 />
                             
                             {provider === 'ollama' && (
+                                <>
+                                 <FormField
+                                    control={form.control}
+                                    name="ollamaServerAddress"
+                                    render={({ field }) => (
+                                        <FormItem>
+                                        <FormLabel>Endereço do Servidor Ollama</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="http://127.0.0.1:11434" {...field} />
+                                        </FormControl>
+                                        <FormDescription>A URL onde o seu servidor Ollama está acessível.</FormDescription>
+                                        <FormMessage />
+                                        </FormItem>
+                                    )}
+                                    />
                                 <FormField
                                     control={form.control}
                                     name="ollamaModel"
@@ -136,7 +161,7 @@ export default function SettingsPage() {
                                         <FormItem>
                                         <FormLabel>Modelo Ollama</FormLabel>
                                         <div className="flex gap-2">
-                                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isFetchingOllama || ollamaModels.length === 0}>
+                                            <Select onValueChange={field.onChange} value={field.value} defaultValue={field.value} disabled={isFetchingOllama || ollamaModels.length === 0}>
                                                 <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder={ollamaModels.length > 0 ? "Selecione um modelo" : "Nenhum modelo encontrado"} />
@@ -148,7 +173,7 @@ export default function SettingsPage() {
                                                 ))}
                                                 </SelectContent>
                                             </Select>
-                                            <Button type="button" variant="ghost" size="icon" onClick={fetchOllamaModels} disabled={isFetchingOllama}>
+                                            <Button type="button" variant="ghost" size="icon" onClick={fetchOllamaModels} disabled={isFetchingOllama || !ollamaAddress}>
                                                 <RefreshCw className={`h-4 w-4 ${isFetchingOllama ? 'animate-spin': ''}`} />
                                             </Button>
                                         </div>
@@ -156,6 +181,7 @@ export default function SettingsPage() {
                                         </FormItem>
                                     )}
                                 />
+                                </>
                             )}
 
                              {provider === 'googleai' && (
@@ -219,6 +245,7 @@ export default function SettingsPage() {
                             </Button>
                         </form>
                     </Form>
+                    )}
                 </CardContent>
             </Card>
         </div>
@@ -226,30 +253,22 @@ export default function SettingsPage() {
 }
 
 
-function SettingsSkeleton() {
+function SettingsFormSkeleton() {
     return (
-        <div className="flex flex-col gap-6">
-            <div>
-                <Skeleton className="h-10 w-64 mb-2" />
-                <Skeleton className="h-4 w-96" />
+        <div className="space-y-6 max-w-lg">
+            <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-10 w-full" />
             </div>
-             <Card>
-                 <CardHeader>
-                    <Skeleton className="h-8 w-48 mb-2" />
-                    <Skeleton className="h-4 w-full" />
-                </CardHeader>
-                <CardContent className="space-y-6 max-w-lg">
-                    <div className="space-y-2">
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-10 w-full" />
-                    </div>
-                    <div className="space-y-2">
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-10 w-full" />
-                    </div>
-                    <Skeleton className="h-10 w-36" />
-                </CardContent>
-            </Card>
+            <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-10 w-full" />
+            </div>
+             <div className="space-y-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-10 w-full" />
+            </div>
+            <Skeleton className="h-10 w-36" />
         </div>
     )
 }

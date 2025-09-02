@@ -21,6 +21,7 @@ export type OpenAIModel = 'gpt-3.5-turbo' | 'gpt-4';
 export interface AISettings {
   provider: AIProvider;
   ollamaModel?: string;
+  ollamaServerAddress?: string;
   googleAIApiKey?: string;
   openAIModel?: OpenAIModel;
   openAIApiKey?: string;

@@ -25,12 +25,10 @@ async function initialize() {
   if (settings.provider === 'googleai' && settings.googleAIApiKey) {
     plugins.push(googleAI({apiKey: settings.googleAIApiKey}));
   } else if (settings.provider === 'ollama' && settings.ollamaModel) {
-    // Apenas configure o Ollama se explicitamente selecionado.
-    // Em um ambiente de produção/PWA, isso não funcionará a menos que o servidor tenha acesso.
     plugins.push(
       ollama({
         model: settings.ollamaModel,
-        serverAddress: 'http://127.0.0.1:11434',
+        serverAddress: settings.ollamaServerAddress || 'http://127.0.0.1:11434',
       })
     );
   } else if (
@@ -42,7 +40,6 @@ async function initialize() {
   } else {
     // Se nenhum provedor estiver configurado, não adicione nenhum plugin.
     // A UI irá guiar o usuário para a página de configurações.
-    // Isso evita que a aplicação quebre tentando contatar um localhost inexistente.
   }
 
   ai = genkit({
@@ -60,5 +57,10 @@ export async function getAI(): Promise<ReturnType<typeof genkit>> {
     initPromise = initialize();
   }
   await initPromise;
+  // Se a inicialização falhou (por exemplo, sem plugins), o `ai` pode não ter sido definido.
+  // Criamos uma instância vazia para evitar que a aplicação quebre.
+  if (!ai) {
+    ai = genkit();
+  }
   return ai;
 }
