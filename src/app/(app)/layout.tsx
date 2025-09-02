@@ -39,9 +39,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   
   // Se o carregamento estiver completo e tivermos um usuário, renderize o layout do painel.
   return (
-      <TransactionsProvider>
+      <TransactionsProvider user={user}>
         <SidebarProvider defaultOpen={false}>
-          <div className="flex">
+          <div className="flex min-h-screen">
               <Sidebar>
               <SidebarHeader>
                   <div className="flex items-center justify-center h-12 group-data-[state=expanded]:justify-start group-data-[state=expanded]:gap-2">
@@ -56,9 +56,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   <UserNav />
               </SidebarFooter>
               </Sidebar>
-              <main className="flex-1 md:ml-[var(--sidebar-width-icon)] group-data-[state=expanded]:md:ml-[var(--sidebar-width)] transition-[margin-left] duration-300 ease-in-out">
-                  <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6">
-                      <div className="flex items-center gap-2 md:hidden">
+              <main className="flex-1">
+                  <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6 md:hidden">
+                      <div className="flex items-center gap-2">
                           <SidebarTrigger/>
                           <Logo className="w-8 h-8"/>
                       </div>

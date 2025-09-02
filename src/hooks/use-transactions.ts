@@ -5,7 +5,7 @@ import { DateRange } from "react-day-picker";
 import { subDays } from "date-fns";
 import { Transaction, TransactionCategory } from "@/lib/types";
 import { getTransactions, addTransaction as addTransactionAction } from "@/app/actions";
-import { useAuth } from "./use-auth";
+import type { User } from "firebase/auth";
 
 interface TransactionsContextType {
   allTransactions: Transaction[];
@@ -21,13 +21,13 @@ interface TransactionsContextType {
   availableSubcategories: string[];
   selectedSubcategory: string;
   setSelectedSubcategory: (subcategory: string) => void;
-  refreshTransactions: () => Promise<void>;
-  addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
+  refreshTransactions: (idToken: string) => Promise<void>;
+  addTransaction: (idToken: string, transaction: Omit<Transaction, 'id'>) => Promise<void>;
 }
 
 const TransactionsContext = createContext<TransactionsContextType | undefined>(undefined);
 
-export function TransactionsProvider({ children }: { children: ReactNode }) {
+export function TransactionsProvider({ children, user }: { children: ReactNode, user: User | null }) {
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -36,14 +36,12 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   });
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('all');
-  const { user, loading: authLoading } = useAuth();
-
-  const loadTransactions = useCallback(async () => {
-    if (authLoading || !user) return;
+  
+  const loadTransactions = useCallback(async (idToken: string) => {
+    if (!user) return;
     
     setIsLoading(true);
     try {
-      const idToken = await user.getIdToken();
       const transactions = await getTransactions(idToken);
       setAllTransactions(transactions);
     } catch (error) {
@@ -52,22 +50,23 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [authLoading, user]);
+  }, [user]);
 
   useEffect(() => {
-    if (user && !authLoading) {
-      loadTransactions();
-    } else if (!user && !authLoading) {
+    if (user) {
+        user.getIdToken().then(token => {
+            loadTransactions(token);
+        });
+    } else {
         setIsLoading(false);
         setAllTransactions([]);
     }
-  }, [user, authLoading, loadTransactions]);
+  }, [user, loadTransactions]);
   
-  const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
+  const addTransaction = async (idToken: string, transaction: Omit<Transaction, 'id'>) => {
     if(!user) throw new Error("User not authenticated");
-    const idToken = await user.getIdToken();
     await addTransactionAction(idToken, transaction);
-    await loadTransactions();
+    await loadTransactions(idToken);
   }
 
   const { categories, subcategories } = useMemo(() => {
@@ -138,7 +137,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
 
   const availableSubcategories = subcategories[selectedCategory as TransactionCategory] || [];
 
-  const value = {
+  const value: TransactionsContextType = {
     allTransactions,
     isLoading,
     filteredTransactions,
