@@ -2,12 +2,13 @@
 'use client';
 
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BarChart, Bot, LayoutDashboard, Wallet } from "lucide-react";
+import { ArrowRight, BarChart, Bot, LayoutDashboard, Wallet, Check } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { useAuth } from "@/hooks/use-auth";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { Badge } from "@/components/ui/badge";
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -93,14 +94,16 @@ export default function Page() {
         </section>
 
         {/* Features Section */}
-        <section className="py-20 sm:py-32 bg-background/80">
+        <section className="py-20 sm:py-32 bg-card/20">
             <div className="container mx-auto px-4">
-                <motion.h2 {...fadeIn} className="text-3xl md:text-4xl font-bold tracking-tight text-center">
-                    Tudo que você precisa em um só lugar
-                </motion.h2>
-                <motion.p {...fadeIn} transition={{...fadeIn.transition, delay: 0.2}} className="mt-4 text-lg text-muted-foreground text-center max-w-xl mx-auto">
-                   De dashboards interativos a um assistente com IA, o FinWise tem as ferramentas para impulsionar sua saúde financeira.
-                </motion.p>
+                <motion.div {...fadeIn}>
+                    <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-center">
+                        Tudo que você precisa em um só lugar
+                    </h2>
+                    <p className="mt-4 text-lg text-muted-foreground text-center max-w-xl mx-auto">
+                       De dashboards interativos a um assistente com IA, o FinWise tem as ferramentas para impulsionar sua saúde financeira.
+                    </p>
+                </motion.div>
 
                 <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                     {[
@@ -123,6 +126,100 @@ export default function Page() {
                             </div>
                             <h3 className="mt-4 text-xl font-semibold">{feature.title}</h3>
                             <p className="mt-2 text-muted-foreground">{feature.description}</p>
+                        </motion.div>
+                    ))}
+                </div>
+            </div>
+        </section>
+
+        {/* Pricing Section */}
+        <section className="py-20 sm:py-32">
+            <div className="container mx-auto px-4">
+                 <motion.div {...fadeIn}>
+                    <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-center">
+                        Um plano para cada jornada financeira
+                    </h2>
+                    <p className="mt-4 text-lg text-muted-foreground text-center max-w-xl mx-auto">
+                      Comece gratuitamente e evolua seu controle financeiro com recursos de IA avançados.
+                    </p>
+                </motion.div>
+
+                <div className="mt-16 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                    {[
+                        {
+                            name: "Básico",
+                            price: "Grátis",
+                            description: "Para quem está começando a organizar as finanças.",
+                            features: [
+                                "Dashboard interativo",
+                                "Transações ilimitadas",
+                                "Gerenciamento de categorias",
+                                "Análises com IA (10/mês)",
+                            ],
+                            cta: "Começar Agora",
+                            variant: "outline"
+                        },
+                        {
+                            name: "Pro",
+                            price: "R$ 19,90",
+                            priceDetail: "/mês",
+                            description: "Para controle total e insights avançados com IA.",
+                            features: [
+                                "Tudo do plano Básico, e mais:",
+                                "Análises e dicas com IA ilimitadas",
+                                "Assistente de Chat com IA",
+                                "Escanear notas fiscais (OCR)",
+                                "Importação de extratos (CSV, OFX)",
+                                "Suporte prioritário"
+                            ],
+                            cta: "Fazer Upgrade",
+                            variant: "default",
+                            highlight: true
+                        },
+                        {
+                            name: "Plus",
+                            price: "R$ 39,90",
+                            priceDetail: "/mês",
+                            description: "Para usuários avançados e planejamento futuro.",
+                            features: [
+                                "Tudo do plano Pro, e mais:",
+                                "Orçamentos inteligentes com IA",
+                                "Previsão de gastos futuros",
+                                "Múltiplas carteiras/contas",
+                                "Exportação avançada de relatórios",
+                                "Acesso a novos recursos beta"
+                            ],
+                            cta: "Assinar o Plus",
+                            variant: "outline"
+                        }
+                    ].map((plan, index) => (
+                        <motion.div
+                            key={plan.name}
+                            variants={featureVariants}
+                            initial="initial"
+                            whileInView="animate"
+                            viewport={{ once: true, amount: 0.3 }}
+                            transition={{ ...featureVariants.transition, delay: index * 0.15 }}
+                            className={`flex flex-col rounded-lg border p-6 h-full ${plan.highlight ? 'border-primary shadow-primary/20 shadow-lg' : 'border-border'}`}
+                        >
+                            {plan.highlight && <Badge className="w-fit mb-4 -mt-2">Mais Popular</Badge>}
+                            <h3 className="text-2xl font-bold">{plan.name}</h3>
+                            <p className="mt-2 text-muted-foreground">{plan.description}</p>
+                            <div className="mt-6">
+                                <span className="text-4xl font-extrabold">{plan.price}</span>
+                                {plan.priceDetail && <span className="text-muted-foreground">{plan.priceDetail}</span>}
+                            </div>
+                            <ul className="mt-8 space-y-4 flex-1">
+                                {plan.features.map(feature => (
+                                    <li key={feature} className="flex items-start gap-3">
+                                        <Check className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
+                                        <span className="text-muted-foreground">{feature}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                            <Button asChild size="lg" className="w-full mt-8" variant={plan.variant as any}>
+                                <Link href="/login">{plan.cta}</Link>
+                            </Button>
                         </motion.div>
                     ))}
                 </div>
