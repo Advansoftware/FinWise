@@ -17,12 +17,13 @@ import { v4 as uuidv4 } from "uuid";
 
 
 const credentialSchema = z.object({
+  id: z.string().optional(),
   name: z.string().min(1, "O nome é obrigatório."),
   provider: z.enum(["ollama", "googleai", "openai"]),
   ollamaModel: z.string().optional(),
   ollamaServerAddress: z.string().url("Por favor, insira uma URL válida.").optional(),
   googleAIApiKey: z.string().optional(),
-  openAIModel: z.enum(["gpt-3.5-turbo", "gpt-4", "gpt-4-vision-preview"]).optional(),
+  openAIModel: z.enum(["gpt-3.5-turbo", "gpt-4", "gpt-4-vision-preview", "gpt-4o"]).optional(),
   openAIApiKey: z.string().optional(),
 }).superRefine((data, ctx) => {
     if (data.provider === 'ollama' && !data.ollamaModel) {
@@ -59,22 +60,24 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
       name: "",
       provider: "ollama",
       ollamaServerAddress: "http://127.0.0.1:11434",
-      openAIModel: "gpt-3.5-turbo",
+      openAIModel: "gpt-4o",
     },
   });
 
   const provider = form.watch("provider");
 
   useEffect(() => {
-    if (initialData) {
-      form.reset(initialData);
-    } else {
-      form.reset({
-        name: "",
-        provider: "ollama",
-        ollamaServerAddress: "http://127.0.0.1:11434",
-        openAIModel: "gpt-3.5-turbo",
-      });
+    if (isOpen) {
+        if (initialData) {
+            form.reset(initialData);
+        } else {
+            form.reset({
+                name: "",
+                provider: "ollama",
+                ollamaServerAddress: "http://127.0.0.1:11434",
+                openAIModel: "gpt-4o",
+            });
+        }
     }
   }, [initialData, form, isOpen]);
 
@@ -244,9 +247,10 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
-                                        <SelectItem value="gpt-4">GPT-4</SelectItem>
+                                        <SelectItem value="gpt-4o">GPT-4o</SelectItem>
                                         <SelectItem value="gpt-4-vision-preview">GPT-4 Vision</SelectItem>
+                                        <SelectItem value="gpt-4">GPT-4</SelectItem>
+                                        <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <FormMessage />

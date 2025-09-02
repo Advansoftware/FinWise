@@ -1,3 +1,4 @@
+
 // src/hooks/use-ai-settings.tsx
 'use client';
 
@@ -69,37 +70,43 @@ export function useAISettings() {
                 activeCredentialId: newActiveId,
             }, { merge: true });
 
+            // Directly update the state after successful save
             setCredentials(newCredentials);
             setActiveCredentialId(newActiveId);
 
             toast({ title: "Configurações de IA salvas!" });
         } catch (error) {
             toast({ variant: "destructive", title: "Erro ao salvar configurações." });
+            throw error; // Re-throw error to be caught by caller
         } finally {
             setIsSaving(false);
         }
     };
 
-    const handleSaveCredential = async (credentialData: Omit<AICredential, 'id'>) => {
-        const isEditing = editingCredential !== null;
-        let newCredentials = [...credentials];
-        let newActiveId = activeCredentialId;
+    const handleSaveCredential = async (credentialData: Omit<AICredential, 'id'> & { id?: string }) => {
+        const isEditing = !!credentialData.id;
+        let newCredentials;
 
         if (isEditing) {
             newCredentials = credentials.map(c => 
-                c.id === editingCredential.id ? { ...credentialData, id: c.id } : c
+                c.id === credentialData.id ? { ...c, ...credentialData } : c
             );
         } else {
             const newCredential = { ...credentialData, id: uuidv4() };
-            newCredentials.push(newCredential);
-            // If it's the first credential being added, make it active.
-            if (credentials.length === 0) {
-                newActiveId = newCredential.id;
-            }
+            newCredentials = [...credentials, newCredential];
         }
-        await saveSettings(newCredentials, newActiveId);
-        setIsDialogOpen(false);
-        setEditingCredential(null);
+
+        // If it's the first credential being added, make it active.
+        const newActiveId = activeCredentialId || (newCredentials.length === 1 ? newCredentials[0].id : null);
+        
+        try {
+            await saveSettings(newCredentials, newActiveId);
+            setIsDialogOpen(false); // Close dialog on success
+            setEditingCredential(null);
+        } catch (error) {
+            // Error toast is already shown in saveSettings
+            console.error("Failed to save credential", error);
+        }
     };
 
     const handleDelete = async (id: string) => {
