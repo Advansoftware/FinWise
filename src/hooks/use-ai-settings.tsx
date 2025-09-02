@@ -1,4 +1,5 @@
 
+
 // src/hooks/use-ai-settings.tsx
 'use client';
 
@@ -85,26 +86,41 @@ export function useAISettings() {
 
     const handleSaveCredential = async (credentialData: Omit<AICredential, 'id'> & { id?: string }) => {
         const isEditing = !!credentialData.id;
+        const finalCredential: Partial<AICredential> & { id?: string, name: string, provider: 'ollama' | 'googleai' | 'openai' } = {
+            id: credentialData.id,
+            name: credentialData.name,
+            provider: credentialData.provider,
+        };
+
+        // Filter properties based on the provider
+        if (credentialData.provider === 'ollama') {
+            finalCredential.ollamaModel = credentialData.ollamaModel;
+            finalCredential.ollamaServerAddress = credentialData.ollamaServerAddress;
+        } else if (credentialData.provider === 'googleai') {
+            finalCredential.googleAIApiKey = credentialData.googleAIApiKey;
+        } else if (credentialData.provider === 'openai') {
+            finalCredential.openAIApiKey = credentialData.openAIApiKey;
+            finalCredential.openAIModel = credentialData.openAIModel;
+        }
+
         let newCredentials;
 
         if (isEditing) {
             newCredentials = credentials.map(c => 
-                c.id === credentialData.id ? { ...c, ...credentialData } : c
+                c.id === finalCredential.id ? (finalCredential as AICredential) : c
             );
         } else {
-            const newCredential = { ...credentialData, id: uuidv4() };
+            const newCredential = { ...finalCredential, id: uuidv4() } as AICredential;
             newCredentials = [...credentials, newCredential];
         }
 
-        // If it's the first credential being added, make it active.
         const newActiveId = activeCredentialId || (newCredentials.length === 1 ? newCredentials[0].id : null);
         
         try {
             await saveSettings(newCredentials, newActiveId);
-            setIsDialogOpen(false); // Close dialog on success
+            setIsDialogOpen(false);
             setEditingCredential(null);
         } catch (error) {
-            // Error toast is already shown in saveSettings
             console.error("Failed to save credential", error);
         }
     };
@@ -113,7 +129,6 @@ export function useAISettings() {
         const newCredentials = credentials.filter(c => c.id !== id);
         let newActiveId = activeCredentialId;
         if (activeCredentialId === id) {
-            // If the deleted credential was active, set the first one as active, or null if none are left.
             newActiveId = newCredentials.length > 0 ? newCredentials[0].id : null;
         }
         await saveSettings(newCredentials, newActiveId);

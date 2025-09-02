@@ -1,4 +1,5 @@
 
+
 'use client';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -21,21 +22,35 @@ const credentialSchema = z.object({
   name: z.string().min(1, "O nome é obrigatório."),
   provider: z.enum(["ollama", "googleai", "openai"]),
   ollamaModel: z.string().optional(),
-  ollamaServerAddress: z.string().url("Por favor, insira uma URL válida.").optional(),
+  ollamaServerAddress: z.string().optional(),
   googleAIApiKey: z.string().optional(),
   openAIModel: z.enum(["gpt-3.5-turbo", "gpt-4", "gpt-4-vision-preview", "gpt-4o"]).optional(),
   openAIApiKey: z.string().optional(),
 }).superRefine((data, ctx) => {
     if (data.provider === 'ollama') {
-        if (!data.ollamaModel) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O modelo Ollama é obrigatório.", path: ["ollamaModel"] });
-        if (!data.ollamaServerAddress) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O endereço do servidor é obrigatório.", path: ["ollamaServerAddress"] });
+        if (!data.ollamaModel) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O modelo Ollama é obrigatório.", path: ["ollamaModel"] });
+        }
+        if (!data.ollamaServerAddress) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O endereço do servidor é obrigatório.", path: ["ollamaServerAddress"] });
+        } else {
+            try {
+                new URL(data.ollamaServerAddress);
+            } catch (error) {
+                ctx.addIssue({ code: z.ZodIssueCode.custom, message: "URL do servidor inválida.", path: ["ollamaServerAddress"] });
+            }
+        }
     }
     if (data.provider === 'googleai' && !data.googleAIApiKey) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "A chave de API do Google AI é obrigatória.", path: ["googleAIApiKey"] });
     }
     if (data.provider === 'openai') {
-       if (!data.openAIApiKey) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "A chave de API do OpenAI é obrigatória.", path: ["openAIApiKey"] });
-       if (!data.openAIModel) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O modelo OpenAI é obrigatório.", path: ["openAIModel"] });
+       if (!data.openAIApiKey) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "A chave de API do OpenAI é obrigatória.", path: ["openAIApiKey"] });
+       }
+       if (!data.openAIModel) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O modelo OpenAI é obrigatório.", path: ["openAIModel"] });
+       }
     }
 });
 
