@@ -17,7 +17,7 @@ export interface Category {
 }
 
 export type AIProvider = 'ollama' | 'googleai' | 'openai';
-export type OpenAIModel = 'gpt-3.5-turbo' | 'gpt-4' | 'gpt-4-vision-preview';
+export type OpenAIModel = 'gpt-3.5-turbo' | 'gpt-4' | 'gpt-4-vision-preview' | 'gpt-4o';
 
 export interface AICredential {
   id: string;

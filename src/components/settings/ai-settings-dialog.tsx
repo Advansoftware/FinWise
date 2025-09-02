@@ -26,17 +26,16 @@ const credentialSchema = z.object({
   openAIModel: z.enum(["gpt-3.5-turbo", "gpt-4", "gpt-4-vision-preview", "gpt-4o"]).optional(),
   openAIApiKey: z.string().optional(),
 }).superRefine((data, ctx) => {
-    if (data.provider === 'ollama' && !data.ollamaModel) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O modelo Ollama é obrigatório.", path: ["ollamaModel"] });
+    if (data.provider === 'ollama') {
+        if (!data.ollamaModel) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O modelo Ollama é obrigatório.", path: ["ollamaModel"] });
+        if (!data.ollamaServerAddress) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O endereço do servidor é obrigatório.", path: ["ollamaServerAddress"] });
     }
     if (data.provider === 'googleai' && !data.googleAIApiKey) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: "A chave de API do Google AI é obrigatória.", path: ["googleAIApiKey"] });
     }
-    if (data.provider === 'openai' && !data.openAIApiKey) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "A chave de API do OpenAI é obrigatória.", path: ["openAIApiKey"] });
-    }
-    if (data.provider === 'openai' && !data.openAIModel) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O modelo OpenAI é obrigatório.", path: ["openAIModel"] });
+    if (data.provider === 'openai') {
+       if (!data.openAIApiKey) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "A chave de API do OpenAI é obrigatória.", path: ["openAIApiKey"] });
+       if (!data.openAIModel) ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O modelo OpenAI é obrigatório.", path: ["openAIModel"] });
     }
 });
 
@@ -180,7 +179,7 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
                             <FormItem>
                                 <FormLabel>Endereço do Servidor Ollama</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="http://127.0.0.1:11434" {...field} />
+                                    <Input placeholder="http://127.0.0.1:11434" {...field} value={field.value || ''} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
