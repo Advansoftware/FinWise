@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { UploadCloud, FileText, X, Loader2, Wand2, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Transaction } from '@/lib/types';
+import { Transaction, TransactionCategory } from '@/lib/types';
 import { useTransactions } from "@/hooks/use-transactions";
 import Papa from 'papaparse';
 import { default as toJs } from 'ofx-js';
@@ -24,8 +24,8 @@ export default function ImportPage() {
     const [fileContent, setFileContent] = useState<string>("");
     const [parsedData, setParsedData] = useState<any[]>([]);
     const [headers, setHeaders] = useState<string[]>([]);
-    const [fieldMapping, setFieldMapping] = useState<Record<keyof ParsedTransaction, string>>({
-        date: '', item: '', amount: '', category: '', subcategory: '', quantity: ''
+    const [fieldMapping, setFieldMapping] = useState<Record<keyof Omit<Transaction, 'id'>, string>>({
+        date: '', item: '', amount: '', category: '', subcategory: '', quantity: '', establishment: ''
     });
     const [transactionsToImport, setTransactionsToImport] = useState<ParsedTransaction[]>([]);
     const [stage, setStage] = useState<FileStage>('upload');
@@ -38,7 +38,7 @@ export default function ImportPage() {
         if (!selectedFile) return;
 
         const isCsv = selectedFile.type.includes('csv') || selectedFile.name.endsWith('.csv');
-        const isOfx = ['application/ofx', 'text/ofx'].includes(selectedFile.type) || selectedFile.name.endsWith('.ofx');
+        const isOfx = ['application/ofx', 'text/ofx', 'application/x-ofx'].includes(selectedFile.type) || selectedFile.name.endsWith('.ofx')  || selectedFile.name.endsWith('.OFX');
 
         if (!isCsv && !isOfx) {
             toast({ variant: 'destructive', title: 'Arquivo Inválido', description: 'Por favor, selecione um arquivo .csv ou .ofx' });
@@ -57,7 +57,7 @@ export default function ImportPage() {
                 parseOfx(content);
             }
         };
-
+        
         // Use a codificação correta para cada tipo de arquivo
         if (isCsv) {
             reader.readAsText(selectedFile, 'UTF-8');
@@ -84,14 +84,17 @@ export default function ImportPage() {
             const ofxData = await toJs(content);
             const account = ofxData.OFX.BANKMSGSRSV1.STMTTRNRS.STMTRS;
             const transactions = account.BANKTRANLIST.STMTTRN.map((t: any) => ({
-                date: format(new Date(`${t.DTPOSTED.slice(0, 4)}-${t.DTPOSTED.slice(4, 6)}-${t.DTPOSTED.slice(6, 8)}`), 'yyyy-MM-dd'),
+                date: new Date(`${t.DTPOSTED.slice(0, 4)}-${t.DTPOSTED.slice(4, 6)}-${t.DTPOSTED.slice(6, 8)}T12:00:00Z`).toISOString(), // Add time to avoid timezone issues
                 item: t.MEMO,
-                amount: Math.abs(parseFloat(t.TRNAMT)), // always positive
+                amount: Math.abs(parseFloat(t.TRNAMT)),
+                category: "Outros" as TransactionCategory,
+                quantity: 1,
             }));
             setTransactionsToImport(transactions);
             setIsParsing(false);
             setStage('confirm');
         } catch (error) {
+            console.error("OFX Parsing error:", error);
             toast({ variant: 'destructive', title: 'Erro ao Ler OFX', description: 'O arquivo parece estar mal formatado.' });
             handleReset();
         }
@@ -99,27 +102,42 @@ export default function ImportPage() {
     
     const handleProceedToConfirm = () => {
         const mappedTransactions = parsedData.map(row => {
-            const transaction: ParsedTransaction = { date: '', item: '', amount: 0 };
+            const transaction: Partial<ParsedTransaction> = {};
             for (const key in fieldMapping) {
                 const typedKey = key as keyof ParsedTransaction;
                 const mappedHeader = fieldMapping[typedKey];
                 if (mappedHeader && row[mappedHeader]) {
-                    if(typedKey === 'amount' || typedKey === 'quantity') {
-                         (transaction[typedKey] as any) = parseFloat(String(row[mappedHeader]).replace(',', '.'));
+                    const rawValue = row[mappedHeader];
+                    if (typedKey === 'amount' || typedKey === 'quantity') {
+                        const numericValue = parseFloat(String(rawValue).replace(/[^0-9.,-]+/g, '').replace(',', '.'));
+                        (transaction[typedKey] as any) = isNaN(numericValue) ? undefined : numericValue;
                     } else {
-                         (transaction[typedKey] as any) = row[mappedHeader];
+                         (transaction[typedKey] as any) = rawValue;
                     }
                 }
             }
+
             // Fix date format if needed (DD/MM/YYYY -> YYYY-MM-DD)
             if (transaction.date && transaction.date.includes('/')) {
-                const parts = transaction.date.split('/');
+                const parts = transaction.date.split(/[\/\- ]/); // Split by slash, dash or space
                 if (parts.length === 3) {
-                    transaction.date = `${parts[2]}-${parts[1]}-${parts[0]}`;
+                    const day = parts[0];
+                    const month = parts[1];
+                    const year = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
+                    transaction.date = `${year}-${month}-${day}T12:00:00Z`;
                 }
+            } else if (transaction.date) {
+                 transaction.date = new Date(transaction.date).toISOString();
             }
-            return transaction;
-        }).filter(t => t.date && t.item && t.amount > 0);
+
+            // Ensure required fields and defaults
+            if (!transaction.item || !transaction.amount || !transaction.date) return null;
+            if (!transaction.category) transaction.category = "Outros";
+            if (!transaction.quantity || isNaN(transaction.quantity)) transaction.quantity = 1;
+             transaction.amount = Math.abs(transaction.amount);
+
+            return transaction as ParsedTransaction;
+        }).filter((t): t is ParsedTransaction => t !== null);
 
         setTransactionsToImport(mappedTransactions);
         setStage('confirm');
@@ -143,7 +161,7 @@ export default function ImportPage() {
         setFile(null);
         setParsedData([]);
         setHeaders([]);
-        setFieldMapping({ date: '', item: '', amount: '', category: '', subcategory: '', quantity: '' });
+        setFieldMapping({ date: '', item: '', amount: '', category: '', subcategory: '', quantity: '', establishment: '' });
         setTransactionsToImport([]);
         setIsParsing(false);
         setStage('upload');
@@ -160,7 +178,7 @@ export default function ImportPage() {
                 <p className="mb-2 text-sm text-foreground"><span className="font-semibold text-primary">Clique para enviar</span> ou arraste e solte</p>
                 <p className="text-xs text-muted-foreground">CSV ou OFX (máx. 2MB)</p>
             </div>
-            <input id="file-upload" type="file" className="hidden" accept=".csv,.ofx" onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)} />
+            <input id="file-upload" type="file" className="hidden" accept=".csv,.ofx,.OFX" onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)} />
         </label> 
     );
     
@@ -172,10 +190,14 @@ export default function ImportPage() {
              </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                  {Object.keys(fieldMapping).map(field => {
-                    const isRequired = REQUIRED_FIELDS.includes(field as keyof ParsedTransaction);
+                    const typedField = field as keyof typeof fieldMapping;
+                    const isRequired = REQUIRED_FIELDS.includes(typedField as any);
                     return (
                       <div key={field} className="space-y-1">
-                        <Label htmlFor={field} className="capitalize flex items-center">{field} {isRequired && <span className="text-destructive ml-1">*</span>}</Label>
+                        <Label htmlFor={field} className="capitalize flex items-center">
+                            {field.replace(/([A-Z])/g, ' $1')} {/* Add space before capital letters */}
+                            {isRequired && <span className="text-destructive ml-1">*</span>}
+                        </Label>
                         <Select onValueChange={(value) => setFieldMapping(prev => ({ ...prev, [field]: value }))}>
                           <SelectTrigger id={field}>
                             <SelectValue placeholder="Selecione uma coluna" />
@@ -212,8 +234,8 @@ export default function ImportPage() {
                     <TableBody>
                         {transactionsToImport.map((t, i) => (
                             <TableRow key={i}>
-                                <TableCell>{t.date}</TableCell>
-                                <TableCell>{t.item}</TableCell>
+                                <TableCell>{format(new Date(t.date), 'dd/MM/yyyy')}</TableCell>
+                                <TableCell className="max-w-[200px] truncate">{t.item}</TableCell>
                                 <TableCell>{t.category}</TableCell>
                                 <TableCell className="text-right">R$ {t.amount.toFixed(2)}</TableCell>
                             </TableRow>
@@ -221,7 +243,8 @@ export default function ImportPage() {
                     </TableBody>
                 </Table>
             </div>
-             <Button onClick={handleImport}>
+             <Button onClick={handleImport} disabled={stage === 'importing'}>
+                {stage === 'importing' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                 Importar {transactionsToImport.length} Transações
             </Button>
         </div>
@@ -258,4 +281,3 @@ export default function ImportPage() {
         </div>
     );
 }
-

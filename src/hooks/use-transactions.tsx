@@ -235,11 +235,13 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
         ? transactionDate >= dateRange.from && transactionDate <= dateRange.to
         : true;
 
-      const categoryCondition = selectedCategory === 'all' || t.category === selectedCategory;
+      // Make category check more robust: it must exist and match, or filter is 'all'
+      const categoryCondition = selectedCategory === 'all' || (t.category && t.category === selectedCategory);
 
+      // Make subcategory check more robust
       const subcategoryCondition = selectedCategory === 'all'
         || selectedSubcategory === 'all'
-        || t.subcategory === selectedSubcategory;
+        || (t.subcategory && t.subcategory === selectedSubcategory);
 
       return dateCondition && categoryCondition && subcategoryCondition;
     });
@@ -248,7 +250,8 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   const chartData = useMemo(() => {
     if (selectedCategory === 'all') {
       const categoryTotals = filteredTransactions.reduce((acc, t) => {
-        acc[t.category] = (acc[t.category] || 0) + t.amount;
+        const key = t.category || "Outros";
+        acc[key] = (acc[key] || 0) + t.amount;
         return acc;
       }, {} as Record<string, number>);
       return Object.entries(categoryTotals).map(([name, total]) => ({ name, total }));
@@ -256,7 +259,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       const subcategoryTotals = filteredTransactions
         .filter(t => t.category === selectedCategory)
         .reduce((acc, t) => {
-          const key = t.subcategory || 'Outros';
+          const key = t.subcategory || 'Sem Subcategoria';
           acc[key] = (acc[key] || 0) + t.amount;
           return acc;
         }, {} as Record<string, number>);
