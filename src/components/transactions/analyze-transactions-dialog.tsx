@@ -60,15 +60,13 @@ export function AnalyzeTransactionsDialog({ transactions }: AnalyzeTransactionsD
                         A IA analisou as transações selecionadas e encontrou os seguintes pontos:
                     </DialogDescription>
                 </DialogHeader>
-                <ScrollArea className="max-h-80 my-4 pr-6">
+                <ScrollArea className="max-h-80 my-4 pr-6 prose prose-sm dark:prose-invert prose-p:my-2 prose-headings:my-2">
                     {isAnalyzing ? (
                         <div className="flex items-center justify-center h-40">
                              <Loader2 className="h-8 w-8 animate-spin text-primary"/>
                         </div>
                     ) : (
-                        <div className="prose prose-sm dark:prose-invert prose-p:my-2 prose-headings:my-2">
-                             <ReactMarkdown>{analysis}</ReactMarkdown>
-                        </div>
+                        <ReactMarkdown>{analysis}</ReactMarkdown>
                     )}
                 </ScrollArea>
                 <DialogFooter>
