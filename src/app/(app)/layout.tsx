@@ -39,7 +39,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   
   // Se o carregamento estiver completo e tivermos um usuário, renderize o layout do painel.
   return (
-      <TransactionsProvider user={user}>
+      <TransactionsProvider>
         <SidebarProvider defaultOpen={false}>
           <div className="flex min-h-screen">
               <Sidebar>
