@@ -1,7 +1,7 @@
 'use server';
 
-import { generateSpendingTip, SpendingTipInput } from '@/ai/flows/ai-powered-spending-tips';
-import { chatWithTransactions, ChatInput as ChatInputFlow } from '@/ai/flows/chat-with-transactions';
+// import { generateSpendingTip, SpendingTipInput } from '@/ai/flows/ai-powered-spending-tips';
+// import { chatWithTransactions, ChatInput as ChatInputFlow } from '@/ai/flows/chat-with-transactions';
 import { Transaction, AISettings } from '@/lib/types';
 import { getFirebase } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
@@ -77,35 +77,37 @@ export async function getOllamaModels(): Promise<string[]> {
 // --- AI Actions ---
 
 export async function getSpendingTip(transactions: Transaction[]) {
-  try {
-    const settings = await getAISettings();
-    const spendingData = JSON.stringify(transactions, null, 2);
-    const input: SpendingTipInput = { spendingData, settings };
-    const result = await generateSpendingTip(input);
-    return result.tip;
-  } catch (error) {
-    console.error(error);
-    return "Desculpe, não consegui gerar uma dica agora. Verifique suas configurações de IA e tente novamente.";
-  }
+  // try {
+  //   const settings = await getAISettings();
+  //   const spendingData = JSON.stringify(transactions, null, 2);
+  //   const input: SpendingTipInput = { spendingData, settings };
+  //   const result = await generateSpendingTip(input);
+  //   return result.tip;
+  // } catch (error) {
+  //   console.error(error);
+  //   return "Desculpe, não consegui gerar uma dica agora. Verifique suas configurações de IA e tente novamente.";
+  // }
+  return "AI functionality is temporarily disabled.";
 }
 
-export type ChatInputAction = Omit<ChatInputFlow, 'settings'>;
+// export type ChatInputAction = Omit<ChatInputFlow, 'settings'>;
 
-export async function getChatbotResponse(input: ChatInputAction) {
-    try {
-        const settings = await getAISettings();
-        if ((settings.provider === 'googleai' && !settings.googleAIApiKey) ||
-            (settings.provider === 'openai' && !settings.openAIApiKey)) {
-            return "Por favor, configure sua chave de API na página de Configurações para usar o assistente de IA.";
-        }
+export async function getChatbotResponse(input: any) { // ChatInputAction
+    // try {
+    //     const settings = await getAISettings();
+    //     if ((settings.provider === 'googleai' && !settings.googleAIApiKey) ||
+    //         (settings.provider === 'openai' && !settings.openAIApiKey)) {
+    //         return "Por favor, configure sua chave de API na página de Configurações para usar o assistente de IA.";
+    //     }
         
-        const fullInput: ChatInputFlow = { ...input, settings };
-        const result = await chatWithTransactions(fullInput);
-        return result.response;
-    } catch (error) {
-        console.error("Error in getChatbotResponse:", error);
-        return "Desculpe, ocorreu um erro ao processar sua pergunta. Verifique suas configurações de IA e tente novamente.";
-    }
+    //     const fullInput: ChatInputFlow = { ...input, settings };
+    //     const result = await chatWithTransactions(fullInput);
+    //     return result.response;
+    // } catch (error) {
+    //     console.error("Error in getChatbotResponse:", error);
+    //     return "Desculpe, ocorreu um erro ao processar sua pergunta. Verifique suas configurações de IA e tente novamente.";
+    // }
+    return "AI functionality is temporarily disabled.";
 }
 
 
