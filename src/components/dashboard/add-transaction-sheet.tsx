@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState } from "react";
@@ -9,7 +10,6 @@ import {
   SheetDescription,
   SheetFooter,
   SheetTrigger,
-  SheetClose,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,6 +25,7 @@ import { useTransactions } from "@/hooks/use-transactions.tsx";
 const categories: TransactionCategory[] = ["Supermercado", "Transporte", "Entretenimento", "Contas", "Restaurante", "Saúde"];
 
 export function AddTransactionSheet({ children }: { children: React.ReactNode }) {
+  const [isOpen, setIsOpen] = useState(false);
   const [item, setItem] = useState('');
   const [quantity, setQuantity] = useState('1');
   const [amount, setAmount] = useState('');
@@ -35,6 +36,14 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
   const { toast } = useToast();
   const { addTransaction } = useTransactions();
 
+  const resetForm = () => {
+    setItem('');
+    setQuantity('1');
+    setAmount('');
+    setDate(new Date());
+    setCategory('');
+    setSubcategory('');
+  };
 
   const handleSubmit = async () => {
     if (!item || !amount || !date || !category) {
@@ -63,13 +72,8 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
             description: "Sua transação foi adicionada.",
         });
         
-        // Reset form and close sheet
-        setItem('');
-        setQuantity('1');
-        setAmount('');
-        setDate(new Date());
-        setCategory('');
-        setSubcategory('');
+        resetForm();
+        setIsOpen(false); // Close sheet on success
         
     } catch (error) {
         console.error(error);
@@ -84,8 +88,8 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
   }
 
   return (
-    <Sheet>
-      <SheetTrigger asChild>{children}</SheetTrigger>
+    <Sheet open={isOpen} onOpenChange={setIsOpen}>
+      <SheetTrigger asChild onClick={() => setIsOpen(true)}>{children}</SheetTrigger>
       <SheetContent>
         <SheetHeader>
           <SheetTitle>Adicionar Nova Transação</SheetTitle>
@@ -143,12 +147,10 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
           </div>
         </div>
         <SheetFooter>
-            <SheetClose asChild>
-                <Button onClick={handleSubmit} disabled={isSubmitting}>
-                    {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Salvar Transação
-                </Button>
-            </SheetClose>
+            <Button onClick={handleSubmit} disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Salvar Transação
+            </Button>
         </SheetFooter>
       </SheetContent>
     </Sheet>
