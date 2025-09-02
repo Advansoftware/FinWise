@@ -17,12 +17,10 @@ import {
   AnalyzeTransactionsInputSchema,
   AnalyzeTransactionsOutputSchema
 } from '@/ai/ai-types';
-import { getFirebase } from "@/lib/firebase";
-import { doc, getDoc } from 'firebase/firestore';
 import { createConfiguredAI, getModelReference } from '@/ai/genkit';
-import { User } from 'firebase/auth';
-import { getAuth } from 'firebase-admin/auth';
 import { getAdminApp } from '@/lib/firebase-admin';
+import * as admin from 'firebase-admin';
+
 
 // Default AI settings
 const DEFAULT_AI_SETTINGS: AISettings = {
@@ -32,7 +30,7 @@ const DEFAULT_AI_SETTINGS: AISettings = {
   openAIModel: 'gpt-3.5-turbo'
 };
 
-// Server action to get AI settings
+// Server action to get AI settings using Admin SDK
 export async function getAISettings(userId: string): Promise<AISettings> {
   if (!userId) {
     console.warn("getAISettings called without a userId. Returning default settings.");
@@ -40,18 +38,18 @@ export async function getAISettings(userId: string): Promise<AISettings> {
   }
 
   try {
-    const { db } = getFirebase();
-    const settingsRef = doc(db, "users", userId, "settings", "ai");
-    const docSnap = await getDoc(settingsRef);
+    const adminDb = getAdminApp().firestore();
+    const settingsRef = adminDb.doc(`users/${userId}/settings/ai`);
+    const docSnap = await settingsRef.get();
 
-    if (docSnap.exists()) {
+    if (docSnap.exists) {
       return { ...DEFAULT_AI_SETTINGS, ...docSnap.data() } as AISettings;
     }
 
     return DEFAULT_AI_SETTINGS;
   } catch (error) {
-    console.error("Error getting AI settings from Firestore:", error);
-    // Em caso de erro (ex: permissão), retorna o padrão para não quebrar a aplicação
+    console.error("Error getting AI settings from Firestore with Admin SDK:", error);
+    // In case of error (e.g., permissions), return defaults to avoid breaking the app
     return DEFAULT_AI_SETTINGS;
   }
 }
@@ -83,7 +81,7 @@ export async function getFinancialProfile(transactions: Transaction[], userId: s
       name: 'financialProfilePrompt',
       input: { schema: FinancialProfileInputSchema },
       output: { schema: FinancialProfileOutputSchema },
-      model: modelRef, // Especifica o modelo
+      model: modelRef,
       prompt: `You are a savvy and positive financial analyst. Based on the user's transaction history, define a financial profile for them. Give them a creative name and a description that summarizes their spending patterns in a friendly and insightful way. Focus on providing a narrative, not just numbers. All output must be in Brazilian Portuguese.
 
 User's transactions:
@@ -114,7 +112,7 @@ export async function analyzeTransactions(transactions: Transaction[], userId: s
       name: 'analyzeTransactionsPrompt',
       input: { schema: AnalyzeTransactionsInputSchema },
       output: { schema: AnalyzeTransactionsOutputSchema },
-      model: modelRef, // Especifica o modelo
+      model: modelRef,
       prompt: `You are a meticulous financial auditor. Analyze this small batch of transactions and provide a brief analysis in markdown. Look for anomalies (e.g., unusually high amounts), patterns (e.g., frequent small purchases), or potential recategorization (e.g., a "Padaria" purchase in "Restaurante" could be "Supermercado"). Be concise. All output must be in Brazilian Portuguese.
 
 Transactions:
