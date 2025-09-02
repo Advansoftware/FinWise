@@ -17,7 +17,6 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Transaction, TransactionCategory } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { addTransaction } from "@/app/actions";
 import { Loader2 } from "lucide-react";
 import { SingleDatePicker } from "../single-date-picker";
 import { useTransactions } from "@/hooks/use-transactions";
@@ -34,7 +33,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
   const [subcategory, setSubcategory] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
-  const { refreshTransactions } = useTransactions();
+  const { addTransaction } = useTransactions();
 
 
   const handleSubmit = async () => {
@@ -71,9 +70,6 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
         setDate(new Date());
         setCategory('');
         setSubcategory('');
-
-        // Revalidate data on the page
-        await refreshTransactions();
         
     } catch (error) {
         console.error(error);

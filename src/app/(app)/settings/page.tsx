@@ -1,4 +1,3 @@
-// src/app/(app)/settings/page.tsx
 'use client';
 
 import { useEffect, useState, useTransition } from "react";
@@ -15,6 +14,7 @@ import { saveAISettings, getAISettings, getOllamaModels } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, RefreshCw } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useAuth } from "@/hooks/use-auth";
 
 const aiSettingsSchema = z.object({
   provider: z.enum(["ollama", "googleai", "openai"]),
@@ -26,6 +26,7 @@ const aiSettingsSchema = z.object({
 
 export default function SettingsPage() {
     const { toast } = useToast();
+    const { user } = useAuth();
     const [isSaving, setIsSaving] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [ollamaModels, setOllamaModels] = useState<string[]>([]);
@@ -56,8 +57,10 @@ export default function SettingsPage() {
 
     useEffect(() => {
         const loadSettings = async () => {
+            if (!user) return;
             setIsLoading(true);
-            const settings = await getAISettings();
+            const idToken = await user.getIdToken();
+            const settings = await getAISettings(idToken);
             form.reset(settings);
             if (settings.provider === 'ollama') {
                fetchOllamaModels();
@@ -66,11 +69,16 @@ export default function SettingsPage() {
         };
         loadSettings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [form]);
+    }, [form, user]);
 
     const onSubmit = async (data: z.infer<typeof aiSettingsSchema>) => {
+        if (!user) {
+            toast({ variant: 'destructive', title: 'Erro', description: 'Você precisa estar logado para salvar as configurações.' });
+            return;
+        }
         setIsSaving(true);
-        await saveAISettings(data);
+        const idToken = await user.getIdToken();
+        await saveAISettings(idToken, data);
         toast({
             title: "Configurações Salvas!",
             description: "Suas configurações de IA foram atualizadas com sucesso.",

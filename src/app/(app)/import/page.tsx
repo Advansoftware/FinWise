@@ -1,4 +1,3 @@
-// src/app/(app)/import/page.tsx
 'use client';
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -7,7 +6,6 @@ import { UploadCloud, File, X, Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Transaction } from '@/lib/types';
-import { addTransaction } from '@/app/actions';
 import { useTransactions } from '@/hooks/use-transactions';
 
 type ParsedTransaction = Omit<Transaction, 'id'>;
@@ -18,7 +16,7 @@ export default function ImportPage() {
     const [isParsing, setIsParsing] = useState(false);
     const [isImporting, setIsImporting] = useState(false);
     const { toast } = useToast();
-    const { refreshTransactions } = useTransactions();
+    const { addTransaction, refreshTransactions } = useTransactions();
 
     const handleFileChange = (files: FileList | null) => {
         if (files && files[0]) {

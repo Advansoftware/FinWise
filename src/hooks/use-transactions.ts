@@ -1,13 +1,33 @@
 "use client";
 
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, createContext, useContext, ReactNode } from "react";
 import { DateRange } from "react-day-picker";
 import { subDays } from "date-fns";
 import { Transaction, TransactionCategory } from "@/lib/types";
-import { getTransactions } from "@/app/actions";
+import { getTransactions, addTransaction as addTransactionAction } from "@/app/actions";
 import { useAuth } from "./use-auth";
 
-export function useTransactions() {
+interface TransactionsContextType {
+  allTransactions: Transaction[];
+  isLoading: boolean;
+  filteredTransactions: Transaction[];
+  chartData: { name: string; total: number }[];
+  dateRange: DateRange | undefined;
+  setDateRange: (range: DateRange | undefined) => void;
+  categories: TransactionCategory[];
+  subcategories: Partial<Record<TransactionCategory, string[]>>;
+  selectedCategory: string;
+  handleCategoryChange: (category: string) => void;
+  availableSubcategories: string[];
+  selectedSubcategory: string;
+  setSelectedSubcategory: (subcategory: string) => void;
+  refreshTransactions: () => Promise<void>;
+  addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
+}
+
+const TransactionsContext = createContext<TransactionsContextType | undefined>(undefined);
+
+export function TransactionsProvider({ children }: { children: ReactNode }) {
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
@@ -18,38 +38,37 @@ export function useTransactions() {
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('all');
   const { user, loading: authLoading } = useAuth();
 
-
   const loadTransactions = useCallback(async () => {
-    // Don't start loading if auth is still loading.
-    if (authLoading) return;
+    if (authLoading || !user) return;
     
     setIsLoading(true);
     try {
-      // getTransactions will now throw an error if the user is not authenticated.
-      // This is caught below.
-      const transactions = await getTransactions();
+      const idToken = await user.getIdToken();
+      const transactions = await getTransactions(idToken);
       setAllTransactions(transactions);
     } catch (error) {
-      // This will catch auth errors from getTransactions, so we don't need to show a toast.
-      // The user will be redirected to the login page by the AppLayout.
-      console.error("Failed to fetch transactions (likely due to auth):", error);
-      setAllTransactions([]); // Clear transactions on error
+      console.error("Failed to fetch transactions:", error);
+      setAllTransactions([]);
     } finally {
       setIsLoading(false);
     }
-  }, [authLoading]);
+  }, [authLoading, user]);
 
   useEffect(() => {
-    // Only attempt to load transactions if we have a user.
-    // If there is no user, the AppLayout will redirect to /login.
     if (user && !authLoading) {
       loadTransactions();
     } else if (!user && !authLoading) {
-        // If auth is done and there's no user, stop loading and clear transactions.
         setIsLoading(false);
         setAllTransactions([]);
     }
   }, [user, authLoading, loadTransactions]);
+  
+  const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
+    if(!user) throw new Error("User not authenticated");
+    const idToken = await user.getIdToken();
+    await addTransactionAction(idToken, transaction);
+    await loadTransactions();
+  }
 
   const { categories, subcategories } = useMemo(() => {
     const categoriesSet = new Set<TransactionCategory>();
@@ -71,7 +90,7 @@ export function useTransactions() {
     }
 
     return {
-      categories: Array.from(categoriesSet),
+      categories: Array.from(categoriesSet).sort(),
       subcategories: subcategoriesAsArray
     };
   }, [allTransactions]);
@@ -119,7 +138,7 @@ export function useTransactions() {
 
   const availableSubcategories = subcategories[selectedCategory as TransactionCategory] || [];
 
-  return {
+  const value = {
     allTransactions,
     isLoading,
     filteredTransactions,
@@ -134,5 +153,20 @@ export function useTransactions() {
     selectedSubcategory,
     setSelectedSubcategory,
     refreshTransactions: loadTransactions,
+    addTransaction
   };
+
+  return (
+    <TransactionsContext.Provider value={value}>
+        {children}
+    </TransactionsContext.Provider>
+  )
+}
+
+export function useTransactions() {
+  const context = useContext(TransactionsContext);
+  if (context === undefined) {
+    throw new Error("useTransactions must be used within a TransactionsProvider");
+  }
+  return context;
 }

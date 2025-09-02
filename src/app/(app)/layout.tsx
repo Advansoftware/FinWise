@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ChatAssistant } from "@/components/chat/chat-assistant";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
+import { TransactionsProvider } from "@/hooks/use-transactions";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -38,40 +39,42 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   
   // Se o carregamento estiver completo e tivermos um usuário, renderize o layout do painel.
   return (
-      <SidebarProvider defaultOpen={false}>
-        <div className="flex">
-            <Sidebar>
-            <SidebarHeader>
-                <div className="flex items-center justify-center h-12 group-data-[state=expanded]:justify-start group-data-[state=expanded]:gap-2">
-                    <Logo className="w-8 h-auto"/>
-                    <span className="text-lg font-semibold group-data-[state=collapsed]:hidden">FinWise</span>
-                </div>
-            </SidebarHeader>
-            <SidebarContent>
-                <AppNav />
-            </SidebarContent>
-            <SidebarFooter>
-                <UserNav />
-            </SidebarFooter>
-            </Sidebar>
-            <main className="flex-1 md:ml-[var(--sidebar-width-icon)] group-data-[state=expanded]:md:ml-[var(--sidebar-width)] transition-[margin-left] duration-300 ease-in-out">
-                <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6">
-                    <div className="flex items-center gap-2 md:hidden">
-                        <SidebarTrigger/>
-                        <Logo className="w-8 h-8"/>
-                    </div>
-                    <div className="flex-1">
-                        {/* O título da página pode ir aqui */}
-                    </div>
-                    <UserNav />
-                </header>
-                <div className="flex-1 p-4 md:p-6">
-                    {children}
-                </div>
-                <PWAUpdater />
-                <ChatAssistant />
-            </main>
-        </div>
-      </SidebarProvider>
+      <TransactionsProvider>
+        <SidebarProvider defaultOpen={false}>
+          <div className="flex">
+              <Sidebar>
+              <SidebarHeader>
+                  <div className="flex items-center justify-center h-12 group-data-[state=expanded]:justify-start group-data-[state=expanded]:gap-2">
+                      <Logo className="w-8 h-auto"/>
+                      <span className="text-lg font-semibold group-data-[state=collapsed]:hidden">FinWise</span>
+                  </div>
+              </SidebarHeader>
+              <SidebarContent>
+                  <AppNav />
+              </SidebarContent>
+              <SidebarFooter>
+                  <UserNav />
+              </SidebarFooter>
+              </Sidebar>
+              <main className="flex-1 md:ml-[var(--sidebar-width-icon)] group-data-[state=expanded]:md:ml-[var(--sidebar-width)] transition-[margin-left] duration-300 ease-in-out">
+                  <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6">
+                      <div className="flex items-center gap-2 md:hidden">
+                          <SidebarTrigger/>
+                          <Logo className="w-8 h-8"/>
+                      </div>
+                      <div className="flex-1">
+                          {/* O título da página pode ir aqui */}
+                      </div>
+                      <UserNav />
+                  </header>
+                  <div className="flex-1 p-4 md:p-6">
+                      {children}
+                  </div>
+                  <PWAUpdater />
+                  <ChatAssistant />
+              </main>
+          </div>
+        </SidebarProvider>
+      </TransactionsProvider>
   );
 }

@@ -5,19 +5,12 @@
 import { Transaction, AISettings } from '@/lib/types';
 import { getFirebase } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
-import { headers } from 'next/headers';
 import { getFirebaseAdmin } from '@/lib/firebase-admin';
 
 
-async function getUserId() {
-    const authorization = headers().get('Authorization');
-    if (!authorization) {
-        throw new Error('Authorization header not found. User is not authenticated.');
-    }
-    
-    const idToken = authorization.split('Bearer ')[1];
+async function getUserId(idToken: string) {
     if (!idToken || idToken === 'null' || idToken === 'undefined') {
-        throw new Error('ID token not found in Authorization header. User is not authenticated.');
+        throw new Error('ID token not found. User is not authenticated.');
     }
     
     try {
@@ -36,14 +29,14 @@ async function getUserId() {
 
 // --- AI Settings Actions ---
 
-async function getSettingsDocRef() {
-    const userId = await getUserId();
+async function getSettingsDocRef(idToken: string) {
+    const userId = await getUserId(idToken);
     const { db: clientDb } = getFirebase(); 
     return doc(clientDb, "users", userId, "settings", "ai");
 }
 
-export async function getAISettings(): Promise<AISettings> {
-    const settingsRef = await getSettingsDocRef();
+export async function getAISettings(idToken: string): Promise<AISettings> {
+    const settingsRef = await getSettingsDocRef(idToken);
     const docSnap = await getDoc(settingsRef);
     if (docSnap.exists()) {
         return docSnap.data() as AISettings;
@@ -52,8 +45,8 @@ export async function getAISettings(): Promise<AISettings> {
     }
 }
 
-export async function saveAISettings(settings: AISettings): Promise<void> {
-    const settingsRef = await getSettingsDocRef();
+export async function saveAISettings(idToken: string, settings: AISettings): Promise<void> {
+    const settingsRef = await getSettingsDocRef(idToken);
     await setDoc(settingsRef, settings);
 }
 
@@ -113,15 +106,15 @@ export async function getChatbotResponse(input: any) { // ChatInputAction
 
 // --- Transaction Actions ---
 
-async function getTransactionsCollectionRef() {
-    const userId = await getUserId();
+async function getTransactionsCollectionRef(idToken: string) {
+    const userId = await getUserId(idToken);
     const { db: clientDb } = getFirebase(); // Usar o DB do cliente
     return collection(clientDb, "users", userId, "transactions");
 }
 
 
-export async function getTransactions(): Promise<Transaction[]> {
-    const transactionsCollection = await getTransactionsCollectionRef();
+export async function getTransactions(idToken: string): Promise<Transaction[]> {
+    const transactionsCollection = await getTransactionsCollectionRef(idToken);
     const querySnapshot = await getDocs(transactionsCollection);
     const transactions: Transaction[] = [];
     querySnapshot.forEach((doc) => {
@@ -135,8 +128,8 @@ export async function getTransactions(): Promise<Transaction[]> {
     return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 }
 
-export async function addTransaction(transaction: Omit<Transaction, 'id'>): Promise<string> {
-    const transactionsCollection = await getTransactionsCollectionRef();
+export async function addTransaction(idToken: string, transaction: Omit<Transaction, 'id'>): Promise<string> {
+    const transactionsCollection = await getTransactionsCollectionRef(idToken);
     const docRef = await addDoc(transactionsCollection, {
         ...transaction,
         date: new Date(transaction.date)
