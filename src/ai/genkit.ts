@@ -4,7 +4,6 @@
  * and configures the main `ai` object that will be used throughout the application
  * to define and run AI flows.
  */
-'use server';
 
 import {genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
