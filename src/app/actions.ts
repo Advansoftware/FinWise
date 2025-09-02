@@ -2,9 +2,9 @@
 'use server';
 
 import { Transaction, AISettings, TransactionCategory } from '@/lib/types';
-import { getFirebase } from '@/lib/firebase-server';
+import { getFirebase as getFirebaseAdmin } from '@/lib/firebase-server';
 import { revalidatePath } from 'next/cache';
-import { getAI } from '@/ai/genkit';
+import { getAI, clearAISettingsCache } from '@/ai/genkit';
 import { z } from 'zod';
 import { generateSpendingTip } from '@/ai/flows/ai-powered-spending-tips';
 import { chatWithTransactions } from '@/ai/flows/chat-with-transactions';
@@ -16,8 +16,7 @@ import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, Timesta
 
 // --- Firebase Server Instance ---
 const getDb = () => {
-    // Usa a inicialização do Firebase para o servidor.
-    const { db } = getFirebase();
+    const { db } = getFirebaseAdmin();
     return db;
 };
 
@@ -40,7 +39,6 @@ export async function getAISettings(userId: string): Promise<AISettings> {
     try {
       const docSnap = await getDoc(settingsRef);
        if (docSnap.exists()) {
-        // Os dados do usuário (docSnap.data()) devem sobrescrever os padrões.
         return { ...defaultSettings, ...docSnap.data() } as AISettings;
       }
     } catch(e) {
@@ -55,8 +53,11 @@ export async function saveAISettings(userId: string, settings: AISettings): Prom
     }
     const db = getDb();
     const settingsRef = doc(db, "users", userId, "settings", "ai");
-    // Use setDoc without merge to ensure old provider data is cleared.
     await setDoc(settingsRef, settings); 
+    
+    // Clear the cache for this user to apply settings immediately
+    clearAISettingsCache(userId);
+
     revalidatePath('/(app)/settings', 'page');
 }
 
@@ -258,5 +259,3 @@ export async function deleteTransactionsByCategory(userId: string, category: Tra
 // We re-export these from a central place to be used in client components.
 export { extractReceiptInfo, suggestCategoryForItem };
 export type { ReceiptInfoInput, ReceiptInfoOutput, SuggestCategoryInput, SuggestCategoryOutput };
-
-    
