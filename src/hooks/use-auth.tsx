@@ -24,6 +24,7 @@ import {
 } from 'firebase/auth';
 import { getFirebase } from '@/lib/firebase';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
   user: User | null;
@@ -44,6 +45,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const { auth, db } = getFirebase();
+  const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
@@ -75,7 +77,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = async () => {
     await signOut(auth);
-    window.location.href = '/login';
+    // Redireciona explicitamente para a página de login após o logout.
+    router.push('/login');
   };
 
   const signInWithGoogle = async () => {
@@ -117,7 +120,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!auth.currentUser || !auth.currentUser.email) throw new Error("User not authenticated or email is missing");
     const credential = EmailAuthProvider.credential(auth.currentUser.email, password);
     await reauthenticateWithCredential(auth.currentUser, credential);
-a  }
+  }
 
   const updateUserPassword = async (password: string) => {
     if (!auth.currentUser) throw new Error("User not authenticated");
@@ -147,5 +150,3 @@ export function useAuth() {
   }
   return context;
 }
-
-    

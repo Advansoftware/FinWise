@@ -9,11 +9,12 @@ import { PWAUpdater } from "@/components/pwa-updater";
 import { ChatAssistant } from "@/components/chat/chat-assistant";
 import { TransactionsProvider } from "@/hooks/use-transactions";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { AuthGuard } from "@/components/auth/auth-guard";
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   
-  // Se o carregamento estiver completo e tivermos um usuário, renderize o layout do painel.
   return (
+    <AuthGuard isProtected>
       <TransactionsProvider>
         <SidebarProvider defaultOpen={true}>
           <div className="flex min-h-screen">
@@ -55,7 +56,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </div>
         </SidebarProvider>
       </TransactionsProvider>
+    </AuthGuard>
   );
 }
 
-    
