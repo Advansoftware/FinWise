@@ -8,6 +8,7 @@ import { Transaction, TransactionCategory } from "@/lib/types";
 import { getTransactions, addTransaction as addTransactionAction, getCategories, saveCategories, deleteTransactionsByCategory } from "@/app/actions";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
+import { FirebaseError } from "firebase/app";
 
 type CategoryMap = Partial<Record<TransactionCategory, string[]>>;
 
@@ -62,14 +63,21 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       setAllTransactions(transactions);
       setCategoryMap(categories);
     } catch (error) {
-      console.error("Failed to fetch data:", error);
-      setAllTransactions([]);
-      setCategoryMap({});
-       toast({
-        variant: "destructive",
-        title: "Erro ao carregar dados",
-        description: "Não foi possível buscar suas informações. Tente novamente mais tarde.",
-      });
+        console.error("Failed to fetch data:", error);
+        setAllTransactions([]);
+        setCategoryMap({});
+
+        let description = "Não foi possível buscar suas informações. Tente novamente mais tarde.";
+        if (error instanceof FirebaseError && error.code === 'permission-denied') {
+            description = "Acesso ao banco de dados negado. Verifique se o Cloud Firestore foi ativado em seu projeto Firebase e se as regras de segurança permitem leitura e escrita."
+        }
+        
+        toast({
+            variant: "destructive",
+            title: "Erro ao Carregar Dados",
+            description,
+            duration: 10000,
+        });
     } finally {
       setIsLoading(false);
     }

@@ -1,3 +1,4 @@
+
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
 import { getFirestore, enableIndexedDbPersistence, Firestore } from "firebase/firestore";
 import { getAuth, Auth } from "firebase/auth";
@@ -19,6 +20,7 @@ interface FirebaseServices {
 
 let firebaseServices: FirebaseServices | null = null;
 
+// This function initializes Firebase for a CLIENT environment.
 function getFirebase(): FirebaseServices {
   if (firebaseServices) {
     return firebaseServices;
@@ -29,16 +31,16 @@ function getFirebase(): FirebaseServices {
   const db = getFirestore(app);
 
   try {
-    // Tenta habilitar a persistência. Isso deve ser feito antes de outras operações do Firestore.
+    // This enables offline persistence. It must be called before any other Firestore operations.
     enableIndexedDbPersistence(db).catch((err) => {
       if (err.code == 'failed-precondition') {
-        console.warn('Falha na pré-condição da persistência. Múltiplas abas abertas?');
+        console.warn('Firestore persistence failed-precondition. Multiple tabs open?');
       } else if (err.code == 'unimplemented') {
-        console.warn('O navegador atual não suporta persistência offline.');
+        console.warn('Firestore persistence is not available in this browser.');
       }
     });
   } catch (error) {
-    console.error("Erro ao habilitar persistência: ", error);
+    console.error("Error enabling Firestore persistence: ", error);
   }
 
   firebaseServices = { app, auth, db };
