@@ -1,55 +1,60 @@
-
 'use server';
-/**
- * @fileOverview A conversational AI flow for answering questions about financial transactions.
- *
- * - chatWithTransactions - A function that handles the conversational process.
- */
 
-import { ai, getPlugins } from '@/ai/genkit';
-import { ChatInputSchema, ChatOutputSchema } from '../ai-types';
-import type { ChatInput } from '../ai-types';
+import { ChatInput, ChatOutputSchema, ChatInputSchema } from '@/ai/ai-types';
+import { createConfiguredAI, getModelReference } from '@/ai/genkit';
+import { getAISettings } from '@/app/actions';
+import { ZodTypeAny } from 'zod';
 
-const chatWithTransactionsPrompt = ai.definePrompt({
-    name: 'chatWithTransactionsPrompt',
-    input: { schema: ChatInputSchema },
-    output: { schema: ChatOutputSchema },
-    prompt: `You are FinWise, a helpful and friendly AI financial assistant.
-Your role is to answer user questions based on the provided transaction data.
-Analyze the user's prompt and the transaction data to provide a clear and helpful response.
-Be concise and conversational.
-All responses must be in Brazilian Portuguese.
+export async function chatWithTransactionsAction(input: ChatInput, userId?: string) {
+    try {
+        // 1. Pega configurações de IA (Firestore > Default)
+        const settings = await getAISettings(userId || '');
 
-Current conversation history:
+        if (!settings) {
+            throw new Error("Nenhum modelo configurado. Verifique suas configurações de IA.");
+        }
+
+        console.log('Settings loaded:', settings); // Debug
+
+        const configuredAI = createConfiguredAI(settings);
+        const modelRef = getModelReference(settings);
+
+        console.log('Model reference:', modelRef); // Debug
+
+        // 2. Define prompt com modelo especificado
+        const chatWithTransactionsPrompt = configuredAI.definePrompt({
+            name: 'chatWithTransactionsPrompt',
+            input: { schema: ChatInputSchema as unknown as ZodTypeAny },
+            output: { schema: ChatOutputSchema as unknown as ZodTypeAny },
+            model: modelRef, // CRUCIAL: especifica o modelo aqui
+            prompt: `Você é FinWise, um assistente financeiro amigável. Responda perguntas do usuário com base nas transações fornecidas. Seja claro, objetivo e responda em Português do Brasil.
+
+Histórico da conversa:
 {{#each history}}
 - {{role}}: {{content}}
 {{/each}}
 
-User's financial transactions:
-\`\`\`json
-{{{jsonStringify transactions}}}
-\`\`\`
+Transações do usuário:
+{{{transactionsJSON}}}
 
-New user question: {{{prompt}}}
+Pergunta do usuário: {{{prompt}}}
 
-Your answer:
-`,
-});
+Sua resposta: `,
+        });
 
-export const chatWithTransactions = ai.defineFlow({
-    name: 'chatWithTransactions',
-    inputSchema: ChatInputSchema,
-    outputSchema: ChatOutputSchema
-}, async (input) => {
-     const { output } = await chatWithTransactionsPrompt(input, {
-        plugins: await getPlugins(),
-     });
-    if (!output) {
-      throw new Error("AI failed to provide a response.");
+        // 3. Executa prompt, enviando o JSON como campo normal
+        const { output } = await chatWithTransactionsPrompt({
+            ...input,
+            transactionsJSON: JSON.stringify(input.transactions, null, 2),
+        });
+
+        if (!output) {
+            throw new Error("IA não conseguiu gerar resposta.");
+        }
+
+        return output;
+    } catch (error) {
+        console.error('Erro em chatWithTransactionsAction:', error);
+        throw error; // Re-throw para que getChatbotResponse possa tratar
     }
-    return output;
-});
-
-export async function chatWithTransactionsAction(input: ChatInput) {
-    return chatWithTransactions(input);
 }

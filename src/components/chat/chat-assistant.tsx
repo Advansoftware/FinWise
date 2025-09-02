@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useState, useRef, useEffect, useTransition } from 'react';
@@ -12,6 +11,8 @@ import { useTransactions } from "@/hooks/use-transactions";
 import { getChatbotResponse } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Message } from '@/ai/ai-types';
+import { useAuthState } from 'react-firebase-hooks/auth'; // Adicione esta importação
+import { getFirebase } from '@/lib/firebase'; // Ajuste o caminho conforme sua estrutura
 
 const suggestionPrompts = [
     "Quanto gastei com Supermercado este mês?",
@@ -28,6 +29,9 @@ export function ChatAssistant() {
     const { allTransactions } = useTransactions();
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const { toast } = useToast();
+    
+    // Adicione esta linha para pegar o usuário autenticado
+    const [user, loading, error] = useAuthState(getFirebase().auth);
 
     useEffect(() => {
         // Scroll to bottom when new messages are added
@@ -39,27 +43,61 @@ export function ChatAssistant() {
         }
     }, [messages]);
 
-
     const handleSubmit = (prompt: string = input) => {
         if (!prompt.trim()) return;
+
+        // Verificar se o usuário está autenticado
+        if (!user) {
+            toast({
+                title: "Erro",
+                description: "Você precisa estar logado para usar o chat.",
+                variant: "destructive"
+            });
+            return;
+        }
 
         const newUserMessage: Message = { role: 'user', content: prompt };
         setMessages(prev => [...prev, newUserMessage]);
         setInput('');
 
         startTransition(async () => {
-            const response = await getChatbotResponse({
-                history: messages,
-                prompt: prompt,
-                transactions: allTransactions,
-            });
-            const newModelMessage: Message = { role: 'model', content: response };
-            setMessages(prev => [...prev, newModelMessage]);
+            try {
+                // IMPORTANTE: Passar o userId aqui
+                const response = await getChatbotResponse({
+                    history: messages,
+                    prompt: prompt,
+                    transactions: allTransactions,
+                }, user.uid); // ← Aqui está a correção principal
+                
+                const newModelMessage: Message = { role: 'model', content: response };
+                setMessages(prev => [...prev, newModelMessage]);
+            } catch (error) {
+                console.error('Error getting chatbot response:', error);
+                toast({
+                    title: "Erro no Chat",
+                    description: "Ocorreu um erro ao processar sua pergunta. Tente novamente.",
+                    variant: "destructive"
+                });
+                
+                // Remover a mensagem do usuário se houve erro
+                setMessages(prev => prev.filter(msg => msg !== newUserMessage));
+            }
         });
     };
     
     const handleSuggestionClick = (prompt: string) => {
         handleSubmit(prompt);
+    };
+
+    // Mostrar loading se ainda estiver carregando o usuário
+    if (loading) {
+        return null; // ou um loading spinner
+    }
+
+    // Mostrar erro se houve problema na autenticação
+    if (error) {
+        console.error('Auth error:', error);
+        return null;
     }
 
     return (
@@ -86,7 +124,11 @@ export function ChatAssistant() {
                             <CardContent className="flex-1 overflow-hidden p-0">
                                 <ScrollArea className="h-full" ref={scrollAreaRef}>
                                     <div className="p-4 space-y-4">
-                                        {messages.length === 0 && (
+                                        {!user ? (
+                                            <div className="text-center p-4">
+                                                <p className="text-muted-foreground">Faça login para usar o assistente de chat.</p>
+                                            </div>
+                                        ) : messages.length === 0 ? (
                                             <div className="text-center p-4">
                                                 <p className="text-muted-foreground mb-4">Faça uma pergunta sobre suas finanças ou escolha uma sugestão.</p>
                                                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
@@ -97,7 +139,7 @@ export function ChatAssistant() {
                                                     ))}
                                                 </div>
                                             </div>
-                                        )}
+                                        ) : null}
                                         {messages.map((msg, index) => (
                                             <div key={index} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                                 {msg.role === 'model' && <Bot className="h-6 w-6 text-primary flex-shrink-0" />}
@@ -120,17 +162,17 @@ export function ChatAssistant() {
                             <CardFooter className="p-4 border-t">
                                 <div className="relative w-full">
                                     <Input
-                                        placeholder="Pergunte algo sobre seus gastos..."
+                                        placeholder={user ? "Pergunte algo sobre seus gastos..." : "Faça login para usar o chat"}
                                         value={input}
                                         onChange={(e) => setInput(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-                                        disabled={isPending}
+                                        disabled={isPending || !user}
                                     />
                                     <Button
                                         size="icon"
                                         className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
                                         onClick={() => handleSubmit()}
-                                        disabled={!input.trim() || isPending}
+                                        disabled={!input.trim() || isPending || !user}
                                     >
                                         <Send className="h-4 w-4" />
                                     </Button>
@@ -151,5 +193,3 @@ export function ChatAssistant() {
         </>
     );
 }
-
-    

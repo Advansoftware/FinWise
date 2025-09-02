@@ -1,103 +1,120 @@
-
 /**
- * @fileoverview This file initializes and a new Genkit AI toolkit instance.
- * It sets up plugins for different AI providers like Google AI and Ollama,
- * and configures the main `ai` object that will be used throughout the application
- * to define and run AI flows.
+ * @fileoverview This file initializes and configures the Genkit AI toolkit instance.
+ * It sets up plugins for different AI providers like Ollama and OpenAI.
  */
 
-import {genkit, type Genkit} from 'genkit';
-import {googleAI} from '@genkit-ai/googleai';
-import {Plugin} from 'genkit/plugins';
-import {getAISettings as fetchAISettings} from '@/app/actions';
-import {ollama} from 'genkitx-ollama';
-import {openai} from 'genkitx-openai';
-import { getAuth } from 'firebase/auth';
-import { getFirebase } from '@/lib/firebase';
+import { genkit, type Genkit } from 'genkit';
+import { ollama } from 'genkitx-ollama';
+import { openAI } from 'genkitx-openai';
 import { AISettings } from '@/lib/types';
 
-
-// This is a simple in-memory cache to avoid fetching settings on every call in the same request lifecycle.
-export const settingsCache: { [key: string]: { settings: AISettings, timestamp: number } } = {};
-const CACHE_TTL = 1000 * 60 * 5; // 5 minutes
-
-export function clearAISettingsCache(userId: string) {
-    if (settingsCache[userId]) {
-        delete settingsCache[userId];
-    }
-}
-
 /**
- * The global Genkit instance. 
+ * The global Genkit instance.
  * All flows and prompts should be defined on this instance.
  */
-export const ai = genkit();
-
-
-async function createPlugins(settings: AISettings): Promise<Plugin[]> {
-    const plugins: Plugin[] = [];
-
-    if (settings.provider === 'googleai' && settings.googleAIApiKey) {
-        plugins.push(googleAI({apiKey: settings.googleAIApiKey}));
-    } else if (settings.provider === 'ollama' && settings.ollamaModel) {
-        plugins.push(
+export const ai = genkit({
+    plugins: [
+        // Default Ollama plugin para fallback
         ollama({
-            model: settings.ollamaModel,
-            serverAddress: settings.ollamaServerAddress || 'http://127.0.0.1:11434',
+            models: [{ name: 'llama3' }],
+            serverAddress: 'http://127.0.0.1:11434',
         })
-        );
-    } else if (
-        settings.provider === 'openai' &&
-        settings.openAIApiKey &&
-        settings.openAIModel
-    ) {
-        plugins.push(openai({apiKey: settings.openAIApiKey, model: settings.openAIModel}));
+    ]
+});
+
+/**
+ * Creates appropriate plugins based on AI settings
+ */
+export function createAIPlugins(settings: AISettings): any[] {
+    const plugins: any[] = [];
+
+    switch (settings.provider) {
+        case 'ollama':
+            if (settings.ollamaModel) {
+                plugins.push(
+                    ollama({
+                        models: [{ name: settings.ollamaModel }],
+                        serverAddress: settings.ollamaServerAddress || 'http://127.0.0.1:11434',
+                    })
+                );
+            }
+            break;
+
+        case 'openai':
+            if (settings.openAIApiKey && settings.openAIModel) {
+                plugins.push(
+                    openAI({
+                        apiKey: settings.openAIApiKey,
+                    })
+                );
+            }
+            break;
     }
+
+    // Fallback to default Ollama if no plugins were created
+    if (plugins.length === 0) {
+        plugins.push(
+            ollama({
+                models: [{ name: 'llama3' }],
+                serverAddress: 'http://127.0.0.1:11434',
+            })
+        );
+    }
+
     return plugins;
 }
 
-
 /**
- * Gets the appropriate Genkit plugins based on the current user's settings.
- * This is called by each flow at runtime to ensure the correct AI provider is used.
+ * Gets the model reference based on settings
  */
-export async function getPlugins(): Promise<Plugin[]> {
-  const { auth } = getFirebase(); // Client-side firebase
-  const userId = auth.currentUser?.uid;
-
-  if (!userId) {
-    // If no user, return a default instance with ollama
-     return [
-          ollama({
-            model: 'llama3',
-            serverAddress: 'http://127.0.0.1:11434',
-          })
-      ];
-  }
-  
-  // Check cache first
-  const cached = settingsCache[userId];
-  if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
-    return createPlugins(cached.settings);
-  }
-
-  // Fetch fresh settings and clear old cache entry for this user
-  clearAISettingsCache(userId);
-  const settings = await fetchAISettings(userId);
-  settingsCache[userId] = { settings, timestamp: Date.now() };
-
-  return createPlugins(settings);
+export function getModelReference(settings: AISettings): string {
+    switch (settings.provider) {
+        case 'ollama':
+            return `ollama/${settings.ollamaModel || 'llama3'}`;
+        case 'openai':
+            return `openai/${settings.openAIModel || 'gpt-3.5-turbo'}`;
+        default:
+            return 'ollama/llama3'; // fallback
+    }
 }
 
+/**
+ * Creates a configured Genkit instance with the specified settings
+ */
+export function createConfiguredAI(settings: AISettings): Genkit & { modelRef: string } {
+    const plugins = createAIPlugins(settings);
+    const modelRef = getModelReference(settings);
 
+    const configuredAI = genkit({ plugins });
 
-// Clean up old cache entries periodically
-setInterval(() => {
-    const now = Date.now();
-    for (const userId in settingsCache) {
-        if (now - (settingsCache[userId]?.timestamp || 0) > CACHE_TTL) {
-            delete settingsCache[userId];
-        }
+    // Adiciona a referência do modelo para uso nas chamadas
+    return Object.assign(configuredAI, { modelRef });
+}
+
+/**
+ * Validates AI settings
+ */
+export function validateAISettings(settings: AISettings): boolean {
+    switch (settings.provider) {
+        case 'ollama':
+            return !!settings.ollamaModel;
+        case 'openai':
+            return !!(settings.openAIApiKey && settings.openAIModel);
+        default:
+            return false;
     }
-}, CACHE_TTL);
+}
 
+/**
+ * Gets model configuration string for display/logging
+ */
+export function getModelConfigString(settings: AISettings): string {
+    switch (settings.provider) {
+        case 'ollama':
+            return `Ollama (${settings.ollamaModel}) @ ${settings.ollamaServerAddress}`;
+        case 'openai':
+            return `OpenAI (${settings.openAIModel})`;
+        default:
+            return 'Unknown provider';
+    }
+}
