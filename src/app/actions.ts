@@ -54,7 +54,12 @@ export async function getAISettings(): Promise<AISettings> {
 }
 
 export async function saveAISettings(settings: AISettings): Promise<void> {
-    const settingsRef = doc(await getSettingsCollectionRef(), 'ai');
+    const userId = getUserId();
+    if (!userId) {
+        throw new Error("Usuário não autenticado.");
+    }
+    const { db: clientDb } = getFirebase(); 
+    const settingsRef = doc(clientDb, "users", userId, "settings", "ai");
     await setDoc(settingsRef, settings);
     revalidatePath('/(app)/settings', 'page');
 }
@@ -250,5 +255,3 @@ export async function deleteTransactionsByCategory(category: TransactionCategory
 // We re-export these from a central place to be used in client components.
 export { extractReceiptInfo, suggestCategoryForItem };
 export type { ReceiptInfoInput, ReceiptInfoOutput, SuggestCategoryInput, SuggestCategoryOutput };
-
-    

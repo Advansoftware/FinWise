@@ -72,7 +72,6 @@ export default function SettingsPage() {
 
     useEffect(() => {
         const loadSettings = async () => {
-            if (!user) return;
             try {
                 const settings = await getAISettings();
                 form.reset(settings);
@@ -89,13 +88,9 @@ export default function SettingsPage() {
             }
         };
         loadSettings();
-    }, [user, form, toast, fetchOllamaModels]);
+    }, [form, toast, fetchOllamaModels]);
 
     const onSubmit = async (data: z.infer<typeof aiSettingsSchema>) => {
-        if (!user) {
-            toast({ variant: 'destructive', title: 'Erro', description: 'Você precisa estar logado para salvar as configurações.' });
-            return;
-        }
         setIsSaving(true);
         try {
             await saveAISettings(data);
@@ -105,7 +100,8 @@ export default function SettingsPage() {
             });
             setTimeout(() => window.location.reload(), 1500); 
         } catch (error) {
-            toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível salvar as configurações.' });
+            const errorMessage = error instanceof Error ? error.message : 'Não foi possível salvar as configurações.';
+            toast({ variant: 'destructive', title: 'Erro', description: errorMessage });
         } finally {
             setIsSaving(false);
         }
