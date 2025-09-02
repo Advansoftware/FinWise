@@ -38,13 +38,13 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   
   // Se o carregamento estiver completo e tivermos um usuário, renderize o layout do painel.
   return (
-      <SidebarProvider>
+      <SidebarProvider defaultOpen={false}>
         <div className="flex">
             <Sidebar>
             <SidebarHeader>
-                <div className="flex items-center gap-2">
-                    <Logo />
-                    <span className="text-lg font-semibold group-data-[state=expanded]:hidden">FinWise</span>
+                <div className="flex items-center justify-center h-12 group-data-[state=expanded]:justify-start group-data-[state=expanded]:gap-2">
+                    <Logo className="w-8 h-auto"/>
+                    <span className="text-lg font-semibold group-data-[state=collapsed]:hidden">FinWise</span>
                 </div>
             </SidebarHeader>
             <SidebarContent>

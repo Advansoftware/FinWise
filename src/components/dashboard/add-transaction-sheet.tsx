@@ -27,6 +27,7 @@ const categories: TransactionCategory[] = ["Supermercado", "Transporte", "Entret
 
 export function AddTransactionSheet({ children }: { children: React.ReactNode }) {
   const [item, setItem] = useState('');
+  const [quantity, setQuantity] = useState('1');
   const [amount, setAmount] = useState('');
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [category, setCategory] = useState<TransactionCategory | ''>('');
@@ -54,6 +55,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
             date: date.toISOString(),
             category,
             subcategory: subcategory || undefined,
+            quantity: parseInt(quantity)
         };
         await addTransaction(newTransaction);
 
@@ -64,6 +66,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
         
         // Reset form and close sheet
         setItem('');
+        setQuantity('1');
         setAmount('');
         setDate(new Date());
         setCategory('');
@@ -100,6 +103,12 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
               Item
             </Label>
             <Input id="item" placeholder="ex: Café" className="col-span-3" value={item} onChange={(e) => setItem(e.target.value)} />
+          </div>
+          <div className="grid grid-cols-4 items-center gap-4">
+            <Label htmlFor="quantity" className="text-right">
+              Quantidade
+            </Label>
+            <Input id="quantity" type="number" placeholder="ex: 1" className="col-span-3" value={quantity} onChange={(e) => setQuantity(e.target.value)} />
           </div>
           <div className="grid grid-cols-4 items-center gap-4">
             <Label htmlFor="amount" className="text-right">

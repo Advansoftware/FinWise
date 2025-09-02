@@ -7,6 +7,7 @@ export interface Transaction {
   category: TransactionCategory;
   subcategory?: string;
   amount: number;
+  quantity?: number;
 }
 
 export interface Category {
