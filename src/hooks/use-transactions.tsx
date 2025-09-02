@@ -68,10 +68,22 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       const transactions: Transaction[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
+        
+        let dateValue: string;
+        // Robust date handling
+        if (data.date instanceof Timestamp) {
+            dateValue = data.date.toDate().toISOString();
+        } else if (typeof data.date === 'string') {
+            dateValue = new Date(data.date).toISOString();
+        } else {
+            // Fallback for unexpected formats
+            dateValue = new Date().toISOString();
+        }
+
         transactions.push({ 
           id: doc.id, 
           ...data,
-          date: (data.date as Timestamp).toDate().toISOString() 
+          date: dateValue,
         } as Transaction);
       });
       setAllTransactions(transactions);
