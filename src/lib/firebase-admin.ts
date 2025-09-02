@@ -1,6 +1,7 @@
 'use server';
 
 import * as admin from 'firebase-admin';
+import { firebaseConfig } from './firebase';
 
 // Armazena a instância inicializada para evitar múltiplas inicializações.
 let adminInstance: { auth: admin.auth.Auth, db: admin.firestore.Firestore } | null = null;
@@ -14,10 +15,11 @@ function getFirebaseAdmin() {
 
   if (!admin.apps.length) {
     try {
-      // Tenta usar as credenciais do ambiente, que é a forma padrão e segura.
-      // Isso funciona automaticamente no Firebase/Google Cloud.
-      // Para desenvolvimento local, requer o setup do GOOGLE_APPLICATION_CREDENTIALS.
-      admin.initializeApp();
+      // Inicializa o SDK Admin com o projectId, que é suficiente para
+      // validar tokens de ID na maioria dos ambientes.
+      admin.initializeApp({
+        projectId: firebaseConfig.projectId,
+      });
     } catch (error) {
       console.error('Firebase admin initialization error:', error);
       // Lança um erro mais descritivo para facilitar a depuração.
