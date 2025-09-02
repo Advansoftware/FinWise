@@ -134,11 +134,28 @@ export function useAISettings() {
         if (activeCredentialId === id) {
             newActiveId = newCredentials.length > 0 ? newCredentials[0].id : null;
         }
-        await saveSettings(newCredentials, newActiveId);
+        
+        try {
+            const result = await saveSettings(newCredentials, newActiveId);
+            if (result) {
+                setCredentials(result.savedCredentials);
+                setActiveCredentialId(result.savedActiveId);
+            }
+        } catch (error) {
+            console.error("Failed to delete credential", error);
+        }
     };
 
     const handleActivate = async (id: string) => {
-        await saveSettings(credentials, id);
+        try {
+            const result = await saveSettings(credentials, id);
+            if (result) {
+                setCredentials(result.savedCredentials);
+                setActiveCredentialId(result.savedActiveId);
+            }
+        } catch (error) {
+            console.error("Failed to activate credential", error);
+        }
     };
 
     const handleOpenDialog = (credential: AICredential | null) => {
