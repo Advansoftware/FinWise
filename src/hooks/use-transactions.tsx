@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useEffect, createContext, useContext, ReactNode } from "react";
 import { DateRange } from "react-day-picker";
-import { subDays } from "date-fns";
+import { subDays, endOfDay } from "date-fns";
 import { Transaction, TransactionCategory } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
@@ -97,7 +97,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     // Real-time listener for categories
     const categoriesDocRef = doc(db, "users", user.uid, "settings", "categories");
     const unsubscribeCategories = onSnapshot(categoriesDocRef, async (docSnap) => {
-      if (docSnap.exists()) {
+      if (docSnap.exists() && Object.keys(docSnap.data()).length > 0) {
         setCategoryMap(docSnap.data() as CategoryMap);
       } else {
          const defaultCategories: CategoryMap = {
@@ -243,8 +243,11 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   const filteredTransactions = useMemo(() => {
     return allTransactions.filter((t) => {
       const transactionDate = new Date(t.date);
-      const dateCondition = dateRange?.from && dateRange?.to
-        ? transactionDate >= dateRange.from && transactionDate <= dateRange.to
+      
+      const toDate = dateRange?.to ? endOfDay(dateRange.to) : undefined;
+
+      const dateCondition = dateRange?.from && toDate
+        ? transactionDate >= dateRange.from && transactionDate <= toDate
         : true;
 
       // Make category check more robust: it must exist and match, or filter is 'all'
