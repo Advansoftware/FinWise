@@ -36,13 +36,13 @@ export function getAdminApp(): admin.app.App {
     }
   }
 
-  // Fallback para o método padrão, embora não seja o principal para este projeto.
+  // Fallback para o método padrão, que usa GOOGLE_APPLICATION_CREDENTIALS
   try {
     console.log("Tentando inicializar com credenciais padrão do ambiente (GOOGLE_APPLICATION_CREDENTIALS)...");
     adminApp = admin.initializeApp();
   } catch(error: any) {
     console.error("Falha ao inicializar o Firebase Admin SDK com credenciais padrão.", error);
-    console.error("Verifique se as credenciais (FIREBASE_SERVICE_ACCOUNT_JSON) estão configuradas corretamente no seu ambiente.");
+    console.error("Verifique se as credenciais (FIREBASE_SERVICE_ACCOUNT_JSON ou GOOGLE_APPLICATION_CREDENTIALS) estão configuradas corretamente no seu ambiente.");
     throw new Error("Não foi possível inicializar o Firebase Admin. Consulte os logs do servidor.");
   }
 
