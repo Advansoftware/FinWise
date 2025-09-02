@@ -48,7 +48,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('all');
   
-  const loadData = useCallback(async () => {
+  const refreshAllData = useCallback(async () => {
     if (!user) {
         setAllTransactions([]);
         setCategoryMap({});
@@ -80,14 +80,14 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   }, [user, toast]);
 
   useEffect(() => {
-    loadData();
-  }, [loadData]);
+    refreshAllData();
+  }, [refreshAllData]);
   
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     if(!user) throw new Error("User not authenticated");
     const idToken = await user.getIdToken();
     await addTransactionAction(idToken, transaction);
-    await loadData();
+    await refreshAllData();
   }
 
   const { categories, subcategories } = useMemo(() => {
@@ -108,7 +108,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     const newCategoryMap = { ...categoryMap, [categoryName]: [] };
     const idToken = await user.getIdToken();
     await saveCategories(idToken, newCategoryMap);
-    setCategoryMap(newCategoryMap);
+    await refreshAllData();
   };
 
   const deleteCategory = async (categoryName: TransactionCategory) => {
@@ -121,7 +121,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
        // Optional: delete transactions of this category
        // deleteTransactionsByCategory(idToken, categoryName) 
      ]);
-     setCategoryMap(newCategoryMap);
+     await refreshAllData();
      if (selectedCategory === categoryName) {
        setSelectedCategory('all');
      }
@@ -140,7 +140,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     };
     const idToken = await user.getIdToken();
     await saveCategories(idToken, newCategoryMap);
-    setCategoryMap(newCategoryMap);
+    await refreshAllData();
   }
 
   const deleteSubcategory = async (categoryName: TransactionCategory, subcategoryName: string) => {
@@ -152,7 +152,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     };
     const idToken = await user.getIdToken();
     await saveCategories(idToken, newCategoryMap);
-    setCategoryMap(newCategoryMap);
+    await refreshAllData();
   }
 
 
@@ -213,7 +213,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     availableSubcategories,
     selectedSubcategory,
     setSelectedSubcategory,
-    refreshAllData: loadData,
+    refreshAllData: refreshAllData,
     addTransaction,
     addCategory,
     deleteCategory,

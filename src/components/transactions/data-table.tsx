@@ -10,6 +10,7 @@ import {
   useReactTable,
   SortingState,
   ColumnFiltersState,
+  RowSelectionState,
 } from '@tanstack/react-table';
 
 import {
@@ -23,6 +24,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
+import { AnalyzeTransactionsDialog } from './analyze-transactions-dialog';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -35,6 +37,7 @@ export function DataTable<TData, TValue>({
 }: DataTableProps<TData, TValue>) {
     const [sorting, setSorting] = useState<SortingState>([]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+    const [rowSelection, setRowSelection] = useState({});
 
     const table = useReactTable({
         data,
@@ -45,20 +48,24 @@ export function DataTable<TData, TValue>({
         getSortedRowModel: getSortedRowModel(),
         onColumnFiltersChange: setColumnFilters,
         getFilteredRowModel: getFilteredRowModel(),
+        onRowSelectionChange: setRowSelection,
         state: {
           sorting,
-          columnFilters
+          columnFilters,
+          rowSelection,
         },
         initialState: {
             pagination: {
-                pageSize: 8,
+                pageSize: 10,
             }
         }
   });
 
+  const selectedRows = table.getFilteredSelectedRowModel().rows.map(row => row.original);
+
   return (
     <div className="border rounded-lg">
-      <div className="flex items-center p-4">
+      <div className="flex items-center justify-between p-4">
         <Input
           placeholder="Filtrar por item..."
           value={(table.getColumn("item")?.getFilterValue() as string) ?? ""}
@@ -67,15 +74,18 @@ export function DataTable<TData, TValue>({
           }
           className="max-w-sm"
         />
+        {selectedRows.length > 0 && (
+          <AnalyzeTransactionsDialog transactions={selectedRows as any} />
+        )}
       </div>
-      <div className="overflow-auto">
+      <div className="overflow-x-auto">
         <Table>
             <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                     return (
-                    <TableHead key={header.id} className="p-2">
+                    <TableHead key={header.id} className="p-2" style={{width: header.getSize() !== 150 ? `${header.getSize()}px` : undefined}}>
                         {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -94,6 +104,7 @@ export function DataTable<TData, TValue>({
                 <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && 'selected'}
+                    className="h-12"
                 >
                     {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id} className="p-2">
@@ -112,7 +123,11 @@ export function DataTable<TData, TValue>({
             </TableBody>
         </Table>
       </div>
-       <div className="flex items-center justify-end space-x-2 p-4">
+       <div className="flex items-center justify-end space-x-2 p-2 border-t">
+        <div className="flex-1 text-sm text-muted-foreground px-2">
+          {table.getFilteredSelectedRowModel().rows.length} de{" "}
+          {table.getFilteredRowModel().rows.length} linha(s) selecionadas.
+        </div>
         <Button
           variant="outline"
           size="sm"

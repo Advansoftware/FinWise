@@ -37,6 +37,7 @@ const prompt = ai.definePrompt({
   input: {schema: ReceiptInfoInputSchema},
   output: {schema: ReceiptInfoOutputSchema},
   prompt: `You are an expert OCR system specializing in extracting information from receipts.
+You MUST reply in Brazilian Portuguese.
 Analyze the provided image and extract the following information:
 1. Determine if the image is a valid receipt.
 2. List all individual items with their corresponding prices.

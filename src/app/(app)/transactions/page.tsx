@@ -1,8 +1,7 @@
-// src/app/(app)/transactions/page.tsx
 'use client';
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { useTransactions } from "@/hooks/use-transactions.tsx";
+import { useTransactions } from "@/hooks/use-transactions";
 import { columns } from "@/components/transactions/columns";
 import { DataTable } from "@/components/transactions/data-table";
 

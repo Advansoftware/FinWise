@@ -8,8 +8,34 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowUpDown } from 'lucide-react';
 import { Button } from '../ui/button';
 import { CategoryIcon } from '../icons';
+import { Checkbox } from '../ui/checkbox';
 
 export const columns: ColumnDef<Transaction>[] = [
+  {
+    id: 'select',
+    header: ({ table }) => (
+      <Checkbox
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && 'indeterminate')
+        }
+        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+        aria-label="Selecionar todas"
+        className="translate-y-[2px]"
+      />
+    ),
+    cell: ({ row }) => (
+      <Checkbox
+        checked={row.getIsSelected()}
+        onCheckedChange={(value) => row.toggleSelected(!!value)}
+        aria-label="Selecionar linha"
+        className="translate-y-[2px]"
+      />
+    ),
+    enableSorting: false,
+    enableHiding: false,
+    size: 20,
+  },
   {
     accessorKey: 'date',
     header: ({ column }) => {
@@ -18,9 +44,9 @@ export const columns: ColumnDef<Transaction>[] = [
           variant="ghost"
           size="sm"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="-ml-4"
+          className="-ml-3 h-8"
         >
-          Data
+          <span>Data</span>
           <ArrowUpDown className="ml-2 h-3 w-3" />
         </Button>
       );
@@ -42,8 +68,8 @@ export const columns: ColumnDef<Transaction>[] = [
     cell: ({ row }) => {
       const category = row.original.category;
       return (
-         <Badge variant="outline" className="flex items-center justify-center gap-1 w-fit">
-            <CategoryIcon category={category as any} className="h-3 w-3 text-muted-foreground" />
+         <Badge variant="outline" className="flex items-center justify-center gap-1.5 w-fit font-normal">
+            <CategoryIcon category={category as any} className="h-3 w-3" />
             <span className="capitalize">{category}</span>
         </Badge>
       );
@@ -55,7 +81,7 @@ export const columns: ColumnDef<Transaction>[] = [
     header: 'Subcategoria',
     cell: ({ row }) => {
       const subcategory = row.original.subcategory;
-      return subcategory ? <Badge variant="secondary" className="w-fit">{subcategory}</Badge> : null
+      return subcategory ? <Badge variant="secondary" className="w-fit font-normal">{subcategory}</Badge> : <span className="text-muted-foreground">-</span>
     },
     size: 100,
   },
@@ -77,9 +103,9 @@ export const columns: ColumnDef<Transaction>[] = [
                 variant="ghost"
                 size="sm"
                 onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-                className="-mr-4"
+                className="h-8 -mr-4"
                 >
-                Valor
+                <span>Valor</span>
                 <ArrowUpDown className="ml-2 h-3 w-3" />
             </Button>
         </div>
@@ -92,7 +118,7 @@ export const columns: ColumnDef<Transaction>[] = [
         currency: 'BRL',
       }).format(amount);
 
-      return <div className="text-right font-medium text-red-400 whitespace-nowrap">{formatted}</div>;
+      return <div className="text-right font-medium text-red-400/90 whitespace-nowrap">{formatted}</div>;
     },
     size: 50,
   },

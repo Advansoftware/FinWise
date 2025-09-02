@@ -1,12 +1,14 @@
 'use server';
 
-import { generateSpendingTip, SpendingTipInput } from '@/ai/flows/ai-powered-spending-tips';
+import { generateSpendingTip, SpendingTipInput, SpendingTipOutput, SpendingTipInputSchema, SpendingTipOutputSchema } from '@/ai/flows/ai-powered-spending-tips';
 import { chatWithTransactions, ChatInput as ChatInputFlow } from '@/ai/flows/chat-with-transactions';
 import { Transaction, AISettings, TransactionCategory } from '@/lib/types';
 import { getFirebase } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, getDoc, setDoc, Timestamp, writeBatch, query, where, deleteDoc } from "firebase/firestore";
 import { getFirebaseAdmin } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
+import { ai } from '@/ai/genkit';
+import { z } from 'zod';
 
 
 async function getUserId(idToken: string) {
@@ -37,9 +39,6 @@ async function getSettingsCollectionRef(idToken: string) {
 }
 
 export async function getAISettings(idToken?: string): Promise<AISettings> {
-    // This function might be called from server components where the token isn't available.
-    // In a real-world scenario, you would handle user identification differently on the server.
-    // For this example, we'll allow it to proceed, but AI features will require settings.
     const defaultSettings: AISettings = { provider: 'ollama', ollamaModel: 'llama3', openAIModel: 'gpt-3.5-turbo' };
     if (!idToken) return defaultSettings;
     
@@ -63,7 +62,7 @@ export async function getOllamaModels(): Promise<string[]> {
   try {
     const response = await fetch('http://127.0.0.1:11434/api/tags', { cache: 'no-store' });
     if (!response.ok) {
-      console.error('Ollama is not running or not accessible at http://127.0.0.1:11434');
+      console.error('Ollama is not running or not accessible at http://1227.0.0.1:11434');
       return [];
     }
     const data = await response.json();
@@ -77,16 +76,69 @@ export async function getOllamaModels(): Promise<string[]> {
 
 // --- AI Actions ---
 
-export async function getSpendingTip(idToken: string, transactions: Transaction[]) {
+export async function getSpendingTip(idToken: string, transactions: Transaction[]): Promise<string> {
   try {
-    const settings = await getAISettings(idToken);
-    const spendingData = JSON.stringify(transactions, null, 2);
-    const input: SpendingTipInput = { spendingData, settings };
+    const input: SpendingTipInput = { transactions: JSON.stringify(transactions, null, 2) };
     const result = await generateSpendingTip(input);
     return result.tip;
   } catch (error) {
     console.error(error);
     return "Desculpe, não consegui gerar uma dica agora. Verifique suas configurações de IA e tente novamente.";
+  }
+}
+
+export async function getFinancialProfile(idToken: string, transactions: Transaction[]): Promise<string> {
+    const FinancialProfileInputSchema = z.object({
+      transactions: z.string().describe('A JSON string representing an array of user transactions.'),
+    });
+    const FinancialProfileOutputSchema = z.object({
+      profileName: z.string().describe('A creative, catchy name for the user financial profile, in Brazilian Portuguese. E.g., "O Explorador Gastronômico" or "O Economista Equilibrado".'),
+      profileDescription: z.string().describe('A short, encouraging, and insightful description of the user spending habits, in Brazilian Portuguese. It should be 1-2 paragraphs long.'),
+    });
+
+    const prompt = ai.definePrompt({
+        name: 'financialProfilePrompt',
+        input: { schema: FinancialProfileInputSchema },
+        output: { schema: FinancialProfileOutputSchema },
+        prompt: `You are a savvy and positive financial analyst. Based on the user's transaction history, define a financial profile for them. Give them a creative name and a description that summarizes their spending patterns in a friendly and insightful way. Focus on providing a narrative, not just numbers. All output must be in Brazilian Portuguese.
+
+        User's transactions:
+        {{{transactions}}}
+        `,
+    });
+    
+    try {
+        const { output } = await prompt({transactions: JSON.stringify(transactions)});
+        if (!output) return "Não foi possível gerar seu perfil. Tente novamente.";
+        return `**${output.profileName}**\n\n${output.profileDescription}`;
+    } catch (error) {
+        console.error(error);
+        return "Não foi possível gerar seu perfil. Verifique suas configurações de IA e tente novamente.";
+    }
+}
+
+
+const AnalyzeTransactionsOutputSchema = z.object({
+  analysis: z.string().describe('A brief, insightful analysis of the provided transactions. Identify patterns, anomalies, or suggestions for recategorization. The output must be in markdown format and in Brazilian Portuguese.'),
+});
+export async function analyzeTransactions(idToken: string, transactions: Transaction[]): Promise<string> {
+  const prompt = ai.definePrompt({
+    name: 'analyzeTransactionsPrompt',
+    input: { schema: z.object({ txns: z.string() }) },
+    output: { schema: AnalyzeTransactionsOutputSchema },
+    prompt: `You are a meticulous financial auditor. Analyze this small batch of transactions and provide a brief analysis in markdown. Look for anomalies (e.g., unusually high amounts), patterns (e.g., frequent small purchases), or potential recategorization (e.g., a "Padaria" purchase in "Restaurante" could be "Supermercado"). Be concise. All output must be in Brazilian Portuguese.
+
+Transactions:
+{{{txns}}}
+`,
+  });
+
+  try {
+    const { output } = await prompt({ txns: JSON.stringify(transactions, null, 2) });
+    return output?.analysis || "Nenhuma análise pôde ser gerada.";
+  } catch (error) {
+    console.error(error);
+    return "Ocorreu um erro ao analisar as transações. Verifique suas configurações de IA.";
   }
 }
 
@@ -100,7 +152,7 @@ export async function getChatbotResponse(idToken: string, input: ChatInputAction
             return "Por favor, configure sua chave de API na página de Configurações para usar o assistente de IA.";
         }
         
-        const fullInput: ChatInputFlow = { ...input, settings };
+        const fullInput: ChatInputFlow = { ...input };
         const result = await chatWithTransactions(fullInput);
         return result.response;
     } catch (error) {
@@ -114,7 +166,7 @@ export async function getChatbotResponse(idToken: string, input: ChatInputAction
 
 async function getTransactionsCollectionRef(idToken: string) {
     const userId = await getUserId(idToken);
-    const { db: clientDb } = getFirebase(); // Usar o DB do cliente
+    const { db: clientDb } = getFirebase();
     return collection(clientDb, "users", userId, "transactions");
 }
 
@@ -138,6 +190,7 @@ export async function addTransaction(idToken: string, transaction: Omit<Transact
     const transactionsCollection = await getTransactionsCollectionRef(idToken);
     const docRef = await addDoc(transactionsCollection, {
         ...transaction,
+        amount: Math.abs(transaction.amount),
         date: new Date(transaction.date)
     });
     revalidatePath('/(app)', 'layout');
