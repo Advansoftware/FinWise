@@ -7,6 +7,7 @@ import { subDays } from "date-fns";
 import { Transaction, TransactionCategory } from "@/lib/types";
 import { getTransactions, addTransaction as addTransactionAction, getCategories, saveCategories, deleteTransactionsByCategory } from "@/app/actions";
 import { useToast } from "./use-toast";
+import { useAuth } from "./use-auth";
 
 type CategoryMap = Partial<Record<TransactionCategory, string[]>>;
 
@@ -36,6 +37,7 @@ const TransactionsContext = createContext<TransactionsContextType | undefined>(u
 
 export function TransactionsProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
+  const { user } = useAuth();
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [categoryMap, setCategoryMap] = useState<CategoryMap>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -47,11 +49,15 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('all');
   
   const refreshAllData = useCallback(async () => {
+    if (!user) {
+        setIsLoading(false);
+        return;
+    };
     setIsLoading(true);
     try {
       const [transactions, categories] = await Promise.all([
-        getTransactions(),
-        getCategories()
+        getTransactions(user.uid),
+        getCategories(user.uid)
       ]);
       setAllTransactions(transactions);
       setCategoryMap(categories);
@@ -67,14 +73,15 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [toast]);
+  }, [user, toast]);
 
   useEffect(() => {
     refreshAllData();
   }, [refreshAllData]);
   
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
-    await addTransactionAction(transaction);
+    if (!user) throw new Error("User not authenticated");
+    await addTransactionAction(user.uid, transaction);
     await refreshAllData();
   }
 
@@ -88,22 +95,24 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   
   // --- Category Management ---
   const addCategory = async (categoryName: TransactionCategory) => {
+    if (!user) throw new Error("User not authenticated");
     if (categories.includes(categoryName)) {
       toast({ variant: "destructive", title: "Categoria já existe" });
       return;
     }
     const newCategoryMap = { ...categoryMap, [categoryName]: [] };
-    await saveCategories(newCategoryMap);
+    await saveCategories(user.uid, newCategoryMap);
     await refreshAllData();
   };
 
   const deleteCategory = async (categoryName: TransactionCategory) => {
+    if (!user) throw new Error("User not authenticated");
      const newCategoryMap = { ...categoryMap };
      delete newCategoryMap[categoryName];
      await Promise.all([
-       saveCategories(newCategoryMap),
+       saveCategories(user.uid, newCategoryMap),
        // Optional: delete transactions of this category
-       // deleteTransactionsByCategory(categoryName) 
+       // deleteTransactionsByCategory(user.uid, categoryName) 
      ]);
      await refreshAllData();
      if (selectedCategory === categoryName) {
@@ -112,6 +121,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   };
 
   const addSubcategory = async (categoryName: TransactionCategory, subcategoryName: string) => {
+    if (!user) throw new Error("User not authenticated");
     const subs = categoryMap[categoryName] || [];
     if (subs.includes(subcategoryName)) {
        toast({ variant: "destructive", title: "Subcategoria já existe" });
@@ -121,17 +131,18 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       ...categoryMap, 
       [categoryName]: [...subs, subcategoryName].sort() 
     };
-    await saveCategories(newCategoryMap);
+    await saveCategories(user.uid, newCategoryMap);
     await refreshAllData();
   }
 
   const deleteSubcategory = async (categoryName: TransactionCategory, subcategoryName: string) => {
+    if (!user) throw new Error("User not authenticated");
     const subs = categoryMap[categoryName] || [];
     const newCategoryMap = {
       ...categoryMap,
       [categoryName]: subs.filter(s => s !== subcategoryName)
     };
-    await saveCategories(newCategoryMap);
+    await saveCategories(user.uid, newCategoryMap);
     await refreshAllData();
   }
 
@@ -215,5 +226,3 @@ export function useTransactions() {
   }
   return context;
 }
-
-    

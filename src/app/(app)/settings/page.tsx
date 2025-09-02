@@ -72,8 +72,9 @@ export default function SettingsPage() {
 
     useEffect(() => {
         const loadSettings = async () => {
+            if (!user) return;
             try {
-                const settings = await getAISettings();
+                const settings = await getAISettings(user.uid);
                 form.reset(settings);
                 if (settings.provider === 'ollama' && settings.ollamaServerAddress) {
                     fetchOllamaModels();
@@ -88,12 +89,16 @@ export default function SettingsPage() {
             }
         };
         loadSettings();
-    }, [form, toast, fetchOllamaModels]);
+    }, [user, form, toast, fetchOllamaModels]);
 
     const onSubmit = async (data: z.infer<typeof aiSettingsSchema>) => {
+        if (!user) {
+            toast({ variant: 'destructive', title: 'Erro', description: 'Você precisa estar logado para salvar as configurações.' });
+            return;
+        }
         setIsSaving(true);
         try {
-            await saveAISettings(data);
+            await saveAISettings(user.uid, data);
             toast({
                 title: "Configurações Salvas!",
                 description: "Suas configurações de IA foram atualizadas com sucesso. A página será recarregada para aplicar as mudanças.",
@@ -246,7 +251,7 @@ export default function SettingsPage() {
                                 </>
                             )}
 
-                            <Button type="submit" disabled={isSaving}>
+                            <Button type="submit" disabled={isSaving || !user}>
                                 {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                                 Salvar Configurações
                             </Button>

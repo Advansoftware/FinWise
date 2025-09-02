@@ -12,6 +12,8 @@ import {Plugin} from 'genkit/plugins';
 import {getAISettings} from '@/app/actions';
 import {ollama} from 'genkitx-ollama';
 import {openai} from 'genkitx-openai';
+import {getAuth} from 'firebase/auth';
+import {getFirebase} from '@/lib/firebase';
 
 let ai: ReturnType<typeof genkit>;
 let initPromise: Promise<void> | null = null;
@@ -20,7 +22,12 @@ async function initialize() {
   // Avoid re-initialization
   if (ai) return;
 
-  const settings = await getAISettings();
+  const { auth } = getFirebase();
+  const userId = auth.currentUser?.uid;
+
+  // Pass an empty string if userId is not available. 
+  // getAISettings will handle returning default settings.
+  const settings = await getAISettings(userId || '');
   const plugins: Plugin[] = [];
 
   if (settings.provider === 'googleai' && settings.googleAIApiKey) {
@@ -65,5 +72,3 @@ export async function getAI(): Promise<ReturnType<typeof genkit>> {
   }
   return ai;
 }
-
-    
