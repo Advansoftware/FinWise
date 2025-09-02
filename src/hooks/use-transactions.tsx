@@ -8,7 +8,7 @@ import { Transaction, TransactionCategory } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { getFirebase } from "@/lib/firebase";
-import { collection, doc, setDoc, addDoc, Timestamp, onSnapshot, Unsubscribe, deleteDoc, writeBatch, query, where, getDocs } from "firebase/firestore";
+import { collection, doc, setDoc, addDoc, Timestamp, onSnapshot, Unsubscribe, deleteDoc, writeBatch, query, where, getDocs, orderBy } from "firebase/firestore";
 import { FirebaseError } from "firebase/app";
 
 type CategoryMap = Partial<Record<TransactionCategory, string[]>>;
@@ -63,8 +63,8 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     const { db } = getFirebase();
     
     // Real-time listener for transactions
-    const transactionsCollection = collection(db, "users", user.uid, "transactions");
-    const unsubscribeTransactions = onSnapshot(transactionsCollection, (querySnapshot) => {
+    const q = query(collection(db, "users", user.uid, "transactions"), orderBy("date", "desc"));
+    const unsubscribeTransactions = onSnapshot(q, (querySnapshot) => {
       const transactions: Transaction[] = [];
       querySnapshot.forEach((doc) => {
         const data = doc.data();
@@ -74,7 +74,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
           date: (data.date as Timestamp).toDate().toISOString() 
         } as Transaction);
       });
-      setAllTransactions(transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
+      setAllTransactions(transactions);
       setIsLoading(false);
     }, (error) => {
        console.error("Failed to fetch transactions:", error);
