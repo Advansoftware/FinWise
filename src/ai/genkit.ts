@@ -12,14 +12,13 @@ import {getAISettings} from '@/app/actions';
 import {ollama} from 'genkitx-ollama';
 import {openai} from 'genkitx-openai';
 
-// This is a proxy object that will be used to ensure that Genkit is initialized
-// before any of its methods are called. This is necessary because the
-// initialization is asynchronous and we don't want to block the entire app
-// from rendering while we wait for it to complete.
 let ai: ReturnType<typeof genkit>;
 let initPromise: Promise<void> | null = null;
 
 async function initialize() {
+  // Evita re-inicialização
+  if (ai) return;
+
   const settings = await getAISettings();
   const plugins: Plugin[] = [];
 
@@ -52,27 +51,14 @@ async function initialize() {
 }
 
 /**
- * Ensures that Genkit is initialized before use.
+ * Ensures that Genkit is initialized before use and returns the AI instance.
  * This prevents race conditions by making sure the configuration is loaded
  * before any AI flows are called.
  */
-async function ensureInitialized() {
+export async function getAI(): Promise<ReturnType<typeof genkit>> {
   if (!initPromise) {
     initPromise = initialize();
   }
   await initPromise;
+  return ai;
 }
-
-// We wrap the `ai` object in a proxy to ensure initialization before any access.
-// This is a robust way to handle the async nature of initialization.
-const aiProxy = new Proxy(
-  {},
-  {
-    get: async (target, prop) => {
-      await ensureInitialized();
-      return (ai as any)[prop];
-    },
-  }
-) as ReturnType<typeof genkit>;
-
-export {aiProxy as ai};

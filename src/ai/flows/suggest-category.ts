@@ -6,7 +6,7 @@
  * - SuggestCategoryInput - The input type for the suggestCategoryForItem function.
  * - SuggestCategoryOutput - The return type for the suggestCategoryForItem function.
  */
-import {ai} from '@/ai/genkit';
+import {getAI} from '@/ai/genkit';
 import {z} from 'genkit';
 import { TransactionCategory } from '@/lib/types';
 
@@ -23,11 +23,13 @@ const SuggestCategoryOutputSchema = z.object({
 export type SuggestCategoryOutput = z.infer<typeof SuggestCategoryOutputSchema>;
 
 
-const prompt = ai.definePrompt({
-  name: 'suggestCategoryPrompt',
-  input: {schema: SuggestCategoryInputSchema},
-  output: {schema: SuggestCategoryOutputSchema},
-  prompt: `You are a personal finance assistant. Your task is to categorize a spending item.
+export const suggestCategoryForItem = async (input: SuggestCategoryInput) => {
+  const ai = await getAI();
+  const prompt = ai.definePrompt({
+    name: 'suggestCategoryPrompt',
+    input: {schema: SuggestCategoryInputSchema},
+    output: {schema: SuggestCategoryOutputSchema},
+    prompt: `You are a personal finance assistant. Your task is to categorize a spending item.
 Given the item name and a list of existing categories, suggest the most appropriate category.
 Also, suggest a relevant subcategory for the item. The subcategory can be new if it makes sense.
 
@@ -39,16 +41,8 @@ If the item is "Conta de luz", the category should be "Contas" and subcategory "
 If the item is "Maçãs", the category should be "Supermercado" and subcategory "Frutas".
 If the item is "Gasolina", the category should be "Transporte" and subcategory "Combustível".
 `,
-});
+  });
 
-export const suggestCategoryForItem = ai.defineFlow(
-  {
-    name: 'suggestCategoryForItem',
-    inputSchema: SuggestCategoryInputSchema,
-    outputSchema: SuggestCategoryOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
-  }
-);
+  const {output} = await prompt(input);
+  return output!;
+};

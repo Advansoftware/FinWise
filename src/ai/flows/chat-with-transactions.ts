@@ -7,7 +7,7 @@
  * - ChatOutput - The return type for the chat function.
  */
 
-import { ai } from '@/ai/genkit';
+import { getAI } from '@/ai/genkit';
 import { Transaction } from '@/lib/types';
 import { z } from 'genkit';
 
@@ -30,11 +30,13 @@ export const ChatOutputSchema = z.object({
 export type ChatOutput = z.infer<typeof ChatOutputSchema>;
 
 
-const prompt = ai.definePrompt({
-    name: 'chatWithTransactionsPrompt',
-    input: { schema: ChatInputSchema },
-    output: { schema: ChatOutputSchema },
-    prompt: `You are FinWise, a helpful and friendly AI financial assistant.
+export const chatWithTransactions = async (input: ChatInput) => {
+    const ai = await getAI();
+    const prompt = ai.definePrompt({
+        name: 'chatWithTransactionsPrompt',
+        input: { schema: ChatInputSchema },
+        output: { schema: ChatOutputSchema },
+        prompt: `You are FinWise, a helpful and friendly AI financial assistant.
 Your role is to answer user questions based on the provided transaction data.
 Analyze the user's prompt and the transaction data to provide a clear and helpful response.
 Be concise and conversational.
@@ -54,17 +56,8 @@ New user question: {{{prompt}}}
 
 Your answer:
 `,
-});
+    });
 
-
-export const chatWithTransactions = ai.defineFlow(
-  {
-    name: 'chatWithTransactions',
-    inputSchema: ChatInputSchema,
-    outputSchema: ChatOutputSchema,
-  },
-  async (input) => {
     const { output } = await prompt(input);
     return output!;
-  }
-);
+};

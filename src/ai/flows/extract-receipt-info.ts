@@ -6,7 +6,7 @@
  * - ReceiptInfoInput - The input type for the extractReceiptInfo function.
  * - ReceiptInfoOutput - The return type for the extractReceiptInfo function.
  */
-import {ai} from '@/ai/genkit';
+import {getAI} from '@/ai/genkit';
 import {z} from 'genkit';
 
 const ReceiptItemSchema = z.object({
@@ -32,11 +32,13 @@ const ReceiptInfoOutputSchema = z.object({
 export type ReceiptInfoOutput = z.infer<typeof ReceiptInfoOutputSchema>;
 
 
-const prompt = ai.definePrompt({
-  name: 'extractReceiptInfoPrompt',
-  input: {schema: ReceiptInfoInputSchema},
-  output: {schema: ReceiptInfoOutputSchema},
-  prompt: `You are an expert OCR system specializing in extracting information from receipts.
+export const extractReceiptInfo = async (input: ReceiptInfoInput) => {
+  const ai = await getAI();
+  const prompt = ai.definePrompt({
+    name: 'extractReceiptInfoPrompt',
+    input: {schema: ReceiptInfoInputSchema},
+    output: {schema: ReceiptInfoOutputSchema},
+    prompt: `You are an expert OCR system specializing in extracting information from receipts.
 You MUST reply in Brazilian Portuguese.
 Analyze the provided image and extract the following information:
 1. Determine if the image is a valid receipt.
@@ -47,16 +49,8 @@ Analyze the provided image and extract the following information:
 If the image is not a receipt, set isValid to false and leave other fields empty.
 
 Receipt Image: {{media url=photoDataUri}}`,
-});
+  });
 
-export const extractReceiptInfo = ai.defineFlow(
-  {
-    name: 'extractReceiptInfo',
-    inputSchema: ReceiptInfoInputSchema,
-    outputSchema: ReceiptInfoOutputSchema,
-  },
-  async input => {
-    const {output} = await prompt(input);
-    return output!;
-  }
-);
+  const {output} = await prompt(input);
+  return output!;
+};

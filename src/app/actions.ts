@@ -7,7 +7,7 @@ import { getFirebase } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, getDoc, setDoc, Timestamp, writeBatch, query, where, deleteDoc } from "firebase/firestore";
 import { getFirebaseAdmin } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
-import { ai } from '@/ai/genkit';
+import { getAI } from '@/ai/genkit';
 import { z } from 'zod';
 
 
@@ -88,6 +88,7 @@ export async function getSpendingTip(idToken: string, transactions: Transaction[
 }
 
 export async function getFinancialProfile(idToken: string, transactions: Transaction[]): Promise<string> {
+    const ai = await getAI();
     const FinancialProfileInputSchema = z.object({
       transactions: z.string().describe('A JSON string representing an array of user transactions.'),
     });
@@ -122,6 +123,7 @@ const AnalyzeTransactionsOutputSchema = z.object({
   analysis: z.string().describe('A brief, insightful analysis of the provided transactions. Identify patterns, anomalies, or suggestions for recategorization. The output must be in markdown format and in Brazilian Portuguese.'),
 });
 export async function analyzeTransactions(idToken: string, transactions: Transaction[]): Promise<string> {
+  const ai = await getAI();
   const prompt = ai.definePrompt({
     name: 'analyzeTransactionsPrompt',
     input: { schema: z.object({ txns: z.string() }) },
