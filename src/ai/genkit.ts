@@ -81,7 +81,8 @@ export async function getAI(): Promise<Genkit> {
     return genkit({ plugins: await createPlugins(cached.settings) });
   }
 
-  // Fetch fresh settings
+  // Fetch fresh settings and clear old cache entry for this user
+  clearAISettingsCache(userId);
   const settings = await getAISettings(userId);
   settingsCache[userId] = { settings, timestamp: Date.now() };
 

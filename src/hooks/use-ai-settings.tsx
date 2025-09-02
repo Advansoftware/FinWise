@@ -10,7 +10,6 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { getFirebase } from "@/lib/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
-import { clearAISettingsCache } from "@/ai/genkit";
 
 const aiSettingsSchema = z.object({
   provider: z.enum(["ollama", "googleai", "openai"]),
@@ -118,7 +117,7 @@ export function useAISettings() {
             }
         };
         loadSettings();
-    }, [user, form.reset, toast]); // Removed form and fetchOllamaModels to prevent re-renders
+    }, [user, toast]); 
 
     const onSubmit = async (data: AISettingsForm) => {
         if (!user) {
@@ -144,8 +143,6 @@ export function useAISettings() {
             const { db } = getFirebase();
             const settingsRef = doc(db, "users", user.uid, "settings", "ai");
             await setDoc(settingsRef, settingsToSave);
-
-            clearAISettingsCache(user.uid);
 
             toast({
                 title: "Configurações Salvas!",
