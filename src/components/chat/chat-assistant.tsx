@@ -11,8 +11,8 @@ import { useTransactions } from "@/hooks/use-transactions";
 import { getChatbotResponse } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Message } from '@/ai/ai-types';
-import { useAuthState } from 'react-firebase-hooks/auth'; // Adicione esta importação
-import { getFirebase } from '@/lib/firebase'; // Ajuste o caminho conforme sua estrutura
+import { useAuthState } from 'react-firebase-hooks/auth';
+import { getFirebase } from '@/lib/firebase';
 
 const suggestionPrompts = [
     "Quanto gastei com Supermercado este mês?",
@@ -30,7 +30,6 @@ export function ChatAssistant() {
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const { toast } = useToast();
     
-    // Adicione esta linha para pegar o usuário autenticado
     const [user, loading, error] = useAuthState(getFirebase().auth);
 
     useEffect(() => {
@@ -67,7 +66,7 @@ export function ChatAssistant() {
                     history: messages,
                     prompt: prompt,
                     transactions: allTransactions,
-                }, user.uid); // ← Aqui está a correção principal
+                }, user.uid);
                 
                 const newModelMessage: Message = { role: 'model', content: response };
                 setMessages(prev => [...prev, newModelMessage]);
