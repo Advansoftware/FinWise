@@ -98,7 +98,7 @@ export default function ImportPage() {
             <Card onDragOver={handleDragOver} onDrop={handleDrop}>
                 <CardHeader>
                     <CardTitle>Upload de Arquivo</CardTitle>
-                    <CardDescription>Selecione ou arraste um arquivo .csv. O formato esperado é: data,item,valor,categoria,subcategoria</p>
+                    <CardDescription>Selecione ou arraste um arquivo .csv. O formato esperado é: data,item,valor,categoria,subcategoria</CardDescription>
                 </CardHeader>
                 <CardContent>
                     {!csvFile ? (
@@ -162,5 +162,5 @@ export default function ImportPage() {
                 </CardContent>
             </Card>
         </div>
-    )
+    );
 }
