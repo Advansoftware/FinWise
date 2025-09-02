@@ -25,7 +25,7 @@ export function getAdminApp(): admin.app.App {
     adminApp = admin.initializeApp();
   } catch(error: any) {
     console.error("Falha ao inicializar o Firebase Admin SDK.", error);
-    console.error("Verifique se a variável de ambiente GOOGLE_APPLICATION_CREDENTIALS está apontando para um arquivo de credenciais válido.");
+    console.error("Verifique se a variável de ambiente GOOGLE_APPLICATION_CREDENTIALS está apontando para um arquivo de credenciais válido e se o arquivo existe.");
     throw new Error("Não foi possível inicializar o Firebase Admin. Consulte os logs do servidor.");
   }
 
