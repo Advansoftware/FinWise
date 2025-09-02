@@ -8,11 +8,11 @@
  */
 
 import {ai} from '@/ai/genkit';
-import {z} from 'genkit';
+import {z} from 'zod';
 import { ModelReference } from 'genkit/model';
 import { AISettings, Transaction } from '@/lib/types';
 import {googleAI} from '@genkit-ai/googleai';
-import {openAI} from 'genkitx-openai/openai';
+import {openAI} from 'genkitx-openai';
 
 
 const ChatInputSchema = z.object({
@@ -49,20 +49,20 @@ const chatWithTransactionsFlow = ai.defineFlow(
 
     switch (settings.provider) {
         case 'googleai':
-            modelToUse = 'googleai/gemini-1.5-flash';
+            modelToUse = googleAI.model('gemini-1.5-flash');
              if (settings.googleAIApiKey) {
                 providerPlugins.push(googleAI({apiKey: settings.googleAIApiKey}));
             }
             break;
         case 'openai':
-            modelToUse = settings.openAIModel === 'gpt-4' ? 'openai/gpt-4' : 'openai/gpt-3.5-turbo';
+            modelToUse = settings.openAIModel === 'gpt-4' ? openAI.model('gpt-4') : openAI.model('gpt-3.5-turbo');
              if (settings.openAIApiKey) {
                 providerPlugins.push(openAI({apiKey: settings.openAIApiKey}));
             }
             break;
         case 'ollama':
-            modelToUse = `ollama/${settings.ollamaModel || 'llama3'}`;
-            break;
+             // Ollama support to be added.
+            throw new Error('Ollama provider not yet implemented.');
         default:
             throw new Error(`Unknown AI provider: ${settings.provider}`);
     }
