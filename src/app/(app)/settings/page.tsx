@@ -29,7 +29,6 @@ export default function SettingsPage() {
     const { toast } = useToast();
     const { user } = useAuth();
     const [isSaving, setIsSaving] = useState(false);
-    const [isLoading, setIsLoading] = useState(true);
     const [ollamaModels, setOllamaModels] = useState<string[]>([]);
     const [isFetchingOllama, startFetchingOllama] = useTransition();
 
@@ -45,26 +44,27 @@ export default function SettingsPage() {
     const ollamaAddress = form.watch("ollamaServerAddress");
 
     const fetchOllamaModels = () => {
-        if (!ollamaAddress) {
+        const address = form.getValues("ollamaServerAddress");
+        if (!address) {
             toast({ variant: 'destructive', title: 'Endereço do Servidor Ollama Necessário' });
             return;
         }
         startFetchingOllama(async () => {
             try {
-                const models = await getOllamaModels(ollamaAddress);
+                const models = await getOllamaModels(address);
                 setOllamaModels(models);
                 if (models.length === 0) {
                      toast({
                         variant: 'destructive',
                         title: 'Ollama não encontrado',
-                        description: `Não foi possível conectar ao Ollama em ${ollamaAddress}. Verifique o endereço e se o serviço está em execução.`,
+                        description: `Não foi possível conectar ao Ollama em ${address}. Verifique o endereço e se o serviço está em execução.`,
                     });
                 }
             } catch(e) {
                  toast({
                     variant: 'destructive',
                     title: 'Falha na Conexão',
-                    description: `Não foi possível conectar ao Ollama em ${ollamaAddress}. Verifique o endereço e se o serviço está em execução.`,
+                    description: `Não foi possível conectar ao Ollama em ${address}. Verifique o endereço e se o serviço está em execução.`,
                 });
             }
         });
@@ -72,18 +72,25 @@ export default function SettingsPage() {
 
     useEffect(() => {
         const loadSettings = async () => {
-            if (!user) {
-                setIsLoading(false);
-                return
-            };
-            setIsLoading(true);
-            const idToken = await user.getIdToken();
-            const settings = await getAISettings(idToken);
-            form.reset(settings);
-            if (settings.provider === 'ollama' && settings.ollamaServerAddress) {
-               fetchOllamaModels();
+            if (!user) return;
+            try {
+                const settings = await getAISettings();
+                form.reset(settings);
+                if (settings.provider === 'ollama' && settings.ollamaServerAddress) {
+                    // Kick off a fetch for models based on saved settings
+                    startFetchingOllama(async () => {
+                        const models = await getOllamaModels(settings.ollamaServerAddress!);
+                        setOllamaModels(models);
+                    });
+                }
+            } catch (error) {
+                console.error("Failed to load AI settings:", error);
+                toast({
+                    variant: "destructive",
+                    title: "Erro ao Carregar Configurações",
+                    description: "Não foi possível buscar suas configurações de IA salvas.",
+                });
             }
-            setIsLoading(false);
         };
         loadSettings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -95,13 +102,17 @@ export default function SettingsPage() {
             return;
         }
         setIsSaving(true);
-        const idToken = await user.getIdToken();
-        await saveAISettings(idToken, data);
-        toast({
-            title: "Configurações Salvas!",
-            description: "Suas configurações de IA foram atualizadas com sucesso.",
-        });
-        setIsSaving(false);
+        try {
+            await saveAISettings(data);
+            toast({
+                title: "Configurações Salvas!",
+                description: "Suas configurações de IA foram atualizadas com sucesso.",
+            });
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível salvar as configurações.' });
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     return (
@@ -117,7 +128,6 @@ export default function SettingsPage() {
                     <CardDescription>Escolha qual serviço de IA você deseja usar para os recursos inteligentes.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                    {isLoading ? <SettingsFormSkeleton /> : (
                     <Form {...form}>
                         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 max-w-lg">
                              <FormField
@@ -217,7 +227,7 @@ export default function SettingsPage() {
                                                 <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Selecione um modelo OpenAI" />
-                                                </SelectTrigger>
+                                                </Trigger>
                                                 </FormControl>
                                                 <SelectContent>
                                                     <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
@@ -238,42 +248,4 @@ export default function SettingsPage() {
                                                 <Input type="password" placeholder="Cole sua chave de API aqui" {...field} />
                                             </FormControl>
                                             <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </>
-                            )}
-                            
-                            <Button type="submit" disabled={isSaving}>
-                                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Salvar Configurações
-                            </Button>
-                        </form>
-                    </Form>
-                    )}
-                </CardContent>
-            </Card>
-        </div>
-    )
-}
-
-
-function SettingsFormSkeleton() {
-    return (
-        <div className="space-y-6 max-w-lg">
-            <div className="space-y-2">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-10 w-full" />
-            </div>
-            <div className="space-y-2">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-10 w-full" />
-            </div>
-             <div className="space-y-2">
-                <Skeleton className="h-4 w-24" />
-                <Skeleton className="h-10 w-full" />
-            </div>
-            <Skeleton className="h-10 w-36" />
-        </div>
-    )
-}
+                                            </F...
