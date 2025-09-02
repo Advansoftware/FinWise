@@ -11,7 +11,7 @@ const PROTECTED_ROOT = '/dashboard';
 const PUBLIC_ROOT = '/';
 const LOGIN_ROOT = '/login';
 
-export function AuthGuard({ children }: { children: React.ReactNode }) {
+export function AuthGuard({ children, isProtected = false }: { children: React.ReactNode, isProtected?: boolean }) {
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -25,34 +25,29 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     setIsChecking(true);
 
     const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/signup');
-    const isProtectedRoute = !isAuthRoute && pathname !== PUBLIC_ROOT;
-    
-    // If user is logged in
-    if (user) {
-        // and tries to access an auth route (login/signup), redirect to dashboard
-        if (isAuthRoute) {
-            router.replace(PROTECTED_ROOT);
-            return;
-        }
-        // and tries to access the landing page, redirect to dashboard
-        if (pathname === PUBLIC_ROOT) {
-            router.replace(PROTECTED_ROOT);
-            return;
-        }
-    } 
-    // If user is NOT logged in
-    else {
-        // and tries to access a protected route, redirect to login
-        if (isProtectedRoute) {
-            router.replace(LOGIN_ROOT);
-            return;
-        }
-    }
+    // A rota de documentação é sempre pública
+    const isDocsRoute = pathname.startsWith('/docs');
 
-    // If none of the above, stop checking and show the page.
+    // Se o AuthGuard está em um layout protegido
+    if (isProtected) {
+      if (!user) {
+        router.replace(LOGIN_ROOT);
+        return;
+      }
+    } else { // Para layouts públicos (auth, docs, landing)
+       if (user) {
+          // Se o usuário logado tentar acessar login/signup ou a landing page, redireciona para o painel
+          if (isAuthRoute || pathname === PUBLIC_ROOT) {
+            router.replace(PROTECTED_ROOT);
+            return;
+          }
+       }
+    }
+   
+    // Se nenhuma das condições de redirecionamento for atendida, para de verificar e mostra a página.
     setIsChecking(false);
 
-  }, [user, loading, router, pathname]);
+  }, [user, loading, router, pathname, isProtected]);
 
   if (isChecking || loading) {
     return (
