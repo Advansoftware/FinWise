@@ -8,24 +8,36 @@ export function getAdminApp(): admin.app.App {
   if (adminApp) {
     return adminApp;
   }
-
-  // Quando executando no ambiente do Firebase/Google Cloud, o SDK automaticamente
-  // usa a variável de ambiente GOOGLE_APPLICATION_CREDENTIALS (que aponta para um arquivo)
-  // ou as credenciais padrão do ambiente para se inicializar.
-  // Não é necessário ler a variável ou fazer o parse do JSON manualmente.
   
   if (admin.apps.length > 0) {
     adminApp = admin.app();
-  } else {
-    // A inicialização sem argumentos funciona quando as variáveis de ambiente
-    // (GOOGLE_APPLICATION_CREDENTIALS ou outras do gcloud) estão configuradas.
+    return adminApp;
+  }
+
+  // Tenta inicializar usando o conteúdo da variável de ambiente.
+  // Isso é mais robusto para desenvolvimento local e ambientes de compilação.
+  const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+
+  if (serviceAccountJson) {
     try {
-      adminApp = admin.initializeApp();
-    } catch(error: any) {
-        console.error("Falha ao inicializar o Firebase Admin SDK.", error);
-        console.error("Verifique se as variáveis de ambiente (GOOGLE_APPLICATION_CREDENTIALS) estão configuradas corretamente no seu ambiente de execução.");
-        throw new Error("Não foi possível inicializar o Firebase Admin. Consulte os logs do servidor.");
+      const serviceAccount = JSON.parse(serviceAccountJson);
+      adminApp = admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount),
+      });
+      return adminApp;
+    } catch (error: any) {
+      console.error("Falha ao fazer parse ou inicializar com FIREBASE_SERVICE_ACCOUNT_JSON.", error);
+      throw new Error("A variável FIREBASE_SERVICE_ACCOUNT_JSON parece estar mal formatada. Consulte os logs.");
     }
+  }
+
+  // Fallback para o método padrão (usado em ambientes de produção como o Google Cloud)
+  try {
+    adminApp = admin.initializeApp();
+  } catch(error: any) {
+    console.error("Falha ao inicializar o Firebase Admin SDK com credenciais padrão.", error);
+    console.error("Verifique se as credenciais (FIREBASE_SERVICE_ACCOUNT_JSON ou GOOGLE_APPLICATION_CREDENTIALS) estão configuradas corretamente no seu ambiente.");
+    throw new Error("Não foi possível inicializar o Firebase Admin. Consulte os logs do servidor.");
   }
 
   return adminApp;
