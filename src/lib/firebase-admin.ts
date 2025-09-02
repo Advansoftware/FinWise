@@ -29,7 +29,9 @@ export function getAdminApp(): admin.app.App {
         const serviceAccount = JSON.parse(serviceAccountString);
 
         // **CRUCIAL FIX**: Replace literal '\\n' with actual newlines
-        serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+        if (serviceAccount.private_key) {
+            serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, '\n');
+        }
 
         adminApp = admin.initializeApp({
           credential: admin.credential.cert(serviceAccount)
