@@ -5,18 +5,15 @@
  *
  * - extractReceiptInfo - A function that handles the receipt information extraction process.
  */
-import {getAI} from '@/ai/genkit';
-import {z} from 'genkit';
+import {ai, getPlugins} from '@/ai/genkit';
 import { ReceiptInfoInputSchema, ReceiptInfoOutputSchema } from '../ai-types';
+import type { ReceiptInfoInput } from '../ai-types';
 
-
-export const extractReceiptInfo = async (input: z.infer<typeof ReceiptInfoInputSchema>) => {
-  const ai = await getAI();
-  const prompt = ai.definePrompt({
-    name: 'extractReceiptInfoPrompt',
-    input: {schema: ReceiptInfoInputSchema},
-    output: {schema: ReceiptInfoOutputSchema},
-    prompt: `You are an expert OCR system specializing in extracting information from receipts.
+const extractReceiptInfoPrompt = ai.definePrompt({
+  name: 'extractReceiptInfoPrompt',
+  input: {schema: ReceiptInfoInputSchema},
+  output: {schema: ReceiptInfoOutputSchema},
+  prompt: `You are an expert OCR system specializing in extracting information from receipts.
 You MUST reply in Brazilian Portuguese.
 Analyze the provided image and extract the following information:
 1. Determine if the image is a valid receipt.
@@ -27,13 +24,22 @@ Analyze the provided image and extract the following information:
 If the image is not a receipt, set isValid to false and leave other fields empty.
 
 Receipt Image: {{media url=photoDataUri}}`,
-  });
+});
 
-  const {output} = await prompt(input);
-  if (!output) {
-    throw new Error("Failed to extract receipt info.");
-  }
-  return output;
-};
+export const extractReceiptInfo = ai.defineFlow({
+    name: 'extractReceiptInfo',
+    inputSchema: ReceiptInfoInputSchema,
+    outputSchema: ReceiptInfoOutputSchema
+}, async (input) => {
+    const { output } = await extractReceiptInfoPrompt(input, {
+        plugins: await getPlugins(),
+    });
+    if (!output) {
+        throw new Error("Failed to extract receipt info.");
+    }
+    return output;
+});
 
-    
+export async function extractReceiptInfoAction(input: ReceiptInfoInput) {
+    return extractReceiptInfo(input);
+}

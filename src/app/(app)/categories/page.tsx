@@ -33,7 +33,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { suggestCategoryForItem } from "@/ai/flows/suggest-category";
+import { suggestCategoryForItemAction } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 
 
@@ -72,7 +72,7 @@ export default function CategoriesPage() {
         setSuggestion(null);
         startSuggesting(async () => {
              try {
-                const result = await suggestCategoryForItem({ itemName, existingCategories: categories });
+                const result = await suggestCategoryForItemAction({ itemName, existingCategories: categories });
                 setSuggestion(result);
             } catch (error) {
                 console.error("Error fetching AI suggestion:", error);

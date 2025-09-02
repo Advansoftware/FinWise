@@ -16,7 +16,7 @@ import { Loader2, Upload } from "lucide-react";
 import { useRef, useState, useEffect, useCallback, useTransition } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { extractReceiptInfo } from "@/ai/flows/extract-receipt-info";
+import { extractReceiptInfoAction } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
 import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
@@ -113,7 +113,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
         setExtractedData(null);
         startProcessing(async () => {
             try {
-                const result = await extractReceiptInfo({ photoDataUri: imageData });
+                const result = await extractReceiptInfoAction({ photoDataUri: imageData });
                 setExtractedData(result);
                 if (!result.isValid) {
                      toast({

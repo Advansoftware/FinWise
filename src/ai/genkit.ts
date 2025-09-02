@@ -9,7 +9,7 @@
 import {genkit, type Genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
 import {Plugin} from 'genkit/plugins';
-import {getAISettings} from '@/app/actions';
+import {getAISettings as fetchAISettings} from '@/app/actions';
 import {ollama} from 'genkitx-ollama';
 import {openai} from 'genkitx-openai';
 import { getAuth } from 'firebase/auth';
@@ -26,6 +26,12 @@ export function clearAISettingsCache(userId: string) {
         delete settingsCache[userId];
     }
 }
+
+/**
+ * The global Genkit instance. 
+ * All flows and prompts should be defined on this instance.
+ */
+export const ai = genkit();
 
 
 async function createPlugins(settings: AISettings): Promise<Plugin[]> {
@@ -52,46 +58,35 @@ async function createPlugins(settings: AISettings): Promise<Plugin[]> {
 
 
 /**
- * Ensures that Genkit is initialized before use and returns the AI instance.
- * This prevents race conditions by making sure the configuration is loaded
- * before any AI flows are called.
- * 
- * IMPORTANT: This function now dynamically reconfigures the 'ai' instance
- * based on the user's settings for each call.
+ * Gets the appropriate Genkit plugins based on the current user's settings.
+ * This is called by each flow at runtime to ensure the correct AI provider is used.
  */
-export async function getAI(): Promise<Genkit> {
+export async function getPlugins(): Promise<Plugin[]> {
   const { auth } = getFirebase(); // Client-side firebase
   const userId = auth.currentUser?.uid;
 
   if (!userId) {
     // If no user, return a default instance with ollama
-     return genkit({
-      plugins: [
+     return [
           ollama({
             model: 'llama3',
             serverAddress: 'http://127.0.0.1:11434',
           })
-      ],
-    });
+      ];
   }
   
   // Check cache first
   const cached = settingsCache[userId];
   if (cached && (Date.now() - cached.timestamp < CACHE_TTL)) {
-    return genkit({ plugins: await createPlugins(cached.settings) });
+    return createPlugins(cached.settings);
   }
 
   // Fetch fresh settings and clear old cache entry for this user
   clearAISettingsCache(userId);
-  const settings = await getAISettings(userId);
+  const settings = await fetchAISettings(userId);
   settingsCache[userId] = { settings, timestamp: Date.now() };
 
-  const plugins = await createPlugins(settings);
-  
-  // Return a dynamically configured instance
-  return genkit({
-    plugins,
-  });
+  return createPlugins(settings);
 }
 
 
@@ -105,3 +100,4 @@ setInterval(() => {
         }
     }
 }, CACHE_TTL);
+

@@ -2,12 +2,12 @@
 'use server';
 
 import { Transaction, AISettings } from '@/lib/types';
-import { getAI } from '@/ai/genkit';
+import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { generateSpendingTip } from '@/ai/flows/ai-powered-spending-tips';
-import { chatWithTransactions } from '@/ai/flows/chat-with-transactions';
-import { extractReceiptInfo } from '@/ai/flows/extract-receipt-info';
-import { suggestCategoryForItem } from '@/ai/flows/suggest-category';
+import { generateSpendingTip, generateSpendingTipAction } from '@/ai/flows/ai-powered-spending-tips';
+import { chatWithTransactionsAction } from '@/ai/flows/chat-with-transactions';
+import { extractReceiptInfoAction } from '@/ai/flows/extract-receipt-info';
+import { suggestCategoryForItemAction } from '@/ai/flows/suggest-category';
 import { ChatInput, ReceiptInfoInput, ReceiptInfoOutput, SuggestCategoryInput, SuggestCategoryOutput } from './ai/ai-types';
 import { getFirebase } from "@/lib/firebase"; 
 import { doc, getDoc } from 'firebase/firestore';
@@ -42,7 +42,7 @@ export async function getAISettings(userId: string): Promise<AISettings> {
 
 export async function getSpendingTip(transactions: Transaction[]): Promise<string> {
   try {
-    const result = await generateSpendingTip({ transactions: JSON.stringify(transactions, null, 2) });
+    const result = await generateSpendingTipAction({ transactions: JSON.stringify(transactions, null, 2) });
     return result.tip;
   } catch (error) {
     console.error(error);
@@ -51,7 +51,6 @@ export async function getSpendingTip(transactions: Transaction[]): Promise<strin
 }
 
 export async function getFinancialProfile(transactions: Transaction[]): Promise<string> {
-    const ai = await getAI();
     const FinancialProfileInputSchema = z.object({
       transactions: z.string().describe('A JSON string representing an array of user transactions.'),
     });
@@ -86,7 +85,6 @@ const AnalyzeTransactionsOutputSchema = z.object({
   analysis: z.string().describe('A brief, insightful analysis of the provided transactions. Identify patterns, anomalies, or suggestions for recategorization. The output must be in markdown format and in Brazilian Portuguese.'),
 });
 export async function analyzeTransactions(transactions: Transaction[]): Promise<string> {
-  const ai = await getAI();
   const prompt = ai.definePrompt({
     name: 'analyzeTransactionsPrompt',
     input: { schema: z.object({ txns: z.string() }) },
@@ -109,7 +107,7 @@ Transactions:
 
 export async function getChatbotResponse(input: ChatInput) {
     try {
-        const result = await chatWithTransactions(input);
+        const result = await chatWithTransactionsAction(input);
         return result.response;
     } catch (error) {
         console.error("Error in getChatbotResponse:", error);
@@ -119,5 +117,5 @@ export async function getChatbotResponse(input: ChatInput) {
 
 // --- Export AI flow wrappers ---
 // We re-export these from a central place to be used in client components.
-export { extractReceiptInfo, suggestCategoryForItem };
+export { extractReceiptInfoAction, suggestCategoryForItemAction };
 export type { ReceiptInfoInput, ReceiptInfoOutput, SuggestCategoryInput, SuggestCategoryOutput };
