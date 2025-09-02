@@ -9,11 +9,10 @@ import { chatWithTransactions } from '@/ai/flows/chat-with-transactions';
 import { extractReceiptInfo } from '@/ai/flows/extract-receipt-info';
 import { suggestCategoryForItem } from '@/ai/flows/suggest-category';
 import { ChatInput, ReceiptInfoInput, ReceiptInfoOutput, SuggestCategoryInput, SuggestCategoryOutput } from './ai/ai-types';
-import { getFirebase } from "@/lib/firebase"; // Note: This will be the client SDK, but it's safe in actions.
+import { getFirebase } from "@/lib/firebase"; 
 import { doc, getDoc } from 'firebase/firestore';
 
 
-// This function is now only used on the server side by getAI in genkit.ts
 export async function getAISettings(userId: string): Promise<AISettings> {
     const { db } = getFirebase();
     
@@ -31,7 +30,6 @@ export async function getAISettings(userId: string): Promise<AISettings> {
     try {
       const docSnap = await getDoc(settingsRef);
        if (docSnap.exists()) {
-        // Correctly merge: user's saved settings override the defaults.
         return { ...defaultSettings, ...docSnap.data() } as AISettings;
       }
     } catch(e) {
@@ -39,23 +37,6 @@ export async function getAISettings(userId: string): Promise<AISettings> {
     }
     return defaultSettings;
 }
-
-
-export async function getOllamaModels(serverAddress: string): Promise<string[]> {
-  try {
-    const response = await fetch(`${serverAddress}/api/tags`, { cache: 'no-store' });
-    if (!response.ok) {
-      console.error(`Ollama is not running or not accessible at ${serverAddress}`);
-      return [];
-    }
-    const data = await response.json();
-    return data.models.map((model: any) => model.name.replace(':latest', ''));
-  } catch (error) {
-    console.error('Failed to fetch Ollama models:', error);
-    return [];
-  }
-}
-
 
 // --- AI Actions ---
 

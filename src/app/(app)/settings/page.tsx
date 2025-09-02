@@ -1,127 +1,31 @@
 
 'use client';
 
-import { useEffect, useState, useTransition, useCallback } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { AISettings } from "@/lib/types";
-import { getOllamaModels } from "@/app/actions";
-import { useToast } from "@/hooks/use-toast";
 import { Loader2, RefreshCw } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
-import { getFirebase } from "@/lib/firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-
-const aiSettingsSchema = z.object({
-  provider: z.enum(["ollama", "googleai", "openai"]),
-  ollamaModel: z.string().optional(),
-  ollamaServerAddress: z.string().url({ message: "Por favor, insira uma URL válida." }).optional(),
-  googleAIApiKey: z.string().optional(),
-  openAIModel: z.enum(["gpt-3.5-turbo", "gpt-4"]).optional(),
-  openAIApiKey: z.string().optional(),
-});
+import { useAISettings } from "@/hooks/use-ai-settings";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function SettingsPage() {
-    const { toast } = useToast();
-    const { user } = useAuth();
-    const [isSaving, setIsSaving] = useState(false);
-    const [ollamaModels, setOllamaModels] = useState<string[]>([]);
-    const [isFetchingOllama, startFetchingOllama] = useTransition();
+    const {
+        form,
+        isSaving,
+        isLoading,
+        isFetchingOllama,
+        ollamaModels,
+        provider,
+        ollamaAddress,
+        fetchOllamaModels,
+        onSubmit,
+    } = useAISettings();
 
-    const form = useForm<z.infer<typeof aiSettingsSchema>>({
-        resolver: zodResolver(aiSettingsSchema),
-        defaultValues: {
-            provider: "ollama",
-            ollamaServerAddress: "http://127.0.0.1:11434"
-        },
-    });
-
-    const provider = form.watch("provider");
-    const ollamaAddress = form.watch("ollamaServerAddress");
-
-    const fetchOllamaModels = useCallback(() => {
-        const address = form.getValues("ollamaServerAddress");
-        if (!address) {
-            toast({ variant: 'destructive', title: 'Endereço do Servidor Ollama Necessário' });
-            return;
-        }
-        startFetchingOllama(async () => {
-            try {
-                const models = await getOllamaModels(address);
-                setOllamaModels(models);
-                if (models.length === 0) {
-                     toast({
-                        variant: 'destructive',
-                        title: 'Ollama não encontrado',
-                        description: `Não foi possível conectar ao Ollama em ${address}. Verifique o endereço e se o serviço está em execução.`,
-                    });
-                }
-            } catch(e) {
-                 toast({
-                    variant: 'destructive',
-                    title: 'Falha na Conexão',
-                    description: `Não foi possível conectar ao Ollama em ${address}. Verifique o endereço e se o serviço está em execução.`,
-                });
-            }
-        });
-    }, [form, toast]);
-
-    useEffect(() => {
-        const loadSettings = async () => {
-            if (!user) return;
-            const { db } = getFirebase();
-            const settingsRef = doc(db, "users", user.uid, "settings", "ai");
-
-            try {
-                const docSnap = await getDoc(settingsRef);
-                 if (docSnap.exists()) {
-                    const settings = docSnap.data() as AISettings;
-                    form.reset(settings);
-                    if (settings.provider === 'ollama' && settings.ollamaServerAddress) {
-                        fetchOllamaModels();
-                    }
-                }
-            } catch (error) {
-                console.error("Failed to load AI settings:", error);
-                toast({
-                    variant: "destructive",
-                    title: "Erro ao Carregar Configurações",
-                    description: "Não foi possível buscar suas configurações de IA salvas.",
-                });
-            }
-        };
-        loadSettings();
-    }, [user, form, toast, fetchOllamaModels]);
-
-
-    const onSubmit = async (data: z.infer<typeof aiSettingsSchema>) => {
-        if (!user) {
-            toast({ variant: 'destructive', title: 'Erro', description: 'Você precisa estar logado para salvar as configurações.' });
-            return;
-        }
-        setIsSaving(true);
-        try {
-            const { db } = getFirebase();
-            const settingsRef = doc(db, "users", user.uid, "settings", "ai");
-            await setDoc(settingsRef, data);
-
-            toast({
-                title: "Configurações Salvas!",
-                description: "Suas configurações de IA foram atualizadas com sucesso.",
-            });
-        } catch (error) {
-            const errorMessage = error instanceof Error ? error.message : 'Não foi possível salvar as configurações.';
-            toast({ variant: 'destructive', title: 'Erro', description: errorMessage });
-        } finally {
-            setIsSaving(false);
-        }
-    };
+    if (isLoading) {
+        return <SettingsSkeleton />
+    }
 
     return (
         <div className="flex flex-col gap-6">
@@ -144,7 +48,7 @@ export default function SettingsPage() {
                                 render={({ field }) => (
                                     <FormItem>
                                     <FormLabel>Provedor</FormLabel>
-                                    <Select onValueChange={(value) => { field.onChange(value); if (value === 'ollama') fetchOllamaModels(); }} defaultValue={field.value}>
+                                    <Select onValueChange={field.onChange} value={field.value}>
                                         <FormControl>
                                         <SelectTrigger>
                                             <SelectValue placeholder="Selecione um provedor de IA" />
@@ -231,7 +135,7 @@ export default function SettingsPage() {
                                         render={({ field }) => (
                                             <FormItem>
                                             <FormLabel>Modelo OpenAI</FormLabel>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                            <Select onValueChange={field.onChange} value={field.value}>
                                                 <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Selecione um modelo OpenAI" />
@@ -262,7 +166,7 @@ export default function SettingsPage() {
                                 </>
                             )}
 
-                            <Button type="submit" disabled={isSaving || !user}>
+                            <Button type="submit" disabled={isSaving}>
                                 {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                                 Salvar Configurações
                             </Button>
@@ -272,4 +176,37 @@ export default function SettingsPage() {
             </Card>
         </div>
     );
+}
+
+
+function SettingsSkeleton() {
+    return (
+        <div className="flex flex-col gap-6">
+            <div>
+                <Skeleton className="h-10 w-64 mb-2" />
+                <Skeleton className="h-4 w-96" />
+            </div>
+            <Card>
+                <CardHeader>
+                    <Skeleton className="h-8 w-48 mb-2" />
+                    <Skeleton className="h-4 w-full" />
+                </CardHeader>
+                <CardContent className="space-y-6 max-w-lg">
+                    <div className="space-y-2">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
+                     <div className="space-y-2">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
+                     <div className="space-y-2">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-10 w-full" />
+                    </div>
+                    <Skeleton className="h-10 w-40" />
+                </CardContent>
+            </Card>
+        </div>
+    )
 }
