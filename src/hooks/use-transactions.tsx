@@ -69,7 +69,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
 
         let description = "Não foi possível buscar suas informações. Tente novamente mais tarde.";
         if (error instanceof FirebaseError && error.code === 'permission-denied') {
-            description = "Acesso ao banco de dados negado. Verifique se o Cloud Firestore foi ativado em seu projeto Firebase e se as regras de segurança permitem leitura e escrita."
+            description = "Acesso ao banco de dados negado. Verifique se o Cloud Firestore foi ativado em seu projeto Firebase e se as regras de segurança permitem leitura e escrita para usuários autenticados."
         }
         
         toast({
