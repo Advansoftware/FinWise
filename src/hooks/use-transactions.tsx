@@ -1,14 +1,14 @@
 
 "use client";
 
-import { useState, useMemo, useEffect, useCallback, createContext, useContext, ReactNode } from "react";
+import { useState, useMemo, useEffect, createContext, useContext, ReactNode } from "react";
 import { DateRange } from "react-day-picker";
 import { subDays } from "date-fns";
 import { Transaction, TransactionCategory } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { getFirebase } from "@/lib/firebase";
-import { collection, doc, setDoc, addDoc, Timestamp, onSnapshot, Unsubscribe, deleteDoc } from "firebase/firestore";
+import { collection, doc, setDoc, addDoc, Timestamp, onSnapshot, Unsubscribe, deleteDoc, writeBatch, query, where, getDocs } from "firebase/firestore";
 import { FirebaseError } from "firebase/app";
 
 type CategoryMap = Partial<Record<TransactionCategory, string[]>>;
@@ -28,6 +28,8 @@ interface TransactionsContextType {
   selectedSubcategory: string;
   setSelectedSubcategory: (subcategory: string) => void;
   addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
+  updateTransaction: (transactionId: string, updates: Partial<Transaction>, updateAllMatching: boolean, originalItemName: string) => Promise<void>;
+  deleteTransaction: (transactionId: string) => Promise<void>;
   addCategory: (categoryName: TransactionCategory) => Promise<void>;
   deleteCategory: (categoryName: TransactionCategory) => Promise<void>;
   addSubcategory: (categoryName: TransactionCategory, subcategoryName: string) => Promise<void>;
@@ -86,13 +88,17 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       if (docSnap.exists()) {
         setCategoryMap(docSnap.data() as CategoryMap);
       } else {
-         const defaultCategories = {
-            "Supermercado": ["Mercearia", "Feira", "Açougue"],
-            "Transporte": ["Combustível", "Uber/99", "Metrô/Ônibus"],
-            "Restaurante": ["Almoço", "Jantar", "Café"],
-            "Contas": ["Aluguel", "Luz", "Água", "Internet"],
-            "Entretenimento": ["Cinema", "Show", "Streaming"],
-            "Saúde": ["Farmácia", "Consulta"],
+         const defaultCategories: CategoryMap = {
+            "Supermercado": ["Mercearia", "Feira", "Açougue", "Bebidas"],
+            "Transporte": ["Combustível", "Uber/99", "Metrô/Ônibus", "Estacionamento"],
+            "Restaurante": ["Almoço", "Jantar", "Café", "Lanche"],
+            "Contas": ["Aluguel", "Luz", "Água", "Internet", "Celular", "Condomínio"],
+            "Entretenimento": ["Cinema", "Show", "Streaming", "Jogos"],
+            "Saúde": ["Farmácia", "Consulta", "Plano de Saúde"],
+            "Educação": ["Cursos", "Livros", "Mensalidade"],
+            "Lazer": ["Viagem", "Passeios", "Hobbies"],
+            "Vestuário": ["Roupas", "Calçados", "Acessórios"],
+            "Outros": ["Presentes", "Serviços", "Impostos"],
         };
         await setDoc(categoriesDocRef, defaultCategories);
         setCategoryMap(defaultCategories);
@@ -122,7 +128,35 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
         amount: Math.abs(transaction.amount),
         date: new Date(transaction.date)
     });
-    // No need to refresh, onSnapshot handles it
+  }
+
+  const updateTransaction = async (transactionId: string, updates: Partial<Transaction>, updateAllMatching: boolean, originalItemName: string) => {
+    if (!user) throw new Error("User not authenticated");
+    const { db } = getFirebase();
+    const batch = writeBatch(db);
+
+    if (updateAllMatching) {
+        // Query for all transactions with the same original item name
+        const q = query(collection(db, "users", user.uid, "transactions"), where("item", "==", originalItemName));
+        const querySnapshot = await getDocs(q);
+        querySnapshot.forEach(doc => {
+            // Apply the same updates to all matching documents
+            batch.update(doc.ref, { ...updates, date: new Date(updates.date!) });
+        });
+    } else {
+        // Update only the single transaction
+        const docRef = doc(db, "users", user.uid, "transactions", transactionId);
+        batch.update(docRef, { ...updates, date: new Date(updates.date!) });
+    }
+
+    await batch.commit();
+  };
+  
+  const deleteTransaction = async (transactionId: string) => {
+     if (!user) throw new Error("User not authenticated");
+     const { db } = getFirebase();
+     const docRef = doc(db, "users", user.uid, "transactions", transactionId);
+     await deleteDoc(docRef);
   }
 
   const { categories, subcategories } = useMemo(() => {
@@ -137,7 +171,6 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       const { db } = getFirebase();
       const docRef = doc(db, "users", userId, "settings", "categories");
       await setDoc(docRef, newCategories);
-      // No need to refresh, onSnapshot handles it
   };
 
   // --- Category Management ---
@@ -244,6 +277,8 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     selectedSubcategory,
     setSelectedSubcategory,
     addTransaction,
+    updateTransaction,
+    deleteTransaction,
     addCategory,
     deleteCategory,
     addSubcategory,

@@ -1,4 +1,4 @@
-export type TransactionCategory = "Supermercado" | "Transporte" | "Entretenimento" | "Contas" | "Restaurante" | "Saúde";
+export type TransactionCategory = "Supermercado" | "Transporte" | "Entretenimento" | "Contas" | "Restaurante" | "Saúde" | "Educação" | "Lazer" | "Vestuário" | "Outros";
 
 export interface Transaction {
   id: string;
@@ -8,6 +8,7 @@ export interface Transaction {
   subcategory?: string;
   amount: number;
   quantity?: number;
+  establishment?: string;
 }
 
 export interface Category {

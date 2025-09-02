@@ -1,3 +1,4 @@
+
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
@@ -5,10 +6,89 @@ import { Transaction } from '@/lib/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
-import { ArrowUpDown } from 'lucide-react';
+import { ArrowUpDown, MoreHorizontal, Pen, Trash2 } from 'lucide-react';
 import { Button } from '../ui/button';
 import { CategoryIcon } from '../icons';
 import { Checkbox } from '../ui/checkbox';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
+import { useTransactions } from '@/hooks/use-transactions';
+import { useToast } from '@/hooks/use-toast';
+import { useState } from 'react';
+import { EditTransactionSheet } from './edit-transaction-sheet';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog"
+
+const ActionsCell = ({ row }: { row: any }) => {
+    const transaction = row.original as Transaction;
+    const { deleteTransaction } = useTransactions();
+    const { toast } = useToast();
+    const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
+    const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+    const handleDelete = async () => {
+        try {
+            await deleteTransaction(transaction.id);
+            toast({ title: "Transação excluída com sucesso." });
+        } catch (error) {
+            toast({ variant: "destructive", title: "Erro ao excluir transação." });
+        }
+    };
+    
+    return (
+      <>
+        <EditTransactionSheet 
+            transaction={transaction} 
+            isOpen={isEditSheetOpen} 
+            setIsOpen={setIsEditSheetOpen}
+        />
+
+        <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+            <AlertDialogContent>
+                <AlertDialogHeader>
+                    <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                        Esta ação não pode ser desfeita. Isso excluirá permanentemente a transação "{transaction.item}".
+                    </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                    <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Excluir</AlertDialogAction>
+                </AlertDialogFooter>
+            </AlertDialogContent>
+        </AlertDialog>
+
+        <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="h-8 w-8 p-0">
+                    <span className="sr-only">Abrir menu</span>
+                    <MoreHorizontal className="h-4 w-4" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+                <DropdownMenuLabel>Ações</DropdownMenuLabel>
+                <DropdownMenuItem onClick={() => setIsEditSheetOpen(true)}>
+                    <Pen className="mr-2 h-4 w-4" />
+                    Editar
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="text-red-500 focus:text-red-400 focus:bg-destructive/10">
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Excluir
+                </DropdownMenuItem>
+            </DropdownMenuContent>
+        </DropdownMenu>
+      </>
+    );
+};
+
 
 export const columns: ColumnDef<Transaction>[] = [
   {
@@ -60,7 +140,15 @@ export const columns: ColumnDef<Transaction>[] = [
   {
     accessorKey: 'item',
     header: 'Item',
-    cell: ({ row }) => <div className="font-medium">{row.getValue('item')}</div>,
+    cell: ({ row }) => {
+      const establishment = row.original.establishment;
+      return (
+        <div>
+          <div className="font-medium">{row.getValue('item')}</div>
+          {establishment && <div className="text-xs text-muted-foreground">{establishment}</div>}
+        </div>
+      )
+    },
   },
   {
     accessorKey: 'category',
@@ -121,5 +209,10 @@ export const columns: ColumnDef<Transaction>[] = [
       return <div className="text-right font-medium text-red-400/90 whitespace-nowrap">{formatted}</div>;
     },
     size: 50,
+  },
+  {
+    id: 'actions',
+    cell: ActionsCell,
+    size: 40,
   },
 ];
