@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState, useTransition, useCallback } from "react";
@@ -68,7 +67,7 @@ export default function SettingsPage() {
                 });
             }
         });
-    }, [form, toast, startFetchingOllama]);
+    }, [form, toast]);
 
     useEffect(() => {
         const loadSettings = async () => {
@@ -77,7 +76,6 @@ export default function SettingsPage() {
                 const settings = await getAISettings();
                 form.reset(settings);
                 if (settings.provider === 'ollama' && settings.ollamaServerAddress) {
-                    // Automatically fetch models if ollama is the saved provider
                     fetchOllamaModels();
                 }
             } catch (error) {
@@ -104,7 +102,6 @@ export default function SettingsPage() {
                 title: "Configurações Salvas!",
                 description: "Suas configurações de IA foram atualizadas com sucesso. A página será recarregada para aplicar as mudanças.",
             });
-            // Recarrega a página para garantir que a nova configuração de IA seja carregada no servidor
             setTimeout(() => window.location.reload(), 1500); 
         } catch (error) {
             toast({ variant: 'destructive', title: 'Erro', description: 'Não foi possível salvar as configurações.' });
@@ -263,5 +260,3 @@ export default function SettingsPage() {
         </div>
     );
 }
-
-    
