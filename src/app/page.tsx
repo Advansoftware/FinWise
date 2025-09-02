@@ -54,8 +54,13 @@ export default function Page() {
                   <span className="text-xl font-bold">FinWise</span>
               </Link>
             </motion.div>
-            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
+            <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="flex items-center gap-4">
               <Button asChild variant="ghost">
+                  <Link href="/docs">
+                      Documentação
+                  </Link>
+              </Button>
+              <Button asChild>
                   <Link href={user ? "/dashboard" : "/login"}>
                       {user ? "Acessar Painel" : "Entrar"}
                   </Link>
