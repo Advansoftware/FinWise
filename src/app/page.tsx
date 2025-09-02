@@ -200,7 +200,7 @@ export default function Page() {
                             whileInView="animate"
                             viewport={{ once: true, amount: 0.3 }}
                             transition={{ ...featureVariants.transition, delay: index * 0.15 }}
-                            className={`flex flex-col rounded-lg border p-6 h-full ${plan.highlight ? 'border-primary shadow-primary/20 shadow-lg' : 'border-border'}`}
+                            className={`flex flex-col rounded-lg border p-6 h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-2 ${plan.highlight ? 'border-primary shadow-primary/20 shadow-lg' : 'border-border'}`}
                         >
                             {plan.highlight && <Badge className="w-fit mb-4 -mt-2">Mais Popular</Badge>}
                             <h3 className="text-2xl font-bold">{plan.name}</h3>
