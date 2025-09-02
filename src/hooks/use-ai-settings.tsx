@@ -60,7 +60,7 @@ export function useAISettings() {
     const saveSettings = async (newCredentials: AICredential[], newActiveId: string | null) => {
         if (!user) {
             toast({ variant: "destructive", title: "Usuário não autenticado." });
-            return;
+            return null;
         }
         setIsSaving(true);
         try {
@@ -71,11 +71,9 @@ export function useAISettings() {
                 activeCredentialId: newActiveId,
             }, { merge: true });
 
-            // Directly update the state after successful save
-            setCredentials(newCredentials);
-            setActiveCredentialId(newActiveId);
-
             toast({ title: "Configurações de IA salvas!" });
+            return { savedCredentials: newCredentials, savedActiveId: newActiveId };
+
         } catch (error) {
             toast({ variant: "destructive", title: "Erro ao salvar configurações." });
             throw error; // Re-throw error to be caught by caller
@@ -86,6 +84,7 @@ export function useAISettings() {
 
     const handleSaveCredential = async (credentialData: Omit<AICredential, 'id'> & { id?: string }) => {
         const isEditing = !!credentialData.id;
+        
         const finalCredential: Partial<AICredential> & { id?: string, name: string, provider: 'ollama' | 'googleai' | 'openai' } = {
             id: credentialData.id,
             name: credentialData.name,
@@ -117,9 +116,13 @@ export function useAISettings() {
         const newActiveId = activeCredentialId || (newCredentials.length === 1 ? newCredentials[0].id : null);
         
         try {
-            await saveSettings(newCredentials, newActiveId);
-            setIsDialogOpen(false);
-            setEditingCredential(null);
+            const result = await saveSettings(newCredentials, newActiveId);
+            if (result) {
+                setCredentials(result.savedCredentials);
+                setActiveCredentialId(result.savedActiveId);
+                setIsDialogOpen(false);
+                setEditingCredential(null);
+            }
         } catch (error) {
             console.error("Failed to save credential", error);
         }
