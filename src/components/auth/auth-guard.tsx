@@ -27,6 +27,13 @@ export function AuthGuard({
     setIsChecking(true);
 
     const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/signup');
+    const isRootPage = pathname === '/';
+
+    // Se for a landing page (rota raiz), não fazemos nada, apenas liberamos.
+    if (isRootPage) {
+      setIsChecking(false);
+      return;
+    }
 
     if (isProtected) {
       // Se a rota é protegida e não há usuário, redireciona para o login.
