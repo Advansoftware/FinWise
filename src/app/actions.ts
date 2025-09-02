@@ -1,3 +1,4 @@
+
 'use server';
 
 import { Transaction, AISettings } from '@/lib/types';
@@ -19,10 +20,8 @@ import {
 } from '@/ai/ai-types';
 import { createConfiguredAI, getModelReference } from '@/ai/genkit';
 import { getAdminApp } from '@/lib/firebase-admin';
-import * as admin from 'firebase-admin';
 
-
-// Default AI settings
+// Default AI settings for fallback ONLY.
 const DEFAULT_AI_SETTINGS: AISettings = {
   provider: 'ollama',
   ollamaModel: 'llama3',
@@ -43,9 +42,11 @@ export async function getAISettings(userId: string): Promise<AISettings> {
     const docSnap = await settingsRef.get();
 
     if (docSnap.exists) {
+      // Merge saved settings with defaults to ensure all fields are present
       return { ...DEFAULT_AI_SETTINGS, ...docSnap.data() } as AISettings;
     }
-
+    
+    // No settings saved for this user, return defaults
     return DEFAULT_AI_SETTINGS;
   } catch (error) {
     console.error("Error getting AI settings from Firestore with Admin SDK:", error);

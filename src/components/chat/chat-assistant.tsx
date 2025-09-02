@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useRef, useEffect, useTransition } from 'react';
@@ -11,8 +12,7 @@ import { useTransactions } from "@/hooks/use-transactions";
 import { getChatbotResponse } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Message } from '@/ai/ai-types';
-import { useAuthState } from 'react-firebase-hooks/auth';
-import { getFirebase } from '@/lib/firebase';
+import { useAuth } from '@/hooks/use-auth';
 
 const suggestionPrompts = [
     "Quanto gastei com Supermercado este mês?",
@@ -29,8 +29,7 @@ export function ChatAssistant() {
     const { allTransactions } = useTransactions();
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const { toast } = useToast();
-    
-    const [user, loading, error] = useAuthState(getFirebase().auth);
+    const { user, loading } = useAuth();
 
     useEffect(() => {
         // Scroll to bottom when new messages are added
@@ -45,10 +44,9 @@ export function ChatAssistant() {
     const handleSubmit = (prompt: string = input) => {
         if (!prompt.trim()) return;
 
-        // Verificar se o usuário está autenticado
         if (!user) {
             toast({
-                title: "Erro",
+                title: "Erro de Autenticação",
                 description: "Você precisa estar logado para usar o chat.",
                 variant: "destructive"
             });
@@ -61,20 +59,20 @@ export function ChatAssistant() {
 
         startTransition(async () => {
             try {
-                // IMPORTANTE: Passar o userId aqui
                 const response = await getChatbotResponse({
                     history: messages,
                     prompt: prompt,
                     transactions: allTransactions,
-                }, user.uid);
+                }, user.uid); // Passando o user.uid
                 
                 const newModelMessage: Message = { role: 'model', content: response };
                 setMessages(prev => [...prev, newModelMessage]);
             } catch (error) {
                 console.error('Error getting chatbot response:', error);
+                const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro ao processar sua pergunta.";
                 toast({
                     title: "Erro no Chat",
-                    description: "Ocorreu um erro ao processar sua pergunta. Tente novamente.",
+                    description: errorMessage,
                     variant: "destructive"
                 });
                 
@@ -87,17 +85,6 @@ export function ChatAssistant() {
     const handleSuggestionClick = (prompt: string) => {
         handleSubmit(prompt);
     };
-
-    // Mostrar loading se ainda estiver carregando o usuário
-    if (loading) {
-        return null; // ou um loading spinner
-    }
-
-    // Mostrar erro se houve problema na autenticação
-    if (error) {
-        console.error('Auth error:', error);
-        return null;
-    }
 
     return (
         <>
@@ -123,7 +110,11 @@ export function ChatAssistant() {
                             <CardContent className="flex-1 overflow-hidden p-0">
                                 <ScrollArea className="h-full" ref={scrollAreaRef}>
                                     <div className="p-4 space-y-4">
-                                        {!user ? (
+                                        {loading ? (
+                                            <div className="text-center p-4 flex justify-center items-center">
+                                                <Loader2 className="h-6 w-6 animate-spin"/>
+                                            </div>
+                                        ) : !user ? (
                                             <div className="text-center p-4">
                                                 <p className="text-muted-foreground">Faça login para usar o assistente de chat.</p>
                                             </div>
