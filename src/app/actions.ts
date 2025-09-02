@@ -2,8 +2,7 @@
 'use server';
 
 import { Transaction, AISettings, TransactionCategory } from '@/lib/types';
-import { getFirebaseAdminApp } from '@/lib/firebase-admin';
-import * as admin from 'firebase-admin';
+import { getFirebase } from '@/lib/firebase-server'; // MUDANÇA IMPORTANTE
 import { revalidatePath } from 'next/cache';
 import { getAI } from '@/ai/genkit';
 import { z } from 'zod';
@@ -12,10 +11,14 @@ import { chatWithTransactions } from '@/ai/flows/chat-with-transactions';
 import { extractReceiptInfo } from '@/ai/flows/extract-receipt-info';
 import { suggestCategoryForItem } from '@/ai/flows/suggest-category';
 import { ChatInput, ReceiptInfoInput, ReceiptInfoOutput, SuggestCategoryInput, SuggestCategoryOutput } from './ai/ai-types';
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, addDoc, Timestamp, query, where, writeBatch } from 'firebase/firestore';
 
-// --- Firebase Admin Instance ---
+
+// --- Firebase Server Instance ---
 const getDb = () => {
-    return getFirebaseAdminApp().firestore();
+    // Usa a inicialização do Firebase para o servidor.
+    const { db } = getFirebase();
+    return db;
 };
 
 
@@ -32,15 +35,15 @@ export async function getAISettings(userId: string): Promise<AISettings> {
     if (!userId) return defaultSettings;
     
     const db = getDb();
-    const settingsRef = db.collection("users").doc(userId).collection("settings").doc("ai");
+    const settingsRef = doc(db, "users", userId, "settings", "ai");
 
     try {
-      const docSnap = await settingsRef.get();
-       if (docSnap.exists) {
+      const docSnap = await getDoc(settingsRef);
+       if (docSnap.exists()) {
         return { ...defaultSettings, ...docSnap.data() } as AISettings;
       }
     } catch(e) {
-      console.error("Error getting AI settings from Firestore Admin:", e);
+      console.error("Error getting AI settings from Firestore:", e);
     }
     return defaultSettings;
 }
@@ -50,8 +53,8 @@ export async function saveAISettings(userId: string, settings: AISettings): Prom
         throw new Error("Usuário não autenticado.");
     }
     const db = getDb();
-    const settingsRef = db.collection("users").doc(userId).collection("settings").doc("ai");
-    await settingsRef.set(settings);
+    const settingsRef = doc(db, "users", userId, "settings", "ai");
+    await setDoc(settingsRef, settings);
     revalidatePath('/(app)/settings', 'page');
 }
 
@@ -164,21 +167,21 @@ export async function getChatbotResponse(input: ChatInput) {
 async function getTransactionsCollectionRef(userId: string) {
     if (!userId) throw new Error("User ID required");
     const db = getDb();
-    return db.collection("users").doc(userId).collection("transactions");
+    return collection(db, "users", userId, "transactions");
 }
 
 
 export async function getTransactions(userId: string): Promise<Transaction[]> {
     if (!userId) return [];
     const transactionsCollection = await getTransactionsCollectionRef(userId);
-    const querySnapshot = await transactionsCollection.get();
+    const querySnapshot = await getDocs(transactionsCollection);
     const transactions: Transaction[] = [];
     querySnapshot.forEach((doc) => {
         const data = doc.data();
         transactions.push({ 
             id: doc.id, 
             ...data,
-            date: (data.date as admin.firestore.Timestamp).toDate().toISOString() 
+            date: (data.date as Timestamp).toDate().toISOString() 
         } as Transaction);
     });
     return transactions.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -187,7 +190,7 @@ export async function getTransactions(userId: string): Promise<Transaction[]> {
 export async function addTransaction(userId: string, transaction: Omit<Transaction, 'id'>): Promise<string> {
     if (!userId) throw new Error("User ID required");
     const transactionsCollection = await getTransactionsCollectionRef(userId);
-    const docRef = await transactionsCollection.add({
+    const docRef = await addDoc(transactionsCollection, {
         ...transaction,
         amount: Math.abs(transaction.amount),
         date: new Date(transaction.date)
@@ -202,14 +205,14 @@ export async function addTransaction(userId: string, transaction: Omit<Transacti
 async function getCategoriesDocRef(userId: string) {
     if (!userId) throw new Error("User ID required");
     const db = getDb();
-    return db.collection("users").doc(userId).collection("settings").doc("categories");
+    return doc(db, "users", userId, "settings", "categories");
 }
 
 export async function getCategories(userId: string): Promise<Partial<Record<TransactionCategory, string[]>>> {
     if (!userId) return {};
     const docRef = await getCategoriesDocRef(userId);
-    const docSnap = await docRef.get();
-    if (docSnap.exists) {
+    const docSnap = await getDoc(docRef);
+    if (docSnap.exists()) {
         return docSnap.data() as Partial<Record<TransactionCategory, string[]>>;
     } else {
         // Default categories
@@ -230,7 +233,7 @@ export async function getCategories(userId: string): Promise<Partial<Record<Tran
 export async function saveCategories(userId: string, categories: Partial<Record<TransactionCategory, string[]>>) {
     if (!userId) throw new Error("User ID required");
     const docRef = await getCategoriesDocRef(userId);
-    await docRef.set(categories);
+    await setDoc(docRef, categories);
     revalidatePath('/(app)/categories', 'page');
 }
 
@@ -238,9 +241,9 @@ export async function deleteTransactionsByCategory(userId: string, category: Tra
     if (!userId) throw new Error("User ID required");
     const db = getDb();
     const transactionsCollection = await getTransactionsCollectionRef(userId);
-    const q = transactionsCollection.where("category", "==", category);
-    const querySnapshot = await q.get();
-    const batch = db.batch();
+    const q = query(transactionsCollection, where("category", "==", category));
+    const querySnapshot = await getDocs(q);
+    const batch = writeBatch(db);
     querySnapshot.forEach(doc => {
         batch.delete(doc.ref);
     });
