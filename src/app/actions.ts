@@ -32,13 +32,19 @@ export async function getAISettings(userId: string): Promise<AISettings> {
     
     if (!userId) return defaultSettings;
 
-    const settingsRef = doc(await getSettingsCollectionRef(userId), 'ai');
-    const docSnap = await getDoc(settingsRef);
-    if (docSnap.exists()) {
+    const settingsRef = doc(collection(getFirebase().db, "users", userId, "settings"), 'ai');
+
+    try {
+      const docSnap = await getDoc(settingsRef);
+       if (docSnap.exists()) {
         return { ...defaultSettings, ...docSnap.data() } as AISettings;
-    } else {
-        return defaultSettings;
+      }
+    } catch(e) {
+      // This can happen if the firestore rules don't allow access yet,
+      // which can happen if the user is not fully logged in.
+      // In this case, we just return the default settings.
     }
+    return defaultSettings;
 }
 
 export async function saveAISettings(userId: string, settings: AISettings): Promise<void> {
