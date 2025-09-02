@@ -1,7 +1,5 @@
 'use server';
 
-import { generateSpendingTip, SpendingTipInput, SpendingTipOutput } from '@/ai/flows/ai-powered-spending-tips';
-import { chatWithTransactions, ChatInput } from '@/ai/flows/chat-with-transactions';
 import { Transaction, AISettings, TransactionCategory } from '@/lib/types';
 import { getFirebase } from '@/lib/firebase';
 import { collection, addDoc, getDocs, doc, getDoc, setDoc, Timestamp, writeBatch, query, where, deleteDoc } from "firebase/firestore";
@@ -9,6 +7,9 @@ import { getFirebaseAdmin } from '@/lib/firebase-admin';
 import { revalidatePath } from 'next/cache';
 import { getAI } from '@/ai/genkit';
 import { z } from 'zod';
+
+import { generateSpendingTip, SpendingTipInput, SpendingTipOutput } from '@/ai/flows/ai-powered-spending-tips';
+import { chatWithTransactions, ChatInput } from '@/ai/flows/chat-with-transactions';
 import { extractReceiptInfo, ReceiptInfoInput, ReceiptInfoOutput } from '@/ai/flows/extract-receipt-info';
 import { suggestCategoryForItem, SuggestCategoryInput, SuggestCategoryOutput } from '@/ai/flows/suggest-category';
 
@@ -52,7 +53,7 @@ export async function getAISettings(idToken?: string): Promise<AISettings> {
     const settingsRef = doc(collection(await getSettingsCollectionRef(idToken)), 'ai');
     const docSnap = await getDoc(settingsRef);
     if (docSnap.exists()) {
-        return docSnap.data() as AISettings;
+        return { ...defaultSettings, ...docSnap.data() } as AISettings;
     } else {
         return defaultSettings;
     }
@@ -85,8 +86,7 @@ export async function getOllamaModels(serverAddress: string): Promise<string[]> 
 
 export async function getSpendingTip(idToken: string, transactions: Transaction[]): Promise<string> {
   try {
-    const input: SpendingTipInput = { transactions: JSON.stringify(transactions, null, 2) };
-    const result = await generateSpendingTip(input);
+    const result = await generateSpendingTip({ transactions: JSON.stringify(transactions, null, 2) });
     return result.tip;
   } catch (error) {
     console.error(error);

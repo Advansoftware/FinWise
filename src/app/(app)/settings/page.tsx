@@ -50,12 +50,20 @@ export default function SettingsPage() {
             return;
         }
         startFetchingOllama(async () => {
-            const models = await getOllamaModels(ollamaAddress);
-            setOllamaModels(models);
-            if (models.length === 0) {
+            try {
+                const models = await getOllamaModels(ollamaAddress);
+                setOllamaModels(models);
+                if (models.length === 0) {
+                     toast({
+                        variant: 'destructive',
+                        title: 'Ollama não encontrado',
+                        description: `Não foi possível conectar ao Ollama em ${ollamaAddress}. Verifique o endereço e se o serviço está em execução.`,
+                    });
+                }
+            } catch(e) {
                  toast({
                     variant: 'destructive',
-                    title: 'Ollama não encontrado',
+                    title: 'Falha na Conexão',
                     description: `Não foi possível conectar ao Ollama em ${ollamaAddress}. Verifique o endereço e se o serviço está em execução.`,
                 });
             }
@@ -71,10 +79,7 @@ export default function SettingsPage() {
             setIsLoading(true);
             const idToken = await user.getIdToken();
             const settings = await getAISettings(idToken);
-            form.reset({
-                ...settings,
-                ollamaServerAddress: settings.ollamaServerAddress || 'http://127.0.0.1:11434'
-            });
+            form.reset(settings);
             if (settings.provider === 'ollama' && settings.ollamaServerAddress) {
                fetchOllamaModels();
             }
@@ -82,7 +87,7 @@ export default function SettingsPage() {
         };
         loadSettings();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [user]);
+    }, [user, form.reset]);
 
     const onSubmit = async (data: z.infer<typeof aiSettingsSchema>) => {
         if (!user) {
