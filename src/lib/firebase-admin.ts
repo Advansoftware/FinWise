@@ -2,6 +2,7 @@
 'use server';
 
 import * as admin from 'firebase-admin';
+import { firebaseConfig } from './firebase';
 
 // Armazena a instância inicializada para evitar múltiplas inicializações.
 let adminInstance: admin.app.App | null = null;
@@ -20,9 +21,12 @@ function getFirebaseAdminApp(): admin.app.App {
   }
   
   try {
-    // Inicializa o Admin SDK sem credenciais explícitas.
-    // O SDK encontrará as credenciais do ambiente automaticamente.
-    adminInstance = admin.initializeApp();
+    // Inicializa o Admin SDK com a configuração do projeto e credenciais do ambiente.
+    // O serviceAccountId é uma forma de apontar para as credenciais corretas no ambiente de execução.
+    adminInstance = admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+        projectId: firebaseConfig.projectId,
+    });
   } catch (error) {
     console.error('Firebase admin initialization error:', error);
     // Lança um erro mais descritivo para facilitar a depuração.

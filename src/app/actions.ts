@@ -12,7 +12,6 @@ import { chatWithTransactions } from '@/ai/flows/chat-with-transactions';
 import { extractReceiptInfo } from '@/ai/flows/extract-receipt-info';
 import { suggestCategoryForItem } from '@/ai/flows/suggest-category';
 import { ChatInput, ReceiptInfoInput, ReceiptInfoOutput, SuggestCategoryInput, SuggestCategoryOutput } from './ai/ai-types';
-import { getFirebase } from '@/lib/firebase'; // Keep for client-side imports in other functions if needed
 
 // --- Firebase Admin Instance ---
 const getDb = () => {
@@ -254,5 +253,3 @@ export async function deleteTransactionsByCategory(userId: string, category: Tra
 // We re-export these from a central place to be used in client components.
 export { extractReceiptInfo, suggestCategoryForItem };
 export type { ReceiptInfoInput, ReceiptInfoOutput, SuggestCategoryInput, SuggestCategoryOutput };
-
-    
