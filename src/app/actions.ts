@@ -40,7 +40,7 @@ export async function getAISettings(userId: string): Promise<AISettings> {
     try {
       const docSnap = await getDoc(settingsRef);
        if (docSnap.exists()) {
-        // CORREÇÃO: Os dados do usuário (docSnap.data()) devem sobrescrever os padrões.
+        // Os dados do usuário (docSnap.data()) devem sobrescrever os padrões.
         return { ...defaultSettings, ...docSnap.data() } as AISettings;
       }
     } catch(e) {
@@ -55,7 +55,8 @@ export async function saveAISettings(userId: string, settings: AISettings): Prom
     }
     const db = getDb();
     const settingsRef = doc(db, "users", userId, "settings", "ai");
-    await setDoc(settingsRef, settings, { merge: true }); // Usar merge: true é uma boa prática
+    // Use setDoc without merge to ensure old provider data is cleared.
+    await setDoc(settingsRef, settings); 
     revalidatePath('/(app)/settings', 'page');
 }
 

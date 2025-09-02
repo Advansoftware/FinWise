@@ -98,7 +98,23 @@ export default function SettingsPage() {
         }
         setIsSaving(true);
         try {
-            await saveAISettings(user.uid, data);
+            // Clean up the settings object to only include relevant fields for the selected provider
+            const settingsToSave: Partial<AISettings> = {
+                provider: data.provider,
+            };
+
+            if (data.provider === 'ollama') {
+                settingsToSave.ollamaModel = data.ollamaModel;
+                settingsToSave.ollamaServerAddress = data.ollamaServerAddress;
+            } else if (data.provider === 'googleai') {
+                settingsToSave.googleAIApiKey = data.googleAIApiKey;
+            } else if (data.provider === 'openai') {
+                settingsToSave.openAIModel = data.openAIModel;
+                settingsToSave.openAIApiKey = data.openAIApiKey;
+            }
+
+            await saveAISettings(user.uid, settingsToSave as AISettings);
+
             toast({
                 title: "Configurações Salvas!",
                 description: "Suas configurações de IA foram atualizadas com sucesso. A página será recarregada para aplicar as mudanças.",
@@ -262,3 +278,5 @@ export default function SettingsPage() {
         </div>
     );
 }
+
+    
