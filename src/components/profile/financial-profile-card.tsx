@@ -1,4 +1,4 @@
-
+// src/components/profile/financial-profile-card.tsx
 "use client";
 
 import { useState, useEffect, useTransition, useCallback, useMemo } from "react";
@@ -14,9 +14,15 @@ import { useAuth } from "@/hooks/use-auth";
 import { getFirebase } from "@/lib/firebase";
 import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
 import { startOfMonth, getYear, isSameMonth } from "date-fns";
+import { FinancialProfileOutput } from "@/ai/ai-types";
+
+const isSameMonthAndYear = (d1: Date, d2: Date) => {
+    return d1.getFullYear() === d2.getFullYear() &&
+           d1.getMonth() === d2.getMonth();
+}
 
 export function FinancialProfileCard() {
-  const [profile, setProfile] = useState("");
+  const [profile, setProfile] = useState<FinancialProfileOutput | null>(null);
   const [isPending, startTransition] = useTransition();
   const { allTransactions } = useTransactions();
   const { monthlyReports, annualReports } = useReports();
@@ -30,12 +36,12 @@ export function FinancialProfileCard() {
   const fetchProfile = useCallback(async (forceRefresh = false) => {
     if (!user) return;
     if (allTransactions.length === 0) {
-      setProfile("Adicione transações para gerar seu primeiro perfil financeiro.");
+      setProfile({ profileName: "Aguardando Dados", profileDescription: "Adicione transações para gerar seu primeiro perfil financeiro."});
       return;
     }
 
     startTransition(async () => {
-      setProfile(""); // Clear previous profile
+      setProfile(null); // Clear previous profile
       const { db } = getFirebase();
       const settingsRef = doc(db, "users", user.uid, "settings", "aiLastRan");
 
@@ -45,7 +51,7 @@ export function FinancialProfileCard() {
         const lastRun = data?.lastProfileTimestamp?.toDate();
         const lastProfile = data?.lastProfileContent;
 
-        if (lastRun && isSameMonth(lastRun, new Date()) && !forceRefresh && lastProfile) {
+        if (lastRun && isSameMonthAndYear(lastRun, new Date()) && !forceRefresh && lastProfile) {
           setProfile(lastProfile);
         } else {
            const currentYear = getYear(new Date());
@@ -66,7 +72,7 @@ export function FinancialProfileCard() {
         }
       } catch (error) {
         console.error("Error fetching or setting financial profile:", error);
-        setProfile("Não foi possível carregar o perfil. Tente novamente.");
+        setProfile({ profileName: "Erro", profileDescription: "Não foi possível carregar o perfil. Tente novamente."});
       }
     });
   }, [allTransactions, monthlyReports, annualReports, currentMonthTransactions, user]);
@@ -75,7 +81,7 @@ export function FinancialProfileCard() {
     if(user && allTransactions.length > 0) {
         fetchProfile();
     } else if (allTransactions.length === 0) {
-        setProfile("Adicione transações para gerar seu primeiro perfil financeiro.");
+        setProfile({ profileName: "Aguardando Dados", profileDescription: "Adicione transações para gerar seu primeiro perfil."});
     }
   }, [allTransactions.length, user, fetchProfile]);
 
@@ -101,7 +107,7 @@ export function FinancialProfileCard() {
       </CardHeader>
       <CardContent>
         <Separator className="mb-4" />
-        {isPending ? (
+        {isPending || !profile ? (
            <div className="space-y-3 pt-2">
             <Skeleton className="h-5 w-3/5 bg-primary/10" />
             <Skeleton className="h-4 w-full bg-primary/10" />
@@ -109,9 +115,12 @@ export function FinancialProfileCard() {
             <Skeleton className="h-4 w-4/5 bg-primary/10" />
           </div>
         ) : (
-          <p className="text-foreground/90 pt-2 text-sm whitespace-pre-line">
-            {profile}
-          </p>
+          <div className="pt-2">
+            <h4 className="font-bold text-xl text-foreground">{profile.profileName}</h4>
+            <p className="text-foreground/90 mt-2 text-sm whitespace-pre-line">
+              {profile.profileDescription}
+            </p>
+          </div>
         )}
       </CardContent>
     </Card>

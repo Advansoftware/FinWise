@@ -22,6 +22,7 @@ import {
   FinancialProfileInput,
   FinancialProfileInputSchema,
   FinancialProfileOutputSchema,
+  FinancialProfileOutput,
   AnalyzeTransactionsInputSchema,
   AnalyzeTransactionsOutputSchema,
   GenerateReportInput,
@@ -155,7 +156,7 @@ export async function getSpendingTip(transactions: Transaction[], userId: string
   }
 }
 
-export async function getFinancialProfile(input: FinancialProfileInput, userId: string, forceRefresh: boolean = false): Promise<string> {
+export async function getFinancialProfile(input: FinancialProfileInput, userId: string, forceRefresh: boolean = false): Promise<FinancialProfileOutput> {
   const cost = forceRefresh ? 5 : 0;
   await consumeAICredits(userId, cost, 'Perfil Financeiro', !forceRefresh);
   try {
@@ -168,14 +169,18 @@ export async function getFinancialProfile(input: FinancialProfileInput, userId: 
       input: { schema: FinancialProfileInputSchema },
       output: { schema: FinancialProfileOutputSchema },
       model: modelRef,
-      prompt: `Você é um analista financeiro sagaz e positivo. Sua tarefa é criar um perfil financeiro para o usuário.
+      prompt: `Você é um analista financeiro sagaz e positivo. Sua tarefa é criar um perfil financeiro para o usuário, incluindo um **título criativo** e uma **descrição**.
 
 Para isso, você tem uma hierarquia de dados:
 1.  **Relatórios Anuais (annualReports):** Resumos de anos anteriores. Use-os para entender tendências de longo prazo.
 2.  **Relatórios Mensais (monthlyReports):** Resumos de meses do ano corrente. Use-os para entender o comportamento no ano atual.
 3.  **Transações do Mês Atual (currentMonthTransactions):** Dados do mês corrente. Use-os para entender os hábitos mais recentes.
 
-Com base na combinação dessas informações, defina um perfil financeiro para o usuário. Dê um nome criativo e uma descrição que resuma seus padrões de gastos de forma amigável e perspicaz. Foque em fornecer uma narrativa, não apenas números. Toda a saída deve ser em Português do Brasil.
+Com base na combinação dessas informações, defina o perfil do usuário:
+-   **profileName**: Crie um nome de arquétipo curto, criativo e em português (Ex: "O Estrategista Cauteloso", "A Exploradora de Sabores", "O Acumulador de Metas").
+-   **profileDescription**: Escreva uma descrição curta (2-3 frases) que justifique o nome do perfil, resumindo os padrões de gastos de forma amigável e perspicaz.
+
+Toda a saída deve ser em Português do Brasil.
 
 Relatórios de Anos Anteriores:
 {{{annualReports}}}
@@ -191,14 +196,13 @@ Transações do Mês Atual:
     const { output } = await prompt(input);
 
     if (!output) {
-      return "Não foi possível gerar seu perfil. Tente novamente.";
+      throw new Error("Não foi possível gerar seu perfil. Tente novamente.");
     }
-
-    return `**${output.profileName}**\n\n${output.profileDescription}`;
+    return output;
   } catch (error) {
     console.error('Error generating financial profile:', error);
-    if (error instanceof Error) return error.message;
-    return "Não foi possível gerar seu perfil. Verifique suas configurações de IA e tente novamente.";
+    if (error instanceof Error) throw error;
+    throw new Error("Não foi possível gerar seu perfil. Verifique suas configurações de IA e tente novamente.");
   }
 }
 

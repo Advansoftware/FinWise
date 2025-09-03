@@ -1,4 +1,4 @@
-
+// src/ai/ai-types.ts
 
 import { z } from 'zod';
 
@@ -22,8 +22,8 @@ export const FinancialProfileInputSchema = z.object({
 export type FinancialProfileInput = z.infer<typeof FinancialProfileInputSchema>;
 
 export const FinancialProfileOutputSchema = z.object({
-  profileName: z.string().describe('A creative, catchy name for the user financial profile, in Brazilian Portuguese.'),
-  profileDescription: z.string().describe('A short, encouraging, and insightful description of the user spending habits, in Brazilian Portuguese.'),
+  profileName: z.string().describe('A creative, catchy name for the user financial profile, in Brazilian Portuguese. For example: "O Estrategista Cauteloso", "O Explorador de Sabores", "O Acumulador de Metas".'),
+  profileDescription: z.string().describe('A short, encouraging, and insightful description of the user spending habits that justifies the profileName, in Brazilian Portuguese.'),
 });
 export type FinancialProfileOutput = z.infer<typeof FinancialProfileOutputSchema>;
 
