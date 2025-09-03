@@ -20,6 +20,7 @@ import { Loader2 } from "lucide-react";
 import { SingleDatePicker } from "../single-date-picker";
 import { useTransactions } from "@/hooks/use-transactions.tsx";
 import { Switch } from "../ui/switch";
+import { cn } from "@/lib/utils";
 
 interface EditTransactionSheetProps {
     transaction: Transaction;
@@ -114,23 +115,13 @@ export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTra
             <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                     <Label className="text-right">Tipo</Label>
-                     <div className="col-span-3 flex items-center justify-around p-1 rounded-full bg-muted">
-                       <Button 
-                            variant={formState.type === 'expense' ? 'destructive' : 'ghost'}
-                            size="sm" 
-                            className="w-full rounded-full"
-                            onClick={() => handleInputChange('type', 'expense')}
-                        >
-                            Despesa
-                        </Button>
-                        <Button 
-                             variant={formState.type === 'income' ? 'default' : 'ghost'}
-                             size="sm" 
-                             className="w-full rounded-full bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 data-[variant=default]:bg-emerald-600 data-[variant=default]:text-white"
-                             onClick={() => handleInputChange('type', 'income')}
-                        >
-                            Receita
-                        </Button>
+                     <div className="col-span-3 flex items-center justify-between">
+                        <span className={cn(formState.type === 'expense' && 'font-bold text-primary')}>Despesa</span>
+                        <Switch
+                            checked={formState.type === 'income'}
+                            onCheckedChange={(checked) => handleInputChange('type', checked ? 'income' : 'expense')}
+                        />
+                        <span className={cn(formState.type === 'income' && 'font-bold text-emerald-400')}>Receita</span>
                     </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
