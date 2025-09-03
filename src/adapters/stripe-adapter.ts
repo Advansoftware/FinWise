@@ -1,5 +1,4 @@
 // src/adapters/stripe-adapter.ts
-'use server';
 
 import { PaymentService, CheckoutInput, CheckoutOutput, PortalInput, PortalOutput } from "@/services/payment-service";
 import { getAdminApp } from '@/lib/firebase-admin';
