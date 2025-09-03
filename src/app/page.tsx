@@ -50,14 +50,24 @@ export default function Page() {
     <AuthGuard>
       <div className="flex flex-col min-h-screen bg-background text-foreground overflow-x-hidden">
         <header className="sticky top-0 z-50 p-4 md:p-6 bg-background/50 backdrop-blur-lg border-b border-border/50">
-          <div className="container mx-auto flex justify-between items-center">
-              <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }}>
+          <div className="container mx-auto flex flex-col md:flex-row md:justify-between md:items-center">
+              <motion.div 
+                initial={{ opacity: 0, y: -20 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                transition={{ duration: 0.5 }}
+                className="flex justify-center md:justify-start"
+              >
                 <Link href="/" className="flex items-center gap-2">
                     <Logo className="w-8 h-8"/>
                     <span className="text-xl font-bold">FinWise</span>
                 </Link>
               </motion.div>
-              <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.5 }} className="flex items-center gap-4">
+              <motion.div 
+                initial={{ opacity: 0, y: 20 }} 
+                animate={{ opacity: 1, y: 0 }} 
+                transition={{ duration: 0.5, delay: 0.2 }} 
+                className="flex items-center justify-center gap-4 mt-4 md:mt-0"
+              >
                 <Button asChild variant="ghost">
                     <Link href="/docs">
                         Documentação
