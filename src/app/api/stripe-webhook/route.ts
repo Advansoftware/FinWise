@@ -37,7 +37,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     console.log(`Atualizando plano para ${plan} para o usuário ${firebaseUID}...`);
     await userRef.update({
         plan: plan,
-        aiCredits: creditsMap[plan], // Reseta/Define os créditos ao assinar
+        aiCredits: firestore.FieldValue.increment(creditsMap[plan]), // Use increment to add credits
         stripeCustomerId: session.customer, // Salva o ID do cliente do Stripe
     });
     console.log(`Plano do usuário ${firebaseUID} atualizado com sucesso para ${plan}.`);
@@ -46,21 +46,33 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
     // This event is for renewals.
-    // The subscription object in the invoice contains the metadata.
     const subscriptionId = invoice.subscription;
     if (typeof subscriptionId !== 'string') {
         console.log("Invoice without subscription ID, likely not a renewal. Skipping.");
         return;
     }
 
+    // We need to retrieve the subscription to get the metadata
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     const firebaseUID = subscription.metadata.firebaseUID;
-    const plan = subscription.metadata.plan as UserPlan;
 
-    if (!firebaseUID || !plan) {
-        console.error(`Webhook Renewal Error: firebaseUID ou plan ausente nos metadados da assinatura: ${subscriptionId}`);
+    if (!firebaseUID) {
+        console.error(`Webhook Renewal Error: firebaseUID ausente nos metadados da assinatura: ${subscriptionId}`);
         return;
     }
+    
+    // Retrieve the plan from the subscription item's price
+    const priceId = subscription.items.data[0]?.price.id;
+    let plan: UserPlan = 'Básico'; // Default
+    if (priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO) {
+        plan = 'Pro';
+    } else if (priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PLUS) {
+        plan = 'Plus';
+    } else {
+        console.error(`Webhook Renewal Error: Price ID ${priceId} não corresponde a nenhum plano conhecido.`);
+        return;
+    }
+
 
     const adminDb = getAdminApp().firestore();
     const userRef = adminDb.doc(`users/${firebaseUID}`);
@@ -108,7 +120,7 @@ export async function POST(req: NextRequest) {
              case 'invoice.payment_succeeded':
                 // This handles subscription renewals
                 const invoice = event.data.object as Stripe.Invoice;
-                if (invoice.billing_reason === 'subscription_cycle') {
+                if (invoice.billing_reason === 'subscription_cycle' || invoice.billing_reason === 'subscription_create') {
                    await handleInvoicePaymentSucceeded(invoice);
                 }
                 break;
