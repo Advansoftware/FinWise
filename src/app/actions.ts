@@ -306,21 +306,6 @@ export async function predictFutureBalanceAction(input: PredictFutureBalanceInpu
     return predictFutureBalance(input, credential);
 }
 
-export async function getPlanAction(userId: string): Promise<UserPlan> {
-    if (!userId) return 'Básico'; // Default to Básico if no user
-    try {
-        const adminDb = getAdminApp().firestore();
-        const userDocRef = adminDb.doc(`users/${userId}`);
-        const userDocSnap = await userDocRef.get();
-        if (userDocSnap.exists()) {
-            return userDocSnap.data()?.plan || 'Básico';
-        }
-        return 'Básico';
-    } catch (error) {
-        console.error("Error getting user plan:", error);
-        return 'Básico';
-    }
-}
 
 // --- Payment and Subscription Actions ---
 
@@ -377,15 +362,18 @@ export async function createStripeCheckoutAction(userId: string, userEmail: stri
                 price: priceId,
                 quantity: 1,
             }],
-            subscription_data: {
-                metadata: {
-                    firebaseUID: userId,
-                    plan: plan,
-                }
+            // Add metadata to the session itself to be retrieved in the webhook
+            metadata: {
+                firebaseUID: userId,
+                plan: plan,
             },
             success_url: `${appUrl}/billing?success=true`,
             cancel_url: `${appUrl}/billing?canceled=true`,
         });
+        
+        if (!session.url) {
+            return { url: null, error: "Não foi possível criar a sessão de pagamento do Stripe." };
+        }
 
         return { url: session.url };
     } catch (error) {

@@ -16,66 +16,66 @@ const creditsMap: Record<UserPlan, number> = {
     'Plus': 300,
 };
 
-async function findUserByStripeCustomerId(customerId: string): Promise<{id: string, ref: firestore.DocumentReference} | null> {
-    const adminDb = getAdminApp().firestore();
-    const usersRef = adminDb.collection('users');
-    const q = usersRef.where('stripeCustomerId', '==', customerId).limit(1);
-    const snapshot = await q.get();
+async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
+    const firebaseUID = session.metadata?.firebaseUID;
+    const plan = session.metadata?.plan as UserPlan;
 
-    if (snapshot.empty) {
-        console.warn(`Webhook: Não foi encontrado usuário com stripeCustomerId: ${customerId}`);
-        return null;
+    if (!firebaseUID || !plan) {
+        console.error(`Webhook Error: firebaseUID ou plan ausente nos metadados da sessão de checkout: ${session.id}`);
+        return;
     }
-    const userDoc = snapshot.docs[0];
-    return { id: userDoc.id, ref: userDoc.ref };
-}
 
-async function findUserByFirebaseUID(firebaseUID: string): Promise<{id: string, ref: firestore.DocumentReference} | null> {
-    if (!firebaseUID) return null;
     const adminDb = getAdminApp().firestore();
     const userRef = adminDb.doc(`users/${firebaseUID}`);
     const userDoc = await userRef.get();
 
     if (!userDoc.exists) {
-        console.warn(`Webhook: Não foi encontrado usuário com firebaseUID: ${firebaseUID}`);
-        return null;
-    }
-    return { id: userDoc.id, ref: userDoc.ref };
-}
-
-
-async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
-    const customerId = invoice.customer;
-    const subscriptionId = invoice.subscription;
-
-    if (typeof customerId !== 'string' || typeof subscriptionId !== 'string') {
-        console.error('Webhook Error: customerId ou subscriptionId ausente no evento de fatura.');
-        return;
-    }
-    
-    // Obter os metadados da assinatura para saber o plano e o UID do Firebase
-    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-    const firebaseUID = subscription.metadata.firebaseUID;
-    
-    // Encontrar o usuário no Firestore pelo firebaseUID dos metadados da assinatura
-    const user = await findUserByFirebaseUID(firebaseUID);
-    if (!user) {
         console.error(`Webhook Error: Usuário com UID ${firebaseUID} não encontrado no Firestore.`);
         return;
     }
 
-    const plan = subscription.metadata.plan as UserPlan;
-    if (!plan || !creditsMap[plan]) {
-        console.error(`Webhook Error: Plano inválido ou ausente nos metadados da assinatura: ${plan}`);
+    console.log(`Atualizando plano para ${plan} para o usuário ${firebaseUID}...`);
+    await userRef.update({
+        plan: plan,
+        aiCredits: creditsMap[plan], // Reseta/Define os créditos ao assinar
+        stripeCustomerId: session.customer, // Salva o ID do cliente do Stripe
+    });
+    console.log(`Plano do usuário ${firebaseUID} atualizado com sucesso para ${plan}.`);
+}
+
+
+async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
+    // This event is for renewals.
+    // The subscription object in the invoice contains the metadata.
+    const subscriptionId = invoice.subscription;
+    if (typeof subscriptionId !== 'string') {
+        console.log("Invoice without subscription ID, likely not a renewal. Skipping.");
         return;
     }
 
-    console.log(`Atualizando plano para ${plan} para o usuário ${user.id}...`);
-    await user.ref.update({
-        plan: plan,
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    const firebaseUID = subscription.metadata.firebaseUID;
+    const plan = subscription.metadata.plan as UserPlan;
+
+    if (!firebaseUID || !plan) {
+        console.error(`Webhook Renewal Error: firebaseUID ou plan ausente nos metadados da assinatura: ${subscriptionId}`);
+        return;
+    }
+
+    const adminDb = getAdminApp().firestore();
+    const userRef = adminDb.doc(`users/${firebaseUID}`);
+    const userDoc = await userRef.get();
+    
+    if (!userDoc.exists) {
+        console.error(`Webhook Renewal Error: Usuário com UID ${firebaseUID} não encontrado no Firestore.`);
+        return;
+    }
+
+    console.log(`Renovando créditos para o plano ${plan} para o usuário ${firebaseUID}...`);
+    await userRef.update({
         aiCredits: creditsMap[plan], // Reseta os créditos no início de cada ciclo de pagamento
     });
-    console.log(`Plano do usuário ${user.id} atualizado com sucesso para ${plan}.`);
+    console.log(`Créditos do usuário ${firebaseUID} renovados com sucesso.`);
 }
 
 
@@ -99,18 +99,23 @@ export async function POST(req: NextRequest) {
     // Handle the event
     try {
         switch (event.type) {
+             case 'checkout.session.completed':
+                const session = event.data.object as Stripe.Checkout.Session;
+                // This handles the initial subscription creation
+                await handleCheckoutSessionCompleted(session);
+                break;
+            
              case 'invoice.payment_succeeded':
+                // This handles subscription renewals
                 const invoice = event.data.object as Stripe.Invoice;
-                // O billing_reason 'subscription_cycle' lida com renovações
-                // O 'subscription_create' lida com o primeiro pagamento de uma nova assinatura
-                if (invoice.billing_reason === 'subscription_create' || invoice.billing_reason === 'subscription_cycle') {
+                if (invoice.billing_reason === 'subscription_cycle') {
                    await handleInvoicePaymentSucceeded(invoice);
                 }
                 break;
             
-            // Adicionar mais manipuladores de eventos aqui se necessário (ex: cancelamento)
+            // TODO: Handle subscription cancellations
             // case 'customer.subscription.deleted':
-            //     // ...
+            //     // ... logic to downgrade user to Básico plan
             //     break;
             
             default:
@@ -120,7 +125,6 @@ export async function POST(req: NextRequest) {
         console.error("Erro ao processar o webhook:", error);
         return NextResponse.json({ error: 'Erro interno ao processar webhook.' }, { status: 500 });
     }
-
 
     return NextResponse.json({ received: true });
 }
