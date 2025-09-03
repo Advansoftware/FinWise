@@ -106,7 +106,7 @@ function GoalCard({ goal, onDelete }: { goal: Goal, onDelete: () => void }) {
         } else if (goal.currentAmount >= goal.targetAmount) {
             setProjectionResult({ projection: "Meta concluída!" });
         }
-    }, [goal, transactionsJson, user]);
+    }, [goal, user]);
 
     const getProjectionText = () => {
         if (!projectionResult) return null;
