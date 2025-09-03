@@ -1,4 +1,3 @@
-
 // src/hooks/use-reports.tsx
 'use client';
 
@@ -10,7 +9,7 @@ import { getFirebase } from "@/lib/firebase";
 import { collection, doc, setDoc, onSnapshot, Unsubscribe, query } from "firebase/firestore";
 import { generateMonthlyReportAction, generateAnnualReportAction } from "@/app/actions";
 import { useTransactions } from "./use-transactions";
-import { startOfMonth, subMonths, getYear, getMonth } from "date-fns";
+import { startOfMonth, subMonths, getYear, getMonth, isToday } from "date-fns";
 
 interface ReportsContextType {
   monthlyReports: MonthlyReport[];
@@ -22,8 +21,8 @@ interface ReportsContextType {
 
 const ReportsContext = createContext<ReportsContextType | undefined>(undefined);
 
-// A flag to ensure the automatic generation runs only once per session.
-let hasRunAutomaticGeneration = false;
+const LOCAL_STORAGE_KEY = 'finwise_last_report_check';
+
 
 export function ReportsProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
@@ -39,7 +38,6 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
       setIsLoading(true);
       setMonthlyReports([]);
       setAnnualReports([]);
-      hasRunAutomaticGeneration = false; // Reset on logout
       return;
     }
 
@@ -146,8 +144,14 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
 
   // Effect for automatic report generation
   useEffect(() => {
-    if (isLoading || isLoadingTransactions || !user || hasRunAutomaticGeneration) {
+    if (isLoading || isLoadingTransactions || !user) {
         return;
+    }
+    
+    // Check if generation has run today
+    const lastCheckString = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (lastCheckString && isToday(new Date(lastCheckString))) {
+        return; // Already ran today
     }
 
     const runAutomaticGeneration = async () => {
@@ -188,7 +192,8 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
             await generateAnnualReport(lastYear, monthlyForLastYear);
         }
 
-        hasRunAutomaticGeneration = true; // Mark as run
+        // Mark as run for today
+        localStorage.setItem(LOCAL_STORAGE_KEY, new Date().toISOString());
     };
 
     runAutomaticGeneration();
