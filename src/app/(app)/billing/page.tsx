@@ -1,4 +1,3 @@
-
 // src/app/(app)/billing/page.tsx
 'use client';
 
@@ -120,5 +119,3 @@ export default function BillingPage() {
         </div>
     )
 }
-
-    
