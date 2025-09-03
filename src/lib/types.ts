@@ -66,3 +66,14 @@ export interface AISettings {
   credentials: AICredential[];
   activeCredentialId: string | null;
 }
+
+export interface MonthlyReport {
+  id: string; // YYYY-MM format
+  userId: string;
+  totalIncome: number;
+  totalExpense: number;
+  balance: number;
+  categoryBreakdown: Record<string, number>;
+  summary: string; // AI-generated summary
+  generatedAt: string; // ISO 8601 format string
+}

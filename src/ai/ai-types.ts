@@ -84,3 +84,21 @@ export const SuggestCategoryOutputSchema = z.object({
   subcategory: z.string().optional().describe('The suggested subcategory for the item.'),
 });
 export type SuggestCategoryOutput = z.infer<typeof SuggestCategoryOutputSchema>;
+
+
+// Schema for Monthly Report
+export const GenerateReportInputSchema = z.object({
+  transactions: z.string().describe('A JSON string representing an array of transactions for a specific month.'),
+  month: z.string().describe('The month for the report in "MM" format.'),
+  year: z.string().describe('The year for the report in "YYYY" format.'),
+});
+export type GenerateReportInput = z.infer<typeof GenerateReportInputSchema>;
+
+export const GenerateReportOutputSchema = z.object({
+  totalIncome: z.number().describe('The total income for the month.'),
+  totalExpense: z.number().describe('The total expense for the month.'),
+  balance: z.number().describe('The final balance for the month (income - expense).'),
+  categoryBreakdown: z.record(z.number()).describe('An object with spending totals for each category.'),
+  summary: z.string().describe('A concise, insightful, and encouraging summary of the month financial activity in Brazilian Portuguese. Highlight the main spending category and suggest one area for improvement.'),
+});
+export type GenerateReportOutput = z.infer<typeof GenerateReportOutputSchema>;

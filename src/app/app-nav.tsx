@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
-import { Home, History, Settings, FolderKanban, Upload, Gem, UserCircle, Target, Goal, Wallet } from 'lucide-react';
+import { Home, History, Settings, FolderKanban, Upload, Gem, UserCircle, Target, Goal, Wallet, FileText } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
 
 const navItems = [
@@ -12,6 +12,7 @@ const navItems = [
     { href: '/categories', label: 'Categorias', icon: FolderKanban },
     { href: '/budgets', label: 'Orçamentos', icon: Target },
     { href: '/goals', label: 'Metas', icon: Goal },
+    { href: '/reports', label: 'Relatórios', icon: FileText },
     { href: '/import', label: 'Importar', icon: Upload },
     { href: '/settings', label: 'Configurações', icon: Settings },
     { href: '/billing', label: 'Assinatura', icon: Gem },

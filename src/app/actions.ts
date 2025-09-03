@@ -1,12 +1,13 @@
 
 'use server';
 
-import { Transaction, AICredential } from '@/lib/types';
+import { Transaction, AICredential, MonthlyReport } from '@/lib/types';
 import { z } from 'zod';
 import { generateSpendingTip } from '@/ai/flows/ai-powered-spending-tips';
 import { chatWithTransactions } from '@/ai/flows/chat-with-transactions';
 import { extractReceiptInfo } from '@/ai/flows/extract-receipt-info';
 import { suggestCategoryForItem } from '@/ai/flows/suggest-category';
+import { generateMonthlyReport } from '@/ai/flows/generate-monthly-report';
 import {
   ChatInput,
   ReceiptInfoInput,
@@ -16,7 +17,9 @@ import {
   FinancialProfileInputSchema,
   FinancialProfileOutputSchema,
   AnalyzeTransactionsInputSchema,
-  AnalyzeTransactionsOutputSchema
+  AnalyzeTransactionsOutputSchema,
+  GenerateReportInput,
+  GenerateReportOutput
 } from '@/ai/ai-types';
 import { createConfiguredAI, getModelReference } from '@/ai/genkit';
 import { getAdminApp } from '@/lib/firebase-admin';
@@ -160,4 +163,9 @@ export async function extractReceiptInfoAction(input: ReceiptInfoInput, userId: 
 export async function suggestCategoryForItemAction(input: SuggestCategoryInput, userId: string): Promise<SuggestCategoryOutput> {
     const credential = await getActiveAICredential(userId);
     return suggestCategoryForItem(input, credential);
+}
+
+export async function generateMonthlyReportAction(input: GenerateReportInput, userId: string): Promise<GenerateReportOutput> {
+  const credential = await getActiveAICredential(userId);
+  return generateMonthlyReport(input, credential);
 }
