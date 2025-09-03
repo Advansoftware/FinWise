@@ -1,4 +1,3 @@
-
 // src/services/database/indexeddb-adapter.ts
 import { openDB, IDBPDatabase, DBSchema } from 'idb';
 import { DocumentData } from "firebase/firestore";
@@ -27,6 +26,12 @@ export class IndexedDBAdapter implements IDatabaseAdapter {
 
 
     constructor() {
+        if (typeof window === 'undefined') {
+            // This is a safeguard. The actual prevention happens in the factory.
+            this.dbPromise = new Promise(() => {}); // Create a non-resolving promise on the server
+            return;
+        }
+
         this.dbPromise = openDB<FinWiseDBSchema>(DB_NAME, DB_VERSION, {
             upgrade(db) {
                 for (const storeName of STORES) {
