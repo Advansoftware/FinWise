@@ -15,6 +15,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Message } from '@/ai/ai-types';
 import { useAuth } from '@/hooks/use-auth';
 import { Badge } from '../ui/badge';
+import { getYear, startOfMonth } from 'date-fns';
 
 const suggestionPrompts = [
     "Quanto gastei com Supermercado este mês?",
@@ -29,7 +30,7 @@ export function ChatAssistant() {
     const [input, setInput] = useState('');
     const [isPending, startTransition] = useTransition();
     const { allTransactions } = useTransactions();
-    const { reports } = useReports();
+    const { monthlyReports, annualReports } = useReports();
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const { toast } = useToast();
     const { user, loading } = useAuth();
@@ -62,11 +63,20 @@ export function ChatAssistant() {
 
         startTransition(async () => {
             try {
+                const currentYear = getYear(new Date());
+                const startOfCurrentMonth = startOfMonth(new Date());
+
+                // Prepare data for the AI
+                const currentMonthTransactions = allTransactions.filter(t => new Date(t.date) >= startOfCurrentMonth);
+                const currentYearMonthlyReports = monthlyReports.filter(r => r.year === currentYear);
+                const pastAnnualReports = annualReports.filter(r => r.year < currentYear);
+
                 const response = await getChatbotResponse({
                     history: messages,
                     prompt: prompt,
-                    transactions: allTransactions,
-                    reports: reports,
+                    transactions: currentMonthTransactions,
+                    monthlyReports: currentYearMonthlyReports,
+                    annualReports: pastAnnualReports
                 }, user.uid);
                 
                 const newModelMessage: Message = { role: 'model', content: response };

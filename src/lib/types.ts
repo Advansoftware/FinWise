@@ -70,10 +70,25 @@ export interface AISettings {
 export interface MonthlyReport {
   id: string; // YYYY-MM format
   userId: string;
+  year: number;
+  month: number;
   totalIncome: number;
   totalExpense: number;
   balance: number;
   categoryBreakdown: Record<string, number>;
   summary: string; // AI-generated summary
+  generatedAt: string; // ISO 8601 format string
+}
+
+export interface AnnualReport {
+  id: string; // YYYY format
+  userId: string;
+  year: number;
+  totalIncome: number;
+  totalExpense: number;
+  finalBalance: number;
+  monthlyBalances: Record<string, number>; // e.g., {"1": 1200, "2": -300, ...}
+  topSpendingCategories: Record<string, number>; // Top 5-10 spending categories for the year
+  summary: string; // AI-generated summary of the year
   generatedAt: string; // ISO 8601 format string
 }

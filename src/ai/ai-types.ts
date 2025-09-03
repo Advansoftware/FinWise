@@ -15,7 +15,8 @@ export type SpendingTipOutput = z.infer<typeof SpendingTipOutputSchema>;
 // Schema for Financial Profile
 export const FinancialProfileInputSchema = z.object({
   currentMonthTransactions: z.string().describe("A JSON string representing the user's transactions for the current, ongoing month."),
-  reports: z.string().describe('A JSON string representing an array of pre-computed monthly financial summary reports from past months.'),
+  monthlyReports: z.string().describe('A JSON string representing an array of pre-computed monthly financial summary reports from the current year.'),
+  annualReports: z.string().describe('A JSON string representing an array of pre-computed annual financial summary reports from past years.'),
 });
 export type FinancialProfileInput = z.infer<typeof FinancialProfileInputSchema>;
 
@@ -46,8 +47,9 @@ export type Message = z.infer<typeof MessageSchema>;
 export const ChatInputSchema = z.object({
   history: z.array(MessageSchema).describe('The conversation history.'),
   prompt: z.string().describe('The latest user prompt.'),
-  transactions: z.array(z.any()).describe("A JSON array of the user's financial transactions, typically for the CURRENT month or a specific, recent period."),
-  reports: z.array(z.any()).optional().describe("An optional JSON array of pre-computed monthly financial reports. Use this for questions about past months to get quick, summarized data."),
+  transactions: z.array(z.any()).describe("A JSON array of the user's financial transactions for the CURRENT month only."),
+  monthlyReports: z.array(z.any()).optional().describe("An optional JSON array of pre-computed monthly financial reports FOR THE CURRENT YEAR. Use this for questions about past months within this year."),
+  annualReports: z.array(z.any()).optional().describe("An optional JSON array of pre-computed ANNUAL reports. Use this for questions about previous years to get quick, summarized data."),
 });
 export type ChatInput = z.infer<typeof ChatInputSchema>;
 
@@ -105,3 +107,20 @@ export const GenerateReportOutputSchema = z.object({
   summary: z.string().describe('A concise, insightful, and encouraging summary of the month financial activity in Brazilian Portuguese. Highlight the main spending category and suggest one area for improvement.'),
 });
 export type GenerateReportOutput = z.infer<typeof GenerateReportOutputSchema>;
+
+// Schema for Annual Report
+export const GenerateAnnualReportInputSchema = z.object({
+  monthlyReports: z.string().describe('A JSON string representing an array of all 12 monthly reports for the year.'),
+  year: z.string().describe('The year for the report in "YYYY" format.'),
+});
+export type GenerateAnnualReportInput = z.infer<typeof GenerateAnnualReportInputSchema>;
+
+export const GenerateAnnualReportOutputSchema = z.object({
+  totalIncome: z.number().describe('The total income for the year.'),
+  totalExpense: z.number().describe('The total expense for the year.'),
+  finalBalance: z.number().describe('The final balance for the year (income - expense).'),
+  monthlyBalances: z.record(z.number()).describe('An object with the final balance for each month of the year (key: month number 1-12).'),
+  topSpendingCategories: z.record(z.number()).describe('An object with the top 5 spending categories and their total amounts for the year.'),
+  summary: z.string().describe('A concise, insightful, and encouraging summary of the year financial activity in Brazilian Portuguese. Highlight overall trends, the main spending category of the year, and suggest one high-level goal for the next year.'),
+});
+export type GenerateAnnualReportOutput = z.infer<typeof GenerateAnnualReportOutputSchema>;

@@ -13,7 +13,7 @@ import { Separator } from "../ui/separator";
 import { useAuth } from "@/hooks/use-auth";
 import { getFirebase } from "@/lib/firebase";
 import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
-import { startOfMonth } from "date-fns";
+import { startOfMonth, getYear } from "date-fns";
 
 const isSameDay = (d1: Date, d2: Date) => {
     return d1.getFullYear() === d2.getFullYear() &&
@@ -25,7 +25,7 @@ export function FinancialProfileCard() {
   const [profile, setProfile] = useState("");
   const [isPending, startTransition] = useTransition();
   const { allTransactions } = useTransactions();
-  const { reports } = useReports();
+  const { monthlyReports, annualReports } = useReports();
   const { user } = useAuth();
 
   const currentMonthTransactions = useMemo(() => {
@@ -54,8 +54,13 @@ export function FinancialProfileCard() {
         if (lastRun && isSameDay(lastRun, new Date()) && !forceRefresh && lastProfile) {
           setProfile(lastProfile);
         } else {
+           const currentYear = getYear(new Date());
+           const currentYearMonthlyReports = monthlyReports.filter(r => r.year === currentYear);
+           const pastAnnualReports = annualReports.filter(r => r.year < currentYear);
+
           const newProfile = await getFinancialProfile({
-            reports: JSON.stringify(reports, null, 2),
+            monthlyReports: JSON.stringify(currentYearMonthlyReports, null, 2),
+            annualReports: JSON.stringify(pastAnnualReports, null, 2),
             currentMonthTransactions: JSON.stringify(currentMonthTransactions, null, 2),
           }, user.uid);
 
@@ -70,7 +75,7 @@ export function FinancialProfileCard() {
         setProfile("Não foi possível carregar o perfil. Tente novamente.");
       }
     });
-  }, [allTransactions, reports, currentMonthTransactions, user]);
+  }, [allTransactions, monthlyReports, annualReports, currentMonthTransactions, user]);
 
   useEffect(() => {
     if(user && allTransactions.length > 0) {

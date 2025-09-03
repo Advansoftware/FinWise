@@ -8,6 +8,7 @@ import { chatWithTransactions } from '@/ai/flows/chat-with-transactions';
 import { extractReceiptInfo } from '@/ai/flows/extract-receipt-info';
 import { suggestCategoryForItem } from '@/ai/flows/suggest-category';
 import { generateMonthlyReport } from '@/ai/flows/generate-monthly-report';
+import { generateAnnualReport } from '@/ai/flows/generate-annual-report';
 import {
   ChatInput,
   ReceiptInfoInput,
@@ -20,7 +21,9 @@ import {
   AnalyzeTransactionsInputSchema,
   AnalyzeTransactionsOutputSchema,
   GenerateReportInput,
-  GenerateReportOutput
+  GenerateReportOutput,
+  GenerateAnnualReportInput,
+  GenerateAnnualReportOutput
 } from '@/ai/ai-types';
 import { createConfiguredAI, getModelReference } from '@/ai/genkit';
 import { getAdminApp } from '@/lib/firebase-admin';
@@ -97,14 +100,18 @@ export async function getFinancialProfile(input: FinancialProfileInput, userId: 
       model: modelRef,
       prompt: `Você é um analista financeiro sagaz e positivo. Sua tarefa é criar um perfil financeiro para o usuário.
 
-Para isso, você tem duas fontes de dados:
-1.  **Relatórios Mensais (reports):** Um array JSON com resumos de meses anteriores. Use estes dados para entender o comportamento de longo prazo e as tendências do usuário.
-2.  **Transações do Mês Atual (currentMonthTransactions):** Um array JSON com as transações do mês corrente, que ainda não foi fechado. Use estes dados para entender os hábitos mais recentes.
+Para isso, você tem uma hierarquia de dados:
+1.  **Relatórios Anuais (annualReports):** Resumos de anos anteriores. Use-os para entender tendências de longo prazo.
+2.  **Relatórios Mensais (monthlyReports):** Resumos de meses do ano corrente. Use-os para entender o comportamento no ano atual.
+3.  **Transações do Mês Atual (currentMonthTransactions):** Dados do mês corrente. Use-os para entender os hábitos mais recentes.
 
 Com base na combinação dessas informações, defina um perfil financeiro para o usuário. Dê um nome criativo e uma descrição que resuma seus padrões de gastos de forma amigável e perspicaz. Foque em fornecer uma narrativa, não apenas números. Toda a saída deve ser em Português do Brasil.
 
-Relatórios de Meses Passados:
-{{{reports}}}
+Relatórios de Anos Anteriores:
+{{{annualReports}}}
+
+Relatórios Mensais do Ano Corrente:
+{{{monthlyReports}}}
 
 Transações do Mês Atual:
 {{{currentMonthTransactions}}}
@@ -178,4 +185,9 @@ export async function suggestCategoryForItemAction(input: SuggestCategoryInput, 
 export async function generateMonthlyReportAction(input: GenerateReportInput, userId: string): Promise<GenerateReportOutput> {
   const credential = await getActiveAICredential(userId);
   return generateMonthlyReport(input, credential);
+}
+
+export async function generateAnnualReportAction(input: GenerateAnnualReportInput, userId: string): Promise<GenerateAnnualReportOutput> {
+  const credential = await getActiveAICredential(userId);
+  return generateAnnualReport(input, credential);
 }
