@@ -4,7 +4,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BarChart, Bot, LayoutDashboard, Wallet, Check } from "lucide-react";
+import { ArrowRight, BarChart, Bot, LayoutDashboard, Wallet, Check, Goal, FolderKanban, Upload } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { useAuth } from "@/hooks/use-auth";
@@ -131,19 +131,45 @@ export default function Page() {
               <div className="container mx-auto px-4">
                   <motion.div {...fadeIn}>
                       <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-center">
-                          Tudo que você precisa em um só lugar
+                          Ferramentas poderosas para sua vida financeira
                       </h2>
-                      <p className="mt-4 text-lg text-muted-foreground text-center max-w-xl mx-auto">
-                        De dashboards interativos a um assistente com IA, o FinWise tem as ferramentas para impulsionar sua saúde financeira.
+                      <p className="mt-4 text-lg text-muted-foreground text-center max-w-2xl mx-auto">
+                        Cada recurso do FinWise foi projetado para te dar clareza e controle. Deixe de adivinhar e comece a tomar decisões financeiras com confiança.
                       </p>
                   </motion.div>
 
-                  <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                  <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                       {[
-                          { icon: LayoutDashboard, title: "Dashboard Intuitivo", description: "Visualize suas finanças de forma clara com gráficos e relatórios interativos." },
-                          { icon: Wallet, title: "Controle de Gastos", description: "Adicione e categorize suas transações para saber para onde seu dinheiro está indo." },
-                          { icon: BarChart, title: "Análise Inteligente", description: "Receba insights e dicas personalizadas geradas por Inteligência Artificial." },
-                          { icon: Bot, title: "Assistente Pessoal", description: "Converse com nossa IA para tirar dúvidas e analisar seus padrões de gastos." }
+                          { 
+                            icon: LayoutDashboard, 
+                            title: "Dashboard Centralizado", 
+                            description: "Tenha uma visão completa de suas finanças em um só lugar. Acompanhe seu patrimônio líquido, receitas, despesas e transações recentes sem esforço."
+                          },
+                          { 
+                            icon: Wallet, 
+                            title: "Orçamentos Inteligentes", 
+                            description: "Defina limites de gastos para categorias e evite surpresas. Nossa IA pode até sugerir orçamentos com base nos seus hábitos para te ajudar a economizar." 
+                          },
+                          { 
+                            icon: Goal, 
+                            title: "Metas de Economia", 
+                            description: "Transforme sonhos em planos. Crie metas, acompanhe seu progresso e veja a IA projetar quando você alcançará seus objetivos. Comemoramos com você a cada meta atingida!" 
+                          },
+                          { 
+                            icon: Bot, 
+                            title: "Assistente com IA", 
+                            description: "Converse com nosso assistente para obter insights valiosos. Pergunte sobre seus gastos, peça análises e receba dicas personalizadas para otimizar suas finanças." 
+                          },
+                          { 
+                            icon: Upload, 
+                            title: "Importação e OCR", 
+                            description: "Economize tempo importando extratos do seu banco (CSV/OFX). Tire uma foto de uma nota fiscal e deixe nossa IA extrair e categorizar os itens para você." 
+                          },
+                          { 
+                            icon: BarChart, 
+                            title: "Relatórios Detalhados", 
+                            description: "Gere relatórios mensais e anuais com análises automáticas da IA. Entenda seus padrões de consumo e meça sua evolução financeira ao longo do tempo."
+                          }
                       ].map((feature, index) => (
                           <motion.div 
                             key={feature.title}
@@ -152,7 +178,7 @@ export default function Page() {
                             whileInView="animate"
                             viewport={{ once: true, amount: 0.5 }}
                             transition={{ ...featureVariants.transition, delay: index * 0.1 }}
-                            className="flex flex-col items-center text-center p-6 rounded-lg bg-card/50 border border-border/20 transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
+                            className="flex flex-col items-start text-left p-6 rounded-lg bg-card/50 border border-border/20 transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
                           >
                               <div className="flex items-center justify-center h-12 w-12 rounded-full bg-primary/10 text-primary">
                                   <feature.icon className="h-6 w-6"/>
