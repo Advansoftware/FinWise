@@ -3,6 +3,7 @@
 import { PaymentService, CheckoutInput, CheckoutOutput, PortalInput, PortalOutput } from "@/services/payment-service";
 import { getAdminApp } from '@/lib/firebase-admin';
 import Stripe from 'stripe';
+import { UserPlan } from "@/lib/types";
 
 class StripeAdapter implements PaymentService {
     private stripe: Stripe;

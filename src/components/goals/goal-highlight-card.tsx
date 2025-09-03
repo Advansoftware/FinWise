@@ -12,7 +12,7 @@ import { AddDepositDialog } from "./add-deposit-dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useState, useEffect, useTransition, useMemo } from "react";
-import { projectGoalCompletionAction } from "@/app/actions";
+import { projectGoalCompletionAction } from "@/services/ai-actions";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
