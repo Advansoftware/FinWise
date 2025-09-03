@@ -1,3 +1,4 @@
+
 // src/app/api/data/[...path]/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -58,7 +59,13 @@ async function handler(
     
     // The 'users' collection is special, it's keyed by _id = userId, not a separate userId field.
     if (collectionName === 'users') {
-        query = { _id: new ObjectId(userId) };
+        // When fetching all users (not typical), this will be overwritten below if docId exists.
+        // For now, let's prevent fetching all users.
+        if (!docId) {
+             return NextResponse.json({ error: 'Fetching all users is not permitted.' }, { status: 403 });
+        }
+        // When a specific user doc is requested, the query must be by _id
+        query = { _id: new ObjectId(docId) };
     }
 
 
@@ -71,15 +78,14 @@ async function handler(
     try {
         if (request.method === 'GET') {
             if (docId) {
-                 // For a specific user, the docId is the userId.
-                const findById = collectionName === 'users' ? new ObjectId(docId) : new ObjectId(docId);
-                const queryById = collectionName === 'users' ? { _id: findById } : { _id: findById, userId };
+                // If it's a regular collection, query by both docId and userId for security
+                const queryById = collectionName === 'users' ? query : { _id: new ObjectId(docId), userId };
                 const item = await collection.findOne(queryById);
 
-                if (!item) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+                if (!item) return NextResponse.json({ error: 'Not found or permission denied' }, { status: 404 });
                 return NextResponse.json(item);
             } else {
-                const items = await collection.find(query).toArray();
+                const items = await collection.find({ userId }).toArray();
                 return NextResponse.json(items);
             }
         }
@@ -96,8 +102,7 @@ async function handler(
             delete body.id;
             delete body.uid;
             
-            const findById = collectionName === 'users' ? new ObjectId(docId) : new ObjectId(docId);
-            const queryById = collectionName === 'users' ? { _id: findById } : { _id: findById, userId };
+            const queryById = collectionName === 'users' ? { _id: new ObjectId(docId) } : { _id: new ObjectId(docId), userId };
            
             const result = await collection.replaceOne(queryById, body);
             if (result.matchedCount === 0) return NextResponse.json({ error: 'Not found or permission denied' }, { status: 404 });
@@ -108,8 +113,7 @@ async function handler(
              const body = await request.json();
              const updateOps = processUpdates(body);
              
-             const findById = new ObjectId(docId);
-             const queryById = collectionName === 'users' ? { _id: findById } : { _id: findById, userId };
+             const queryById = collectionName === 'users' ? { _id: new ObjectId(docId) } : { _id: new ObjectId(docId), userId };
             
              const result = await collection.updateOne(queryById, updateOps);
              if (result.matchedCount === 0) return NextResponse.json({ error: 'Not found or permission denied' }, { status: 404 });
