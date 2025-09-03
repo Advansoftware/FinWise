@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { UploadCloud, FileText, X, Loader2, Wand2, ChevronRight } from 'lucide-react';
+import { UploadCloud, FileText, X, Loader2, Wand2, ChevronRight, ChevronLeft } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Transaction, TransactionCategory } from '@/lib/types';
@@ -19,13 +19,23 @@ type ParsedTransaction = Omit<Transaction, 'id'>;
 type FileStage = 'upload' | 'mapping' | 'confirm' | 'importing';
 const REQUIRED_FIELDS: (keyof ParsedTransaction)[] = ['date', 'item', 'amount'];
 
+const MAPPABLE_FIELDS: Record<keyof Omit<Transaction, 'id' | 'type' | 'walletId' | 'toWalletId'>, string> = {
+    date: 'Data*',
+    item: 'Item/Descrição*',
+    amount: 'Valor*',
+    category: 'Categoria',
+    subcategory: 'Subcategoria',
+    establishment: 'Estabelecimento',
+    quantity: 'Quantidade',
+};
+
 export default function ImportPage() {
     const [file, setFile] = useState<File | null>(null);
-    const [fileContent, setFileContent] = useState<string>("");
+    const [fileType, setFileType] = useState<'csv' | 'ofx' | null>(null);
     const [parsedData, setParsedData] = useState<any[]>([]);
     const [headers, setHeaders] = useState<string[]>([]);
-    const [fieldMapping, setFieldMapping] = useState<Record<keyof Omit<Transaction, 'id'>, string>>({
-        date: '', item: '', amount: '', category: '', subcategory: '', quantity: '', establishment: ''
+    const [fieldMapping, setFieldMapping] = useState<Record<keyof ParsedTransaction, string>>({
+        date: '', item: '', amount: '', category: '', subcategory: '', quantity: '', establishment: '', type: 'expense', walletId: ''
     });
     const [transactionsToImport, setTransactionsToImport] = useState<ParsedTransaction[]>([]);
     const [stage, setStage] = useState<FileStage>('upload');
@@ -50,19 +60,19 @@ export default function ImportPage() {
         const reader = new FileReader();
         reader.onload = (e) => {
             const content = e.target?.result as string;
-            setFileContent(content);
             if (isCsv) {
+                setFileType('csv');
                 parseCsv(content);
             } else {
+                setFileType('ofx');
                 parseOfx(content);
             }
         };
         
-        // Use a codificação correta para cada tipo de arquivo
         if (isCsv) {
             reader.readAsText(selectedFile, 'UTF-8');
         } else {
-            reader.readAsText(selectedFile, 'latin1'); // OFX files often use this encoding
+            reader.readAsText(selectedFile, 'latin1');
         }
     };
 
@@ -71,6 +81,11 @@ export default function ImportPage() {
             header: true,
             skipEmptyLines: true,
             complete: (result) => {
+                if(result.errors.length > 0) {
+                     toast({ variant: 'destructive', title: 'Erro ao ler CSV', description: 'O arquivo parece estar mal formatado.' });
+                     handleReset();
+                     return;
+                }
                 setHeaders(result.meta.fields || []);
                 setParsedData(result.data);
                 setIsParsing(false);
@@ -84,9 +99,10 @@ export default function ImportPage() {
             const ofxData = await toJs(content);
             const account = ofxData.OFX.BANKMSGSRSV1.STMTTRNRS.STMTRS;
             const transactions = account.BANKTRANLIST.STMTTRN.map((t: any) => ({
-                date: new Date(`${t.DTPOSTED.slice(0, 4)}-${t.DTPOSTED.slice(4, 6)}-${t.DTPOSTED.slice(6, 8)}T12:00:00Z`).toISOString(), // Add time to avoid timezone issues
+                date: new Date(`${t.DTPOSTED.slice(0, 4)}-${t.DTPOSTED.slice(4, 6)}-${t.DTPOSTED.slice(6, 8)}T12:00:00Z`).toISOString(),
                 item: t.MEMO,
                 amount: Math.abs(parseFloat(t.TRNAMT)),
+                type: parseFloat(t.TRNAMT) > 0 ? 'income' : 'expense',
                 category: "Outros" as TransactionCategory,
                 quantity: 1,
             }));
@@ -117,9 +133,8 @@ export default function ImportPage() {
                 }
             }
 
-            // Fix date format if needed (DD/MM/YYYY -> YYYY-MM-DD)
             if (transaction.date && transaction.date.includes('/')) {
-                const parts = transaction.date.split(/[\/\- ]/); // Split by slash, dash or space
+                const parts = transaction.date.split(/[\/\- ]/);
                 if (parts.length === 3) {
                     const day = parts[0];
                     const month = parts[1];
@@ -130,7 +145,6 @@ export default function ImportPage() {
                  transaction.date = new Date(transaction.date).toISOString();
             }
 
-            // Ensure required fields and defaults
             if (!transaction.item || !transaction.amount || !transaction.date) return null;
             if (!transaction.category) transaction.category = "Outros";
             if (!transaction.quantity || isNaN(transaction.quantity)) transaction.quantity = 1;
@@ -152,16 +166,17 @@ export default function ImportPage() {
             toast({ title: 'Sucesso!', description: `${transactionsToImport.length} transações importadas.` });
             handleReset();
         } catch (error) {
-            toast({ variant: 'destructive', title: 'Erro na Importação', description: 'Não foi possível importar as transações.' });
+            toast({ variant: 'destructive', title: 'Erro na Importação', description: 'Não foi possível importar as transações. Verifique se você criou uma carteira primeiro.' });
             setStage('confirm');
         }
     };
 
     const handleReset = () => {
         setFile(null);
+        setFileType(null);
         setParsedData([]);
         setHeaders([]);
-        setFieldMapping({ date: '', item: '', amount: '', category: '', subcategory: '', quantity: '', establishment: '' });
+        setFieldMapping({ date: '', item: '', amount: '', category: '', subcategory: '', quantity: '', establishment: '', type: 'expense', walletId: '' });
         setTransactionsToImport([]);
         setIsParsing(false);
         setStage('upload');
@@ -185,21 +200,19 @@ export default function ImportPage() {
     const renderMapping = () => (
          <div className="space-y-6">
              <div>
-                <h3 className="text-lg font-semibold">Mapear Colunas</h3>
-                <p className="text-sm text-muted-foreground">Associe as colunas do seu arquivo aos campos de transação.</p>
+                <h3 className="text-lg font-semibold">Mapear Colunas do CSV</h3>
+                <p className="text-sm text-muted-foreground">Associe as colunas do seu arquivo aos campos do FinWise. Campos com * são obrigatórios.</p>
              </div>
              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                 {Object.keys(fieldMapping).map(field => {
-                    const typedField = field as keyof typeof fieldMapping;
-                    const isRequired = REQUIRED_FIELDS.includes(typedField as any);
+                 {Object.entries(MAPPABLE_FIELDS).map(([key, label]) => {
+                    const typedField = key as keyof typeof MAPPABLE_FIELDS;
                     return (
-                      <div key={field} className="space-y-1">
-                        <Label htmlFor={field} className="capitalize flex items-center">
-                            {field.replace(/([A-Z])/g, ' $1')} {/* Add space before capital letters */}
-                            {isRequired && <span className="text-destructive ml-1">*</span>}
+                      <div key={key} className="space-y-1">
+                        <Label htmlFor={key} className="capitalize flex items-center">
+                            {label}
                         </Label>
-                        <Select onValueChange={(value) => setFieldMapping(prev => ({ ...prev, [field]: value }))}>
-                          <SelectTrigger id={field}>
+                        <Select onValueChange={(value) => setFieldMapping(prev => ({ ...prev, [key]: value }))} value={fieldMapping[typedField]}>
+                          <SelectTrigger id={key}>
                             <SelectValue placeholder="Selecione uma coluna" />
                           </SelectTrigger>
                           <SelectContent>
@@ -243,10 +256,17 @@ export default function ImportPage() {
                     </TableBody>
                 </Table>
             </div>
-             <Button onClick={handleImport} disabled={stage === 'importing'}>
-                {stage === 'importing' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                Importar {transactionsToImport.length} Transações
-            </Button>
+             <div className="flex flex-wrap gap-2">
+                {fileType === 'csv' && (
+                  <Button variant="outline" onClick={() => setStage('mapping')} disabled={stage === 'importing'}>
+                     <ChevronLeft className="mr-2 h-4 w-4" /> Voltar ao Mapeamento
+                  </Button>
+                )}
+                 <Button onClick={handleImport} disabled={stage === 'importing'}>
+                    {stage === 'importing' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+                    Importar {transactionsToImport.length} Transações
+                </Button>
+             </div>
         </div>
     );
 
@@ -255,11 +275,11 @@ export default function ImportPage() {
             <div className="flex justify-between items-start">
                  <div>
                     <h1 className="text-3xl font-bold tracking-tight">Importar Transações</h1>
-                    <p className="text-muted-foreground">Faça o upload de um arquivo CSV ou OFX para adicionar transações.</p>
+                    <p className="text-muted-foreground">Faça o upload de um arquivo CSV ou OFX para adicionar transações em lote.</p>
                 </div>
                 {stage !== 'upload' && (
                     <Button variant="ghost" onClick={handleReset} disabled={stage === 'importing'}>
-                        <X className="mr-2 h-4 w-4" /> Cancelar
+                        <X className="mr-2 h-4 w-4" /> Cancelar Importação
                     </Button>
                 )}
             </div>
