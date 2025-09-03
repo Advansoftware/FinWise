@@ -115,13 +115,20 @@ export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTra
             <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                     <Label className="text-right">Tipo</Label>
-                     <div className="col-span-3 flex items-center justify-between">
-                        <span className={cn(formState.type === 'expense' && 'font-bold text-primary')}>Despesa</span>
-                        <Switch
-                            checked={formState.type === 'income'}
-                            onCheckedChange={(checked) => handleInputChange('type', checked ? 'income' : 'expense')}
-                        />
-                        <span className={cn(formState.type === 'income' && 'font-bold text-emerald-400')}>Receita</span>
+                    <div className="col-span-3 grid grid-cols-2 gap-2">
+                         <Button
+                            variant={formState.type === 'expense' ? 'destructive' : 'outline'}
+                            onClick={() => handleInputChange('type', 'expense')}
+                         >
+                            Despesa
+                        </Button>
+                         <Button
+                             variant={formState.type === 'income' ? 'default' : 'outline'}
+                             className="bg-emerald-600 hover:bg-emerald-700 data-[variant=outline]:bg-transparent data-[variant=outline]:text-current"
+                             onClick={() => handleInputChange('type', 'income')}
+                         >
+                            Receita
+                        </Button>
                     </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
