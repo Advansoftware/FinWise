@@ -6,16 +6,16 @@ Este projeto foi desenvolvido com o Firebase Studio e serve como um exemplo robu
 
 ## Funcionalidades Principais
 
-- **Dashboard Interativo**: Visualize seus gastos totais, principais categorias de despesa e transações recentes em um piscar de olhos.
-- **Visualização de Dados**: Gráficos interativos que ajudam a entender seus padrões de gastos ao longo do tempo.
-- **Gerenciamento de Transações**: Adicione, visualize e filtre suas transações com facilidade.
-- **Categorização Inteligente**: Organize suas despesas com categorias e subcategorias personalizáveis.
-- **Configuração de IA Flexível**: Escolha entre múltiplos provedores de IA (Ollama, Google AI, OpenAI) e configure modelos diretamente na interface.
-- **Assistente de Chat com IA**: Converse com um assistente inteligente que analisa suas transações em tempo real para responder perguntas e fornecer insights.
+- **Dashboard Interativo**: Visualize seus gastos totais, balanço consolidado de todas as carteiras e transações recentes.
+- **Gerenciamento de Múltiplas Carteiras**: Crie e gerencie diversas contas (corrente, cartão de crédito, poupança, etc.) para um controle financeiro completo.
+- **Orçamentos Mensais**: Defina limites de gastos para categorias específicas e acompanhe seu progresso para não estourar o orçamento.
+- **Metas de Economia**: Estabeleça objetivos financeiros, como uma viagem ou um bem de consumo, e acompanhe sua evolução a cada depósito.
+- **Relatórios Inteligentes**: Gere relatórios mensais e anuais com resumos e análises perspicazes criados por IA.
+- **Importação de Extratos**: Importe transações em massa a partir de arquivos CSV ou OFX do seu banco.
+- **Assistente de Chat com IA**: Converse com um assistente que analisa seus relatórios para responder perguntas complexas sobre sua vida financeira.
 - **OCR de Notas Fiscais**: Tire uma foto de uma nota fiscal e a IA extrairá as informações para você.
 - **Progressive Web App (PWA)**: Instale o aplicativo no seu desktop ou celular e use-o offline.
 - **Sincronização Offline**: Todas as alterações feitas sem conexão são salvas localmente e sincronizadas automaticamente quando a internet é restabelecida.
-- **Atualização da PWA**: Seja notificado quando uma nova versão do aplicativo estiver disponível, com um botão para atualizar instantaneamente.
 - **Design Moderno**: Interface inspirada em designs de fintechs modernas, com tema escuro e foco na experiência do usuário.
 
 ## Tech Stack
