@@ -84,7 +84,7 @@ export default function DashboardPage() {
             </div>
 
             {isLoading ? <DashboardSkeleton /> : (
-                 <div className="grid gap-6">
+                <>
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                         <div className="lg:col-span-2">
                            <WalletCard transactions={filteredTransactions} />
@@ -104,7 +104,7 @@ export default function DashboardPage() {
                        <RecentTransactions transactions={filteredTransactions} />
                     </div>
                      {isPro && <AITipCard transactions={filteredTransactions} />}
-                </div>
+                </>
             )}
         </div>
     );
@@ -113,7 +113,7 @@ export default function DashboardPage() {
 
 function DashboardSkeleton() {
     return (
-        <div className="grid gap-6">
+        <>
              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <Skeleton className="lg:col-span-2 h-36" />
                 <div className="space-y-6">
@@ -131,6 +131,6 @@ function DashboardSkeleton() {
                 <Skeleton className="h-[450px]" />
             </div>
             <Skeleton className="h-28" />
-        </div>
+        </>
     );
 }
