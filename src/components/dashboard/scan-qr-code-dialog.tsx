@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -8,11 +9,10 @@ import {
   DialogDescription,
   DialogFooter,
   DialogTrigger,
-  DialogClose
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Upload } from "lucide-react";
+import { Loader2, Upload, Camera } from "lucide-react";
 import { useRef, useState, useEffect, useCallback, useTransition } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -37,14 +37,8 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
     const [extractedData, setExtractedData] = useState<any>(null);
     const [isProcessing, startProcessing] = useTransition();
     const [isSaving, startSaving] = useTransition();
-    const { addTransaction, categories, subcategories } = useTransactions();
+    const { addTransaction } = useTransactions();
     const { user } = useAuth();
-
-    const resetState = () => {
-        setReceiptImage(null);
-        setExtractedData(null);
-        stopCamera();
-    };
 
     const stopCamera = useCallback(() => {
         if (videoRef.current && videoRef.current.srcObject) {
@@ -53,6 +47,14 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
             videoRef.current.srcObject = null;
         }
     }, []);
+    
+    const resetState = useCallback(() => {
+        stopCamera();
+        setReceiptImage(null);
+        setExtractedData(null);
+        setHasCameraPermission(null);
+    }, [stopCamera]);
+
 
     const handleDialogOpenChange = (open: boolean) => {
         setIsDialogOpen(open);
@@ -62,7 +64,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
     };
 
     useEffect(() => {
-        if (isMobile && isDialogOpen) {
+        if (isMobile && isDialogOpen && !receiptImage) {
             const getCameraPermission = async () => {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
@@ -81,7 +83,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
         return () => {
            if(isDialogOpen) stopCamera();
         }
-    }, [isMobile, isDialogOpen, stopCamera]);
+    }, [isMobile, isDialogOpen, stopCamera, receiptImage]);
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -150,6 +152,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                         amount: parseFloat(item.amount),
                         date: extractedData.date ? new Date(extractedData.date).toISOString() : new Date().toISOString(),
                         category: "Supermercado", // Categoria padrão
+                        type: "expense",
                     };
                     return addTransaction(newTransaction);
                 });
@@ -167,7 +170,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                  toast({
                     variant: 'destructive',
                     title: 'Erro ao Salvar',
-                    description: 'Não foi possível salvar as transações.',
+                    description: 'Não foi possível salvar as transações. Verifique se você tem uma carteira criada.',
                 });
             }
         });
@@ -226,7 +229,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                     <DialogTitle>Escanear Nota Fiscal</DialogTitle>
                     <DialogDescription>
                         {isMobile
-                            ? "Aponte a câmera para a nota fiscal ou envie uma imagem."
+                            ? "Aponte a câmera para a nota fiscal ou envie uma imagem da galeria."
                             : "Faça upload da imagem da nota fiscal para adicionar as transações."
                         }
                     </DialogDescription>
@@ -239,7 +242,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                                 <div className="flex flex-col items-center justify-center w-full space-y-4">
                                     <div className="relative w-full">
                                         <video ref={videoRef} className="w-full aspect-video rounded-md bg-muted" autoPlay muted playsInline />
-                                        <div className="absolute inset-0 border-4 border-dashed border-primary/50 rounded-md m-4"></div>
+                                        {hasCameraPermission && <div className="absolute inset-0 border-4 border-dashed border-primary/50 rounded-md m-4"></div>}
                                     </div>
                                     {hasCameraPermission === false && (
                                         <Alert variant="destructive">
@@ -255,7 +258,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                                         <div className="h-px flex-1 bg-border"/>
                                     </div>
                                     <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>
-                                        <Upload className="mr-2 h-4 w-4" /> Enviar Imagem
+                                        <Upload className="mr-2 h-4 w-4" /> Enviar Imagem da Galeria
                                     </Button>
                                     <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                                 </div>
@@ -267,7 +270,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                                             <p className="mb-2 text-sm text-foreground"><span className="font-semibold text-primary">Clique para enviar</span> ou arraste e solte</p>
                                             <p className="text-xs text-muted-foreground">PNG, JPG, ou PDF</p>
                                         </div>
-                                        <input ref={fileInputRef} id="dropzone-file" type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileChange} />
+                                        <input ref={fileInputRef} id="dropzone-file" type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
                                     </label>
                                 </div>
                             )}
@@ -281,12 +284,12 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                 </div>
 
                 <DialogFooter className="gap-2 sm:gap-0">
-                     <Button variant="ghost" onClick={() => setReceiptImage(null)} disabled={!receiptImage || isProcessing || isSaving}>
-                        Tentar Novamente
+                     <Button variant="ghost" onClick={resetState} disabled={isProcessing || isSaving}>
+                        {isMobile ? "Escanear Outra" : "Enviar Outra"}
                     </Button>
                     {isMobile && !receiptImage ? (
-                        <Button onClick={handleCapture} disabled={hasCameraPermission === false || isProcessing}>
-                            {isProcessing ? <Loader2 className="animate-spin" /> : "Capturar"}
+                        <Button onClick={handleCapture} disabled={hasCameraPermission === false || isProcessing || isSaving}>
+                           <Camera className="mr-2 h-4 w-4"/> Capturar
                         </Button>
                     ) : extractedData?.isValid ? (
                          <Button onClick={handleSaveTransactions} disabled={isSaving || isProcessing}>
@@ -299,3 +302,5 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
         </Dialog>
     );
 }
+
+    
