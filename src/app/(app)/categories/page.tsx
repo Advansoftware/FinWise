@@ -74,7 +74,9 @@ export default function CategoriesPage() {
         setSuggestion(null);
         startSuggesting(async () => {
              try {
-                const result = await suggestCategoryForItemAction({ itemName, existingCategories: categories }, user.uid);
+                // Ensure categories are passed as string[]
+                const categoryStrings: string[] = categories.map(c => c as string);
+                const result = await suggestCategoryForItemAction({ itemName, existingCategories: categoryStrings }, user.uid);
                 setSuggestion(result);
             } catch (error) {
                 console.error("Error fetching AI suggestion:", error);
