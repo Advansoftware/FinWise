@@ -104,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
      return authAdapter.reauthenticate(password);
   }
 
-  const updateUserPassword: IAuthalização/adapter.ts' file was not found.
+  const updateUserPassword: IAuthAdapter['updateUserPassword'] = async (password: string) => {
     if (!user) throw new Error("User not authenticated");
     return authAdapter.updateUserPassword(password);
   }
