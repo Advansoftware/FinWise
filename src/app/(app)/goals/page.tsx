@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, MoreVertical, Trash2, Edit, Target, PiggyBank, CircleDollarSign } from "lucide-react";
+import { PlusCircle, MoreVertical, Trash2, Edit, Target, PiggyBank, CircleDollarSign, Sparkles, Loader2 } from "lucide-react";
 import { useGoals } from "@/hooks/use-goals";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
@@ -23,6 +23,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Goal } from "@/lib/types";
+import { useState, useTransition, useEffect } from "react";
+import { projectGoalCompletionAction } from "@/app/actions";
+import { useAuth } from "@/hooks/use-auth";
+import { useTransactions } from "@/hooks/use-transactions";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 export default function GoalsPage() {
     const { goals, isLoading, deleteGoal } = useGoals();
@@ -71,6 +77,31 @@ export default function GoalsPage() {
 
 function GoalCard({ goal, onDelete }: { goal: Goal, onDelete: () => void }) {
     const percentage = Math.round((goal.currentAmount / goal.targetAmount) * 100);
+    const { user } = useAuth();
+    const { allTransactions } = useTransactions();
+    const [isProjecting, startProjecting] = useTransition();
+    const [projection, setProjection] = useState<string | null>(null);
+
+    useEffect(() => {
+        if (user && allTransactions.length > 0) {
+            startProjecting(async () => {
+                const result = await projectGoalCompletionAction({
+                    goalName: goal.name,
+                    targetAmount: goal.targetAmount,
+                    currentAmount: goal.currentAmount,
+                    transactions: JSON.stringify(allTransactions, null, 2),
+                }, user.uid);
+
+                if (result.completionDate) {
+                    const date = new Date(result.completionDate);
+                    setProjection(format(date, "MMMM 'de' yyyy", { locale: ptBR }));
+                } else {
+                    setProjection(result.projection);
+                }
+            });
+        }
+    }, [goal, user, allTransactions, startProjecting]);
+
     
     return (
         <Card>
@@ -129,6 +160,16 @@ function GoalCard({ goal, onDelete }: { goal: Goal, onDelete: () => void }) {
                     <p className="text-lg font-bold text-foreground">R$ {goal.currentAmount.toFixed(2)}</p>
                     <p className="text-sm text-muted-foreground">de R$ {goal.targetAmount.toFixed(2)}</p>
                 </div>
+                <div className="text-xs text-muted-foreground h-4 flex items-center gap-2">
+                    <Sparkles className={cn("h-3.5 w-3.5 text-primary/80", isProjecting && "animate-pulse")} />
+                    {isProjecting ? (
+                        <span>Calculando projeção...</span>
+                    ) : projection ? (
+                        <span>Estimativa de conclusão: <span className="font-semibold text-foreground/80 capitalize">{projection}</span></span>
+                    ) : (
+                        <span>Não foi possível projetar a conclusão.</span>
+                    )}
+                </div>
             </CardContent>
              <CardFooter>
                  <AddDepositDialog goal={goal}>
@@ -152,9 +193,9 @@ function GoalsSkeleton() {
                 <Skeleton className="h-10 w-36" />
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <Skeleton className="h-56" />
-                <Skeleton className="h-56" />
-                <Skeleton className="h-56" />
+                <Skeleton className="h-64" />
+                <Skeleton className="h-64" />
+                <Skeleton className="h-64" />
             </div>
         </div>
     )

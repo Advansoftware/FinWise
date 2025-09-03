@@ -137,3 +137,19 @@ export const SuggestBudgetOutputSchema = z.object({
   justification: z.string().describe('A brief, one-sentence justification for the suggested amount in Brazilian Portuguese.'),
 });
 export type SuggestBudgetOutput = z.infer<typeof SuggestBudgetOutputSchema>;
+
+
+// Schema for Goal Projection
+export const ProjectGoalCompletionInputSchema = z.object({
+  goalName: z.string().describe('The name of the goal.'),
+  targetAmount: z.number().describe('The target amount for the goal.'),
+  currentAmount: z.number().describe('The current saved amount for the goal.'),
+  transactions: z.string().describe('A JSON string of all user transactions to analyze their saving capacity.'),
+});
+export type ProjectGoalCompletionInput = z.infer<typeof ProjectGoalCompletionInputSchema>;
+
+export const ProjectGoalCompletionOutputSchema = z.object({
+  completionDate: z.string().optional().describe('The projected completion date in YYYY-MM-DD format. Only set if a projection is possible.'),
+  projection: z.string().describe('A human-readable projection in Brazilian Portuguese (e.g., "em 5 meses", "dados insuficientes").'),
+});
+export type ProjectGoalCompletionOutput = z.infer<typeof ProjectGoalCompletionOutputSchema>;
