@@ -25,6 +25,7 @@ import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from "../ui/po
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
 import { cn } from "@/lib/utils";
 import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group";
+import { FormDescription } from "../ui/form";
 
 
 export function AddTransactionSheet({ children }: { children: React.ReactNode }) {
@@ -186,6 +187,12 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
     }
   }
 
+  const typeDescriptions = {
+      expense: "Registra uma saída de dinheiro. Diminui o saldo da carteira selecionada.",
+      income: "Registra uma entrada de dinheiro. Aumenta o saldo da carteira selecionada.",
+      transfer: "Move dinheiro entre duas de suas carteiras. Não altera seu saldo total, apenas o local do dinheiro."
+  }
+
   return (
     <Sheet open={isOpen} onOpenChange={(open) => { setIsOpen(open); if(!open) resetForm(); }}>
       <SheetTrigger asChild>{children}</SheetTrigger>
@@ -206,6 +213,13 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                         <ToggleGroupItem value="transfer" aria-label="Transferência" className="w-full data-[state=on]:bg-sky-600 data-[state=on]:text-white">Transfer</ToggleGroupItem>
                     </ToggleGroup>
                 </div>
+
+                <div className="col-start-2 col-span-3">
+                    <FormDescription className="text-xs -mt-2">
+                        {typeDescriptions[formState.type]}
+                    </FormDescription>
+                </div>
+
 
                 <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="amount" className="text-right">Valor</Label>
