@@ -13,7 +13,7 @@ import { Separator } from "../ui/separator";
 import { useAuth } from "@/hooks/use-auth";
 import { getFirebase } from "@/lib/firebase";
 import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
-import { startOfMonth, getYear, isSameDay } from "date-fns";
+import { startOfMonth, getYear, isSameMonth } from "date-fns";
 
 export function FinancialProfileCard() {
   const [profile, setProfile] = useState("");
@@ -45,7 +45,7 @@ export function FinancialProfileCard() {
         const lastRun = data?.lastProfileTimestamp?.toDate();
         const lastProfile = data?.lastProfileContent;
 
-        if (lastRun && isSameDay(lastRun, new Date()) && !forceRefresh && lastProfile) {
+        if (lastRun && isSameMonth(lastRun, new Date()) && !forceRefresh && lastProfile) {
           setProfile(lastProfile);
         } else {
            const currentYear = getYear(new Date());
