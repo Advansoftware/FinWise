@@ -11,6 +11,7 @@ import { generateMonthlyReport } from '@/ai/flows/generate-monthly-report';
 import { generateAnnualReport } from '@/ai/flows/generate-annual-report';
 import { suggestBudgetAmount } from '@/ai/flows/suggest-budget-amount';
 import { projectGoalCompletion } from '@/ai/flows/project-goal-completion';
+import { generateAutomaticBudgets } from '@/ai/flows/generate-automatic-budgets';
 import {
   ChatInput,
   ReceiptInfoInput,
@@ -29,7 +30,9 @@ import {
   SuggestBudgetInput,
   SuggestBudgetOutput,
   ProjectGoalCompletionInput,
-  ProjectGoalCompletionOutput
+  ProjectGoalCompletionOutput,
+  GenerateAutomaticBudgetsInput,
+  GenerateAutomaticBudgetsOutput
 } from '@/ai/ai-types';
 import { createConfiguredAI, getModelReference } from '@/ai/genkit';
 import { getAdminApp } from '@/lib/firebase-admin';
@@ -206,4 +209,9 @@ export async function suggestBudgetAmountAction(input: SuggestBudgetInput, userI
 export async function projectGoalCompletionAction(input: ProjectGoalCompletionInput, userId: string): Promise<ProjectGoalCompletionOutput> {
     const credential = await getActiveAICredential(userId);
     return projectGoalCompletion(input, credential);
+}
+
+export async function generateAutomaticBudgetsAction(input: GenerateAutomaticBudgetsInput, userId: string): Promise<GenerateAutomaticBudgetsOutput> {
+    const credential = await getActiveAICredential(userId);
+    return generateAutomaticBudgets(input, credential);
 }

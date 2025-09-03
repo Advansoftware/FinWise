@@ -153,3 +153,21 @@ export const ProjectGoalCompletionOutputSchema = z.object({
   projection: z.string().describe('A human-readable projection in Brazilian Portuguese (e.g., "em 5 meses", "dados insuficientes").'),
 });
 export type ProjectGoalCompletionOutput = z.infer<typeof ProjectGoalCompletionOutputSchema>;
+
+// Schema for Automatic Budgets
+export const GenerateAutomaticBudgetsInputSchema = z.object({
+  lastMonthTransactions: z.string().describe('A JSON string of all transactions from the previous month.'),
+  existingBudgets: z.string().describe('A JSON string of already existing budget categories for the current month.'),
+});
+export type GenerateAutomaticBudgetsInput = z.infer<typeof GenerateAutomaticBudgetsInputSchema>;
+
+export const BudgetItemSchema = z.object({
+  name: z.string().describe('A clear name for the budget (e.g., "Gastos com Supermercado").'),
+  category: z.string().describe('The category this budget applies to.'),
+  amount: z.number().describe('The suggested budget amount, rounded to a sensible whole number (e.g., multiple of 10 or 50).'),
+});
+
+export const GenerateAutomaticBudgetsOutputSchema = z.object({
+  suggestedBudgets: z.array(BudgetItemSchema).describe('An array of suggested budgets.'),
+});
+export type GenerateAutomaticBudgetsOutput = z.infer<typeof GenerateAutomaticBudgetsOutputSchema>;

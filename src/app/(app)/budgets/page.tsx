@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, MoreVertical, Trash2, Edit, PiggyBank } from "lucide-react";
+import { PlusCircle, MoreVertical, Trash2, Edit, PiggyBank, Sparkles } from "lucide-react";
 import { useBudgets } from "@/hooks/use-budgets";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
@@ -22,6 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Budget } from "@/lib/types";
+import { AutomaticBudgetCard } from "@/components/budgets/automatic-budget-card";
 
 export default function BudgetsPage() {
     const { budgets, isLoading, deleteBudget } = useBudgets();
@@ -43,6 +44,8 @@ export default function BudgetsPage() {
                     </Button>
                 </CreateBudgetDialog>
             </div>
+
+            <AutomaticBudgetCard />
             
             {budgets.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -51,7 +54,7 @@ export default function BudgetsPage() {
                     ))}
                 </div>
             ) : (
-                 <Card className="col-span-full">
+                 <Card className="col-span-full border-dashed">
                     <CardContent className="p-8 text-center text-muted-foreground flex flex-col items-center">
                        <PiggyBank className="h-12 w-12 mb-4 text-primary/50" />
                         <h3 className="text-lg font-semibold text-foreground">Nenhum orçamento encontrado.</h3>
@@ -150,6 +153,7 @@ function BudgetsSkeleton() {
                 </div>
                 <Skeleton className="h-10 w-36" />
             </div>
+            <Skeleton className="h-24 w-full" />
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <Skeleton className="h-56" />
                 <Skeleton className="h-56" />
