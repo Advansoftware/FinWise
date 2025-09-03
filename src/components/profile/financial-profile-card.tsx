@@ -1,3 +1,4 @@
+
 // src/components/profile/financial-profile-card.tsx
 "use client";
 
@@ -35,7 +36,7 @@ export function FinancialProfileCard() {
 
   const fetchProfile = useCallback(async (forceRefresh = false) => {
     if (!user) return;
-    if (allTransactions.length === 0) {
+    if (allTransactions.length === 0 && !forceRefresh) {
       setProfile({ profileName: "Aguardando Dados", profileDescription: "Adicione transações para gerar seu primeiro perfil financeiro."});
       return;
     }
@@ -65,14 +66,16 @@ export function FinancialProfileCard() {
           }, user.uid, forceRefresh);
 
           setProfile(newProfile);
-          await setDoc(settingsRef, {
-            lastProfileTimestamp: Timestamp.now(),
-            lastProfileContent: newProfile
-          }, { merge: true });
+          if (!forceRefresh) {
+            await setDoc(settingsRef, {
+              lastProfileTimestamp: Timestamp.now(),
+              lastProfileContent: newProfile
+            }, { merge: true });
+          }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching or setting financial profile:", error);
-        setProfile({ profileName: "Erro", profileDescription: "Não foi possível carregar o perfil. Tente novamente."});
+        setProfile({ profileName: "Erro", profileDescription: error.message || "Não foi possível carregar o perfil. Tente novamente."});
       }
     });
   }, [allTransactions, monthlyReports, annualReports, currentMonthTransactions, user]);
@@ -89,9 +92,14 @@ export function FinancialProfileCard() {
     <Card className="h-full bg-card/50 backdrop-blur-sm border-primary/20">
       <CardHeader>
         <div className="flex items-start justify-between">
-             <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary" />
-                <CardTitle className="text-lg text-primary/90">Seu Perfil Financeiro</CardTitle>
+             <div className="flex-1">
+                <div className="flex items-center gap-2">
+                    <Sparkles className="h-5 w-5 text-primary" />
+                    <CardTitle className="text-lg text-primary/90">Seu Perfil Financeiro</CardTitle>
+                </div>
+                 <CardDescription className="text-xs text-primary/70 mt-1">
+                    Gerado 1x por mês. Atualizar custa 5 créditos.
+                </CardDescription>
             </div>
             <Button
                 variant="ghost"
@@ -103,7 +111,6 @@ export function FinancialProfileCard() {
                 <RefreshCw className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
             </Button>
         </div>
-        <CardDescription>Uma análise gerada por IA sobre seus hábitos de consumo.</CardDescription>
       </CardHeader>
       <CardContent>
         <Separator className="mb-4" />

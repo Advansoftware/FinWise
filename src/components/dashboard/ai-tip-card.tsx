@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect, useTransition, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Sparkles } from "lucide-react";
 import { getSpendingTip } from "@/app/actions";
@@ -29,8 +29,8 @@ export function AITipCard({ transactions }: AITipCardProps) {
 
   const fetchTip = useCallback(async (forceRefresh = false) => {
     if (!user) return;
-    if (transactions.length === 0) {
-      setTip("Não há dados de transação suficientes para gerar uma dica.");
+    if (transactions.length === 0 && !forceRefresh) {
+      setTip("Adicione transações para receber sua primeira dica.");
       return;
     }
 
@@ -50,14 +50,17 @@ export function AITipCard({ transactions }: AITipCardProps) {
             } else {
                 const newTip = await getSpendingTip(transactions, user.uid, forceRefresh);
                 setTip(newTip);
-                await setDoc(settingsRef, {
-                    lastTipTimestamp: Timestamp.now(),
-                    lastTipContent: newTip
-                }, { merge: true });
+                // Only cache the content if it was a free, automatic generation
+                if (!forceRefresh) {
+                    await setDoc(settingsRef, {
+                        lastTipTimestamp: Timestamp.now(),
+                        lastTipContent: newTip
+                    }, { merge: true });
+                }
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error fetching or setting spending tip:", error);
-            setTip("Não foi possível carregar a dica. Tente novamente.");
+            setTip(error.message || "Não foi possível carregar a dica. Tente novamente.");
         }
     });
   }, [transactions, user]);
@@ -72,16 +75,21 @@ export function AITipCard({ transactions }: AITipCardProps) {
 
   return (
     <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <div className="flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary animate-pulse" />
-            <CardTitle className="text-lg text-primary/90">Dica Financeira com IA</CardTitle>
+      <CardHeader className="flex flex-row items-start justify-between pb-2">
+        <div className="flex-1">
+            <div className="flex items-center gap-2">
+                <Sparkles className="h-5 w-5 text-primary animate-pulse" />
+                <CardTitle className="text-lg text-primary/90">Dica Financeira com IA</CardTitle>
+            </div>
+            <CardDescription className="text-xs text-primary/70 mt-1">
+                Gerado automaticamente 1x por dia. Atualizar custa 1 crédito.
+            </CardDescription>
         </div>
         <Button
             variant="ghost"
             size="icon"
             onClick={() => fetchTip(true)}
-            disabled={isPending || transactions.length === 0 || !user}
+            disabled={isPending || !user}
             className="text-primary/70 hover:bg-primary/10 hover:text-primary rounded-full"
         >
             <RefreshCw className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
@@ -92,10 +100,9 @@ export function AITipCard({ transactions }: AITipCardProps) {
            <div className="space-y-2 pt-2">
             <Skeleton className="h-4 w-full bg-primary/10" />
             <Skeleton className="h-4 w-4/5 bg-primary/10" />
-            <Skeleton className="h-4 w-1/2 bg-primary/10" />
           </div>
         ) : (
-          <p className="text-foreground/90 pt-2 text-base">
+          <p className="text-foreground/90 pt-2 text-sm">
             {tip}
           </p>
         )}

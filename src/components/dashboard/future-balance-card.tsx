@@ -30,7 +30,7 @@ export function FutureBalanceCard() {
   
   const fetchPrediction = useCallback(async (forceRefresh = false) => {
     if (!user) return;
-    if (allTransactions.length === 0) {
+    if (allTransactions.length === 0 && !forceRefresh) {
       setPrediction({
         summary: "Adicione transações para gerar sua primeira previsão.",
         projectedEndOfMonthBalance: currentBalance,
@@ -64,15 +64,17 @@ export function FutureBalanceCard() {
           }, user.uid, forceRefresh);
           setPrediction(result);
 
-          await setDoc(settingsRef, {
-            lastPredictionTimestamp: Timestamp.now(),
-            lastPredictionContent: result
-          }, { merge: true });
+          if (!forceRefresh) {
+            await setDoc(settingsRef, {
+                lastPredictionTimestamp: Timestamp.now(),
+                lastPredictionContent: result
+            }, { merge: true });
+          }
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error("Error fetching future balance prediction:", error);
         setPrediction({
-          summary: "Não foi possível carregar a previsão. Tente novamente.",
+          summary: error.message || "Não foi possível carregar a previsão. Tente novamente.",
           projectedEndOfMonthBalance: 0,
           isRiskOfNegativeBalance: true,
         });
@@ -112,14 +114,19 @@ export function FutureBalanceCard() {
     <Card className="relative overflow-hidden bg-card/80 backdrop-blur-xl border-primary/20">
        <CardHeader className="pb-4">
           <div className="flex items-start justify-between">
-             <div className="flex items-center gap-3">
-                <div className={cn("p-2 rounded-full", prediction?.isRiskOfNegativeBalance ? "bg-destructive/20 text-destructive" : "bg-primary/20 text-primary")}>
-                    {prediction?.isRiskOfNegativeBalance ? <AlertTriangle className="h-6 w-6"/> : <TrendingUp className="h-6 w-6"/>}
+             <div className="flex-1">
+                <div className="flex items-center gap-3">
+                    <div className={cn("p-2 rounded-full", prediction?.isRiskOfNegativeBalance ? "bg-destructive/20 text-destructive" : "bg-primary/20 text-primary")}>
+                        {prediction?.isRiskOfNegativeBalance ? <AlertTriangle className="h-6 w-6"/> : <TrendingUp className="h-6 w-6"/>}
+                    </div>
+                    <div>
+                        <CardTitle>Previsão de Saldo</CardTitle>
+                        <CardDescription>Projeção para o fim deste mês</CardDescription>
+                    </div>
                 </div>
-                <div>
-                    <CardTitle>Previsão de Saldo</CardTitle>
-                    <CardDescription>Projeção para o fim deste mês</CardDescription>
-                </div>
+                 <CardDescription className="text-xs text-primary/70 mt-2 pl-12">
+                    Gerado 1x por dia. Atualizar custa 3 créditos.
+                </CardDescription>
             </div>
             <Button
                 variant="ghost"
