@@ -20,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { SingleDatePicker } from "../single-date-picker";
 import { useTransactions } from "@/hooks/use-transactions.tsx";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from "../ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
 import { cn } from "@/lib/utils";
 
@@ -43,9 +43,17 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
       type: 'expense' as 'income' | 'expense'
   });
   
-  // States for autocomplete
   const [itemInputValue, setItemInputValue] = useState("");
   const [isItemPopoverOpen, setIsItemPopoverOpen] = useState(false);
+
+  useEffect(() => {
+      if (itemInputValue && filteredItems.length > 0) {
+          setIsItemPopoverOpen(true);
+      } else {
+          setIsItemPopoverOpen(false);
+      }
+  }, [itemInputValue]);
+
 
   const resetForm = () => {
     setFormState({
@@ -64,12 +72,11 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
   const handleInputChange = (field: keyof typeof formState, value: any) => {
     setFormState(prev => ({...prev, [field]: value}));
     if(field === 'category') {
-        setFormState(prev => ({...prev, subcategory: ''})); // Reset subcategory when category changes
+        setFormState(prev => ({...prev, subcategory: ''}));
     }
   }
 
   const handleItemSelect = (transaction: Transaction) => {
-    // Fill the form with the selected transaction's data
     setFormState(prev => ({
       ...prev,
       item: transaction.item,
@@ -78,7 +85,6 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
       category: transaction.category,
       subcategory: transaction.subcategory || '',
     }));
-    // Also update the visible input value
     setItemInputValue(transaction.item);
     setIsItemPopoverOpen(false);
   }
@@ -170,7 +176,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                         </Button>
                          <Button
                              variant={formState.type === 'income' ? 'default' : 'outline'}
-                             className={cn("bg-transparent", formState.type === 'income' && "bg-emerald-600 hover:bg-emerald-700 text-white")}
+                             className={cn("bg-transparent border-emerald-600 text-emerald-600 hover:bg-emerald-600 hover:text-white", formState.type === 'income' && "bg-emerald-600 text-white")}
                              onClick={() => handleInputChange('type', 'income')}
                          >
                             Receita
@@ -181,32 +187,29 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                 <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="item" className="text-right">Item</Label>
                     <Popover open={isItemPopoverOpen} onOpenChange={setIsItemPopoverOpen}>
-                        <PopoverTrigger asChild className="col-span-3">
+                        <PopoverAnchor className="col-span-3">
                             <Input 
                                 id="item" 
                                 placeholder="ex: Café" 
                                 value={itemInputValue} 
                                 onChange={(e) => setItemInputValue(e.target.value)}
-                                onFocus={() => setIsItemPopoverOpen(true)}
+                                autoComplete="off"
                             />
-                        </PopoverTrigger>
-                         {filteredItems.length > 0 && (
-                            <PopoverContent className="p-0 w-[--radix-popover-trigger-width]">
-                                <Command>
-                                    {/* CommandInput is not needed as we control the input from outside */}
-                                    <CommandList>
-                                        <CommandEmpty>Nenhum item encontrado.</CommandEmpty>
-                                        <CommandGroup>
-                                        {filteredItems.map((transaction) => (
-                                            <CommandItem key={transaction.id} onSelect={() => handleItemSelect(transaction)}>
-                                                {transaction.item}
-                                            </CommandItem>
-                                        ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </Command>
-                            </PopoverContent>
-                        )}
+                        </PopoverAnchor>
+                        <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" onOpenAutoFocus={(e) => e.preventDefault()}>
+                            <Command>
+                                <CommandList>
+                                    <CommandEmpty>Nenhum item encontrado.</CommandEmpty>
+                                    <CommandGroup>
+                                    {filteredItems.map((transaction) => (
+                                        <CommandItem key={transaction.id} onSelect={() => handleItemSelect(transaction)}>
+                                            {transaction.item}
+                                        </CommandItem>
+                                    ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
                     </Popover>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -265,5 +268,3 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
     </Sheet>
   );
 }
-
-    
