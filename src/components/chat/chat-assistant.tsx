@@ -9,6 +9,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Bot, Send, Sparkles, X, Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTransactions } from "@/hooks/use-transactions";
+import { useReports } from '@/hooks/use-reports';
 import { getChatbotResponse } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Message } from '@/ai/ai-types';
@@ -28,6 +29,7 @@ export function ChatAssistant() {
     const [input, setInput] = useState('');
     const [isPending, startTransition] = useTransition();
     const { allTransactions } = useTransactions();
+    const { reports } = useReports();
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const { toast } = useToast();
     const { user, loading } = useAuth();
@@ -64,7 +66,8 @@ export function ChatAssistant() {
                     history: messages,
                     prompt: prompt,
                     transactions: allTransactions,
-                }, user.uid); // Passando o user.uid
+                    reports: reports,
+                }, user.uid);
                 
                 const newModelMessage: Message = { role: 'model', content: response };
                 setMessages(prev => [...prev, newModelMessage]);

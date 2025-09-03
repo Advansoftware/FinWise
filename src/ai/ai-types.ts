@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 // Schema for generating spending tips
@@ -44,7 +45,8 @@ export type Message = z.infer<typeof MessageSchema>;
 export const ChatInputSchema = z.object({
   history: z.array(MessageSchema).describe('The conversation history.'),
   prompt: z.string().describe('The latest user prompt.'),
-  transactions: z.array(z.any()).describe("A JSON array of the user's financial transactions."),
+  transactions: z.array(z.any()).describe("A JSON array of the user's financial transactions, typically for the CURRENT month or a specific, recent period."),
+  reports: z.array(z.any()).optional().describe("An optional JSON array of pre-computed monthly financial reports. Use this for questions about past months to get quick, summarized data."),
 });
 export type ChatInput = z.infer<typeof ChatInputSchema>;
 
