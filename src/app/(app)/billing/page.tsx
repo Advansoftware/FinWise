@@ -105,7 +105,7 @@ export default function BillingPage() {
             if (result && result.url) {
                 window.location.href = result.url;
             } else {
-                 throw new Error('A resposta do servidor não continha a URL de checkout.');
+                 throw new Error(result.error || 'A resposta do servidor não continha a URL de checkout.');
             }
         } catch (error) {
             toast({ 
@@ -114,6 +114,7 @@ export default function BillingPage() {
                 description: error instanceof Error ? error.message : 'Tente novamente mais tarde.'
             });
             console.error("Stripe checkout error:", error);
+        } finally {
             setUpdatingPlan(null);
         }
     }

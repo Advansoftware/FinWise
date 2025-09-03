@@ -329,13 +329,14 @@ export async function getPlanAction(userId: string): Promise<UserPlan> {
  * @param userId - The ID of the user subscribing.
  * @returns The URL for the Stripe Checkout page.
  */
-export async function createStripeCheckoutAction(userId: string, userEmail: string, plan: Exclude<UserPlan, 'Básico'>): Promise<{ url: string | null }> {
+export async function createStripeCheckoutAction(userId: string, userEmail: string, plan: Exclude<UserPlan, 'Básico'>): Promise<{ url: string | null, error?: string }> {
     if (!userId || !userEmail) {
-        throw new Error("Usuário não autenticado ou email ausente.");
+        return { url: null, error: "Usuário não autenticado ou email ausente." };
     }
     
     if (!process.env.STRIPE_SECRET_KEY) {
-      throw new Error("A chave secreta do Stripe não está configurada no servidor.");
+        console.error("A chave secreta do Stripe não está configurada no servidor.");
+        return { url: null, error: "Erro de configuração de pagamento no servidor." };
     }
 
     const priceId = plan === 'Pro' 
@@ -343,29 +344,31 @@ export async function createStripeCheckoutAction(userId: string, userEmail: stri
         : process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PLUS;
 
     if (!priceId) {
-        throw new Error(`O ID de preço para o plano ${plan} não está configurado.`);
+        console.error(`O ID de preço para o plano ${plan} não está configurado.`);
+        return { url: null, error: `Erro de configuração para o plano ${plan}.` };
     }
 
     const adminDb = getAdminApp().firestore();
     const userDocRef = adminDb.doc(`users/${userId}`);
-    const userDoc = await userDocRef.get();
-    let stripeCustomerId = userDoc.data()?.stripeCustomerId;
-
-    // Create a new Stripe customer if one doesn't exist
-    if (!stripeCustomerId) {
-        const customer = await stripe.customers.create({
-            email: userEmail,
-            metadata: {
-                firebaseUID: userId,
-            },
-        });
-        stripeCustomerId = customer.id;
-        await userDocRef.set({ stripeCustomerId }, { merge: true });
-    }
-
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
-
+    
     try {
+        const userDoc = await userDocRef.get();
+        let stripeCustomerId = userDoc.data()?.stripeCustomerId;
+
+        // Create a new Stripe customer if one doesn't exist
+        if (!stripeCustomerId) {
+            const customer = await stripe.customers.create({
+                email: userEmail,
+                metadata: {
+                    firebaseUID: userId,
+                },
+            });
+            stripeCustomerId = customer.id;
+            await userDocRef.set({ stripeCustomerId }, { merge: true });
+        }
+
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+
         const session = await stripe.checkout.sessions.create({
             payment_method_types: ['card'],
             mode: 'subscription',
@@ -385,9 +388,7 @@ export async function createStripeCheckoutAction(userId: string, userEmail: stri
         return { url: session.url };
     } catch (error) {
         console.error("Error creating Stripe Checkout session:", error);
-        if (error instanceof Stripe.errors.StripeError) {
-            throw new Error(`Erro do Stripe: ${error.message}`);
-        }
-        throw new Error("Não foi possível iniciar o processo de pagamento.");
+        const errorMessage = error instanceof Stripe.errors.StripeError ? error.message : "Não foi possível iniciar o processo de pagamento.";
+        return { url: null, error: errorMessage };
     }
 }
