@@ -56,8 +56,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, [auth]);
 
-  const login = (email: string, pass: string) => {
-    return signInWithEmailAndPassword(auth, email, pass);
+  const login = async (email: string, pass: string) => {
+    const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+    
+    // Ensure user document exists in Firestore
+    const userDocRef = doc(db, "users", userCredential.user.uid);
+    const userDocSnap = await getDoc(userDocRef);
+
+    if (!userDocSnap.exists()) {
+        await setDoc(userDocRef, {
+            uid: userCredential.user.uid,
+            displayName: userCredential.user.displayName,
+            email: userCredential.user.email,
+            createdAt: new Date(),
+            plan: 'Básico'
+        }, { merge: true }); // Use merge to be safe
+    }
+    
+    return userCredential;
   };
   
   const signup = async (email: string, pass: string, name: string) => {
@@ -69,7 +85,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         displayName: name,
         email: email,
         createdAt: new Date(),
-        plan: 'Básico'
+        plan: 'Básico',
+        aiCredits: 0
     });
 
     return userCredential;
@@ -94,7 +111,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             displayName: userCredential.user.displayName,
             email: userCredential.user.email,
             createdAt: new Date(),
-            plan: 'Básico'
+            plan: 'Básico',
+            aiCredits: 0
         });
     }
 
