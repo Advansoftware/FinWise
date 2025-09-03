@@ -8,7 +8,7 @@ import { CheckCircle2, Loader2, Gem, BrainCircuit, Rocket } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { usePlan } from "@/hooks/use-plan";
 import { UserPlan } from "@/lib/types";
-import { createStripeCheckoutAction, createStripePortalSession } from '@/services/stripe-actions';
+import { createCheckoutAction, createPortalAction } from '@/services/payment-service';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { UpgradeCelebration } from '@/components/billing/upgrade-celebration';
@@ -95,7 +95,7 @@ function BillingPageContent() {
         if (!user || !user.email) return;
         setIsProcessing(true);
         try {
-            const result = await createStripeCheckoutAction(user.uid, user.email, newPlan);
+            const result = await createCheckoutAction({ userId: user.uid, userEmail: user.email, plan: newPlan });
             if (result.url) {
                 window.location.href = result.url;
             } else {
@@ -117,7 +117,7 @@ function BillingPageContent() {
         if (!user) return;
         setIsProcessing(true);
         try {
-            const { url, error } = await createStripePortalSession(user.uid);
+            const { url, error } = await createPortalAction({ userId: user.uid });
             if (url) {
                 window.location.href = url;
             } else {
