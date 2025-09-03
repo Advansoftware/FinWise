@@ -154,7 +154,7 @@ export default function BillingPage() {
                                     className="w-full" 
                                     disabled={isCurrent || isLoading || isPlanLoading} 
                                     onClick={() => handlePlanChange(plan.name as UserPlan)} 
-                                    variant={isCurrent ? 'default' : 'outline'}
+                                    variant={isCurrent ? 'outline' : 'default'}
                                 >
                                     {isLoading ? <Loader2 className="animate-spin" /> : isCurrent ? "Seu Plano Atual" : plan.cta}
                                 </Button>
