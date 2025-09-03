@@ -56,25 +56,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [dbAdapter]);
 
   useEffect(() => {
-    // This listener handles Firebase-based auth state (Google, or if Firebase is auth provider)
-    const unsubscribe = authAdapter.onAuthStateChanged(handleAuthChange);
-    return () => unsubscribe();
+    const authProvider = process.env.NEXT_PUBLIC_AUTH_PROVIDER || 'firebase';
+
+    if (authProvider === 'firebase') {
+      // This listener handles Firebase-based auth state (Google, or if Firebase is auth provider)
+      const unsubscribe = authAdapter.onAuthStateChanged(handleAuthChange);
+      return () => unsubscribe();
+    } else {
+      // For mongodb provider, we check session from localStorage
+      try {
+        const session = localStorage.getItem('finwise_session');
+        if (session) {
+          const userProfile = JSON.parse(session);
+          setUser(userProfile);
+        }
+      } catch (error) {
+        console.error("Failed to parse local session", error);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    }
   }, [authAdapter, handleAuthChange]);
   
   const login: IAuthAdapter['login'] = async (email, password) => {
     setLoading(true);
-    const loggedInUser = await authAdapter.login(email, password);
-    setUser(loggedInUser);
-    setLoading(false);
-    return loggedInUser;
+    try {
+      const loggedInUser = await authAdapter.login(email, password);
+      setUser(loggedInUser);
+      return loggedInUser;
+    } finally {
+      setLoading(false);
+    }
   };
   
   const signup: IAuthAdapter['signup'] = async (email, password, name) => {
     setLoading(true);
-    const signedUpUser = await authAdapter.signup(email, password, name);
-    setUser(signedUpUser);
-    setLoading(false);
-    return signedUpUser;
+    try {
+      const signedUpUser = await authAdapter.signup(email, password, name);
+      setUser(signedUpUser);
+      return signedUpUser;
+    } finally {
+      setLoading(false);
+    }
   };
   
   const signInWithGoogle: IAuthAdapter['signInWithGoogle'] = async () => {

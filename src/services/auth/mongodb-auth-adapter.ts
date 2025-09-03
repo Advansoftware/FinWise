@@ -1,3 +1,4 @@
+
 // src/services/auth/mongodb-auth-adapter.ts
 
 import { getFirebase } from "@/lib/firebase";
@@ -47,48 +48,19 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
 
     async logout(): Promise<void> {
         localStorage.removeItem(SESSION_KEY);
+        // Also sign out from Firebase in case of a Google session
+        if (this.firebaseAuth.currentUser) {
+            await this.firebaseAuth.signOut();
+        }
         await Promise.resolve();
     }
     
     onAuthStateChanged(callback: AuthStateChangedCallback): Unsubscribe {
-        // This adapter doesn't use Firebase's auth state for email/password.
-        // We simulate it for Google Sign-In and for initial page load.
-        
-        // For Google Sign-in, Firebase will handle the auth state.
+        // This method is primarily for the Firebase adapter.
+        // The logic for MongoDB is handled directly in the AuthProvider's useEffect.
+        // However, we still need to listen for Google Sign-in which uses Firebase.
         const unsubscribeFirebase = this.firebaseAuth.onIdTokenChanged(callback);
-        
-        // For our custom auth, we check local storage on load.
-        try {
-            const session = localStorage.getItem(SESSION_KEY);
-            if (session) {
-                // We need to create a "mock" FirebaseUser object to satisfy the callback type.
-                // This is a bit of a hack, but necessary to bridge the two systems.
-                const profile: UserProfile = JSON.parse(session);
-                const mockUser: FirebaseUser = {
-                    uid: profile.uid,
-                    email: profile.email,
-                    displayName: profile.displayName,
-                    // Add other required properties with default values
-                    photoURL: null,
-                    emailVerified: false,
-                    isAnonymous: false,
-                    metadata: {},
-                    providerData: [],
-                    providerId: 'custom',
-                    tenantId: null,
-                    delete: async () => {},
-                    getIdToken: async () => '',
-                    getIdTokenResult: async () => ({} as any),
-                    reload: async () => {},
-                    toJSON: () => ({}),
-                };
-                callback(mockUser);
-            }
-        } catch (e) {
-            console.error("Failed to parse session", e);
-        }
 
-        // Return a function that unsubscribes from the Firebase listener.
         return () => {
             unsubscribeFirebase();
         };
