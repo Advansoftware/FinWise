@@ -1,4 +1,3 @@
-
 // src/app/api/stripe-webhook/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
@@ -49,7 +48,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
             aiCredits: creditsMap[plan],
             stripeCustomerId: session.customer,
             stripeSubscriptionId: subscription.id,
-            stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+            stripeCurrentPeriodEnd: firestore.Timestamp.fromMillis(subscription.current_period_end * 1000),
         });
         
         console.log(`[Webhook] Successfully upgraded plan for user ${firebaseUID} to ${plan}.`);
@@ -82,7 +81,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
         
         await userRef.update({
             aiCredits: creditsMap[plan], // Reset credits at the start of each billing cycle
-            stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+            stripeCurrentPeriodEnd: firestore.Timestamp.fromMillis(subscription.current_period_end * 1000),
         });
 
         console.log(`[Webhook] Successfully renewed credits for user ${firebaseUID}.`);
