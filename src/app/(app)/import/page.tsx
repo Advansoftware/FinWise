@@ -69,7 +69,8 @@ export default function ImportPage() {
                 parseOfx(content);
             }
         };
-
+        
+        // Smart encoding detection for OFX
         if (isOfx) {
             const peekReader = new FileReader();
             peekReader.onload = (e) => {
@@ -106,28 +107,29 @@ export default function ImportPage() {
 
     const parseOfx = async (content: string) => {
         try {
-            // Workaround for a bug in ofx-js library where it fails on some bank statements
-            const processedContent = content.replace(/<\/BANKTRANLIST>/, '</BANKTRANLIST></STMTRS>');
-            
-            const ofxData = await toJs(processedContent);
-            let account;
+            const ofxData = await toJs(content);
             let transactionList;
             
-            if (ofxData.OFX.BANKMSGSRSV1) {
-                account = ofxData.OFX.BANKMSGSRSV1.STMTTRNRS.STMTRS;
-                transactionList = account.BANKTRANLIST.STMTTRN;
-            } else if (ofxData.OFX.CREDITCARDMSGSRSV1) {
-                account = ofxData.OFX.CREDITCARDMSGSRSV1.CCSTMTTRNRS.CCSTMTRS;
-                transactionList = account.BANKTRANLIST.STMTTRN;
+            // Check for bank account transactions
+            if (ofxData?.OFX?.BANKMSGSRSV1?.STMTTRNRS?.STMTRS?.BANKTRANLIST?.STMTTRN) {
+                transactionList = ofxData.OFX.BANKMSGSRSV1.STMTTRNRS.STMTRS.BANKTRANLIST.STMTTRN;
+            // Check for credit card transactions
+            } else if (ofxData?.OFX?.CREDITCARDMSGSRSV1?.CCSTMTTRNRS?.CCSTMTRS?.BANKTRANLIST?.STMTTRN) {
+                transactionList = ofxData.OFX.CREDITCARDMSGSRSV1.CCSTMTTRNRS.CCSTMTRS.BANKTRANLIST.STMTTRN;
             } else {
-                throw new Error("Formato OFX não suportado.");
+                throw new Error("Formato OFX não suportado ou nenhuma transação encontrada.");
+            }
+
+            // Ensure transactionList is an array
+            if (!Array.isArray(transactionList)) {
+                transactionList = [transactionList];
             }
 
             const transactions = transactionList.map((t: any) => ({
                 date: new Date(`${t.DTPOSTED.slice(0, 4)}-${t.DTPOSTED.slice(4, 6)}-${t.DTPOSTED.slice(6, 8)}T12:00:00Z`).toISOString(),
                 item: t.MEMO,
                 amount: Math.abs(parseFloat(t.TRNAMT)),
-                type: parseFloat(t.TRNAMT) > 0 ? 'income' : 'expense',
+                type: parseFloat(t.TRNAMT) >= 0 ? 'income' : 'expense',
                 category: "Outros" as TransactionCategory,
                 quantity: 1,
             }));
