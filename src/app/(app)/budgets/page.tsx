@@ -1,4 +1,3 @@
-
 // src/app/(app)/budgets/page.tsx
 'use client';
 

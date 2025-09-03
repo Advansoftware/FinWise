@@ -1,4 +1,3 @@
-
 // src/components/dashboard/future-balance-card.tsx
 'use client';
 
@@ -11,7 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useWallets } from "@/hooks/use-wallets";
 import { useBudgets } from "@/hooks/use-budgets";
 import { useTransactions } from "@/hooks/use-transactions";
-import { predictFutureBalanceAction } from "@/app/actions";
+import { predictFutureBalanceAction } from "@/services/ai-actions";
 import { PredictFutureBalanceOutput } from "@/ai/ai-types";
 import { subMonths, startOfMonth, isSameDay } from "date-fns";
 import { cn } from "@/lib/utils";

@@ -1,4 +1,3 @@
-
 // src/app/(app)/reports/page.tsx
 'use client';
 import { useState, useMemo } from 'react';
@@ -11,11 +10,14 @@ import { Loader2, BarChart2, TrendingUp, TrendingDown, DollarSign, Sparkles, Cal
 import { Skeleton } from '@/components/ui/skeleton';
 import { ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { ProUpgradeCard } from '@/components/pro-upgrade-card';
+import { usePlan } from '@/hooks/use-plan';
 
 const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
 export default function ReportsPage() {
     const { allTransactions, isLoading: isTransactionsLoading } = useTransactions();
+    const { isPro, isLoading: isPlanLoading } = usePlan();
 
     const availableYears = useMemo(() => {
         const years = new Set(allTransactions.map(t => getYear(new Date(t.date))));
@@ -24,7 +26,7 @@ export default function ReportsPage() {
         return Array.from(years).sort((a, b) => b - a);
     }, [allTransactions]);
 
-    if (isTransactionsLoading) {
+    if (isTransactionsLoading || isPlanLoading) {
         return (
             <div className="flex flex-col gap-6">
                  <div>
@@ -35,6 +37,10 @@ export default function ReportsPage() {
                 <Skeleton className="h-64 w-full"/>
             </div>
         )
+    }
+
+    if (!isPro) {
+        return <ProUpgradeCard featureName="Relatórios Inteligentes" />
     }
 
     return (

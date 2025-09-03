@@ -1,4 +1,4 @@
-
+// src/components/dashboard/scan-qr-code-dialog.tsx
 "use client";
 
 import {
@@ -16,7 +16,7 @@ import { Loader2, Upload, Camera, Paperclip, Sparkles, BrainCircuit, Info } from
 import { useRef, useState, useEffect, useCallback, useTransition } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { extractReceiptInfoAction } from "@/app/actions";
+import { extractReceiptInfoAction } from "@/services/ai-actions";
 import { Skeleton } from "../ui/skeleton";
 import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";

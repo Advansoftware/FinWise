@@ -1,4 +1,4 @@
-
+// src/components/chat/chat-assistant.tsx
 "use client";
 
 import { useState, useRef, useEffect, useTransition } from 'react';
@@ -10,12 +10,13 @@ import { Bot, Send, Sparkles, X, Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTransactions } from "@/hooks/use-transactions";
 import { useReports } from '@/hooks/use-reports';
-import { getChatbotResponse } from '@/app/actions';
+import { getChatbotResponse } from '@/services/ai-actions';
 import { useToast } from '@/hooks/use-toast';
 import { Message } from '@/ai/ai-types';
 import { useAuth } from '@/hooks/use-auth';
 import { Badge } from '../ui/badge';
 import { getYear, startOfMonth } from 'date-fns';
+import { usePlan } from '@/hooks/use-plan';
 
 const suggestionPrompts = [
     "Quanto gastei com Supermercado este mês?",
@@ -34,6 +35,7 @@ export function ChatAssistant() {
     const scrollAreaRef = useRef<HTMLDivElement>(null);
     const { toast } = useToast();
     const { user, loading } = useAuth();
+    const { isPro } = usePlan();
 
     useEffect(() => {
         // Scroll to bottom when new messages are added
@@ -48,10 +50,10 @@ export function ChatAssistant() {
     const handleSubmit = (prompt: string = input) => {
         if (!prompt.trim()) return;
 
-        if (!user) {
+        if (!user || !isPro) {
             toast({
-                title: "Erro de Autenticação",
-                description: "Você precisa estar logado para usar o chat.",
+                title: "Recurso Pro",
+                description: "O assistente de IA está disponível apenas para assinantes Pro.",
                 variant: "destructive"
             });
             return;
@@ -99,6 +101,8 @@ export function ChatAssistant() {
     const handleSuggestionClick = (prompt: string) => {
         handleSubmit(prompt);
     };
+    
+    if (!isPro) return null;
 
     return (
         <div className="relative">

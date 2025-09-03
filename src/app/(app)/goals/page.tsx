@@ -24,7 +24,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Goal } from "@/lib/types";
 import { useState, useTransition, useEffect, useMemo, useRef } from "react";
-import { projectGoalCompletionAction } from "@/app/actions";
+import { projectGoalCompletionAction } from "@/services/ai-actions";
 import { useAuth } from "@/hooks/use-auth";
 import { useTransactions } from "@/hooks/use-transactions";
 import { format } from "date-fns";

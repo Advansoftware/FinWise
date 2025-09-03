@@ -1,4 +1,4 @@
-
+// src/components/transactions/analyze-transactions-dialog.tsx
 
 "use client";
 
@@ -15,7 +15,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Wand2, Loader2, Lock } from "lucide-react";
 import { Transaction } from "@/lib/types";
-import { analyzeTransactions } from "@/app/actions";
+import { analyzeTransactionsAction } from "@/services/ai-actions";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "../ui/scroll-area";
 import ReactMarkdown from 'react-markdown';
@@ -40,7 +40,7 @@ export function AnalyzeTransactionsDialog({ transactions }: AnalyzeTransactionsD
         
         startAnalyzing(async () => {
             try {
-                const result = await analyzeTransactions(transactions, user.uid);
+                const result = await analyzeTransactionsAction(transactions, user.uid);
                 setAnalysis(result);
             } catch (error: any) {
                 console.error("Analysis error:", error);

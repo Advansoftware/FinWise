@@ -1,11 +1,11 @@
-
+// src/components/dashboard/ai-tip-card.tsx
 "use client";
 
 import { useState, useEffect, useTransition, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Sparkles } from "lucide-react";
-import { getSpendingTip } from "@/app/actions";
+import { getSpendingTip } from "@/services/ai-actions";
 import { Skeleton } from "../ui/skeleton";
 import { Transaction } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";

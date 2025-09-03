@@ -8,7 +8,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useBudgets } from "@/hooks/use-budgets";
 import { subMonths, startOfMonth, endOfMonth } from "date-fns";
-import { generateAutomaticBudgetsAction } from "@/app/actions";
+import { generateAutomaticBudgetsAction } from "@/services/ai-actions";
 import { useToast } from "@/hooks/use-toast";
 import { AutomaticBudgetDialog } from "./automatic-budget-dialog";
 import { BudgetItemSchema } from "@/ai/ai-types";

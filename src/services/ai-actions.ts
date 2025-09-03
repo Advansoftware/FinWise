@@ -1,18 +1,6 @@
-
+// src/services/ai-actions.ts
 'use server';
 
-import { AICredential, UserPlan } from '@/lib/types';
-import { z } from 'zod';
-import { generateSpendingTip } from '@/ai/flows/ai-powered-spending-tips';
-import { chatWithTransactions } from '@/ai/flows/chat-with-transactions';
-import { extractReceiptInfo } from '@/ai/flows/extract-receipt-info';
-import { suggestCategoryForItem } from '@/ai/flows/suggest-category';
-import { generateMonthlyReport } from '@/ai/flows/generate-monthly-report';
-import { generateAnnualReport } from '@/ai/flows/generate-annual-report';
-import { suggestBudgetAmount } from '@/ai/flows/suggest-budget-amount';
-import { projectGoalCompletion } from '@/ai/flows/project-goal-completion';
-import { generateAutomaticBudgets } from '@/ai/flows/generate-automatic-budgets';
-import { predictFutureBalance } from '@/ai/flows/predict-future-balance';
 import {
   ChatInput,
   ReceiptInfoInput,
@@ -37,136 +25,27 @@ import {
   GenerateAutomaticBudgetsOutput,
   PredictFutureBalanceInput,
   PredictFutureBalanceOutput,
-  AICreditLogAction
+  AICreditLogAction,
+  Transaction
 } from '@/ai/ai-types';
+import { getActiveAICredential } from './settings-service';
+import { consumeAICredits } from './credits-service';
+import { generateSpendingTip } from '@/ai/flows/ai-powered-spending-tips';
+import { chatWithTransactions } from '@/ai/flows/chat-with-transactions';
+import { extractReceiptInfo } from '@/ai/flows/extract-receipt-info';
+import { suggestCategoryForItem } from '@/ai/flows/suggest-category';
+import { generateMonthlyReport } from '@/ai/flows/generate-monthly-report';
+import { generateAnnualReport } from '@/ai/flows/generate-annual-report';
+import { suggestBudgetAmount } from '@/ai/flows/suggest-budget-amount';
+import { projectGoalCompletion } from '@/ai/flows/project-goal-completion';
+import { generateAutomaticBudgets } from '@/ai/flows/generate-automatic-budgets';
+import { predictFutureBalance } from '@/ai/flows/predict-future-balance';
 import { createConfiguredAI, getModelReference } from '@/ai/genkit';
-import { getAdminApp } from '@/lib/firebase-admin';
-import { increment } from 'firebase-admin/firestore';
-import Stripe from 'stripe';
 
-const FINWISE_AI_CREDENTIAL_ID = 'finwise-ai-default';
-
-const finwiseAICredential = {
-    id: FINWISE_AI_CREDENTIAL_ID,
-    name: 'FinWise AI',
-    provider: 'finwise',
-    isReadOnly: true,
-} as const;
-
-// Default AI settings for fallback ONLY.
-const DEFAULT_AI_CREDENTIAL: AICredential = {
-  id: 'default-fallback',
-  name: 'Default Fallback Ollama',
-  provider: 'ollama',
-  ollamaModel: 'llama3',
-  ollamaServerAddress: 'http://127.0.0.1:11434',
-};
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-  apiVersion: '2024-06-20',
-});
-
-
-async function consumeAICredits(userId: string, cost: number, action: AICreditLogAction, isFreeAction: boolean = false): Promise<void> {
-  if (!userId) {
-    throw new Error("Usuário não autenticado.");
-  }
-
-  // If the action is designated as free, skip the entire process.
-  if (isFreeAction) {
-    return;
-  }
-
-  const adminDb = getAdminApp().firestore();
-  const userRef = adminDb.doc(`users/${userId}`);
-
-  try {
-    await adminDb.runTransaction(async (transaction) => {
-      const userDoc = await transaction.get(userRef);
-      if (!userDoc.exists) {
-        throw new Error("Usuário não encontrado.");
-      }
-
-      const userData = userDoc.data();
-      const currentPlan = userData?.plan || 'Básico';
-      const currentCredits = userData?.aiCredits || 0;
-
-      if (currentPlan === 'Básico') {
-        throw new Error("Este recurso está disponível apenas para assinantes dos planos Pro, Plus ou Infinity. Faça upgrade para continuar.");
-      }
-
-      if (cost > 0 && currentCredits < cost) {
-        throw new Error(`Créditos de IA insuficientes. Você precisa de ${cost} créditos, mas tem apenas ${currentCredits}. Considere comprar mais créditos ou aguardar a renovação mensal.`);
-      }
-
-      // Decrement credits and log the action
-      if (cost > 0) {
-        transaction.update(userRef, { aiCredits: increment(-cost) });
-      }
-
-      const logRef = adminDb.collection('users').doc(userId).collection('aiCreditLogs').doc();
-      transaction.set(logRef, {
-        action,
-        cost,
-        timestamp: new Date().toISOString(), // Use ISO string for consistency
-      });
-    });
-  } catch (error) {
-    // Re-throw the original error to be displayed to the user
-    throw error;
-  }
-}
-
-
-// Server action to get AI settings using Admin SDK
-export async function getActiveAICredential(userId: string): Promise<AICredential> {
-  if (!userId) {
-    console.warn("getActiveAICredential called without a userId. Returning default settings.");
-    return DEFAULT_AI_CREDENTIAL;
-  }
-
-  try {
-    const adminDb = getAdminApp().firestore();
-    const settingsRef = adminDb.doc(`users/${userId}/settings/ai`);
-    const docSnap = await settingsRef.get();
-
-    if (docSnap.exists()) {
-      const settings = docSnap.data();
-      if (settings && settings.activeCredentialId && settings.credentials) {
-        if (settings.activeCredentialId === FINWISE_AI_CREDENTIAL_ID) {
-          return {
-            ...finwiseAICredential,
-            provider: 'googleai', // The underlying provider for FinWise AI
-            googleAIApiKey: process.env.GEMINI_API_KEY,
-          };
-        }
-        
-        const activeCredential = settings.credentials.find((c: AICredential) => c.id === settings.activeCredentialId);
-        if (activeCredential) {
-          return { ...DEFAULT_AI_CREDENTIAL, ...activeCredential };
-        }
-      }
-    }
-    
-    // If no specific setting is found, default to FinWise AI
-    return {
-      ...finwiseAICredential,
-      provider: 'googleai',
-      googleAIApiKey: process.env.GEMINI_API_KEY,
-    };
-    
-  } catch (error) {
-    console.error("Error getting AI settings from Firestore with Admin SDK:", error);
-    // In case of error (e.g., permissions), return defaults to avoid breaking the app
-    return DEFAULT_AI_CREDENTIAL;
-  }
-}
-
-async function getCredentialAndHandleCredits(userId: string, cost: number, action: AICreditLogAction, isFreeAction: boolean = false): Promise<AICredential> {
+async function getCredentialAndHandleCredits(userId: string, cost: number, action: AICreditLogAction, isFreeAction: boolean = false): Promise<any> {
     const credential = await getActiveAICredential(userId);
 
-    // Only consume credits if the active provider is FinWise AI (which uses googleai)
-    if (credential.id === FINWISE_AI_CREDENTIAL_ID) {
+    if (credential.provider === 'finwise') {
         await consumeAICredits(userId, cost, action, isFreeAction);
     }
     
@@ -243,7 +122,7 @@ Transações do Mês Atual:
   }
 }
 
-export async function analyzeTransactions(transactions: any, userId: string): Promise<string> {
+export async function analyzeTransactionsAction(transactions: Transaction[], userId: string): Promise<string> {
   const credential = await getCredentialAndHandleCredits(userId, 5, 'Análise de Transações');
   try {
     const configuredAI = createConfiguredAI(credential);
@@ -297,7 +176,7 @@ export async function extractReceiptInfoAction(input: ReceiptInfoInput, userId: 
     credential = await getActiveAICredential(userId);
   }
 
-  if (credential.id === FINWISE_AI_CREDENTIAL_ID) {
+  if (credential.provider === 'finwise') {
      await consumeAICredits(userId, 10, 'Leitura de Nota Fiscal (OCR)');
   }
   
@@ -339,112 +218,3 @@ export async function predictFutureBalanceAction(input: PredictFutureBalanceInpu
   const credential = await getCredentialAndHandleCredits(userId, cost, 'Previsão de Saldo', !forceRefresh);
   return predictFutureBalance(input, credential);
 }
-
-
-// --- Payment and Subscription Actions ---
-
-export async function createStripeCheckoutAction(userId: string, userEmail: string, plan: Exclude<UserPlan, 'Básico'>): Promise<{ url: string | null; error?: string }> {
-  if (!userId || !userEmail) {
-    return { url: null, error: "Usuário não autenticado ou email ausente." };
-  }
-
-  if (!process.env.STRIPE_SECRET_KEY) {
-    console.error("A chave secreta do Stripe não está configurada no servidor.");
-    return { url: null, error: "Erro de configuração de pagamento no servidor." };
-  }
-  
-  let priceId: string | undefined;
-
-  switch (plan) {
-    case 'Pro':
-      priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO;
-      break;
-    case 'Plus':
-      priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PLUS;
-      break;
-    case 'Infinity':
-      priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_INFINITY;
-      break;
-  }
-
-  if (!priceId) {
-    console.error(`O ID de preço para o plano ${plan} não está configurado.`);
-    return { url: null, error: `Erro de configuração para o plano ${plan}.` };
-  }
-
-  const adminDb = getAdminApp().firestore();
-  const userDocRef = adminDb.doc(`users/${userId}`);
-
-  try {
-    const userDoc = await userDocRef.get();
-    let stripeCustomerId = userDoc.data()?.stripeCustomerId;
-
-    if (!stripeCustomerId) {
-      const customer = await stripe.customers.create({
-        email: userEmail,
-        metadata: { firebaseUID: userId },
-      });
-      stripeCustomerId = customer.id;
-      await userDocRef.set({ stripeCustomerId }, { merge: true });
-    }
-
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
-
-    const session = await stripe.checkout.sessions.create({
-      payment_method_types: ['card'],
-      mode: 'subscription',
-      customer: stripeCustomerId,
-      line_items: [{
-        price: priceId,
-        quantity: 1,
-      }],
-      subscription_data: {
-        metadata: {
-          firebaseUID: userId,
-          plan: plan,
-        }
-      },
-      success_url: `${appUrl}/billing?success=true`,
-      cancel_url: `${appUrl}/billing?canceled=true`,
-    });
-
-    return { url: session.url };
-  } catch (error) {
-    console.error("Error creating Stripe Checkout session:", error);
-    const errorMessage = error instanceof Stripe.errors.StripeError ? error.message : "Não foi possível iniciar o processo de pagamento.";
-    return { url: null, error: errorMessage };
-  }
-}
-
-
-export async function createStripePortalSession(userId: string): Promise<{ url: string | null, error?: string }> {
-  if (!userId) {
-    return { url: null, error: "Usuário não autenticado." };
-  }
-
-  try {
-    const adminDb = getAdminApp().firestore();
-    const userDocRef = adminDb.doc(`users/${userId}`);
-    const userDoc = await userDocRef.get();
-    const stripeCustomerId = userDoc.data()?.stripeCustomerId;
-
-    if (!stripeCustomerId) {
-      return { url: null, error: "Cliente Stripe não encontrado para este usuário." };
-    }
-
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
-
-    const portalSession = await stripe.billingPortal.sessions.create({
-      customer: stripeCustomerId,
-      return_url: `${appUrl}/billing`,
-    });
-
-    return { url: portalSession.url };
-
-  } catch (error) {
-    console.error("Error creating Stripe Portal session:", error);
-    const errorMessage = error instanceof Stripe.errors.StripeError ? error.message : "Não foi possível abrir o portal de gerenciamento.";
-    return { url: null, error: errorMessage };
-  }
-}
-

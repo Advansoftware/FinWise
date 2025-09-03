@@ -7,7 +7,7 @@ import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { getFirebase } from "@/lib/firebase";
 import { collection, doc, setDoc, onSnapshot, Unsubscribe, query } from "firebase/firestore";
-import { generateMonthlyReportAction, generateAnnualReportAction } from "@/app/actions";
+import { generateMonthlyReportAction, generateAnnualReportAction } from "@/services/ai-actions";
 import { useTransactions } from "./use-transactions";
 import { startOfMonth, subMonths, getYear, getMonth, isToday } from "date-fns";
 

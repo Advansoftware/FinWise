@@ -1,4 +1,3 @@
-
 // src/components/profile/financial-profile-card.tsx
 "use client";
 
@@ -9,7 +8,7 @@ import { RefreshCw, Sparkles } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useReports } from "@/hooks/use-reports";
-import { getFinancialProfile } from "@/app/actions";
+import { getFinancialProfile } from "@/services/ai-actions";
 import { Separator } from "../ui/separator";
 import { useAuth } from "@/hooks/use-auth";
 import { getFirebase } from "@/lib/firebase";

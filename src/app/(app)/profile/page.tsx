@@ -1,4 +1,3 @@
-
 // src/app/(app)/profile/page.tsx
 'use client';
 
@@ -6,8 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { FinancialProfileCard } from "@/components/profile/financial-profile-card";
 import { UpdateNameForm } from "@/components/profile/update-name-form";
 import { UpdatePasswordForm } from "@/components/profile/update-password-form";
+import { usePlan } from "@/hooks/use-plan";
+import { ProUpgradeCard } from "@/components/pro-upgrade-card";
 
 export default function ProfilePage() {
+    const { isPro } = usePlan();
+
     return (
         <div className="flex flex-col gap-6">
             <div>
@@ -37,7 +40,11 @@ export default function ProfilePage() {
                     </Card>
                 </div>
                 <div className="lg:col-span-1">
-                     <FinancialProfileCard />
+                    {isPro ? (
+                        <FinancialProfileCard />
+                    ) : (
+                        <ProUpgradeCard featureName="Análise de Perfil com IA" />
+                    )}
                 </div>
 
             </div>

@@ -1,4 +1,4 @@
-
+// src/app/(app)/import/page.tsx
 'use client';
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -13,7 +13,7 @@ import { default as toJs } from 'ofx-js';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { format } from 'date-fns';
-import { suggestCategoryForItemAction } from '@/app/actions';
+import { suggestCategoryForItemAction } from '@/services/ai-actions';
 import { useAuth } from '@/hooks/use-auth';
 import { usePlan } from '@/hooks/use-plan';
 import { ProUpgradeCard } from '@/components/pro-upgrade-card';

@@ -1,4 +1,3 @@
-
 // src/components/budgets/create-budget-dialog.tsx
 'use client';
 
@@ -24,7 +23,7 @@ import { useTransactions } from "@/hooks/use-transactions";
 import { useBudgets } from "@/hooks/use-budgets";
 import { Budget, TransactionCategory } from "@/lib/types";
 import { Loader2, Sparkles } from "lucide-react";
-import { suggestBudgetAmountAction } from "@/app/actions";
+import { suggestBudgetAmountAction } from "@/services/ai-actions";
 import { useAuth } from "@/hooks/use-auth";
 import { subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { usePlan } from "@/hooks/use-plan";
