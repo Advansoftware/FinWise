@@ -65,7 +65,7 @@ class StripeAdapter implements PaymentService {
                     }
                 },
                 success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}/billing?success=true`,
-                cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}/billing`,
+                cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}/billing?canceled=true`,
             };
 
             // If user already has a Stripe Customer ID, use it.

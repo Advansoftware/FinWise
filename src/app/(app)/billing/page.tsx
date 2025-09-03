@@ -1,3 +1,4 @@
+
 // src/app/(app)/billing/page.tsx
 'use client';
 import { useState, useEffect, Suspense } from 'react';
@@ -12,6 +13,7 @@ import { createCheckoutAction, createPortalAction } from '@/services/payment-act
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { UpgradeCelebration } from '@/components/billing/upgrade-celebration';
+import { CancelFeedback } from '@/components/billing/cancel-feedback';
 
 const plans = [
     {
@@ -83,11 +85,15 @@ function BillingPageContent() {
     const { toast } = useToast();
     const [isProcessing, setIsProcessing] = useState(false);
     const [showCelebration, setShowCelebration] = useState(false);
+    const [showCancelFeedback, setShowCancelFeedback] = useState(false);
     const searchParams = useSearchParams();
 
     useEffect(() => {
         if (searchParams.get('success')) {
             setShowCelebration(true);
+        }
+        if (searchParams.get('canceled')) {
+            setShowCancelFeedback(true);
         }
     }, [searchParams]);
 
@@ -141,6 +147,7 @@ function BillingPageContent() {
     return (
         <div className="flex flex-col gap-6">
             {showCelebration && <UpgradeCelebration onComplete={() => setShowCelebration(false)} />}
+            {showCancelFeedback && <CancelFeedback onComplete={() => setShowCancelFeedback(false)} />}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                  <div>
                     <h1 className="text-3xl font-bold tracking-tight">Assinatura e Créditos</h1>
