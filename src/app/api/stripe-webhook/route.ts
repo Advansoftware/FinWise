@@ -1,3 +1,4 @@
+
 // src/app/api/stripe-webhook/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
@@ -23,12 +24,15 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         return;
     }
 
+    // Customer ID must exist to link the subscription to a customer
     if (!session.customer) {
         console.error(`Webhook Error: Customer ID is missing from session. Session ID: ${session.id}`);
         return;
     }
     
     try {
+        // **ROBUST FIX**: Retrieve the subscription object directly from Stripe.
+        // This is the source of truth for metadata.
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
         
         const firebaseUID = subscription.metadata?.firebaseUID;
@@ -43,10 +47,11 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         const userRef = adminDb.doc(`users/${firebaseUID}`);
         
         // This is the crucial update that happens after a successful checkout.
+        // It sets the plan, credits, and Stripe-related IDs on the user's document.
         await userRef.set({
             plan: plan,
             aiCredits: creditsMap[plan] || 0,
-            stripeCustomerId: session.customer,
+            stripeCustomerId: session.customer, // Save the customer ID
             stripeSubscriptionId: subscription.id,
             stripeCurrentPeriodEnd: firestore.Timestamp.fromMillis(subscription.current_period_end * 1000),
         }, { merge: true }); // Use merge:true to avoid overwriting existing user fields.

@@ -1,3 +1,4 @@
+
 // src/adapters/stripe-adapter.ts
 
 import { PaymentService, CheckoutInput, CheckoutOutput, PortalInput, PortalOutput } from "@/services/payment-service";
@@ -55,6 +56,8 @@ class StripeAdapter implements PaymentService {
                     price: priceId,
                     quantity: 1,
                 }],
+                // **CRUCIAL CHANGE**: Metadata is moved to subscription_data
+                // This ensures it's saved on the subscription object itself.
                 subscription_data: {
                     metadata: {
                         firebaseUID: userId,
@@ -72,8 +75,7 @@ class StripeAdapter implements PaymentService {
                 // Otherwise, let Stripe create the customer during checkout.
                 // Pass user info so a new customer is created with this email.
                 sessionConfig.customer_email = userEmail;
-                // Add Firebase UID to customer metadata so we can link them in the webhook.
-                sessionConfig.customer_creation = 'always'; // Ensures customer is created
+                sessionConfig.customer_creation = 'always';
             }
 
             const session = await this.stripe.checkout.sessions.create(sessionConfig);
