@@ -54,7 +54,9 @@ const DEFAULT_AI_CREDENTIAL: AICredential = {
   openAIModel: 'gpt-3.5-turbo'
 };
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+    apiVersion: '2024-06-20',
+});
 
 
 async function consumeAICredits(userId: string, cost: number, action: AICreditLogAction, isFreeAction: boolean = false): Promise<void> {
@@ -325,7 +327,6 @@ export async function getPlanAction(userId: string): Promise<UserPlan> {
 /**
  * Creates a Stripe Checkout session for a user to subscribe to a plan.
  * @param userId - The ID of the user subscribing.
- * @param plan - The plan the user is subscribing to.
  * @returns The URL for the Stripe Checkout page.
  */
 export async function createStripeCheckoutAction(userId: string, userEmail: string, plan: Exclude<UserPlan, 'Básico'>): Promise<{ url: string | null }> {
@@ -384,6 +385,9 @@ export async function createStripeCheckoutAction(userId: string, userEmail: stri
         return { url: session.url };
     } catch (error) {
         console.error("Error creating Stripe Checkout session:", error);
+        if (error instanceof Error) {
+            throw new Error(`Não foi possível iniciar o processo de pagamento: ${error.message}`);
+        }
         throw new Error("Não foi possível iniciar o processo de pagamento.");
     }
 }

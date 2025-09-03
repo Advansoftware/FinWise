@@ -89,17 +89,23 @@ export default function BillingPage() {
     }, [searchParams, toast]);
 
     const handlePlanChange = async (newPlan: UserPlan) => {
-        if (!user || newPlan === 'Básico') return;
+        if (!user || newPlan === 'Básico' || !user.email) {
+            toast({
+                variant: 'destructive',
+                title: 'Erro de Autenticação',
+                description: 'Não foi possível identificar o usuário. Por favor, faça login novamente.'
+            });
+            return;
+        }
         
         setUpdatingPlan(newPlan);
 
         try {
-            const { url } = await createStripeCheckoutAction(user.uid, user.email!, newPlan as Exclude<UserPlan, 'Básico'>);
-            if (url) {
-                // Redireciona o usuário para a página de pagamento do Stripe
-                window.location.href = url;
+            const result = await createStripeCheckoutAction(user.uid, user.email, newPlan as Exclude<UserPlan, 'Básico'>);
+            if (result && result.url) {
+                window.location.href = result.url;
             } else {
-                 throw new Error('Não foi possível criar a sessão de checkout do Stripe.');
+                 throw new Error('A resposta do servidor não continha a URL de checkout.');
             }
         } catch (error) {
             toast({ 
@@ -108,10 +114,8 @@ export default function BillingPage() {
                 description: error instanceof Error ? error.message : 'Tente novamente mais tarde.'
             });
             console.error("Stripe checkout error:", error);
-            // Se houve erro, paramos o loading para o usuário tentar de novo.
             setUpdatingPlan(null);
         }
-        // Em caso de sucesso, o usuário será redirecionado, então não precisamos resetar o loading aqui.
     }
 
     return (
