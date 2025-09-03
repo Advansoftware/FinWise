@@ -22,7 +22,7 @@ class StripeAdapter implements PaymentService {
         const priceIdMap = {
             'Pro': process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO,
             'Plus': process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PLUS,
-            'Infinity': "price_1S3JSwAqYZYoBfLTltKNlHY7",
+            'Infinity': process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_INFINITY,
         };
         const priceId = priceIdMap[plan];
 
@@ -47,21 +47,10 @@ class StripeAdapter implements PaymentService {
             const userDoc = await userDocRef.get();
             let stripeCustomerId = userDoc.data()?.stripeCustomerId;
 
-            if (!stripeCustomerId) {
-                const customer = await this.stripe.customers.create({
-                    email: userEmail,
-                    metadata: { firebaseUID: userId },
-                });
-                stripeCustomerId = customer.id;
-                await userDocRef.set({ stripeCustomerId }, { merge: true });
-            }
-
-            const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
-
-            const session = await this.stripe.checkout.sessions.create({
+            // Session configuration object
+            const sessionConfig: Stripe.Checkout.SessionCreateParams = {
                 payment_method_types: ['card'],
                 mode: 'subscription',
-                customer: stripeCustomerId,
                 line_items: [{
                     price: priceId,
                     quantity: 1,
@@ -72,9 +61,22 @@ class StripeAdapter implements PaymentService {
                         plan: plan,
                     }
                 },
-                success_url: `${appUrl}/billing?success=true`,
-                cancel_url: `${appUrl}/billing`,
-            });
+                success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}/billing?success=true`,
+                cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002'}/billing`,
+            };
+
+            // If user already has a Stripe Customer ID, use it.
+            if (stripeCustomerId) {
+                sessionConfig.customer = stripeCustomerId;
+            } else {
+                // Otherwise, let Stripe create the customer during checkout.
+                // Pass user info so a new customer is created with this email.
+                sessionConfig.customer_email = userEmail;
+                // Add Firebase UID to customer metadata so we can link them in the webhook.
+                sessionConfig.customer_creation = 'always'; // Ensures customer is created
+            }
+
+            const session = await this.stripe.checkout.sessions.create(sessionConfig);
 
             return { url: session.url };
 
@@ -98,7 +100,8 @@ class StripeAdapter implements PaymentService {
             const stripeCustomerId = userDoc.data()?.stripeCustomerId;
 
             if (!stripeCustomerId) {
-                return { url: null, error: "Cliente Stripe não encontrado para este usuário." };
+                console.error(`[StripeAdapter] Portal session error: No stripeCustomerId found for user ${userId}`);
+                return { url: null, error: "Gerenciamento de assinatura indisponível. Por favor, contate o suporte." };
             }
 
             const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';

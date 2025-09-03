@@ -23,9 +23,13 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         console.error(`Webhook Error: Subscription ID is not a string. Session ID: ${session.id}`);
         return;
     }
+
+    if (!session.customer) {
+        console.error(`Webhook Error: Customer ID is missing from session. Session ID: ${session.id}`);
+        return;
+    }
     
     try {
-        // Retrieve the full subscription object to access metadata
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
         
         const firebaseUID = subscription.metadata?.firebaseUID;
@@ -39,15 +43,16 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         const adminDb = getAdminApp().firestore();
         const userRef = adminDb.doc(`users/${firebaseUID}`);
         
-        await userRef.update({
+        // This is the crucial update that happens after a successful checkout.
+        await userRef.set({
             plan: plan,
-            aiCredits: creditsMap[plan],
+            aiCredits: creditsMap[plan] || 0,
             stripeCustomerId: session.customer,
             stripeSubscriptionId: subscription.id,
             stripeCurrentPeriodEnd: firestore.Timestamp.fromMillis(subscription.current_period_end * 1000),
-        });
+        }, { merge: true }); // Use merge:true to avoid overwriting existing user fields.
         
-        console.log(`[Webhook] Successfully upgraded plan for user ${firebaseUID} to ${plan}.`);
+        console.log(`[Webhook] Successfully set plan for user ${firebaseUID} to ${plan}.`);
 
     } catch (error) {
         console.error(`[Webhook] Error handling checkout.session.completed for session ${session.id}:`, error);
@@ -79,7 +84,6 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
         const userRef = adminDb.doc(`users/${firebaseUID}`);
         
         // This logic is for renewals. It resets the credits to the plan's amount.
-        // If you want credits to accumulate, change this to `firestore.FieldValue.increment(creditsMap[plan])`.
         await userRef.update({
             aiCredits: creditsMap[plan], 
             stripeCurrentPeriodEnd: firestore.Timestamp.fromMillis(subscription.current_period_end * 1000),
@@ -157,4 +161,3 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ received: true });
 }
-
