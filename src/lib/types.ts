@@ -22,6 +22,14 @@ export interface Budget {
     currentSpending: number; // This will be calculated client-side
 }
 
+export interface Goal {
+    id: string;
+    name: string;
+    targetAmount: number;
+    currentAmount: number;
+    createdAt: string; // ISO 8601 format string
+}
+
 
 export interface Category {
   name: TransactionCategory;
