@@ -1,15 +1,13 @@
 
 // src/app/(app)/reports/page.tsx
 'use client';
-import { useState, useMemo, useTransition } from 'react';
-import { AnnualReport, MonthlyReport, Transaction } from "@/lib/types";
+import { useState, useMemo } from 'react';
+import { AnnualReport, MonthlyReport } from "@/lib/types";
 import { useReports } from '@/hooks/use-reports';
 import { useTransactions } from '@/hooks/use-transactions';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getYear, getMonth, startOfYear, endOfYear, startOfMonth, endOfMonth } from 'date-fns';
-import { Loader2, FileText, BarChart2, TrendingUp, TrendingDown, DollarSign, Sparkles, Calendar, LineChart } from 'lucide-react';
+import { getYear } from 'date-fns';
+import { Loader2, BarChart2, TrendingUp, TrendingDown, DollarSign, Sparkles, Calendar, Clock } from 'lucide-react';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ResponsiveContainer, PieChart, Pie, Cell, Legend } from 'recharts';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -43,7 +41,7 @@ export default function ReportsPage() {
         <div className="flex flex-col gap-6">
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Relatórios</h1>
-                <p className="text-muted-foreground">Analise seus fechamentos mensais e anuais, e obtenha insights gerados por IA.</p>
+                <p className="text-muted-foreground">Visualize os relatórios mensais e anuais gerados automaticamente pelo sistema. Os relatórios do mês anterior são criados no dia 01 de cada mês.</p>
             </div>
             <Tabs defaultValue={String(getYear(new Date()))} className="w-full">
                 <TabsList>
@@ -62,22 +60,9 @@ export default function ReportsPage() {
 }
 
 function YearlyReportView({ year }: { year: number }) {
-    const { getAnnualReport, generateAnnualReport, monthlyReports, isLoading: isReportsLoading } = useReports();
-    const [isGenerating, startGenerating] = useTransition();
-
+    const { getAnnualReport, isLoading: isReportsLoading } = useReports();
+    
     const annualReport = useMemo(() => getAnnualReport(year), [year, getAnnualReport]);
-    const monthlyReportsForYear = useMemo(() => monthlyReports.filter(r => r.year === year), [year, monthlyReports]);
-    const areAllMonthlyReportsGenerated = monthlyReportsForYear.length === 12;
-
-    const handleGenerateAnnualReport = () => {
-        if (!areAllMonthlyReportsGenerated) {
-            // Potentially add a toast here to inform user
-            return;
-        }
-        startGenerating(async () => {
-            await generateAnnualReport(year, monthlyReportsForYear);
-        });
-    };
     
     if (isReportsLoading) return <ReportsSkeleton />;
 
@@ -89,8 +74,8 @@ function YearlyReportView({ year }: { year: number }) {
         <Tabs defaultValue="monthly" className="w-full mt-4">
             <TabsList className="grid w-full grid-cols-2">
                 <TabsTrigger value="monthly">Visão Mensal</TabsTrigger>
-                <TabsTrigger value="annual" disabled={!areAllMonthlyReportsGenerated}>
-                    Visão Anual {!areAllMonthlyReportsGenerated && `(${monthlyReportsForYear.length}/12)`}
+                <TabsTrigger value="annual" disabled>
+                    Visão Anual (Pendente)
                 </TabsTrigger>
             </TabsList>
             <TabsContent value="monthly">
@@ -100,14 +85,10 @@ function YearlyReportView({ year }: { year: number }) {
                  <Card className="col-span-full mt-4">
                     <CardContent className="p-8 text-center text-muted-foreground flex flex-col items-center">
                         <Calendar className="h-12 w-12 mb-4 text-primary/50" />
-                        <h3 className="text-lg font-semibold text-foreground">Gerar Relatório Anual de {year}</h3>
+                        <h3 className="text-lg font-semibold text-foreground">Relatório Anual de {year} Pendente</h3>
                         <p className="text-sm max-w-md mx-auto">
-                           Consolide os 12 relatórios mensais em uma única análise anual para otimizar consultas futuras da IA.
+                           O relatório anual será gerado automaticamente quando todos os 12 relatórios mensais estiverem disponíveis.
                         </p>
-                        <Button className="mt-4" onClick={handleGenerateAnnualReport} disabled={isGenerating}>
-                            {isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-                            Gerar Relatório Anual
-                        </Button>
                     </CardContent>
                 </Card>
             </TabsContent>
@@ -129,28 +110,9 @@ function MonthlyReportsGrid({ year }: { year: number }) {
 }
 
 function MonthlyReportCard({ year, month }: { year: number, month: number }) {
-    const { getMonthlyReport, generateMonthlyReport } = useReports();
-    const { allTransactions } = useTransactions();
-    const [isGenerating, startGenerating] = useTransition();
-
+    const { getMonthlyReport } = useReports();
     const report = getMonthlyReport(year, month);
     const monthName = new Date(0, month - 1).toLocaleString('pt-BR', { month: 'long' });
-
-    const transactionsForMonth = useMemo(() => {
-        const startDate = startOfMonth(new Date(year, month - 1));
-        const endDate = endOfMonth(startDate);
-        return allTransactions.filter(t => {
-            const tDate = new Date(t.date);
-            return tDate >= startDate && tDate <= endDate;
-        });
-    }, [allTransactions, year, month]);
-
-     const handleGenerateReport = () => {
-        if (transactionsForMonth.length === 0) return;
-        startGenerating(async () => {
-            await generateMonthlyReport(year, month, transactionsForMonth);
-        });
-    }
 
     if (report) {
          return (
@@ -170,13 +132,10 @@ function MonthlyReportCard({ year, month }: { year: number, month: number }) {
     return (
         <Card className="flex flex-col justify-center items-center text-center p-4 bg-muted/50 border-dashed h-full min-h-[118px]">
             <h3 className="font-semibold text-base capitalize">{monthName}</h3>
-            {transactionsForMonth.length > 0 ? (
-                <Button size="sm" className="mt-2" onClick={handleGenerateReport} disabled={isGenerating}>
-                    {isGenerating ? <Loader2 className="h-4 w-4 animate-spin"/> : "Gerar"}
-                </Button>
-            ) : (
-                <p className="text-xs text-muted-foreground mt-1">Sem dados</p>
-            )}
+            <div className="flex items-center gap-1.5 text-muted-foreground text-xs mt-2">
+                <Clock className="h-3 w-3"/>
+                <span>Pendente</span>
+            </div>
         </Card>
     )
 }
@@ -258,7 +217,3 @@ function ReportsSkeleton() {
         </div>
     )
 }
-
-    
-
-    

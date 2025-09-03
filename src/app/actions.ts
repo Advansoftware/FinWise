@@ -52,11 +52,16 @@ const DEFAULT_AI_CREDENTIAL: AICredential = {
   openAIModel: 'gpt-3.5-turbo'
 };
 
-async function consumeAICredits(userId: string, cost: number, action: AICreditLogAction): Promise<void> {
+async function consumeAICredits(userId: string, cost: number, action: AICreditLogAction, isFreeAction: boolean = false): Promise<void> {
     if (!userId) {
         throw new Error("Usuário não autenticado.");
     }
     
+    // If the action is designated as free, skip the entire process.
+    if (isFreeAction) {
+        return;
+    }
+
     const adminDb = getAdminApp().firestore();
     const userRef = adminDb.doc(`users/${userId}`);
 
@@ -135,7 +140,7 @@ export async function getActiveAICredential(userId: string): Promise<AICredentia
 
 export async function getSpendingTip(transactions: Transaction[], userId: string, forceRefresh: boolean = false): Promise<string> {
   const cost = forceRefresh ? 1 : 0;
-  await consumeAICredits(userId, cost, 'Dica Rápida');
+  await consumeAICredits(userId, cost, 'Dica Rápida', !forceRefresh);
   try {
     const credential = await getActiveAICredential(userId);
     const result = await generateSpendingTip({
@@ -152,7 +157,7 @@ export async function getSpendingTip(transactions: Transaction[], userId: string
 
 export async function getFinancialProfile(input: FinancialProfileInput, userId: string, forceRefresh: boolean = false): Promise<string> {
   const cost = forceRefresh ? 5 : 0;
-  await consumeAICredits(userId, cost, 'Perfil Financeiro');
+  await consumeAICredits(userId, cost, 'Perfil Financeiro', !forceRefresh);
   try {
     const credential = await getActiveAICredential(userId);
     const configuredAI = createConfiguredAI(credential);
@@ -254,14 +259,14 @@ export async function suggestCategoryForItemAction(input: SuggestCategoryInput, 
     return suggestCategoryForItem(input, credential);
 }
 
-export async function generateMonthlyReportAction(input: GenerateReportInput, userId: string): Promise<GenerateReportOutput> {
-  await consumeAICredits(userId, 5, 'Relatório Mensal');
+export async function generateMonthlyReportAction(input: GenerateReportInput, userId: string, isFreeAction: boolean = false): Promise<GenerateReportOutput> {
+  await consumeAICredits(userId, 5, 'Relatório Mensal', isFreeAction);
   const credential = await getActiveAICredential(userId);
   return generateMonthlyReport(input, credential);
 }
 
-export async function generateAnnualReportAction(input: GenerateAnnualReportInput, userId: string): Promise<GenerateAnnualReportOutput> {
-  await consumeAICredits(userId, 10, 'Relatório Anual');
+export async function generateAnnualReportAction(input: GenerateAnnualReportInput, userId: string, isFreeAction: boolean = false): Promise<GenerateAnnualReportOutput> {
+  await consumeAICredits(userId, 10, 'Relatório Anual', isFreeAction);
   const credential = await getActiveAICredential(userId);
   return generateAnnualReport(input, credential);
 }
@@ -286,7 +291,7 @@ export async function generateAutomaticBudgetsAction(input: GenerateAutomaticBud
 
 export async function predictFutureBalanceAction(input: PredictFutureBalanceInput, userId: string, forceRefresh: boolean = false): Promise<PredictFutureBalanceOutput> {
     const cost = forceRefresh ? 3 : 0;
-    await consumeAICredits(userId, cost, 'Previsão de Saldo');
+    await consumeAICredits(userId, cost, 'Previsão de Saldo', !forceRefresh);
     const credential = await getActiveAICredential(userId);
     return predictFutureBalance(input, credential);
 }
