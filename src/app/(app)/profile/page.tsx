@@ -1,20 +1,46 @@
 
+// src/app/(app)/profile/page.tsx
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FinancialProfileCard } from "@/components/profile/financial-profile-card";
+import { UpdateNameForm } from "@/components/profile/update-name-form";
+import { UpdatePasswordForm } from "@/components/profile/update-password-form";
 
 export default function ProfilePage() {
     return (
         <div className="flex flex-col gap-6">
             <div>
-                <h1 className="text-3xl font-bold tracking-tight">Perfil e Análise</h1>
-                <p className="text-muted-foreground">Descubra seu perfil financeiro. A IA analisa seus hábitos de consumo e cria um resumo para ajudá-lo a entender melhor para onde seu dinheiro vai.</p>
+                <h1 className="text-3xl font-bold tracking-tight">Perfil e Configurações da Conta</h1>
+                <p className="text-muted-foreground">Gerencie suas informações pessoais, segurança e veja a análise do seu perfil financeiro.</p>
             </div>
             
-            <FinancialProfileCard />
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <div className="lg:col-span-2 space-y-6">
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Informações da Conta</CardTitle>
+                            <CardDescription>Atualize seu nome de exibição.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                           <UpdateNameForm />
+                        </CardContent>
+                    </Card>
+                     <Card>
+                        <CardHeader>
+                            <CardTitle>Segurança</CardTitle>
+                            <CardDescription>Altere sua senha.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                           <UpdatePasswordForm />
+                        </CardContent>
+                    </Card>
+                </div>
+                <div className="lg:col-span-1">
+                     <FinancialProfileCard />
+                </div>
+
+            </div>
         </div>
     )
 }
-
-    
