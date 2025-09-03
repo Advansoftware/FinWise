@@ -17,13 +17,6 @@ const creditsMap: Record<UserPlan, number> = {
     'Infinity': 500,
 };
 
-async function sendCommandToClient(userId: string, command: object) {
-    const rtdb = getAdminApp().database();
-    const commandRef = rtdb.ref(`commands/${userId}`);
-    // Using set() will overwrite any existing command, which is fine for this use case
-    await commandRef.set(command);
-}
-
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
     const subscriptionId = session.subscription;
     if (typeof subscriptionId !== 'string') {
@@ -47,29 +40,23 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
             return;
         }
 
-        // Send a command to the client to update the user's plan
-        await sendCommandToClient(firebaseUID, {
-            action: 'SET_USER_PLAN',
-            payload: {
-                plan: plan,
-                aiCredits: creditsMap[plan] || 0,
-                stripeCustomerId: session.customer,
-                stripeSubscriptionId: subscription.id,
-                stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000).toISOString(),
-            }
-        });
+        const adminDb = getAdminApp().firestore();
+        const userRef = adminDb.doc(`users/${firebaseUID}`);
+
+        await userRef.set({
+            plan: plan,
+            aiCredits: creditsMap[plan] || 0,
+            stripeCustomerId: session.customer,
+            stripeSubscriptionId: subscription.id,
+            stripeCurrentPeriodEnd: firestore.Timestamp.fromMillis(subscription.current_period_end * 1000),
+        }, { merge: true });
         
-        console.log(`[Webhook] Sent SET_USER_PLAN command to user ${firebaseUID} for plan ${plan}.`);
+        console.log(`[Webhook] Successfully updated plan for user ${firebaseUID} to ${plan}.`);
 
     } catch (error) {
         console.error(`[Webhook] Error handling checkout.session.completed for session ${session.id}:`, error);
     }
 }
-
-// NOTE: Invoice payment succeeded is for renewals. Since the client-side database
-// doesn't persist between sessions in the same way, we can let the initial `SET_USER_PLAN`
-// handle the credit update. For a full production system with a server DB,
-// this would be important for credit renewals. For now, we can simplify.
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     const firebaseUID = subscription.metadata.firebaseUID;
@@ -79,13 +66,16 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     }
     
     try {
-        // Send a command to the client to downgrade the plan
-        await sendCommandToClient(firebaseUID, {
-            action: 'DOWNGRADE_USER_PLAN',
-            payload: {}
+        const adminDb = getAdminApp().firestore();
+        const userRef = adminDb.doc(`users/${firebaseUID}`);
+
+        await userRef.update({
+            plan: 'Básico',
+            stripeSubscriptionId: null,
+            stripeCurrentPeriodEnd: null,
         });
 
-        console.log(`[Webhook] Sent DOWNGRADE_USER_PLAN command to user ${firebaseUID}.`);
+        console.log(`[Webhook] Successfully downgraded plan for user ${firebaseUID}.`);
     } catch (error) {
         console.error(`[Webhook] Error handling subscription cancellation for user ${firebaseUID}:`, error);
     }
@@ -114,9 +104,6 @@ export async function POST(req: NextRequest) {
              case 'checkout.session.completed':
                 await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
                 break;
-            
-            // We are simplifying and not handling 'invoice.payment_succeeded' for now
-            // as the client-side DB state would be reset anyway on a new session.
             
             case 'customer.subscription.deleted':
                 await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
