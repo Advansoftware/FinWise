@@ -24,6 +24,7 @@ import { useWallets } from "@/hooks/use-wallets";
 import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from "../ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
 import { cn } from "@/lib/utils";
+import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group";
 
 
 export function AddTransactionSheet({ children }: { children: React.ReactNode }) {
@@ -42,7 +43,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
       date: new Date(),
       category: '' as TransactionCategory | '',
       subcategory: '',
-      type: 'expense' as 'income' | 'expense',
+      type: 'expense' as 'income' | 'expense' | 'transfer',
       walletId: '',
   });
   
@@ -92,6 +93,13 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
     if(field === 'category') {
         setFormState(prev => ({...prev, subcategory: ''}));
     }
+     if (field === 'type' && value === 'transfer') {
+      setFormState(prev => ({...prev, category: 'Transferência', item: 'Transferência entre contas'}));
+      setItemInputValue('Transferência entre contas');
+    } else if (field === 'type' && value !== 'transfer' && formState.category === 'Transferência') {
+       setFormState(prev => ({...prev, category: '', item: ''}));
+       setItemInputValue('');
+    }
   }
 
   const handleItemSelect = (transaction: Transaction) => {
@@ -134,6 +142,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
             date: formState.date.toISOString(),
             quantity: parseInt(formState.quantity),
             walletId,
+            category: formState.type === 'transfer' ? 'Transferência' : formState.category
         };
         await addTransaction(newTransaction);
 
@@ -171,21 +180,11 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
             <div className="grid gap-4 py-4">
                 <div className="grid grid-cols-4 items-center gap-4">
                     <Label className="text-right">Tipo</Label>
-                    <div className="col-span-3 grid grid-cols-2 gap-2">
-                         <Button
-                            variant={formState.type === 'expense' ? 'destructive' : 'outline'}
-                            onClick={() => handleInputChange('type', 'expense')}
-                         >
-                            Despesa
-                        </Button>
-                         <Button
-                             variant={formState.type === 'income' ? 'default' : 'outline'}
-                             className={cn("bg-transparent border-emerald-600 text-emerald-600 hover:bg-emerald-600 hover:text-white", formState.type === 'income' && "bg-emerald-600 text-white")}
-                             onClick={() => handleInputChange('type', 'income')}
-                         >
-                            Receita
-                        </Button>
-                    </div>
+                     <ToggleGroup type="single" value={formState.type} onValueChange={(value) => handleInputChange('type', value || 'expense')} className="col-span-3">
+                        <ToggleGroupItem value="expense" aria-label="Despesa" className="w-full data-[state=on]:bg-destructive/80 data-[state=on]:text-white">Despesa</ToggleGroupItem>
+                        <ToggleGroupItem value="income" aria-label="Receita" className="w-full data-[state=on]:bg-emerald-600 data-[state=on]:text-white">Receita</ToggleGroupItem>
+                        <ToggleGroupItem value="transfer" aria-label="Transferência" className="w-full data-[state=on]:bg-sky-600 data-[state=on]:text-white">Transfer</ToggleGroupItem>
+                    </ToggleGroup>
                 </div>
 
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -199,6 +198,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                                     value={itemInputValue} 
                                     onChange={(e) => setItemInputValue(e.target.value)}
                                     autoComplete="off"
+                                    disabled={formState.type === 'transfer'}
                                 />
                             </PopoverAnchor>
                             <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" onOpenAutoFocus={(e) => e.preventDefault()}>
@@ -249,32 +249,36 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                     </SelectContent>
                     </Select>
                 </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="category" className="text-right">Categoria</Label>
-                    <Select value={formState.category} onValueChange={(value) => handleInputChange('category', value as TransactionCategory)}>
-                    <SelectTrigger className="col-span-3">
-                        <SelectValue placeholder="Selecione uma categoria" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {categories.map(cat => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                        ))}
-                    </SelectContent>
-                    </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="subcategory" className="text-right">Subcategoria</Label>
-                    <Select value={formState.subcategory} onValueChange={(v) => handleInputChange('subcategory', v)} disabled={!formState.category || availableSubcategories.length === 0}>
-                        <SelectTrigger className="col-span-3">
-                            <SelectValue placeholder={availableSubcategories.length > 0 ? "Selecione" : "Nenhuma"} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {availableSubcategories.map(sub => (
-                                <SelectItem key={sub} value={sub}>{sub}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
+                {formState.type !== 'transfer' && (
+                    <>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="category" className="text-right">Categoria</Label>
+                            <Select value={formState.category} onValueChange={(value) => handleInputChange('category', value as TransactionCategory)}>
+                            <SelectTrigger className="col-span-3">
+                                <SelectValue placeholder="Selecione uma categoria" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {categories.filter(c => c !== 'Transferência').map(cat => (
+                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                ))}
+                            </SelectContent>
+                            </Select>
+                        </div>
+                        <div className="grid grid-cols-4 items-center gap-4">
+                            <Label htmlFor="subcategory" className="text-right">Subcategoria</Label>
+                            <Select value={formState.subcategory} onValueChange={(v) => handleInputChange('subcategory', v)} disabled={!formState.category || availableSubcategories.length === 0}>
+                                <SelectTrigger className="col-span-3">
+                                    <SelectValue placeholder={availableSubcategories.length > 0 ? "Selecione" : "Nenhuma"} />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {availableSubcategories.map(sub => (
+                                        <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </>
+                )}
             </div>
         </div>
         <SheetFooter>

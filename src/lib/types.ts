@@ -1,4 +1,4 @@
-export type TransactionCategory = "Supermercado" | "Transporte" | "Entretenimento" | "Contas" | "Restaurante" | "Saúde" | "Educação" | "Lazer" | "Vestuário" | "Outros" | "Salário" | "Investimentos" | "Vendas";
+export type TransactionCategory = "Supermercado" | "Transporte" | "Entretenimento" | "Contas" | "Restaurante" | "Saúde" | "Educação" | "Lazer" | "Vestuário" | "Outros" | "Salário" | "Investimentos" | "Vendas" | "Transferência";
 
 export type WalletType = 'Conta Corrente' | 'Cartão de Crédito' | 'Poupança' | 'Investimentos' | 'Dinheiro' | 'Outros';
 
@@ -19,7 +19,7 @@ export interface Transaction {
   amount: number;
   quantity?: number;
   establishment?: string;
-  type: 'income' | 'expense';
+  type: 'income' | 'expense' | 'transfer';
   walletId: string;
 }
 

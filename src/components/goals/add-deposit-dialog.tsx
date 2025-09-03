@@ -21,9 +21,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useGoals } from "@/hooks/use-goals";
 import { Goal } from "@/lib/types";
 import { Loader2 } from "lucide-react";
+import { useWallets } from "@/hooks/use-wallets";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 const depositSchema = z.object({
   amount: z.coerce.number().positive("O valor do depósito deve ser maior que zero."),
+  walletId: z.string().min(1, "A carteira de origem é obrigatória.")
 });
 
 type DepositFormValues = z.infer<typeof depositSchema>;
@@ -38,16 +41,17 @@ export function AddDepositDialog({ children, goal }: AddDepositDialogProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { addDeposit } = useGoals();
+  const { wallets } = useWallets();
 
   const form = useForm<DepositFormValues>({
     resolver: zodResolver(depositSchema),
-    defaultValues: { amount: 0 },
+    defaultValues: { amount: 0, walletId: '' },
   });
 
   const onSubmit = async (data: DepositFormValues) => {
     setIsSubmitting(true);
     try {
-      await addDeposit(goal.id, Number(data.amount));
+      await addDeposit(goal.id, Number(data.amount), data.walletId);
       setIsOpen(false);
       form.reset();
     } catch (error) {
@@ -59,13 +63,13 @@ export function AddDepositDialog({ children, goal }: AddDepositDialogProps) {
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if(!open) form.reset(); }}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Adicionar Depósito para "{goal.name}"</DialogTitle>
           <DialogDescription>
-            Insira o valor que você deseja adicionar a esta meta.
+            Insira o valor que você deseja adicionar a esta meta e de qual carteira o dinheiro sairá.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -79,6 +83,28 @@ export function AddDepositDialog({ children, goal }: AddDepositDialogProps) {
                   <FormControl>
                     <Input type="number" step="0.01" placeholder="Ex: 100.00" {...field} />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="walletId"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Carteira de Origem</FormLabel>
+                  <Select onValueChange={field.onChange} value={field.value}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione de onde sairá o dinheiro" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {wallets.map(wallet => (
+                        <SelectItem key={wallet.id} value={wallet.id}>{wallet.name} (R$ {wallet.balance.toFixed(2)})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}

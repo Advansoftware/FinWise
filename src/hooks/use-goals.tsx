@@ -3,11 +3,11 @@
 'use client';
 
 import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from "react";
-import { Goal } from "@/lib/types";
+import { Goal, Transaction } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { getFirebase } from "@/lib/firebase";
-import { collection, doc, setDoc, addDoc, Timestamp, onSnapshot, Unsubscribe, deleteDoc, writeBatch, query, where, getDocs, orderBy, updateDoc, increment } from "firebase/firestore";
+import { collection, doc, setDoc, addDoc, Timestamp, onSnapshot, Unsubscribe, deleteDoc, writeBatch, query, where, getDocs, orderBy, updateDoc, increment, runTransaction } from "firebase/firestore";
 
 interface GoalsContextType {
   goals: Goal[];
@@ -15,7 +15,7 @@ interface GoalsContextType {
   addGoal: (goal: Omit<Goal, 'id' | 'createdAt' | 'currentAmount'>) => Promise<void>;
   updateGoal: (goalId: string, updates: Partial<Goal>) => Promise<void>;
   deleteGoal: (goalId: string) => Promise<void>;
-  addDeposit: (goalId: string, amount: number) => Promise<void>;
+  addDeposit: (goalId: string, amount: number, walletId: string) => Promise<void>;
 }
 
 const GoalsContext = createContext<GoalsContextType | undefined>(undefined);
@@ -81,18 +81,40 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
   const deleteGoal = async (goalId: string) => {
     if (!user) throw new Error("User not authenticated");
     const { db } = getFirebase();
+    // In a real app, you might want to handle what happens to deposited money.
+    // For now, we'll just delete the goal.
     const docRef = doc(db, "users", user.uid, "goals", goalId);
     await deleteDoc(docRef);
     toast({ title: "Meta excluída." });
   }
 
-  const addDeposit = async (goalId: string, amount: number) => {
+  const addDeposit = async (goalId: string, amount: number, walletId: string) => {
      if (!user) throw new Error("User not authenticated");
      const { db } = getFirebase();
-     const docRef = doc(db, "users", user.uid, "goals", goalId);
-     await updateDoc(docRef, {
-        currentAmount: increment(amount)
+     const goalRef = doc(db, "users", user.uid, "goals", goalId);
+     const walletRef = doc(db, "users", user.uid, "wallets", walletId);
+     const transactionRef = doc(collection(db, "users", user.uid, "transactions"));
+
+     await runTransaction(db, async (t) => {
+        const goalDoc = await t.get(goalRef);
+        if (!goalDoc.exists()) throw new Error("Meta não encontrada.");
+
+        // Create the transaction record
+        const newTransaction: Omit<Transaction, 'id'> = {
+            item: `Depósito para Meta: ${goalDoc.data().name}`,
+            amount: amount,
+            date: new Date().toISOString(),
+            category: "Transferência",
+            type: 'transfer',
+            walletId: walletId,
+        };
+        t.set(transactionRef, { ...newTransaction, date: new Date(newTransaction.date) });
+
+        // Update wallet and goal balances
+        t.update(walletRef, { balance: increment(-amount) });
+        t.update(goalRef, { currentAmount: increment(amount) });
      });
+
      toast({ title: `Depósito de R$ ${amount.toFixed(2)} adicionado!`})
   }
 
