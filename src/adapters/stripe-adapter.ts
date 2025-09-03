@@ -56,11 +56,9 @@ class StripeAdapter implements PaymentService {
                     price: priceId,
                     quantity: 1,
                 }],
-                // **CRUCIAL CHANGE**: Metadata is moved to subscription_data
-                // This ensures it's saved on the subscription object itself.
                 subscription_data: {
                     metadata: {
-                        firebaseUID: userId,
+                        userId: userId, // Use a generic userId
                         plan: plan,
                     }
                 },
@@ -73,10 +71,7 @@ class StripeAdapter implements PaymentService {
                 sessionConfig.customer = stripeCustomerId;
             } else {
                 // Otherwise, let Stripe create the customer during checkout.
-                // Pass user info so a new customer is created with this email.
                 sessionConfig.customer_email = userEmail;
-                // No longer need 'customer_creation: 'always'' as it's implicit
-                // when customer_email is provided without a customer ID.
             }
 
             const session = await this.stripe.checkout.sessions.create(sessionConfig);

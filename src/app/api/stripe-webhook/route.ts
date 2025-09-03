@@ -22,8 +22,6 @@ async function updateUserPlanInDb(userId: string, updates: Record<string, any>) 
     const { db } = await connectToDatabase();
     const usersCollection = db.collection('users');
     
-    // The user ID from Firebase/Custom Auth is a string, which corresponds to the _id in our users collection.
-    // We need to convert it to an ObjectId to query correctly.
     const userObjectId = new ObjectId(userId);
 
     await usersCollection.updateOne(
@@ -38,16 +36,16 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         const subscriptionId = session.subscription as string;
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
-        const firebaseUID = subscription.metadata.firebaseUID;
+        const userId = subscription.metadata.userId; // Use generic userId
         const plan = subscription.metadata.plan as UserPlan;
         
-        if (!firebaseUID || !plan) {
-            console.error(`[Webhook Critical Error] firebaseUID or plan is missing from subscription metadata. Subscription ID: ${subscription.id}`);
+        if (!userId || !plan) {
+            console.error(`[Webhook Critical Error] userId or plan is missing from subscription metadata. Subscription ID: ${subscription.id}`);
             return;
         }
 
         try {
-            await updateUserPlanInDb(firebaseUID, {
+            await updateUserPlanInDb(userId, {
                 plan: plan,
                 aiCredits: creditsMap[plan] || 0,
                 stripeCustomerId: subscription.customer as string,
@@ -55,10 +53,10 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
                 stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
             });
             
-            console.log(`[Webhook] Successfully processed subscription ${subscription.id} for user ${firebaseUID} on plan ${plan}.`);
+            console.log(`[Webhook] Successfully processed subscription ${subscription.id} for user ${userId} on plan ${plan}.`);
 
         } catch (error) {
-            console.error(`[Webhook] Error handling checkout.session.completed for user ${firebaseUID}:`, error);
+            console.error(`[Webhook] Error handling checkout.session.completed for user ${userId}:`, error);
         }
     } else {
          console.log(`[Webhook] Skipped processing checkout session ${session.id} as it is not a subscription.`);
@@ -66,32 +64,32 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
-    const firebaseUID = subscription.metadata.firebaseUID;
-    if (!firebaseUID) {
-        console.error(`[Webhook] Cancellation Error: firebaseUID is missing from subscription metadata. Subscription ID: ${subscription.id}`);
+    const userId = subscription.metadata.userId; // Use generic userId
+    if (!userId) {
+        console.error(`[Webhook] Cancellation Error: userId is missing from subscription metadata. Subscription ID: ${subscription.id}`);
         return; 
     }
     
     try {
-        await updateUserPlanInDb(firebaseUID, {
+        await updateUserPlanInDb(userId, {
             plan: 'Básico',
             aiCredits: 0,
             stripeSubscriptionId: null,
             stripeCurrentPeriodEnd: null,
         });
 
-        console.log(`[Webhook] Successfully downgraded plan for user ${firebaseUID} upon subscription cancellation.`);
+        console.log(`[Webhook] Successfully downgraded plan for user ${userId} upon subscription cancellation.`);
     } catch (error) {
-        console.error(`[Webhook] Error handling subscription cancellation for user ${firebaseUID}:`, error);
+        console.error(`[Webhook] Error handling subscription cancellation for user ${userId}:`, error);
     }
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
-    const firebaseUID = subscription.metadata.firebaseUID;
+    const userId = subscription.metadata.userId; // Use generic userId
     const newPlan = subscription.metadata.plan as UserPlan;
 
-    if (!firebaseUID || !newPlan) {
-        console.error(`[Webhook] Update Error: firebaseUID or plan is missing from subscription metadata. Subscription ID: ${subscription.id}`);
+    if (!userId || !newPlan) {
+        console.error(`[Webhook] Update Error: userId or plan is missing from subscription metadata. Subscription ID: ${subscription.id}`);
         return;
     }
 
@@ -100,15 +98,15 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     }
 
     try {
-        await updateUserPlanInDb(firebaseUID, {
+        await updateUserPlanInDb(userId, {
             plan: newPlan,
             aiCredits: creditsMap[newPlan] || 0,
             stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
         });
 
-        console.log(`[Webhook] Successfully updated plan for user ${firebaseUID} to ${newPlan}.`);
+        console.log(`[Webhook] Successfully updated plan for user ${userId} to ${newPlan}.`);
     } catch (error) {
-        console.error(`[Webhook] Error handling subscription update for user ${firebaseUID}:`, error);
+        console.error(`[Webhook] Error handling subscription update for user ${userId}:`, error);
     }
 }
 
