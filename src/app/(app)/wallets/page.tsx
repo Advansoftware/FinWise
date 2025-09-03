@@ -46,7 +46,7 @@ export default function WalletsPage() {
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Carteiras</h1>
-                    <p className="text-muted-foreground">Gerencie suas contas, cartões e outras fontes de recursos.</p>
+                    <p className="text-muted-foreground">Gerencie suas fontes de recursos. Carteiras representam suas contas bancárias, cartões de crédito ou até mesmo dinheiro físico. Toda transação precisa estar associada a uma carteira.</p>
                 </div>
                  <CreateWalletDialog>
                     <Button>
@@ -66,10 +66,10 @@ export default function WalletsPage() {
                     <CardContent className="p-8 text-center text-muted-foreground flex flex-col items-center">
                        <Landmark className="h-12 w-12 mb-4 text-primary/50" />
                        <h3 className="text-lg font-semibold text-foreground">Nenhuma carteira encontrada.</h3>
-                       <p className="text-sm">Crie sua primeira carteira (ex: "Conta Corrente") para começar a adicionar transações.</p>
+                       <p className="text-sm max-w-md mx-auto">Para começar, você precisa criar sua primeira carteira. Pense nela como sua conta bancária principal ou o cartão que mais usa.</p>
                        <CreateWalletDialog>
                          <Button className="mt-4">
-                            <PlusCircle className="mr-2 h-4 w-4" /> Criar Carteira
+                            <PlusCircle className="mr-2 h-4 w-4" /> Criar Primeira Carteira
                          </Button>
                        </CreateWalletDialog>
                     </CardContent>

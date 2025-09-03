@@ -36,7 +36,7 @@ export default function GoalsPage() {
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Metas de Economia</h1>
-                    <p className="text-muted-foreground">Crie e acompanhe suas metas para alcançar seus sonhos.</p>
+                    <p className="text-muted-foreground">Transforme seus sonhos em realidade. Crie metas financeiras e acompanhe seu progresso a cada depósito.</p>
                 </div>
                  <CreateGoalDialog>
                     <Button>
@@ -53,10 +53,15 @@ export default function GoalsPage() {
                 </div>
             ) : (
                  <Card className="col-span-full">
-                    <CardContent className="p-8 text-center text-muted-foreground">
+                    <CardContent className="p-8 text-center text-muted-foreground flex flex-col items-center">
                         <PiggyBank className="mx-auto h-12 w-12 mb-4 text-primary/50"/>
-                       <p>Nenhuma meta encontrada.</p>
-                       <p className="text-sm">Crie sua primeira meta para começar a economizar.</p>
+                       <h3 className="text-lg font-semibold text-foreground">Nenhuma meta encontrada.</h3>
+                       <p className="text-sm max-w-md mx-auto">Crie sua primeira meta para começar a economizar. Que tal "Viagem de Férias" ou "Entrada do Apartamento"?</p>
+                         <CreateGoalDialog>
+                            <Button className="mt-4">
+                                <PlusCircle className="mr-2 h-4 w-4" /> Criar Meta
+                            </Button>
+                        </CreateGoalDialog>
                     </CardContent>
                 </Card>
             )}

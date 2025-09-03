@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, MoreVertical, Trash2, Edit } from "lucide-react";
+import { PlusCircle, MoreVertical, Trash2, Edit, PiggyBank } from "lucide-react";
 import { useBudgets } from "@/hooks/use-budgets";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
@@ -35,7 +35,7 @@ export default function BudgetsPage() {
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Orçamentos</h1>
-                    <p className="text-muted-foreground">Crie e acompanhe seus orçamentos mensais para manter seus gastos sob controle.</p>
+                    <p className="text-muted-foreground">Defina limites de gastos mensais para suas categorias e evite surpresas no final do mês. Acompanhar um orçamento é o primeiro passo para assumir o controle total de suas finanças.</p>
                 </div>
                  <CreateBudgetDialog>
                     <Button>
@@ -52,9 +52,15 @@ export default function BudgetsPage() {
                 </div>
             ) : (
                  <Card className="col-span-full">
-                    <CardContent className="p-8 text-center text-muted-foreground">
-                       <p>Nenhum orçamento encontrado.</p>
-                       <p className="text-sm">Crie seu primeiro orçamento para começar a planejar.</p>
+                    <CardContent className="p-8 text-center text-muted-foreground flex flex-col items-center">
+                       <PiggyBank className="h-12 w-12 mb-4 text-primary/50" />
+                        <h3 className="text-lg font-semibold text-foreground">Nenhum orçamento encontrado.</h3>
+                       <p className="text-sm max-w-md mx-auto">Crie seu primeiro orçamento para começar a planejar. Que tal definir um limite para "Supermercado" ou "Restaurante"?</p>
+                        <CreateBudgetDialog>
+                            <Button className="mt-4">
+                                <PlusCircle className="mr-2 h-4 w-4" /> Criar Orçamento
+                            </Button>
+                        </CreateBudgetDialog>
                     </CardContent>
                 </Card>
             )}
