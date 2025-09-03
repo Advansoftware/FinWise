@@ -1,3 +1,4 @@
+
 // src/app/(app)/billing/page.tsx
 'use client';
 import { useState, useEffect } from 'react';
@@ -91,7 +92,7 @@ export default function BillingPage() {
         if (!user || newPlan === 'Básico') return;
         setUpdatingPlan(newPlan);
         try {
-            const { url } = await createStripeCheckoutAction(user.uid, user.email!, newPlan);
+            const { url } = await createStripeCheckoutAction(user.uid, user.email!, newPlan as Exclude<UserPlan, 'Básico'>);
             if (url) {
                 // Redireciona o usuário para a página de pagamento do Stripe
                 window.location.href = url;
@@ -105,11 +106,10 @@ export default function BillingPage() {
                 description: error instanceof Error ? error.message : 'Tente novamente mais tarde.'
             });
             console.error(error);
-        } finally {
-            // O loading será interrompido pela navegação para o Stripe,
-            // ou pelo erro, então não precisamos resetar aqui em caso de sucesso.
-             setUpdatingPlan(null);
+            // Se houve erro, paramos o loading para o usuário tentar de novo.
+            setUpdatingPlan(null);
         }
+        // Em caso de sucesso, o usuário será redirecionado, então não precisamos resetar o loading.
     }
 
     return (
