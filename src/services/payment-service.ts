@@ -38,30 +38,8 @@ export interface PaymentService {
  * Returns the currently configured payment service provider.
  * This acts as a factory, allowing us to easily switch providers in the future.
  */
-function getPaymentService(): PaymentService {
+export function getPaymentService(): PaymentService {
     // For now, we are hardcoding the Stripe adapter.
     // In the future, this could read from a config file to decide which provider to use.
     return getStripeAdapter();
-}
-
-// --- Public-facing Server Actions ---
-
-/**
- * Creates a checkout session using the configured payment provider.
- * UI components should call this action.
- */
-export async function createCheckoutAction(input: CheckoutInput): Promise<CheckoutOutput> {
-    'use server';
-    const paymentService = getPaymentService();
-    return paymentService.createCheckoutSession(input);
-}
-
-/**
- * Creates a customer portal session using the configured payment provider.
- * UI components should call this action.
- */
-export async function createPortalAction(input: PortalInput): Promise<PortalOutput> {
-    'use server';
-    const paymentService = getPaymentService();
-    return paymentService.createPortalSession(input);
 }

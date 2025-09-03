@@ -8,7 +8,7 @@ import { CheckCircle2, Loader2, Gem, BrainCircuit, Rocket } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { usePlan } from "@/hooks/use-plan";
 import { UserPlan } from "@/lib/types";
-import { createCheckoutAction, createPortalAction } from '@/services/payment-service';
+import { createCheckoutAction, createPortalAction } from '@/services/payment-actions';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { UpgradeCelebration } from '@/components/billing/upgrade-celebration';
