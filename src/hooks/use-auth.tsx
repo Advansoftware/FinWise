@@ -23,7 +23,7 @@ import {
   updatePassword
 } from 'firebase/auth';
 import { getFirebase } from '@/lib/firebase';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { getDatabaseAdapter } from '@/services/database/database-service';
 import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
@@ -45,79 +45,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const { auth, db } = getFirebase();
+  const dbAdapter = getDatabaseAdapter();
   const router = useRouter();
 
   useEffect(() => {
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
       setUser(user);
+      if (user) {
+        // Ensure user profile exists in the database
+        await dbAdapter.ensureUserProfile(user);
+      }
       setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [auth]);
+  }, [auth, dbAdapter]);
 
-  const login = async (email: string, pass: string) => {
-    const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-    
-    // Ensure user document exists in Firestore
-    const userDocRef = doc(db, "users", userCredential.user.uid);
-    const userDocSnap = await getDoc(userDocRef);
-
-    if (!userDocSnap.exists()) {
-        await setDoc(userDocRef, {
-            uid: userCredential.user.uid,
-            displayName: userCredential.user.displayName,
-            email: userCredential.user.email,
-            createdAt: new Date(),
-            plan: 'Básico',
-            aiCredits: 0,
-        }, { merge: true }); // Use merge to be safe
-    }
-    
-    return userCredential;
+  const login = (email: string, pass: string) => {
+    return signInWithEmailAndPassword(auth, email, pass);
   };
   
-  const signup = async (email: string, pass: string, name: string) => {
-    const userCredential = await createUserWithEmailAndPassword(auth, email, pass);
-    await updateProfile(userCredential.user, { displayName: name });
-    
-    await setDoc(doc(db, "users", userCredential.user.uid), {
-        uid: userCredential.user.uid,
-        displayName: name,
-        email: email,
-        createdAt: new Date(),
-        plan: 'Básico',
-        aiCredits: 0
+  const signup = (email: string, pass: string, name: string) => {
+    return createUserWithEmailAndPassword(auth, email, pass).then(async (userCredential) => {
+        await updateProfile(userCredential.user, { displayName: name });
+        // The onIdTokenChanged listener will handle profile creation
+        return userCredential;
     });
-
-    return userCredential;
   };
 
   const logout = async () => {
     await signOut(auth);
-    // Redireciona explicitamente para a página de login após o logout.
     router.push('/login');
   };
 
-  const signInWithGoogle = async () => {
+  const signInWithGoogle = () => {
     const provider = new GoogleAuthProvider();
-    const userCredential = await signInWithPopup(auth, provider);
-
-    const userDocRef = doc(db, "users", userCredential.user.uid);
-    const userDocSnap = await getDoc(userDocRef);
-
-    if (!userDocSnap.exists()) {
-        await setDoc(userDocRef, {
-            uid: userCredential.user.uid,
-            displayName: userCredential.user.displayName,
-            email: userCredential.user.email,
-            createdAt: new Date(),
-            plan: 'Básico',
-            aiCredits: 0
-        });
-    }
-
-    return userCredential;
+    return signInWithPopup(auth, provider);
+    // The onIdTokenChanged listener will handle profile creation
   };
   
   const sendPasswordReset = (email: string) => {
@@ -128,10 +92,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!auth.currentUser) throw new Error("User not authenticated");
     await updateProfile(auth.currentUser, { displayName: name });
     
-    const userDocRef = doc(db, "users", auth.currentUser.uid);
-    await setDoc(userDocRef, { displayName: name }, { merge: true });
+    await dbAdapter.updateDoc(`users/${auth.currentUser.uid}`, { displayName: name });
     
-    // Create a new object to trigger re-render
     setUser(auth.currentUser ? { ...auth.currentUser } : null);
   }
 

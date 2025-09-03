@@ -3,7 +3,7 @@
 
 import { IDatabaseAdapter } from "./database-adapter";
 import { FirebaseAdapter } from "./firebase-adapter";
-import { LocalStorageAdapter } from "./localstorage-adapter";
+import { IndexedDBAdapter } from "./indexeddb-adapter";
 import { MongoDbAdapter } from "./mongodb-adapter";
 
 let currentAdapter: IDatabaseAdapter | null = null;
@@ -26,8 +26,8 @@ export function getDatabaseAdapter(): IDatabaseAdapter {
         case 'mongodb':
             currentAdapter = new MongoDbAdapter();
             break;
-        case 'localstorage':
-            currentAdapter = new LocalStorageAdapter();
+        case 'indexeddb':
+            currentAdapter = new IndexedDBAdapter();
             break;
         case 'firebase':
         default:

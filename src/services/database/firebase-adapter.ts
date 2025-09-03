@@ -17,6 +17,7 @@ import {
     query,
     Timestamp,
 } from "firebase/firestore";
+import { User } from "firebase/auth";
 import { IDatabaseAdapter, Unsubscribe } from "./database-adapter";
 
 export class FirebaseAdapter implements IDatabaseAdapter {
@@ -43,8 +44,6 @@ export class FirebaseAdapter implements IDatabaseAdapter {
 
     private resolvePath(path: string): string {
         const userId = this.getUserId();
-        // Replace a placeholder with the actual user ID.
-        // e.g., 'users/USER_ID/transactions' becomes 'users/xyz123/transactions'
         return path.replace('USER_ID', userId);
     }
     
@@ -70,7 +69,6 @@ export class FirebaseAdapter implements IDatabaseAdapter {
                 const data: T[] = [];
                 querySnapshot.forEach((doc) => {
                     const docData = doc.data();
-                    // Convert Firestore Timestamps to ISO strings
                      Object.keys(docData).forEach(key => {
                         if (docData[key] instanceof Timestamp) {
                             docData[key] = docData[key].toDate().toISOString();
@@ -81,13 +79,9 @@ export class FirebaseAdapter implements IDatabaseAdapter {
                 callback(data);
             }, (error) => {
                 console.error(`Firebase listener error on path ${resolvedPath}:`, error);
-                // Optionally, you could have the callback handle errors
-                // callback([], error); 
             });
         } catch (error) {
-            // This will catch errors like unauthenticated user from getUserId()
             console.error("Failed to attach listener:", error);
-            // Return a no-op unsubscribe function
             return () => {};
         }
     }
@@ -97,9 +91,32 @@ export class FirebaseAdapter implements IDatabaseAdapter {
         const docRef = doc(this.db, resolvedPath);
         const docSnap = await fbGetDoc(docRef);
         if (docSnap.exists()) {
-            return { id: docSnap.id, ...docSnap.data() } as T;
+            const data = docSnap.data();
+            Object.keys(data).forEach(key => {
+                if (data[key] instanceof Timestamp) {
+                    data[key] = data[key].toDate().toISOString();
+                }
+            });
+            return { id: docSnap.id, ...data } as T;
         }
         return null;
+    }
+
+     async ensureUserProfile(user: User): Promise<void> {
+        const userDocRef = doc(this.db, 'users', user.uid);
+        const userDoc = await fbGetDoc(userDocRef);
+
+        if (!userDoc.exists()) {
+            const newUserProfile = {
+                uid: user.uid,
+                email: user.email,
+                displayName: user.displayName,
+                plan: 'Básico',
+                aiCredits: 0,
+                createdAt: new Date(),
+            };
+            await fbSetDoc(userDocRef, this.serializeData(newUserProfile));
+        }
     }
 
     async addDoc<T extends DocumentData>(collectionPath: string, data: T): Promise<string> {
@@ -128,8 +145,6 @@ export class FirebaseAdapter implements IDatabaseAdapter {
 
     async runTransaction(updateFunction: (transaction: any) => Promise<any>): Promise<any> {
         return await fbRunTransaction(this.db, async (firebaseTransaction) => {
-            
-            // Create a wrapper for the Firebase transaction to make it compatible with the adapter interface
             const wrappedTransaction = {
                 get: (docPath: string) => {
                     const resolvedPath = this.resolvePath(docPath);
@@ -150,7 +165,6 @@ export class FirebaseAdapter implements IDatabaseAdapter {
                      return firebaseTransaction.delete(doc(this.db, resolvedPath));
                 }
             };
-
             return updateFunction(wrappedTransaction);
         });
     }

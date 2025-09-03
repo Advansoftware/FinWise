@@ -1,6 +1,7 @@
 // src/services/database/database-adapter.ts
 
 import { DocumentData, QueryConstraint } from "firebase/firestore";
+import { User } from "firebase/auth";
 
 export type Unsubscribe = () => void;
 
@@ -28,6 +29,13 @@ export interface IDatabaseAdapter {
      * @returns The document data or null if not found.
      */
     getDoc<T>(docPath: string): Promise<T | null>;
+    
+    /**
+     * Checks if a user profile exists and creates it if it doesn't.
+     * This is crucial for synchronizing auth users with database profiles.
+     * @param user The user object from the authentication provider.
+     */
+    ensureUserProfile(user: User): Promise<void>;
 
     /**
      * Adds a new document to a collection.
