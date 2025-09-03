@@ -13,25 +13,40 @@ const plans = [
         price: "Grátis",
         description: "Para quem está começando a organizar as finanças.",
         features: [
-            "Dashboard com insights básicos",
-            "Criação manual de transações",
+            "Dashboard interativo",
+            "Transações ilimitadas",
             "Gerenciamento de categorias",
-            "Análise com IA (até 10 por dia)",
+            "Análises com IA (10/mês)",
         ],
         cta: "Seu Plano Atual",
         isCurrent: true,
     },
     {
         name: "Pro",
-        price: "R$19,90/mês",
+        price: "R$ 19,90/mês",
         description: "Para controle total e insights avançados.",
         features: [
             "Tudo do plano Básico",
-            "Assistente com IA para dicas financeiras",
+            "Análises e dicas com IA ilimitadas",
+            "Assistente de Chat com IA",
             "Escanear notas fiscais (OCR)",
-            "Importação de extratos bancários",
-            "Análises com IA ilimitadas",
+            "Importação de extratos (CSV, OFX)",
             "Suporte prioritário",
+        ],
+        cta: "Fazer Upgrade",
+        isCurrent: false,
+    },
+    {
+        name: "Plus",
+        price: "R$ 39,90/mês",
+        description: "Para usuários avançados e planejamento futuro.",
+        features: [
+            "Tudo do plano Pro",
+            "Orçamentos inteligentes com IA",
+            "Previsão de gastos futuros",
+            "Múltiplas carteiras/contas",
+            "Exportação avançada de relatórios",
+            "Acesso a novos recursos beta",
         ],
         cta: "Fazer Upgrade",
         isCurrent: false,
@@ -50,11 +65,11 @@ export default function BillingPage() {
                 <p className="text-muted-foreground">Gerencie seu plano e informações de pagamento.</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {plans.map(plan => (
                      <Card 
                         key={plan.name} 
-                        className={`flex flex-col ${plan.name === currentUserPlan ? 'border-primary' : ''}`}
+                        className={`flex flex-col ${plan.name === currentUserPlan ? 'border-primary shadow-lg' : ''}`}
                      >
                         <CardHeader>
                             <div className="flex justify-between items-center">
@@ -67,8 +82,8 @@ export default function BillingPage() {
                              <div className="text-3xl font-bold">{plan.price}</div>
                              <ul className="space-y-2">
                                 {plan.features.map(feature => (
-                                    <li key={feature} className="flex items-center gap-2">
-                                        <CheckCircle2 className="h-5 w-5 text-green-500" />
+                                    <li key={feature} className="flex items-start gap-2">
+                                        <CheckCircle2 className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" />
                                         <span className="text-muted-foreground">{feature}</span>
                                     </li>
                                 ))}
@@ -85,5 +100,3 @@ export default function BillingPage() {
         </div>
     )
 }
-
-    
