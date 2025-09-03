@@ -8,7 +8,7 @@ import { Transaction, TransactionCategory } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { getFirebase } from "@/lib/firebase";
-import { collection, doc, setDoc, addDoc, Timestamp, onSnapshot, Unsubscribe, deleteDoc, writeBatch, query, where, getDocs, orderBy } from "firebase/firestore";
+import { collection, doc, setDoc, addDoc, Timestamp, onSnapshot, Unsubscribe, deleteDoc, writeBatch, query, where, getDocs, orderBy, runTransaction, increment } from "firebase/firestore";
 import { FirebaseError } from "firebase/app";
 
 type CategoryMap = Partial<Record<TransactionCategory, string[]>>;
@@ -138,15 +138,13 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     if (!user) throw new Error("User not authenticated");
     const { db } = getFirebase();
-    const transactionsCollection = collection(db, "users", user.uid, "transactions");
-    
-    // Ensure date is a JavaScript Date object before sending to Firestore
-    const dateObject = new Date(transaction.date);
+    const walletRef = doc(db, "users", user.uid, "wallets", transaction.walletId);
+    const transactionRef = doc(collection(db, "users", user.uid, "transactions"));
 
-    await addDoc(transactionsCollection, {
-        ...transaction,
-        amount: Math.abs(transaction.amount),
-        date: dateObject
+    await runTransaction(db, async (t) => {
+        const amount = transaction.type === 'income' ? transaction.amount : -transaction.amount;
+        t.update(walletRef, { balance: increment(amount) });
+        t.set(transactionRef, { ...transaction, amount: Math.abs(transaction.amount), date: new Date(transaction.date) });
     });
   }
 
@@ -175,8 +173,21 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   const deleteTransaction = async (transactionId: string) => {
      if (!user) throw new Error("User not authenticated");
      const { db } = getFirebase();
-     const docRef = doc(db, "users", user.uid, "transactions", transactionId);
-     await deleteDoc(docRef);
+     const transactionRef = doc(db, "users", user.uid, "transactions", transactionId);
+     
+     await runTransaction(db, async (t) => {
+        const transactionDoc = await t.get(transactionRef);
+        if (!transactionDoc.exists()) {
+            throw "Transaction does not exist!";
+        }
+
+        const transactionData = transactionDoc.data() as Transaction;
+        const walletRef = doc(db, "users", user.uid, "wallets", transactionData.walletId);
+        const amount = transactionData.type === 'income' ? -transactionData.amount : transactionData.amount;
+        
+        t.update(walletRef, { balance: increment(amount) });
+        t.delete(transactionRef);
+     });
   }
 
   const { categories, subcategories } = useMemo(() => {

@@ -21,6 +21,7 @@ import { SingleDatePicker } from "../single-date-picker";
 import { useTransactions } from "@/hooks/use-transactions.tsx";
 import { Switch } from "../ui/switch";
 import { cn } from "@/lib/utils";
+import { useWallets } from "@/hooks/use-wallets";
 
 interface EditTransactionSheetProps {
     transaction: Transaction;
@@ -35,6 +36,7 @@ export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTra
   
   const { toast } = useToast();
   const { updateTransaction, categories, subcategories } = useTransactions();
+  const { wallets } = useWallets();
 
   useEffect(() => {
     if (transaction) {
@@ -59,12 +61,12 @@ export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTra
   }, [formState.category, subcategories]);
 
   const handleSubmit = async () => {
-    const { item, amount, date, category } = formState;
-    if (!item || !amount || !date || !category) {
+    const { item, amount, date, category, walletId } = formState;
+    if (!item || !amount || !date || !category || !walletId) {
         toast({
             variant: "destructive",
             title: "Campos obrigatórios",
-            description: "Por favor, preencha Item, Valor, Data e Categoria.",
+            description: "Por favor, preencha todos os campos obrigatórios.",
         });
         return;
     }
@@ -124,7 +126,7 @@ export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTra
                         </Button>
                          <Button
                              variant={formState.type === 'income' ? 'default' : 'outline'}
-                             className="bg-emerald-600 hover:bg-emerald-700 data-[variant=outline]:bg-transparent data-[variant=outline]:text-current"
+                              className={cn("bg-transparent border-emerald-600 text-emerald-600 hover:bg-emerald-600 hover:text-white", formState.type === 'income' && "bg-emerald-600 text-white")}
                              onClick={() => handleInputChange('type', 'income')}
                          >
                             Receita
@@ -152,6 +154,19 @@ export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTra
                     <div className="col-span-3">
                         <SingleDatePicker date={formState.date as Date} setDate={(d) => handleInputChange('date', d)} />
                     </div>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="wallet" className="text-right">Carteira</Label>
+                    <Select value={formState.walletId || ''} onValueChange={(value) => handleInputChange('walletId', value)}>
+                    <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Selecione uma carteira" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {wallets.map(wallet => (
+                        <SelectItem key={wallet.id} value={wallet.id}>{wallet.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                    </Select>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="category" className="text-right">Categoria</Label>

@@ -2,7 +2,7 @@
 'use client';
 
 import { ColumnDef } from '@tanstack/react-table';
-import { Transaction } from '@/lib/types';
+import { Transaction, Wallet } from '@/lib/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +26,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { cn } from '@/lib/utils';
+import { useWallets } from '@/hooks/use-wallets';
 
 const ActionsCell = ({ row }: { row: any }) => {
     const transaction = row.original as Transaction;
@@ -89,6 +90,12 @@ const ActionsCell = ({ row }: { row: any }) => {
       </>
     );
 };
+
+const WalletCell = ({ row }: { row: any}) => {
+    const { wallets } = useWallets();
+    const wallet = wallets.find(w => w.id === row.original.walletId);
+    return wallet ? <div className="text-xs text-muted-foreground whitespace-nowrap">{wallet.name}</div> : null;
+}
 
 
 export const columns: ColumnDef<Transaction>[] = [
@@ -154,6 +161,12 @@ export const columns: ColumnDef<Transaction>[] = [
         </div>
       )
     },
+  },
+  {
+    accessorKey: 'walletId',
+    header: 'Carteira',
+    cell: WalletCell,
+    size: 100,
   },
   {
     accessorKey: 'category',

@@ -1,5 +1,15 @@
 export type TransactionCategory = "Supermercado" | "Transporte" | "Entretenimento" | "Contas" | "Restaurante" | "Saúde" | "Educação" | "Lazer" | "Vestuário" | "Outros" | "Salário" | "Investimentos" | "Vendas";
 
+export type WalletType = 'Conta Corrente' | 'Cartão de Crédito' | 'Poupança' | 'Investimentos' | 'Dinheiro' | 'Outros';
+
+export interface Wallet {
+    id: string;
+    name: string;
+    type: WalletType;
+    balance: number;
+    createdAt: string; // ISO 8601 format string
+}
+
 export interface Transaction {
   id: string;
   date: string; // ISO 8601 format string
@@ -10,6 +20,7 @@ export interface Transaction {
   quantity?: number;
   establishment?: string;
   type: 'income' | 'expense';
+  walletId: string;
 }
 
 export interface Budget {

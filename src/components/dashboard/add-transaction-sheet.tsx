@@ -20,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { SingleDatePicker } from "../single-date-picker";
 import { useTransactions } from "@/hooks/use-transactions.tsx";
+import { useWallets } from "@/hooks/use-wallets";
 import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from "../ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
 import { cn } from "@/lib/utils";
@@ -31,6 +32,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
   
   const { toast } = useToast();
   const { addTransaction, categories, subcategories, allTransactions } = useTransactions();
+  const { wallets } = useWallets();
   
   const [formState, setFormState] = useState({
       item: '',
@@ -40,7 +42,8 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
       date: new Date(),
       category: '' as TransactionCategory | '',
       subcategory: '',
-      type: 'expense' as 'income' | 'expense'
+      type: 'expense' as 'income' | 'expense',
+      walletId: '',
   });
   
   const [itemInputValue, setItemInputValue] = useState("");
@@ -52,7 +55,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
       } else {
           setIsItemPopoverOpen(false);
       }
-  }, [itemInputValue]);
+  }, [itemInputValue, filteredItems]);
 
 
   const resetForm = () => {
@@ -64,7 +67,8 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
         date: new Date(),
         category: '',
         subcategory: '',
-        type: 'expense'
+        type: 'expense',
+        walletId: '',
     });
     setItemInputValue("");
   };
@@ -111,13 +115,13 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
 
   const handleSubmit = async () => {
     const finalItem = itemInputValue;
-    const { amount, date, category } = formState;
+    const { amount, date, category, walletId } = formState;
 
-    if (!finalItem || !amount || !date || !category) {
+    if (!finalItem || !amount || !date || !category || !walletId) {
         toast({
             variant: "destructive",
             title: "Campos obrigatórios",
-            description: "Por favor, preencha Item, Valor, Data e Categoria.",
+            description: "Por favor, preencha Item, Valor, Data, Categoria e Carteira.",
         });
         return;
     }
@@ -130,6 +134,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
             amount: parseFloat(formState.amount),
             date: formState.date.toISOString(),
             quantity: parseInt(formState.quantity),
+            walletId,
         };
         await addTransaction(newTransaction);
 
@@ -186,31 +191,33 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
 
                 <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="item" className="text-right">Item</Label>
-                    <Popover open={isItemPopoverOpen} onOpenChange={setIsItemPopoverOpen}>
-                        <PopoverAnchor className="col-span-3">
-                            <Input 
-                                id="item" 
-                                placeholder="ex: Café" 
-                                value={itemInputValue} 
-                                onChange={(e) => setItemInputValue(e.target.value)}
-                                autoComplete="off"
-                            />
-                        </PopoverAnchor>
-                        <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" onOpenAutoFocus={(e) => e.preventDefault()}>
-                            <Command>
-                                <CommandList>
-                                    <CommandEmpty>Nenhum item encontrado.</CommandEmpty>
-                                    <CommandGroup>
-                                    {filteredItems.map((transaction) => (
-                                        <CommandItem key={transaction.id} onSelect={() => handleItemSelect(transaction)}>
-                                            {transaction.item}
-                                        </CommandItem>
-                                    ))}
-                                    </CommandGroup>
-                                </CommandList>
-                            </Command>
-                        </PopoverContent>
-                    </Popover>
+                     <div className="col-span-3">
+                        <Popover open={isItemPopoverOpen} onOpenChange={setIsItemPopoverOpen}>
+                            <PopoverAnchor>
+                                <Input 
+                                    id="item" 
+                                    placeholder="ex: Café" 
+                                    value={itemInputValue} 
+                                    onChange={(e) => setItemInputValue(e.target.value)}
+                                    autoComplete="off"
+                                />
+                            </PopoverAnchor>
+                            <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" onOpenAutoFocus={(e) => e.preventDefault()}>
+                                <Command>
+                                    <CommandList>
+                                        <CommandEmpty>Nenhuma sugestão encontrada.</CommandEmpty>
+                                        <CommandGroup>
+                                        {filteredItems.map((transaction) => (
+                                            <CommandItem key={transaction.id} onSelect={() => handleItemSelect(transaction)}>
+                                                {transaction.item}
+                                            </CommandItem>
+                                        ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
+                    </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="establishment" className="text-right">Estabelecimento</Label>
@@ -229,6 +236,19 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                     <div className="col-span-3">
                     <SingleDatePicker date={formState.date} setDate={(d) => handleInputChange('date', d)} />
                     </div>
+                </div>
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label htmlFor="wallet" className="text-right">Carteira</Label>
+                    <Select value={formState.walletId} onValueChange={(value) => handleInputChange('walletId', value)}>
+                    <SelectTrigger className="col-span-3">
+                        <SelectValue placeholder="Selecione uma carteira" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {wallets.map(wallet => (
+                        <SelectItem key={wallet.id} value={wallet.id}>{wallet.name}</SelectItem>
+                        ))}
+                    </SelectContent>
+                    </Select>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="category" className="text-right">Categoria</Label>
@@ -259,9 +279,9 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
             </div>
         </div>
         <SheetFooter>
-            <Button onClick={handleSubmit} disabled={isSubmitting}>
+            <Button onClick={handleSubmit} disabled={isSubmitting || wallets.length === 0}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Salvar Transação
+                {wallets.length === 0 ? "Crie uma carteira primeiro" : "Salvar Transação"}
             </Button>
         </SheetFooter>
       </SheetContent>
