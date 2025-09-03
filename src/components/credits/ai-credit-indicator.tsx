@@ -1,8 +1,9 @@
+
 'use client';
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Sparkles, Gem } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { useCredits } from '@/hooks/use-credits';
 import { usePlan } from '@/hooks/use-plan';
 import { Skeleton } from '../ui/skeleton';
@@ -16,7 +17,7 @@ export function AICreditIndicator() {
 
   const isLoading = isLoadingCredits || isLoadingPlan;
 
-  if (plan === 'Básico') {
+  if (plan === 'Básico' && !isLoading) {
     return null; // Don't show indicator for basic plan users
   }
   
