@@ -1,22 +1,27 @@
+---
+title: "Configuração da IA"
+order: 7
+---
+
 # Guia de Configuração da IA
 
-Para usar os recursos inteligentes do FinWise, como o chat, dicas e escaneamento de notas, você precisa configurar um "provedor de IA". O FinWise suporta três opções: **Ollama** (para uso local, gratuito), **Google AI** e **OpenAI**.
+Para usar os recursos inteligentes do FinWise — como o chat, dicas personalizadas, relatórios automáticos e escaneamento de notas — você precisa configurar um "provedor de IA". O FinWise suporta três opções: **Ollama** (para uso local e gratuito), **Google AI** (Gemini) e **OpenAI** (ChatGPT).
 
 Você pode ter várias configurações salvas, mas **apenas uma pode estar ativa por vez**.
 
-Siga os passos abaixo na tela de **Configurações > Configurações de IA**:
+Siga os passos abaixo na tela de **Configurações** (ícone de engrenagem no menu lateral):
 
 ## Passo 1: Criar uma Nova Credencial
 
-1. Na tela de Configurações, clique no botão **"Nova Credencial"**.
-2. Um formulário aparecerá. Preencha um **Nome da Configuração** (ex: "Minha Chave OpenAI" ou "Ollama em Casa").
-3. Escolha o **Provedor** na lista: `Ollama`, `Google AI`, ou `OpenAI`.
+1.  Na tela de Configurações, clique no botão **"Nova Credencial"**.
+2.  Um formulário aparecerá. Preencha um **Nome da Configuração** (ex: "Minha Chave OpenAI" ou "Ollama em Casa").
+3.  Escolha o **Provedor** na lista: `Ollama`, `Google AI`, ou `OpenAI`.
 
 ## Passo 2: Configurar o Provedor Escolhido
 
 ### Opção A: Configurando o Ollama (Uso Local)
 
-Ollama é um software que permite rodar modelos de IA poderosos diretamente no seu computador. É uma ótima opção gratuita e que mantém seus dados privados.
+Ollama é um software que permite rodar modelos de IA poderosos diretamente no seu computador. É uma ótima opção gratuita e que mantém seus dados 100% privados.
 
 1.  **Instale o Ollama**: Se ainda não o fez, baixe e instale o Ollama em seu computador a partir do site oficial: [https://ollama.com/](https://ollama.com/).
 2.  **Baixe um Modelo**: Após instalar, abra o terminal (ou prompt de comando) e baixe um modelo. Recomendamos o `llama3`. Execute o comando:
@@ -27,12 +32,12 @@ Ollama é um software que permite rodar modelos de IA poderosos diretamente no s
     *   **Nome da Configuração**: Dê um nome, como "Ollama Llama3".
     *   **Provedor**: Selecione `ollama`.
     *   **Endereço do Servidor Ollama**: O valor padrão `http://127.0.0.1:11434` geralmente funciona. Não altere a menos que você tenha configurado o Ollama de forma diferente.
-    *   **Modelo Ollama**: Clique no botão com o ícone de recarregar para que o FinWise busque os modelos que você tem instalado. Selecione `llama3`.
+    *   **Modelo Ollama**: Clique no botão com o ícone de recarregar (`<RefreshCw />`) para que o FinWise busque os modelos que você tem instalado. Selecione `llama3` na lista.
 4.  Clique em **Salvar**.
 
 ### Opção B: Configurando o Google AI (Gemini)
 
-O Google oferece acesso a seus modelos de IA através de uma chave de API.
+O Google oferece acesso a seus modelos de IA, como o Gemini, através de uma chave de API.
 
 1.  **Obtenha uma Chave de API**:
     *   Acesse o [Google AI Studio](https://aistudio.google.com/app/apikey).
