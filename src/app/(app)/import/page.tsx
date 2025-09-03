@@ -58,6 +58,7 @@ export default function ImportPage() {
         setFile(selectedFile);
         setIsParsing(true);
         const reader = new FileReader();
+        
         reader.onload = (e) => {
             const content = e.target?.result as string;
             if (isCsv) {
@@ -68,11 +69,21 @@ export default function ImportPage() {
                 parseOfx(content);
             }
         };
-        
-        if (isCsv) {
+
+        if (isOfx) {
+            // Check for UTF-8 encoding in OFX header
+            const peekReader = new FileReader();
+            peekReader.onload = (e) => {
+                const peekContent = e.target?.result as string;
+                if (peekContent.includes('ENCODING:UTF-8')) {
+                    reader.readAsText(selectedFile, 'UTF-8');
+                } else {
+                    reader.readAsText(selectedFile, 'latin1');
+                }
+            };
+            peekReader.readAsText(selectedFile.slice(0, 200)); // Read first 200 bytes
+        } else { // It's a CSV
             reader.readAsText(selectedFile, 'UTF-8');
-        } else {
-            reader.readAsText(selectedFile, 'latin1');
         }
     };
 
