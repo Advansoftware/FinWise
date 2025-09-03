@@ -359,14 +359,14 @@ export async function createStripeCheckoutAction(userId: string, userEmail: stri
             },
         });
         stripeCustomerId = customer.id;
-        await userDocRef.update({ stripeCustomerId });
+        await userDocRef.set({ stripeCustomerId }, { merge: true });
     }
 
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL as string;
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
 
     try {
         const session = await stripe.checkout.sessions.create({
-            payment_method_types: ['card', 'google_pay'],
+            payment_method_types: ['card'],
             mode: 'subscription',
             customer: stripeCustomerId,
             line_items: [{

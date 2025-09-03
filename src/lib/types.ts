@@ -99,3 +99,13 @@ export interface AnnualReport {
   summary: string; // AI-generated summary of the year
   generatedAt: string; // ISO 8601 format string
 }
+
+export interface UserProfile {
+    uid: string;
+    email: string | null;
+    displayName: string | null;
+    plan: UserPlan;
+    aiCredits: number;
+    stripeCustomerId?: string;
+    createdAt: string;
+}
