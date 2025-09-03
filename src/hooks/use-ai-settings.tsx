@@ -69,10 +69,28 @@ export function useAISettings() {
         loadSettings();
     }, [loadSettings]);
 
-    // Memoize displayed credentials to include the default FinWise AI
+    // Memoize displayed credentials to include the default FinWise AI and filter based on plan
     const displayedCredentials = useMemo(() => {
-        return [finwiseAICredential, ...credentials];
-    }, [credentials]);
+        let userCredentials = credentials;
+        
+        if (isPlus && !isInfinity) { // Plus plan
+            userCredentials = credentials.filter(c => c.provider === 'ollama');
+        } else if (isPro && !isPlus) { // Pro plan
+            userCredentials = [];
+        }
+        // Infinity plan sees all credentials
+
+        return [finwiseAICredential, ...userCredentials];
+    }, [credentials, isPro, isPlus, isInfinity]);
+
+     // Effect to reset active credential if it's no longer allowed by the current plan
+    useEffect(() => {
+        const activeCredExistsInDisplayed = displayedCredentials.some(c => c.id === activeCredentialId);
+        if (!activeCredExistsInDisplayed && activeCredentialId !== FINWISE_AI_CREDENTIAL_ID) {
+            handleActivate(FINWISE_AI_CREDENTIAL_ID);
+        }
+    }, [displayedCredentials, activeCredentialId]);
+
 
     // Function to save all settings to Firestore
     const saveSettings = async (newCredentials: AICredential[], newActiveId: string | null) => {
