@@ -57,11 +57,9 @@ const DEFAULT_AI_CREDENTIAL: AICredential = {
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
 // Mapeia o nome do plano para o ID do Preço no Stripe
-// IMPORTANTE: Você precisa criar produtos e preços no seu painel do Stripe
-// e substituir estes IDs pelos seus.
 const stripePriceIds: Record<Exclude<UserPlan, 'Básico'>, string> = {
-  'Pro': 'price_xxxxxxxxxxxxxxxxx', // Substitua pelo seu ID de preço do plano Pro
-  'Plus': 'price_yyyyyyyyyyyyyyyyy', // Substitua pelo seu ID de preço do plano Plus
+  'Pro': 'price_1S39OYAqYZYoBfLT6jWwPOQj',
+  'Plus': 'price_1S39QsAqYZYoBfLTgpJFGDiT',
 };
 
 
