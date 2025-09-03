@@ -205,10 +205,10 @@ export default function Page() {
                               description: "Eficiência e insights para otimizar seu tempo e dinheiro.",
                               features: [
                                   "Tudo do plano Básico, e mais:",
-                                  "Análises e dicas com IA ilimitadas",
+                                  "**100 Créditos de IA** por mês",
                                   "Assistente de Chat com IA",
                                   "Relatórios inteligentes (Mensal/Anual)",
-                                  "Escanear notas fiscais (OCR) (10/mês)",
+                                  "Escanear notas fiscais (OCR)",
                                   "Importação de extratos (CSV, OFX)",
                                   "Suporte prioritário",
                               ],
@@ -223,7 +223,7 @@ export default function Page() {
                               description: "O piloto automático para sua vida financeira com IA preditiva.",
                               features: [
                                   "Tudo do plano Pro, e mais:",
-                                  "Escanear notas fiscais (OCR) (50/mês)",
+                                  "**300 Créditos de IA** por mês",
                                   "Orçamentos inteligentes e automáticos",
                                   "Previsão de gastos e saldos futuros",
                                   "Conciliação automática de transações",
@@ -254,7 +254,7 @@ export default function Page() {
                                   {plan.features.map(feature => (
                                       <li key={feature} className="flex items-start gap-3">
                                           <Check className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
-                                          <span className="text-muted-foreground">{feature}</span>
+                                          <span dangerouslySetInnerHTML={{ __html: feature.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-foreground/90">$1</strong>') }} className="text-muted-foreground"></span>
                                       </li>
                                   ))}
                               </ul>
@@ -278,3 +278,5 @@ export default function Page() {
     </AuthGuard>
   );
 }
+
+    

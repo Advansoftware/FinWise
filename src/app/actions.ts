@@ -39,7 +39,7 @@ import {
 } from '@/ai/ai-types';
 import { createConfiguredAI, getModelReference } from '@/ai/genkit';
 import { getAdminApp } from '@/lib/firebase-admin';
-import { FieldValue } from 'firebase-admin/firestore';
+import { FieldValue, increment } from 'firebase-admin/firestore';
 
 // Default AI settings for fallback ONLY.
 const DEFAULT_AI_CREDENTIAL: AICredential = {
@@ -51,29 +51,38 @@ const DEFAULT_AI_CREDENTIAL: AICredential = {
   openAIModel: 'gpt-3.5-turbo'
 };
 
-async function getUserPlan(userId: string): Promise<UserPlan> {
-    if (!userId) return 'Básico'; // Default to Básico if no user
-    try {
-        const adminDb = getAdminApp().firestore();
-        const userDocRef = adminDb.doc(`users/${userId}`);
-        const userDocSnap = await userDocRef.get();
-        if (userDocSnap.exists()) {
-            return userDocSnap.data()?.plan || 'Básico';
-        }
-        return 'Básico';
-    } catch (error) {
-        console.error("Error getting user plan:", error);
-        return 'Básico';
+async function consumeAICredits(userId: string, cost: number): Promise<void> {
+    if (!userId) {
+        throw new Error("Usuário não autenticado.");
     }
-}
-
-async function checkUserPlan(userId: string, requiredPlan: 'Pro' | 'Plus'): Promise<void> {
-    const userPlan = await getUserPlan(userId);
     
-    const planHierarchy = { 'Básico': 0, 'Pro': 1, 'Plus': 2 };
+    const adminDb = getAdminApp().firestore();
+    const userRef = adminDb.doc(`users/${userId}`);
 
-    if (planHierarchy[userPlan] < planHierarchy[requiredPlan]) {
-        throw new Error(`Este recurso está disponível apenas para assinantes do plano ${requiredPlan} ou superior. Faça upgrade para continuar.`);
+    try {
+        await adminDb.runTransaction(async (transaction) => {
+            const userDoc = await transaction.get(userRef);
+            if (!userDoc.exists) {
+                throw new Error("Usuário não encontrado.");
+            }
+            
+            const userData = userDoc.data();
+            const currentPlan = userData?.plan || 'Básico';
+            const currentCredits = userData?.aiCredits || 0;
+
+            if (currentPlan === 'Básico') {
+                 throw new Error("Este recurso está disponível apenas para assinantes dos planos Pro ou Plus. Faça upgrade para continuar.");
+            }
+
+            if (currentCredits < cost) {
+                throw new Error(`Créditos de IA insuficientes. Você precisa de ${cost} créditos, mas tem apenas ${currentCredits}. Considere comprar mais créditos ou aguardar a renovação mensal.`);
+            }
+
+            transaction.update(userRef, { aiCredits: increment(-cost) });
+        });
+    } catch (error) {
+        // Re-throw the original error to be displayed to the user
+        throw error;
     }
 }
 
@@ -114,7 +123,7 @@ export async function getActiveAICredential(userId: string): Promise<AICredentia
 // --- AI Actions ---
 
 export async function getSpendingTip(transactions: Transaction[], userId: string): Promise<string> {
-  await checkUserPlan(userId, 'Pro');
+  await consumeAICredits(userId, 1);
   try {
     const credential = await getActiveAICredential(userId);
     const result = await generateSpendingTip({
@@ -130,7 +139,7 @@ export async function getSpendingTip(transactions: Transaction[], userId: string
 }
 
 export async function getFinancialProfile(input: FinancialProfileInput, userId: string): Promise<string> {
-  await checkUserPlan(userId, 'Pro');
+  await consumeAICredits(userId, 5);
   try {
     const credential = await getActiveAICredential(userId);
     const configuredAI = createConfiguredAI(credential);
@@ -176,7 +185,7 @@ Transações do Mês Atual:
 }
 
 export async function analyzeTransactions(transactions: Transaction[], userId: string): Promise<string> {
-  await checkUserPlan(userId, 'Pro');
+  await consumeAICredits(userId, 5);
   try {
     const credential = await getActiveAICredential(userId);
     const configuredAI = createConfiguredAI(credential);
@@ -204,7 +213,7 @@ Transactions:
 }
 
 export async function getChatbotResponse(input: ChatInput, userId: string): Promise<string> {
-  await checkUserPlan(userId, 'Pro');
+  await consumeAICredits(userId, 1);
   try {
     const credential = await getActiveAICredential(userId);
     const result = await chatWithTransactions(input, credential);
@@ -221,78 +230,67 @@ export async function getChatbotResponse(input: ChatInput, userId: string): Prom
 }
 
 export async function extractReceiptInfoAction(input: ReceiptInfoInput, userId: string): Promise<ReceiptInfoOutput> {
-    const plan = await getUserPlan(userId);
-    const planLimits = { 'Básico': 0, 'Pro': 10, 'Plus': 50 };
-    const limit = planLimits[plan] || 0;
-
-    if (limit === 0) {
-        throw new Error("O escaneamento de notas (OCR) não está disponível no seu plano. Faça upgrade para o Pro ou Plus.");
-    }
-    
-    const adminDb = getAdminApp().firestore();
-    const now = new Date();
-    const monthId = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
-    const usageRef = adminDb.doc(`users/${userId}/usage/${monthId}`);
-    
-    const usageDoc = await usageRef.get();
-    const currentUsage = usageDoc.data()?.ocrUsage || 0;
-
-    if (currentUsage >= limit) {
-        throw new Error(`Você atingiu o seu limite mensal de ${limit} escaneamentos de notas. O limite será renovado no próximo mês.`);
-    }
-
+    await consumeAICredits(userId, 10); // Image processing is more expensive
     const credential = await getActiveAICredential(userId);
-    const result = await extractReceiptInfo(input, credential);
-
-    if (result.isValid) {
-        await usageRef.set({ ocrUsage: FieldValue.increment(1) }, { merge: true });
-    }
-
-    return result;
+    return await extractReceiptInfo(input, credential);
 }
 
 export async function suggestCategoryForItemAction(input: SuggestCategoryInput, userId: string): Promise<SuggestCategoryOutput> {
-    await checkUserPlan(userId, 'Plus');
+    await consumeAICredits(userId, 1);
     const credential = await getActiveAICredential(userId);
     return suggestCategoryForItem(input, credential);
 }
 
 export async function generateMonthlyReportAction(input: GenerateReportInput, userId: string): Promise<GenerateReportOutput> {
-  await checkUserPlan(userId, 'Pro');
+  await consumeAICredits(userId, 5);
   const credential = await getActiveAICredential(userId);
   return generateMonthlyReport(input, credential);
 }
 
 export async function generateAnnualReportAction(input: GenerateAnnualReportInput, userId: string): Promise<GenerateAnnualReportOutput> {
-  await checkUserPlan(userId, 'Pro');
+  await consumeAICredits(userId, 10);
   const credential = await getActiveAICredential(userId);
   return generateAnnualReport(input, credential);
 }
 
 export async function suggestBudgetAmountAction(input: SuggestBudgetInput, userId: string): Promise<SuggestBudgetOutput> {
-    await checkUserPlan(userId, 'Plus');
+    await consumeAICredits(userId, 2);
     const credential = await getActiveAICredential(userId);
     return suggestBudgetAmount(input);
 }
 
 export async function projectGoalCompletionAction(input: ProjectGoalCompletionInput, userId: string): Promise<ProjectGoalCompletionOutput> {
-    await checkUserPlan(userId, 'Plus');
+    await consumeAICredits(userId, 3);
     const credential = await getActiveAICredential(userId);
     return projectGoalCompletion(input, credential);
 }
 
 export async function generateAutomaticBudgetsAction(input: GenerateAutomaticBudgetsInput, userId: string): Promise<GenerateAutomaticBudgetsOutput> {
-    await checkUserPlan(userId, 'Plus');
+    await consumeAICredits(userId, 5);
     const credential = await getActiveAICredential(userId);
     return generateAutomaticBudgets(input, credential);
 }
 
 export async function predictFutureBalanceAction(input: PredictFutureBalanceInput, userId: string): Promise<PredictFutureBalanceOutput> {
-    await checkUserPlan(userId, 'Plus');
+    await consumeAICredits(userId, 3);
     const credential = await getActiveAICredential(userId);
     return predictFutureBalance(input, credential);
 }
 
 export async function getPlanAction(userId: string): Promise<UserPlan> {
-    return getUserPlan(userId);
+    if (!userId) return 'Básico'; // Default to Básico if no user
+    try {
+        const adminDb = getAdminApp().firestore();
+        const userDocRef = adminDb.doc(`users/${userId}`);
+        const userDocSnap = await userDocRef.get();
+        if (userDocSnap.exists()) {
+            return userDocSnap.data()?.plan || 'Básico';
+        }
+        return 'Básico';
+    } catch (error) {
+        console.error("Error getting user plan:", error);
+        return 'Básico';
+    }
 }
+
+    
