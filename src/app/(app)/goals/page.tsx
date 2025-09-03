@@ -23,7 +23,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Goal } from "@/lib/types";
-import { useState, useTransition, useEffect } from "react";
+import { useState, useTransition, useEffect, useMemo } from "react";
 import { projectGoalCompletionAction } from "@/app/actions";
 import { useAuth } from "@/hooks/use-auth";
 import { useTransactions } from "@/hooks/use-transactions";
@@ -82,25 +82,36 @@ function GoalCard({ goal, onDelete }: { goal: Goal, onDelete: () => void }) {
     const [isProjecting, startProjecting] = useTransition();
     const [projection, setProjection] = useState<string | null>(null);
 
-    useEffect(() => {
-        if (user && allTransactions.length > 0) {
-            startProjecting(async () => {
-                const result = await projectGoalCompletionAction({
-                    goalName: goal.name,
-                    targetAmount: goal.targetAmount,
-                    currentAmount: goal.currentAmount,
-                    transactions: JSON.stringify(allTransactions, null, 2),
-                }, user.uid);
+    const transactionsJson = useMemo(() => JSON.stringify(allTransactions, null, 2), [allTransactions]);
 
-                if (result.completionDate) {
-                    const date = new Date(result.completionDate);
-                    setProjection(format(date, "MMMM 'de' yyyy", { locale: ptBR }));
-                } else {
-                    setProjection(result.projection);
+    useEffect(() => {
+        if (user && allTransactions.length > 0 && goal.currentAmount < goal.targetAmount) {
+            startProjecting(async () => {
+                try {
+                    const result = await projectGoalCompletionAction({
+                        goalName: goal.name,
+                        targetAmount: goal.targetAmount,
+                        currentAmount: goal.currentAmount,
+                        transactions: transactionsJson,
+                    }, user.uid);
+
+                    if (result.completionDate) {
+                        const date = new Date(result.completionDate);
+                        // Add timezone offset to display correct date
+                        date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+                        setProjection(format(date, "MMMM 'de' yyyy", { locale: ptBR }));
+                    } else {
+                        setProjection(result.projection);
+                    }
+                } catch (e) {
+                    console.error("Projection error:", e);
+                    setProjection("Erro ao calcular projeção.");
                 }
             });
+        } else if (goal.currentAmount >= goal.targetAmount) {
+            setProjection("Meta concluída!");
         }
-    }, [goal, user, allTransactions, startProjecting]);
+    }, [goal.name, goal.targetAmount, goal.currentAmount, transactionsJson, user]);
 
     
     return (
@@ -165,15 +176,17 @@ function GoalCard({ goal, onDelete }: { goal: Goal, onDelete: () => void }) {
                     {isProjecting ? (
                         <span>Calculando projeção...</span>
                     ) : projection ? (
-                        <span>Estimativa de conclusão: <span className="font-semibold text-foreground/80 capitalize">{projection}</span></span>
+                         <span>
+                           {projection === 'Meta concluída!' ? '' : 'Estimativa de conclusão:'} <span className={cn("font-semibold text-foreground/80 capitalize", projection === 'Meta concluída!' && "text-emerald-500")}>{projection}</span>
+                        </span>
                     ) : (
-                        <span>Não foi possível projetar a conclusão.</span>
+                        <span></span> // Empty for no data state
                     )}
                 </div>
             </CardContent>
              <CardFooter>
                  <AddDepositDialog goal={goal}>
-                    <Button className="w-full">
+                    <Button className="w-full" disabled={goal.currentAmount >= goal.targetAmount}>
                         <PiggyBank className="mr-2 h-4 w-4"/>Fazer um Depósito
                     </Button>
                 </AddDepositDialog>

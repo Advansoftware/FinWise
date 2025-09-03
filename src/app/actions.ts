@@ -205,5 +205,5 @@ export async function suggestBudgetAmountAction(input: SuggestBudgetInput, userI
 
 export async function projectGoalCompletionAction(input: ProjectGoalCompletionInput, userId: string): Promise<ProjectGoalCompletionOutput> {
     const credential = await getActiveAICredential(userId);
-    return projectGoalCompletion(input);
+    return projectGoalCompletion(input, credential);
 }
