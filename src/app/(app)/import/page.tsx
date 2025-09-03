@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { UploadCloud, FileText, X, Loader2, Wand2, ChevronRight, ChevronLeft } from 'lucide-react';
+import { UploadCloud, FileText, X, Loader2, Wand2, ChevronRight, ChevronLeft, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Transaction, TransactionCategory } from '@/lib/types';
@@ -13,10 +13,13 @@ import { default as toJs } from 'ofx-js';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
 import { format } from 'date-fns';
+import { suggestCategoryForItemAction } from '@/app/actions';
+import { useAuth } from '@/hooks/use-auth';
 
-type ParsedTransaction = Omit<Transaction, 'id'>;
+type ParsedTransaction = Omit<Transaction, 'id' | 'walletId'> & { walletId?: string };
 
-type FileStage = 'upload' | 'mapping' | 'confirm' | 'importing';
+type FileStage = 'upload' | 'mapping' | 'categorizing' | 'confirm' | 'importing';
+
 const REQUIRED_FIELDS: (keyof ParsedTransaction)[] = ['date', 'item', 'amount'];
 
 const MAPPABLE_FIELDS: Record<keyof Omit<Transaction, 'id' | 'type' | 'walletId' | 'toWalletId'>, string> = {
@@ -40,9 +43,11 @@ export default function ImportPage() {
     const [transactionsToImport, setTransactionsToImport] = useState<ParsedTransaction[]>([]);
     const [stage, setStage] = useState<FileStage>('upload');
     const [isParsing, setIsParsing] = useState(false);
+    const [isCategorizing, setIsCategorizing] = useState(false);
     
     const { toast } = useToast();
-    const { addTransaction } = useTransactions();
+    const { user } = useAuth();
+    const { addTransaction, categories: userCategories, subcategories: userSubcategories } = useTransactions();
 
     const handleFileChange = (selectedFile: File | null) => {
         if (!selectedFile) return;
@@ -70,7 +75,6 @@ export default function ImportPage() {
             }
         };
         
-        // Smart encoding detection for OFX
         if (isOfx) {
             const peekReader = new FileReader();
             peekReader.onload = (e) => {
@@ -108,24 +112,19 @@ export default function ImportPage() {
     const parseOfx = async (content: string) => {
         try {
             const ofxData = await toJs(content);
-            let transactionList;
-            
-            // Check for bank account transactions
+            let transactionList: any[];
+
             if (ofxData?.OFX?.BANKMSGSRSV1?.STMTTRNRS?.STMTRS?.BANKTRANLIST?.STMTTRN) {
                 transactionList = ofxData.OFX.BANKMSGSRSV1.STMTTRNRS.STMTRS.BANKTRANLIST.STMTTRN;
-            // Check for credit card transactions
             } else if (ofxData?.OFX?.CREDITCARDMSGSRSV1?.CCSTMTTRNRS?.CCSTMTRS?.BANKTRANLIST?.STMTTRN) {
                 transactionList = ofxData.OFX.CREDITCARDMSGSRSV1.CCSTMTTRNRS.CCSTMTRS.BANKTRANLIST.STMTTRN;
             } else {
                 throw new Error("Formato OFX não suportado ou nenhuma transação encontrada.");
             }
 
-            // Ensure transactionList is an array
-            if (!Array.isArray(transactionList)) {
-                transactionList = [transactionList];
-            }
+            transactionList = Array.isArray(transactionList) ? transactionList : [transactionList];
 
-            const transactions = transactionList.map((t: any) => ({
+            const transactions = transactionList.map((t: any): ParsedTransaction => ({
                 date: new Date(`${t.DTPOSTED.slice(0, 4)}-${t.DTPOSTED.slice(4, 6)}-${t.DTPOSTED.slice(6, 8)}T12:00:00Z`).toISOString(),
                 item: t.MEMO,
                 amount: Math.abs(parseFloat(t.TRNAMT)),
@@ -136,15 +135,15 @@ export default function ImportPage() {
             
             setTransactionsToImport(transactions);
             setIsParsing(false);
-            setStage('confirm');
+            await runCategorization(transactions);
         } catch (error) {
             console.error("OFX Parsing error:", error);
-            toast({ variant: 'destructive', title: 'Erro ao Ler OFX', description: 'O arquivo parece estar mal formatado ou não é suportado.' });
+            toast({ variant: 'destructive', title: 'Erro ao Ler OFX', description: `O arquivo parece estar mal formatado ou não é suportado. Detalhes: ${error}`});
             handleReset();
         }
     };
     
-    const handleProceedToConfirm = () => {
+    const handleProceedToCategorize = () => {
         const mappedTransactions = parsedData.map(row => {
             const transaction: Partial<ParsedTransaction> = {};
             for (const key in fieldMapping) {
@@ -161,11 +160,11 @@ export default function ImportPage() {
                 }
             }
 
-            if (transaction.date && transaction.date.includes('/')) {
-                const parts = transaction.date.split(/[\/\- ]/);
+            if (transaction.date && String(transaction.date).match(/^\d{2}[\/\-]\d{2}[\/\-]\d{2,4}$/)) {
+                const parts = String(transaction.date).split(/[\/\- ]/);
                 if (parts.length === 3) {
-                    const day = parts[0];
-                    const month = parts[1];
+                    const day = parts[0].padStart(2, '0');
+                    const month = parts[1].padStart(2, '0');
                     const year = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
                     transaction.date = `${year}-${month}-${day}T12:00:00Z`;
                 }
@@ -181,20 +180,61 @@ export default function ImportPage() {
             return transaction as ParsedTransaction;
         }).filter((t): t is ParsedTransaction => t !== null);
 
-        setTransactionsToImport(mappedTransactions);
-        setStage('confirm');
+        runCategorization(mappedTransactions);
+    }
+    
+    const runCategorization = async (transactions: ParsedTransaction[]) => {
+        if (!user) {
+             toast({ variant: 'destructive', title: 'Usuário não autenticado.' });
+             return;
+        }
+        setStage('categorizing');
+        setIsCategorizing(true);
+        const categoryStrings = userCategories as string[];
+        
+        try {
+            const categorizedTransactions = await Promise.all(transactions.map(async (t) => {
+                if (t.category && t.category !== "Outros") return t; // Skip if already categorized
+                
+                const suggestion = await suggestCategoryForItemAction({
+                    itemName: t.item,
+                    existingCategories: categoryStrings
+                }, user.uid);
+                
+                return {
+                    ...t,
+                    category: suggestion.category as TransactionCategory || "Outros",
+                    subcategory: suggestion.subcategory || ""
+                };
+            }));
+            
+            setTransactionsToImport(categorizedTransactions);
+        } catch (error) {
+            console.error("AI categorization error:", error);
+            toast({ variant: "destructive", title: "Erro na categorização por IA", description: "As transações serão carregadas com a categoria padrão 'Outros'."});
+            setTransactionsToImport(transactions);
+        } finally {
+            setIsCategorizing(false);
+            setStage('confirm');
+        }
     }
 
     const handleImport = async () => {
         setStage('importing');
         try {
             for (const transaction of transactionsToImport) {
-                await addTransaction(transaction);
+                // Ensure walletId is set before adding
+                if (!transaction.walletId) {
+                    toast({ variant: 'destructive', title: 'Carteira não selecionada', description: `Selecione uma carteira para a transação "${transaction.item}".` });
+                    setStage('confirm');
+                    return;
+                }
+                await addTransaction(transaction as Transaction);
             }
             toast({ title: 'Sucesso!', description: `${transactionsToImport.length} transações importadas.` });
             handleReset();
         } catch (error) {
-            toast({ variant: 'destructive', title: 'Erro na Importação', description: 'Não foi possível importar as transações. Verifique se você criou uma carteira primeiro.' });
+            toast({ variant: 'destructive', title: 'Erro na Importação', description: `Não foi possível importar as transações. Verifique os dados. Erro: ${error}` });
             setStage('confirm');
         }
     };
@@ -207,7 +247,17 @@ export default function ImportPage() {
         setFieldMapping({ date: '', item: '', amount: '', category: '', subcategory: '', quantity: '', establishment: '', type: 'expense', walletId: '' });
         setTransactionsToImport([]);
         setIsParsing(false);
+        setIsCategorizing(false);
         setStage('upload');
+    };
+
+    const handleTransactionUpdate = (index: number, field: keyof ParsedTransaction, value: any) => {
+        const updatedTransactions = [...transactionsToImport];
+        updatedTransactions[index] = { ...updatedTransactions[index], [field]: value };
+        if (field === 'category') {
+            updatedTransactions[index].subcategory = ''; // Reset subcategory
+        }
+        setTransactionsToImport(updatedTransactions);
     };
 
     const isMappingComplete = useMemo(() => {
@@ -253,23 +303,26 @@ export default function ImportPage() {
                     )
                  })}
              </div>
-             <Button onClick={handleProceedToConfirm} disabled={!isMappingComplete}>
-                Revisar Transações <ChevronRight className="ml-2 h-4 w-4" />
+             <Button onClick={handleProceedToCategorize} disabled={!isMappingComplete}>
+                Categorizar com IA <Sparkles className="ml-2 h-4 w-4" />
              </Button>
          </div>
     );
     
     const renderConfirm = () => (
         <div className="space-y-4">
-            <h3 className="font-semibold">Pré-visualização dos Dados ({transactionsToImport.length} transações)</h3>
-            <div className="max-h-80 overflow-auto border rounded-md">
+            <h3 className="font-semibold">Revisão e Confirmação ({transactionsToImport.length} transações)</h3>
+            <p className="text-sm text-muted-foreground">Revise os dados e as categorias sugeridas pela IA. Você deve selecionar uma carteira para cada transação antes de importar.</p>
+            <div className="max-h-96 overflow-auto border rounded-md">
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>Data</TableHead>
+                            <TableHead className="w-[120px]">Data</TableHead>
                             <TableHead>Item</TableHead>
-                            <TableHead>Categoria</TableHead>
-                            <TableHead className="text-right">Valor</TableHead>
+                            <TableHead className="w-[180px]">Categoria</TableHead>
+                            <TableHead className="w-[180px]">Subcategoria</TableHead>
+                            <TableHead className="w-[180px]">Carteira*</TableHead>
+                            <TableHead className="text-right w-[120px]">Valor</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -277,7 +330,33 @@ export default function ImportPage() {
                             <TableRow key={i}>
                                 <TableCell>{format(new Date(t.date), 'dd/MM/yyyy')}</TableCell>
                                 <TableCell className="max-w-[200px] truncate">{t.item}</TableCell>
-                                <TableCell>{t.category}</TableCell>
+                                <TableCell>
+                                    <Select value={t.category} onValueChange={(val) => handleTransactionUpdate(i, 'category', val)}>
+                                        <SelectTrigger><SelectValue/></SelectTrigger>
+                                        <SelectContent>
+                                            {userCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </TableCell>
+                                 <TableCell>
+                                    <Select value={t.subcategory} onValueChange={(val) => handleTransactionUpdate(i, 'subcategory', val)} disabled={(userSubcategories[t.category]?.length || 0) === 0}>
+                                        <SelectTrigger><SelectValue placeholder="-"/></SelectTrigger>
+                                        <SelectContent>
+                                            {userSubcategories[t.category]?.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                        </SelectContent>
+                                    </Select>
+                                </TableCell>
+                                <TableCell>
+                                     <Select value={t.walletId} onValueChange={(val) => handleTransactionUpdate(i, 'walletId', val)}>
+                                        <SelectTrigger><SelectValue placeholder="Selecione"/></SelectTrigger>
+                                        <SelectContent>
+                                            {/* Wallets need to be fetched from a hook */}
+                                            {/* For now, using a placeholder */}
+                                            <SelectItem value="wallet1">Conta Principal</SelectItem>
+                                            <SelectItem value="wallet2">Cartão de Crédito</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </TableCell>
                                 <TableCell className="text-right">R$ {t.amount.toFixed(2)}</TableCell>
                             </TableRow>
                         ))}
@@ -296,6 +375,14 @@ export default function ImportPage() {
                 </Button>
              </div>
         </div>
+    );
+    
+    const renderCategorizing = () => (
+      <div className="flex flex-col items-center justify-center text-center gap-4 text-muted-foreground min-h-[20rem]">
+        <Loader2 className="h-10 w-10 animate-spin text-primary"/>
+        <h3 className="text-lg font-semibold text-foreground">Categorizando com IA</h3>
+        <p>Aguarde enquanto analisamos e sugerimos categorias para suas transações. Isso pode levar um momento...</p>
+      </div>
     );
 
     return (
@@ -317,11 +404,13 @@ export default function ImportPage() {
                     {file && <div className="flex items-center gap-2 text-sm text-muted-foreground"><FileText className="h-4 w-4"/> {file.name}</div>}
                 </CardHeader>
                 <CardContent className="min-h-[20rem] flex items-center justify-center">
-                    {isParsing || stage === 'importing' ? <Loader2 className="h-8 w-8 animate-spin text-primary" /> : (
+                    {isParsing ? <Loader2 className="h-8 w-8 animate-spin text-primary" /> : (
                         <div className="w-full">
                            {stage === 'upload' && renderUpload()}
                            {stage === 'mapping' && renderMapping()}
+                           {stage === 'categorizing' && renderCategorizing()}
                            {stage === 'confirm' && renderConfirm()}
+                           {stage === 'importing' && renderCategorizing()}
                         </div>
                     )}
                 </CardContent>
@@ -330,4 +419,3 @@ export default function ImportPage() {
     );
 }
 
-    

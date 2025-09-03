@@ -11,17 +11,24 @@ import { createConfiguredAI, getModelReference } from '../genkit';
 import { AICredential } from '@/lib/types';
 
 
-const promptTemplate = `You are a personal finance assistant. Your task is to categorize a spending item.
-Given the item name and a list of existing categories, suggest the most appropriate category.
-Also, suggest a relevant subcategory for the item. The subcategory can be new if it makes sense.
+const promptTemplate = `Você é um especialista em finanças pessoais que categoriza despesas.
+Dada a descrição de uma transação (o "nome do item") e uma lista de categorias existentes, sua tarefa é sugerir a categoria e a subcategoria mais apropriadas.
+A descrição da transação pode estar abreviada, como em um extrato bancário.
+Toda a saída DEVE ser em Português do Brasil.
 
-Item Name: {{{itemName}}}
-Existing Categories: {{{jsonStringify existingCategories}}}
+Item: {{{itemName}}}
+Categorias Existentes: {{{jsonStringify existingCategories}}}
 
-Please provide the best category and a subcategory for this item.
-If the item is "Conta de luz", the category should be "Contas" and subcategory "Eletricidade".
-If the item is "Maçãs", the category should be "Supermercado" and subcategory "Frutas".
-If the item is "Gasolina", the category should be "Transporte" and subcategory "Combustível".
+Exemplos:
+- Item: "Pag*Conta de luz" -> Categoria: "Contas", Subcategoria: "Eletricidade"
+- Item: "Compra em Supermercado P" -> Categoria: "Supermercado", Subcategoria: "Compras do mês"
+- Item: "UBER TRIP HELP.UBER.COM" -> Categoria: "Transporte", Subcategoria: "Uber/99"
+- Item: "IFOOD" -> Categoria: "Restaurante", Subcategoria: "Delivery"
+- Item: "Spotify" -> Categoria: "Entretenimento", Subcategoria: "Streaming"
+- Item: "NETFLIX" -> Categoria: "Entretenimento", Subcategoria: "Streaming"
+- Item: "Gasolina Posto Shell" -> Categoria: "Transporte", Subcategoria: "Combustível"
+
+Responda apenas com a categoria e a subcategoria mais prováveis. Se não tiver certeza da subcategoria, pode deixá-la em branco.
 `;
 
 export async function suggestCategoryForItem(input: SuggestCategoryInput, credential: AICredential) {
