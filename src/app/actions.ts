@@ -309,11 +309,6 @@ export async function predictFutureBalanceAction(input: PredictFutureBalanceInpu
 
 // --- Payment and Subscription Actions ---
 
-/**
- * Creates a Stripe Checkout session for a user to subscribe to a plan.
- * @param userId - The ID of the user subscribing.
- * @returns The URL for the Stripe Checkout page.
- */
 export async function createStripeCheckoutAction(userId: string, userEmail: string, plan: Exclude<UserPlan, 'Básico'>): Promise<{ url: string | null; error?: string }> {
     if (!userId || !userEmail) {
         return { url: null, error: "Usuário não autenticado ou email ausente." };
@@ -340,13 +335,10 @@ export async function createStripeCheckoutAction(userId: string, userEmail: stri
         const userDoc = await userDocRef.get();
         let stripeCustomerId = userDoc.data()?.stripeCustomerId;
 
-        // Create a new Stripe customer if one doesn't exist
         if (!stripeCustomerId) {
             const customer = await stripe.customers.create({
                 email: userEmail,
-                metadata: {
-                    firebaseUID: userId,
-                },
+                metadata: { firebaseUID: userId },
             });
             stripeCustomerId = customer.id;
             await userDocRef.set({ stripeCustomerId }, { merge: true });
@@ -362,7 +354,6 @@ export async function createStripeCheckoutAction(userId: string, userEmail: stri
                 price: priceId,
                 quantity: 1,
             }],
-            // This metadata is passed to the checkout.session.completed webhook
             metadata: {
                 firebaseUID: userId,
                 plan: plan,
@@ -371,14 +362,42 @@ export async function createStripeCheckoutAction(userId: string, userEmail: stri
             cancel_url: `${appUrl}/billing?canceled=true`,
         });
         
-        if (!session.url) {
-            return { url: null, error: "Não foi possível criar a sessão de pagamento do Stripe." };
-        }
-
         return { url: session.url };
     } catch (error) {
         console.error("Error creating Stripe Checkout session:", error);
         const errorMessage = error instanceof Stripe.errors.StripeError ? error.message : "Não foi possível iniciar o processo de pagamento.";
+        return { url: null, error: errorMessage };
+    }
+}
+
+
+export async function createStripePortalSession(userId: string): Promise<{ url: string | null, error?: string }> {
+    if (!userId) {
+        return { url: null, error: "Usuário não autenticado." };
+    }
+    
+    try {
+        const adminDb = getAdminApp().firestore();
+        const userDocRef = adminDb.doc(`users/${userId}`);
+        const userDoc = await userDocRef.get();
+        const stripeCustomerId = userDoc.data()?.stripeCustomerId;
+
+        if (!stripeCustomerId) {
+             return { url: null, error: "Cliente Stripe não encontrado para este usuário." };
+        }
+        
+        const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
+        
+        const portalSession = await stripe.billingPortal.sessions.create({
+            customer: stripeCustomerId,
+            return_url: `${appUrl}/billing`,
+        });
+
+        return { url: portalSession.url };
+
+    } catch (error) {
+        console.error("Error creating Stripe Portal session:", error);
+        const errorMessage = error instanceof Stripe.errors.StripeError ? error.message : "Não foi possível abrir o portal de gerenciamento.";
         return { url: null, error: errorMessage };
     }
 }
