@@ -134,7 +134,7 @@ export const SuggestBudgetInputSchema = z.object({
 export type SuggestBudgetInput = z.infer<typeof SuggestBudgetInputSchema>;
 
 export const SuggestBudgetOutputSchema = z.object({
-  suggestedAmount: z.number().describe('The suggested budget amount, rounded to the nearest whole number.'),
+  suggestedAmount: z.number().describe('The suggested budget amount, rounded to a sensible whole number.'),
   justification: z.string().describe('A brief, one-sentence justification for the suggested amount in Brazilian Portuguese.'),
 });
 export type SuggestBudgetOutput = z.infer<typeof SuggestBudgetOutputSchema>;

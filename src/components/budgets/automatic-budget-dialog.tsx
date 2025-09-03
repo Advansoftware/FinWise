@@ -13,7 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { useBudgets } from "@/hooks/use-budsgets";
+import { useBudgets } from "@/hooks/use-budgets";
 import { Loader2, Sparkles, CheckCircle, Circle } from "lucide-react";
 import { BudgetItemSchema } from "@/ai/ai-types";
 import { ScrollArea } from "../ui/scroll-area";

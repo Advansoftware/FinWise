@@ -269,7 +269,7 @@ export async function generateAnnualReportAction(input: GenerateAnnualReportInpu
 export async function suggestBudgetAmountAction(input: SuggestBudgetInput, userId: string): Promise<SuggestBudgetOutput> {
     await consumeAICredits(userId, 2, 'Sugestão de Orçamento');
     const credential = await getActiveAICredential(userId);
-    return suggestBudgetAmount(input);
+    return suggestBudgetAmount(input, credential);
 }
 
 export async function projectGoalCompletionAction(input: ProjectGoalCompletionInput, userId: string): Promise<ProjectGoalCompletionOutput> {
