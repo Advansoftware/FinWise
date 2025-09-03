@@ -19,6 +19,7 @@ export default function RootLayout({
       <head>
         <title>FinWise - Seu Dashboard Financeiro Inteligente</title>
         <link rel="icon" href="/logo.svg" type="image/svg+xml" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta name="description" content="Controle suas finanças com inteligência. O FinWise é o seu assistente financeiro pessoal." />
         <meta name="manifest" content="/manifest.json" />
         <meta name="theme-color" content="#09090B" />
