@@ -1,17 +1,19 @@
 
 "use client";
 
-import { useState, useEffect, useTransition, useCallback } from "react";
+import { useState, useEffect, useTransition, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Sparkles } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
 import { useTransactions } from "@/hooks/use-transactions";
+import { useReports } from "@/hooks/use-reports";
 import { getFinancialProfile } from "@/app/actions";
 import { Separator } from "../ui/separator";
 import { useAuth } from "@/hooks/use-auth";
 import { getFirebase } from "@/lib/firebase";
 import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
+import { startOfMonth } from "date-fns";
 
 const isSameDay = (d1: Date, d2: Date) => {
     return d1.getFullYear() === d2.getFullYear() &&
@@ -23,7 +25,13 @@ export function FinancialProfileCard() {
   const [profile, setProfile] = useState("");
   const [isPending, startTransition] = useTransition();
   const { allTransactions } = useTransactions();
+  const { reports } = useReports();
   const { user } = useAuth();
+
+  const currentMonthTransactions = useMemo(() => {
+    const startOfCurrentMonth = startOfMonth(new Date());
+    return allTransactions.filter(t => new Date(t.date) >= startOfCurrentMonth);
+  }, [allTransactions]);
 
   const fetchProfile = useCallback(async (forceRefresh = false) => {
     if (!user) return;
@@ -46,7 +54,11 @@ export function FinancialProfileCard() {
         if (lastRun && isSameDay(lastRun, new Date()) && !forceRefresh && lastProfile) {
           setProfile(lastProfile);
         } else {
-          const newProfile = await getFinancialProfile(allTransactions, user.uid);
+          const newProfile = await getFinancialProfile({
+            reports: JSON.stringify(reports, null, 2),
+            currentMonthTransactions: JSON.stringify(currentMonthTransactions, null, 2),
+          }, user.uid);
+
           setProfile(newProfile);
           await setDoc(settingsRef, {
             lastProfileTimestamp: Timestamp.now(),
@@ -58,7 +70,7 @@ export function FinancialProfileCard() {
         setProfile("Não foi possível carregar o perfil. Tente novamente.");
       }
     });
-  }, [allTransactions, user]);
+  }, [allTransactions, reports, currentMonthTransactions, user]);
 
   useEffect(() => {
     if(user && allTransactions.length > 0) {

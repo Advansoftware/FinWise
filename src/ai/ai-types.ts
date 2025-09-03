@@ -14,7 +14,8 @@ export type SpendingTipOutput = z.infer<typeof SpendingTipOutputSchema>;
 
 // Schema for Financial Profile
 export const FinancialProfileInputSchema = z.object({
-  transactions: z.string().describe('A JSON string representing an array of user transactions.'),
+  currentMonthTransactions: z.string().describe("A JSON string representing the user's transactions for the current, ongoing month."),
+  reports: z.string().describe('A JSON string representing an array of pre-computed monthly financial summary reports from past months.'),
 });
 export type FinancialProfileInput = z.infer<typeof FinancialProfileInputSchema>;
 

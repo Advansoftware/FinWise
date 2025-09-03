@@ -14,6 +14,7 @@ import {
   ReceiptInfoOutput,
   SuggestCategoryInput,
   SuggestCategoryOutput,
+  FinancialProfileInput,
   FinancialProfileInputSchema,
   FinancialProfileOutputSchema,
   AnalyzeTransactionsInputSchema,
@@ -83,7 +84,7 @@ export async function getSpendingTip(transactions: Transaction[], userId: string
   }
 }
 
-export async function getFinancialProfile(transactions: Transaction[], userId: string): Promise<string> {
+export async function getFinancialProfile(input: FinancialProfileInput, userId: string): Promise<string> {
   try {
     const credential = await getActiveAICredential(userId);
     const configuredAI = createConfiguredAI(credential);
@@ -94,14 +95,23 @@ export async function getFinancialProfile(transactions: Transaction[], userId: s
       input: { schema: FinancialProfileInputSchema },
       output: { schema: FinancialProfileOutputSchema },
       model: modelRef,
-      prompt: `You are a savvy and positive financial analyst. Based on the user's transaction history, define a financial profile for them. Give them a creative name and a description that summarizes their spending patterns in a friendly and insightful way. Focus on providing a narrative, not just numbers. All output must be in Brazilian Portuguese.
+      prompt: `Você é um analista financeiro sagaz e positivo. Sua tarefa é criar um perfil financeiro para o usuário.
 
-User's transactions:
-{{{transactions}}}
+Para isso, você tem duas fontes de dados:
+1.  **Relatórios Mensais (reports):** Um array JSON com resumos de meses anteriores. Use estes dados para entender o comportamento de longo prazo e as tendências do usuário.
+2.  **Transações do Mês Atual (currentMonthTransactions):** Um array JSON com as transações do mês corrente, que ainda não foi fechado. Use estes dados para entender os hábitos mais recentes.
+
+Com base na combinação dessas informações, defina um perfil financeiro para o usuário. Dê um nome criativo e uma descrição que resuma seus padrões de gastos de forma amigável e perspicaz. Foque em fornecer uma narrativa, não apenas números. Toda a saída deve ser em Português do Brasil.
+
+Relatórios de Meses Passados:
+{{{reports}}}
+
+Transações do Mês Atual:
+{{{currentMonthTransactions}}}
 `,
     });
 
-    const { output } = await prompt({ transactions: JSON.stringify(transactions) });
+    const { output } = await prompt(input);
 
     if (!output) {
       return "Não foi possível gerar seu perfil. Tente novamente.";
