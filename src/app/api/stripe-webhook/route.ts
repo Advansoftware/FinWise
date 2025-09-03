@@ -13,6 +13,7 @@ const creditsMap: Record<UserPlan, number> = {
     'Básico': 0,
     'Pro': 100,
     'Plus': 300,
+    'Infinity': 500,
 };
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
@@ -77,7 +78,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
         const userRef = adminDb.doc(`users/${firebaseUID}`);
         
         await userRef.update({
-            aiCredits: creditsMap[plan], // Reset credits at the start of each billing cycle
+            aiCredits: firestore.FieldValue.increment(creditsMap[plan]), // Add new credits at the start of each billing cycle
             stripeCurrentPeriodEnd: firestore.Timestamp.fromMillis(subscription.current_period_end * 1000),
         });
 

@@ -1,4 +1,3 @@
-
 // src/app/(app)/settings/page.tsx
 'use client';
 
@@ -6,16 +5,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAISettings } from "@/hooks/use-ai-settings";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MoreVertical, Trash2, Edit, PlusCircle, CheckCircle, Radio, Sparkles } from "lucide-react";
+import { MoreVertical, Trash2, Edit, PlusCircle, CheckCircle, Radio, Sparkles, Lock } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { AISettingsDialog } from "@/components/settings/ai-settings-dialog";
+import { usePlan } from "@/hooks/use-plan";
+import { AICredential } from "@/lib/types";
+import { ProUpgradeCard } from "@/components/pro-upgrade-card";
 
 export default function SettingsPage() {
     const {
         isLoading,
-        credentials,
+        displayedCredentials,
         activeCredentialId,
         handleActivate,
         handleDelete,
@@ -24,10 +26,19 @@ export default function SettingsPage() {
         setIsDialogOpen,
         editingCredential
     } = useAISettings();
+    const { plan, isLoading: isPlanLoading, isPro, isPlus, isInfinity } = usePlan();
 
-    if (isLoading) {
+    if (isLoading || isPlanLoading) {
         return <SettingsSkeleton />;
     }
+
+    // Block page for Basic plan users
+    if (plan === 'Básico') {
+        return <ProUpgradeCard featureName="Configurações de IA" />;
+    }
+
+    const canAddOllama = isPlus && displayedCredentials.filter(c => c.provider === 'ollama').length === 0;
+    const canAddMore = isInfinity;
 
     return (
         <div className="flex flex-col gap-6">
@@ -35,21 +46,21 @@ export default function SettingsPage() {
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Configurações de IA</h1>
-                    <p className="text-muted-foreground">Gerencie suas credenciais e configurações dos provedores de IA.</p>
+                    <p className="text-muted-foreground">Gerencie suas credenciais de IA. A credencial ativa será usada para todos os recursos.</p>
                 </div>
-                <Button onClick={() => handleOpenDialog(null)}>
+                <Button onClick={() => handleOpenDialog(null)} disabled={!canAddOllama && !canAddMore}>
                     <PlusCircle className="mr-2 h-4 w-4" /> Nova Credencial
                 </Button>
             </div>
             
             <Card>
                 <CardHeader>
-                    <CardTitle>Credenciais Salvas</CardTitle>
-                    <CardDescription>Gerencie suas chaves de API e configurações. A credencial ativa será usada para todos os recursos de IA.</CardDescription>
+                    <CardTitle>Credenciais Disponíveis</CardTitle>
+                    <CardDescription>Apenas a IA da credencial ativa consome seus créditos FinWise.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
-                        {credentials.length > 0 ? credentials.map(cred => {
+                        {displayedCredentials.map(cred => {
                              const isActive = cred.id === activeCredentialId;
                              return (
                                 <div key={cred.id} className={`flex items-center p-4 rounded-lg border ${isActive ? 'border-primary bg-primary/5' : ''}`}>
@@ -57,9 +68,11 @@ export default function SettingsPage() {
                                         <div className="flex items-center gap-2">
                                             {isActive ? <CheckCircle className="h-5 w-5 text-primary"/> : <Radio className="h-5 w-5 text-muted-foreground"/>}
                                             <p className="font-semibold">{cred.name}</p>
-                                            <Badge variant="secondary">{cred.provider}</Badge>
+                                            <Badge variant={cred.provider === 'finwise' ? 'default' : 'secondary'}>{cred.provider}</Badge>
+                                             {cred.isReadOnly && <Lock className="h-3 w-3 text-muted-foreground" />}
                                         </div>
                                         <p className="text-sm text-muted-foreground pl-7">
+                                            {cred.provider === 'finwise' && 'IA otimizada e integrada ao FinWise (usa créditos).'}
                                             {cred.provider === 'ollama' && `Modelo: ${cred.ollamaModel} @ ${cred.ollamaServerAddress}`}
                                             {cred.provider === 'googleai' && `Google AI (Gemini)`}
                                             {cred.provider === 'openai' && `Modelo: ${cred.openAIModel}`}
@@ -69,47 +82,43 @@ export default function SettingsPage() {
                                         {!isActive && (
                                             <Button variant="ghost" size="sm" onClick={() => handleActivate(cred.id)}>Ativar</Button>
                                         )}
-                                         <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                    <MoreVertical className="h-4 w-4"/>
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent>
-                                                 <DropdownMenuItem onClick={() => handleOpenDialog(cred)}>
-                                                    <Edit className="mr-2 h-4 w-4"/> Editar
-                                                 </DropdownMenuItem>
-                                                  <AlertDialog>
-                                                        <AlertDialogTrigger asChild>
-                                                             <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-400 focus:bg-destructive/10">
-                                                                <Trash2 className="mr-2 h-4 w-4"/>Excluir
-                                                            </DropdownMenuItem>
-                                                        </AlertDialogTrigger>
-                                                        <AlertDialogContent>
-                                                            <AlertDialogHeader>
-                                                                <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                                                                <AlertDialogDescription>
-                                                                    Esta ação não pode ser desfeita. Isso excluirá permanentemente a credencial "{cred.name}".
-                                                                </AlertDialogDescription>
-                                                            </AlertDialogHeader>
-                                                            <AlertDialogFooter>
-                                                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                                <AlertDialogAction onClick={() => handleDelete(cred.id)} className="bg-destructive hover:bg-destructive/90">Excluir</AlertDialogAction>
-                                                            </AlertDialogFooter>
-                                                        </AlertDialogContent>
-                                                    </AlertDialog>
-                                            </DropdownMenuContent>
-                                         </DropdownMenu>
+                                         {!cred.isReadOnly && (
+                                             <DropdownMenu>
+                                                <DropdownMenuTrigger asChild>
+                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                        <MoreVertical className="h-4 w-4"/>
+                                                    </Button>
+                                                </DropdownMenuTrigger>
+                                                <DropdownMenuContent>
+                                                     <DropdownMenuItem onClick={() => handleOpenDialog(cred)}>
+                                                        <Edit className="mr-2 h-4 w-4"/> Editar
+                                                     </DropdownMenuItem>
+                                                      <AlertDialog>
+                                                            <AlertDialogTrigger asChild>
+                                                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-400 focus:bg-destructive/10">
+                                                                    <Trash2 className="mr-2 h-4 w-4"/>Excluir
+                                                                </DropdownMenuItem>
+                                                            </AlertDialogTrigger>
+                                                            <AlertDialogContent>
+                                                                <AlertDialogHeader>
+                                                                    <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                                                                    <AlertDialogDescription>
+                                                                        Esta ação não pode ser desfeita. Isso excluirá permanentemente a credencial "{cred.name}".
+                                                                    </AlertDialogDescription>
+                                                                </AlertDialogHeader>
+                                                                <AlertDialogFooter>
+                                                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                                    <AlertDialogAction onClick={() => handleDelete(cred.id)} className="bg-destructive hover:bg-destructive/90">Excluir</AlertDialogAction>
+                                                                </AlertDialogFooter>
+                                                            </AlertDialogContent>
+                                                        </AlertDialog>
+                                                </DropdownMenuContent>
+                                             </DropdownMenu>
+                                         )}
                                     </div>
                                 </div>
                              )
-                        }) : (
-                            <div className="text-center py-12 text-muted-foreground">
-                                <Sparkles className="mx-auto h-8 w-8 mb-2" />
-                                <p>Nenhuma credencial de IA configurada.</p>
-                                <p className="text-sm">Clique em "Nova Credencial" para começar a usar os recursos inteligentes.</p>
-                            </div>
-                        )}
+                        })}
                     </div>
                 </CardContent>
             </Card>

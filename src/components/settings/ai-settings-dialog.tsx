@@ -15,12 +15,13 @@ import { useAISettings } from "@/hooks/use-ai-settings";
 import { useEffect, useState, useTransition } from "react";
 import { Loader2, RefreshCw } from "lucide-react";
 import { v4 as uuidv4 } from "uuid";
+import { usePlan } from "@/hooks/use-plan";
 
 
 const credentialSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "O nome é obrigatório."),
-  provider: z.enum(["ollama", "googleai", "openai"]),
+  provider: z.enum(["ollama", "googleai", "openai", "finwise"]),
   ollamaModel: z.string().optional(),
   ollamaServerAddress: z.string().optional(),
   googleAIApiKey: z.string().optional(),
@@ -67,6 +68,7 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
   const { handleSaveCredential, isSaving } = useAISettings();
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
   const [isFetchingOllama, startFetchingOllama] = useTransition();
+  const { isPlus, isInfinity } = usePlan();
 
   const form = useForm<CredentialFormValues>({
     resolver: zodResolver(credentialSchema),
@@ -175,9 +177,9 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                <SelectItem value="ollama">Ollama (Local/Remoto)</SelectItem>
-                                <SelectItem value="googleai">Google AI</SelectItem>
-                                <SelectItem value="openai">OpenAI</SelectItem>
+                                {isPlus && <SelectItem value="ollama">Ollama (Local/Remoto)</SelectItem>}
+                                {isInfinity && <SelectItem value="googleai">Google AI</SelectItem>}
+                                {isInfinity && <SelectItem value="openai">OpenAI</SelectItem>}
                             </SelectContent>
                         </Select>
                         <FormMessage />
@@ -230,7 +232,7 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
                 </>
             )}
 
-            {provider === 'googleai' && (
+            {provider === 'googleai' && isInfinity && (
                 <FormField
                     control={form.control}
                     name="googleAIApiKey"
@@ -246,7 +248,7 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
                 />
             )}
 
-            {provider === 'openai' && (
+            {provider === 'openai' && isInfinity && (
                 <>
                     <FormField
                         control={form.control}

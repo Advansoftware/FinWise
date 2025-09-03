@@ -4,7 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, Loader2, Gem } from "lucide-react";
+import { CheckCircle2, Loader2, Gem, BrainCircuit, Rocket } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { usePlan } from "@/hooks/use-plan";
 import { UserPlan } from "@/lib/types";
@@ -25,8 +25,10 @@ const plans = [
             "Orçamentos manuais por categoria",
             "Metas de economia",
             "Gerenciamento de categorias",
+            "Acesso à FinWise AI (limitado)",
         ],
         cta: "Plano Atual",
+        planId: 'Básico' as UserPlan,
     },
     {
         name: "Pro",
@@ -39,24 +41,39 @@ const plans = [
             "Relatórios inteligentes (Mensal/Anual)",
             "Escanear notas fiscais (OCR)",
             "Importação de extratos (CSV, OFX)",
-            "Suporte prioritário",
         ],
         cta: "Fazer Upgrade",
+        planId: 'Pro' as UserPlan,
     },
     {
         name: "Plus",
         price: "R$ 39,90/mês",
-        description: "O piloto automático para sua vida financeira com IA preditiva.",
+        description: "Automação e flexibilidade com IA para usuários avançados.",
         features: [
             "Tudo do plano Pro, e mais:",
             "**300 Créditos de IA** por mês",
+            "**Uso de IA Local (Ollama) ilimitado**",
             "Orçamentos inteligentes e automáticos",
             "Previsão de gastos e saldos futuros",
-            "Conciliação automática de transações",
             "Projeção de alcance de metas",
-            "Acesso a novos recursos beta",
         ],
         cta: "Fazer Upgrade",
+        planId: 'Plus' as UserPlan,
+    },
+     {
+        name: "Infinity",
+        price: "R$ 59,90/mês",
+        description: "Controle total e ilimitado para entusiastas de IA.",
+        features: [
+            "Tudo do plano Plus, e mais:",
+            "**500 Créditos de IA** por mês",
+            "**Uso de qualquer provedor de IA** (OpenAI, Google)",
+            "Credenciais de IA ilimitadas",
+            "Acesso a todos os novos recursos beta",
+            "Suporte prioritário",
+        ],
+        cta: "Fazer Upgrade",
+        planId: 'Infinity' as UserPlan,
     }
 ]
 
@@ -119,6 +136,7 @@ function BillingPageContent() {
     }
 
     const isPaidPlan = currentUserPlan !== 'Básico';
+    const planHierarchy = { 'Básico': 0, 'Pro': 1, 'Plus': 2, 'Infinity': 3 };
 
     return (
         <div className="flex flex-col gap-6">
@@ -136,10 +154,28 @@ function BillingPageContent() {
                 )}
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch">
                 {plans.map(plan => {
-                    const isCurrent = plan.name === currentUserPlan;
+                    const isCurrent = plan.planId === currentUserPlan;
+                    const isDowngrade = planHierarchy[plan.planId] < planHierarchy[currentUserPlan];
+                    const isUpgrade = planHierarchy[plan.planId] > planHierarchy[currentUserPlan];
                     
+                    let buttonAction;
+                    let buttonText;
+                    let buttonDisabled = isProcessing || isPlanLoading;
+
+                    if (isCurrent) {
+                        buttonAction = isPaidPlan ? handleManageSubscription : () => {};
+                        buttonText = "Seu Plano Atual";
+                        buttonDisabled = isPaidPlan ? buttonDisabled : true;
+                    } else if (isDowngrade) {
+                        buttonAction = handleManageSubscription;
+                        buttonText = "Gerenciar Assinatura";
+                    } else { // isUpgrade
+                        buttonAction = () => handleUpgrade(plan.planId as Exclude<UserPlan, 'Básico'>);
+                        buttonText = "Fazer Upgrade";
+                    }
+
                     return (
                      <Card 
                         key={plan.name} 
@@ -149,7 +185,7 @@ function BillingPageContent() {
                             <div className="flex justify-between items-center">
                                 <CardTitle>{plan.name}</CardTitle>
                                 {isCurrent && <Badge variant="secondary">Plano Atual</Badge>}
-                                {plan.name === 'Pro' && <Badge>Mais Popular</Badge>}
+                                {plan.name === 'Pro' && <Badge>Popular</Badge>}
                             </div>
                             <CardDescription>{plan.description}</CardDescription>
                         </CardHeader>
@@ -165,21 +201,15 @@ function BillingPageContent() {
                              </ul>
                         </CardContent>
                         <CardFooter>
-                            {plan.name === 'Básico' ? (
-                                <Button className="w-full" disabled={true} variant="outline">
-                                    Seu Plano Atual
-                                </Button>
-                            ) : (
-                                <Button 
-                                    className="w-full" 
-                                    disabled={isProcessing || isPlanLoading || isPaidPlan} 
-                                    onClick={() => handleUpgrade(plan.name as Exclude<UserPlan, 'Básico'>)} 
-                                    variant={isCurrent ? 'outline' : 'default'}
-                                >
-                                    {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                    {isCurrent ? "Seu Plano Atual" : plan.cta}
-                                </Button>
-                            )}
+                            <Button 
+                                className="w-full" 
+                                disabled={buttonDisabled} 
+                                onClick={buttonAction} 
+                                variant={isCurrent ? 'outline' : 'default'}
+                            >
+                                {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {buttonText}
+                            </Button>
                         </CardFooter>
                     </Card>
                 )})}
@@ -190,7 +220,7 @@ function BillingPageContent() {
                     <CardTitle>Como funcionam os Créditos de IA?</CardTitle>
                 </CardHeader>
                 <CardContent className="text-muted-foreground space-y-2">
-                    <p>Os créditos de IA são a moeda que você usa para acessar funcionalidades inteligentes. Cada ação tem um custo diferente, dependendo de sua complexidade.</p>
+                    <p>Créditos são consumidos **apenas ao usar a FinWise AI**, nossa IA integrada. Se você configurar seu próprio provedor (Ollama no plano Plus, ou qualquer outro no plano Infinity), o uso é ilimitado e **não consome seus créditos**.</p>
                     <ul className="list-disc pl-5 space-y-1 text-sm">
                         <li><span className="font-semibold text-foreground">Ações Simples (1-2 créditos):</span> Gerar dicas, responder no chat, sugerir um orçamento.</li>
                         <li><span className="font-semibold text-foreground">Ações Complexas (5 créditos):</span> Gerar um relatório mensal, analisar um grupo de transações.</li>

@@ -1,24 +1,34 @@
-
-
 // src/hooks/use-ai-settings.tsx
 'use client';
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { AICredential } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { getFirebase } from "@/lib/firebase";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { v4 as uuidv4 } from 'uuid';
+import { usePlan } from "./use-plan";
+
+const FINWISE_AI_CREDENTIAL_ID = 'finwise-ai-default';
+
+const finwiseAICredential = {
+    id: FINWISE_AI_CREDENTIAL_ID,
+    name: 'FinWise AI',
+    provider: 'finwise',
+    isReadOnly: true,
+} as const;
+
 
 export function useAISettings() {
     const { toast } = useToast();
     const { user } = useAuth();
+    const { plan, isPro, isPlus, isInfinity } = usePlan();
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     
     const [credentials, setCredentials] = useState<AICredential[]>([]);
-    const [activeCredentialId, setActiveCredentialId] = useState<string | null>(null);
+    const [activeCredentialId, setActiveCredentialId] = useState<string | null>(FINWISE_AI_CREDENTIAL_ID);
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingCredential, setEditingCredential] = useState<AICredential | null>(null);
@@ -39,7 +49,10 @@ export function useAISettings() {
             if (docSnap.exists()) {
                 const settings = docSnap.data();
                 setCredentials(settings.credentials || []);
-                setActiveCredentialId(settings.activeCredentialId || null);
+                setActiveCredentialId(settings.activeCredentialId || FINWISE_AI_CREDENTIAL_ID);
+            } else {
+                 // Set default active credential if none exists
+                 setActiveCredentialId(FINWISE_AI_CREDENTIAL_ID);
             }
         } catch (error) {
             console.error("Failed to load AI settings:", error);
@@ -56,6 +69,11 @@ export function useAISettings() {
         loadSettings();
     }, [loadSettings]);
 
+    // Memoize displayed credentials to include the default FinWise AI
+    const displayedCredentials = useMemo(() => {
+        return [finwiseAICredential, ...credentials];
+    }, [credentials]);
+
     // Function to save all settings to Firestore
     const saveSettings = async (newCredentials: AICredential[], newActiveId: string | null) => {
         if (!user) {
@@ -67,7 +85,7 @@ export function useAISettings() {
             const { db } = getFirebase();
             const settingsRef = doc(db, "users", user.uid, "settings", "ai");
             await setDoc(settingsRef, {
-                credentials: newCredentials,
+                credentials: newCredentials, // Store only user-defined credentials
                 activeCredentialId: newActiveId,
             }, { merge: true });
 
@@ -85,7 +103,7 @@ export function useAISettings() {
     const handleSaveCredential = async (credentialData: Omit<AICredential, 'id'> & { id?: string }) => {
         const isEditing = !!credentialData.id;
         
-        const finalCredential: Partial<AICredential> & { id?: string, name: string, provider: 'ollama' | 'googleai' | 'openai' } = {
+        const finalCredential: Partial<AICredential> & { id?: string, name: string, provider: 'ollama' | 'googleai' | 'openai' | 'finwise' } = {
             id: credentialData.id,
             name: credentialData.name,
             provider: credentialData.provider,
@@ -113,7 +131,7 @@ export function useAISettings() {
             newCredentials = [...credentials, newCredential];
         }
 
-        const newActiveId = activeCredentialId || (newCredentials.length === 1 ? newCredentials[0].id : null);
+        const newActiveId = activeCredentialId || (newCredentials.length === 1 ? newCredentials[0].id : FINWISE_AI_CREDENTIAL_ID);
         
         try {
             const result = await saveSettings(newCredentials, newActiveId);
@@ -132,7 +150,7 @@ export function useAISettings() {
         const newCredentials = credentials.filter(c => c.id !== id);
         let newActiveId = activeCredentialId;
         if (activeCredentialId === id) {
-            newActiveId = newCredentials.length > 0 ? newCredentials[0].id : null;
+            newActiveId = FINWISE_AI_CREDENTIAL_ID; // Fallback to default
         }
         
         try {
@@ -150,7 +168,6 @@ export function useAISettings() {
         try {
             const result = await saveSettings(credentials, id);
             if (result) {
-                setCredentials(result.savedCredentials);
                 setActiveCredentialId(result.savedActiveId);
             }
         } catch (error) {
@@ -166,7 +183,8 @@ export function useAISettings() {
     return {
         isLoading,
         isSaving,
-        credentials,
+        credentials, // User-defined credentials
+        displayedCredentials, // All credentials including FinWise AI
         activeCredentialId,
         handleSaveCredential,
         handleDelete,

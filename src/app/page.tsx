@@ -28,10 +28,7 @@ const featureVariants = {
 
 export default function Page() {
   const { user, loading } = useAuth();
-  const router = useRouter();
-
-  // O AuthGuard agora lida com o redirecionamento, mas mantemos um estado de carregamento
-  // para evitar o flash da página de login antes que o AuthGuard decida.
+  
   if (loading) {
     return (
       <div className="flex flex-col min-h-screen items-center justify-center">
@@ -85,7 +82,7 @@ export default function Page() {
               {...fadeIn}
               className="text-4xl md:text-6xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary/80 to-primary/60"
             >
-              Inteligência Financeira ao seu Alcance.
+              Sua vida financeira, sob seu controle.
             </motion.h1>
             <motion.p 
               {...fadeIn}
@@ -223,20 +220,19 @@ export default function Page() {
                       </p>
                   </motion.div>
 
-                  <div className="mt-16 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                  <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-start">
                       {[
                           {
                               name: "Básico",
                               price: "Grátis",
                               priceDetail: " para sempre",
-                              description: "Controle financeiro manual completo para quem está começando.",
+                              description: "Controle financeiro manual completo.",
                               features: [
                                   "Dashboard interativo",
-                                  "Transações ilimitadas",
-                                  "Múltiplas carteiras e contas",
-                                  "Orçamentos manuais por categoria",
+                                  "Transações e contas ilimitadas",
+                                  "Orçamentos manuais",
                                   "Metas de economia",
-                                  "Gerenciamento de categorias",
+                                  "Uso limitado da FinWise AI",
                               ],
                               cta: "Começar Agora",
                               variant: "outline"
@@ -245,15 +241,14 @@ export default function Page() {
                               name: "Pro",
                               price: "R$ 19,90",
                               priceDetail: "/mês",
-                              description: "Eficiência e insights para otimizar seu tempo e dinheiro.",
+                              description: "Eficiência e insights para otimizar seu tempo.",
                               features: [
-                                  "Tudo do plano Básico, e mais:",
-                                  "**100 Créditos de IA** por mês",
+                                  "Tudo do plano Básico",
+                                  "**100 Créditos de IA** /mês",
                                   "Assistente de Chat com IA",
-                                  "Relatórios inteligentes (Mensal/Anual)",
+                                  "Relatórios inteligentes",
                                   "Escanear notas fiscais (OCR)",
-                                  "Importação de extratos (CSV, OFX)",
-                                  "Suporte prioritário",
+                                  "Importação de extratos",
                               ],
                               cta: "Fazer Upgrade",
                               variant: "default",
@@ -263,17 +258,32 @@ export default function Page() {
                               name: "Plus",
                               price: "R$ 39,90",
                               priceDetail: "/mês",
-                              description: "O piloto automático para sua vida financeira com IA preditiva.",
+                              description: "Automação e flexibilidade com IA local.",
                               features: [
-                                  "Tudo do plano Pro, e mais:",
-                                  "**300 Créditos de IA** por mês",
-                                  "Orçamentos inteligentes e automáticos",
-                                  "Previsão de gastos e saldos futuros",
-                                  "Conciliação automática de transações",
-                                  "Projeção de alcance de metas",
-                                  "Acesso a novos recursos beta",
+                                  "Tudo do plano Pro",
+                                  "**300 Créditos de IA** /mês",
+                                  "**Uso de IA Local (Ollama) ilimitado**",
+                                  "Orçamentos automáticos",
+                                  "Previsão de saldos futuros",
+                                  "Projeção de metas com IA",
                               ],
                               cta: "Assinar o Plus",
+                              variant: "outline"
+                          },
+                           {
+                              name: "Infinity",
+                              price: "R$ 59,90",
+                              priceDetail: "/mês",
+                              description: "Controle total e ilimitado para entusiastas de IA.",
+                              features: [
+                                  "Tudo do plano Plus",
+                                  "**500 Créditos de IA** /mês",
+                                  "**Uso de qualquer provedor de IA**",
+                                  "Credenciais de IA ilimitadas",
+                                  "Acesso a recursos beta",
+                                  "Suporte prioritário",
+                              ],
+                              cta: "Seja Infinity",
                               variant: "outline"
                           }
                       ].map((plan, index) => (
@@ -283,7 +293,7 @@ export default function Page() {
                               initial="initial"
                               whileInView="animate"
                               viewport={{ once: true, amount: 0.3 }}
-                              transition={{ ...featureVariants.transition, delay: index * 0.15 }}
+                              transition={{ ...featureVariants.transition, delay: index * 0.1 }}
                               className={`flex flex-col rounded-lg border p-6 h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-2 ${plan.highlight ? 'border-primary shadow-primary/20 shadow-lg' : 'border-border bg-card/30'}`}
                           >
                               {plan.highlight && <Badge className="w-fit mb-4 -mt-2">Mais Popular</Badge>}

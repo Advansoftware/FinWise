@@ -1,8 +1,7 @@
-
 // src/hooks/use-plan.tsx
 'use client';
 
-import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from "react";
+import { useState, useEffect, createContext, useContext, ReactNode } from "react";
 import { useAuth } from "./use-auth";
 import { UserPlan } from "@/lib/types";
 import { doc, onSnapshot } from "firebase/firestore";
@@ -13,6 +12,7 @@ interface PlanContextType {
   isLoading: boolean;
   isPro: boolean;
   isPlus: boolean;
+  isInfinity: boolean;
 }
 
 const PlanContext = createContext<PlanContextType | undefined>(undefined);
@@ -58,8 +58,9 @@ export function PlanProvider({ children }: { children: ReactNode }) {
   const value: PlanContextType = {
     plan,
     isLoading: authLoading || isLoading,
-    isPro: plan === 'Pro' || plan === 'Plus',
-    isPlus: plan === 'Plus',
+    isPro: plan === 'Pro' || plan === 'Plus' || plan === 'Infinity',
+    isPlus: plan === 'Plus' || plan === 'Infinity',
+    isInfinity: plan === 'Infinity',
   };
 
   return (

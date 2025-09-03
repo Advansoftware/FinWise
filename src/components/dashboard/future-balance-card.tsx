@@ -5,7 +5,7 @@
 import { useState, useEffect, useTransition, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Sparkles, TrendingUp, AlertTriangle } from "lucide-react";
+import { RefreshCw, TrendingUp, AlertTriangle } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { useWallets } from "@/hooks/use-wallets";
@@ -17,6 +17,7 @@ import { subMonths, startOfMonth, isSameDay } from "date-fns";
 import { cn } from "@/lib/utils";
 import { getFirebase } from "@/lib/firebase";
 import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
+import { usePlan } from "@/hooks/use-plan";
 
 export function FutureBalanceCard() {
   const [prediction, setPrediction] = useState<PredictFutureBalanceOutput | null>(null);
@@ -25,6 +26,7 @@ export function FutureBalanceCard() {
   const { wallets } = useWallets();
   const { budgets } = useBudgets();
   const { allTransactions } = useTransactions();
+  const { isPlus } = usePlan();
 
   const currentBalance = useMemo(() => wallets.reduce((sum, w) => sum + w.balance, 0), [wallets]);
   
@@ -83,10 +85,10 @@ export function FutureBalanceCard() {
   }, [allTransactions, user, budgets, currentBalance]);
 
   useEffect(() => {
-    if(user && allTransactions.length > 0) {
+    if(user && isPlus && allTransactions.length > 0) {
         fetchPrediction();
     }
-  }, [allTransactions.length, user, fetchPrediction]);
+  }, [allTransactions.length, user, isPlus, fetchPrediction]);
 
   const renderContent = () => {
     if (isPending || !prediction) {
@@ -109,6 +111,8 @@ export function FutureBalanceCard() {
         </>
     );
   };
+  
+  if (!isPlus) return null;
 
   return (
     <Card className="relative overflow-hidden bg-card/80 backdrop-blur-xl border-primary/20">
@@ -125,7 +129,7 @@ export function FutureBalanceCard() {
                     </div>
                 </div>
                  <CardDescription className="text-xs text-primary/70 mt-2 pl-12">
-                    Gerado 1x por dia. Atualizar custa 3 créditos.
+                    Gerado 1x por dia. Atualizar custa 3 créditos da FinWise AI.
                 </CardDescription>
             </div>
             <Button

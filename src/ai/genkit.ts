@@ -30,6 +30,16 @@ export function createAIPlugins(credential: AICredential): any[] {
     const plugins: any[] = [];
 
     switch (credential.provider) {
+        case 'finwise':
+        case 'googleai':
+            if (process.env.GEMINI_API_KEY) {
+                 plugins.push(
+                    googleAI({
+                        apiKey: process.env.GEMINI_API_KEY,
+                    })
+                );
+            }
+            break;
         case 'ollama':
             if (credential.ollamaModel) {
                 plugins.push(
@@ -40,17 +50,6 @@ export function createAIPlugins(credential: AICredential): any[] {
                 );
             }
             break;
-
-        case 'googleai':
-            if (credential.googleAIApiKey) {
-                 plugins.push(
-                    googleAI({
-                        apiKey: credential.googleAIApiKey,
-                    })
-                );
-            }
-            break;
-
         case 'openai':
             if (credential.openAIApiKey && credential.openAIModel) {
                 plugins.push(
@@ -62,7 +61,7 @@ export function createAIPlugins(credential: AICredential): any[] {
             break;
     }
 
-    // Fallback to default Ollama if no plugins were created
+    // Fallback to default Ollama if no plugins were created (e.g., missing API key)
     if (plugins.length === 0) {
         plugins.push(
             ollama({
@@ -82,8 +81,8 @@ export function getModelReference(credential: AICredential): string {
     switch (credential.provider) {
         case 'ollama':
             return `ollama/${credential.ollamaModel || 'llama3'}`;
+         case 'finwise':
          case 'googleai':
-            // Não precisa de um modelo específico, o Gemini Pro é usado por padrão
             return `googleai/gemini-1.5-flash-latest`;
         case 'openai':
             return `openai/${credential.openAIModel || 'gpt-3.5-turbo'}`;
@@ -105,6 +104,8 @@ export function createConfiguredAI(credential: AICredential): Genkit {
  */
 export function validateAISettings(credential: AICredential): boolean {
     switch (credential.provider) {
+        case 'finwise':
+            return !!process.env.GEMINI_API_KEY;
         case 'ollama':
             return !!credential.ollamaModel;
         case 'googleai':
@@ -121,6 +122,8 @@ export function validateAISettings(credential: AICredential): boolean {
  */
 export function getModelConfigString(credential: AICredential): string {
     switch (credential.provider) {
+        case 'finwise':
+            return `FinWise AI (Otimizado)`;
         case 'ollama':
             return `Ollama (${credential.ollamaModel}) @ ${credential.ollamaServerAddress}`;
         case 'googleai':

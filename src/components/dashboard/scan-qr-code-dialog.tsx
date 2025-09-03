@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Upload, Camera, Paperclip } from "lucide-react";
+import { Loader2, Upload, Camera, Paperclip, Sparkles, BrainCircuit, Info } from "lucide-react";
 import { useRef, useState, useEffect, useCallback, useTransition } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -24,6 +24,10 @@ import { Label } from "../ui/label";
 import { useTransactions } from "@/hooks/use-transactions";
 import { Transaction } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
+import { usePlan } from "@/hooks/use-plan";
+import { useAISettings } from "@/hooks/use-ai-settings";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 
 export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
@@ -39,6 +43,12 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
     const [isSaving, startSaving] = useTransition();
     const { addTransaction } = useTransactions();
     const { user } = useAuth();
+    const { isPlus } = usePlan();
+    const { displayedCredentials, activeCredentialId } = useAISettings();
+    const [selectedAI, setSelectedAI] = useState(activeCredentialId || 'finwise-ai-default');
+
+    const canSelectProvider = isPlus; // Plus and Infinity can select
+    const ollamaIsSelected = displayedCredentials.find(c => c.id === selectedAI)?.provider === 'ollama';
 
     const stopCamera = useCallback(() => {
         if (videoRef.current && videoRef.current.srcObject) {
@@ -53,10 +63,11 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
         setReceiptImage(null);
         setExtractedData(null);
         setHasCameraPermission(null);
+        setSelectedAI(activeCredentialId || 'finwise-ai-default');
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
         }
-    }, [stopCamera]);
+    }, [stopCamera, activeCredentialId]);
 
 
     const handleDialogOpenChange = (open: boolean) => {
@@ -126,7 +137,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
         setExtractedData(null);
         startProcessing(async () => {
             try {
-                const result = await extractReceiptInfoAction({ photoDataUri: imageData }, user.uid);
+                const result = await extractReceiptInfoAction({ photoDataUri: imageData }, user.uid, selectedAI);
                 setExtractedData(result);
                 if (!result.isValid) {
                      toast({
@@ -142,8 +153,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                     title: 'Erro ao Processar',
                     description: error.message || 'Não foi possível extrair as informações da imagem. Verifique suas configurações de IA.',
                 });
-                 // Se o erro foi de limite de uso, não resetar para o usuário ver a msg
-                if (!error.message?.includes('limite mensal')) {
+                if (!error.message?.includes('limite')) {
                     resetState();
                 }
             }
@@ -244,7 +254,32 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                     </DialogDescription>
                 </DialogHeader>
 
-                <div className="py-4">
+                <div className="py-4 space-y-4">
+                    {canSelectProvider && !receiptImage && (
+                        <div className="space-y-2">
+                            <Label htmlFor="ai-provider">Provedor de IA</Label>
+                            <Select value={selectedAI} onValueChange={setSelectedAI}>
+                                <SelectTrigger id="ai-provider">
+                                    <SelectValue />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {displayedCredentials.map(c => (
+                                        <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                            {ollamaIsSelected && (
+                                 <Alert variant="default" className="border-amber-500/50 text-amber-200">
+                                    <Info className="h-4 w-4 !text-amber-400" />
+                                    <AlertTitle>Aviso sobre IA Local</AlertTitle>
+                                    <AlertDescription>
+                                        Modelos locais podem ter menor precisão na leitura de imagens.
+                                    </AlertDescription>
+                                </Alert>
+                            )}
+                        </div>
+                    )}
+                    
                     {!receiptImage ? (
                         <>
                             {isMobile ? (

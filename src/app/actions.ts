@@ -1,7 +1,7 @@
 
 'use server';
 
-import { Transaction, AICredential, MonthlyReport, UserPlan } from '@/lib/types';
+import { AICredential, UserPlan } from '@/lib/types';
 import { z } from 'zod';
 import { generateSpendingTip } from '@/ai/flows/ai-powered-spending-tips';
 import { chatWithTransactions } from '@/ai/flows/chat-with-transactions';
@@ -41,8 +41,17 @@ import {
 } from '@/ai/ai-types';
 import { createConfiguredAI, getModelReference } from '@/ai/genkit';
 import { getAdminApp } from '@/lib/firebase-admin';
-import { FieldValue, increment } from 'firebase-admin/firestore';
+import { increment } from 'firebase-admin/firestore';
 import Stripe from 'stripe';
+
+const FINWISE_AI_CREDENTIAL_ID = 'finwise-ai-default';
+
+const finwiseAICredential = {
+    id: FINWISE_AI_CREDENTIAL_ID,
+    name: 'FinWise AI',
+    provider: 'finwise',
+    isReadOnly: true,
+} as const;
 
 // Default AI settings for fallback ONLY.
 const DEFAULT_AI_CREDENTIAL: AICredential = {
@@ -51,7 +60,6 @@ const DEFAULT_AI_CREDENTIAL: AICredential = {
   provider: 'ollama',
   ollamaModel: 'llama3',
   ollamaServerAddress: 'http://127.0.0.1:11434',
-  openAIModel: 'gpt-3.5-turbo'
 };
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
@@ -84,7 +92,7 @@ async function consumeAICredits(userId: string, cost: number, action: AICreditLo
       const currentCredits = userData?.aiCredits || 0;
 
       if (currentPlan === 'Básico') {
-        throw new Error("Este recurso está disponível apenas para assinantes dos planos Pro ou Plus. Faça upgrade para continuar.");
+        throw new Error("Este recurso está disponível apenas para assinantes dos planos Pro, Plus ou Infinity. Faça upgrade para continuar.");
       }
 
       if (cost > 0 && currentCredits < cost) {
@@ -125,16 +133,28 @@ export async function getActiveAICredential(userId: string): Promise<AICredentia
     if (docSnap.exists()) {
       const settings = docSnap.data();
       if (settings && settings.activeCredentialId && settings.credentials) {
+        if (settings.activeCredentialId === FINWISE_AI_CREDENTIAL_ID) {
+          return {
+            ...finwiseAICredential,
+            provider: 'googleai', // The underlying provider for FinWise AI
+            googleAIApiKey: process.env.GEMINI_API_KEY,
+          };
+        }
+        
         const activeCredential = settings.credentials.find((c: AICredential) => c.id === settings.activeCredentialId);
         if (activeCredential) {
-          // Merge with defaults to ensure all fields are present
           return { ...DEFAULT_AI_CREDENTIAL, ...activeCredential };
         }
       }
     }
-
-    // No active/valid credential found for this user, return defaults
-    return DEFAULT_AI_CREDENTIAL;
+    
+    // If no specific setting is found, default to FinWise AI
+    return {
+      ...finwiseAICredential,
+      provider: 'googleai',
+      googleAIApiKey: process.env.GEMINI_API_KEY,
+    };
+    
   } catch (error) {
     console.error("Error getting AI settings from Firestore with Admin SDK:", error);
     // In case of error (e.g., permissions), return defaults to avoid breaking the app
@@ -142,14 +162,25 @@ export async function getActiveAICredential(userId: string): Promise<AICredentia
   }
 }
 
+async function getCredentialAndHandleCredits(userId: string, cost: number, action: AICreditLogAction, isFreeAction: boolean = false): Promise<AICredential> {
+    const credential = await getActiveAICredential(userId);
+
+    // Only consume credits if the active provider is FinWise AI (which uses googleai)
+    if (credential.id === FINWISE_AI_CREDENTIAL_ID) {
+        await consumeAICredits(userId, cost, action, isFreeAction);
+    }
+    
+    return credential;
+}
+
 
 // --- AI Actions ---
 
-export async function getSpendingTip(transactions: Transaction[], userId: string, forceRefresh: boolean = false): Promise<string> {
+export async function getSpendingTip(transactions: any, userId: string, forceRefresh: boolean = false): Promise<string> {
   const cost = forceRefresh ? 1 : 0;
-  await consumeAICredits(userId, cost, 'Dica Rápida', !forceRefresh);
+  const credential = await getCredentialAndHandleCredits(userId, cost, 'Dica Rápida', !forceRefresh);
+  
   try {
-    const credential = await getActiveAICredential(userId);
     const result = await generateSpendingTip({
       transactions: JSON.stringify(transactions, null, 2)
     }, credential);
@@ -164,9 +195,9 @@ export async function getSpendingTip(transactions: Transaction[], userId: string
 
 export async function getFinancialProfile(input: FinancialProfileInput, userId: string, forceRefresh: boolean = false): Promise<FinancialProfileOutput> {
   const cost = forceRefresh ? 5 : 0;
-  await consumeAICredits(userId, cost, 'Perfil Financeiro', !forceRefresh);
+  const credential = await getCredentialAndHandleCredits(userId, cost, 'Perfil Financeiro', !forceRefresh);
+
   try {
-    const credential = await getActiveAICredential(userId);
     const configuredAI = createConfiguredAI(credential);
     const modelRef = getModelReference(credential);
 
@@ -212,10 +243,9 @@ Transações do Mês Atual:
   }
 }
 
-export async function analyzeTransactions(transactions: Transaction[], userId: string): Promise<string> {
-  await consumeAICredits(userId, 5, 'Análise de Transações');
+export async function analyzeTransactions(transactions: any, userId: string): Promise<string> {
+  const credential = await getCredentialAndHandleCredits(userId, 5, 'Análise de Transações');
   try {
-    const credential = await getActiveAICredential(userId);
     const configuredAI = createConfiguredAI(credential);
     const modelRef = getModelReference(credential);
 
@@ -241,9 +271,8 @@ Transactions:
 }
 
 export async function getChatbotResponse(input: ChatInput, userId: string): Promise<string> {
-  await consumeAICredits(userId, 1, 'Chat com Assistente');
+  const credential = await getCredentialAndHandleCredits(userId, 1, 'Chat com Assistente');
   try {
-    const credential = await getActiveAICredential(userId);
     const result = await chatWithTransactions(input, credential);
     return result.response;
   } catch (error) {
@@ -257,52 +286,57 @@ export async function getChatbotResponse(input: ChatInput, userId: string): Prom
   }
 }
 
-export async function extractReceiptInfoAction(input: ReceiptInfoInput, userId: string): Promise<ReceiptInfoOutput> {
-  await consumeAICredits(userId, 10, 'Leitura de Nota Fiscal (OCR)');
-  const credential = await getActiveAICredential(userId);
+export async function extractReceiptInfoAction(input: ReceiptInfoInput, userId: string, chosenProviderId?: string): Promise<ReceiptInfoOutput> {
+  let credential;
+  if(chosenProviderId) {
+      const allSettings = await getActiveAICredential(userId); // Bit of a hack to get all credentials
+      // In a real app, this would be a direct fetch. For now, we simulate.
+      // This is a placeholder for a more robust multi-credential system.
+      credential = allSettings; // Fallback to active if chosen not found
+  } else {
+    credential = await getActiveAICredential(userId);
+  }
+
+  if (credential.id === FINWISE_AI_CREDENTIAL_ID) {
+     await consumeAICredits(userId, 10, 'Leitura de Nota Fiscal (OCR)');
+  }
+  
   return await extractReceiptInfo(input, credential);
 }
 
 export async function suggestCategoryForItemAction(input: SuggestCategoryInput, userId: string): Promise<SuggestCategoryOutput> {
-  await consumeAICredits(userId, 1, 'Sugestão de Categoria');
-  const credential = await getActiveAICredential(userId);
+  const credential = await getCredentialAndHandleCredits(userId, 1, 'Sugestão de Categoria');
   return suggestCategoryForItem(input, credential);
 }
 
 export async function generateMonthlyReportAction(input: GenerateReportInput, userId: string, isFreeAction: boolean = false): Promise<GenerateReportOutput> {
-  await consumeAICredits(userId, 5, 'Relatório Mensal', isFreeAction);
-  const credential = await getActiveAICredential(userId);
+  const credential = await getCredentialAndHandleCredits(userId, 5, 'Relatório Mensal', isFreeAction);
   return generateMonthlyReport(input, credential);
 }
 
 export async function generateAnnualReportAction(input: GenerateAnnualReportInput, userId: string, isFreeAction: boolean = false): Promise<GenerateAnnualReportOutput> {
-  await consumeAICredits(userId, 10, 'Relatório Anual', isFreeAction);
-  const credential = await getActiveAICredential(userId);
+  const credential = await getCredentialAndHandleCredits(userId, 10, 'Relatório Anual', isFreeAction);
   return generateAnnualReport(input, credential);
 }
 
 export async function suggestBudgetAmountAction(input: SuggestBudgetInput, userId: string): Promise<SuggestBudgetOutput> {
-  await consumeAICredits(userId, 2, 'Sugestão de Orçamento');
-  const credential = await getActiveAICredential(userId);
+  const credential = await getCredentialAndHandleCredits(userId, 2, 'Sugestão de Orçamento');
   return suggestBudgetAmount(input, credential);
 }
 
 export async function projectGoalCompletionAction(input: ProjectGoalCompletionInput, userId: string): Promise<ProjectGoalCompletionOutput> {
-  await consumeAICredits(userId, 3, 'Projeção de Meta');
-  const credential = await getActiveAICredential(userId);
+  const credential = await getCredentialAndHandleCredits(userId, 3, 'Projeção de Meta');
   return projectGoalCompletion(input, credential);
 }
 
 export async function generateAutomaticBudgetsAction(input: GenerateAutomaticBudgetsInput, userId: string): Promise<GenerateAutomaticBudgetsOutput> {
-  await consumeAICredits(userId, 5, 'Criação de Orçamentos Automáticos');
-  const credential = await getActiveAICredential(userId);
+  const credential = await getCredentialAndHandleCredits(userId, 5, 'Criação de Orçamentos Automáticos');
   return generateAutomaticBudgets(input, credential);
 }
 
 export async function predictFutureBalanceAction(input: PredictFutureBalanceInput, userId: string, forceRefresh: boolean = false): Promise<PredictFutureBalanceOutput> {
   const cost = forceRefresh ? 3 : 0;
-  await consumeAICredits(userId, cost, 'Previsão de Saldo', !forceRefresh);
-  const credential = await getActiveAICredential(userId);
+  const credential = await getCredentialAndHandleCredits(userId, cost, 'Previsão de Saldo', !forceRefresh);
   return predictFutureBalance(input, credential);
 }
 
@@ -318,10 +352,20 @@ export async function createStripeCheckoutAction(userId: string, userEmail: stri
     console.error("A chave secreta do Stripe não está configurada no servidor.");
     return { url: null, error: "Erro de configuração de pagamento no servidor." };
   }
+  
+  let priceId: string | undefined;
 
-  const priceId = plan === 'Pro'
-    ? process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO
-    : process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PLUS;
+  switch (plan) {
+    case 'Pro':
+      priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO;
+      break;
+    case 'Plus':
+      priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PLUS;
+      break;
+    case 'Infinity':
+      priceId = process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_INFINITY;
+      break;
+  }
 
   if (!priceId) {
     console.error(`O ID de preço para o plano ${plan} não está configurado.`);

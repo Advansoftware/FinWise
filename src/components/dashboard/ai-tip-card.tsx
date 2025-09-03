@@ -11,6 +11,7 @@ import { Transaction } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import { getFirebase } from "@/lib/firebase";
 import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
+import { usePlan } from "@/hooks/use-plan";
 
 interface AITipCardProps {
     transactions: Transaction[];
@@ -26,6 +27,7 @@ export function AITipCard({ transactions }: AITipCardProps) {
   const [tip, setTip] = useState("");
   const [isPending, startTransition] = useTransition();
   const { user } = useAuth();
+  const { isPro } = usePlan();
 
   const fetchTip = useCallback(async (forceRefresh = false) => {
     if (!user) return;
@@ -66,12 +68,14 @@ export function AITipCard({ transactions }: AITipCardProps) {
   }, [transactions, user]);
 
   useEffect(() => {
-    if(user && transactions.length > 0) {
+    if(user && isPro && transactions.length > 0) {
       fetchTip();
     } else if (transactions.length === 0) {
       setTip("Adicione transações para receber sua primeira dica.");
     }
-  }, [transactions.length, user, fetchTip]);
+  }, [transactions.length, user, isPro, fetchTip]);
+
+  if (!isPro) return null;
 
   return (
     <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
@@ -82,7 +86,7 @@ export function AITipCard({ transactions }: AITipCardProps) {
                 <CardTitle className="text-lg text-primary/90">Dica Financeira com IA</CardTitle>
             </div>
             <CardDescription className="text-xs text-primary/70 mt-1">
-                Gerado automaticamente 1x por dia. Atualizar custa 1 crédito.
+                Gerado automaticamente 1x por dia. Atualizar custa 1 crédito da FinWise AI.
             </CardDescription>
         </div>
         <Button

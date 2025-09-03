@@ -1,6 +1,6 @@
+// src/lib/types.ts
 
-
-export type UserPlan = 'Básico' | 'Pro' | 'Plus';
+export type UserPlan = 'Básico' | 'Pro' | 'Plus' | 'Infinity';
 
 export type TransactionCategory = "Supermercado" | "Transporte" | "Entretenimento" | "Contas" | "Restaurante" | "Saúde" | "Educação" | "Lazer" | "Vestuário" | "Outros" | "Salário" | "Investimentos" | "Vendas" | "Transferência";
 
@@ -54,13 +54,14 @@ export interface Category {
   subcategories: string[];
 }
 
-export type AIProvider = 'ollama' | 'googleai' | 'openai';
+export type AIProvider = 'ollama' | 'googleai' | 'openai' | 'finwise';
 export type OpenAIModel = 'gpt-3.5-turbo' | 'gpt-4' | 'gpt-4-vision-preview' | 'gpt-4o';
 
 export interface AICredential {
   id: string;
   name: string; // User-defined name for the credential
   provider: AIProvider;
+  isReadOnly?: boolean; // To lock the FinWise AI credential
   ollamaModel?: string;
   ollamaServerAddress?: string;
   googleAIApiKey?: string;

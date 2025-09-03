@@ -1,4 +1,4 @@
-
+// src/components/pro-upgrade-card.tsx
 'use client';
 
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,7 +19,7 @@ export function ProUpgradeCard({ featureName }: ProUpgradeCardProps) {
                     Recurso Exclusivo para Assinantes
                 </h3>
                 <p className="text-sm max-w-md mx-auto mt-2">
-                   A funcionalidade de **{featureName}** está disponível apenas nos planos Pro e Plus e consome créditos de IA. Faça o upgrade para desbloquear este e outros recursos inteligentes.
+                   A funcionalidade de **{featureName}** está disponível apenas em nossos planos de assinatura. Faça o upgrade para desbloquear este e outros recursos inteligentes.
                 </p>
                 <Button className="mt-6" asChild>
                     <Link href="/billing">Ver Planos</Link>
@@ -28,5 +28,3 @@ export function ProUpgradeCard({ featureName }: ProUpgradeCardProps) {
         </Card>
     );
 }
-
-    
