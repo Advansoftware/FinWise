@@ -3,9 +3,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { headers } from 'next/headers';
-import { getAdminApp } from '@/lib/firebase-admin';
+import { connectToDatabase } from '@/lib/mongodb'; // Importar a conexão direta
 import { UserPlan } from '@/lib/types';
-import { firestore } from 'firebase-admin';
+import { ObjectId } from 'mongodb';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
@@ -17,8 +17,23 @@ const creditsMap: Record<UserPlan, number> = {
     'Infinity': 500,
 };
 
+// Helper function to update user plan in MongoDB
+async function updateUserPlanInDb(userId: string, updates: Record<string, any>) {
+    const { db } = await connectToDatabase();
+    const usersCollection = db.collection('users');
+    
+    // The user ID from Firebase/Custom Auth is a string, which corresponds to the _id in our users collection.
+    // We need to convert it to an ObjectId to query correctly.
+    const userObjectId = new ObjectId(userId);
+
+    await usersCollection.updateOne(
+        { _id: userObjectId },
+        { $set: updates }
+    );
+}
+
+
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
-    // If the checkout session is for a subscription...
     if (session.mode === 'subscription' && session.subscription) {
         const subscriptionId = session.subscription as string;
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
@@ -32,18 +47,13 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         }
 
         try {
-            const adminDb = getAdminApp().firestore();
-            const userRef = adminDb.doc(`users/${firebaseUID}`);
-
-            // Set the Stripe Customer ID on the user's document for future portal access
-            // and store the active subscription ID.
-            await userRef.set({
+            await updateUserPlanInDb(firebaseUID, {
                 plan: plan,
                 aiCredits: creditsMap[plan] || 0,
                 stripeCustomerId: subscription.customer as string,
                 stripeSubscriptionId: subscription.id,
-                stripeCurrentPeriodEnd: firestore.Timestamp.fromMillis(subscription.current_period_end * 1000),
-            }, { merge: true });
+                stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+            });
             
             console.log(`[Webhook] Successfully processed subscription ${subscription.id} for user ${firebaseUID} on plan ${plan}.`);
 
@@ -63,16 +73,11 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     }
     
     try {
-        const adminDb = getAdminApp().firestore();
-        const userRef = adminDb.doc(`users/${firebaseUID}`);
-
-        // Downgrade the user to the 'Básico' plan and clear Stripe-related fields.
-        await userRef.update({
+        await updateUserPlanInDb(firebaseUID, {
             plan: 'Básico',
             aiCredits: 0,
             stripeSubscriptionId: null,
             stripeCurrentPeriodEnd: null,
-            // Optionally, you might want to keep the stripeCustomerId for history
         });
 
         console.log(`[Webhook] Successfully downgraded plan for user ${firebaseUID} upon subscription cancellation.`);
@@ -90,22 +95,15 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
         return;
     }
 
-    // Check if the subscription is still active. If it was cancelled but not yet deleted,
-    // the status will be 'active' until the end of the period. A 'canceled' status here
-    // means it's effectively over.
     if (subscription.status !== 'active') {
         return handleSubscriptionDeleted(subscription);
     }
 
     try {
-        const adminDb = getAdminApp().firestore();
-        const userRef = adminDb.doc(`users/${firebaseUID}`);
-
-        // Update the user's plan and credit-related fields.
-        await userRef.update({
+        await updateUserPlanInDb(firebaseUID, {
             plan: newPlan,
             aiCredits: creditsMap[newPlan] || 0,
-            stripeCurrentPeriodEnd: firestore.Timestamp.fromMillis(subscription.current_period_end * 1000),
+            stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
         });
 
         console.log(`[Webhook] Successfully updated plan for user ${firebaseUID} to ${newPlan}.`);
