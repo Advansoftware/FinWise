@@ -94,9 +94,10 @@ export type SuggestCategoryOutput = z.infer<typeof SuggestCategoryOutputSchema>;
 
 // Schema for Monthly Report
 export const GenerateReportInputSchema = z.object({
-  transactions: z.string().describe('A JSON string representing an array of transactions for a specific month.'),
+  transactions: z.string().describe('A JSON string representing an array of transactions for the report month.'),
   month: z.string().describe('The month for the report in "MM" format.'),
   year: z.string().describe('The year for the report in "YYYY" format.'),
+  previousMonthReport: z.string().optional().describe("An optional JSON string of the previous month's report to provide context and track progression."),
 });
 export type GenerateReportInput = z.infer<typeof GenerateReportInputSchema>;
 

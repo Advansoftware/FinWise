@@ -77,6 +77,73 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
     };
   }, [user, toast]);
   
+  const generateMonthlyReport = useCallback(async (year: number, month: number, transactions: Transaction[], previousMonthReport?: MonthlyReport) => {
+      if(!user) return null;
+      
+      const reportId = `${year}-${String(month).padStart(2, '0')}`;
+      
+      try {
+        const aiResult = await generateMonthlyReportAction({
+            transactions: JSON.stringify(transactions, null, 2),
+            year: String(year),
+            month: String(month).padStart(2, '0'),
+            previousMonthReport: previousMonthReport ? JSON.stringify(previousMonthReport) : undefined,
+        }, user.uid, true);
+        
+        const newReport: MonthlyReport = {
+            ...aiResult,
+            id: reportId,
+            userId: user.uid,
+            year,
+            month,
+            generatedAt: new Date().toISOString()
+        }
+
+        const { db } = getFirebase();
+        const reportRef = doc(db, "users", user.uid, "reports", reportId);
+        await setDoc(reportRef, newReport);
+        
+        return newReport;
+
+      } catch (error) {
+          console.error("Failed to generate monthly report:", error);
+          // Don't toast automatic errors
+          return null;
+      }
+  }, [user]);
+
+   const generateAnnualReport = useCallback(async (year: number, monthlyReportsForYear: MonthlyReport[]) => {
+      if(!user) return null;
+      
+      const reportId = String(year);
+      
+      try {
+        const aiResult = await generateAnnualReportAction({
+            monthlyReports: JSON.stringify(monthlyReportsForYear, null, 2),
+            year: String(year),
+        }, user.uid, true);
+        
+        const newReport: AnnualReport = {
+            ...aiResult,
+            id: reportId,
+            userId: user.uid,
+            year,
+            generatedAt: new Date().toISOString()
+        }
+
+        const { db } = getFirebase();
+        const reportRef = doc(db, "users", user.uid, "annualReports", reportId);
+        await setDoc(reportRef, newReport);
+        
+        return newReport;
+
+      } catch (error) {
+          console.error("Failed to generate annual report:", error);
+          // Don't toast automatic errors
+          return null;
+      }
+  }, [user]);
+
   // Effect for automatic report generation
   useEffect(() => {
     if (isLoading || isLoadingTransactions || !user || hasRunAutomaticGeneration) {
@@ -100,19 +167,25 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
                 const tDate = new Date(t.date);
                 return tDate >= start && tDate <= end;
             });
+
+            // Find previous month's report
+            const prevMonthDate = subMonths(lastMonthDate, 1);
+            const prevReportYear = getYear(prevMonthDate);
+            const prevReportMonth = getMonth(prevMonthDate) + 1;
+            const prevReportId = `${prevReportYear}-${String(prevReportMonth).padStart(2, '0')}`;
+            const previousMonthReport = monthlyReports.find(r => r.id === prevReportId);
             
             if (transactionsForMonth.length > 0) {
-                 await generateMonthlyReport(reportYear, reportMonth, transactionsForMonth, false); // No credit cost
+                 await generateMonthlyReport(reportYear, reportMonth, transactionsForMonth, previousMonthReport);
             }
         }
         
-        // This is a simplified annual check. A real-world one would be more robust.
         const lastYear = getYear(now) - 1;
         const isAnnualReportMissing = !annualReports.find(r => r.year === lastYear);
         const monthlyForLastYear = monthlyReports.filter(r => r.year === lastYear);
 
         if (isAnnualReportMissing && monthlyForLastYear.length === 12) {
-            await generateAnnualReport(lastYear, monthlyForLastYear, false); // No credit cost
+            await generateAnnualReport(lastYear, monthlyForLastYear);
         }
 
         hasRunAutomaticGeneration = true; // Mark as run
@@ -120,7 +193,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
 
     runAutomaticGeneration();
 
-  }, [isLoading, isLoadingTransactions, user, allTransactions, monthlyReports, annualReports]);
+  }, [isLoading, isLoadingTransactions, user, allTransactions, monthlyReports, annualReports, generateAnnualReport, generateMonthlyReport]);
 
   const getMonthlyReport = (year: number, month: number) => {
       const reportId = `${year}-${String(month).padStart(2, '0')}`;
@@ -130,85 +203,6 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
   const getAnnualReport = (year: number) => {
       return annualReports.find(r => r.year === year);
   }
-
-  const generateMonthlyReport = async (year: number, month: number, transactions: Transaction[], consumeCredit: boolean) => {
-      if(!user) return null;
-      
-      const reportId = `${year}-${String(month).padStart(2, '0')}`;
-      
-      try {
-        // Here we would check the 'consumeCredit' flag before calling the action
-        // For simplicity in this context, we assume the action is modified to handle this
-        const aiResult = await generateMonthlyReportAction({
-            transactions: JSON.stringify(transactions, null, 2),
-            year: String(year),
-            month: String(month).padStart(2, '0')
-        }, user.uid, !consumeCredit); // Pass a flag to skip credit consumption
-        
-        const newReport: MonthlyReport = {
-            ...aiResult,
-            id: reportId,
-            userId: user.uid,
-            year,
-            month,
-            generatedAt: new Date().toISOString()
-        }
-
-        const { db } = getFirebase();
-        const reportRef = doc(db, "users", user.uid, "reports", reportId);
-        await setDoc(reportRef, newReport);
-        
-        if (consumeCredit) {
-          toast({ title: "Relatório mensal gerado com sucesso!" });
-        }
-        return newReport;
-
-      } catch (error) {
-          console.error("Failed to generate monthly report:", error);
-          if (consumeCredit) {
-             toast({ variant: "destructive", title: "Erro ao Gerar Relatório Mensal", description: "Não foi possível conectar com a IA. Verifique suas configurações." });
-          }
-          return null;
-      }
-  }
-
-   const generateAnnualReport = async (year: number, monthlyReportsForYear: MonthlyReport[], consumeCredit: boolean) => {
-      if(!user) return null;
-      
-      const reportId = String(year);
-      
-      try {
-        const aiResult = await generateAnnualReportAction({
-            monthlyReports: JSON.stringify(monthlyReportsForYear, null, 2),
-            year: String(year),
-        }, user.uid, !consumeCredit);
-        
-        const newReport: AnnualReport = {
-            ...aiResult,
-            id: reportId,
-            userId: user.uid,
-            year,
-            generatedAt: new Date().toISOString()
-        }
-
-        const { db } = getFirebase();
-        const reportRef = doc(db, "users", user.uid, "annualReports", reportId);
-        await setDoc(reportRef, newReport);
-        
-        if (consumeCredit) {
-          toast({ title: `Relatório anual de ${year} gerado com sucesso!` });
-        }
-        return newReport;
-
-      } catch (error) {
-          console.error("Failed to generate annual report:", error);
-          if (consumeCredit) {
-            toast({ variant: "destructive", title: "Erro ao Gerar Relatório Anual", description: "Não foi possível conectar com a IA. Verifique suas configurações." });
-          }
-          return null;
-      }
-  }
-
 
   const value: ReportsContextType = {
     monthlyReports,

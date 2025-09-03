@@ -12,15 +12,20 @@ import { AICredential } from '@/lib/types';
 
 
 const promptTemplate = `Você é um analista financeiro especializado em criar relatórios mensais claros e objetivos para usuários de um aplicativo de finanças pessoais.
-Com base no JSON de transações fornecido, você deve analisar os dados do mês de {{{month}}}/{{{year}}} e gerar um relatório completo no formato JSON especificado.
+Com base no JSON de transações do mês de {{{month}}}/{{{year}}} e, opcionalmente, no relatório do mês anterior, gere um relatório completo no formato JSON especificado.
 
 Sua análise deve ser:
 - **Precisa**: Calcule os totais de receitas, despesas, o balanço final e o detalhamento de gastos por categoria corretamente.
-- **Perspicaz**: No resumo (campo 'summary'), vá além dos números. Comente sobre o principal ponto de gasto, ofereça um insight sobre o comportamento financeiro do usuário e forneça uma dica prática e encorajadora para o próximo mês.
+- **Perspicaz**: No resumo (campo 'summary'), vá além dos números. Se houver um relatório do mês anterior, compare os resultados. Comente sobre a evolução, o principal ponto de gasto do mês atual e forneça uma dica prática e encorajadora para o próximo mês.
 - **Concisa**: Mantenha o resumo com no máximo 3 frases curtas.
 - **Em Português do Brasil**: Toda a sua saída, especialmente o resumo, deve ser em Português do Brasil.
 
-JSON de Transações:
+{{#if previousMonthReport}}
+**Relatório do Mês Anterior (para contexto):**
+{{{previousMonthReport}}}
+{{/if}}
+
+**JSON de Transações para o Mês Atual ({{{month}}}/{{{year}}}):**
 {{{transactions}}}
 `;
 
