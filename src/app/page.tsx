@@ -48,36 +48,34 @@ export default function Page() {
   return (
     <AuthGuard>
       <div className="flex flex-col min-h-screen bg-background text-foreground overflow-x-hidden">
-        <header className="sticky top-0 z-50 p-4 md:p-6 bg-background/50 backdrop-blur-lg border-b border-border/50">
-          <div className="container mx-auto flex justify-between items-center">
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }} 
-                animate={{ opacity: 1, x: 0 }} 
-                transition={{ duration: 0.5 }}
-              >
-                <Link href="/" className="flex items-center gap-2">
-                    <Logo className="w-8 h-8"/>
-                    <span className="text-xl font-bold">FinWise</span>
-                </Link>
-              </motion.div>
-              <motion.div 
-                initial={{ opacity: 0, x: 20 }} 
-                animate={{ opacity: 1, x: 0 }} 
-                transition={{ duration: 0.5, delay: 0.2 }} 
-                className="flex items-center gap-4"
-              >
-                <Button asChild variant="ghost">
-                    <Link href="/docs">
-                        Doc
-                    </Link>
-                </Button>
-                <Button asChild>
-                    <Link href={user ? "/dashboard" : "/login"}>
-                        {user ? "Acessar Painel" : "Entrar"}
-                    </Link>
-                </Button>
-              </motion.div>
-          </div>
+        <header className="sticky top-0 z-50 px-4 md:px-6 h-14 flex items-center justify-between bg-background/50 backdrop-blur-lg border-b border-border/50">
+            <motion.div 
+              initial={{ opacity: 0, x: -20 }} 
+              animate={{ opacity: 1, x: 0 }} 
+              transition={{ duration: 0.5 }}
+            >
+              <Link href="/" className="flex items-center gap-2">
+                  <Logo className="w-8 h-8"/>
+                  <span className="text-xl font-bold">FinWise</span>
+              </Link>
+            </motion.div>
+            <motion.div 
+              initial={{ opacity: 0, x: 20 }} 
+              animate={{ opacity: 1, x: 0 }} 
+              transition={{ duration: 0.5, delay: 0.2 }} 
+              className="flex items-center gap-4"
+            >
+              <Button asChild variant="ghost">
+                  <Link href="/docs">
+                      Doc
+                  </Link>
+              </Button>
+              <Button asChild>
+                  <Link href={user ? "/dashboard" : "/login"}>
+                      {user ? "Acessar Painel" : "Entrar"}
+                  </Link>
+              </Button>
+            </motion.div>
         </header>
 
         <main className="flex-1">
