@@ -118,8 +118,8 @@ export default function BillingPage() {
                 </div>
                  {isPaidPlan && (
                     <Button onClick={handleManageSubscription} disabled={isProcessing}>
-                        {isProcessing ? <Loader2 className="animate-spin" /> : <Gem />}
-                        Gerenciar Assinatura
+                        {isProcessing ? <Loader2 className="animate-spin" /> : <Gem className="h-4 w-4" />}
+                        <span className="ml-2">Gerenciar Assinatura</span>
                     </Button>
                 )}
             </div>
@@ -155,7 +155,7 @@ export default function BillingPage() {
                         <CardFooter>
                              <Button 
                                 className="w-full" 
-                                disabled={isCurrent || isProcessing || isPlanLoading} 
+                                disabled={isCurrent || isProcessing || isPlanLoading || isPaidPlan} 
                                 onClick={() => handleUpgrade(plan.name as Exclude<UserPlan, 'Básico'>)} 
                                 variant={isCurrent ? 'outline' : 'default'}
                             >

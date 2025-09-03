@@ -16,10 +16,8 @@ const creditsMap: Record<UserPlan, number> = {
 };
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
-    // This event is now the primary way to handle a new subscription.
-    // It is triggered when a user successfully completes the checkout process.
     if (session.mode !== 'subscription') {
-        return; // Ignore one-time payments if any
+        return;
     }
 
     const subscriptionId = session.subscription;
@@ -29,7 +27,6 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     }
     
     try {
-        // Retrieve the subscription to get the metadata we attached
         const subscription = await stripe.subscriptions.retrieve(subscriptionId as string);
         
         const firebaseUID = subscription.metadata?.firebaseUID;
@@ -59,10 +56,13 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 }
 
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
-    // This event is useful for renewals.
+    // Only handle renewals, not the initial creation payment
+    if (invoice.billing_reason !== 'subscription_cycle') {
+        return;
+    }
+    
     const subscriptionId = invoice.subscription;
-    if (!subscriptionId || invoice.billing_reason !== 'subscription_cycle') {
-        // Ignore invoices that are not for subscription renewals
+    if (!subscriptionId) {
         return;
     }
     
@@ -90,6 +90,28 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
     }
 }
 
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+    const firebaseUID = subscription.metadata.firebaseUID;
+    if (!firebaseUID) {
+        console.error(`[Webhook] Cancellation Error: firebaseUID is missing from subscription metadata. Subscription ID: ${subscription.id}`);
+        return;
+    }
+    
+    try {
+        const adminDb = getAdminApp().firestore();
+        const userRef = adminDb.doc(`users/${firebaseUID}`);
+        
+        await userRef.update({
+            plan: 'Básico',
+            aiCredits: 0,
+        });
+
+        console.log(`[Webhook] Successfully downgraded plan to Básico for user ${firebaseUID}.`);
+    } catch (error) {
+        console.error(`[Webhook] Error handling subscription cancellation for user ${firebaseUID}:`, error);
+    }
+}
+
 
 export async function POST(req: NextRequest) {
     const buf = await req.text();
@@ -108,7 +130,6 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
     }
 
-    // Handle the event
     try {
         switch (event.type) {
              case 'checkout.session.completed':
@@ -119,13 +140,12 @@ export async function POST(req: NextRequest) {
                 await handleInvoicePaymentSucceeded(event.data.object as Stripe.Invoice);
                 break;
             
-            // TODO: Handle subscription cancellations
-            // case 'customer.subscription.deleted':
-            //     // ... logic to downgrade the user's plan to 'Básico'
-            //     break;
+            case 'customer.subscription.deleted':
+                await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
+                break;
             
             default:
-                // console.log(`Unhandled event type ${event.type}`);
+                // Unhandled event type
         }
     } catch (error) {
         console.error("[Webhook Error] Error processing webhook:", error);
