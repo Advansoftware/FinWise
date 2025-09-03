@@ -1,3 +1,4 @@
+
 // src/services/ai-actions.ts
 'use server';
 
@@ -41,11 +42,12 @@ import { projectGoalCompletion } from '@/ai/flows/project-goal-completion';
 import { generateAutomaticBudgets } from '@/ai/flows/generate-automatic-budgets';
 import { predictFutureBalance } from '@/ai/flows/predict-future-balance';
 import { createConfiguredAI, getModelReference } from '@/ai/genkit';
+import { AICredential } from '@/lib/types';
 
 async function getCredentialAndHandleCredits(userId: string, cost: number, action: AICreditLogAction, isFreeAction: boolean = false): Promise<any> {
     const credential = await getActiveAICredential(userId);
 
-    if (credential.provider === 'finwise') {
+    if (credential.provider === 'finwise' || (!credential.provider && process.env.DEFAULT_AI_PROVIDER)) {
         await consumeAICredits(userId, cost, action, isFreeAction);
     }
     
@@ -165,21 +167,8 @@ export async function getChatbotResponse(input: ChatInput, userId: string): Prom
   }
 }
 
-export async function extractReceiptInfoAction(input: ReceiptInfoInput, userId: string, chosenProviderId?: string): Promise<ReceiptInfoOutput> {
-  let credential;
-  if(chosenProviderId) {
-      const allSettings = await getActiveAICredential(userId); // Bit of a hack to get all credentials
-      // In a real app, this would be a direct fetch. For now, we simulate.
-      // This is a placeholder for a more robust multi-credential system.
-      credential = allSettings; // Fallback to active if chosen not found
-  } else {
-    credential = await getActiveAICredential(userId);
-  }
-
-  if (credential.provider === 'finwise') {
-     await consumeAICredits(userId, 10, 'Leitura de Nota Fiscal (OCR)');
-  }
-  
+export async function extractReceiptInfoAction(input: ReceiptInfoInput, userId: string, chosenProviderId: string): Promise<ReceiptInfoOutput> {
+  const credential = await getCredentialAndHandleCredits(userId, 10, 'Leitura de Nota Fiscal (OCR)');
   return await extractReceiptInfo(input, credential);
 }
 

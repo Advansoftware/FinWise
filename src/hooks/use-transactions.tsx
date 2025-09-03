@@ -1,3 +1,4 @@
+
 // src/hooks/use-transactions.tsx
 "use client";
 
@@ -8,6 +9,7 @@ import { Transaction, TransactionCategory } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { getDatabaseAdapter } from "@/services/database/database-service";
+import { IDatabaseAdapter } from "@/services/database/database-adapter";
 
 type CategoryMap = Partial<Record<TransactionCategory, string[]>>;
 
@@ -36,6 +38,25 @@ interface TransactionsContextType {
 
 const TransactionsContext = createContext<TransactionsContextType | undefined>(undefined);
 
+async function performAtomicUpdate(dbAdapter: IDatabaseAdapter, updates: Partial<Transaction>, originalTransaction: Transaction) {
+    await dbAdapter.runTransaction(async (t: any) => {
+        const originalWallet = await t.get(`users/USER_ID/wallets/${originalTransaction.walletId}`);
+        if (!originalWallet) throw new Error("Original wallet not found.");
+
+        // Revert the original transaction amount from its wallet
+        const revertAmount = originalTransaction.type === 'income' ? -originalTransaction.amount : originalTransaction.amount;
+        t.update(`users/USER_ID/wallets/${originalTransaction.walletId}`, { balance: dbAdapter.increment(revertAmount) });
+
+        // Apply the new transaction amount to its wallet
+        const newAmount = updates.type === 'income' ? updates.amount : -(updates.amount ?? 0);
+        t.update(`users/USER_ID/wallets/${updates.walletId}`, { balance: dbAdapter.increment(newAmount ?? 0) });
+
+        // Finally, update the transaction document itself
+        t.update(`users/USER_ID/transactions/${originalTransaction.id}`, updates);
+    });
+}
+
+
 export function TransactionsProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -60,11 +81,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
 
     setIsLoading(true);
     
-    // The specific constraints (like orderBy) are passed as arguments
-    // but the implementation is hidden inside the adapter.
-    const transactionConstraints = (dbAdapter.constructor.name === 'FirebaseAdapter') 
-      ? [dbAdapter.queryConstraint('orderBy', 'date', 'desc')] 
-      : [];
+    const transactionConstraints = [dbAdapter.queryConstraint('orderBy', 'date', 'desc')];
 
     const unsubscribeTransactions = dbAdapter.listenToCollection<Transaction>(
       'users/USER_ID/transactions',
@@ -113,16 +130,16 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     if (!user) throw new Error("User not authenticated");
 
-    await dbAdapter.runTransaction(async (t) => {
+    await dbAdapter.runTransaction(async (t: any) => {
       if (transaction.type === 'income' || transaction.type === 'expense') {
         const amount = transaction.type === 'income' ? transaction.amount : -transaction.amount;
-        await t.update(`users/USER_ID/wallets/${transaction.walletId}`, { balance: dbAdapter.increment(amount) });
+        t.update(`users/USER_ID/wallets/${transaction.walletId}`, { balance: dbAdapter.increment(amount) });
       }
       
       if (transaction.type === 'transfer') {
         if (!transaction.toWalletId) throw new Error("Destination wallet is required for transfers.");
-        await t.update(`users/USER_ID/wallets/${transaction.walletId}`, { balance: dbAdapter.increment(-transaction.amount) });
-        await t.update(`users/USER_ID/wallets/${transaction.toWalletId}`, { balance: dbAdapter.increment(transaction.amount) });
+        t.update(`users/USER_ID/wallets/${transaction.walletId}`, { balance: dbAdapter.increment(-transaction.amount) });
+        t.update(`users/USER_ID/wallets/${transaction.toWalletId}`, { balance: dbAdapter.increment(transaction.amount) });
       }
 
       const newTransactionData = { ...transaction, amount: Math.abs(transaction.amount), date: new Date(transaction.date) };
@@ -137,13 +154,16 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
         toast({ variant: "default", title: "Ação não suportada", description: "A atualização em lote não é suportada por este adaptador de banco de dados." });
     }
     
-    await dbAdapter.updateDoc(`users/USER_ID/transactions/${transactionId}`, { ...updates, date: new Date(updates.date!) });
+    const originalTransaction = allTransactions.find(t => t.id === transactionId);
+    if (!originalTransaction) throw new Error("Transaction not found for update.");
+
+    await performAtomicUpdate(dbAdapter, updates, originalTransaction);
   };
   
   const deleteTransaction = async (transactionId: string) => {
      if (!user) throw new Error("User not authenticated");
 
-     await dbAdapter.runTransaction(async (t) => {
+     await dbAdapter.runTransaction(async (t: any) => {
         const transactionDoc = await t.get(`users/USER_ID/transactions/${transactionId}`);
         if (!transactionDoc || !transactionDoc.data()) {
             throw new Error("Transaction does not exist!");

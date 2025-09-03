@@ -44,7 +44,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const { auth, db } = getFirebase();
+  const { auth } = getFirebase();
   const dbAdapter = getDatabaseAdapter();
   const router = useRouter();
 
@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
       setUser(user);
       if (user) {
-        // Ensure user profile exists in the database
+        // Ensure user profile exists in the database using the adapter
         await dbAdapter.ensureUserProfile(user);
       }
       setLoading(false);
@@ -61,14 +61,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => unsubscribe();
   }, [auth, dbAdapter]);
 
-  const login = (email: string, pass: string) => {
-    return signInWithEmailAndPassword(auth, email, pass);
+  const login = async (email: string, pass: string) => {
+    const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+    if (userCredential.user) {
+      await dbAdapter.ensureUserProfile(userCredential.user);
+    }
+    return userCredential;
   };
   
   const signup = (email: string, pass: string, name: string) => {
     return createUserWithEmailAndPassword(auth, email, pass).then(async (userCredential) => {
         await updateProfile(userCredential.user, { displayName: name });
-        // The onIdTokenChanged listener will handle profile creation
+        // The onIdTokenChanged listener will handle profile creation via the adapter
+        setUser(auth.currentUser ? { ...auth.currentUser } : null); // Force re-render to trigger listener effect
         return userCredential;
     });
   };
@@ -78,10 +83,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     router.push('/login');
   };
 
-  const signInWithGoogle = () => {
+  const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
-    return signInWithPopup(auth, provider);
-    // The onIdTokenChanged listener will handle profile creation
+    const result = await signInWithPopup(auth, provider);
+    // The onIdTokenChanged listener handles profile creation, but we can ensure it here as well
+    if (result.user) {
+        await dbAdapter.ensureUserProfile(result.user);
+    }
+    return result;
   };
   
   const sendPasswordReset = (email: string) => {
@@ -92,8 +101,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!auth.currentUser) throw new Error("User not authenticated");
     await updateProfile(auth.currentUser, { displayName: name });
     
+    // Use the adapter to update the user's profile in the database
     await dbAdapter.updateDoc(`users/${auth.currentUser.uid}`, { displayName: name });
     
+    // Force a re-render to reflect the change immediately in the UI
     setUser(auth.currentUser ? { ...auth.currentUser } : null);
   }
 

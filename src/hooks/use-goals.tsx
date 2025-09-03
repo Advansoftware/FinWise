@@ -1,3 +1,4 @@
+
 // src/hooks/use-goals.tsx
 'use client';
 
@@ -96,7 +97,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
   const addDeposit = async (goalId: string, amount: number, walletId: string) => {
      if (!user) throw new Error("User not authenticated");
      
-     await dbAdapter.runTransaction(async (transaction) => {
+     await dbAdapter.runTransaction(async (transaction: any) => {
         const goalDoc = await transaction.get(`users/USER_ID/goals/${goalId}`);
         if (!goalDoc || !goalDoc.data()) throw new Error("Meta não encontrada.");
 

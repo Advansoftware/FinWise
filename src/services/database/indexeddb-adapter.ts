@@ -1,8 +1,9 @@
+
 // src/services/database/indexeddb-adapter.ts
 import { openDB, IDBPDatabase, DBSchema } from 'idb';
-import { DocumentData, QueryConstraint } from "firebase/firestore";
+import { DocumentData } from "firebase/firestore";
 import { User } from 'firebase/auth';
-import { IDatabaseAdapter, Unsubscribe } from "./database-adapter";
+import { IDatabaseAdapter, Unsubscribe, QueryConstraint } from "./database-adapter";
 import { v4 as uuidv4 } from 'uuid';
 
 const DB_NAME = 'finwiseDB';
@@ -22,6 +23,8 @@ interface FinWiseDBSchema extends DBSchema {
 export class IndexedDBAdapter implements IDatabaseAdapter {
     private dbPromise: Promise<IDBPDatabase<FinWiseDBSchema>>;
     private userId: string | null = null;
+    private listeners: Map<string, ((data: any[]) => void)[]> = new Map();
+
 
     constructor() {
         this.dbPromise = openDB<FinWiseDBSchema>(DB_NAME, DB_VERSION, {
@@ -32,12 +35,13 @@ export class IndexedDBAdapter implements IDatabaseAdapter {
                         if (storeName !== 'users') {
                             store.createIndex('by-userId', 'userId');
                         }
+                         if (storeName === 'transactions' || storeName === 'budgets' || storeName === 'goals' || storeName === 'wallets') {
+                            store.createIndex('by-createdAt', 'createdAt');
+                        }
                     }
                 }
             },
         });
-        // This is a simplification; a real app would use the auth context.
-        // For now, we assume a single user or a way to get the current user ID.
     }
 
     private setUserId(id: string | null) {
@@ -46,38 +50,61 @@ export class IndexedDBAdapter implements IDatabaseAdapter {
 
     private getUserId(): string {
        if (!this.userId) {
-          // Attempt to get from a hypothetical auth state if not set
-          // This part is tricky without direct access to auth state.
-          // The useAuth hook will call setUserId on this adapter instance.
+          const storedUser = localStorage.getItem('finwise_user_id');
+          if (storedUser) this.userId = storedUser;
        }
        if (!this.userId) throw new Error("User not authenticated for IndexedDB operations.");
        return this.userId;
     }
+    
+    private async notifyListeners(storeName: string) {
+        const cbs = this.listeners.get(storeName);
+        if (cbs) {
+            const db = await this.dbPromise;
+            const userId = this.getUserId();
+            const data = storeName === 'users' ? await db.getAll(storeName as any) : await db.getAllFromIndex(storeName as any, 'by-userId', userId);
+            cbs.forEach(cb => cb(data));
+        }
+    }
 
     private resolvePath(path: string): { storeName: string, id?: string } {
         const parts = path.split('/');
-        if (parts.length === 1) return { storeName: parts[0] }; // e.g., 'users'
+        if (parts.length === 1) return { storeName: parts[0] }; 
+        if (parts[0] === 'users' && parts.length === 2 && parts[1] !== 'USER_ID') return { storeName: 'users', id: parts[1] };
         if (parts[0] === 'users' && parts[1] === 'USER_ID') {
             return { storeName: parts[2], id: parts[3] };
         }
         return { storeName: parts[0], id: parts[1] };
     }
-    
-    // NOTE: This implementation of listenToCollection does not provide real-time updates.
-    // It fetches the data once. A full real-time implementation would be complex.
-    listenToCollection<T>(collectionPath: string, callback: (data: T[]) => void, constraints?: QueryConstraint[]): Unsubscribe {
+
+    listenToCollection<T>(collectionPath: string, callback: (data: T[]) => void, constraints?: any[]): Unsubscribe {
         const { storeName } = this.resolvePath(collectionPath);
-        const userId = this.getUserId();
         
+        if (!this.listeners.has(storeName)) {
+            this.listeners.set(storeName, []);
+        }
+        this.listeners.get(storeName)!.push(callback);
+
         const fetchData = async () => {
-            try {
+             try {
                 const db = await this.dbPromise;
+                const userId = this.getUserId();
                 let results: T[];
                 if (storeName === 'users') {
                     results = await db.getAll(storeName as any);
                 } else {
                     results = await db.getAllFromIndex(storeName as any, 'by-userId', userId);
                 }
+                
+                // Manual sorting based on constraints
+                if(constraints) {
+                   for (const constraint of constraints) {
+                       if (constraint.type === 'orderBy' && constraint.field === 'createdAt' && constraint.direction === 'desc') {
+                           results.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+                       }
+                   }
+                }
+                
                 callback(results);
             } catch (error) {
                 console.error(`Error fetching from IndexedDB store ${storeName}:`, error);
@@ -87,8 +114,17 @@ export class IndexedDBAdapter implements IDatabaseAdapter {
 
         fetchData();
 
-        // Return a no-op unsubscribe function as this is not a real-time listener.
-        return () => {};
+        const unsubscribe = () => {
+            const cbs = this.listeners.get(storeName);
+            if (cbs) {
+                const index = cbs.indexOf(callback);
+                if (index > -1) {
+                    cbs.splice(index, 1);
+                }
+            }
+        };
+
+        return unsubscribe;
     }
 
     async getDoc<T>(docPath: string): Promise<T | null> {
@@ -100,7 +136,8 @@ export class IndexedDBAdapter implements IDatabaseAdapter {
     }
 
     async ensureUserProfile(user: User): Promise<void> {
-        this.setUserId(user.uid); // Set userId for subsequent operations
+        this.setUserId(user.uid); 
+        localStorage.setItem('finwise_user_id', user.uid);
         const db = await this.dbPromise;
         const existingUser = await db.get('users', user.uid);
         if (!existingUser) {
@@ -114,6 +151,7 @@ export class IndexedDBAdapter implements IDatabaseAdapter {
                 createdAt: new Date().toISOString(),
             };
             await db.put('users', newUserProfile);
+            await this.notifyListeners('users');
         }
     }
 
@@ -128,6 +166,7 @@ export class IndexedDBAdapter implements IDatabaseAdapter {
             createdAt: new Date().toISOString(),
         };
         await db.add(storeName as any, newDoc);
+        await this.notifyListeners(storeName);
         return newId;
     }
 
@@ -135,11 +174,15 @@ export class IndexedDBAdapter implements IDatabaseAdapter {
         const { storeName, id } = this.resolvePath(docPath);
         if (!id) throw new Error("Document ID is required for setDoc");
         const db = await this.dbPromise;
-        const docToSet = { ...data, id };
-        if (storeName !== 'users') {
-           (docToSet as any).userId = this.getUserId();
+        
+        const existing = await db.get(storeName as any, id);
+        const docToSet = { ...(existing || {}), ...data, id };
+        
+        if (storeName !== 'users' && !docToSet.userId) {
+           docToSet.userId = this.getUserId();
         }
         await db.put(storeName as any, docToSet);
+        await this.notifyListeners(storeName);
     }
     
     async updateDoc(docPath: string, data: Partial<DocumentData>): Promise<void> {
@@ -150,6 +193,7 @@ export class IndexedDBAdapter implements IDatabaseAdapter {
         if (existing) {
             const updated = { ...existing, ...data };
             await db.put(storeName as any, updated);
+            await this.notifyListeners(storeName);
         }
     }
 
@@ -158,24 +202,37 @@ export class IndexedDBAdapter implements IDatabaseAdapter {
         if (!id) throw new Error("Document ID is required for deleteDoc");
         const db = await this.dbPromise;
         await db.delete(storeName as any, id);
+        await this.notifyListeners(storeName);
     }
     
-    // Transactions in IndexedDB are complex. This is a simplified, non-atomic stub.
     async runTransaction(updateFunction: (transaction: any) => Promise<any>): Promise<any> {
-        console.warn("IndexedDBAdapter does not support true atomic transactions. Operations will be performed sequentially.");
+        console.warn("IndexedDBAdapter: Transactions are not atomic. Simulating for development.");
+        
+        const txPromises: Promise<any>[] = [];
+
         const dummyTransaction = {
             get: this.getDoc.bind(this),
-            set: this.setDoc.bind(this),
-            update: this.updateDoc.bind(this),
-            delete: this.deleteDoc.bind(this)
+            set: (docPath: string, data: DocumentData) => {
+                txPromises.push(this.setDoc(docPath, data));
+            },
+            update: (docPath: string, data: Partial<DocumentData>) => {
+                txPromises.push(this.updateDoc(docPath, data));
+            },
+            delete: (docPath: string) => {
+                txPromises.push(this.deleteDoc(docPath));
+            }
         };
-        return updateFunction(dummyTransaction);
+
+        await updateFunction(dummyTransaction);
+        await Promise.all(txPromises);
     }
 
-    // A real implementation would need to fetch, calculate, and update.
-    increment(value: number) {
-        console.warn("IndexedDBAdapter does not support atomic increments. This operation is not safe in concurrent environments.");
-        // This is a placeholder and not a true atomic increment.
-        return { __indexeddb_increment: value };
+    increment(value: number): any {
+        return { __idb_increment: value };
+    }
+
+    queryConstraint(type: 'orderBy' | 'where', field: string, ...args: any[]): any {
+        // This is a mock. The actual filtering/sorting is done in listenToCollection for IndexedDB.
+        return { type, field, direction: args[0], operator: args[0], value: args[1] };
     }
 }
