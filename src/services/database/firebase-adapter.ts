@@ -13,9 +13,14 @@ import {
     runTransaction as fbRunTransaction,
     increment as fbIncrement,
     DocumentData,
-    QueryConstraint,
+    QueryConstraint as FirebaseQueryConstraint,
     query,
     Timestamp,
+    orderBy,
+    where,
+    limit,
+    WhereFilterOp,
+    OrderByDirection,
 } from "firebase/firestore";
 import { User } from "firebase/auth";
 import { IDatabaseAdapter, Unsubscribe } from "./database-adapter";
@@ -60,7 +65,7 @@ export class FirebaseAdapter implements IDatabaseAdapter {
         return serialized;
     }
 
-    listenToCollection<T>(collectionPath: string, callback: (data: T[]) => void, constraints: QueryConstraint[] = []): Unsubscribe {
+    listenToCollection<T>(collectionPath: string, callback: (data: T[]) => void, constraints: FirebaseQueryConstraint[] = []): Unsubscribe {
         try {
             const resolvedPath = this.resolvePath(collectionPath);
             const q = query(collection(this.db, resolvedPath), ...constraints);
@@ -171,5 +176,17 @@ export class FirebaseAdapter implements IDatabaseAdapter {
 
     increment(value: number): any {
         return fbIncrement(value);
+    }
+
+    queryConstraint(type: 'orderBy', field: string, direction: OrderByDirection): FirebaseQueryConstraint;
+    queryConstraint(type: 'where', field: string, operator: WhereFilterOp, value: any): FirebaseQueryConstraint;
+    queryConstraint(type: any, field: any, operator: any, value?: any): FirebaseQueryConstraint {
+        if (type === 'orderBy') {
+            return orderBy(field, operator);
+        }
+        if (type === 'where') {
+            return where(field, operator, value);
+        }
+        throw new Error(`Unsupported constraint type: ${type}`);
     }
 }

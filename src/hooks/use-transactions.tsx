@@ -8,7 +8,6 @@ import { Transaction, TransactionCategory } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { getDatabaseAdapter } from "@/services/database/database-service";
-import { orderBy, where } from "firebase/firestore";
 
 type CategoryMap = Partial<Record<TransactionCategory, string[]>>;
 
@@ -61,17 +60,21 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
 
     setIsLoading(true);
     
-    // Real-time listener for transactions
+    // The specific constraints (like orderBy) are passed as arguments
+    // but the implementation is hidden inside the adapter.
+    const transactionConstraints = (dbAdapter.constructor.name === 'FirebaseAdapter') 
+      ? [dbAdapter.queryConstraint('orderBy', 'date', 'desc')] 
+      : [];
+
     const unsubscribeTransactions = dbAdapter.listenToCollection<Transaction>(
       'users/USER_ID/transactions',
       (transactions) => {
         setAllTransactions(transactions);
         setIsLoading(false);
       },
-      (dbAdapter.constructor.name === 'FirebaseAdapter' ? [orderBy("date", "desc")] : [])
+      transactionConstraints
     );
 
-    // Listener for categories
     const unsubscribeCategories = dbAdapter.listenToCollection<CategoryMap>(
       'users/USER_ID/settings',
       (settings) => {
@@ -79,7 +82,6 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
          if (catSettings) {
              setCategoryMap(catSettings as CategoryMap);
          } else {
-            // Initialize default categories if they don't exist
             const defaultCategories: CategoryMap = {
                 "Supermercado": ["Mercearia", "Feira", "Açougue", "Bebidas"],
                 "Transporte": ["Combustível", "Uber/99", "Metrô/Ônibus", "Estacionamento"],
@@ -102,7 +104,6 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     );
 
 
-    // Cleanup function to unsubscribe when component unmounts or user changes
     return () => {
       unsubscribeTransactions();
       unsubscribeCategories();
@@ -113,31 +114,25 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     if (!user) throw new Error("User not authenticated");
 
     await dbAdapter.runTransaction(async (t) => {
-      // Handle balance update for income/expense
       if (transaction.type === 'income' || transaction.type === 'expense') {
         const amount = transaction.type === 'income' ? transaction.amount : -transaction.amount;
         await t.update(`users/USER_ID/wallets/${transaction.walletId}`, { balance: dbAdapter.increment(amount) });
       }
       
-      // Handle balance update for transfers
       if (transaction.type === 'transfer') {
         if (!transaction.toWalletId) throw new Error("Destination wallet is required for transfers.");
         await t.update(`users/USER_ID/wallets/${transaction.walletId}`, { balance: dbAdapter.increment(-transaction.amount) });
         await t.update(`users/USER_ID/wallets/${transaction.toWalletId}`, { balance: dbAdapter.increment(transaction.amount) });
       }
 
-      // Create the transaction record itself
       const newTransactionData = { ...transaction, amount: Math.abs(transaction.amount), date: new Date(transaction.date) };
-      await t.set(`users/USER_ID/transactions/${Date.now()}`, newTransactionData); // Using timestamp as ID for simplicity
+      await t.set(`users/USER_ID/transactions/${Date.now()}`, newTransactionData);
     });
   }
 
   const updateTransaction = async (transactionId: string, updates: Partial<Transaction>, updateAllMatching: boolean, originalItemName: string) => {
     if (!user) throw new Error("User not authenticated");
     
-    // The adapter pattern makes batch updates complex without a specific API for it.
-    // For now, we'll simplify and only update the single transaction.
-    // A full implementation would require a `batchUpdate` method in the IDatabaseAdapter.
      if (updateAllMatching) {
         toast({ variant: "default", title: "Ação não suportada", description: "A atualização em lote não é suportada por este adaptador de banco de dados." });
     }
@@ -156,13 +151,11 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
 
         const transactionData = transactionDoc.data() as Transaction;
         
-        // Handle balance update for income/expense
         if (transactionData.type === 'income' || transactionData.type === 'expense') {
             const amount = transactionData.type === 'income' ? -transactionData.amount : transactionData.amount;
             await t.update(`users/USER_ID/wallets/${transactionData.walletId}`, { balance: dbAdapter.increment(amount) });
         }
 
-        // Handle balance update for transfers
         if (transactionData.type === 'transfer') {
            if (!transactionData.toWalletId) throw new Error("Cannot reverse transfer without destination wallet.");
            await t.update(`users/USER_ID/wallets/${transactionData.walletId}`, { balance: dbAdapter.increment(transactionData.amount) });
@@ -174,7 +167,6 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   }
 
   const { categories, subcategories } = useMemo(() => {
-    // Remove "id" from the map to get clean categories
     const { id, ...cats } = categoryMap as any;
     const categoryNames = Object.keys(cats) as TransactionCategory[];
     return {
@@ -187,7 +179,6 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       await dbAdapter.setDoc(`users/USER_ID/settings/categories`, newCategories);
   };
 
-  // --- Category Management ---
   const addCategory = async (categoryName: TransactionCategory) => {
     if (!user) throw new Error("User not authenticated");
     if (categories.includes(categoryName)) {
@@ -232,7 +223,6 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     await saveCategories(user.uid, newCategoryMap);
   }
 
-
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
     setSelectedSubcategory('all');
@@ -259,7 +249,6 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   }, [allTransactions, dateRange, selectedCategory, selectedSubcategory]);
 
   const chartData = useMemo(() => {
-    // We filter out transfers from chart data as they aren't expenses.
     const expenseTransactions = filteredTransactions.filter(t => t.type === 'expense');
     
     if (selectedCategory === 'all') {

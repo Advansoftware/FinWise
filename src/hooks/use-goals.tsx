@@ -6,7 +6,6 @@ import { Goal, Transaction } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { getDatabaseAdapter } from "@/services/database/database-service";
-import { orderBy } from "firebase/firestore";
 
 interface GoalsContextType {
   goals: Goal[];
@@ -33,10 +32,8 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
 
   // Effect to check for newly completed goals
   useEffect(() => {
-    // Find a goal that just got completed
     const justCompleted = goals.find(currentGoal => {
         const prevGoal = prevGoalsRef.current.find(pg => pg.id === currentGoal.id);
-        // It's completed now, but it wasn't before
         return currentGoal.currentAmount >= currentGoal.targetAmount && prevGoal && prevGoal.currentAmount < prevGoal.targetAmount;
     });
 
@@ -44,7 +41,6 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
         setCompletedGoal(justCompleted);
     }
 
-    // Update the previous goals ref for the next render
     prevGoalsRef.current = goals;
   }, [goals]);
 
@@ -58,13 +54,18 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     }
 
     setIsLoading(true);
+
+    const constraints = (dbAdapter.constructor.name === 'FirebaseAdapter')
+      ? [dbAdapter.queryConstraint('orderBy', 'createdAt', 'desc')]
+      : [];
+
     const unsubscribe = dbAdapter.listenToCollection<Goal>(
       'users/USER_ID/goals',
       (fetchedGoals) => {
         setGoals(fetchedGoals);
         setIsLoading(false);
       },
-       (dbAdapter.constructor.name === 'FirebaseAdapter' ? [orderBy("createdAt", "desc")] : [])
+      constraints
     );
     
     return () => unsubscribe();
@@ -88,8 +89,6 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
 
   const deleteGoal = async (goalId: string) => {
     if (!user) throw new Error("User not authenticated");
-    // In a real app, you might want to handle what happens to deposited money.
-    // For now, we'll just delete the goal.
     await dbAdapter.deleteDoc(`users/USER_ID/goals/${goalId}`);
     toast({ title: "Meta excluída." });
   }
@@ -101,7 +100,6 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
         const goalDoc = await transaction.get(`users/USER_ID/goals/${goalId}`);
         if (!goalDoc || !goalDoc.data()) throw new Error("Meta não encontrada.");
 
-        // Create the transaction record
         const newTransaction: Omit<Transaction, 'id'> = {
             item: `Depósito para Meta: ${goalDoc.data().name}`,
             amount: amount,
@@ -112,7 +110,6 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
         };
         await transaction.set(`users/USER_ID/transactions/${Date.now()}`, newTransaction);
 
-        // Update wallet and goal balances
         transaction.update(`users/USER_ID/wallets/${walletId}`, { balance: dbAdapter.increment(-amount) });
         transaction.update(`users/USER_ID/goals/${goalId}`, { currentAmount: dbAdapter.increment(amount) });
      });

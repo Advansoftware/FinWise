@@ -6,7 +6,6 @@ import { Wallet } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { getDatabaseAdapter } from "@/services/database/database-service";
-import { orderBy, where } from "firebase/firestore";
 
 interface WalletsContextType {
   wallets: Wallet[];
@@ -34,13 +33,18 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
     }
 
     setIsLoading(true);
+    
+    const constraints = (dbAdapter.constructor.name === 'FirebaseAdapter')
+      ? [dbAdapter.queryConstraint('orderBy', 'createdAt', 'desc')]
+      : [];
+
     const unsubscribe = dbAdapter.listenToCollection<Wallet>(
       'users/USER_ID/wallets',
       (fetchedWallets) => {
         setWallets(fetchedWallets);
         setIsLoading(false);
       },
-       (dbAdapter.constructor.name === 'FirebaseAdapter' ? [orderBy("createdAt", "desc")] : [])
+      constraints
     );
     
     return () => unsubscribe();
@@ -64,11 +68,6 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
 
   const deleteWallet = async (walletId: string) => {
     if (!user) throw new Error("User not authenticated");
-    
-    // Check if there are transactions associated with this wallet
-    // This is hard with the adapter pattern, as it would require a "getDocs" with a "where" clause.
-    // For now, we assume the user knows what they're doing. A more robust solution
-    // would add a `getDocs` method to the adapter interface.
     
     await dbAdapter.deleteDoc(`users/USER_ID/wallets/${walletId}`);
     toast({ title: "Carteira excluída." });

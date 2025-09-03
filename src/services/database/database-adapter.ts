@@ -1,9 +1,17 @@
 // src/services/database/database-adapter.ts
 
-import { DocumentData, QueryConstraint } from "firebase/firestore";
+import { DocumentData } from "firebase/firestore";
 import { User } from "firebase/auth";
 
 export type Unsubscribe = () => void;
+export type QueryConstraint = {
+    type: 'where' | 'orderBy' | 'limit';
+    field?: string;
+    operator?: string;
+    value?: any;
+    direction?: 'asc' | 'desc';
+};
+
 
 /**
  * Interface (Port) for the Database Adapter.
@@ -20,7 +28,7 @@ export interface IDatabaseAdapter {
     listenToCollection<T>(
         collectionPath: string,
         callback: (data: T[]) => void,
-        constraints?: QueryConstraint[]
+        constraints?: any[] // Type any to support different lib constraints
     ): Unsubscribe;
 
     /**
@@ -76,4 +84,10 @@ export interface IDatabaseAdapter {
      * @param value The value to increment by (can be negative).
      */
     increment(value: number): any;
+    
+    /**
+     * A way to represent a query constraint.
+     */
+    queryConstraint(type: 'orderBy', field: string, direction: 'asc' | 'desc'): any;
+    queryConstraint(type: 'where', field: string, operator: any, value: any): any;
 }

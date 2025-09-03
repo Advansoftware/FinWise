@@ -8,7 +8,6 @@ import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { useTransactions } from "./use-transactions";
 import { getDatabaseAdapter } from "@/services/database/database-service";
-import { orderBy } from "firebase/firestore";
 
 interface BudgetsContextType {
   budgets: Budget[];
@@ -37,16 +36,18 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
     }
 
     setIsLoading(true);
+
+    const constraints = (dbAdapter.constructor.name === 'FirebaseAdapter') 
+      ? [dbAdapter.queryConstraint('orderBy', 'createdAt', 'desc')] 
+      : [];
+
     const unsubscribe = dbAdapter.listenToCollection<Budget>(
       'users/USER_ID/budgets',
       (fetchedBudgets) => {
         setBudgets(fetchedBudgets.map(b => ({ ...b, currentSpending: 0 })));
         setIsLoading(false);
       },
-      // This is Firestore specific, so we pass it carefully.
-      // A more abstract query system might be needed for full DB independence.
-      // For now, we assume other adapters might ignore it.
-      (dbAdapter.constructor.name === 'FirebaseAdapter' ? [orderBy("createdAt", "desc")] : [])
+      constraints
     );
 
     return () => unsubscribe();
