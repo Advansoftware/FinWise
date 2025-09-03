@@ -44,6 +44,8 @@ export interface Goal {
     targetAmount: number;
     currentAmount: number;
     createdAt: string; // ISO 8601 format string
+    monthlyDeposit?: number; // Optional monthly deposit amount
+    targetDate?: string; // Optional target completion date (ISO 8601)
 }
 
 

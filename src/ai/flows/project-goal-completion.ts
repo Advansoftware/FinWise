@@ -15,32 +15,38 @@ import type { ProjectGoalCompletionInput, ProjectGoalCompletionOutput } from '..
 import { AICredential } from '@/lib/types';
 
 
-const promptTemplate = `Você é um planejador financeiro pragmático que projeta quando um usuário atingirá uma meta de economia. Sua tarefa é analisar o histórico de transações do usuário para determinar sua capacidade média de economia mensal.
+const promptTemplate = `Você é um planejador financeiro pragmático que projeta quando um usuário atingirá uma meta de economia. Sua tarefa é analisar os dados fornecidos e retornar uma projeção clara.
 
-**Instruções de Cálculo:**
-1.  **Encontre o Período**: Determine o número de meses distintos presentes no histórico de transações. Se houver menos de 15 dias de transações, considere como dados insuficientes.
-2.  **Calcule a Renda Média Mensal**: Some todas as transações de 'income' e divida pelo número de meses.
-3.  **Calcule a Despesa Média Mensal**: Some todas as transações de 'expense' e divida pelo número de meses.
-4.  **Calcule o Saldo Médio Mensal (Capacidade de Economia)**: Renda Média - Despesa Média.
-5.  **Calcule o Valor Restante para a Meta**: targetAmount - currentAmount.
-6.  **Calcule os Meses Restantes**: Valor Restante / Saldo Médio Mensal. Arredonde para cima para o próximo inteiro.
+**Hierarquia de Dados para Projeção (USE ESTA ORDEM):**
+1.  **Depósito Mensal (monthlyDeposit):** Se este valor for fornecido, USE-O como a capacidade de economia mensal. É a informação mais importante. Ignore o histórico de transações para o cálculo principal.
+2.  **Data Alvo (targetDate):** Se fornecida (e o depósito mensal não), sua tarefa é calcular QUAL o valor mensal necessário para atingir a meta até essa data.
+3.  **Histórico de Transações (transactions):** Se NENHUM dos anteriores for fornecido, analise o histórico de transações para estimar uma capacidade de economia mensal (receita média - despesa média).
 
 **Dados de Entrada:**
 - Meta: {{goalName}}
 - Valor Alvo: R$ {{targetAmount}}
 - Valor Atual: R$ {{currentAmount}}
+- Depósito Mensal Planejado: R$ {{#if monthlyDeposit}}{{monthlyDeposit}}{{else}}Não informado{{/if}}
+- Data Alvo: {{#if targetDate}}{{targetDate}}{{else}}Não informada{{/if}}
 - Histórico de Transações do Usuário:
 {{{transactions}}}
 
 **Regras de Saída (em Português do Brasil):**
-- **Se for possível projetar (Saldo Médio > 0):**
-    - Calcule a data de conclusão a partir de hoje (considere hoje como o primeiro dia do mês corrente para simplificar).
-    - Preencha 'completionDate' com a data no formato YYYY-MM-DD.
-    - Preencha 'projection' com uma frase curta como "em X meses" ou "em 1 ano e Y meses".
-- **Se a capacidade de economia for insuficiente (Saldo Médio <= 0):**
+- **Cenário 1 (monthlyDeposit informado):**
+    - Calcule os meses restantes: (targetAmount - currentAmount) / monthlyDeposit. Arredonde para cima.
+    - Preencha 'completionDate' com a data futura no formato YYYY-MM-DD.
+    - Preencha 'projection' com uma frase como "em X meses".
+- **Cenário 2 (targetDate informado):**
+    - Calcule os meses até a data alvo.
+    - Calcule o depósito mensal necessário: (targetAmount - currentAmount) / meses.
+    - Preencha 'requiredMonthlyDeposit' com o valor calculado.
+    - Preencha 'projection' com "Para atingir a meta, economize R$X por mês.".
     - Deixe 'completionDate' em branco.
-    - Defina 'projection' como "Capacidade de economia insuficiente para projetar.".
-- **Se não houver dados de transação suficientes (menos de 15 dias de histórico):**
+- **Cenário 3 (nenhum dos dois informado):**
+    - Calcule a capacidade de economia a partir do histórico de transações.
+    - Se a capacidade for positiva, calcule a data e preencha 'completionDate' e 'projection' ("em X meses").
+    - Se a capacidade for negativa, defina 'projection' como "Capacidade de economia insuficiente para projetar.".
+- **Se não houver dados de transação suficientes (menos de 15 dias de histórico, apenas no cenário 3):**
     - Deixe 'completionDate' em branco.
     - Defina 'projection' como "Dados insuficientes para projetar.".
 - **A resposta DEVE ser em Português do Brasil.**

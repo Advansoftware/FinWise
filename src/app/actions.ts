@@ -64,7 +64,7 @@ async function consumeAICredits(userId: string, cost: number, action: AICreditLo
         await adminDb.runTransaction(async (transaction) => {
             const userDoc = await transaction.get(userRef);
             if (!userDoc.exists) {
-                throw new Error("Usuário não encontrado no Firestore. Faça login novamente para sincronizar.");
+                throw new Error("Usuário não encontrado. Faça o login novamente para sincronizar os dados.");
             }
             
             const userData = userDoc.data();

@@ -20,11 +20,14 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useGoals } from "@/hooks/use-goals";
 import { Goal } from "@/lib/types";
-import { Loader2 } from "lucide-react";
+import { Calendar, Loader2 } from "lucide-react";
+import { SingleDatePicker } from "../single-date-picker";
 
 const goalSchema = z.object({
   name: z.string().min(1, "O nome da meta é obrigatório."),
   targetAmount: z.coerce.number().positive("O valor alvo deve ser maior que zero."),
+  monthlyDeposit: z.coerce.number().optional(),
+  targetDate: z.date().optional(),
 });
 
 type GoalFormValues = z.infer<typeof goalSchema>;
@@ -45,6 +48,8 @@ export function CreateGoalDialog({ children, initialData }: CreateGoalDialogProp
     defaultValues: {
       name: "",
       targetAmount: 0,
+      monthlyDeposit: undefined,
+      targetDate: undefined,
     },
   });
 
@@ -54,9 +59,11 @@ export function CreateGoalDialog({ children, initialData }: CreateGoalDialogProp
             form.reset({
                 name: initialData.name,
                 targetAmount: initialData.targetAmount,
+                monthlyDeposit: initialData.monthlyDeposit || undefined,
+                targetDate: initialData.targetDate ? new Date(initialData.targetDate) : undefined
             });
         } else {
-            form.reset({ name: "", targetAmount: 0 });
+            form.reset({ name: "", targetAmount: 0, monthlyDeposit: undefined, targetDate: undefined });
         }
     }
   }, [isOpen, initialData, form]);
@@ -64,16 +71,17 @@ export function CreateGoalDialog({ children, initialData }: CreateGoalDialogProp
   const onSubmit = async (data: GoalFormValues) => {
     setIsSubmitting(true);
     try {
+      const goalData: Partial<Goal> = {
+        name: data.name,
+        targetAmount: Number(data.targetAmount),
+        monthlyDeposit: data.monthlyDeposit ? Number(data.monthlyDeposit) : undefined,
+        targetDate: data.targetDate ? data.targetDate.toISOString() : undefined,
+      };
+
       if (initialData) {
-        await updateGoal(initialData.id, {
-            ...data,
-            targetAmount: Number(data.targetAmount),
-        });
+        await updateGoal(initialData.id, goalData);
       } else {
-        await addGoal({
-            ...data,
-            targetAmount: Number(data.targetAmount),
-        });
+        await addGoal(goalData as Omit<Goal, 'id' | 'createdAt' | 'currentAmount'>);
       }
       setIsOpen(false);
     } catch (error) {
@@ -91,7 +99,7 @@ export function CreateGoalDialog({ children, initialData }: CreateGoalDialogProp
         <DialogHeader>
           <DialogTitle>{initialData ? "Editar Meta" : "Criar Nova Meta"}</DialogTitle>
           <DialogDescription>
-            Defina um objetivo financeiro e acompanhe seu progresso.
+            Defina um objetivo financeiro. Preencha os campos opcionais para ajudar a IA a fazer projeções mais precisas.
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
@@ -117,6 +125,33 @@ export function CreateGoalDialog({ children, initialData }: CreateGoalDialogProp
                   <FormLabel>Valor da Meta (R$)</FormLabel>
                   <FormControl>
                     <Input type="number" step="0.01" placeholder="Ex: 30000.00" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <div className="text-sm font-medium text-muted-foreground my-4 text-center">Opcional</div>
+             <FormField
+              control={form.control}
+              name="monthlyDeposit"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Depósito Mensal Planejado (R$)</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.01" placeholder="Ex: 500.00" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+             <FormField
+              control={form.control}
+              name="targetDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Data Alvo para Conclusão</FormLabel>
+                  <FormControl>
+                    <SingleDatePicker date={field.value} setDate={field.onChange} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

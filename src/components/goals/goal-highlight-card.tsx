@@ -16,13 +16,15 @@ import { projectGoalCompletionAction } from "@/app/actions";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { ProjectGoalCompletionOutput } from "@/ai/ai-types";
+
 
 export function GoalHighlightCard() {
     const { goals, isLoading: isGoalsLoading } = useGoals();
     const { allTransactions, isLoading: isTxLoading } = useTransactions();
     const { user } = useAuth();
     const [isProjecting, startProjecting] = useTransition();
-    const [projection, setProjection] = useState<string | null>(null);
+    const [projectionResult, setProjectionResult] = useState<ProjectGoalCompletionOutput | null>(null);
 
     const isLoading = isGoalsLoading || isTxLoading;
 
@@ -42,24 +44,18 @@ export function GoalHighlightCard() {
                         goalName: firstGoal.name,
                         targetAmount: firstGoal.targetAmount,
                         currentAmount: firstGoal.currentAmount,
+                        monthlyDeposit: firstGoal.monthlyDeposit,
+                        targetDate: firstGoal.targetDate,
                         transactions: transactionsJson,
                     }, user.uid);
-
-                    if (result.completionDate) {
-                        const date = new Date(result.completionDate);
-                         // Add timezone offset to display correct date
-                        date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
-                        setProjection(format(date, "MMMM 'de' yyyy", { locale: ptBR }));
-                    } else {
-                        setProjection(result.projection);
-                    }
+                    setProjectionResult(result);
                 } catch (e) {
                     console.error("Projection error:", e);
-                    setProjection("Erro ao calcular.");
+                    setProjectionResult({ projection: "Erro ao calcular." });
                 }
             });
         } else if (firstGoal && firstGoal.currentAmount >= firstGoal.targetAmount) {
-            setProjection("Meta concluída!");
+            setProjectionResult({ projection: "Meta concluída!" });
         }
     }, [firstGoal, user, allTransactions.length, transactionsJson]);
 
@@ -84,6 +80,19 @@ export function GoalHighlightCard() {
     }
 
     const percentage = Math.round((firstGoal.currentAmount / firstGoal.targetAmount) * 100);
+    
+    const getProjectionText = () => {
+        if (!projectionResult) return null;
+        if (projectionResult.projection === "Meta concluída!") {
+            return <span className="text-emerald-500 font-semibold">{projectionResult.projection}</span>
+        }
+        if (projectionResult.completionDate) {
+            const date = new Date(projectionResult.completionDate);
+            date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+            return <span>Estimativa: <span className="font-semibold text-foreground/80 capitalize">{format(date, "MMMM 'de' yyyy", { locale: ptBR })}</span></span>
+        }
+        return <span className="capitalize">{projectionResult.projection}</span>
+    }
 
     return (
         <Card className="flex flex-col h-full">
@@ -108,12 +117,8 @@ export function GoalHighlightCard() {
                     <Sparkles className={cn("h-3.5 w-3.5 text-primary/80", isProjecting && "animate-pulse")} />
                      {isProjecting ? (
                         <span>Calculando projeção...</span>
-                    ) : projection ? (
-                         <span>
-                           {projection === 'Meta concluída!' ? '' : 'Estimativa:'} <span className={cn("font-semibold text-foreground/80 capitalize", projection === 'Meta concluída!' && "text-emerald-500")}>{projection}</span>
-                        </span>
                     ) : (
-                        <span></span> // Empty for no data state
+                       getProjectionText()
                     )}
                 </div>
             </CardContent>

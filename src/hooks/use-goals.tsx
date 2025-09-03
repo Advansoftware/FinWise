@@ -1,4 +1,3 @@
-
 // src/hooks/use-goals.tsx
 'use client';
 

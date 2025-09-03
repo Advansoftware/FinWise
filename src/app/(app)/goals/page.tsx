@@ -27,8 +27,9 @@ import { useState, useTransition, useEffect, useMemo } from "react";
 import { projectGoalCompletionAction } from "@/app/actions";
 import { useAuth } from "@/hooks/use-auth";
 import { useTransactions } from "@/hooks/use-transactions";
-import { format } from "date-fns";
+import { format, formatDistanceToNowStrict } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { ProjectGoalCompletionOutput } from "@/ai/ai-types";
 
 export default function GoalsPage() {
     const { goals, isLoading, deleteGoal } = useGoals();
@@ -80,7 +81,7 @@ function GoalCard({ goal, onDelete }: { goal: Goal, onDelete: () => void }) {
     const { user } = useAuth();
     const { allTransactions } = useTransactions();
     const [isProjecting, startProjecting] = useTransition();
-    const [projection, setProjection] = useState<string | null>(null);
+    const [projectionResult, setProjectionResult] = useState<ProjectGoalCompletionOutput | null>(null);
 
     const transactionsJson = useMemo(() => JSON.stringify(allTransactions, null, 2), [allTransactions]);
 
@@ -92,27 +93,33 @@ function GoalCard({ goal, onDelete }: { goal: Goal, onDelete: () => void }) {
                         goalName: goal.name,
                         targetAmount: goal.targetAmount,
                         currentAmount: goal.currentAmount,
+                        monthlyDeposit: goal.monthlyDeposit,
+                        targetDate: goal.targetDate,
                         transactions: transactionsJson,
                     }, user.uid);
-
-                    if (result.completionDate) {
-                        const date = new Date(result.completionDate);
-                        // Add timezone offset to display correct date
-                        date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
-                        setProjection(format(date, "MMMM 'de' yyyy", { locale: ptBR }));
-                    } else {
-                        setProjection(result.projection);
-                    }
+                    setProjectionResult(result);
                 } catch (e) {
                     console.error("Projection error:", e);
-                    setProjection("Erro ao calcular projeção.");
+                    setProjectionResult({ projection: "Erro ao calcular projeção." });
                 }
             });
         } else if (goal.currentAmount >= goal.targetAmount) {
-            setProjection("Meta concluída!");
+            setProjectionResult({ projection: "Meta concluída!" });
         }
-    }, [goal.name, goal.targetAmount, goal.currentAmount, transactionsJson, user]);
+    }, [goal, transactionsJson, user]);
 
+    const getProjectionText = () => {
+        if (!projectionResult) return null;
+        if (projectionResult.projection === "Meta concluída!") {
+            return <span className="text-emerald-500 font-semibold">{projectionResult.projection}</span>
+        }
+        if (projectionResult.completionDate) {
+            const date = new Date(projectionResult.completionDate);
+            date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+            return <span>Estimativa de conclusão: <span className="font-semibold text-foreground/80 capitalize">{format(date, "MMMM 'de' yyyy", { locale: ptBR })}</span></span>
+        }
+        return <span className="capitalize">{projectionResult.projection}</span>
+    }
     
     return (
         <Card>
@@ -175,12 +182,8 @@ function GoalCard({ goal, onDelete }: { goal: Goal, onDelete: () => void }) {
                     <Sparkles className={cn("h-3.5 w-3.5 text-primary/80", isProjecting && "animate-pulse")} />
                     {isProjecting ? (
                         <span>Calculando projeção...</span>
-                    ) : projection ? (
-                         <span>
-                           {projection === 'Meta concluída!' ? '' : 'Estimativa de conclusão:'} <span className={cn("font-semibold text-foreground/80 capitalize", projection === 'Meta concluída!' && "text-emerald-500")}>{projection}</span>
-                        </span>
                     ) : (
-                        <span></span> // Empty for no data state
+                        getProjectionText()
                     )}
                 </div>
             </CardContent>
