@@ -5,11 +5,10 @@ import { useState, useEffect, createContext, useContext, ReactNode, useCallback 
 import { MonthlyReport, AnnualReport, Transaction } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
-import { getFirebase } from "@/lib/firebase";
-import { collection, doc, setDoc, onSnapshot, Unsubscribe, query } from "firebase/firestore";
 import { generateMonthlyReportAction, generateAnnualReportAction } from "@/services/ai-actions";
 import { useTransactions } from "./use-transactions";
 import { startOfMonth, subMonths, getYear, getMonth, isToday } from "date-fns";
+import { getDatabaseAdapter } from "@/services/database/database-service";
 
 interface ReportsContextType {
   monthlyReports: MonthlyReport[];
@@ -31,49 +30,35 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
   const [monthlyReports, setMonthlyReports] = useState<MonthlyReport[]>([]);
   const [annualReports, setAnnualReports] = useState<AnnualReport[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const dbAdapter = getDatabaseAdapter();
 
-  // Listener for monthly reports
+  // Listener for monthly and annual reports
   useEffect(() => {
     if (!user) {
       setIsLoading(true);
       setMonthlyReports([]);
       setAnnualReports([]);
-      return;
+      return () => {};
     }
 
-    const { db } = getFirebase();
-    const monthlyQuery = query(collection(db, "users", user.uid, "reports"));
-    const annualQuery = query(collection(db, "users", user.uid, "annualReports"));
-
-    const unsubscribeMonthly = onSnapshot(monthlyQuery, (querySnapshot) => {
-      const fetchedReports: MonthlyReport[] = [];
-      querySnapshot.forEach((doc) => {
-        fetchedReports.push(doc.data() as MonthlyReport);
-      });
-      setMonthlyReports(fetchedReports);
-      setIsLoading(false);
-    }, (error) => {
-       console.error("Failed to fetch monthly reports:", error);
-       toast({ variant: "destructive", title: "Erro ao Carregar Relatórios Mensais" });
-       setIsLoading(false);
-    });
-
-    const unsubscribeAnnual = onSnapshot(annualQuery, (querySnapshot) => {
-      const fetchedReports: AnnualReport[] = [];
-      querySnapshot.forEach((doc) => {
-        fetchedReports.push(doc.data() as AnnualReport);
-      });
-      setAnnualReports(fetchedReports);
-    }, (error) => {
-       console.error("Failed to fetch annual reports:", error);
-       toast({ variant: "destructive", title: "Erro ao Carregar Relatórios Anuais" });
-    });
+    const unsubscribeMonthly = dbAdapter.listenToCollection<MonthlyReport>(
+        'users/USER_ID/reports',
+        (reports) => {
+            setMonthlyReports(reports);
+            setIsLoading(false);
+        }
+    );
+    
+    const unsubscribeAnnual = dbAdapter.listenToCollection<AnnualReport>(
+        'users/USER_ID/annualReports',
+        (reports) => setAnnualReports(reports)
+    );
 
     return () => {
         unsubscribeMonthly();
         unsubscribeAnnual();
     };
-  }, [user, toast]);
+  }, [user, toast, dbAdapter]);
   
   const generateMonthlyReport = useCallback(async (year: number, month: number, transactions: Transaction[], previousMonthReport?: MonthlyReport) => {
       if(!user) return null;
@@ -97,9 +82,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
             generatedAt: new Date().toISOString()
         }
 
-        const { db } = getFirebase();
-        const reportRef = doc(db, "users", user.uid, "reports", reportId);
-        await setDoc(reportRef, newReport);
+        await dbAdapter.setDoc(`users/USER_ID/reports/${reportId}`, newReport);
         
         return newReport;
 
@@ -108,7 +91,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
           // Don't toast automatic errors
           return null;
       }
-  }, [user]);
+  }, [user, dbAdapter]);
 
    const generateAnnualReport = useCallback(async (year: number, monthlyReportsForYear: MonthlyReport[]) => {
       if(!user) return null;
@@ -129,9 +112,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
             generatedAt: new Date().toISOString()
         }
 
-        const { db } = getFirebase();
-        const reportRef = doc(db, "users", user.uid, "annualReports", reportId);
-        await setDoc(reportRef, newReport);
+        await dbAdapter.setDoc(`users/USER_ID/annualReports/${reportId}`, newReport);
         
         return newReport;
 
@@ -140,7 +121,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
           // Don't toast automatic errors
           return null;
       }
-  }, [user]);
+  }, [user, dbAdapter]);
 
   // Effect for automatic report generation
   useEffect(() => {

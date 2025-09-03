@@ -1,13 +1,12 @@
-
 // src/hooks/use-credits.tsx
 'use client';
 
-import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from "react";
+import { useState, useEffect, createContext, useContext, ReactNode } from "react";
 import { useAuth } from "./use-auth";
-import { getFirebase } from "@/lib/firebase";
-import { doc, onSnapshot, Unsubscribe, collection, query, orderBy } from "firebase/firestore";
 import { useToast } from "./use-toast";
 import { AICreditLog } from "@/ai/ai-types";
+import { getDatabaseAdapter } from "@/services/database/database-service";
+import { UserProfile } from "@/lib/types";
 
 interface CreditsContextType {
   credits: number;
@@ -23,57 +22,42 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
   const [credits, setCredits] = useState(0);
   const [logs, setLogs] = useState<AICreditLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const dbAdapter = getDatabaseAdapter();
 
   // Listener for user's credit balance
   useEffect(() => {
     if (!user) {
       setIsLoading(false);
       setCredits(0);
-      return;
-    }
-
-    const { db } = getFirebase();
-    const userDocRef = doc(db, "users", user.uid);
-    
-    const unsubscribe = onSnapshot(userDocRef, (docSnap) => {
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setCredits(data.aiCredits || 0);
-      }
-      setIsLoading(false);
-    }, (error) => {
-       console.error("Failed to fetch credits:", error);
-       toast({ variant: "destructive", title: "Erro ao Carregar Saldo de Créditos" });
-       setIsLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [user, toast]);
-
-  // Listener for credit logs
-  useEffect(() => {
-    if (!user) {
       setLogs([]);
-      return;
+      return () => {};
     }
+
+    const unsubscribeUser = dbAdapter.listenToCollection<UserProfile>(
+      'users',
+      (users) => {
+        const currentUserProfile = users.find(u => u.uid === user.uid);
+        if (currentUserProfile) {
+          setCredits(currentUserProfile.aiCredits || 0);
+        }
+        setIsLoading(false);
+      }
+    );
     
-    const { db } = getFirebase();
-    const logsQuery = query(
-      collection(db, "users", user.uid, "aiCreditLogs"),
-      orderBy("timestamp", "desc")
+    // Listener for credit logs
+    const unsubscribeLogs = dbAdapter.listenToCollection<AICreditLog>(
+        `users/USER_ID/aiCreditLogs`,
+        (fetchedLogs) => {
+            setLogs(fetchedLogs);
+        }
     );
 
-    const unsubscribe = onSnapshot(logsQuery, (querySnapshot) => {
-      const fetchedLogs: AICreditLog[] = [];
-      querySnapshot.forEach((doc) => {
-        fetchedLogs.push({ id: doc.id, ...doc.data() } as AICreditLog);
-      });
-      setLogs(fetchedLogs);
-    });
+    return () => {
+        unsubscribeUser();
+        unsubscribeLogs();
+    };
+  }, [user, toast, dbAdapter]);
 
-    return () => unsubscribe();
-
-  }, [user]);
 
   const value: CreditsContextType = {
     credits,

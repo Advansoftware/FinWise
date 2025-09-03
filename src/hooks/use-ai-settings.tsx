@@ -5,8 +5,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { AICredential } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { getFirebase } from "@/lib/firebase";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { getDatabaseAdapter } from "@/services/database/database-service";
 import { v4 as uuidv4 } from 'uuid';
 import { usePlan } from "./use-plan";
 
@@ -27,47 +26,39 @@ export function useAISettings() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     
-    const [credentials, setCredentials] = useState<AICredential[]>([]);
-    const [activeCredentialId, setActiveCredentialId] = useState<string | null>(FINWISE_AI_CREDENTIAL_ID);
+    const [settings, setSettings] = useState<{credentials: AICredential[], activeCredentialId: string | null} | null>(null);
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingCredential, setEditingCredential] = useState<AICredential | null>(null);
+    const dbAdapter = getDatabaseAdapter();
 
-    // Function to load settings from Firestore
-    const loadSettings = useCallback(async () => {
+
+    // Function to load settings
+    useEffect(() => {
         if (!user) {
             setIsLoading(false);
-            return;
+            return () => {};
         }
 
         setIsLoading(true);
-        const { db } = getFirebase();
-        const settingsRef = doc(db, "users", user.uid, "settings", "ai");
+        const unsubscribe = dbAdapter.listenToCollection<{credentials: AICredential[], activeCredentialId: string | null}>(
+          'users/USER_ID/settings',
+          (settingsData) => {
+             const aiSettings = settingsData.find(s => (s as any).id === 'ai');
+             if (aiSettings) {
+                setSettings(aiSettings);
+             } else {
+                 setSettings({ credentials: [], activeCredentialId: FINWISE_AI_CREDENTIAL_ID });
+             }
+             setIsLoading(false);
+          }
+        );
+       
+        return () => unsubscribe();
+    }, [user, dbAdapter]);
 
-        try {
-            const docSnap = await getDoc(settingsRef);
-            if (docSnap.exists()) {
-                const settings = docSnap.data();
-                setCredentials(settings.credentials || []);
-                setActiveCredentialId(settings.activeCredentialId || FINWISE_AI_CREDENTIAL_ID);
-            } else {
-                 // Set default active credential if none exists
-                 setActiveCredentialId(FINWISE_AI_CREDENTIAL_ID);
-            }
-        } catch (error) {
-            console.error("Failed to load AI settings:", error);
-            toast({
-                variant: "destructive",
-                title: "Erro ao Carregar Configurações",
-            });
-        } finally {
-            setIsLoading(false);
-        }
-    }, [user, toast]);
-
-    useEffect(() => {
-        loadSettings();
-    }, [loadSettings]);
+    const credentials = useMemo(() => settings?.credentials || [], [settings]);
+    const activeCredentialId = useMemo(() => settings?.activeCredentialId || FINWISE_AI_CREDENTIAL_ID, [settings]);
 
     // Memoize displayed credentials to include the default FinWise AI and filter based on plan
     const displayedCredentials = useMemo(() => {
@@ -92,24 +83,17 @@ export function useAISettings() {
     }, [displayedCredentials, activeCredentialId]);
 
 
-    // Function to save all settings to Firestore
-    const saveSettings = async (newCredentials: AICredential[], newActiveId: string | null) => {
+    // Function to save all settings
+    const saveSettings = async (newSettings: {credentials: AICredential[], activeCredentialId: string | null}) => {
         if (!user) {
             toast({ variant: "destructive", title: "Usuário não autenticado." });
-            return null;
+            return;
         }
         setIsSaving(true);
         try {
-            const { db } = getFirebase();
-            const settingsRef = doc(db, "users", user.uid, "settings", "ai");
-            await setDoc(settingsRef, {
-                credentials: newCredentials, // Store only user-defined credentials
-                activeCredentialId: newActiveId,
-            }, { merge: true });
-
+            await dbAdapter.setDoc('users/USER_ID/settings/ai', newSettings);
             toast({ title: "Configurações de IA salvas!" });
-            return { savedCredentials: newCredentials, savedActiveId: newActiveId };
-
+            setSettings(newSettings);
         } catch (error) {
             toast({ variant: "destructive", title: "Erro ao salvar configurações." });
             throw error; // Re-throw error to be caught by caller
@@ -152,13 +136,9 @@ export function useAISettings() {
         const newActiveId = activeCredentialId || (newCredentials.length === 1 ? newCredentials[0].id : FINWISE_AI_CREDENTIAL_ID);
         
         try {
-            const result = await saveSettings(newCredentials, newActiveId);
-            if (result) {
-                setCredentials(result.savedCredentials);
-                setActiveCredentialId(result.savedActiveId);
-                setIsDialogOpen(false);
-                setEditingCredential(null);
-            }
+            await saveSettings({ credentials: newCredentials, activeCredentialId: newActiveId });
+            setIsDialogOpen(false);
+            setEditingCredential(null);
         } catch (error) {
             console.error("Failed to save credential", error);
         }
@@ -172,11 +152,7 @@ export function useAISettings() {
         }
         
         try {
-            const result = await saveSettings(newCredentials, newActiveId);
-            if (result) {
-                setCredentials(result.savedCredentials);
-                setActiveCredentialId(result.savedActiveId);
-            }
+            await saveSettings({ credentials: newCredentials, activeCredentialId: newActiveId });
         } catch (error) {
             console.error("Failed to delete credential", error);
         }
@@ -184,10 +160,7 @@ export function useAISettings() {
 
     const handleActivate = async (id: string) => {
         try {
-            const result = await saveSettings(credentials, id);
-            if (result) {
-                setActiveCredentialId(result.savedActiveId);
-            }
+            await saveSettings({ credentials, activeCredentialId: id });
         } catch (error) {
             console.error("Failed to activate credential", error);
         }

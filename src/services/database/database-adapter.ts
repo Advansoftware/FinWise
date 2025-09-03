@@ -1,0 +1,71 @@
+// src/services/database/database-adapter.ts
+
+import { DocumentData, QueryConstraint } from "firebase/firestore";
+
+export type Unsubscribe = () => void;
+
+/**
+ * Interface (Port) for the Database Adapter.
+ * Defines the contract that any data persistence implementation must follow.
+ */
+export interface IDatabaseAdapter {
+    /**
+     * Listens for real-time updates on a collection.
+     * @param collectionPath The path to the collection.
+     * @param callback A function to be called with the new data.
+     * @param constraints Optional query constraints.
+     * @returns An unsubscribe function.
+     */
+    listenToCollection<T>(
+        collectionPath: string,
+        callback: (data: T[]) => void,
+        constraints?: QueryConstraint[]
+    ): Unsubscribe;
+
+    /**
+     * Gets a single document from a collection.
+     * @param docPath The path to the document.
+     * @returns The document data or null if not found.
+     */
+    getDoc<T>(docPath: string): Promise<T | null>;
+
+    /**
+     * Adds a new document to a collection.
+     * @param collectionPath The path to the collection.
+     * @param data The data to add.
+     * @returns The ID of the newly created document.
+     */
+    addDoc<T extends DocumentData>(collectionPath: string, data: T): Promise<string>;
+
+    /**
+     * Creates or overwrites a single document.
+     * @param docPath The path to the document.
+     * @param data The data to set.
+     */
+    setDoc<T extends DocumentData>(docPath: string, data: T): Promise<void>;
+
+     /**
+     * Updates a document.
+     * @param docPath The path to the document.
+     * @param data The data to update.
+     */
+    updateDoc(docPath: string, data: Partial<DocumentData>): Promise<void>;
+
+    /**
+     * Deletes a document.
+     * @param docPath The path to the document.
+     */
+    deleteDoc(docPath: string): Promise<void>;
+
+    /**
+     * Executes a transaction.
+     * @param updateFunction The function that executes the transaction logic.
+     */
+    runTransaction(updateFunction: (transaction: any) => Promise<any>): Promise<any>;
+
+    /**
+     * A way to represent an increment operation for numeric fields.
+     * @param value The value to increment by (can be negative).
+     */
+    increment(value: number): any;
+}

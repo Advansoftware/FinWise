@@ -5,6 +5,9 @@ import { getAdminApp } from "@/lib/firebase-admin";
 import { increment } from "firebase-admin/firestore";
 import { AICreditLogAction } from "@/ai/ai-types";
 
+// This service remains using firebase-admin as it deals with sensitive credit data
+// and should always be a trusted server-side operation.
+
 export async function consumeAICredits(userId: string, cost: number, action: AICreditLogAction, isFreeAction: boolean = false): Promise<void> {
   if (!userId) {
     throw new Error("Usuário não autenticado.");

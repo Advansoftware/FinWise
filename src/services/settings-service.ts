@@ -4,6 +4,11 @@
 import { AICredential } from '@/lib/types';
 import { getAdminApp } from '@/lib/firebase-admin';
 
+// This service will now act as a server-side reader for settings,
+// regardless of the underlying database.
+// For now, it's still tied to Firebase Admin SDK because that's our trusted server environment.
+// A more advanced setup would have this service use an admin-level adapter.
+
 const FINWISE_AI_CREDENTIAL_ID = 'finwise-ai-default';
 
 const finwiseAICredential = {
