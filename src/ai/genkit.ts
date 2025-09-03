@@ -30,12 +30,21 @@ export function createAIPlugins(credential: AICredential): any[] {
     const plugins: any[] = [];
 
     switch (credential.provider) {
-        case 'finwise':
+        case 'finwise': // This case is now handled by the server-side settings service
+            // The resolved credential will have the actual provider (googleai, openai, etc.)
+            // We handle the specific provider keys below.
+             if (process.env.GEMINI_API_KEY) {
+                 plugins.push(googleAI({ apiKey: process.env.GEMINI_API_KEY }));
+             }
+             if (process.env.OPENAI_API_KEY) {
+                 plugins.push(openAI({ apiKey: process.env.OPENAI_API_KEY }));
+             }
+            break;
         case 'googleai':
-            if (process.env.GEMINI_API_KEY) {
+            if (credential.googleAIApiKey || process.env.GEMINI_API_KEY) {
                  plugins.push(
                     googleAI({
-                        apiKey: process.env.GEMINI_API_KEY,
+                        apiKey: credential.googleAIApiKey || process.env.GEMINI_API_KEY,
                     })
                 );
             }
@@ -51,10 +60,10 @@ export function createAIPlugins(credential: AICredential): any[] {
             }
             break;
         case 'openai':
-            if (credential.openAIApiKey && credential.openAIModel) {
+            if (credential.openAIApiKey || process.env.OPENAI_API_KEY) {
                 plugins.push(
                     openAI({
-                        apiKey: credential.openAIApiKey,
+                        apiKey: credential.openAIApiKey || process.env.OPENAI_API_KEY,
                     })
                 );
             }
@@ -82,10 +91,17 @@ export function getModelReference(credential: AICredential): string {
         case 'ollama':
             return `ollama/${credential.ollamaModel || 'llama3'}`;
          case 'finwise':
+            // The actual provider is resolved on the server, but we need a client-side hint.
+            // The createAIPlugins function will load the correct plugin based on env vars.
+            // The model name will also be determined by the default provider env vars.
+            if (process.env.DEFAULT_AI_PROVIDER === 'openai') {
+                return `openai/${process.env.DEFAULT_OPENAI_MODEL || 'gpt-4o'}`;
+            }
+            return `googleai/gemini-1.5-flash-latest`;
          case 'googleai':
             return `googleai/gemini-1.5-flash-latest`;
         case 'openai':
-            return `openai/${credential.openAIModel || 'gpt-3.5-turbo'}`;
+            return `openai/${credential.openAIModel || 'gpt-4o'}`;
         default:
             return 'ollama/llama3'; // fallback
     }
@@ -105,7 +121,8 @@ export function createConfiguredAI(credential: AICredential): Genkit {
 export function validateAISettings(credential: AICredential): boolean {
     switch (credential.provider) {
         case 'finwise':
-            return !!process.env.GEMINI_API_KEY;
+            // Check if ANY of the default provider keys are set
+            return !!process.env.GEMINI_API_KEY || !!process.env.OPENAI_API_KEY;
         case 'ollama':
             return !!credential.ollamaModel;
         case 'googleai':
