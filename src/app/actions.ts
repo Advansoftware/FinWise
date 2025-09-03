@@ -354,9 +354,11 @@ export async function createStripeCheckoutAction(userId: string, userEmail: stri
                 price: priceId,
                 quantity: 1,
             }],
-            metadata: {
-                firebaseUID: userId,
-                plan: plan,
+            subscription_data: {
+                metadata: {
+                    firebaseUID: userId,
+                    plan: plan,
+                }
             },
             success_url: `${appUrl}/billing?success=true`,
             cancel_url: `${appUrl}/billing?canceled=true`,
