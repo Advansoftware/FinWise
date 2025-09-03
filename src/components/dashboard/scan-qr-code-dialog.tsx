@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -134,13 +135,17 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                         description: 'A imagem não parece ser uma nota fiscal válida. Tente outra imagem.',
                     });
                 }
-            } catch (error) {
+            } catch (error: any) {
                 console.error(error);
                 toast({
                     variant: 'destructive',
                     title: 'Erro ao Processar',
-                    description: 'Não foi possível extrair as informações da imagem. Verifique suas configurações de IA.',
+                    description: error.message || 'Não foi possível extrair as informações da imagem. Verifique suas configurações de IA.',
                 });
+                 // Se o erro foi de limite de uso, não resetar para o usuário ver a msg
+                if (!error.message?.includes('limite mensal')) {
+                    resetState();
+                }
             }
         });
     };

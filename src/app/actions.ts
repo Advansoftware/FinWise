@@ -39,6 +39,7 @@ import {
 } from '@/ai/ai-types';
 import { createConfiguredAI, getModelReference } from '@/ai/genkit';
 import { getAdminApp } from '@/lib/firebase-admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 // Default AI settings for fallback ONLY.
 const DEFAULT_AI_CREDENTIAL: AICredential = {
@@ -220,9 +221,34 @@ export async function getChatbotResponse(input: ChatInput, userId: string): Prom
 }
 
 export async function extractReceiptInfoAction(input: ReceiptInfoInput, userId: string): Promise<ReceiptInfoOutput> {
-    await checkUserPlan(userId, 'Pro');
+    const plan = await getUserPlan(userId);
+    const planLimits = { 'Básico': 0, 'Pro': 10, 'Plus': 50 };
+    const limit = planLimits[plan] || 0;
+
+    if (limit === 0) {
+        throw new Error("O escaneamento de notas (OCR) não está disponível no seu plano. Faça upgrade para o Pro ou Plus.");
+    }
+    
+    const adminDb = getAdminApp().firestore();
+    const now = new Date();
+    const monthId = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+    const usageRef = adminDb.doc(`users/${userId}/usage/${monthId}`);
+    
+    const usageDoc = await usageRef.get();
+    const currentUsage = usageDoc.data()?.ocrUsage || 0;
+
+    if (currentUsage >= limit) {
+        throw new Error(`Você atingiu o seu limite mensal de ${limit} escaneamentos de notas. O limite será renovado no próximo mês.`);
+    }
+
     const credential = await getActiveAICredential(userId);
-    return extractReceiptInfo(input, credential);
+    const result = await extractReceiptInfo(input, credential);
+
+    if (result.isValid) {
+        await usageRef.set({ ocrUsage: FieldValue.increment(1) }, { merge: true });
+    }
+
+    return result;
 }
 
 export async function suggestCategoryForItemAction(input: SuggestCategoryInput, userId: string): Promise<SuggestCategoryOutput> {

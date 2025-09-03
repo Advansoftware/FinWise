@@ -208,7 +208,7 @@ export default function Page() {
                                   "Análises e dicas com IA ilimitadas",
                                   "Assistente de Chat com IA",
                                   "Relatórios inteligentes (Mensal/Anual)",
-                                  "Escanear notas fiscais (OCR)",
+                                  "Escanear notas fiscais (OCR) (10/mês)",
                                   "Importação de extratos (CSV, OFX)",
                                   "Suporte prioritário",
                               ],
@@ -223,6 +223,7 @@ export default function Page() {
                               description: "O piloto automático para sua vida financeira com IA preditiva.",
                               features: [
                                   "Tudo do plano Pro, e mais:",
+                                  "Escanear notas fiscais (OCR) (50/mês)",
                                   "Orçamentos inteligentes e automáticos",
                                   "Previsão de gastos e saldos futuros",
                                   "Conciliação automática de transações",
