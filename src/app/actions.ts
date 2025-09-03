@@ -362,7 +362,7 @@ export async function createStripeCheckoutAction(userId: string, userEmail: stri
                 price: priceId,
                 quantity: 1,
             }],
-            // Add metadata to the session itself to be retrieved in the webhook
+            // This metadata is passed to the checkout.session.completed webhook
             metadata: {
                 firebaseUID: userId,
                 plan: plan,

@@ -21,7 +21,8 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     const plan = session.metadata?.plan as UserPlan;
 
     if (!firebaseUID || !plan) {
-        console.error(`Webhook Error: firebaseUID ou plan ausente nos metadados da sessão de checkout: ${session.id}`);
+        console.error(`Webhook Error: firebaseUID or plan is missing from checkout session metadata. Session ID: ${session.id}`);
+        // We cannot proceed without this information.
         return;
     }
 
@@ -31,56 +32,61 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     try {
         await userRef.update({
             plan: plan,
-            aiCredits: creditsMap[plan], // Define o valor de créditos para o novo plano
-            stripeCustomerId: session.customer, // Salva ou atualiza o ID do cliente do Stripe
+            aiCredits: creditsMap[plan], // Set the credit amount for the new plan
+            stripeCustomerId: session.customer, // Save or update the Stripe Customer ID
         });
-        console.log(`Plano do usuário ${firebaseUID} atualizado com sucesso para ${plan}.`);
+        console.log(`Successfully updated plan for user ${firebaseUID} to ${plan}.`);
     } catch (error) {
-        console.error(`Falha ao atualizar o plano do usuário ${firebaseUID} para ${plan}:`, error);
-        // Opcional: Adicionar lógica de re-tentativa ou notificação de erro
+        console.error(`Failed to update plan for user ${firebaseUID} to ${plan}. Error:`, error);
+        // Optional: Implement retry logic or send a notification for manual intervention
     }
 }
 
 
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
-    // Este evento é útil para renovações.
-    const subscriptionId = invoice.subscription;
-    if (typeof subscriptionId !== 'string' || invoice.billing_reason !== 'subscription_cycle') {
-        // Ignora faturas que não são de renovação de ciclo de assinatura
-        return;
-    }
-
-    // Precisamos buscar a assinatura para obter os metadados
-    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-    const firebaseUID = subscription.metadata.firebaseUID;
-
-    if (!firebaseUID) {
-        console.error(`Webhook de Renovação: firebaseUID ausente nos metadados da assinatura: ${subscriptionId}`);
+    // This event is useful for renewals.
+    if (invoice.billing_reason !== 'subscription_cycle' || !invoice.subscription) {
+        // Ignore invoices that are not for subscription renewals
         return;
     }
     
-    // Identificar o plano pelo ID do preço
-    const priceId = subscription.items.data[0]?.price.id;
-    let plan: UserPlan = 'Básico'; // Padrão de segurança
-    if (priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO) {
-        plan = 'Pro';
-    } else if (priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PLUS) {
-        plan = 'Plus';
-    }
+    const subscriptionId = invoice.subscription as string;
 
-    if (plan === 'Básico') {
-        console.error(`Webhook de Renovação: ID de preço ${priceId} não corresponde a um plano conhecido.`);
-        return;
-    }
+    try {
+        // We need to retrieve the subscription to get our metadata
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+        const firebaseUID = subscription.metadata.firebaseUID;
+        
+        if (!firebaseUID) {
+            console.error(`Renewal Webhook Error: firebaseUID is missing from subscription metadata. Subscription ID: ${subscriptionId}`);
+            return;
+        }
+        
+        // Identify the plan from the price ID
+        const priceId = subscription.items.data[0]?.price.id;
+        let plan: UserPlan = 'Básico'; // Default for safety
+        if (priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO) {
+            plan = 'Pro';
+        } else if (priceId === process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PLUS) {
+            plan = 'Plus';
+        }
 
-    const adminDb = getAdminApp().firestore();
-    const userRef = adminDb.doc(`users/${firebaseUID}`);
-    
-    console.log(`Renovando créditos para o plano ${plan} do usuário ${firebaseUID}...`);
-    await userRef.update({
-        aiCredits: creditsMap[plan], // Reseta os créditos no início de cada ciclo de pagamento
-    });
-    console.log(`Créditos do usuário ${firebaseUID} renovados com sucesso.`);
+        if (plan === 'Básico') {
+            console.error(`Renewal Webhook Error: Price ID ${priceId} does not correspond to a known plan.`);
+            return;
+        }
+
+        const adminDb = getAdminApp().firestore();
+        const userRef = adminDb.doc(`users/${firebaseUID}`);
+        
+        console.log(`Renewing credits for plan ${plan} for user ${firebaseUID}...`);
+        await userRef.update({
+            aiCredits: creditsMap[plan], // Reset credits at the start of each billing cycle
+        });
+        console.log(`Successfully renewed credits for user ${firebaseUID}.`);
+    } catch (error) {
+        console.error(`Error handling invoice.payment_succeeded for subscription ${subscriptionId}:`, error);
+    }
 }
 
 
@@ -92,8 +98,8 @@ export async function POST(req: NextRequest) {
 
     try {
         if (!sig || !webhookSecret) {
-            console.error("Webhook Error: Assinatura do Stripe ou segredo do webhook ausente.");
-            return NextResponse.json({ error: 'Segredo do Webhook não configurado.' }, { status: 400 });
+            console.error("Webhook Error: Stripe signature or webhook secret is missing.");
+            return NextResponse.json({ error: 'Webhook secret not configured.' }, { status: 400 });
         }
         event = stripe.webhooks.constructEvent(buf, sig, webhookSecret);
     } catch (err: any) {
@@ -106,27 +112,27 @@ export async function POST(req: NextRequest) {
         switch (event.type) {
              case 'checkout.session.completed':
                 const session = event.data.object as Stripe.Checkout.Session;
-                // Lida com a criação inicial da assinatura
+                // Handles the initial subscription creation
                 await handleCheckoutSessionCompleted(session);
                 break;
             
              case 'invoice.payment_succeeded':
                 const invoice = event.data.object as Stripe.Invoice;
-                // Lida com renovações da assinatura
+                // Handles subscription renewals
                 await handleInvoicePaymentSucceeded(invoice);
                 break;
             
-            // TODO: Lidar com cancelamentos de assinatura
+            // TODO: Handle subscription cancellations
             // case 'customer.subscription.deleted':
-            //     // ... lógica para fazer o downgrade do plano do usuário para 'Básico'
+            //     // ... logic to downgrade the user's plan to 'Básico'
             //     break;
             
             default:
-                // console.log(`Evento não tratado do tipo ${event.type}`);
+                // console.log(`Unhandled event type ${event.type}`);
         }
     } catch (error) {
-        console.error("Erro ao processar o webhook:", error);
-        return NextResponse.json({ error: 'Erro interno ao processar webhook.' }, { status: 500 });
+        console.error("Error processing webhook:", error);
+        return NextResponse.json({ error: 'Internal server error while processing webhook.' }, { status: 500 });
     }
 
     return NextResponse.json({ received: true });
