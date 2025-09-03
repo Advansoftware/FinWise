@@ -42,6 +42,7 @@ import {
 import { createConfiguredAI, getModelReference } from '@/ai/genkit';
 import { getAdminApp } from '@/lib/firebase-admin';
 import { FieldValue, increment } from 'firebase-admin/firestore';
+import Stripe from 'stripe';
 
 // Default AI settings for fallback ONLY.
 const DEFAULT_AI_CREDENTIAL: AICredential = {
@@ -52,6 +53,17 @@ const DEFAULT_AI_CREDENTIAL: AICredential = {
   ollamaServerAddress: 'http://127.0.0.1:11434',
   openAIModel: 'gpt-3.5-turbo'
 };
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
+
+// Mapeia o nome do plano para o ID do Preço no Stripe
+// IMPORTANTE: Você precisa criar produtos e preços no seu painel do Stripe
+// e substituir estes IDs pelos seus.
+const stripePriceIds: Record<Exclude<UserPlan, 'Básico'>, string> = {
+  'Pro': 'price_xxxxxxxxxxxxxxxxx', // Substitua pelo seu ID de preço do plano Pro
+  'Plus': 'price_yyyyyyyyyyyyyyyyy', // Substitua pelo seu ID de preço do plano Plus
+};
+
 
 async function consumeAICredits(userId: string, cost: number, action: AICreditLogAction, isFreeAction: boolean = false): Promise<void> {
     if (!userId) {
@@ -315,6 +327,68 @@ export async function getPlanAction(userId: string): Promise<UserPlan> {
         return 'Básico';
     }
 }
+
+// --- Payment and Subscription Actions ---
+
+/**
+ * Creates a Stripe Checkout session for a user to subscribe to a plan.
+ * @param userId - The ID of the user subscribing.
+ * @param plan - The plan the user is subscribing to.
+ * @returns The URL for the Stripe Checkout page.
+ */
+export async function createStripeCheckoutAction(userId: string, userEmail: string, plan: Exclude<UserPlan, 'Básico'>): Promise<{ url: string | null }> {
+    if (!userId) {
+        throw new Error("Usuário não autenticado.");
+    }
+    
+    if (!process.env.STRIPE_SECRET_KEY) {
+      throw new Error("A chave secreta do Stripe não está configurada no servidor.");
+    }
+
+    const adminDb = getAdminApp().firestore();
+    const userDocRef = adminDb.doc(`users/${userId}`);
+    const userDoc = await userDocRef.get();
+    let stripeCustomerId = userDoc.data()?.stripeCustomerId;
+
+    // Create a new Stripe customer if one doesn't exist
+    if (!stripeCustomerId) {
+        const customer = await stripe.customers.create({
+            email: userEmail,
+            metadata: {
+                firebaseUID: userId,
+            },
+        });
+        stripeCustomerId = customer.id;
+        await userDocRef.update({ stripeCustomerId });
+    }
+
+    const priceId = stripePriceIds[plan];
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL as string;
+
+    try {
+        const session = await stripe.checkout.sessions.create({
+            payment_method_types: ['card', 'google_pay'],
+            mode: 'subscription',
+            customer: stripeCustomerId,
+            line_items: [{
+                price: priceId,
+                quantity: 1,
+            }],
+            success_url: `${appUrl}/billing?success=true`,
+            cancel_url: `${appUrl}/billing?canceled=true`,
+            metadata: {
+                firebaseUID: userId,
+                plan: plan,
+            }
+        });
+
+        return { url: session.url };
+    } catch (error) {
+        console.error("Error creating Stripe Checkout session:", error);
+        throw new Error("Não foi possível iniciar o processo de pagamento.");
+    }
+}
+
 
 export async function updateUserPlanAction(userId: string, plan: UserPlan): Promise<void> {
     if (!userId) {

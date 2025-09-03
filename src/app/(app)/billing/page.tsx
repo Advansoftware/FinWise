@@ -1,18 +1,19 @@
 // src/app/(app)/billing/page.tsx
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { usePlan } from "@/hooks/use-plan";
 import { UserPlan } from "@/lib/types";
-import { updateUserPlanAction } from '@/app/actions';
+import { createStripeCheckoutAction } from '@/app/actions';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { UpgradeCelebration } from '@/components/billing/upgrade-celebration';
+import { useSearchParams } from 'next/navigation';
 
-const plans: {name: UserPlan, price: string, description: string, features: string[], cta: string}[] = [
+const plans: {name: UserPlan, price: string, description: string, features: string[], cta: string, priceId?: string}[] = [
     {
         name: "Básico",
         price: "Grátis",
@@ -25,7 +26,7 @@ const plans: {name: UserPlan, price: string, description: string, features: stri
             "Metas de economia",
             "Gerenciamento de categorias",
         ],
-        cta: "Selecionar Plano",
+        cta: "Plano Atual",
     },
     {
         name: "Pro",
@@ -64,25 +65,50 @@ export default function BillingPage() {
     const { plan: currentUserPlan, isLoading: isPlanLoading } = usePlan();
     const { user } = useAuth();
     const { toast } = useToast();
+    const searchParams = useSearchParams();
     const [updatingPlan, setUpdatingPlan] = useState<UserPlan | null>(null);
     const [showCelebration, setShowCelebration] = useState(false);
 
+    useEffect(() => {
+        if (searchParams.get('success')) {
+            toast({
+                title: "Pagamento bem-sucedido!",
+                description: "Obrigado por assinar! Seu plano foi atualizado.",
+            });
+            setShowCelebration(true);
+        }
+
+        if (searchParams.get('canceled')) {
+            toast({
+                variant: 'destructive',
+                title: "Pagamento cancelado",
+                description: "Você não foi cobrado. Continue explorando nossos recursos quando quiser.",
+            });
+        }
+    }, [searchParams, toast]);
+
     const handlePlanChange = async (newPlan: UserPlan) => {
-        if (!user) return;
+        if (!user || newPlan === 'Básico') return;
         setUpdatingPlan(newPlan);
         try {
-            await updateUserPlanAction(user.uid, newPlan);
-            // O listener onSnapshot no hook usePlan irá atualizar a UI automaticamente.
-            toast({ title: "Plano atualizado com sucesso!", description: `Agora você está no plano ${newPlan}.`});
-            
-            if (newPlan === 'Pro' || newPlan === 'Plus') {
-                setShowCelebration(true);
+            const { url } = await createStripeCheckoutAction(user.uid, user.email!, newPlan);
+            if (url) {
+                // Redireciona o usuário para a página de pagamento do Stripe
+                window.location.href = url;
+            } else {
+                 throw new Error('Não foi possível criar a sessão de checkout.');
             }
         } catch (error) {
-            toast({ variant: 'destructive', title: 'Erro ao atualizar o plano.' });
+            toast({ 
+                variant: 'destructive', 
+                title: 'Erro ao iniciar assinatura.',
+                description: error instanceof Error ? error.message : 'Tente novamente mais tarde.'
+            });
             console.error(error);
         } finally {
-            setUpdatingPlan(null);
+            // O loading será interrompido pela navegação para o Stripe,
+            // ou pelo erro, então não precisamos resetar aqui em caso de sucesso.
+             setUpdatingPlan(null);
         }
     }
 
@@ -124,7 +150,12 @@ export default function BillingPage() {
                                  </ul>
                             </CardContent>
                             <CardFooter>
-                                <Button className="w-full" disabled={isCurrent || isLoading || isPlanLoading} onClick={() => handlePlanChange(plan.name)} variant={isCurrent ? 'default' : 'outline'}>
+                                <Button 
+                                    className="w-full" 
+                                    disabled={isCurrent || isLoading || isPlanLoading} 
+                                    onClick={() => handlePlanChange(plan.name)} 
+                                    variant={isCurrent ? 'default' : 'outline'}
+                                >
                                     {isLoading ? <Loader2 className="animate-spin" /> : isCurrent ? "Seu Plano Atual" : plan.cta}
                                 </Button>
                             </CardFooter>
