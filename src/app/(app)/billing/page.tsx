@@ -90,14 +90,16 @@ export default function BillingPage() {
 
     const handlePlanChange = async (newPlan: UserPlan) => {
         if (!user || newPlan === 'Básico') return;
+        
         setUpdatingPlan(newPlan);
+
         try {
             const { url } = await createStripeCheckoutAction(user.uid, user.email!, newPlan as Exclude<UserPlan, 'Básico'>);
             if (url) {
                 // Redireciona o usuário para a página de pagamento do Stripe
                 window.location.href = url;
             } else {
-                 throw new Error('Não foi possível criar a sessão de checkout.');
+                 throw new Error('Não foi possível criar a sessão de checkout do Stripe.');
             }
         } catch (error) {
             toast({ 
@@ -105,11 +107,11 @@ export default function BillingPage() {
                 title: 'Erro ao iniciar assinatura.',
                 description: error instanceof Error ? error.message : 'Tente novamente mais tarde.'
             });
-            console.error(error);
+            console.error("Stripe checkout error:", error);
             // Se houve erro, paramos o loading para o usuário tentar de novo.
             setUpdatingPlan(null);
         }
-        // Em caso de sucesso, o usuário será redirecionado, então não precisamos resetar o loading.
+        // Em caso de sucesso, o usuário será redirecionado, então não precisamos resetar o loading aqui.
     }
 
     return (
