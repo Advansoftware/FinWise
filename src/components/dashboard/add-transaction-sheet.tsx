@@ -90,15 +90,20 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
   
   const handleInputChange = (field: keyof typeof formState, value: any) => {
     setFormState(prev => ({...prev, [field]: value}));
+    
     if(field === 'category') {
         setFormState(prev => ({...prev, subcategory: ''}));
     }
-     if (field === 'type' && value === 'transfer') {
-      setFormState(prev => ({...prev, category: 'Transferência', item: 'Transferência entre contas'}));
-      setItemInputValue('Transferência entre contas');
-    } else if (field === 'type' && value !== 'transfer' && formState.category === 'Transferência') {
-       setFormState(prev => ({...prev, category: '', item: ''}));
-       setItemInputValue('');
+    
+    if (field === 'type') {
+      if (value === 'transfer') {
+        setFormState(prev => ({...prev, category: 'Transferência', item: 'Transferência entre contas'}));
+        setItemInputValue('Transferência entre contas');
+      } else if (formState.category === 'Transferência') {
+         // Clear fields when switching away from 'transfer'
+         setFormState(prev => ({...prev, category: '', item: ''}));
+         setItemInputValue('');
+      }
     }
   }
 
@@ -142,7 +147,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
             date: formState.date.toISOString(),
             quantity: parseInt(formState.quantity),
             walletId,
-            category: formState.type === 'transfer' ? 'Transferência' : formState.category
+            category: formState.type === 'transfer' ? 'Transferência' : formState.category,
         };
         await addTransaction(newTransaction);
 
