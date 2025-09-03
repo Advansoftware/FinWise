@@ -52,9 +52,9 @@ async function handler(
                 displayName,
                 email,
                 password: hashedPassword,
-                plan: 'Básico',
+                plan: 'Básico' as const,
                 aiCredits: 0,
-                createdAt: new Date().toISOString(),
+                createdAt: new Date(), // Use BSON Date
             };
 
             const result = await usersCollection.insertOne(newUser);
