@@ -23,6 +23,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     }
     
     try {
+        // Retrieve the full subscription object to access metadata
         const subscription = await stripe.subscriptions.retrieve(subscriptionId);
         
         const firebaseUID = subscription.metadata?.firebaseUID;
@@ -100,6 +101,8 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
         await userRef.update({
             plan: 'Básico',
             aiCredits: 0,
+            stripeSubscriptionId: null, // Clear subscription ID
+            stripeCurrentPeriodEnd: null,
         });
 
         console.log(`[Webhook] Successfully downgraded plan to Básico for user ${firebaseUID}.`);

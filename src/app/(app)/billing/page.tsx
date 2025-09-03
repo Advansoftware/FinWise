@@ -1,6 +1,6 @@
 // src/app/(app)/billing/page.tsx
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -165,15 +165,21 @@ function BillingPageContent() {
                              </ul>
                         </CardContent>
                         <CardFooter>
-                             <Button 
-                                className="w-full" 
-                                disabled={isCurrent || isProcessing || isPlanLoading || isPaidPlan} 
-                                onClick={() => handleUpgrade(plan.name as Exclude<UserPlan, 'Básico'>)} 
-                                variant={isCurrent ? 'outline' : 'default'}
-                            >
-                                {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                {!isProcessing && (isCurrent ? "Seu Plano Atual" : plan.cta)}
-                            </Button>
+                            {plan.name === 'Básico' ? (
+                                <Button className="w-full" disabled={true} variant="outline">
+                                    Seu Plano Atual
+                                </Button>
+                            ) : (
+                                <Button 
+                                    className="w-full" 
+                                    disabled={isProcessing || isPlanLoading || isPaidPlan} 
+                                    onClick={() => handleUpgrade(plan.name as Exclude<UserPlan, 'Básico'>)} 
+                                    variant={isCurrent ? 'outline' : 'default'}
+                                >
+                                    {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    {isCurrent ? "Seu Plano Atual" : plan.cta}
+                                </Button>
+                            )}
                         </CardFooter>
                     </Card>
                 )})}
@@ -199,9 +205,8 @@ function BillingPageContent() {
 
 export default function BillingPage() {
     return (
-        // Suspense boundary is required for useSearchParams
-        <React.Suspense fallback={<div>Carregando...</div>}>
+        <Suspense fallback={<div>Carregando...</div>}>
             <BillingPageContent />
-        </React.Suspense>
+        </Suspense>
     );
 }
