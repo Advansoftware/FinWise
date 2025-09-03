@@ -329,7 +329,7 @@ export async function getPlanAction(userId: string): Promise<UserPlan> {
  * @param userId - The ID of the user subscribing.
  * @returns The URL for the Stripe Checkout page.
  */
-export async function createStripeCheckoutAction(userId: string, userEmail: string, plan: Exclude<UserPlan, 'Básico'>): Promise<{ url: string | null, error?: string }> {
+export async function createStripeCheckoutAction(userId: string, userEmail: string, plan: Exclude<UserPlan, 'Básico'>): Promise<{ url: string | null; error?: string }> {
     if (!userId || !userEmail) {
         return { url: null, error: "Usuário não autenticado ou email ausente." };
     }
@@ -377,12 +377,14 @@ export async function createStripeCheckoutAction(userId: string, userEmail: stri
                 price: priceId,
                 quantity: 1,
             }],
+            subscription_data: {
+                metadata: {
+                    firebaseUID: userId,
+                    plan: plan,
+                }
+            },
             success_url: `${appUrl}/billing?success=true`,
             cancel_url: `${appUrl}/billing?canceled=true`,
-            metadata: {
-                firebaseUID: userId,
-                plan: plan,
-            }
         });
 
         return { url: session.url };
