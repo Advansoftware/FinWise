@@ -49,6 +49,20 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
   const [itemInputValue, setItemInputValue] = useState("");
   const [isItemPopoverOpen, setIsItemPopoverOpen] = useState(false);
 
+  const uniqueTransactions = useMemo(() => {
+    const seen = new Set<string>();
+    return allTransactions.filter(t => {
+      const duplicate = seen.has(t.item.toLowerCase());
+      seen.add(t.item.toLowerCase());
+      return !duplicate;
+    });
+  }, [allTransactions]);
+  
+  const filteredItems = useMemo(() => {
+      if (!itemInputValue) return [];
+      return uniqueTransactions.filter(t => t.item.toLowerCase().includes(itemInputValue.toLowerCase())).slice(0, 5);
+  }, [itemInputValue, uniqueTransactions]);
+
   useEffect(() => {
       if (itemInputValue && filteredItems.length > 0) {
           setIsItemPopoverOpen(true);
@@ -97,21 +111,6 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
       if (!formState.category) return [];
       return subcategories[formState.category] || [];
   }, [formState.category, subcategories]);
-
-  const uniqueTransactions = useMemo(() => {
-    const seen = new Set<string>();
-    return allTransactions.filter(t => {
-      const duplicate = seen.has(t.item.toLowerCase());
-      seen.add(t.item.toLowerCase());
-      return !duplicate;
-    });
-  }, [allTransactions]);
-  
-  const filteredItems = useMemo(() => {
-      if (!itemInputValue) return [];
-      return uniqueTransactions.filter(t => t.item.toLowerCase().includes(itemInputValue.toLowerCase())).slice(0, 5);
-  }, [itemInputValue, uniqueTransactions]);
-
 
   const handleSubmit = async () => {
     const finalItem = itemInputValue;
