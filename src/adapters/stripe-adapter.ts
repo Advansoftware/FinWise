@@ -22,7 +22,7 @@ class StripeAdapter implements PaymentService {
         const priceIdMap = {
             'Pro': process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO,
             'Plus': process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PLUS,
-            'Infinity': process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_INFINITY,
+            'Infinity': "price_1S3JSwAqYZYoBfLTltKNlHY7",
         };
         const priceId = priceIdMap[plan];
 
