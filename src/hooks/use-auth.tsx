@@ -7,122 +7,109 @@ import {
   useState,
   useEffect,
   ReactNode,
+  useCallback,
 } from 'react';
-import {
-  onIdTokenChanged,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  updateProfile,
-  signInWithPopup,
-  GoogleAuthProvider,
-  User,
-  sendPasswordResetEmail,
-  reauthenticateWithCredential,
-  EmailAuthProvider,
-  updatePassword
-} from 'firebase/auth';
-import { getFirebase } from '@/lib/firebase';
-import { getDatabaseAdapter } from '@/services/database/database-service';
+import { User as FirebaseUser } from 'firebase/auth';
+import { getAuthAdapter, IAuthAdapter } from '@/services/auth/auth-service';
 import { useRouter } from 'next/navigation';
-import { UserPlan } from '@/lib/types';
+import { UserProfile } from '@/lib/types';
+import { getDatabaseAdapter } from '@/services/database/database-service';
 
 
 interface AuthContextType {
-  user: User | null;
+  user: UserProfile | null;
   loading: boolean;
-  login: (email: string, pass: string) => Promise<any>;
-  signup: (email: string, pass: string, name: string) => Promise<any>;
+  login: IAuthAdapter['login'];
+  signup: IAuthAdapter['signup'];
   logout: () => Promise<void>;
-  signInWithGoogle: () => Promise<any>;
-  sendPasswordReset: (email: string) => Promise<void>;
+  signInWithGoogle: IAuthAdapter['signInWithGoogle'];
+  sendPasswordReset: IAuthAdapter['sendPasswordReset'];
   updateUserProfile: (name: string) => Promise<void>;
-  reauthenticate: (password: string) => Promise<void>;
-  updateUserPassword: (password: string) => Promise<void>;
+  reauthenticate: IAuthAdapter['reauthenticate'];
+  updateUserPassword: IAuthAdapter['updateUserPassword'];
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const { auth } = getFirebase();
+  const authAdapter = getAuthAdapter();
   const dbAdapter = getDatabaseAdapter();
   const router = useRouter();
 
+  const handleAuthChange = useCallback(async (firebaseUser: FirebaseUser | null) => {
+    if (firebaseUser) {
+      const userProfile = await dbAdapter.getDoc<UserProfile>(`users/${firebaseUser.uid}`);
+      if (userProfile) {
+        setUser(userProfile);
+      } else {
+        // This case can happen with Google Sign-in for the first time
+        await dbAdapter.ensureUserProfile(firebaseUser);
+        const newUserProfile = await dbAdapter.getDoc<UserProfile>(`users/${firebaseUser.uid}`);
+        setUser(newUserProfile);
+      }
+    } else {
+      setUser(null);
+    }
+    setLoading(false);
+  }, [dbAdapter]);
 
   useEffect(() => {
-    const unsubscribe = onIdTokenChanged(auth, async (user) => {
-      setUser(user);
-      if (user) {
-        // Ensure user profile exists in the database using the adapter
-        await dbAdapter.ensureUserProfile(user);
-      }
-      setLoading(false);
-    });
-
+    // This listener handles Firebase-based auth state (Google, or if Firebase is auth provider)
+    const unsubscribe = authAdapter.onAuthStateChanged(handleAuthChange);
     return () => unsubscribe();
-  }, [auth, dbAdapter]);
-
-  const login = async (email: string, pass: string) => {
-    const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-    if (userCredential.user) {
-      await dbAdapter.ensureUserProfile(userCredential.user);
-    }
-    return userCredential;
+  }, [authAdapter, handleAuthChange]);
+  
+  const login: IAuthAdapter['login'] = async (email, password) => {
+    setLoading(true);
+    const loggedInUser = await authAdapter.login(email, password);
+    setUser(loggedInUser);
+    setLoading(false);
+    return loggedInUser;
   };
   
-  const signup = (email: string, pass: string, name: string) => {
-    return createUserWithEmailAndPassword(auth, email, pass).then(async (userCredential) => {
-        await updateProfile(userCredential.user, { displayName: name });
-        // The onIdTokenChanged listener will handle profile creation via the adapter
-        setUser(auth.currentUser ? { ...auth.currentUser } : null); // Force re-render to trigger listener effect
-        return userCredential;
-    });
+  const signup: IAuthAdapter['signup'] = async (email, password, name) => {
+    setLoading(true);
+    const signedUpUser = await authAdapter.signup(email, password, name);
+    setUser(signedUpUser);
+    setLoading(false);
+    return signedUpUser;
+  };
+  
+  const signInWithGoogle: IAuthAdapter['signInWithGoogle'] = async () => {
+    setLoading(true);
+    // Google Sign-In will be handled by the onAuthStateChanged listener
+    return await authAdapter.signInWithGoogle();
   };
 
   const logout = async () => {
-    await signOut(auth);
+    await authAdapter.logout();
+    setUser(null);
     router.push('/login');
   };
 
-  const signInWithGoogle = async () => {
-    const provider = new GoogleAuthProvider();
-    const result = await signInWithPopup(auth, provider);
-    // The onIdTokenChanged listener handles profile creation, but we can ensure it here as well
-    if (result.user) {
-        await dbAdapter.ensureUserProfile(result.user);
-    }
-    return result;
+  const updateUserProfile = async (name: string) => {
+    if (!user) throw new Error("User not authenticated");
+    await dbAdapter.updateDoc(`users/${user.uid}`, { displayName: name });
+    setUser({ ...user, displayName: name });
   };
   
-  const sendPasswordReset = (email: string) => {
-    return sendPasswordResetEmail(auth, email);
+  const sendPasswordReset = async (email: string) => {
+    return authAdapter.sendPasswordReset(email);
   }
 
-  const updateUserProfile = async (name: string) => {
-    if (!auth.currentUser) throw new Error("User not authenticated");
-    await updateProfile(auth.currentUser, { displayName: name });
-    
-    // Use the adapter to update the user's profile in the database
-    await dbAdapter.updateDoc(`users/${auth.currentUser.uid}`, { displayName: name });
-    
-    // Force a re-render to reflect the change immediately in the UI
-    setUser(auth.currentUser ? { ...auth.currentUser } : null);
+  const reauthenticate: IAuthAdapter['reauthenticate'] = async (password: string) => {
+     if (!user) throw new Error("User not authenticated");
+     return authAdapter.reauthenticate(password);
   }
 
-  const reauthenticate = async (password: string) => {
-    if (!auth.currentUser || !auth.currentUser.email) throw new Error("User not authenticated or email is missing");
-    const credential = EmailAuthProvider.credential(auth.currentUser.email, password);
-    await reauthenticateWithCredential(auth.currentUser, credential);
+  const updateUserPassword: IAuthalização/adapter.ts' file was not found.
+    if (!user) throw new Error("User not authenticated");
+    return authAdapter.updateUserPassword(password);
   }
 
-  const updateUserPassword = async (password: string) => {
-    if (!auth.currentUser) throw new Error("User not authenticated");
-    await updatePassword(auth.currentUser, password);
-  }
-
-  const value = {
+  const value: AuthContextType = {
     user,
     loading,
     login,
