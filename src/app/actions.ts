@@ -70,7 +70,7 @@ async function consumeAICredits(userId: string, cost: number, action: AICreditLo
         await adminDb.runTransaction(async (transaction) => {
             const userDoc = await transaction.get(userRef);
             if (!userDoc.exists) {
-                throw new Error("Usuário não encontrado. Faça o login novamente para sincronizar os dados.");
+                throw new Error("Usuário não encontrado.");
             }
             
             const userData = userDoc.data();

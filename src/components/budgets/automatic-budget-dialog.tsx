@@ -1,7 +1,7 @@
 // src/components/budgets/automatic-budget-dialog.tsx
 'use client';
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { z } from "zod";
 import {
   Dialog,
@@ -31,12 +31,14 @@ interface AutomaticBudgetDialogProps {
 export function AutomaticBudgetDialog({ isOpen, setIsOpen, suggestedBudgets }: AutomaticBudgetDialogProps) {
   const { toast } = useToast();
   const { addBudget, isLoading: isSaving } = useBudgets();
-  const [selectedBudgets, setSelectedBudgets] = useState<SuggestedBudget[]>(suggestedBudgets);
+  const [selectedBudgets, setSelectedBudgets] = useState<SuggestedBudget[]>([]);
 
-  // Sync state when suggestions change
-  useState(() => {
-    setSelectedBudgets(suggestedBudgets);
-  });
+  // Sync state when suggestions change and dialog opens
+  useEffect(() => {
+    if (isOpen) {
+        setSelectedBudgets(suggestedBudgets);
+    }
+  }, [isOpen, suggestedBudgets]);
 
   const handleToggleSelection = (budget: SuggestedBudget) => {
     setSelectedBudgets(prev => 
