@@ -75,7 +75,8 @@ class StripeAdapter implements PaymentService {
                 // Otherwise, let Stripe create the customer during checkout.
                 // Pass user info so a new customer is created with this email.
                 sessionConfig.customer_email = userEmail;
-                sessionConfig.customer_creation = 'always';
+                // No longer need 'customer_creation: 'always'' as it's implicit
+                // when customer_email is provided without a customer ID.
             }
 
             const session = await this.stripe.checkout.sessions.create(sessionConfig);
