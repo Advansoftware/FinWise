@@ -35,11 +35,13 @@ import {
   GenerateAutomaticBudgetsInput,
   GenerateAutomaticBudgetsOutput,
   PredictFutureBalanceInput,
-  PredictFutureBalanceOutput
+  PredictFutureBalanceOutput,
+  AICreditLogAction
 } from '@/ai/ai-types';
 import { createConfiguredAI, getModelReference } from '@/ai/genkit';
 import { getAdminApp } from '@/lib/firebase-admin';
 import { FieldValue, increment } from 'firebase-admin/firestore';
+import { logAICreditUsage } from '@/services/ai-credit-log-service';
 
 // Default AI settings for fallback ONLY.
 const DEFAULT_AI_CREDENTIAL: AICredential = {
@@ -51,7 +53,7 @@ const DEFAULT_AI_CREDENTIAL: AICredential = {
   openAIModel: 'gpt-3.5-turbo'
 };
 
-async function consumeAICredits(userId: string, cost: number): Promise<void> {
+async function consumeAICredits(userId: string, cost: number, action: AICreditLogAction): Promise<void> {
     if (!userId) {
         throw new Error("Usuário não autenticado.");
     }
@@ -78,7 +80,14 @@ async function consumeAICredits(userId: string, cost: number): Promise<void> {
                 throw new Error(`Créditos de IA insuficientes. Você precisa de ${cost} créditos, mas tem apenas ${currentCredits}. Considere comprar mais créditos ou aguardar a renovação mensal.`);
             }
 
+            // Decrement credits and log the action
             transaction.update(userRef, { aiCredits: increment(-cost) });
+            const logRef = adminDb.collection('users').doc(userId).collection('aiCreditLogs').doc();
+            transaction.set(logRef, {
+              action,
+              cost,
+              timestamp: FieldValue.serverTimestamp(),
+            });
         });
     } catch (error) {
         // Re-throw the original error to be displayed to the user
@@ -122,8 +131,8 @@ export async function getActiveAICredential(userId: string): Promise<AICredentia
 
 // --- AI Actions ---
 
-export async function getSpendingTip(transactions: Transaction[], userId: string): Promise<string> {
-  await consumeAICredits(userId, 1);
+export async function getSpendingTip(transactions: Transaction[], userId: string, forceRefresh: boolean = false): Promise<string> {
+  if (forceRefresh) await consumeAICredits(userId, 1, 'Dica Rápida');
   try {
     const credential = await getActiveAICredential(userId);
     const result = await generateSpendingTip({
@@ -138,8 +147,8 @@ export async function getSpendingTip(transactions: Transaction[], userId: string
   }
 }
 
-export async function getFinancialProfile(input: FinancialProfileInput, userId: string): Promise<string> {
-  await consumeAICredits(userId, 5);
+export async function getFinancialProfile(input: FinancialProfileInput, userId: string, forceRefresh: boolean = false): Promise<string> {
+  if (forceRefresh) await consumeAICredits(userId, 5, 'Perfil Financeiro');
   try {
     const credential = await getActiveAICredential(userId);
     const configuredAI = createConfiguredAI(credential);
@@ -185,7 +194,7 @@ Transações do Mês Atual:
 }
 
 export async function analyzeTransactions(transactions: Transaction[], userId: string): Promise<string> {
-  await consumeAICredits(userId, 5);
+  await consumeAICredits(userId, 5, 'Análise de Transações');
   try {
     const credential = await getActiveAICredential(userId);
     const configuredAI = createConfiguredAI(credential);
@@ -213,7 +222,7 @@ Transactions:
 }
 
 export async function getChatbotResponse(input: ChatInput, userId: string): Promise<string> {
-  await consumeAICredits(userId, 1);
+  await consumeAICredits(userId, 1, 'Chat com Assistente');
   try {
     const credential = await getActiveAICredential(userId);
     const result = await chatWithTransactions(input, credential);
@@ -230,49 +239,49 @@ export async function getChatbotResponse(input: ChatInput, userId: string): Prom
 }
 
 export async function extractReceiptInfoAction(input: ReceiptInfoInput, userId: string): Promise<ReceiptInfoOutput> {
-    await consumeAICredits(userId, 10); // Image processing is more expensive
+    await consumeAICredits(userId, 10, 'Leitura de Nota Fiscal (OCR)');
     const credential = await getActiveAICredential(userId);
     return await extractReceiptInfo(input, credential);
 }
 
 export async function suggestCategoryForItemAction(input: SuggestCategoryInput, userId: string): Promise<SuggestCategoryOutput> {
-    await consumeAICredits(userId, 1);
+    await consumeAICredits(userId, 1, 'Sugestão de Categoria');
     const credential = await getActiveAICredential(userId);
     return suggestCategoryForItem(input, credential);
 }
 
 export async function generateMonthlyReportAction(input: GenerateReportInput, userId: string): Promise<GenerateReportOutput> {
-  await consumeAICredits(userId, 5);
+  await consumeAICredits(userId, 5, 'Relatório Mensal');
   const credential = await getActiveAICredential(userId);
   return generateMonthlyReport(input, credential);
 }
 
 export async function generateAnnualReportAction(input: GenerateAnnualReportInput, userId: string): Promise<GenerateAnnualReportOutput> {
-  await consumeAICredits(userId, 10);
+  await consumeAICredits(userId, 10, 'Relatório Anual');
   const credential = await getActiveAICredential(userId);
   return generateAnnualReport(input, credential);
 }
 
 export async function suggestBudgetAmountAction(input: SuggestBudgetInput, userId: string): Promise<SuggestBudgetOutput> {
-    await consumeAICredits(userId, 2);
+    await consumeAICredits(userId, 2, 'Sugestão de Orçamento');
     const credential = await getActiveAICredential(userId);
     return suggestBudgetAmount(input);
 }
 
 export async function projectGoalCompletionAction(input: ProjectGoalCompletionInput, userId: string): Promise<ProjectGoalCompletionOutput> {
-    await consumeAICredits(userId, 3);
+    await consumeAICredits(userId, 3, 'Projeção de Meta');
     const credential = await getActiveAICredential(userId);
     return projectGoalCompletion(input, credential);
 }
 
 export async function generateAutomaticBudgetsAction(input: GenerateAutomaticBudgetsInput, userId: string): Promise<GenerateAutomaticBudgetsOutput> {
-    await consumeAICredits(userId, 5);
+    await consumeAICredits(userId, 5, 'Criação de Orçamentos Automáticos');
     const credential = await getActiveAICredential(userId);
     return generateAutomaticBudgets(input, credential);
 }
 
-export async function predictFutureBalanceAction(input: PredictFutureBalanceInput, userId: string): Promise<PredictFutureBalanceOutput> {
-    await consumeAICredits(userId, 3);
+export async function predictFutureBalanceAction(input: PredictFutureBalanceInput, userId: string, forceRefresh: boolean = false): Promise<PredictFutureBalanceOutput> {
+    if (forceRefresh) await consumeAICredits(userId, 3, 'Previsão de Saldo');
     const credential = await getActiveAICredential(userId);
     return predictFutureBalance(input, credential);
 }
@@ -292,5 +301,3 @@ export async function getPlanAction(userId: string): Promise<UserPlan> {
         return 'Básico';
     }
 }
-
-    

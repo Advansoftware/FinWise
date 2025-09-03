@@ -13,13 +13,7 @@ import { Separator } from "../ui/separator";
 import { useAuth } from "@/hooks/use-auth";
 import { getFirebase } from "@/lib/firebase";
 import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
-import { startOfMonth, getYear } from "date-fns";
-
-const isSameDay = (d1: Date, d2: Date) => {
-    return d1.getFullYear() === d2.getFullYear() &&
-           d1.getMonth() === d2.getMonth() &&
-           d1.getDate() === d2.getDate();
-}
+import { startOfMonth, getYear, isSameDay } from "date-fns";
 
 export function FinancialProfileCard() {
   const [profile, setProfile] = useState("");
@@ -62,7 +56,7 @@ export function FinancialProfileCard() {
             monthlyReports: JSON.stringify(currentYearMonthlyReports, null, 2),
             annualReports: JSON.stringify(pastAnnualReports, null, 2),
             currentMonthTransactions: JSON.stringify(currentMonthTransactions, null, 2),
-          }, user.uid);
+          }, user.uid, forceRefresh);
 
           setProfile(newProfile);
           await setDoc(settingsRef, {

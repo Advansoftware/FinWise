@@ -48,7 +48,7 @@ export function AITipCard({ transactions }: AITipCardProps) {
             if (lastRun && isSameDay(lastRun, new Date()) && !forceRefresh && lastTip) {
                 setTip(lastTip);
             } else {
-                const newTip = await getSpendingTip(transactions, user.uid);
+                const newTip = await getSpendingTip(transactions, user.uid, forceRefresh);
                 setTip(newTip);
                 await setDoc(settingsRef, {
                     lastTipTimestamp: Timestamp.now(),

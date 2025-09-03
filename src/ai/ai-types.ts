@@ -1,4 +1,5 @@
 
+
 import { z } from 'zod';
 
 // Schema for generating spending tips
@@ -186,3 +187,27 @@ export const PredictFutureBalanceOutputSchema = z.object({
     summary: z.string().describe('A very brief, one-sentence summary of the projection in Brazilian Portuguese (e.g., "Você está a caminho de terminar o mês positivo!" ou "Atenção! Seu saldo pode ficar negativo se os gastos continuarem neste ritmo.").'),
 });
 export type PredictFutureBalanceOutput = z.infer<typeof PredictFutureBalanceOutputSchema>;
+
+// Schema for AI Credit Log
+export type AICreditLogAction =
+  | 'Dica Rápida'
+  | 'Perfil Financeiro'
+  | 'Análise de Transações'
+  | 'Chat com Assistente'
+  | 'Leitura de Nota Fiscal (OCR)'
+  | 'Sugestão de Categoria'
+  | 'Relatório Mensal'
+  | 'Relatório Anual'
+  | 'Sugestão de Orçamento'
+  | 'Projeção de Meta'
+  | 'Criação de Orçamentos Automáticos'
+  | 'Previsão de Saldo';
+
+export const AICreditLogSchema = z.object({
+  id: z.string(),
+  userId: z.string(),
+  action: z.string(), // Corresponds to AICreditLogAction
+  cost: z.number(),
+  timestamp: z.string(), // ISO 8601 string
+});
+export type AICreditLog = z.infer<typeof AICreditLogSchema>;
