@@ -16,18 +16,14 @@ const creditsMap: Record<UserPlan, number> = {
 };
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
-    if (session.mode !== 'subscription') {
-        return;
-    }
-
     const subscriptionId = session.subscription;
-    if (!subscriptionId) {
-        console.error(`Webhook Error: Subscription ID missing from checkout session. Session ID: ${session.id}`);
+    if (typeof subscriptionId !== 'string') {
+        console.error(`Webhook Error: Subscription ID is not a string. Session ID: ${session.id}`);
         return;
     }
     
     try {
-        const subscription = await stripe.subscriptions.retrieve(subscriptionId as string);
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
         
         const firebaseUID = subscription.metadata?.firebaseUID;
         const plan = subscription.metadata?.plan as UserPlan;
@@ -62,12 +58,12 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
     }
     
     const subscriptionId = invoice.subscription;
-    if (!subscriptionId) {
+    if (!subscriptionId || typeof subscriptionId !== 'string') {
         return;
     }
     
     try {
-        const subscription = await stripe.subscriptions.retrieve(subscriptionId as string);
+        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
         const firebaseUID = subscription.metadata.firebaseUID;
         const plan = subscription.metadata.plan as UserPlan;
         

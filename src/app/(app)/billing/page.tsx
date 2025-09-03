@@ -1,6 +1,7 @@
 // src/app/(app)/billing/page.tsx
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, Loader2, Gem } from "lucide-react";
@@ -10,6 +11,7 @@ import { UserPlan } from "@/lib/types";
 import { createStripeCheckoutAction, createStripePortalSession } from '@/app/actions';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { UpgradeCelebration } from '@/components/billing/upgrade-celebration';
 
 const plans = [
     {
@@ -58,12 +60,19 @@ const plans = [
     }
 ]
 
-
-export default function BillingPage() {
+function BillingPageContent() {
     const { plan: currentUserPlan, isLoading: isPlanLoading } = usePlan();
     const { user } = useAuth();
     const { toast } = useToast();
     const [isProcessing, setIsProcessing] = useState(false);
+    const [showCelebration, setShowCelebration] = useState(false);
+    const searchParams = useSearchParams();
+
+    useEffect(() => {
+        if (searchParams.get('success')) {
+            setShowCelebration(true);
+        }
+    }, [searchParams]);
 
     const handleUpgrade = async (newPlan: Exclude<UserPlan, 'Básico'>) => {
         if (!user || !user.email) return;
@@ -82,6 +91,7 @@ export default function BillingPage() {
                 title: 'Erro no Checkout',
                 description: 'Não foi possível redirecionar para a página de pagamento. Tente novamente mais tarde.'
             });
+        } finally {
             setIsProcessing(false);
         }
     }
@@ -103,7 +113,8 @@ export default function BillingPage() {
                 title: 'Erro',
                 description: 'Não foi possível abrir o portal de gerenciamento. Tente novamente mais tarde.'
             });
-             setIsProcessing(false);
+        } finally {
+            setIsProcessing(false);
         }
     }
 
@@ -111,6 +122,7 @@ export default function BillingPage() {
 
     return (
         <div className="flex flex-col gap-6">
+            {showCelebration && <UpgradeCelebration onComplete={() => setShowCelebration(false)} />}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                  <div>
                     <h1 className="text-3xl font-bold tracking-tight">Assinatura e Créditos</h1>
@@ -118,8 +130,8 @@ export default function BillingPage() {
                 </div>
                  {isPaidPlan && (
                     <Button onClick={handleManageSubscription} disabled={isProcessing}>
-                        {isProcessing ? <Loader2 className="animate-spin" /> : <Gem className="h-4 w-4" />}
-                        <span className="ml-2">Gerenciar Assinatura</span>
+                        {isProcessing ? <Loader2 className="animate-spin mr-2"/> : <Gem className="mr-2 h-4 w-4" />}
+                        Gerenciar Assinatura
                     </Button>
                 )}
             </div>
@@ -159,7 +171,7 @@ export default function BillingPage() {
                                 onClick={() => handleUpgrade(plan.name as Exclude<UserPlan, 'Básico'>)} 
                                 variant={isCurrent ? 'outline' : 'default'}
                             >
-                                {isProcessing && <Loader2 className="animate-spin" />}
+                                {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 {!isProcessing && (isCurrent ? "Seu Plano Atual" : plan.cta)}
                             </Button>
                         </CardFooter>
@@ -183,4 +195,13 @@ export default function BillingPage() {
             </Card>
         </div>
     )
+}
+
+export default function BillingPage() {
+    return (
+        // Suspense boundary is required for useSearchParams
+        <React.Suspense fallback={<div>Carregando...</div>}>
+            <BillingPageContent />
+        </React.Suspense>
+    );
 }
