@@ -69,16 +69,14 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
   }
 
   const handleItemSelect = (transaction: Transaction) => {
-    setFormState({
+    setFormState(prev => ({
+      ...prev, // Keep existing fields like date and type
       item: transaction.item,
       establishment: transaction.establishment || '',
-      quantity: '1', // Default quantity to 1 on suggestion
       amount: String(transaction.amount),
-      date: new Date(), // Default date to today
       category: transaction.category,
       subcategory: transaction.subcategory || '',
-      type: transaction.type,
-    });
+    }));
     setItemQuery(transaction.item);
     setIsItemPopoverOpen(false);
   }
@@ -171,7 +169,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                         </Button>
                          <Button
                              variant={formState.type === 'income' ? 'default' : 'outline'}
-                             className="bg-emerald-600 hover:bg-emerald-700 data-[variant=outline]:bg-transparent data-[variant=outline]:text-current"
+                             className={cn("bg-transparent", formState.type === 'income' && "bg-emerald-600 hover:bg-emerald-700 text-white")}
                              onClick={() => handleInputChange('type', 'income')}
                          >
                             Receita
