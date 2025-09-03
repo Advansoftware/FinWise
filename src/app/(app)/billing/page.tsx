@@ -2,7 +2,7 @@
 // src/app/(app)/billing/page.tsx
 'use client';
 import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { CheckCircle2, Loader2, Gem, BrainCircuit, Rocket } from "lucide-react";
@@ -87,6 +87,21 @@ function BillingPageContent() {
     const [showCelebration, setShowCelebration] = useState(false);
     const [showCancelFeedback, setShowCancelFeedback] = useState(false);
     const searchParams = useSearchParams();
+    const router = useRouter();
+    const pathname = usePathname();
+
+    const cleanUpUrl = () => {
+        const params = new URLSearchParams(searchParams.toString());
+        params.delete('success');
+        params.delete('canceled');
+        const newUrl = `${pathname}?${params.toString()}`;
+        // Use replaceState to avoid adding to browser history
+        window.history.replaceState(
+            { ...window.history.state, as: newUrl, url: newUrl },
+            '',
+            newUrl
+        );
+    };
 
     useEffect(() => {
         if (searchParams.get('success')) {
@@ -146,8 +161,8 @@ function BillingPageContent() {
 
     return (
         <div className="flex flex-col gap-6">
-            {showCelebration && <UpgradeCelebration onComplete={() => setShowCelebration(false)} />}
-            {showCancelFeedback && <CancelFeedback onComplete={() => setShowCancelFeedback(false)} />}
+            {showCelebration && <UpgradeCelebration onComplete={() => { setShowCelebration(false); cleanUpUrl(); }} />}
+            {showCancelFeedback && <CancelFeedback onComplete={() => { setShowCancelFeedback(false); cleanUpUrl(); }} />}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                  <div>
                     <h1 className="text-3xl font-bold tracking-tight">Assinatura e Créditos</h1>
