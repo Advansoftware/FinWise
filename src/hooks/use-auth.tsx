@@ -69,7 +69,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             displayName: userCredential.user.displayName,
             email: userCredential.user.email,
             createdAt: new Date(),
-            plan: 'Básico'
+            plan: 'Básico',
+            aiCredits: 0,
         }, { merge: true }); // Use merge to be safe
     }
     
