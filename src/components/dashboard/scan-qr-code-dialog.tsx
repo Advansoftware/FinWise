@@ -12,10 +12,10 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Loader2, Upload, Camera } from "lucide-react";
+import { Loader2, Upload, Camera, Paperclip } from "lucide-react";
 import { useRef, useState, useEffect, useCallback, useTransition } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-is-mobile";
 import { extractReceiptInfoAction } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
 import { Badge } from "../ui/badge";
@@ -53,6 +53,9 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
         setReceiptImage(null);
         setExtractedData(null);
         setHasCameraPermission(null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
     }, [stopCamera]);
 
 
@@ -81,7 +84,9 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
             getCameraPermission();
         }
         return () => {
-           if(isDialogOpen) stopCamera();
+           if(!isDialogOpen) {
+               stopCamera();
+           }
         }
     }, [isMobile, isDialogOpen, stopCamera, receiptImage]);
 
@@ -258,9 +263,9 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                                         <div className="h-px flex-1 bg-border"/>
                                     </div>
                                     <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>
-                                        <Upload className="mr-2 h-4 w-4" /> Enviar Imagem da Galeria
+                                        <Paperclip className="mr-2 h-4 w-4" /> Enviar da Galeria
                                     </Button>
-                                    <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                                    <input ref={fileInputRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileChange} />
                                 </div>
                             ) : (
                                 <div className="flex items-center justify-center w-full">
@@ -268,9 +273,9 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                                             <Upload className="w-8 h-8 mb-4 text-primary" />
                                             <p className="mb-2 text-sm text-foreground"><span className="font-semibold text-primary">Clique para enviar</span> ou arraste e solte</p>
-                                            <p className="text-xs text-muted-foreground">PNG, JPG, ou PDF</p>
+                                            <p className="text-xs text-muted-foreground">PDF, PNG, ou JPG</p>
                                         </div>
-                                        <input ref={fileInputRef} id="dropzone-file" type="file" accept="image/*" className="hidden" onChange={handleFileChange} />
+                                        <input ref={fileInputRef} id="dropzone-file" type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileChange} />
                                     </label>
                                 </div>
                             )}
@@ -283,24 +288,28 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                     )}
                 </div>
 
-                <DialogFooter className="gap-2 sm:gap-0">
-                     <Button variant="ghost" onClick={resetState} disabled={isProcessing || isSaving}>
-                        {isMobile ? "Escanear Outra" : "Enviar Outra"}
-                    </Button>
-                    {isMobile && !receiptImage ? (
-                        <Button onClick={handleCapture} disabled={hasCameraPermission === false || isProcessing || isSaving}>
-                           <Camera className="mr-2 h-4 w-4"/> Capturar
-                        </Button>
-                    ) : extractedData?.isValid ? (
-                         <Button onClick={handleSaveTransactions} disabled={isSaving || isProcessing}>
-                            {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                            Salvar Transações
-                        </Button>
-                    ) : null}
+                <DialogFooter className="gap-2 sm:gap-0 sm:justify-between w-full">
+                    <div>
+                         {receiptImage && (
+                            <Button variant="ghost" onClick={resetState} disabled={isProcessing || isSaving}>
+                                Enviar Outra
+                            </Button>
+                        )}
+                    </div>
+                    <div className="flex gap-2">
+                        {isMobile && !receiptImage ? (
+                            <Button onClick={handleCapture} disabled={hasCameraPermission === false || isProcessing || isSaving}>
+                               <Camera className="mr-2 h-4 w-4"/> Capturar
+                            </Button>
+                        ) : extractedData?.isValid ? (
+                             <Button onClick={handleSaveTransactions} disabled={isSaving || isProcessing}>
+                                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                Salvar Transações
+                            </Button>
+                        ) : null}
+                    </div>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
     );
 }
-
-    
