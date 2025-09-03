@@ -1,8 +1,10 @@
 // src/services/database/mongodb-adapter.ts
 
-import { DocumentData, QueryConstraint } from "firebase/firestore";
+import { DocumentData } from "firebase/firestore";
 import { IDatabaseAdapter, Unsubscribe } from "./database-adapter";
 import { User } from "firebase/auth";
+import { UserProfile } from "@/lib/types";
+import { getAuthAdapter } from "../auth/auth-service";
 
 // Helper to construct API URL
 const getApiUrl = (path: string) => `/api/data/${path}`;
@@ -13,44 +15,50 @@ export class MongoDbAdapter implements IDatabaseAdapter {
       // No client-side initialization needed for this adapter
     }
 
-    private getAuthHeader = async () => {
-      // In a real app, this would dynamically get the current user's JWT token
-      // For now, we'll simulate it or require it to be passed in.
-      // This part is complex because it ties into the auth state.
-      // Let's assume for now the API is secured by other means or this is handled.
-      return { 'Authorization': 'Bearer SIMULATED_TOKEN' };
+    private async getAuthHeader() {
+        const authAdapter = getAuthAdapter();
+        const token = await authAdapter.getToken();
+        if (!token) {
+            // This case might happen during public page loads before auth state is known.
+            // API routes should handle requests without tokens gracefully (e.g., return 401).
+            return {};
+        }
+        return { 'Authorization': `Bearer ${token}` };
     }
 
     listenToCollection<T>(collectionPath: string, callback: (data: T[]) => void, constraints?: any[]): Unsubscribe {
         const path = collectionPath.replace('users/USER_ID/', '');
         
-        // Polling as a fallback for real-time, since SSE from Next.js API routes can be tricky.
         let isSubscribed = true;
-        const intervalId = setInterval(async () => {
+
+        const fetchData = async () => {
             if (!isSubscribed) return;
             try {
                 const response = await fetch(getApiUrl(path), { headers: await this.getAuthHeader() });
                 if (response.ok) {
                     const data = await response.json();
-                    callback(data as T[]);
+                    if(isSubscribed) {
+                        callback(data as T[]);
+                    }
+                } else if (response.status === 401) {
+                    // User is not authenticated, clear the data
+                    if(isSubscribed) {
+                        callback([]);
+                    }
                 }
             } catch (error) {
-                console.error(`Polling error for ${path}:`, error);
+                console.error(`Fetch error for ${path}:`, error);
+                 if(isSubscribed) {
+                    callback([]);
+                }
             }
-        }, 5000); // Poll every 5 seconds
+        };
+
+        // Polling as a fallback for real-time, since SSE from Next.js API routes can be tricky.
+        const intervalId = setInterval(fetchData, 10000); // Poll every 10 seconds
 
         // Initial fetch
-        (async () => {
-             try {
-                const response = await fetch(getApiUrl(path), { headers: await this.getAuthHeader() });
-                if (response.ok) {
-                    const data = await response.json();
-                    callback(data as T[]);
-                }
-            } catch (error) {
-                console.error(`Initial fetch error for ${path}:`, error);
-            }
-        })();
+        fetchData();
         
         const unsubscribe = () => {
             isSubscribed = false;
@@ -64,10 +72,17 @@ export class MongoDbAdapter implements IDatabaseAdapter {
         const path = docPath.replace('users/USER_ID/', '');
         const response = await fetch(getApiUrl(path), { headers: await this.getAuthHeader() });
         if (!response.ok) {
+            if (response.status === 401) return null; // Not authorized means no doc
             if (response.status === 404) return null;
             throw new Error(`Failed to get doc: ${await response.text()}`);
         }
-        return response.json();
+        const data = await response.json();
+        // The API returns the document with _id. Map it to id and uid for consistency with Firebase adapter.
+        if (data && data._id) {
+            data.id = data._id;
+            data.uid = data._id;
+        }
+        return data;
     }
     
     async addDoc<T extends DocumentData>(collectionPath: string, data: T): Promise<string> {
@@ -114,35 +129,29 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     async ensureUserProfile(user: User): Promise<void> {
        const profile = await this.getDoc(`users/${user.uid}`);
        if (!profile) {
-           const newUserProfile = {
-                _id: user.uid, // In Mongo, we often control the ID
-                uid: user.uid,
+           const newUserProfile: Omit<UserProfile, 'uid'> = {
                 email: user.email,
                 displayName: user.displayName,
                 plan: 'Básico',
                 aiCredits: 0,
                 createdAt: new Date().toISOString(),
            };
-           // In REST, a POST to a collection creates a resource.
-           // A PUT to a specific resource ID creates/replaces it.
-           // So we use setDoc (which maps to PUT).
            await this.setDoc(`users/${user.uid}`, newUserProfile);
        }
     }
 
     async runTransaction(updateFunction: (transaction: any) => Promise<any>): Promise<any> {
-       console.warn("MongoDbAdapter: Transactions must be implemented as a dedicated API endpoint.");
+       console.warn("MongoDbAdapter: Client-side transactions are not supported. Operations must be atomic API endpoints.");
        throw new Error("Transactions not implemented for MongoDB adapter on the client-side.");
     }
 
     increment(value: number): any {
-       return { '$inc': { field: value } }; // This is tricky. The API route needs to know which field to increment.
+       // This needs to be handled by the API. The API will receive a special object indicating an increment operation.
+       return { __op: 'Increment', value };
     }
 
     queryConstraint(type: 'orderBy' | 'where' | 'limit', field: string, operator: any, value?: any): any {
-      // This would need to be translated into query parameters for the API call
-      // e.g. /api/data/transactions?orderBy=date&direction=desc
-      console.warn("MongoDbAdapter: Query constraints must be implemented via API query parameters.");
+      console.warn("MongoDbAdapter: Query constraints must be implemented via API query parameters and are not yet supported in this adapter.");
       return {};
     }
 }

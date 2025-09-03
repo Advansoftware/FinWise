@@ -32,6 +32,7 @@ export class FirebaseAuthAdapter implements IAuthAdapter {
 
     async login(email: string, pass: string): Promise<UserProfile> {
         const userCredential = await signInWithEmailAndPassword(this.auth, email, pass);
+        // The onAuthStateChanged listener will handle ensuring the profile and setting state
         const profile = await this.dbAdapter.getDoc<UserProfile>(`users/${userCredential.user.uid}`);
         if (!profile) throw new Error("User profile not found in database.");
         return profile;
@@ -40,6 +41,7 @@ export class FirebaseAuthAdapter implements IAuthAdapter {
     async signup(email: string, pass: string, name: string): Promise<UserProfile> {
         const userCredential = await createUserWithEmailAndPassword(this.auth, email, pass);
         await updateProfile(userCredential.user, { displayName: name });
+        // The onAuthStateChanged listener will handle ensuring the profile and setting state
         await this.dbAdapter.ensureUserProfile(userCredential.user);
         const profile = await this.dbAdapter.getDoc<UserProfile>(`users/${userCredential.user.uid}`);
         if (!profile) throw new Error("Failed to create user profile in database.");
@@ -57,9 +59,14 @@ export class FirebaseAuthAdapter implements IAuthAdapter {
     async signInWithGoogle(): Promise<UserProfile> {
         const provider = new GoogleAuthProvider();
         const result = await signInWithPopup(this.auth, provider);
-        await this.dbAdapter.ensureUserProfile(result.user);
+        // The onAuthStateChanged listener will handle ensuring the profile and setting state
         const profile = await this.dbAdapter.getDoc<UserProfile>(`users/${result.user.uid}`);
-        if (!profile) throw new Error("User profile not found after Google Sign-In.");
+        if (!profile) {
+            await this.dbAdapter.ensureUserProfile(result.user);
+            const newProfile = await this.dbAdapter.getDoc<UserProfile>(`users/${result.user.uid}`);
+            if (!newProfile) throw new Error("Could not create user profile after Google Sign-In.");
+            return newProfile;
+        }
         return profile;
     }
 
@@ -80,5 +87,12 @@ export class FirebaseAuthAdapter implements IAuthAdapter {
             throw new Error("User not authenticated");
         }
         await updatePassword(this.auth.currentUser, newPassword);
+    }
+
+    async getToken(): Promise<string | null> {
+        if (!this.auth.currentUser) {
+            return null;
+        }
+        return await this.auth.currentUser.getIdToken();
     }
 }

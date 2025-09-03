@@ -1,24 +1,25 @@
-
 // src/app/api/users/[...path]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { getAdminApp } from '@/lib/firebase-admin';
 import { ObjectId } from 'mongodb';
 import bcrypt from 'bcrypt';
+import * as admin from 'firebase-admin';
 
 const SALT_ROUNDS = 10;
 
-async function getUserId(request: NextRequest): Promise<string | null> {
+// This function is distinct from the one in data/route, it's for user actions
+async function getUserIdFromToken(request: NextRequest): Promise<string | null> {
     const authHeader = request.headers.get('Authorization');
     if (authHeader?.startsWith('Bearer ')) {
         const idToken = authHeader.split('Bearer ')[1];
         try {
-            // This is for Firebase-based auth (like Google Sign-in)
+            // For MongoDB auth, we issue a custom token. For Firebase, it's an ID token.
+            // Firebase Admin SDK can verify both.
             const decodedToken = await getAdminApp().auth().verifyIdToken(idToken);
             return decodedToken.uid;
         } catch (error) {
-            // This could also be a custom session token, for now we assume Firebase
-            console.error("Error verifying Firebase ID token:", error);
+            console.error("Error verifying ID token:", error);
             return null;
         }
     }
@@ -30,7 +31,7 @@ async function handler(
     { params }: { params: { path: string[] } }
 ) {
     const { db } = await connectToDatabase();
-    const [action, docId] = params.path;
+    const [action] = params.path;
     const usersCollection = db.collection('users');
 
     try {
@@ -60,14 +61,14 @@ async function handler(
             const userProfile = await usersCollection.findOne({ _id: result.insertedId });
             
             if (!userProfile) throw new Error("Could not retrieve created user");
+
+            const customToken = await getAdminApp().auth().createCustomToken(userProfile._id.toHexString());
             
             const { password: _, ...userToReturn } = userProfile;
-            
-            // In MongoDB, the document ID is _id. We need to map it to uid for consistency.
-            (userToReturn as any).uid = userProfile._id.toHexString();
+            userToReturn.uid = userProfile._id.toHexString(); // Add uid field for consistency
             delete (userToReturn as any)._id;
 
-            return NextResponse.json({ user: userToReturn }, { status: 201 });
+            return NextResponse.json({ user: userToReturn, token: customToken }, { status: 201 });
         }
 
         if (request.method === 'POST' && action === 'login') {
@@ -77,7 +78,7 @@ async function handler(
             }
 
             const user = await usersCollection.findOne({ email });
-            if (!user) {
+            if (!user || !user.password) {
                 return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
             }
 
@@ -85,17 +86,17 @@ async function handler(
             if (!isPasswordValid) {
                 return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
             }
+            
+            const customToken = await getAdminApp().auth().createCustomToken(user._id.toHexString());
 
             const { password: _, ...userToReturn } = user;
-            (userToReturn as any).uid = user._id.toHexString();
-             delete (userToReturn as any)._id;
+            userToReturn.uid = user._id.toHexString(); // Add uid field for consistency
+            delete (userToReturn as any)._id;
 
-            return NextResponse.json({ user: userToReturn });
+            return NextResponse.json({ user: userToReturn, token: customToken });
         }
 
-        // Default data route logic for other user-related data can be added here
-        // For now, it redirects to the main data handler for collections inside a user.
-         return NextResponse.json({ error: `Action '${action}' not found.` }, { status: 404 });
+        return NextResponse.json({ error: `Action '${action}' not found.` }, { status: 404 });
 
 
     } catch (error: any) {
@@ -104,4 +105,5 @@ async function handler(
     }
 }
 
-export { handler as GET, handler as POST };
+// Only POST is needed for login/signup
+export { handler as POST };

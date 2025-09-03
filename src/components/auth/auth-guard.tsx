@@ -1,4 +1,4 @@
-
+// src/components/auth/auth-guard.tsx
 'use client';
 
 import { useAuth } from '@/hooks/use-auth';
@@ -19,37 +19,37 @@ export function AuthGuard({ children, isProtected = false }: { children: React.R
 
   useEffect(() => {
     if (loading) {
-      return; // Wait for the initial Firebase auth check to complete.
+      return; // Wait for the auth state to be resolved.
     }
     
     setIsChecking(true);
 
-    const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/signup');
-    // A rota de documentação é sempre pública
+    const isAuthRoute = pathname.startsWith(LOGIN_ROOT) || pathname.startsWith('/signup');
     const isDocsRoute = pathname.startsWith('/docs');
 
-    // Se o AuthGuard está em um layout protegido
     if (isProtected) {
+      // If a protected route is being accessed and there's no user, redirect to login.
       if (!user) {
         router.replace(LOGIN_ROOT);
-        return;
+        return; // Stop further execution
       }
-    } else { // Para layouts públicos (auth, docs, landing)
-       if (user) {
-          // Se o usuário logado tentar acessar login/signup ou a landing page, redireciona para o painel
-          if (isAuthRoute || pathname === PUBLIC_ROOT) {
-            router.replace(PROTECTED_ROOT);
-            return;
-          }
-       }
+    } else {
+      // If a public route is being accessed by an authenticated user...
+      if (user) {
+        // ...and it's a landing or auth page, redirect to the dashboard.
+        if (isAuthRoute || pathname === PUBLIC_ROOT) {
+          router.replace(PROTECTED_ROOT);
+          return; // Stop further execution
+        }
+      }
     }
    
-    // Se nenhuma das condições de redirecionamento for atendida, para de verificar e mostra a página.
+    // If no redirection is needed, show the page content.
     setIsChecking(false);
 
   }, [user, loading, router, pathname, isProtected]);
 
-  if (isChecking || loading) {
+  if (loading || isChecking) {
     return (
       <div className="flex h-screen flex-col items-center justify-center gap-4">
         <Logo className="h-12 w-12 animate-pulse" />

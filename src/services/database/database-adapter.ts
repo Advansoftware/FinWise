@@ -20,7 +20,7 @@ export type QueryConstraint = {
 export interface IDatabaseAdapter {
     /**
      * Listens for real-time updates on a collection.
-     * @param collectionPath The path to the collection.
+     * @param collectionPath The path to the collection, may contain 'USER_ID'.
      * @param callback A function to be called with the new data.
      * @param constraints Optional query constraints.
      * @returns An unsubscribe function.
@@ -33,7 +33,7 @@ export interface IDatabaseAdapter {
 
     /**
      * Gets a single document from a collection.
-     * @param docPath The path to the document.
+     * @param docPath The path to the document, may contain 'USER_ID'.
      * @returns The document data or null if not found.
      */
     getDoc<T>(docPath: string): Promise<T | null>;
@@ -47,7 +47,7 @@ export interface IDatabaseAdapter {
 
     /**
      * Adds a new document to a collection.
-     * @param collectionPath The path to the collection.
+     * @param collectionPath The path to the collection, may contain 'USER_ID'.
      * @param data The data to add.
      * @returns The ID of the newly created document.
      */
@@ -55,21 +55,21 @@ export interface IDatabaseAdapter {
 
     /**
      * Creates or overwrites a single document.
-     * @param docPath The path to the document.
+     * @param docPath The path to the document, may contain 'USER_ID'.
      * @param data The data to set.
      */
     setDoc<T extends DocumentData>(docPath: string, data: T): Promise<void>;
 
      /**
      * Updates a document.
-     * @param docPath The path to the document.
+     * @param docPath The path to the document, may contain 'USER_ID'.
      * @param data The data to update.
      */
     updateDoc(docPath: string, data: Partial<DocumentData>): Promise<void>;
 
     /**
      * Deletes a document.
-     * @param docPath The path to the document.
+     * @param docPath The path to the document, may contain 'USER_ID'.
      */
     deleteDoc(docPath: string): Promise<void>;
 

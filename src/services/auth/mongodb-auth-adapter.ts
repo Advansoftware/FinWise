@@ -9,54 +9,63 @@ import { getDatabaseAdapter } from "../database/database-service";
 const SESSION_KEY = 'finwise_session';
 const BROADCAST_CHANNEL_NAME = 'finwise_auth_channel';
 
+// Represents the structure stored in localStorage
+interface SessionData {
+    user: UserProfile;
+    token: string; 
+}
+
 export class MongoDbAuthAdapter implements IAuthAdapter {
     private firebaseAuth; // Still needed for Google Sign-In
-    private channel: BroadcastChannel;
+    private channel: BroadcastChannel | null = null;
+    private dbAdapter;
 
     constructor() {
         const { auth } = getFirebase();
         this.firebaseAuth = auth;
-        this.channel = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
+        this.dbAdapter = getDatabaseAdapter();
+        if (typeof window !== 'undefined') {
+            this.channel = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
+        }
     }
 
-    private saveSession(user: UserProfile): void {
-        localStorage.setItem(SESSION_KEY, JSON.stringify(user));
-        this.channel.postMessage({ type: 'LOGIN', user });
+    private saveSession(data: SessionData): void {
+        if (typeof window === 'undefined') return;
+        localStorage.setItem(SESSION_KEY, JSON.stringify(data));
+        this.channel?.postMessage({ type: 'LOGIN', user: this.mapProfileToFirebaseUser(data.user) });
     }
 
     private clearSession(): void {
+        if (typeof window === 'undefined') return;
         localStorage.removeItem(SESSION_KEY);
-        this.channel.postMessage({ type: 'LOGOUT' });
+        this.channel?.postMessage({ type: 'LOGOUT' });
     }
 
-    private getCurrentSession(): FirebaseUser | null {
-        try {
-            const session = localStorage.getItem(SESSION_KEY);
-            if (!session) return null;
-            // We need to return an object that looks like a FirebaseUser for the callback
-            const userProfile: UserProfile = JSON.parse(session);
-            return {
-                uid: userProfile.uid,
-                email: userProfile.email,
-                displayName: userProfile.displayName,
-                // Add other required FirebaseUser properties as needed, with dummy values
-                providerId: 'password',
-                photoURL: null,
-                emailVerified: false,
-                isAnonymous: false,
-                metadata: {},
-                providerData: [],
-                refreshToken: '',
-                tenantId: null,
-                delete: async () => {},
-                getIdToken: async () => '',
-                getIdTokenResult: async () => ({} as any),
-                reload: async () => {},
-                toJSON: () => ({}),
-            } as FirebaseUser;
-        } catch (error) {
-            return null;
-        }
+    private getCurrentSession(): SessionData | null {
+        if (typeof window === 'undefined') return null;
+        const session = localStorage.getItem(SESSION_KEY);
+        return session ? JSON.parse(session) : null;
+    }
+    
+    private mapProfileToFirebaseUser(profile: UserProfile): FirebaseUser {
+       return {
+            uid: profile.uid,
+            email: profile.email,
+            displayName: profile.displayName,
+            providerId: 'password',
+            photoURL: null,
+            emailVerified: true, // Assume verified for simplicity with custom auth
+            isAnonymous: false,
+            metadata: {},
+            providerData: [],
+            refreshToken: '',
+            tenantId: null,
+            delete: async () => {},
+            getIdToken: async () => this.getToken() || '',
+            getIdTokenResult: async () => ({} as any),
+            reload: async () => {},
+            toJSON: () => ({}),
+        } as FirebaseUser;
     }
 
     async login(email: string, pass: string): Promise<UserProfile> {
@@ -69,7 +78,7 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
         if (!response.ok) {
             throw new Error(data.error || "Login failed");
         }
-        this.saveSession(data.user);
+        this.saveSession(data); // API now returns { user, token }
         return data.user;
     }
 
@@ -84,7 +93,7 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
         if (!response.ok) {
             throw new Error(data.error || "Signup failed");
         }
-        this.saveSession(data.user);
+        this.saveSession(data); // API now returns { user, token }
         return data.user;
     }
 
@@ -93,53 +102,55 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
         if (this.firebaseAuth.currentUser) {
             await this.firebaseAuth.signOut();
         }
-        await Promise.resolve();
     }
     
     onAuthStateChanged(callback: AuthStateChangedCallback): Unsubscribe {
-        const handleStorageChange = (event: StorageEvent) => {
-            if (event.key === SESSION_KEY) {
-                callback(this.getCurrentSession());
+        if (typeof window === 'undefined') {
+            return () => {}; // No-op on the server
+        }
+
+        const handleStorageAndBroadcast = () => {
+            const session = this.getCurrentSession();
+            callback(session ? this.mapProfileToFirebaseUser(session.user) : null);
+        };
+
+        const handleMessage = (event: MessageEvent) => {
+            if (event.data.type === 'LOGIN' || event.data.type === 'LOGOUT') {
+                handleStorageAndBroadcast();
             }
         };
 
-        const handleBroadcastMessage = (event: MessageEvent) => {
-             if (event.data.type === 'LOGIN' || event.data.type === 'LOGOUT') {
-                callback(this.getCurrentSession());
-            }
-        };
-
-        window.addEventListener('storage', handleStorageChange);
-        this.channel.addEventListener('message', handleBroadcastMessage);
-
+        window.addEventListener('storage', handleStorageAndBroadcast);
+        this.channel?.addEventListener('message', handleMessage);
+        
         // Also check for Google Sign-In state from Firebase
         const unsubscribeFirebase = this.firebaseAuth.onIdTokenChanged((firebaseUser) => {
             if (firebaseUser) {
                 // If a Firebase user exists, it takes precedence (e.g., from Google Sign-In)
+                this.clearSession(); // Clear custom session if Google Sign-In is used
                 callback(firebaseUser);
             } else {
                 // Otherwise, check for our custom session
-                callback(this.getCurrentSession());
+                handleStorageAndBroadcast();
             }
         });
-        
+
         // Initial check
-        callback(this.getCurrentSession() || this.firebaseAuth.currentUser);
+        handleStorageAndBroadcast();
 
         return () => {
-            window.removeEventListener('storage', handleStorageChange);
-            this.channel.removeEventListener('message', handleBroadcastMessage);
+            window.removeEventListener('storage', handleStorageAndBroadcast);
+            this.channel?.removeEventListener('message', handleMessage);
             unsubscribeFirebase();
         };
     }
 
     async signInWithGoogle(): Promise<UserProfile> {
-        const dbAdapter = getDatabaseAdapter();
         const provider = new GoogleAuthProvider();
         const result = await signInWithPopup(this.firebaseAuth, provider);
         this.clearSession(); // Clear any custom session
-        await dbAdapter.ensureUserProfile(result.user);
-        const profile = await dbAdapter.getDoc<UserProfile>(`users/${result.user.uid}`);
+        await this.dbAdapter.ensureUserProfile(result.user);
+        const profile = await this.dbAdapter.getDoc<UserProfile>(`users/${result.user.uid}`);
         if (!profile) throw new Error("User profile not found after Google Sign-In.");
         return profile;
     }
@@ -157,5 +168,15 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
     async updateUserPassword(newPassword: string): Promise<void> {
         console.warn("Password update is not implemented for the MongoDB adapter.");
         throw new Error("Password update is not available for this method.");
+    }
+
+    async getToken(): Promise<string | null> {
+        // If there's a firebase user, get their token
+        if (this.firebaseAuth.currentUser) {
+            return this.firebaseAuth.currentUser.getIdToken();
+        }
+        // Otherwise, get the token from our custom session
+        const session = this.getCurrentSession();
+        return session?.token || null;
     }
 }

@@ -13,6 +13,12 @@ let currentAuthType: string | undefined = undefined;
  * Determines which auth adapter to use based on the environment variable.
  */
 export function getAuthAdapter(): IAuthAdapter {
+    if (typeof window === 'undefined') {
+        // On the server, we might need a default adapter, but for auth, it's mostly a client concern.
+        // We'll return the Firebase one as a safe default, but server-side auth logic should be handled with care.
+        return new FirebaseAuthAdapter();
+    }
+    
     const authType = process.env.NEXT_PUBLIC_AUTH_PROVIDER;
 
     // If the adapter type has changed, or if it's not initialized yet

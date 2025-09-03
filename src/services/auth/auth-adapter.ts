@@ -19,4 +19,5 @@ export interface IAuthAdapter {
     sendPasswordReset(email: string): Promise<void>;
     reauthenticate(password: string): Promise<void>;
     updateUserPassword(newPassword: string): Promise<void>;
+    getToken(): Promise<string | null>;
 }

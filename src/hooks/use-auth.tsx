@@ -1,4 +1,4 @@
-
+// src/hooks/use-auth.tsx
 'use client';
 
 import {
@@ -42,10 +42,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (firebaseUser) {
       // This logic will run for both Firebase Auth and MongoDB (which returns a Firebase-like user object)
       const userProfile = await dbAdapter.getDoc<UserProfile>(`users/${firebaseUser.uid}`);
+      
       if (userProfile) {
         setUser(userProfile);
       } else {
         // This case can happen with Google Sign-in for the first time
+        // or if the user was deleted from the DB but not from the auth provider.
         await dbAdapter.ensureUserProfile(firebaseUser);
         const newUserProfile = await dbAdapter.getDoc<UserProfile>(`users/${firebaseUser.uid}`);
         setUser(newUserProfile);
@@ -59,19 +61,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // onAuthStateChanged is now an abstract method that works for both adapters.
     // The specific adapter (Mongo or Firebase) will handle its own session logic.
+    setLoading(true);
     const unsubscribe = authAdapter.onAuthStateChanged(handleAuthChange);
     return () => unsubscribe();
   }, [authAdapter, handleAuthChange]);
-  
   
   const login: IAuthAdapter['login'] = async (email, password) => {
     setLoading(true);
     try {
       const loggedInUser = await authAdapter.login(email, password);
-      setUser(loggedInUser); // Manually set user for non-Firebase providers
+      // The onAuthStateChanged listener will handle setting the user state.
       return loggedInUser;
     } finally {
-      setLoading(false);
+      // Don't setLoading(false) here, as the listener will do it.
     }
   };
   
@@ -79,10 +81,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const signedUpUser = await authAdapter.signup(email, password, name);
-      setUser(signedUpUser); // Manually set user for non-Firebase providers
+      // The onAuthStateChanged listener will handle setting the user state.
       return signedUpUser;
     } finally {
-      setLoading(false);
+       // Don't setLoading(false) here, as the listener will do it.
     }
   };
   
@@ -104,16 +106,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser({ ...user, displayName: name });
   };
   
-  const sendPasswordReset = async (email: string) => {
+  const sendPasswordReset: IAuthAdapter['sendPasswordReset'] = async (email) => {
     return authAdapter.sendPasswordReset(email);
   }
 
-  const reauthenticate: IAuthAdapter['reauthenticate'] = async (password: string) => {
+  const reauthenticate: IAuthAdapter['reauthenticate'] = async (password) => {
      if (!user) throw new Error("User not authenticated");
      return authAdapter.reauthenticate(password);
   }
 
-  const updateUserPassword: IAuthAdapter['updateUserPassword'] = async (password: string) => {
+  const updateUserPassword: IAuthAdapter['updateUserPassword'] = async (password) => {
     if (!user) throw new Error("User not authenticated");
     return authAdapter.updateUserPassword(password);
   }

@@ -24,6 +24,7 @@ import {
 } from "firebase/firestore";
 import { User } from "firebase/auth";
 import { IDatabaseAdapter, Unsubscribe } from "./database-adapter";
+import { UserProfile } from "@/lib/types";
 
 export class FirebaseAdapter implements IDatabaseAdapter {
     private db;
@@ -38,14 +39,18 @@ export class FirebaseAdapter implements IDatabaseAdapter {
     private getUserId(): string {
         const currentUserId = this.auth.currentUser?.uid;
         if (!currentUserId) {
-            throw new Error("User not authenticated");
+            throw new Error("User not authenticated for Firebase operations");
         }
         return currentUserId;
     }
 
     private resolvePath(path: string): string {
-        const userId = this.getUserId();
-        return path.replace('USER_ID', userId);
+        // Only attempt to resolve path if a user is logged in.
+        // This allows for edge cases where we might read public data (not applicable here, but good practice).
+        if (this.auth.currentUser) {
+            return path.replace('USER_ID', this.getUserId());
+        }
+        return path;
     }
     
     private serializeData(data: DocumentData): DocumentData {
@@ -80,6 +85,7 @@ export class FirebaseAdapter implements IDatabaseAdapter {
                 callback(data);
             }, (error) => {
                 console.error(`Firebase listener error on path ${resolvedPath}:`, error);
+                callback([]); // Return empty array on error
             });
         } catch (error) {
             console.error("Failed to attach listener:", error);
@@ -98,7 +104,7 @@ export class FirebaseAdapter implements IDatabaseAdapter {
                     data[key] = data[key].toDate().toISOString();
                 }
             });
-            return { id: docSnap.id, ...data } as T;
+            return { id: docSnap.id, uid: docSnap.id, ...data } as T; // add uid for consistency
         }
         return null;
     }
@@ -108,7 +114,7 @@ export class FirebaseAdapter implements IDatabaseAdapter {
         const userDoc = await fbGetDoc(userDocRef);
 
         if (!userDoc.exists()) {
-            const newUserProfile = {
+            const newUserProfile: UserProfile = {
                 uid: user.uid,
                 email: user.email,
                 displayName: user.displayName,
