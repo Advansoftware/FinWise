@@ -108,15 +108,32 @@ export default function ImportPage() {
     const parseOfx = async (content: string) => {
         try {
             const ofxData = await toJs(content);
-            const account = ofxData.OFX.BANKMSGSRSV1.STMTTRNRS.STMTRS;
-            const transactions = account.BANKTRANLIST.STMTTRN.map((t: any) => ({
+            let account;
+            let transactionList;
+            let defaultType: 'income' | 'expense' = 'expense';
+
+            // Check if it's a bank account or credit card statement
+            if (ofxData.OFX.BANKMSGSRSV1) {
+                account = ofxData.OFX.BANKMSGSRSV1.STMTTRNRS.STMTRS;
+                transactionList = account.BANKTRANLIST.STMTTRN;
+            } else if (ofxData.OFX.CREDITCARDMSGSRSV1) {
+                account = ofxData.OFX.CREDITCARDMSGSRSV1.CCSTMTTRNRS.CCSTMTRS;
+                transactionList = account.BANKTRANLIST.STMTTRN;
+                defaultType = 'expense'; // Credit card transactions are mostly expenses
+            } else {
+                throw new Error("Formato OFX não suportado. Nem BANKMSGSRSV1 nem CREDITCARDMSGSRsv1 encontrados.");
+            }
+
+            const transactions = transactionList.map((t: any) => ({
                 date: new Date(`${t.DTPOSTED.slice(0, 4)}-${t.DTPOSTED.slice(4, 6)}-${t.DTPOSTED.slice(6, 8)}T12:00:00Z`).toISOString(),
                 item: t.MEMO,
                 amount: Math.abs(parseFloat(t.TRNAMT)),
-                type: parseFloat(t.TRNAMT) > 0 ? 'income' : 'expense',
+                // For bank statements, determine by amount. For credit cards, default to expense unless amount is positive.
+                type: ofxData.OFX.BANKMSGSRSV1 ? (parseFloat(t.TRNAMT) > 0 ? 'income' : 'expense') : (parseFloat(t.TRNAMT) > 0 ? 'income' : 'expense'),
                 category: "Outros" as TransactionCategory,
                 quantity: 1,
             }));
+            
             setTransactionsToImport(transactions);
             setIsParsing(false);
             setStage('confirm');
@@ -312,3 +329,5 @@ export default function ImportPage() {
         </div>
     );
 }
+
+    
