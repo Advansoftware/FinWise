@@ -5,7 +5,6 @@
 import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from "react";
 import { useAuth } from "./use-auth";
 import { UserPlan } from "@/lib/types";
-import { getPlanAction } from "@/app/actions";
 import { doc, onSnapshot } from "firebase/firestore";
 import { getFirebase } from "@/lib/firebase";
 
@@ -14,7 +13,6 @@ interface PlanContextType {
   isLoading: boolean;
   isPro: boolean;
   isPlus: boolean;
-  refetchPlan: () => Promise<void>;
 }
 
 const PlanContext = createContext<PlanContextType | undefined>(undefined);
@@ -24,26 +22,7 @@ export function PlanProvider({ children }: { children: ReactNode }) {
   const [plan, setPlan] = useState<UserPlan>('Básico');
   const [isLoading, setIsLoading] = useState(true);
 
-  const fetchPlan = useCallback(async () => {
-    if (!user) {
-        setPlan('Básico');
-        setIsLoading(false);
-        return;
-    }
-
-    setIsLoading(true);
-    try {
-        const userPlan = await getPlanAction(user.uid);
-        setPlan(userPlan);
-    } catch (e) {
-        console.error("Failed to fetch user plan", e);
-        setPlan('Básico'); // Fallback to basic plan on error
-    } finally {
-        setIsLoading(false);
-    }
-  }, [user]);
-
-  // Switched to a realtime listener to automatically update the UI after a webhook changes the user's plan.
+  // The realtime listener is the single source of truth for the user's plan.
   useEffect(() => {
     if (authLoading) {
       return; // Wait for auth to be ready
@@ -81,7 +60,6 @@ export function PlanProvider({ children }: { children: ReactNode }) {
     isLoading: authLoading || isLoading,
     isPro: plan === 'Pro' || plan === 'Plus',
     isPlus: plan === 'Plus',
-    refetchPlan: fetchPlan,
   };
 
   return (
