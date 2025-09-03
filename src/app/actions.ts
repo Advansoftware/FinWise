@@ -56,12 +56,6 @@ const DEFAULT_AI_CREDENTIAL: AICredential = {
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 
-// Mapeia o nome do plano para o ID do Preço no Stripe
-const stripePriceIds: Record<Exclude<UserPlan, 'Básico'>, string> = {
-  'Pro': 'price_1S39OYAqYZYoBfLT6jWwPOQj',
-  'Plus': 'price_1S39QsAqYZYoBfLTgpJFGDiT',
-};
-
 
 async function consumeAICredits(userId: string, cost: number, action: AICreditLogAction, isFreeAction: boolean = false): Promise<void> {
     if (!userId) {
@@ -343,6 +337,14 @@ export async function createStripeCheckoutAction(userId: string, userEmail: stri
       throw new Error("A chave secreta do Stripe não está configurada no servidor.");
     }
 
+    const priceId = plan === 'Pro' 
+        ? process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PRO 
+        : process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PLUS;
+
+    if (!priceId) {
+        throw new Error(`O ID de preço para o plano ${plan} não está configurado nas variáveis de ambiente.`);
+    }
+
     const adminDb = getAdminApp().firestore();
     const userDocRef = adminDb.doc(`users/${userId}`);
     const userDoc = await userDocRef.get();
@@ -360,7 +362,6 @@ export async function createStripeCheckoutAction(userId: string, userEmail: stri
         await userDocRef.update({ stripeCustomerId });
     }
 
-    const priceId = stripePriceIds[plan];
     const appUrl = process.env.NEXT_PUBLIC_APP_URL as string;
 
     try {
