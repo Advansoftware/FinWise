@@ -124,3 +124,16 @@ export const GenerateAnnualReportOutputSchema = z.object({
   summary: z.string().describe('A concise, insightful, and encouraging summary of the year financial activity in Brazilian Portuguese. Highlight overall trends, the main spending category of the year, and suggest one high-level goal for the next year.'),
 });
 export type GenerateAnnualReportOutput = z.infer<typeof GenerateAnnualReportOutputSchema>;
+
+// Schema for Budget Suggestion
+export const SuggestBudgetInputSchema = z.object({
+  category: z.string().describe('The category for which to suggest a budget.'),
+  transactions: z.string().describe('A JSON string of transactions from the previous month for that category.'),
+});
+export type SuggestBudgetInput = z.infer<typeof SuggestBudgetInputSchema>;
+
+export const SuggestBudgetOutputSchema = z.object({
+  suggestedAmount: z.number().describe('The suggested budget amount, rounded to the nearest whole number.'),
+  justification: z.string().describe('A brief, one-sentence justification for the suggested amount in Brazilian Portuguese.'),
+});
+export type SuggestBudgetOutput = z.infer<typeof SuggestBudgetOutputSchema>;

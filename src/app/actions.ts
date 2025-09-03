@@ -9,6 +9,7 @@ import { extractReceiptInfo } from '@/ai/flows/extract-receipt-info';
 import { suggestCategoryForItem } from '@/ai/flows/suggest-category';
 import { generateMonthlyReport } from '@/ai/flows/generate-monthly-report';
 import { generateAnnualReport } from '@/ai/flows/generate-annual-report';
+import { suggestBudgetAmount } from '@/ai/flows/suggest-budget-amount';
 import {
   ChatInput,
   ReceiptInfoInput,
@@ -23,7 +24,9 @@ import {
   GenerateReportInput,
   GenerateReportOutput,
   GenerateAnnualReportInput,
-  GenerateAnnualReportOutput
+  GenerateAnnualReportOutput,
+  SuggestBudgetInput,
+  SuggestBudgetOutput
 } from '@/ai/ai-types';
 import { createConfiguredAI, getModelReference } from '@/ai/genkit';
 import { getAdminApp } from '@/lib/firebase-admin';
@@ -190,4 +193,9 @@ export async function generateMonthlyReportAction(input: GenerateReportInput, us
 export async function generateAnnualReportAction(input: GenerateAnnualReportInput, userId: string): Promise<GenerateAnnualReportOutput> {
   const credential = await getActiveAICredential(userId);
   return generateAnnualReport(input, credential);
+}
+
+export async function suggestBudgetAmountAction(input: SuggestBudgetInput, userId: string): Promise<SuggestBudgetOutput> {
+    const credential = await getActiveAICredential(userId);
+    return suggestBudgetAmount(input);
 }
