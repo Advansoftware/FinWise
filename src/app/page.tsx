@@ -85,14 +85,14 @@ export default function Page() {
               {...fadeIn}
               className="text-4xl md:text-6xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary/80 to-primary/60"
             >
-              Suas finanças, finalmente sob controle.
+              Assuma o Controle da Sua Vida Financeira.
             </motion.h1>
             <motion.p 
               {...fadeIn}
               transition={{ ...fadeIn.transition, delay: 0.2 }}
               className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto"
             >
-              O FinWise é o dashboard inteligente que te ajuda a visualizar seus gastos, criar orçamentos e alcançar seus objetivos financeiros com a ajuda de IA.
+              Deixe a incerteza para trás. O FinWise te dá a clareza e as ferramentas para entender para onde seu dinheiro vai, tomar decisões inteligentes e construir o futuro que você deseja. É mais que um aplicativo; é a sua tranquilidade financeira.
             </motion.p>
             <motion.div 
               {...fadeIn}
