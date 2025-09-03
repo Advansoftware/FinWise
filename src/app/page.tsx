@@ -65,9 +65,9 @@ export default function Page() {
               transition={{ duration: 0.5, delay: 0.2 }} 
               className="flex items-center gap-4"
             >
-              <Button asChild variant="ghost">
+              <Button asChild variant="ghost" className="hidden md:inline-flex">
                   <Link href="/docs">
-                      Doc
+                      Documentação
                   </Link>
               </Button>
               <Button asChild>
