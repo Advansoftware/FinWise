@@ -3,7 +3,7 @@
 
 import { useState, useMemo, useEffect, createContext, useContext, ReactNode } from "react";
 import { DateRange } from "react-day-picker";
-import { subDays, endOfDay } from "date-fns";
+import { startOfMonth, endOfDay } from "date-fns";
 import { Transaction, TransactionCategory } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
@@ -45,7 +45,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   const [categoryMap, setCategoryMap] = useState<CategoryMap>({});
   const [isLoading, setIsLoading] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
-    from: subDays(new Date(), 29),
+    from: startOfMonth(new Date()),
     to: new Date(),
   });
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
