@@ -25,6 +25,9 @@ import {
 import { getFirebase } from '@/lib/firebase';
 import { getDatabaseAdapter } from '@/services/database/database-service';
 import { useRouter } from 'next/navigation';
+import { getDatabase, ref, onValue, remove } from "firebase/database";
+import { UserPlan } from '@/lib/types';
+
 
 interface AuthContextType {
   user: User | null;
@@ -44,9 +47,68 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const { auth } = getFirebase();
+  const { auth, rtdb } = getFirebase();
   const dbAdapter = getDatabaseAdapter();
   const router = useRouter();
+
+  // Command listener for server-to-client updates
+  useEffect(() => {
+    if (!user) {
+        return;
+    }
+
+    const commandRef = ref(rtdb, `commands/${user.uid}`);
+    
+    const unsubscribe = onValue(commandRef, (snapshot) => {
+        const command = snapshot.val();
+        if (command) {
+            console.log("Received command from server:", command);
+            handleServerCommand(command);
+            // Remove the command after processing to prevent re-execution
+            remove(commandRef);
+        }
+    });
+
+    return () => unsubscribe();
+  }, [user, rtdb]);
+
+  const handleServerCommand = async (command: any) => {
+    if (!command || !command.action) return;
+
+    switch(command.action) {
+        case 'SET_USER_PLAN':
+            const { plan, aiCredits, stripeCustomerId, stripeSubscriptionId, stripeCurrentPeriodEnd } = command.payload as { plan: UserPlan, aiCredits: number, stripeCustomerId?: string, stripeSubscriptionId?: string, stripeCurrentPeriodEnd?: string };
+            try {
+                await dbAdapter.setDoc(`users/${user!.uid}`, {
+                    plan,
+                    aiCredits,
+                    stripeCustomerId,
+                    stripeSubscriptionId,
+                    stripeCurrentPeriodEnd,
+                });
+                console.log(`User plan updated to ${plan} via server command.`);
+            } catch (error) {
+                console.error("Failed to execute SET_USER_PLAN command:", error);
+            }
+            break;
+        case 'DOWNGRADE_USER_PLAN':
+            try {
+                 await dbAdapter.setDoc(`users/${user!.uid}`, {
+                    plan: 'Básico',
+                    aiCredits: 0,
+                    stripeSubscriptionId: null,
+                    stripeCurrentPeriodEnd: null,
+                });
+                console.log(`User plan downgraded to Básico via server command.`);
+            } catch(error) {
+                 console.error("Failed to execute DOWNGRADE_USER_PLAN command:", error);
+            }
+            break;
+        default:
+            console.warn("Unknown server command received:", command.action);
+    }
+  }
+
 
   useEffect(() => {
     const unsubscribe = onIdTokenChanged(auth, async (user) => {
