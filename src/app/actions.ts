@@ -1,7 +1,7 @@
 
 'use server';
 
-import { Transaction, AICredential, MonthlyReport } from '@/lib/types';
+import { Transaction, AICredential, MonthlyReport, UserPlan } from '@/lib/types';
 import { z } from 'zod';
 import { generateSpendingTip } from '@/ai/flows/ai-powered-spending-tips';
 import { chatWithTransactions } from '@/ai/flows/chat-with-transactions';
@@ -50,7 +50,7 @@ const DEFAULT_AI_CREDENTIAL: AICredential = {
   openAIModel: 'gpt-3.5-turbo'
 };
 
-async function getUserPlan(userId: string): Promise<string> {
+async function getUserPlan(userId: string): Promise<UserPlan> {
     if (!userId) return 'Básico'; // Default to Básico if no user
     try {
         const adminDb = getAdminApp().firestore();
@@ -66,12 +66,14 @@ async function getUserPlan(userId: string): Promise<string> {
     }
 }
 
-async function canUseAI(userId: string): Promise<void> {
-    const plan = await getUserPlan(userId);
-    if (plan === 'Básico') {
-        throw new Error('Este recurso está disponível apenas para assinantes dos planos Pro e Plus. Faça upgrade para continuar.');
+async function checkUserPlan(userId: string, requiredPlan: 'Pro' | 'Plus'): Promise<void> {
+    const userPlan = await getUserPlan(userId);
+    
+    const planHierarchy = { 'Básico': 0, 'Pro': 1, 'Plus': 2 };
+
+    if (planHierarchy[userPlan] < planHierarchy[requiredPlan]) {
+        throw new Error(`Este recurso está disponível apenas para assinantes do plano ${requiredPlan} ou superior. Faça upgrade para continuar.`);
     }
-    // No limits for Pro and Plus for now, but logic can be expanded here.
 }
 
 
@@ -111,7 +113,7 @@ export async function getActiveAICredential(userId: string): Promise<AICredentia
 // --- AI Actions ---
 
 export async function getSpendingTip(transactions: Transaction[], userId: string): Promise<string> {
-  await canUseAI(userId);
+  await checkUserPlan(userId, 'Pro');
   try {
     const credential = await getActiveAICredential(userId);
     const result = await generateSpendingTip({
@@ -127,7 +129,7 @@ export async function getSpendingTip(transactions: Transaction[], userId: string
 }
 
 export async function getFinancialProfile(input: FinancialProfileInput, userId: string): Promise<string> {
-  await canUseAI(userId);
+  await checkUserPlan(userId, 'Pro');
   try {
     const credential = await getActiveAICredential(userId);
     const configuredAI = createConfiguredAI(credential);
@@ -173,7 +175,7 @@ Transações do Mês Atual:
 }
 
 export async function analyzeTransactions(transactions: Transaction[], userId: string): Promise<string> {
-  await canUseAI(userId);
+  await checkUserPlan(userId, 'Pro');
   try {
     const credential = await getActiveAICredential(userId);
     const configuredAI = createConfiguredAI(credential);
@@ -201,7 +203,7 @@ Transactions:
 }
 
 export async function getChatbotResponse(input: ChatInput, userId: string): Promise<string> {
-  await canUseAI(userId);
+  await checkUserPlan(userId, 'Pro');
   try {
     const credential = await getActiveAICredential(userId);
     const result = await chatWithTransactions(input, credential);
@@ -218,49 +220,53 @@ export async function getChatbotResponse(input: ChatInput, userId: string): Prom
 }
 
 export async function extractReceiptInfoAction(input: ReceiptInfoInput, userId: string): Promise<ReceiptInfoOutput> {
-    await canUseAI(userId);
+    await checkUserPlan(userId, 'Pro');
     const credential = await getActiveAICredential(userId);
     return extractReceiptInfo(input, credential);
 }
 
 export async function suggestCategoryForItemAction(input: SuggestCategoryInput, userId: string): Promise<SuggestCategoryOutput> {
-    await canUseAI(userId);
+    await checkUserPlan(userId, 'Plus');
     const credential = await getActiveAICredential(userId);
     return suggestCategoryForItem(input, credential);
 }
 
 export async function generateMonthlyReportAction(input: GenerateReportInput, userId: string): Promise<GenerateReportOutput> {
-  await canUseAI(userId);
+  await checkUserPlan(userId, 'Pro');
   const credential = await getActiveAICredential(userId);
   return generateMonthlyReport(input, credential);
 }
 
 export async function generateAnnualReportAction(input: GenerateAnnualReportInput, userId: string): Promise<GenerateAnnualReportOutput> {
-  await canUseAI(userId);
+  await checkUserPlan(userId, 'Pro');
   const credential = await getActiveAICredential(userId);
   return generateAnnualReport(input, credential);
 }
 
 export async function suggestBudgetAmountAction(input: SuggestBudgetInput, userId: string): Promise<SuggestBudgetOutput> {
-    await canUseAI(userId);
+    await checkUserPlan(userId, 'Plus');
     const credential = await getActiveAICredential(userId);
     return suggestBudgetAmount(input);
 }
 
 export async function projectGoalCompletionAction(input: ProjectGoalCompletionInput, userId: string): Promise<ProjectGoalCompletionOutput> {
-    await canUseAI(userId);
+    await checkUserPlan(userId, 'Plus');
     const credential = await getActiveAICredential(userId);
     return projectGoalCompletion(input, credential);
 }
 
 export async function generateAutomaticBudgetsAction(input: GenerateAutomaticBudgetsInput, userId: string): Promise<GenerateAutomaticBudgetsOutput> {
-    await canUseAI(userId);
+    await checkUserPlan(userId, 'Plus');
     const credential = await getActiveAICredential(userId);
     return generateAutomaticBudgets(input, credential);
 }
 
 export async function predictFutureBalanceAction(input: PredictFutureBalanceInput, userId: string): Promise<PredictFutureBalanceOutput> {
-    await canUseAI(userId);
+    await checkUserPlan(userId, 'Plus');
     const credential = await getActiveAICredential(userId);
     return predictFutureBalance(input, credential);
+}
+
+export async function getPlanAction(userId: string): Promise<UserPlan> {
+    return getUserPlan(userId);
 }

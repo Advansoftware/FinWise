@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { useState, useTransition } from "react";
@@ -12,13 +13,15 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Wand2, Loader2 } from "lucide-react";
+import { Wand2, Loader2, Lock } from "lucide-react";
 import { Transaction } from "@/lib/types";
 import { analyzeTransactions } from "@/app/actions";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "../ui/scroll-area";
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from "@/hooks/use-auth";
+import { ProUpgradeButton } from "../pro-upgrade-button";
+import { usePlan } from "@/hooks/use-plan";
 
 interface AnalyzeTransactionsDialogProps {
     transactions: Transaction[];
@@ -30,29 +33,32 @@ export function AnalyzeTransactionsDialog({ transactions }: AnalyzeTransactionsD
     const [isAnalyzing, startAnalyzing] = useTransition();
     const { toast } = useToast();
     const { user } = useAuth();
+    const { isPro } = usePlan();
 
     const handleAnalysis = async () => {
-        if (transactions.length === 0 || !user) return;
+        if (transactions.length === 0 || !user || !isPro) return;
         
         startAnalyzing(async () => {
             try {
                 const result = await analyzeTransactions(transactions, user.uid);
                 setAnalysis(result);
-            } catch (error) {
+            } catch (error: any) {
                 console.error("Analysis error:", error);
-                toast({ variant: "destructive", title: "Erro na Análise", description: "Não foi possível analisar as transações." });
+                toast({ variant: "destructive", title: "Erro na Análise", description: error.message || "Não foi possível analisar as transações." });
             }
         });
     }
 
     return (
         <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if(!open) setAnalysis("")}}>
-            <DialogTrigger asChild>
-                <Button variant="outline" size="sm" onClick={() => handleAnalysis()} disabled={!user}>
-                    <Wand2 className="mr-2 h-4 w-4" />
-                    Analisar com IA ({transactions.length})
-                </Button>
-            </DialogTrigger>
+            <ProUpgradeButton requiredPlan="Pro" tooltipContent="Analise transações com IA no plano Pro.">
+              <DialogTrigger asChild>
+                  <Button variant="outline" size="sm" onClick={() => handleAnalysis()} disabled={!user || !isPro}>
+                      <Wand2 className="mr-2 h-4 w-4" />
+                      Analisar com IA ({transactions.length})
+                  </Button>
+              </DialogTrigger>
+            </ProUpgradeButton>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Análise de Transações com IA</DialogTitle>

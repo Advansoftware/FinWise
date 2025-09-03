@@ -16,6 +16,8 @@ import { ScanQRCodeDialog } from "@/components/dashboard/scan-qr-code-dialog";
 import { WalletCard } from "@/components/dashboard/wallet-card";
 import { GoalHighlightCard } from "@/components/goals/goal-highlight-card";
 import { FutureBalanceCard } from "@/components/dashboard/future-balance-card";
+import { usePlan } from "@/hooks/use-plan";
+import { ProUpgradeButton } from "@/components/pro-upgrade-button";
 
 export default function DashboardPage() {
     const { 
@@ -31,6 +33,7 @@ export default function DashboardPage() {
         selectedSubcategory,
         setSelectedSubcategory
     } = useTransactions();
+    const { isPro, isPlus } = usePlan();
 
     return (
         <div className="flex flex-col gap-6">
@@ -40,12 +43,14 @@ export default function DashboardPage() {
                     <p className="text-muted-foreground">Aqui está uma visão geral das suas finanças.</p>
                 </div>
                 <div className="flex gap-2 items-center">
-                    <ScanQRCodeDialog>
-                       <Button variant="outline">
-                            <ScanLine className="mr-2 h-4 w-4"/>
-                            Escanear Nota
-                        </Button>
-                    </ScanQRCodeDialog>
+                    <ProUpgradeButton requiredPlan="Pro">
+                       <ScanQRCodeDialog>
+                           <Button variant="outline" disabled={!isPro}>
+                                <ScanLine className="mr-2 h-4 w-4"/>
+                                Escanear Nota
+                            </Button>
+                        </ScanQRCodeDialog>
+                    </ProUpgradeButton>
                     <AddTransactionSheet>
                         <Button>
                             <PlusCircle className="mr-2 h-4 w-4"/>
@@ -86,7 +91,7 @@ export default function DashboardPage() {
                         </div>
                         <div className="space-y-6">
                            <GoalHighlightCard />
-                           <FutureBalanceCard />
+                           {isPlus && <FutureBalanceCard />}
                         </div>
                     </div>
                     <div className="grid md:grid-cols-3 gap-6">
@@ -98,7 +103,7 @@ export default function DashboardPage() {
                        </div>
                        <RecentTransactions transactions={filteredTransactions} />
                     </div>
-                     <AITipCard transactions={filteredTransactions} />
+                     {isPro && <AITipCard transactions={filteredTransactions} />}
                 </div>
             )}
         </div>

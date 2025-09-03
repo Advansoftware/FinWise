@@ -1,4 +1,7 @@
 
+
+export type UserPlan = 'Básico' | 'Pro' | 'Plus';
+
 export type TransactionCategory = "Supermercado" | "Transporte" | "Entretenimento" | "Contas" | "Restaurante" | "Saúde" | "Educação" | "Lazer" | "Vestuário" | "Outros" | "Salário" | "Investimentos" | "Vendas" | "Transferência";
 
 export type WalletType = 'Conta Corrente' | 'Cartão de Crédito' | 'Poupança' | 'Investimentos' | 'Dinheiro' | 'Outros';

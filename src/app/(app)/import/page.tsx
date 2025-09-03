@@ -3,7 +3,7 @@
 import { useState, useMemo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { UploadCloud, FileText, X, Loader2, Wand2, ChevronRight, ChevronLeft, Sparkles } from 'lucide-react';
+import { UploadCloud, FileText, X, Loader2, Wand2, ChevronRight, ChevronLeft, Sparkles, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Transaction, TransactionCategory } from '@/lib/types';
@@ -15,6 +15,8 @@ import { Label } from '@/components/ui/label';
 import { format } from 'date-fns';
 import { suggestCategoryForItemAction } from '@/app/actions';
 import { useAuth } from '@/hooks/use-auth';
+import { usePlan } from '@/hooks/use-plan';
+import { ProUpgradeCard } from '@/components/pro-upgrade-card';
 
 type ParsedTransaction = Omit<Transaction, 'id' | 'walletId'> & { walletId?: string };
 
@@ -48,6 +50,13 @@ export default function ImportPage() {
     const { toast } = useToast();
     const { user } = useAuth();
     const { addTransaction, categories: userCategories, subcategories: userSubcategories } = useTransactions();
+    const { isPro, isPlus, isLoading: isPlanLoading } = usePlan();
+    
+    const canUseAICategorization = isPlus;
+
+    if (!isPlanLoading && !isPro) {
+        return <ProUpgradeCard featureName="Importação de Extratos" />;
+    }
 
     const handleFileChange = (selectedFile: File | null) => {
         if (!selectedFile) return;
@@ -133,13 +142,13 @@ export default function ImportPage() {
                 quantity: 1,
             }));
             
-            setTransactionsToImport(transactions);
-            setIsParsing(false);
-            await runCategorization(transactions);
+            runCategorization(transactions);
         } catch (error) {
             console.error("OFX Parsing error:", error);
             toast({ variant: 'destructive', title: 'Erro ao Ler OFX', description: `O arquivo parece estar mal formatado ou não é suportado. Detalhes: ${error}`});
             handleReset();
+        } finally {
+            setIsParsing(false);
         }
     };
     
@@ -188,6 +197,13 @@ export default function ImportPage() {
              toast({ variant: 'destructive', title: 'Usuário não autenticado.' });
              return;
         }
+
+        if (!canUseAICategorization) {
+            setTransactionsToImport(transactions);
+            setStage('confirm');
+            return;
+        }
+
         setStage('categorizing');
         setIsCategorizing(true);
         const categoryStrings = userCategories as string[];
@@ -304,15 +320,32 @@ export default function ImportPage() {
                  })}
              </div>
              <Button onClick={handleProceedToCategorize} disabled={!isMappingComplete}>
-                Categorizar com IA <Sparkles className="ml-2 h-4 w-4" />
+                {canUseAICategorization ? "Categorizar com IA" : "Revisar Transações"}
+                {canUseAICategorization && <Sparkles className="ml-2 h-4 w-4" />}
              </Button>
          </div>
     );
     
     const renderConfirm = () => (
         <div className="space-y-4">
-            <h3 className="font-semibold">Revisão e Confirmação ({transactionsToImport.length} transações)</h3>
-            <p className="text-sm text-muted-foreground">Revise os dados e as categorias sugeridas pela IA. Você deve selecionar uma carteira para cada transação antes de importar.</p>
+            <div className='flex justify-between items-start'>
+                <div>
+                    <h3 className="font-semibold">Revisão e Confirmação ({transactionsToImport.length} transações)</h3>
+                    <p className="text-sm text-muted-foreground">
+                        {canUseAICategorization ? "Revise os dados e as categorias sugeridas pela IA." : "Revise os dados importados."}
+                        <br/>
+                        Você deve selecionar uma carteira para cada transação antes de importar.
+                    </p>
+                </div>
+                 {!canUseAICategorization && (
+                    <ProUpgradeButton requiredPlan="Plus" tooltipContent="Desbloqueie a categorização automática com o plano Plus.">
+                        <Button variant="outline" size="sm" disabled>
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            Categorizar com IA
+                        </Button>
+                    </ProUpgradeButton>
+                 )}
+            </div>
             <div className="max-h-96 overflow-auto border rounded-md">
                 <Table>
                     <TableHeader>
@@ -418,4 +451,3 @@ export default function ImportPage() {
         </div>
     );
 }
-

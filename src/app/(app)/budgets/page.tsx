@@ -1,3 +1,4 @@
+
 // src/app/(app)/budgets/page.tsx
 'use client';
 
@@ -23,9 +24,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Budget } from "@/lib/types";
 import { AutomaticBudgetCard } from "@/components/budgets/automatic-budget-card";
+import { usePlan } from "@/hooks/use-plan";
 
 export default function BudgetsPage() {
     const { budgets, isLoading, deleteBudget } = useBudgets();
+    const { isPlus } = usePlan();
     
     if (isLoading) {
         return <BudgetsSkeleton />
@@ -45,7 +48,7 @@ export default function BudgetsPage() {
                 </CreateBudgetDialog>
             </div>
 
-            <AutomaticBudgetCard />
+            {isPlus && <AutomaticBudgetCard />}
             
             {budgets.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

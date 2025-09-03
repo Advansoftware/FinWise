@@ -1,3 +1,4 @@
+
 // src/components/budgets/create-budget-dialog.tsx
 'use client';
 
@@ -26,6 +27,8 @@ import { Loader2, Sparkles } from "lucide-react";
 import { suggestBudgetAmountAction } from "@/app/actions";
 import { useAuth } from "@/hooks/use-auth";
 import { subMonths, startOfMonth, endOfMonth } from "date-fns";
+import { usePlan } from "@/hooks/use-plan";
+import { ProUpgradeButton } from "../pro-upgrade-button";
 
 const budgetSchema = z.object({
   name: z.string().min(1, "O nome do orçamento é obrigatório."),
@@ -49,6 +52,7 @@ export function CreateBudgetDialog({ children, initialData }: CreateBudgetDialog
   const { addBudget, updateBudget } = useBudgets();
   const [isSuggesting, startSuggesting] = useTransition();
   const [suggestionJustification, setSuggestionJustification] = useState<string | null>(null);
+  const { isPlus } = usePlan();
 
   const expenseCategories = categories.filter(c => c !== "Salário" && c !== "Vendas" && c !== "Investimentos");
 
@@ -80,6 +84,7 @@ export function CreateBudgetDialog({ children, initialData }: CreateBudgetDialog
 
   const handleSuggestion = () => {
     if (!user || !selectedCategory) return;
+    if (!isPlus) return; // Plan check
 
     setSuggestionJustification(null);
     startSuggesting(async () => {
@@ -203,11 +208,13 @@ export function CreateBudgetDialog({ children, initialData }: CreateBudgetDialog
                       <FormControl>
                         <Input type="number" step="0.01" placeholder="Ex: 500.00" {...field} />
                       </FormControl>
-                      <Button type="button" variant="outline" size="icon" onClick={handleSuggestion} disabled={isSuggesting || !selectedCategory}>
-                          {isSuggesting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Sparkles className="h-4 w-4 text-primary" />}
-                      </Button>
+                       <ProUpgradeButton requiredPlan="Plus" tooltipContent="Desbloqueie sugestões de orçamento com IA com o plano Plus.">
+                          <Button type="button" variant="outline" size="icon" onClick={handleSuggestion} disabled={isSuggesting || !selectedCategory || !isPlus}>
+                              {isSuggesting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Sparkles className="h-4 w-4 text-primary" />}
+                          </Button>
+                      </ProUpgradeButton>
                    </div>
-                   {suggestionJustification && (
+                   {suggestionJustification && isPlus && (
                       <FormDescription className="text-primary/90 flex items-center gap-1.5">
                         <Sparkles className="h-3 w-3"/>{suggestionJustification}
                       </FormDescription>
