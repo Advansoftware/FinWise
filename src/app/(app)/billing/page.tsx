@@ -3,11 +3,11 @@
 import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2, Gem } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { usePlan } from "@/hooks/use-plan";
 import { UserPlan } from "@/lib/types";
-import { updateUserPlanAction } from '@/app/actions';
+import { createStripeCheckoutAction, createStripePortalSession } from '@/app/actions';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 
@@ -63,40 +63,71 @@ export default function BillingPage() {
     const { plan: currentUserPlan, isLoading: isPlanLoading } = usePlan();
     const { user } = useAuth();
     const { toast } = useToast();
-    const [updatingPlan, setUpdatingPlan] = useState<UserPlan | null>(null);
+    const [isProcessing, setIsProcessing] = useState(false);
 
-    const handlePlanChange = async (newPlan: UserPlan) => {
-        if (!user) return;
-        setUpdatingPlan(newPlan);
+    const handleUpgrade = async (newPlan: Exclude<UserPlan, 'Básico'>) => {
+        if (!user || !user.email) return;
+        setIsProcessing(true);
         try {
-            await updateUserPlanAction(newPlan);
-            toast({ 
-                title: 'Plano atualizado!',
-                description: `Agora você está no plano ${newPlan}.`,
-            });
+            const result = await createStripeCheckoutAction(user.uid, user.email, newPlan);
+            if (result.url) {
+                window.location.href = result.url;
+            } else {
+                throw new Error(result.error || "Não foi possível iniciar o checkout.");
+            }
         } catch (error) {
+            console.error("Stripe checkout error:", error);
             toast({ 
                 variant: 'destructive', 
-                title: 'Erro ao atualizar o plano.',
-                description: 'Tente novamente mais tarde.'
+                title: 'Erro no Checkout',
+                description: 'Não foi possível redirecionar para a página de pagamento. Tente novamente mais tarde.'
             });
-        } finally {
-            setUpdatingPlan(null);
+            setIsProcessing(false);
+        }
+    }
+    
+    const handleManageSubscription = async () => {
+        if (!user) return;
+        setIsProcessing(true);
+        try {
+            const { url, error } = await createStripePortalSession(user.uid);
+            if (url) {
+                window.location.href = url;
+            } else {
+                throw new Error(error || "Não foi possível abrir o portal de gerenciamento.");
+            }
+        } catch (error) {
+            console.error("Stripe portal error:", error);
+            toast({ 
+                variant: 'destructive', 
+                title: 'Erro',
+                description: 'Não foi possível abrir o portal de gerenciamento. Tente novamente mais tarde.'
+            });
+             setIsProcessing(false);
         }
     }
 
+    const isPaidPlan = currentUserPlan !== 'Básico';
+
     return (
         <div className="flex flex-col gap-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Assinatura e Créditos</h1>
-                <p className="text-muted-foreground">Gerencie seu plano e seu uso de créditos de IA.</p>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                 <div>
+                    <h1 className="text-3xl font-bold tracking-tight">Assinatura e Créditos</h1>
+                    <p className="text-muted-foreground">Gerencie seu plano e seu uso de créditos de IA.</p>
+                </div>
+                 {isPaidPlan && (
+                    <Button onClick={handleManageSubscription} disabled={isProcessing}>
+                        {isProcessing ? <Loader2 className="animate-spin" /> : <Gem />}
+                        Gerenciar Assinatura
+                    </Button>
+                )}
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
                 {plans.map(plan => {
                     const isCurrent = plan.name === currentUserPlan;
-                    const isLoading = updatingPlan === plan.name;
-
+                    
                     return (
                      <Card 
                         key={plan.name} 
@@ -122,15 +153,14 @@ export default function BillingPage() {
                              </ul>
                         </CardContent>
                         <CardFooter>
-                            <Button 
+                             <Button 
                                 className="w-full" 
-                                disabled={isCurrent || isLoading || isPlanLoading} 
-                                onClick={() => handlePlanChange(plan.name as UserPlan)} 
+                                disabled={isCurrent || isProcessing || isPlanLoading} 
+                                onClick={() => handleUpgrade(plan.name as Exclude<UserPlan, 'Básico'>)} 
                                 variant={isCurrent ? 'outline' : 'default'}
                             >
-                                {isLoading ? <Loader2 className="animate-spin" /> : 
-                                 isCurrent ? "Seu Plano Atual" :
-                                 plan.cta}
+                                {isProcessing && <Loader2 className="animate-spin" />}
+                                {!isProcessing && (isCurrent ? "Seu Plano Atual" : plan.cta)}
                             </Button>
                         </CardFooter>
                     </Card>
