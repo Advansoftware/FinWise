@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -15,7 +14,7 @@ import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Loader2, Upload, Camera, Paperclip } from "lucide-react";
 import { useRef, useState, useEffect, useCallback, useTransition } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { useIsMobile } from "@/hooks/use-is-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { extractReceiptInfoAction } from "@/app/actions";
 import { Skeleton } from "../ui/skeleton";
 import { Badge } from "../ui/badge";
@@ -235,7 +234,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                     <DialogDescription>
                         {isMobile
                             ? "Aponte a câmera para a nota fiscal ou envie uma imagem da galeria."
-                            : "Faça upload da imagem da nota fiscal para adicionar as transações."
+                            : "Faça upload da imagem (PDF, PNG, JPG) da nota fiscal para adicionar as transações."
                         }
                     </DialogDescription>
                 </DialogHeader>
