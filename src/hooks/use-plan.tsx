@@ -6,13 +6,15 @@ import { useState, useEffect, createContext, useContext, ReactNode, useCallback 
 import { useAuth } from "./use-auth";
 import { UserPlan } from "@/lib/types";
 import { getPlanAction } from "@/app/actions";
+import { doc, onSnapshot } from "firebase/firestore";
+import { getFirebase } from "@/lib/firebase";
 
 interface PlanContextType {
   plan: UserPlan;
   isLoading: boolean;
   isPro: boolean;
   isPlus: boolean;
-  refetchPlan: () => void;
+  refetchPlan: () => Promise<void>;
 }
 
 const PlanContext = createContext<PlanContextType | undefined>(undefined);
@@ -42,10 +44,27 @@ export function PlanProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   useEffect(() => {
-    if (!authLoading) {
-      fetchPlan();
+    if (authLoading) return;
+    
+    if (!user) {
+        setPlan('Básico');
+        setIsLoading(false);
+        return;
     }
-  }, [authLoading, fetchPlan]);
+    
+    const { db } = getFirebase();
+    const userDocRef = doc(db, "users", user.uid);
+
+    const unsubscribe = onSnapshot(userDocRef, (doc) => {
+        if(doc.exists()) {
+            setPlan(doc.data().plan || 'Básico');
+        }
+        setIsLoading(false);
+    });
+
+    return () => unsubscribe();
+
+  }, [authLoading, user]);
 
   const value: PlanContextType = {
     plan,

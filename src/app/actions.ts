@@ -41,7 +41,6 @@ import {
 import { createConfiguredAI, getModelReference } from '@/ai/genkit';
 import { getAdminApp } from '@/lib/firebase-admin';
 import { FieldValue, increment } from 'firebase-admin/firestore';
-import { logAICreditUsage } from '@/services/ai-credit-log-service';
 
 // Default AI settings for fallback ONLY.
 const DEFAULT_AI_CREDENTIAL: AICredential = {
@@ -76,17 +75,20 @@ async function consumeAICredits(userId: string, cost: number, action: AICreditLo
                  throw new Error("Este recurso está disponível apenas para assinantes dos planos Pro ou Plus. Faça upgrade para continuar.");
             }
 
-            if (currentCredits < cost) {
+            if (cost > 0 && currentCredits < cost) {
                 throw new Error(`Créditos de IA insuficientes. Você precisa de ${cost} créditos, mas tem apenas ${currentCredits}. Considere comprar mais créditos ou aguardar a renovação mensal.`);
             }
 
             // Decrement credits and log the action
-            transaction.update(userRef, { aiCredits: increment(-cost) });
+            if (cost > 0) {
+              transaction.update(userRef, { aiCredits: increment(-cost) });
+            }
+
             const logRef = adminDb.collection('users').doc(userId).collection('aiCreditLogs').doc();
             transaction.set(logRef, {
               action,
               cost,
-              timestamp: FieldValue.serverTimestamp(),
+              timestamp: new Date().toISOString(), // Use ISO string for consistency
             });
         });
     } catch (error) {
@@ -132,7 +134,8 @@ export async function getActiveAICredential(userId: string): Promise<AICredentia
 // --- AI Actions ---
 
 export async function getSpendingTip(transactions: Transaction[], userId: string, forceRefresh: boolean = false): Promise<string> {
-  if (forceRefresh) await consumeAICredits(userId, 1, 'Dica Rápida');
+  const cost = forceRefresh ? 1 : 0;
+  await consumeAICredits(userId, cost, 'Dica Rápida');
   try {
     const credential = await getActiveAICredential(userId);
     const result = await generateSpendingTip({
@@ -148,7 +151,8 @@ export async function getSpendingTip(transactions: Transaction[], userId: string
 }
 
 export async function getFinancialProfile(input: FinancialProfileInput, userId: string, forceRefresh: boolean = false): Promise<string> {
-  if (forceRefresh) await consumeAICredits(userId, 5, 'Perfil Financeiro');
+  const cost = forceRefresh ? 5 : 0;
+  await consumeAICredits(userId, cost, 'Perfil Financeiro');
   try {
     const credential = await getActiveAICredential(userId);
     const configuredAI = createConfiguredAI(credential);
@@ -281,7 +285,8 @@ export async function generateAutomaticBudgetsAction(input: GenerateAutomaticBud
 }
 
 export async function predictFutureBalanceAction(input: PredictFutureBalanceInput, userId: string, forceRefresh: boolean = false): Promise<PredictFutureBalanceOutput> {
-    if (forceRefresh) await consumeAICredits(userId, 3, 'Previsão de Saldo');
+    const cost = forceRefresh ? 3 : 0;
+    await consumeAICredits(userId, cost, 'Previsão de Saldo');
     const credential = await getActiveAICredential(userId);
     return predictFutureBalance(input, credential);
 }
@@ -300,4 +305,25 @@ export async function getPlanAction(userId: string): Promise<UserPlan> {
         console.error("Error getting user plan:", error);
         return 'Básico';
     }
+}
+
+export async function updateUserPlanAction(userId: string, plan: UserPlan): Promise<void> {
+    if (!userId) {
+        throw new Error("Usuário não autenticado.");
+    }
+    const adminDb = getAdminApp().firestore();
+    const userRef = adminDb.doc(`users/${userId}`);
+    
+    // In a real scenario, this would involve payment processing via Stripe, etc.
+    // For this app, we'll just update the plan and reset/grant credits.
+    const creditsMap = {
+        'Básico': 0,
+        'Pro': 100,
+        'Plus': 300,
+    };
+
+    await userRef.update({
+        plan: plan,
+        aiCredits: creditsMap[plan],
+    });
 }

@@ -1,12 +1,17 @@
 // src/app/(app)/billing/page.tsx
 'use client';
-
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { usePlan } from "@/hooks/use-plan";
+import { UserPlan } from "@/lib/types";
+import { updateUserPlanAction } from '@/app/actions';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
 
-const plans = [
+const plans: {name: UserPlan, price: string, description: string, features: string[], cta: string}[] = [
     {
         name: "Básico",
         price: "Grátis",
@@ -19,8 +24,7 @@ const plans = [
             "Metas de economia",
             "Gerenciamento de categorias",
         ],
-        cta: "Seu Plano Atual",
-        isCurrent: true,
+        cta: "Selecionar Plano",
     },
     {
         name: "Pro",
@@ -36,7 +40,6 @@ const plans = [
             "Suporte prioritário",
         ],
         cta: "Fazer Upgrade",
-        isCurrent: false,
     },
     {
         name: "Plus",
@@ -52,14 +55,30 @@ const plans = [
             "Acesso a novos recursos beta",
         ],
         cta: "Fazer Upgrade",
-        isCurrent: false,
     }
 ]
 
 
 export default function BillingPage() {
-    
-    const currentUserPlan = 'Básico'; 
+    const { plan: currentUserPlan, isLoading: isPlanLoading, refetchPlan } = usePlan();
+    const { user } = useAuth();
+    const { toast } = useToast();
+    const [updatingPlan, setUpdatingPlan] = useState<UserPlan | null>(null);
+
+    const handlePlanChange = async (newPlan: UserPlan) => {
+        if (!user) return;
+        setUpdatingPlan(newPlan);
+        try {
+            await updateUserPlanAction(user.uid, newPlan);
+            await refetchPlan(); // Re-fetch plan to update UI
+            toast({ title: "Plano atualizado com sucesso!", description: `Agora você está no plano ${newPlan}.`});
+        } catch (error) {
+            toast({ variant: 'destructive', title: 'Erro ao atualizar o plano.' });
+            console.error(error);
+        } finally {
+            setUpdatingPlan(null);
+        }
+    }
 
     return (
         <div className="flex flex-col gap-6">
@@ -69,15 +88,18 @@ export default function BillingPage() {
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
-                {plans.map(plan => (
+                {plans.map(plan => {
+                    const isCurrent = plan.name === currentUserPlan;
+                    const isLoading = updatingPlan === plan.name;
+                    return (
                      <Card 
                         key={plan.name} 
-                        className={`flex flex-col ${plan.name === 'Pro' ? 'border-primary shadow-lg' : ''}`}
+                        className={`flex flex-col ${isCurrent ? 'border-primary shadow-lg' : ''}`}
                      >
                         <CardHeader>
                             <div className="flex justify-between items-center">
                                 <CardTitle>{plan.name}</CardTitle>
-                                {plan.name === currentUserPlan && <Badge variant="secondary">Plano Atual</Badge>}
+                                {isCurrent && <Badge variant="secondary">Plano Atual</Badge>}
                                 {plan.name === 'Pro' && <Badge>Mais Popular</Badge>}
                             </div>
                             <CardDescription>{plan.description}</CardDescription>
@@ -94,12 +116,12 @@ export default function BillingPage() {
                              </ul>
                         </CardContent>
                         <CardFooter>
-                            <Button className="w-full" disabled={plan.name === currentUserPlan} variant={plan.name === 'Pro' ? 'default' : 'outline'}>
-                                {plan.cta}
+                            <Button className="w-full" disabled={isCurrent || isLoading || isPlanLoading} onClick={() => handlePlanChange(plan.name)} variant={isCurrent ? 'default' : 'outline'}>
+                                {isLoading ? <Loader2 className="animate-spin" /> : isCurrent ? "Seu Plano Atual" : plan.cta}
                             </Button>
                         </CardFooter>
                     </Card>
-                ))}
+                )})}
             </div>
 
             <Card>
