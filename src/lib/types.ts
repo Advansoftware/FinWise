@@ -12,6 +12,17 @@ export interface Transaction {
   type: 'income' | 'expense';
 }
 
+export interface Budget {
+    id: string;
+    name: string;
+    category: TransactionCategory;
+    amount: number;
+    period: 'monthly'; // For now, only monthly budgets
+    createdAt: string; // ISO 8601 format string
+    currentSpending: number; // This will be calculated client-side
+}
+
+
 export interface Category {
   name: TransactionCategory;
   subcategories: string[];
