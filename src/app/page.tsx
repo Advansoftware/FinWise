@@ -4,7 +4,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BarChart, Bot, LayoutDashboard, Wallet, Check, Goal, FolderKanban, Upload } from "lucide-react";
+import { ArrowRight, BarChart, Bot, LayoutDashboard, Wallet, Check, Goal, FolderKanban, Upload, KeyRound } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { useAuth } from "@/hooks/use-auth";
@@ -85,14 +85,14 @@ export default function Page() {
               {...fadeIn}
               className="text-4xl md:text-6xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary/80 to-primary/60"
             >
-              Assuma o Controle da Sua Vida Financeira.
+              Inteligência Financeira ao seu Alcance.
             </motion.h1>
             <motion.p 
               {...fadeIn}
               transition={{ ...fadeIn.transition, delay: 0.2 }}
               className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto"
             >
-              Deixe a incerteza para trás. O FinWise te dá a clareza e as ferramentas para entender para onde seu dinheiro vai, tomar decisões inteligentes e construir o futuro que você deseja. É mais que um aplicativo; é a sua tranquilidade financeira.
+              FinWise une um design intuitivo com o poder da Inteligência Artificial para transformar a forma como você gerencia seu dinheiro.
             </motion.p>
             <motion.div 
               {...fadeIn}
@@ -126,8 +126,28 @@ export default function Page() {
             </motion.div>
           </section>
 
+          {/* Why Section */}
+          <section className="py-20 sm:py-24 bg-card/20 border-y border-border/20">
+            <motion.div 
+                {...fadeIn}
+                viewport={{ once: true, amount: 0.5 }}
+                className="container mx-auto px-4 text-center"
+            >
+                <div className="inline-block rounded-full bg-primary/10 p-3 text-primary mb-4">
+                    <KeyRound className="h-8 w-8"/>
+                </div>
+                <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+                    O Controle Financeiro é a Chave para a sua Liberdade
+                </h2>
+                <p className="mt-4 text-lg text-muted-foreground max-w-3xl mx-auto">
+                    Não se trata apenas de números e planilhas. Trata-se de trocar a ansiedade pela confiança. De saber exatamente para onde seu dinheiro vai, você ganha o poder de direcioná-lo para o que realmente importa: suas metas, seus sonhos e sua tranquilidade. O FinWise foi criado para ser essa chave.
+                </p>
+            </motion.div>
+          </section>
+
+
           {/* Features Section */}
-          <section className="py-20 sm:py-32 bg-card/20">
+          <section className="py-20 sm:py-32">
               <div className="container mx-auto px-4">
                   <motion.div {...fadeIn}>
                       <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-center">
