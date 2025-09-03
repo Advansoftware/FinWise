@@ -49,12 +49,11 @@ export default function Page() {
     <AuthGuard>
       <div className="flex flex-col min-h-screen bg-background text-foreground overflow-x-hidden">
         <header className="sticky top-0 z-50 p-4 md:p-6 bg-background/50 backdrop-blur-lg border-b border-border/50">
-          <div className="container mx-auto flex flex-col md:flex-row md:justify-between md:items-center">
+          <div className="container mx-auto flex justify-between items-center">
               <motion.div 
-                initial={{ opacity: 0, y: -20 }} 
-                animate={{ opacity: 1, y: 0 }} 
+                initial={{ opacity: 0, x: -20 }} 
+                animate={{ opacity: 1, x: 0 }} 
                 transition={{ duration: 0.5 }}
-                className="flex justify-center md:justify-start"
               >
                 <Link href="/" className="flex items-center gap-2">
                     <Logo className="w-8 h-8"/>
@@ -62,14 +61,14 @@ export default function Page() {
                 </Link>
               </motion.div>
               <motion.div 
-                initial={{ opacity: 0, y: 20 }} 
-                animate={{ opacity: 1, y: 0 }} 
+                initial={{ opacity: 0, x: 20 }} 
+                animate={{ opacity: 1, x: 0 }} 
                 transition={{ duration: 0.5, delay: 0.2 }} 
-                className="flex items-center justify-center gap-4 mt-4 md:mt-0"
+                className="flex items-center gap-4"
               >
                 <Button asChild variant="ghost">
                     <Link href="/docs">
-                        Documentação
+                        Doc
                     </Link>
                 </Button>
                 <Button asChild>
@@ -241,7 +240,7 @@ export default function Page() {
                               whileInView="animate"
                               viewport={{ once: true, amount: 0.3 }}
                               transition={{ ...featureVariants.transition, delay: index * 0.15 }}
-                              className={`flex flex-col rounded-lg border p-6 h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-2 ${plan.highlight ? 'border-primary shadow-primary/20 shadow-lg' : 'border-border'}`}
+                              className={`flex flex-col rounded-lg border p-6 h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-2 ${plan.highlight ? 'border-primary shadow-primary/20 shadow-lg' : 'border-border bg-card/30'}`}
                           >
                               {plan.highlight && <Badge className="w-fit mb-4 -mt-2">Mais Popular</Badge>}
                               <h3 className="text-2xl font-bold">{plan.name}</h3>
@@ -278,5 +277,3 @@ export default function Page() {
     </AuthGuard>
   );
 }
-
-    
