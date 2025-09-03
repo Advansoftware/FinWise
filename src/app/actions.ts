@@ -330,8 +330,8 @@ export async function getPlanAction(userId: string): Promise<UserPlan> {
  * @returns The URL for the Stripe Checkout page.
  */
 export async function createStripeCheckoutAction(userId: string, userEmail: string, plan: Exclude<UserPlan, 'Básico'>): Promise<{ url: string | null }> {
-    if (!userId) {
-        throw new Error("Usuário não autenticado.");
+    if (!userId || !userEmail) {
+        throw new Error("Usuário não autenticado ou email ausente.");
     }
     
     if (!process.env.STRIPE_SECRET_KEY) {
@@ -343,7 +343,7 @@ export async function createStripeCheckoutAction(userId: string, userEmail: stri
         : process.env.NEXT_PUBLIC_STRIPE_PRICE_ID_PLUS;
 
     if (!priceId) {
-        throw new Error(`O ID de preço para o plano ${plan} não está configurado nas variáveis de ambiente.`);
+        throw new Error(`O ID de preço para o plano ${plan} não está configurado.`);
     }
 
     const adminDb = getAdminApp().firestore();
@@ -385,32 +385,9 @@ export async function createStripeCheckoutAction(userId: string, userEmail: stri
         return { url: session.url };
     } catch (error) {
         console.error("Error creating Stripe Checkout session:", error);
-        if (error instanceof Error) {
-            throw new Error(`Não foi possível iniciar o processo de pagamento: ${error.message}`);
+        if (error instanceof Stripe.errors.StripeError) {
+            throw new Error(`Erro do Stripe: ${error.message}`);
         }
         throw new Error("Não foi possível iniciar o processo de pagamento.");
     }
-}
-
-
-export async function updateUserPlanAction(userId: string, plan: UserPlan): Promise<void> {
-    if (!userId) {
-        throw new Error("Usuário não autenticado.");
-    }
-    const adminDb = getAdminApp().firestore();
-    const userRef = adminDb.doc(`users/${userId}`);
-    
-    // In a real scenario, this would involve payment processing via Stripe, etc.
-    // For this app, we just update the plan. Credit refills would be handled
-    // by a separate webhook from the payment provider.
-    const creditsMap = {
-        'Básico': 0,
-        'Pro': 100,
-        'Plus': 300,
-    };
-
-    await userRef.update({
-        plan: plan,
-        aiCredits: creditsMap[plan], // Reset credits on plan change
-    });
 }
