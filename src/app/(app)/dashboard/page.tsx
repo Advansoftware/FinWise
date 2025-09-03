@@ -15,6 +15,7 @@ import { AddTransactionSheet } from "@/components/dashboard/add-transaction-shee
 import { ScanQRCodeDialog } from "@/components/dashboard/scan-qr-code-dialog";
 import { WalletCard } from "@/components/dashboard/wallet-card";
 import { GoalHighlightCard } from "@/components/goals/goal-highlight-card";
+import { FutureBalanceCard } from "@/components/dashboard/future-balance-card";
 
 export default function DashboardPage() {
     const { 
@@ -83,7 +84,10 @@ export default function DashboardPage() {
                         <div className="lg:col-span-2">
                            <WalletCard transactions={filteredTransactions} />
                         </div>
-                         <GoalHighlightCard />
+                        <div className="space-y-6">
+                           <GoalHighlightCard />
+                           <FutureBalanceCard />
+                        </div>
                     </div>
                     <div className="grid md:grid-cols-3 gap-6">
                         <StatsCards transactions={filteredTransactions} />
@@ -105,7 +109,13 @@ export default function DashboardPage() {
 function DashboardSkeleton() {
     return (
         <div className="grid gap-6">
-             <Skeleton className="h-44" />
+             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <Skeleton className="lg:col-span-2 h-36" />
+                <div className="space-y-6">
+                  <Skeleton className="h-44"/>
+                  <Skeleton className="h-36" />
+                </div>
+             </div>
             <div className="grid md:grid-cols-3 gap-6">
                 <Skeleton className="h-36" />
                 <Skeleton className="h-36" />

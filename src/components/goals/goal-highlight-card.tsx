@@ -2,9 +2,9 @@
 'use client';
 
 import { useGoals } from "@/hooks/use-goals";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "../ui/card";
+import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "../ui/card";
 import { Skeleton } from "../ui/skeleton";
-import { Target, PiggyBank, Sparkles, Loader2 } from "lucide-react";
+import { Target, PiggyBank, Sparkles } from "lucide-react";
 import Link from "next/link";
 import { Button } from "../ui/button";
 import { Progress } from "../ui/progress";
@@ -65,12 +65,12 @@ export function GoalHighlightCard() {
 
 
     if (isLoading) {
-        return <Skeleton className="h-[220px]"/>;
+        return <Skeleton className="h-full"/>;
     }
 
     if (!firstGoal) {
         return (
-             <Card className="flex flex-col items-center justify-center text-center p-6 h-[220px]">
+             <Card className="flex flex-col items-center justify-center text-center p-6 h-full">
                 <Target className="h-10 w-10 text-primary/70 mb-2"/>
                 <CardTitle className="text-lg">Crie sua Primeira Meta</CardTitle>
                 <CardContent className="p-0 mt-2 mb-4">
@@ -86,7 +86,7 @@ export function GoalHighlightCard() {
     const percentage = Math.round((firstGoal.currentAmount / firstGoal.targetAmount) * 100);
 
     return (
-        <Card className="flex flex-col h-[220px]">
+        <Card className="flex flex-col h-full">
             <CardHeader>
                 <div className="flex items-center gap-3">
                     <div className="p-2 rounded-full bg-primary/20">
@@ -94,7 +94,7 @@ export function GoalHighlightCard() {
                     </div>
                     <div>
                          <CardTitle className="text-lg">{firstGoal.name}</CardTitle>
-                         <p className="text-sm text-muted-foreground">Sua meta em destaque</p>
+                         <CardDescription>Sua meta em destaque</CardDescription>
                     </div>
                 </div>
             </CardHeader>

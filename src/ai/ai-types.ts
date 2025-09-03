@@ -171,3 +171,18 @@ export const GenerateAutomaticBudgetsOutputSchema = z.object({
   suggestedBudgets: z.array(BudgetItemSchema).describe('An array of suggested budgets.'),
 });
 export type GenerateAutomaticBudgetsOutput = z.infer<typeof GenerateAutomaticBudgetsOutputSchema>;
+
+// Schema for Future Balance Prediction
+export const PredictFutureBalanceInputSchema = z.object({
+    last3MonthsTransactions: z.string().describe('A JSON string of all transactions from the previous 3 months to analyze spending patterns.'),
+    currentBalance: z.number().describe('The user current consolidated balance across all wallets.'),
+    recurringBills: z.string().describe('A JSON string of known recurring bills for the current month (from budgets).'),
+});
+export type PredictFutureBalanceInput = z.infer<typeof PredictFutureBalanceInputSchema>;
+
+export const PredictFutureBalanceOutputSchema = z.object({
+    projectedEndOfMonthBalance: z.number().describe('The projected final balance for the end of the current month.'),
+    isRiskOfNegativeBalance: z.boolean().describe('Whether there is a significant risk of the balance going negative this month.'),
+    summary: z.string().describe('A very brief, one-sentence summary of the projection in Brazilian Portuguese (e.g., "Você está a caminho de terminar o mês positivo!" ou "Atenção! Seu saldo pode ficar negativo se os gastos continuarem neste ritmo.").'),
+});
+export type PredictFutureBalanceOutput = z.infer<typeof PredictFutureBalanceOutputSchema>;

@@ -12,6 +12,7 @@ import { generateAnnualReport } from '@/ai/flows/generate-annual-report';
 import { suggestBudgetAmount } from '@/ai/flows/suggest-budget-amount';
 import { projectGoalCompletion } from '@/ai/flows/project-goal-completion';
 import { generateAutomaticBudgets } from '@/ai/flows/generate-automatic-budgets';
+import { predictFutureBalance } from '@/ai/flows/predict-future-balance';
 import {
   ChatInput,
   ReceiptInfoInput,
@@ -32,7 +33,9 @@ import {
   ProjectGoalCompletionInput,
   ProjectGoalCompletionOutput,
   GenerateAutomaticBudgetsInput,
-  GenerateAutomaticBudgetsOutput
+  GenerateAutomaticBudgetsOutput,
+  PredictFutureBalanceInput,
+  PredictFutureBalanceOutput
 } from '@/ai/ai-types';
 import { createConfiguredAI, getModelReference } from '@/ai/genkit';
 import { getAdminApp } from '@/lib/firebase-admin';
@@ -59,7 +62,7 @@ export async function getActiveAICredential(userId: string): Promise<AICredentia
     const settingsRef = adminDb.doc(`users/${userId}/settings/ai`);
     const docSnap = await settingsRef.get();
 
-    if (docSnap.exists) {
+    if (docSnap.exists()) {
         const settings = docSnap.data();
         if (settings && settings.activeCredentialId && settings.credentials) {
             const activeCredential = settings.credentials.find((c: AICredential) => c.id === settings.activeCredentialId);
@@ -214,4 +217,9 @@ export async function projectGoalCompletionAction(input: ProjectGoalCompletionIn
 export async function generateAutomaticBudgetsAction(input: GenerateAutomaticBudgetsInput, userId: string): Promise<GenerateAutomaticBudgetsOutput> {
     const credential = await getActiveAICredential(userId);
     return generateAutomaticBudgets(input, credential);
+}
+
+export async function predictFutureBalanceAction(input: PredictFutureBalanceInput, userId: string): Promise<PredictFutureBalanceOutput> {
+    const credential = await getActiveAICredential(userId);
+    return predictFutureBalance(input, credential);
 }

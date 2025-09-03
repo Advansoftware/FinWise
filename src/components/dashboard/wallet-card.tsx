@@ -18,10 +18,9 @@ export function WalletCard({ transactions }: WalletCardProps) {
 
     const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
     const totalExpense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-    const periodBalance = totalIncome - totalExpense;
 
     return (
-        <Card className="relative overflow-hidden bg-card/80 backdrop-blur-xl">
+        <Card className="relative overflow-hidden bg-card/80 backdrop-blur-xl h-full">
             <CardHeader className="pb-4">
                 <div className="flex items-center gap-3">
                     <div className="p-2 rounded-full bg-primary/20 text-primary">
@@ -49,7 +48,7 @@ export function WalletCard({ transactions }: WalletCardProps) {
                             <div>
                                 <p className="text-sm text-muted-foreground">Receitas (período)</p>
                                 <p className="font-semibold text-emerald-500">
-                                    R$ {totalIncome.toFixed(2)}
+                                    +R$ {totalIncome.toFixed(2)}
                                 </p>
                             </div>
                         </div>
@@ -60,7 +59,7 @@ export function WalletCard({ transactions }: WalletCardProps) {
                             <div>
                                 <p className="text-sm text-muted-foreground">Despesas (período)</p>
                                 <p className="font-semibold text-red-500">
-                                    R$ {totalExpense.toFixed(2)}
+                                    -R$ {totalExpense.toFixed(2)}
                                 </p>
                             </div>
                         </div>
