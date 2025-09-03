@@ -43,8 +43,11 @@ export function PlanProvider({ children }: { children: ReactNode }) {
     }
   }, [user]);
 
+  // Switched to a realtime listener to automatically update the UI after a webhook changes the user's plan.
   useEffect(() => {
-    if (authLoading) return;
+    if (authLoading) {
+      return; // Wait for auth to be ready
+    }
     
     if (!user) {
         setPlan('Básico');
@@ -52,17 +55,24 @@ export function PlanProvider({ children }: { children: ReactNode }) {
         return;
     }
     
+    setIsLoading(true);
     const { db } = getFirebase();
     const userDocRef = doc(db, "users", user.uid);
 
     const unsubscribe = onSnapshot(userDocRef, (doc) => {
         if(doc.exists()) {
             setPlan(doc.data().plan || 'Básico');
+        } else {
+            setPlan('Básico');
         }
+        setIsLoading(false);
+    }, (error) => {
+        console.error("Failed to listen to user plan changes:", error);
+        setPlan('Básico'); // Fallback on error
         setIsLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => unsubscribe(); // Cleanup listener on unmount
 
   }, [authLoading, user]);
 
