@@ -44,7 +44,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
   });
   
   // States for autocomplete
-  const [itemQuery, setItemQuery] = useState("");
+  const [itemInputValue, setItemInputValue] = useState("");
   const [isItemPopoverOpen, setIsItemPopoverOpen] = useState(false);
 
   const resetForm = () => {
@@ -58,7 +58,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
         subcategory: '',
         type: 'expense'
     });
-    setItemQuery("");
+    setItemInputValue("");
   };
   
   const handleInputChange = (field: keyof typeof formState, value: any) => {
@@ -69,15 +69,17 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
   }
 
   const handleItemSelect = (transaction: Transaction) => {
+    // Fill the form with the selected transaction's data
     setFormState(prev => ({
-      ...prev, // Keep existing fields like date and type
+      ...prev,
       item: transaction.item,
       establishment: transaction.establishment || '',
       amount: String(transaction.amount),
       category: transaction.category,
       subcategory: transaction.subcategory || '',
     }));
-    setItemQuery(transaction.item);
+    // Also update the visible input value
+    setItemInputValue(transaction.item);
     setIsItemPopoverOpen(false);
   }
 
@@ -96,14 +98,16 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
   }, [allTransactions]);
   
   const filteredItems = useMemo(() => {
-      if (!itemQuery) return uniqueTransactions.slice(0, 5); // Show some initial suggestions
-      return uniqueTransactions.filter(t => t.item.toLowerCase().includes(itemQuery.toLowerCase())).slice(0, 5);
-  }, [itemQuery, uniqueTransactions]);
+      if (!itemInputValue) return [];
+      return uniqueTransactions.filter(t => t.item.toLowerCase().includes(itemInputValue.toLowerCase())).slice(0, 5);
+  }, [itemInputValue, uniqueTransactions]);
 
 
   const handleSubmit = async () => {
-    const { item, amount, date, category } = formState;
-    if (!item || !amount || !date || !category) {
+    const finalItem = itemInputValue;
+    const { amount, date, category } = formState;
+
+    if (!finalItem || !amount || !date || !category) {
         toast({
             variant: "destructive",
             title: "Campos obrigatórios",
@@ -115,14 +119,11 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
     setIsSubmitting(true);
     try {
         const newTransaction: Omit<Transaction, 'id'> = {
-            item: formState.item,
-            establishment: formState.establishment || undefined,
+            ...formState,
+            item: finalItem,
             amount: parseFloat(formState.amount),
             date: formState.date.toISOString(),
-            category: formState.category,
-            subcategory: formState.subcategory || undefined,
             quantity: parseInt(formState.quantity),
-            type: formState.type
         };
         await addTransaction(newTransaction);
 
@@ -184,29 +185,28 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                             <Input 
                                 id="item" 
                                 placeholder="ex: Café" 
-                                value={formState.item} 
-                                onChange={(e) => {
-                                    handleInputChange('item', e.target.value);
-                                    setItemQuery(e.target.value);
-                                    if (!isItemPopoverOpen) setIsItemPopoverOpen(true);
-                                }}
+                                value={itemInputValue} 
+                                onChange={(e) => setItemInputValue(e.target.value)}
+                                onFocus={() => setIsItemPopoverOpen(true)}
                             />
                         </PopoverTrigger>
-                        <PopoverContent className="p-0 w-[--radix-popover-trigger-width]">
-                            <Command>
-                                <CommandInput placeholder="Buscar item existente..." onValueChange={setItemQuery} />
-                                <CommandList>
-                                    <CommandEmpty>Nenhum item encontrado.</CommandEmpty>
-                                    <CommandGroup>
-                                    {filteredItems.map((transaction) => (
-                                        <CommandItem key={transaction.id} onSelect={() => handleItemSelect(transaction)}>
-                                            {transaction.item}
-                                        </CommandItem>
-                                    ))}
-                                    </CommandGroup>
-                                </CommandList>
-                            </Command>
-                        </PopoverContent>
+                         {filteredItems.length > 0 && (
+                            <PopoverContent className="p-0 w-[--radix-popover-trigger-width]">
+                                <Command>
+                                    {/* CommandInput is not needed as we control the input from outside */}
+                                    <CommandList>
+                                        <CommandEmpty>Nenhum item encontrado.</CommandEmpty>
+                                        <CommandGroup>
+                                        {filteredItems.map((transaction) => (
+                                            <CommandItem key={transaction.id} onSelect={() => handleItemSelect(transaction)}>
+                                                {transaction.item}
+                                            </CommandItem>
+                                        ))}
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        )}
                     </Popover>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">
@@ -265,3 +265,5 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
     </Sheet>
   );
 }
+
+    
