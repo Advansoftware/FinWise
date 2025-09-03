@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bot, Send, Sparkles, X, Loader2 } from 'lucide-react';
+import { Bot, Send, Sparkles, X, Loader2, Gem } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTransactions } from "@/hooks/use-transactions";
 import { useReports } from '@/hooks/use-reports';
@@ -17,6 +17,8 @@ import { useAuth } from '@/hooks/use-auth';
 import { Badge } from '../ui/badge';
 import { getYear, startOfMonth } from 'date-fns';
 import { usePlan } from '@/hooks/use-plan';
+import Link from 'next/link';
+import { ProUpgradeCard } from '../pro-upgrade-card';
 
 const suggestionPrompts = [
     "Quanto gastei com Supermercado este mês?",
@@ -48,16 +50,8 @@ export function ChatAssistant() {
     }, [messages]);
 
     const handleSubmit = (prompt: string = input) => {
-        if (!prompt.trim()) return;
+        if (!prompt.trim() || !isPro) return;
 
-        if (!user || !isPro) {
-            toast({
-                title: "Recurso Pro",
-                description: "O assistente de IA está disponível apenas para assinantes Pro.",
-                variant: "destructive"
-            });
-            return;
-        }
 
         const newUserMessage: Message = { role: 'user', content: prompt };
         setMessages(prev => [...prev, newUserMessage]);
@@ -79,7 +73,7 @@ export function ChatAssistant() {
                     transactions: currentMonthTransactions,
                     monthlyReports: currentYearMonthlyReports,
                     annualReports: pastAnnualReports
-                }, user.uid);
+                }, user!.uid);
                 
                 const newModelMessage: Message = { role: 'model', content: response };
                 setMessages(prev => [...prev, newModelMessage]);
@@ -101,8 +95,60 @@ export function ChatAssistant() {
     const handleSuggestionClick = (prompt: string) => {
         handleSubmit(prompt);
     };
-    
-    if (!isPro) return null;
+
+    const renderChatContent = () => {
+        if (loading) {
+            return (
+                <div className="text-center p-4 flex justify-center items-center h-full">
+                    <Loader2 className="h-6 w-6 animate-spin"/>
+                </div>
+            );
+        }
+
+        if (!isPro) {
+            return (
+                <div className="p-4 h-full flex flex-col justify-center">
+                    <ProUpgradeCard featureName="Assistente de Chat com IA" />
+                </div>
+            );
+        }
+
+        if (messages.length === 0) {
+             return (
+                <div className="text-center p-4">
+                    <p className="text-muted-foreground mb-4">Faça uma pergunta sobre suas finanças ou escolha uma sugestão.</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {suggestionPrompts.map(prompt => (
+                            <Button key={prompt} variant="outline" size="sm" className="h-auto py-2" onClick={() => handleSuggestionClick(prompt)}>
+                                <span className="text-wrap">{prompt}</span>
+                            </Button>
+                        ))}
+                    </div>
+                </div>
+            );
+        }
+
+        return (
+             <div className="p-4 space-y-4">
+                {messages.map((msg, index) => (
+                    <div key={index} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                        {msg.role === 'model' && <Bot className="h-6 w-6 text-primary flex-shrink-0" />}
+                        <div className={`rounded-lg px-3 py-2 max-w-[85%] ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                            <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
+                        </div>
+                    </div>
+                ))}
+                {isPending && (
+                    <div className="flex gap-2 justify-start">
+                        <Bot className="h-6 w-6 text-primary flex-shrink-0" />
+                        <div className="rounded-lg px-3 py-2 bg-muted flex items-center">
+                            <Loader2 className="h-5 w-5 animate-spin text-primary"/>
+                        </div>
+                    </div>
+                )}
+            </div>
+        )
+    }
 
     return (
         <div className="relative">
@@ -128,60 +174,23 @@ export function ChatAssistant() {
                             </CardHeader>
                             <CardContent className="flex-1 overflow-hidden p-0">
                                 <ScrollArea className="h-full" ref={scrollAreaRef}>
-                                    <div className="p-4 space-y-4">
-                                        {loading ? (
-                                            <div className="text-center p-4 flex justify-center items-center">
-                                                <Loader2 className="h-6 w-6 animate-spin"/>
-                                            </div>
-                                        ) : !user ? (
-                                            <div className="text-center p-4">
-                                                <p className="text-muted-foreground">Faça login para usar o assistente de chat.</p>
-                                            </div>
-                                        ) : messages.length === 0 ? (
-                                            <div className="text-center p-4">
-                                                <p className="text-muted-foreground mb-4">Faça uma pergunta sobre suas finanças ou escolha uma sugestão.</p>
-                                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                                    {suggestionPrompts.map(prompt => (
-                                                        <Button key={prompt} variant="outline" size="sm" className="h-auto py-2" onClick={() => handleSuggestionClick(prompt)}>
-                                                          <span className="text-wrap">{prompt}</span>
-                                                        </Button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ) : null}
-                                        {messages.map((msg, index) => (
-                                            <div key={index} className={`flex gap-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                                                {msg.role === 'model' && <Bot className="h-6 w-6 text-primary flex-shrink-0" />}
-                                                <div className={`rounded-lg px-3 py-2 max-w-[85%] ${msg.role === 'user' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
-                                                    <p className="text-sm whitespace-pre-wrap">{msg.content}</p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                        {isPending && (
-                                            <div className="flex gap-2 justify-start">
-                                                <Bot className="h-6 w-6 text-primary flex-shrink-0" />
-                                                <div className="rounded-lg px-3 py-2 bg-muted flex items-center">
-                                                   <Loader2 className="h-5 w-5 animate-spin text-primary"/>
-                                                </div>
-                                            </div>
-                                        )}
-                                    </div>
+                                    {renderChatContent()}
                                 </ScrollArea>
                             </CardContent>
                             <CardFooter className="p-4 border-t">
                                 <div className="relative w-full">
                                     <Input
-                                        placeholder={user ? "Pergunte algo sobre seus gastos..." : "Faça login para usar o chat"}
+                                        placeholder={isPro ? "Pergunte algo sobre seus gastos..." : "Faça upgrade para usar o chat"}
                                         value={input}
                                         onChange={(e) => setInput(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-                                        disabled={isPending || !user}
+                                        disabled={isPending || !isPro}
                                     />
                                     <Button
                                         size="icon"
                                         className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
                                         onClick={() => handleSubmit()}
-                                        disabled={!input.trim() || isPending || !user}
+                                        disabled={!input.trim() || isPending || !isPro}
                                     >
                                         <Send className="h-4 w-4" />
                                     </Button>
