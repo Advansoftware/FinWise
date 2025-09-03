@@ -1,7 +1,7 @@
 // src/hooks/use-goals.tsx
 'use client';
 
-import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from "react";
+import { useState, useEffect, createContext, useContext, ReactNode, useCallback, useRef } from "react";
 import { Goal, Transaction } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
@@ -15,6 +15,8 @@ interface GoalsContextType {
   updateGoal: (goalId: string, updates: Partial<Goal>) => Promise<void>;
   deleteGoal: (goalId: string) => Promise<void>;
   addDeposit: (goalId: string, amount: number, walletId: string) => Promise<void>;
+  completedGoal: Goal | null;
+  clearCompletedGoal: () => void;
 }
 
 const GoalsContext = createContext<GoalsContextType | undefined>(undefined);
@@ -24,6 +26,26 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [completedGoal, setCompletedGoal] = useState<Goal | null>(null);
+  const prevGoalsRef = useRef<Goal[]>([]);
+
+  // Effect to check for newly completed goals
+  useEffect(() => {
+    // Find a goal that just got completed
+    const justCompleted = goals.find(currentGoal => {
+        const prevGoal = prevGoalsRef.current.find(pg => pg.id === currentGoal.id);
+        // It's completed now, but it wasn't before
+        return currentGoal.currentAmount >= currentGoal.targetAmount && prevGoal && prevGoal.currentAmount < prevGoal.targetAmount;
+    });
+
+    if (justCompleted) {
+        setCompletedGoal(justCompleted);
+    }
+
+    // Update the previous goals ref for the next render
+    prevGoalsRef.current = goals;
+  }, [goals]);
+
 
   // Listener for goals
   useEffect(() => {
@@ -117,6 +139,10 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
      toast({ title: `Depósito de R$ ${amount.toFixed(2)} adicionado!`})
   }
 
+  const clearCompletedGoal = () => {
+    setCompletedGoal(null);
+  }
+
   const value: GoalsContextType = {
     goals,
     isLoading,
@@ -124,6 +150,8 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     updateGoal,
     deleteGoal,
     addDeposit,
+    completedGoal,
+    clearCompletedGoal,
   };
 
   return (
