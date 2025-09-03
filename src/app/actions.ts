@@ -50,6 +50,31 @@ const DEFAULT_AI_CREDENTIAL: AICredential = {
   openAIModel: 'gpt-3.5-turbo'
 };
 
+async function getUserPlan(userId: string): Promise<string> {
+    if (!userId) return 'Básico'; // Default to Básico if no user
+    try {
+        const adminDb = getAdminApp().firestore();
+        const userDocRef = adminDb.doc(`users/${userId}`);
+        const userDocSnap = await userDocRef.get();
+        if (userDocSnap.exists()) {
+            return userDocSnap.data()?.plan || 'Básico';
+        }
+        return 'Básico';
+    } catch (error) {
+        console.error("Error getting user plan:", error);
+        return 'Básico';
+    }
+}
+
+async function canUseAI(userId: string): Promise<void> {
+    const plan = await getUserPlan(userId);
+    if (plan === 'Básico') {
+        throw new Error('Este recurso está disponível apenas para assinantes dos planos Pro e Plus. Faça upgrade para continuar.');
+    }
+    // No limits for Pro and Plus for now, but logic can be expanded here.
+}
+
+
 // Server action to get AI settings using Admin SDK
 export async function getActiveAICredential(userId: string): Promise<AICredential> {
   if (!userId) {
@@ -86,6 +111,7 @@ export async function getActiveAICredential(userId: string): Promise<AICredentia
 // --- AI Actions ---
 
 export async function getSpendingTip(transactions: Transaction[], userId: string): Promise<string> {
+  await canUseAI(userId);
   try {
     const credential = await getActiveAICredential(userId);
     const result = await generateSpendingTip({
@@ -95,11 +121,13 @@ export async function getSpendingTip(transactions: Transaction[], userId: string
     return result.tip;
   } catch (error) {
     console.error('Error generating spending tip:', error);
+    if (error instanceof Error) return error.message;
     return "Desculpe, não consegui gerar uma dica agora. Verifique suas configurações de IA e tente novamente.";
   }
 }
 
 export async function getFinancialProfile(input: FinancialProfileInput, userId: string): Promise<string> {
+  await canUseAI(userId);
   try {
     const credential = await getActiveAICredential(userId);
     const configuredAI = createConfiguredAI(credential);
@@ -139,11 +167,13 @@ Transações do Mês Atual:
     return `**${output.profileName}**\n\n${output.profileDescription}`;
   } catch (error) {
     console.error('Error generating financial profile:', error);
+    if (error instanceof Error) return error.message;
     return "Não foi possível gerar seu perfil. Verifique suas configurações de IA e tente novamente.";
   }
 }
 
 export async function analyzeTransactions(transactions: Transaction[], userId: string): Promise<string> {
+  await canUseAI(userId);
   try {
     const credential = await getActiveAICredential(userId);
     const configuredAI = createConfiguredAI(credential);
@@ -165,11 +195,13 @@ Transactions:
     return output?.analysis || "Nenhuma análise pôde ser gerada.";
   } catch (error) {
     console.error('Error analyzing transactions:', error);
+    if (error instanceof Error) return error.message;
     return "Ocorreu um erro ao analisar as transações. Verifique suas configurações de IA.";
   }
 }
 
 export async function getChatbotResponse(input: ChatInput, userId: string): Promise<string> {
+  await canUseAI(userId);
   try {
     const credential = await getActiveAICredential(userId);
     const result = await chatWithTransactions(input, credential);
@@ -180,46 +212,55 @@ export async function getChatbotResponse(input: ChatInput, userId: string): Prom
     if (errorMessage.includes("ECONNREFUSED")){
        return "Não foi possível conectar ao servidor Ollama. Verifique se ele está em execução e acessível.";
     }
+     if (error instanceof Error) return error.message;
     return "Desculpe, ocorreu um erro ao processar sua pergunta. Verifique suas configurações de IA e tente novamente.";
   }
 }
 
 export async function extractReceiptInfoAction(input: ReceiptInfoInput, userId: string): Promise<ReceiptInfoOutput> {
+    await canUseAI(userId);
     const credential = await getActiveAICredential(userId);
     return extractReceiptInfo(input, credential);
 }
 
 export async function suggestCategoryForItemAction(input: SuggestCategoryInput, userId: string): Promise<SuggestCategoryOutput> {
+    await canUseAI(userId);
     const credential = await getActiveAICredential(userId);
     return suggestCategoryForItem(input, credential);
 }
 
 export async function generateMonthlyReportAction(input: GenerateReportInput, userId: string): Promise<GenerateReportOutput> {
+  await canUseAI(userId);
   const credential = await getActiveAICredential(userId);
   return generateMonthlyReport(input, credential);
 }
 
 export async function generateAnnualReportAction(input: GenerateAnnualReportInput, userId: string): Promise<GenerateAnnualReportOutput> {
+  await canUseAI(userId);
   const credential = await getActiveAICredential(userId);
   return generateAnnualReport(input, credential);
 }
 
 export async function suggestBudgetAmountAction(input: SuggestBudgetInput, userId: string): Promise<SuggestBudgetOutput> {
+    await canUseAI(userId);
     const credential = await getActiveAICredential(userId);
     return suggestBudgetAmount(input);
 }
 
 export async function projectGoalCompletionAction(input: ProjectGoalCompletionInput, userId: string): Promise<ProjectGoalCompletionOutput> {
+    await canUseAI(userId);
     const credential = await getActiveAICredential(userId);
     return projectGoalCompletion(input, credential);
 }
 
 export async function generateAutomaticBudgetsAction(input: GenerateAutomaticBudgetsInput, userId: string): Promise<GenerateAutomaticBudgetsOutput> {
+    await canUseAI(userId);
     const credential = await getActiveAICredential(userId);
     return generateAutomaticBudgets(input, credential);
 }
 
 export async function predictFutureBalanceAction(input: PredictFutureBalanceInput, userId: string): Promise<PredictFutureBalanceOutput> {
+    await canUseAI(userId);
     const credential = await getActiveAICredential(userId);
     return predictFutureBalance(input, credential);
 }
