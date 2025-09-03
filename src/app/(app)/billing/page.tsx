@@ -1,19 +1,17 @@
 // src/app/(app)/billing/page.tsx
 'use client';
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle2, Loader2, Settings } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { usePlan } from "@/hooks/use-plan";
 import { UserPlan } from "@/lib/types";
-import { createStripeCheckoutAction, createStripePortalSession } from '@/app/actions';
+import { updateUserPlanAction } from '@/app/actions';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
-import { UpgradeCelebration } from '@/components/billing/upgrade-celebration';
-import { useSearchParams } from 'next/navigation';
 
-const plans: {name: UserPlan, price: string, description: string, features: string[], cta: string, priceId?: string}[] = [
+const plans = [
     {
         name: "Básico",
         price: "Grátis",
@@ -65,158 +63,94 @@ export default function BillingPage() {
     const { plan: currentUserPlan, isLoading: isPlanLoading } = usePlan();
     const { user } = useAuth();
     const { toast } = useToast();
-    const searchParams = useSearchParams();
     const [updatingPlan, setUpdatingPlan] = useState<UserPlan | null>(null);
-    const [isManaging, setIsManaging] = useState(false);
-    const [showCelebration, setShowCelebration] = useState(false);
 
-    useEffect(() => {
-        if (searchParams.get('success')) {
-            toast({
-                title: "Pagamento bem-sucedido!",
-                description: "Obrigado por assinar! Seu plano foi atualizado.",
-            });
-            setShowCelebration(true);
-        }
-
-        if (searchParams.get('canceled')) {
-            toast({
-                variant: 'destructive',
-                title: "Pagamento cancelado",
-                description: "Você não foi cobrado. Continue explorando nossos recursos quando quiser.",
-            });
-        }
-    }, [searchParams, toast]);
-
-    const handleUpgrade = async (newPlan: UserPlan) => {
-        if (!user || !user.email || newPlan === 'Básico') {
-            return; // Should not be possible to click, but as a safeguard.
-        }
-        
+    const handlePlanChange = async (newPlan: UserPlan) => {
+        if (!user) return;
         setUpdatingPlan(newPlan);
-
         try {
-            const result = await createStripeCheckoutAction(user.uid, user.email, newPlan as Exclude<UserPlan, 'Básico'>);
-            if (result && result.url) {
-                window.location.href = result.url;
-            } else {
-                 throw new Error(result.error || 'A resposta do servidor não continha a URL de checkout.');
-            }
+            await updateUserPlanAction(newPlan);
+            toast({ 
+                title: 'Plano atualizado!',
+                description: `Agora você está no plano ${newPlan}.`,
+            });
         } catch (error) {
             toast({ 
                 variant: 'destructive', 
-                title: 'Erro ao iniciar assinatura.',
-                description: error instanceof Error ? error.message : 'Tente novamente mais tarde.'
+                title: 'Erro ao atualizar o plano.',
+                description: 'Tente novamente mais tarde.'
             });
-            console.error("Stripe checkout error:", error);
         } finally {
             setUpdatingPlan(null);
         }
     }
-    
-    const handleManageSubscription = async () => {
-        if (!user) return;
-        setIsManaging(true);
-        try {
-            const result = await createStripePortalSession(user.uid);
-            if(result && result.url) {
-                window.location.href = result.url;
-            } else {
-                 throw new Error(result.error || 'A resposta do servidor não continha a URL do portal.');
-            }
-        } catch (error) {
-             toast({ 
-                variant: 'destructive', 
-                title: 'Erro ao gerenciar assinatura.',
-                description: error instanceof Error ? error.message : 'Tente novamente mais tarde.'
-            });
-            console.error("Stripe portal error:", error);
-        } finally {
-            setIsManaging(false);
-        }
-    }
-
-    const isPaidPlan = currentUserPlan === 'Pro' || currentUserPlan === 'Plus';
 
     return (
-        <>
-            {showCelebration && <UpgradeCelebration onComplete={() => setShowCelebration(false)} />}
-            <div className="flex flex-col gap-6">
-                <div className="flex flex-col md:flex-row gap-4 justify-between md:items-center">
-                    <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Assinatura e Créditos</h1>
-                        <p className="text-muted-foreground">Gerencie seu plano e seu uso de créditos de IA.</p>
-                    </div>
-                     {isPaidPlan && (
-                        <Button onClick={handleManageSubscription} disabled={isManaging}>
-                            {isManaging ? <Loader2 className="animate-spin" /> : <Settings />}
-                             Gerenciar Assinatura no Stripe
-                        </Button>
-                     )}
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
-                    {plans.map(plan => {
-                        const isCurrent = plan.name === currentUserPlan;
-                        const isLoading = updatingPlan === plan.name;
-                        const canUpgrade = !isPaidPlan && plan.name !== 'Básico';
-
-                        return (
-                         <Card 
-                            key={plan.name} 
-                            className={`flex flex-col ${isCurrent ? 'border-primary shadow-lg' : ''}`}
-                         >
-                            <CardHeader>
-                                <div className="flex justify-between items-center">
-                                    <CardTitle>{plan.name}</CardTitle>
-                                    {isCurrent && <Badge variant="secondary">Plano Atual</Badge>}
-                                    {plan.name === 'Pro' && <Badge>Mais Popular</Badge>}
-                                </div>
-                                <CardDescription>{plan.description}</CardDescription>
-                            </CardHeader>
-                            <CardContent className="flex-1 space-y-4">
-                                 <div className="text-3xl font-bold">{plan.price}</div>
-                                 <ul className="space-y-2">
-                                    {plan.features.map(feature => (
-                                        <li key={feature} className="flex items-start gap-2">
-                                            <CheckCircle2 className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" />
-                                            <span dangerouslySetInnerHTML={{ __html: feature.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-foreground/90">$1</strong>') }} className="text-muted-foreground"></span>
-                                        </li>
-                                    ))}
-                                 </ul>
-                            </CardContent>
-                            <CardFooter>
-                                <Button 
-                                    className="w-full" 
-                                    disabled={isCurrent || isLoading || isPlanLoading || isPaidPlan} 
-                                    onClick={() => handleUpgrade(plan.name as UserPlan)} 
-                                    variant={isCurrent ? 'outline' : 'default'}
-                                >
-                                    {isLoading ? <Loader2 className="animate-spin" /> : 
-                                     isCurrent ? "Seu Plano Atual" :
-                                     isPaidPlan ? "Gerenciar Assinatura" :
-                                     plan.cta}
-                                </Button>
-                            </CardFooter>
-                        </Card>
-                    )})}
-                </div>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Como funcionam os Créditos de IA?</CardTitle>
-                    </CardHeader>
-                    <CardContent className="text-muted-foreground space-y-2">
-                        <p>Os créditos de IA são a moeda que você usa para acessar funcionalidades inteligentes. Cada ação tem um custo diferente, dependendo de sua complexidade.</p>
-                        <ul className="list-disc pl-5 space-y-1 text-sm">
-                            <li><span className="font-semibold text-foreground">Ações Simples (1-2 créditos):</span> Gerar dicas, responder no chat, sugerir um orçamento.</li>
-                            <li><span className="font-semibold text-foreground">Ações Complexas (5 créditos):</span> Gerar um relatório mensal, analisar um grupo de transações.</li>
-                            <li><span className="font-semibold text-foreground">Ações de Imagem (10 créditos):</span> Escanear uma nota fiscal (OCR).</li>
-                        </ul>
-                        <p className="pt-2">Seus créditos são renovados mensalmente de acordo com seu plano. Em breve, você poderá comprar pacotes de créditos adicionais se precisar.</p>
-                    </CardContent>
-                </Card>
+        <div className="flex flex-col gap-6">
+            <div>
+                <h1 className="text-3xl font-bold tracking-tight">Assinatura e Créditos</h1>
+                <p className="text-muted-foreground">Gerencie seu plano e seu uso de créditos de IA.</p>
             </div>
-        </>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+                {plans.map(plan => {
+                    const isCurrent = plan.name === currentUserPlan;
+                    const isLoading = updatingPlan === plan.name;
+
+                    return (
+                     <Card 
+                        key={plan.name} 
+                        className={`flex flex-col ${isCurrent ? 'border-primary shadow-lg' : ''}`}
+                     >
+                        <CardHeader>
+                            <div className="flex justify-between items-center">
+                                <CardTitle>{plan.name}</CardTitle>
+                                {isCurrent && <Badge variant="secondary">Plano Atual</Badge>}
+                                {plan.name === 'Pro' && <Badge>Mais Popular</Badge>}
+                            </div>
+                            <CardDescription>{plan.description}</CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex-1 space-y-4">
+                             <div className="text-3xl font-bold">{plan.price}</div>
+                             <ul className="space-y-2">
+                                {plan.features.map(feature => (
+                                    <li key={feature} className="flex items-start gap-2">
+                                        <CheckCircle2 className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" />
+                                        <span dangerouslySetInnerHTML={{ __html: feature.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-foreground/90">$1</strong>') }} className="text-muted-foreground"></span>
+                                    </li>
+                                ))}
+                             </ul>
+                        </CardContent>
+                        <CardFooter>
+                            <Button 
+                                className="w-full" 
+                                disabled={isCurrent || isLoading || isPlanLoading} 
+                                onClick={() => handlePlanChange(plan.name as UserPlan)} 
+                                variant={isCurrent ? 'outline' : 'default'}
+                            >
+                                {isLoading ? <Loader2 className="animate-spin" /> : 
+                                 isCurrent ? "Seu Plano Atual" :
+                                 plan.cta}
+                            </Button>
+                        </CardFooter>
+                    </Card>
+                )})}
+            </div>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle>Como funcionam os Créditos de IA?</CardTitle>
+                </CardHeader>
+                <CardContent className="text-muted-foreground space-y-2">
+                    <p>Os créditos de IA são a moeda que você usa para acessar funcionalidades inteligentes. Cada ação tem um custo diferente, dependendo de sua complexidade.</p>
+                    <ul className="list-disc pl-5 space-y-1 text-sm">
+                        <li><span className="font-semibold text-foreground">Ações Simples (1-2 créditos):</span> Gerar dicas, responder no chat, sugerir um orçamento.</li>
+                        <li><span className="font-semibold text-foreground">Ações Complexas (5 créditos):</span> Gerar um relatório mensal, analisar um grupo de transações.</li>
+                        <li><span className="font-semibold text-foreground">Ações de Imagem (10 créditos):</span> Escanear uma nota fiscal (OCR).</li>
+                    </ul>
+                    <p className="pt-2">Seus créditos são renovados mensalmente de acordo com seu plano. Em breve, você poderá comprar pacotes de créditos adicionais se precisar.</p>
+                </CardContent>
+            </Card>
+        </div>
     )
 }
