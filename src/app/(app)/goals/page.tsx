@@ -23,56 +23,78 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Goal } from "@/lib/types";
-import { useState, useTransition, useEffect, useMemo } from "react";
+import { useState, useTransition, useEffect, useMemo, useRef } from "react";
 import { projectGoalCompletionAction } from "@/app/actions";
 import { useAuth } from "@/hooks/use-auth";
 import { useTransactions } from "@/hooks/use-transactions";
-import { format, formatDistanceToNowStrict } from "date-fns";
+import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ProjectGoalCompletionOutput } from "@/ai/ai-types";
+import { GoalCompletionCelebration } from "@/components/goals/goal-celebration";
 
 export default function GoalsPage() {
     const { goals, isLoading, deleteGoal } = useGoals();
+    const [completedGoal, setCompletedGoal] = useState<Goal | null>(null);
+    const prevGoalsRef = useRef<Goal[]>([]);
+
+    useEffect(() => {
+        // Find a goal that just got completed
+        const justCompleted = goals.find(currentGoal => {
+            const prevGoal = prevGoalsRef.current.find(pg => pg.id === currentGoal.id);
+            // It's completed now, but it wasn't before
+            return currentGoal.currentAmount >= currentGoal.targetAmount && prevGoal && prevGoal.currentAmount < prevGoal.targetAmount;
+        });
+
+        if (justCompleted) {
+            setCompletedGoal(justCompleted);
+        }
+
+        // Update the previous goals ref for the next render
+        prevGoalsRef.current = goals;
+    }, [goals]);
     
     if (isLoading) {
         return <GoalsSkeleton />
     }
     
     return (
-        <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Metas de Economia</h1>
-                    <p className="text-muted-foreground">Transforme seus sonhos em realidade. Crie metas financeiras e acompanhe seu progresso a cada depósito.</p>
+        <>
+            {completedGoal && <GoalCompletionCelebration goal={completedGoal} onComplete={() => setCompletedGoal(null)} />}
+            <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div>
+                        <h1 className="text-3xl font-bold tracking-tight">Metas de Economia</h1>
+                        <p className="text-muted-foreground">Transforme seus sonhos em realidade. Crie metas financeiras e acompanhe seu progresso a cada depósito.</p>
+                    </div>
+                     <CreateGoalDialog>
+                        <Button>
+                            <PlusCircle className="mr-2 h-4 w-4" /> Nova Meta
+                        </Button>
+                    </CreateGoalDialog>
                 </div>
-                 <CreateGoalDialog>
-                    <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Nova Meta
-                    </Button>
-                </CreateGoalDialog>
+                
+                {goals.length > 0 ? (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {goals.map(goal => (
+                           <GoalCard key={goal.id} goal={goal} onDelete={() => deleteGoal(goal.id)} />
+                        ))}
+                    </div>
+                ) : (
+                     <Card className="col-span-full">
+                        <CardContent className="p-8 text-center text-muted-foreground flex flex-col items-center">
+                            <PiggyBank className="mx-auto h-12 w-12 mb-4 text-primary/50"/>
+                           <h3 className="text-lg font-semibold text-foreground">Nenhuma meta encontrada.</h3>
+                           <p className="text-sm max-w-md mx-auto">Crie sua primeira meta para começar a economizar. Que tal "Viagem de Férias" ou "Entrada do Apartamento"?</p>
+                             <CreateGoalDialog>
+                                <Button className="mt-4">
+                                    <PlusCircle className="mr-2 h-4 w-4" /> Criar Meta
+                                </Button>
+                            </CreateGoalDialog>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
-            
-            {goals.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {goals.map(goal => (
-                       <GoalCard key={goal.id} goal={goal} onDelete={() => deleteGoal(goal.id)} />
-                    ))}
-                </div>
-            ) : (
-                 <Card className="col-span-full">
-                    <CardContent className="p-8 text-center text-muted-foreground flex flex-col items-center">
-                        <PiggyBank className="mx-auto h-12 w-12 mb-4 text-primary/50"/>
-                       <h3 className="text-lg font-semibold text-foreground">Nenhuma meta encontrada.</h3>
-                       <p className="text-sm max-w-md mx-auto">Crie sua primeira meta para começar a economizar. Que tal "Viagem de Férias" ou "Entrada do Apartamento"?</p>
-                         <CreateGoalDialog>
-                            <Button className="mt-4">
-                                <PlusCircle className="mr-2 h-4 w-4" /> Criar Meta
-                            </Button>
-                        </CreateGoalDialog>
-                    </CardContent>
-                </Card>
-            )}
-        </div>
+        </>
     )
 }
 
