@@ -139,24 +139,28 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     if (!user) throw new Error("User not authenticated");
     const { db } = getFirebase();
-    const walletRef = doc(db, "users", user.uid, "wallets", transaction.walletId);
     const transactionRef = doc(collection(db, "users", user.uid, "transactions"));
 
-    // For transfers, we need a second wallet
-    if (transaction.type === 'transfer') {
-        // Here you would typically have a "toWalletId" field in your form.
-        // For simplicity in this example, we'll assume a real implementation
-        // would get the destination wallet ID from the user.
-        // Since we don't have that, we'll just debit the source wallet.
-        // A full implementation would credit the destination wallet.
-        toast({ title: "Transferência registrada.", description: "Apenas o débito na carteira de origem foi registrado."})
-    }
-
     await runTransaction(db, async (t) => {
+      // Handle balance update for income/expense
+      if (transaction.type === 'income' || transaction.type === 'expense') {
+        const walletRef = doc(db, "users", user.uid, "wallets", transaction.walletId);
         const amount = transaction.type === 'income' ? transaction.amount : -transaction.amount;
-        // Transfers are always a debit from the perspective of the source wallet
         t.update(walletRef, { balance: increment(amount) });
-        t.set(transactionRef, { ...transaction, amount: Math.abs(transaction.amount), date: new Date(transaction.date) });
+      }
+      
+      // Handle balance update for transfers
+      if (transaction.type === 'transfer') {
+        if (!transaction.toWalletId) throw new Error("Destination wallet is required for transfers.");
+        const fromWalletRef = doc(db, "users", user.uid, "wallets", transaction.walletId);
+        const toWalletRef = doc(db, "users", user.uid, "wallets", transaction.toWalletId);
+        
+        t.update(fromWalletRef, { balance: increment(-transaction.amount) });
+        t.update(toWalletRef, { balance: increment(transaction.amount) });
+      }
+
+      // Create the transaction record itself
+      t.set(transactionRef, { ...transaction, amount: Math.abs(transaction.amount), date: new Date(transaction.date) });
     });
   }
 
@@ -196,12 +200,24 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
         }
 
         const transactionData = transactionDoc.data() as Transaction;
-        const walletRef = doc(db, "users", user.uid, "wallets", transactionData.walletId);
-        // Reverse the amount for balance correction
-        const amount = transactionData.type === 'income' ? -transactionData.amount : transactionData.amount;
         
-        // Transfers are also reversed: money comes back to the source wallet.
-        t.update(walletRef, { balance: increment(amount) });
+        // Handle balance update for income/expense
+        if (transactionData.type === 'income' || transactionData.type === 'expense') {
+            const walletRef = doc(db, "users", user.uid, "wallets", transactionData.walletId);
+            const amount = transactionData.type === 'income' ? -transactionData.amount : transactionData.amount;
+            t.update(walletRef, { balance: increment(amount) });
+        }
+
+        // Handle balance update for transfers
+        if (transactionData.type === 'transfer') {
+           if (!transactionData.toWalletId) throw new Error("Cannot reverse transfer without destination wallet.");
+           const fromWalletRef = doc(db, "users", user.uid, "wallets", transactionData.walletId);
+           const toWalletRef = doc(db, "users", user.uid, "wallets", transactionData.toWalletId);
+           
+           t.update(fromWalletRef, { balance: increment(transactionData.amount) }); // Money goes back to source
+           t.update(toWalletRef, { balance: increment(-transactionData.amount) }); // Money is removed from destination
+        }
+
         t.delete(transactionRef);
      });
   }

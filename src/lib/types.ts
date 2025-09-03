@@ -1,3 +1,4 @@
+
 export type TransactionCategory = "Supermercado" | "Transporte" | "Entretenimento" | "Contas" | "Restaurante" | "Saúde" | "Educação" | "Lazer" | "Vestuário" | "Outros" | "Salário" | "Investimentos" | "Vendas" | "Transferência";
 
 export type WalletType = 'Conta Corrente' | 'Cartão de Crédito' | 'Poupança' | 'Investimentos' | 'Dinheiro' | 'Outros';
@@ -21,6 +22,7 @@ export interface Transaction {
   establishment?: string;
   type: 'income' | 'expense' | 'transfer';
   walletId: string;
+  toWalletId?: string; // Only for transfers
 }
 
 export interface Budget {
