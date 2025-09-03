@@ -40,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const handleAuthChange = useCallback(async (firebaseUser: FirebaseUser | null) => {
     if (firebaseUser) {
+      // This logic will run for both Firebase Auth and MongoDB (which returns a Firebase-like user object)
       const userProfile = await dbAdapter.getDoc<UserProfile>(`users/${firebaseUser.uid}`);
       if (userProfile) {
         setUser(userProfile);
@@ -54,36 +55,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setLoading(false);
   }, [dbAdapter]);
-
+  
   useEffect(() => {
-    const authProvider = process.env.NEXT_PUBLIC_AUTH_PROVIDER || 'firebase';
-
-    if (authProvider === 'firebase') {
-      // This listener handles Firebase-based auth state (Google, or if Firebase is auth provider)
-      const unsubscribe = authAdapter.onAuthStateChanged(handleAuthChange);
-      return () => unsubscribe();
-    } else {
-      // For mongodb provider, we check session from localStorage
-      try {
-        const session = localStorage.getItem('finwise_session');
-        if (session) {
-          const userProfile = JSON.parse(session);
-          setUser(userProfile);
-        }
-      } catch (error) {
-        console.error("Failed to parse local session", error);
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    }
+    // onAuthStateChanged is now an abstract method that works for both adapters.
+    // The specific adapter (Mongo or Firebase) will handle its own session logic.
+    const unsubscribe = authAdapter.onAuthStateChanged(handleAuthChange);
+    return () => unsubscribe();
   }, [authAdapter, handleAuthChange]);
+  
   
   const login: IAuthAdapter['login'] = async (email, password) => {
     setLoading(true);
     try {
       const loggedInUser = await authAdapter.login(email, password);
-      setUser(loggedInUser);
+      setUser(loggedInUser); // Manually set user for non-Firebase providers
       return loggedInUser;
     } finally {
       setLoading(false);
@@ -94,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const signedUpUser = await authAdapter.signup(email, password, name);
-      setUser(signedUpUser);
+      setUser(signedUpUser); // Manually set user for non-Firebase providers
       return signedUpUser;
     } finally {
       setLoading(false);
