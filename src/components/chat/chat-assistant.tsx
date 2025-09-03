@@ -101,7 +101,7 @@ export function ChatAssistant() {
     };
 
     return (
-        <>
+        <div className="relative">
             <AnimatePresence>
                 {isOpen && (
                     <motion.div
@@ -109,7 +109,7 @@ export function ChatAssistant() {
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 50, scale: 0.9 }}
                         transition={{ duration: 0.2, ease: "easeOut" }}
-                        className="fixed bottom-24 right-4 sm:right-8 z-50"
+                        className="absolute bottom-20 right-0"
                     >
                         <Card className="w-[calc(100vw-2rem)] sm:w-[400px] h-[500px] flex flex-col shadow-2xl bg-card/80 backdrop-blur-xl">
                             <CardHeader className="flex flex-row items-center justify-between">
@@ -190,11 +190,11 @@ export function ChatAssistant() {
 
             <Button
                 size="lg"
-                className="fixed bottom-4 right-4 sm:right-8 z-50 rounded-full shadow-lg w-16 h-16"
+                className="rounded-full shadow-lg w-16 h-16"
                 onClick={() => setIsOpen(prev => !prev)}
             >
                 {isOpen ? <X className="h-6 w-6" /> : <Sparkles className="h-6 w-6" />}
             </Button>
-        </>
+        </div>
     );
 }

@@ -26,10 +26,9 @@ export function AICreditIndicator() {
       <AICreditStatementDialog isOpen={isDialogOpen} setIsOpen={setIsDialogOpen} logs={logs} />
        <AnimatePresence>
          <motion.div
-            className="fixed top-16 right-4 z-50"
-            initial={{ opacity: 0, y: -20 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
+            exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.3 }}
          >
             <Button

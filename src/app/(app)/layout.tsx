@@ -65,8 +65,10 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                                 </div>
                               </ScrollArea>
                               <PWAUpdater />
-                              <ChatAssistant />
-                              <AICreditIndicator />
+                              <div className="fixed bottom-4 right-4 sm:right-8 z-50 flex items-end gap-3">
+                                <AICreditIndicator />
+                                <ChatAssistant />
+                              </div>
                           </main>
                       </div>
                     </SidebarProvider>
