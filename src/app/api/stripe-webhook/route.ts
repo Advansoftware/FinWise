@@ -1,4 +1,3 @@
-
 // src/app/api/stripe-webhook/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
@@ -18,31 +17,32 @@ const creditsMap: Record<UserPlan, number> = {
 };
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
-    const subscriptionId = session.subscription;
-    if (typeof subscriptionId !== 'string') {
-        console.error(`Webhook Error: Subscription ID is not a string. Session ID: ${session.id}`);
-        return;
-    }
-
-    if (!session.customer) {
-        console.error(`Webhook Error: Customer ID is missing from session. Session ID: ${session.id}`);
-        return;
-    }
+    // The subscription ID is now found in the metadata passed during session creation.
+    const firebaseUID = session.metadata?.firebaseUID;
+    const plan = session.metadata?.plan as UserPlan;
     
-    try {
-        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-        
-        const firebaseUID = subscription.metadata?.firebaseUID;
-        const plan = subscription.metadata?.plan as UserPlan;
+    if (!session.subscription) {
+         console.error(`Webhook Error: Subscription ID is missing. Session ID: ${session.id}`);
+         return;
+    }
 
-        if (!firebaseUID || !plan) {
-            console.error(`Webhook Error: firebaseUID or plan is missing from subscription metadata. Subscription ID: ${subscriptionId}`);
+    if (!firebaseUID || !plan) {
+        console.error(`Webhook Error: firebaseUID or plan is missing from checkout session metadata. Session ID: ${session.id}`);
+        // Attempt to retrieve from the subscription object as a fallback
+        const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
+        if(!subscription.metadata.firebaseUID) {
+            console.error(`Webhook Critical Error: firebaseUID is also missing from subscription metadata. Subscription ID: ${session.subscription}`);
             return;
         }
+    }
 
+    try {
+        const subscription = await stripe.subscriptions.retrieve(session.subscription as string);
         const adminDb = getAdminApp().firestore();
         const userRef = adminDb.doc(`users/${firebaseUID}`);
 
+        // Set the Stripe Customer ID on the user's document for future portal access.
+        // It's crucial to also store the subscription ID to manage its status.
         await userRef.set({
             plan: plan,
             aiCredits: creditsMap[plan] || 0,
@@ -59,23 +59,34 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+    // The firebaseUID should have been stored in the subscription's metadata
+    // when it was created.
     const firebaseUID = subscription.metadata.firebaseUID;
     if (!firebaseUID) {
         console.error(`[Webhook] Cancellation Error: firebaseUID is missing from subscription metadata. Subscription ID: ${subscription.id}`);
-        return;
+        // As a fallback, we can try to find the user by their Stripe Customer ID.
+        // This is less direct and assumes a 1-to-1 mapping.
+        const customerId = subscription.customer;
+        // const user = await findUserByStripeCustomerId(customerId); // This function would need to be implemented
+        // if (!user) return;
+        // firebaseUID = user.uid;
+        return; // For now, we'll return if the UID isn't in metadata.
     }
     
     try {
         const adminDb = getAdminApp().firestore();
         const userRef = adminDb.doc(`users/${firebaseUID}`);
 
+        // Downgrade the user to the 'Básico' plan and clear Stripe-related fields.
         await userRef.update({
             plan: 'Básico',
             stripeSubscriptionId: null,
             stripeCurrentPeriodEnd: null,
+            // Optionally, clear the customer ID if they have no other subscriptions.
+            // stripeCustomerId: null, 
         });
 
-        console.log(`[Webhook] Successfully downgraded plan for user ${firebaseUID}.`);
+        console.log(`[Webhook] Successfully downgraded plan for user ${firebaseUID} upon subscription cancellation.`);
     } catch (error) {
         console.error(`[Webhook] Error handling subscription cancellation for user ${firebaseUID}:`, error);
     }

@@ -28,15 +28,11 @@ import { IDatabaseAdapter, Unsubscribe } from "./database-adapter";
 export class FirebaseAdapter implements IDatabaseAdapter {
     private db;
     private auth;
-    private userId: string | null = null;
 
     constructor() {
         const { db, auth } = getFirebase();
         this.db = db;
         this.auth = auth;
-        this.auth.onAuthStateChanged(user => {
-            this.userId = user ? user.uid : null;
-        });
     }
 
     private getUserId(): string {
@@ -118,7 +114,7 @@ export class FirebaseAdapter implements IDatabaseAdapter {
                 displayName: user.displayName,
                 plan: 'Básico',
                 aiCredits: 0,
-                createdAt: new Date(),
+                createdAt: new Date().toISOString(),
             };
             await fbSetDoc(userDocRef, this.serializeData(newUserProfile));
         }
