@@ -1,44 +1,57 @@
 // src/services/auth/mongodb-auth-adapter.ts
 
-import { getFirebase } from "@/lib/firebase";
-import { signInWithPopup, GoogleAuthProvider, User as FirebaseUser } from 'firebase/auth';
 import { IAuthAdapter, AuthStateChangedCallback, Unsubscribe } from "./auth-adapter";
 import { UserProfile } from "@/lib/types";
-import { getDatabaseAdapter } from "../database/database-service";
+import { User as FirebaseUser } from "firebase/auth";
 
-const SESSION_KEY = 'finwise_session';
+const SESSION_KEY = 'finwise_mongo_session';
 const BROADCAST_CHANNEL_NAME = 'finwise_auth_channel';
 
-// Represents the structure stored in localStorage
+// This is the structure of the data we'll store in localStorage
 interface SessionData {
     user: UserProfile;
     token: string; 
 }
 
 export class MongoDbAuthAdapter implements IAuthAdapter {
-    private firebaseAuth; // Still needed for Google Sign-In
     private channel: BroadcastChannel | null = null;
-    private dbAdapter;
+    private authStateCallback: AuthStateChangedCallback | null = null;
+    private onIdTokenChangedUnsubscribe: Unsubscribe | null = null;
 
     constructor() {
-        const { auth } = getFirebase();
-        this.firebaseAuth = auth;
-        this.dbAdapter = getDatabaseAdapter();
         if (typeof window !== 'undefined') {
             this.channel = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
+            this.channel.onmessage = this.handleBroadcastMessage.bind(this);
+        }
+    }
+    
+    private handleBroadcastMessage(event: MessageEvent) {
+        if (event.data.type === 'LOGIN' || event.data.type === 'LOGOUT') {
+           if (this.authStateCallback) {
+              this.notifyAuthStateChange();
+           }
+        }
+    }
+    
+    private notifyAuthStateChange() {
+        if (this.authStateCallback) {
+            const session = this.getCurrentSession();
+            this.authStateCallback(session ? this.mapProfileToFirebaseUser(session.user) : null);
         }
     }
 
     private saveSession(data: SessionData): void {
         if (typeof window === 'undefined') return;
         localStorage.setItem(SESSION_KEY, JSON.stringify(data));
-        this.channel?.postMessage({ type: 'LOGIN', user: this.mapProfileToFirebaseUser(data.user) });
+        this.channel?.postMessage({ type: 'LOGIN' });
+        this.notifyAuthStateChange();
     }
 
     private clearSession(): void {
         if (typeof window === 'undefined') return;
         localStorage.removeItem(SESSION_KEY);
         this.channel?.postMessage({ type: 'LOGOUT' });
+        this.notifyAuthStateChange();
     }
 
     private getCurrentSession(): SessionData | null {
@@ -47,6 +60,8 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
         return session ? JSON.parse(session) : null;
     }
     
+    // This is a mapping to satisfy the `User` type from `firebase/auth` expected by `useAuth`.
+    // It creates a "mock" Firebase user object from our MongoDB user profile.
     private mapProfileToFirebaseUser(profile: UserProfile): FirebaseUser {
        return {
             uid: profile.uid,
@@ -54,7 +69,7 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
             displayName: profile.displayName,
             providerId: 'password',
             photoURL: null,
-            emailVerified: true, // Assume verified for simplicity with custom auth
+            emailVerified: true,
             isAnonymous: false,
             metadata: {},
             providerData: [],
@@ -64,8 +79,8 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
             getIdToken: async () => this.getToken() || '',
             getIdTokenResult: async () => ({} as any),
             reload: async () => {},
-            toJSON: () => ({}),
-        } as FirebaseUser;
+            toJSON: () => ({...profile}),
+        } as unknown as FirebaseUser;
     }
 
     async login(email: string, pass: string): Promise<UserProfile> {
@@ -78,7 +93,7 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
         if (!response.ok) {
             throw new Error(data.error || "Login failed");
         }
-        this.saveSession(data); // API now returns { user, token }
+        this.saveSession(data);
         return data.user;
     }
 
@@ -88,94 +103,50 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password: pass, displayName: name }),
         });
-
         const data = await response.json();
         if (!response.ok) {
             throw new Error(data.error || "Signup failed");
         }
-        this.saveSession(data); // API now returns { user, token }
+        this.saveSession(data);
         return data.user;
     }
 
     async logout(): Promise<void> {
         this.clearSession();
-        if (this.firebaseAuth.currentUser) {
-            await this.firebaseAuth.signOut();
-        }
     }
     
     onAuthStateChanged(callback: AuthStateChangedCallback): Unsubscribe {
-        if (typeof window === 'undefined') {
-            return () => {}; // No-op on the server
-        }
-
-        const handleStorageAndBroadcast = () => {
-            const session = this.getCurrentSession();
-            callback(session ? this.mapProfileToFirebaseUser(session.user) : null);
-        };
-
-        const handleMessage = (event: MessageEvent) => {
-            if (event.data.type === 'LOGIN' || event.data.type === 'LOGOUT') {
-                handleStorageAndBroadcast();
-            }
-        };
-
-        window.addEventListener('storage', handleStorageAndBroadcast);
-        this.channel?.addEventListener('message', handleMessage);
+        this.authStateCallback = callback;
         
-        // Also check for Google Sign-In state from Firebase
-        const unsubscribeFirebase = this.firebaseAuth.onIdTokenChanged((firebaseUser) => {
-            if (firebaseUser) {
-                // If a Firebase user exists, it takes precedence (e.g., from Google Sign-In)
-                this.clearSession(); // Clear custom session if Google Sign-In is used
-                callback(firebaseUser);
-            } else {
-                // Otherwise, check for our custom session
-                handleStorageAndBroadcast();
-            }
-        });
-
         // Initial check
-        handleStorageAndBroadcast();
+        this.notifyAuthStateChange();
 
+        // The unsubscribe function
         return () => {
-            window.removeEventListener('storage', handleStorageAndBroadcast);
-            this.channel?.removeEventListener('message', handleMessage);
-            unsubscribeFirebase();
+            this.authStateCallback = null;
+            this.channel?.close();
         };
     }
-
+    
+    // These methods are not implemented for the MongoDB adapter and will throw errors if called.
+    // The UI should prevent these calls when the MongoDB provider is active.
     async signInWithGoogle(): Promise<UserProfile> {
-        const provider = new GoogleAuthProvider();
-        const result = await signInWithPopup(this.firebaseAuth, provider);
-        this.clearSession(); // Clear any custom session
-        await this.dbAdapter.ensureUserProfile(result.user);
-        const profile = await this.dbAdapter.getDoc<UserProfile>(`users/${result.user.uid}`);
-        if (!profile) throw new Error("User profile not found after Google Sign-In.");
-        return profile;
+        throw new Error("signInWithGoogle is not supported when AUTH_PROVIDER is mongodb. Use the Firebase provider for this functionality.");
     }
     
     async sendPasswordReset(email: string): Promise<void> {
-        console.warn("Password reset is not implemented for the MongoDB adapter yet.");
         throw new Error("Password reset is not available for this authentication method.");
     }
     
     async reauthenticate(password: string): Promise<void> {
-        console.warn("Reauthentication is not implemented for the MongoDB adapter.");
         throw new Error("Reauthentication is not available for this method.");
     }
 
     async updateUserPassword(newPassword: string): Promise<void> {
-        console.warn("Password update is not implemented for the MongoDB adapter.");
         throw new Error("Password update is not available for this method.");
     }
 
     async getToken(): Promise<string | null> {
-        // If there's a firebase user, get their token
-        if (this.firebaseAuth.currentUser) {
-            return this.firebaseAuth.currentUser.getIdToken();
-        }
-        // Otherwise, get the token from our custom session
         const session = this.getCurrentSession();
         return session?.token || null;
     }

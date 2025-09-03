@@ -39,15 +39,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   const handleAuthChange = useCallback(async (firebaseUser: FirebaseUser | null) => {
+    setLoading(true);
     if (firebaseUser) {
-      // This logic will run for both Firebase Auth and MongoDB (which returns a Firebase-like user object)
+      // Regardless of auth method (Firebase native or our custom token), firebaseUser.uid will be the correct unique ID.
+      // For MongoDB, it's the ObjectId string. For Firebase, it's the Firebase UID.
       const userProfile = await dbAdapter.getDoc<UserProfile>(`users/${firebaseUser.uid}`);
       
       if (userProfile) {
         setUser(userProfile);
       } else {
-        // This case can happen with Google Sign-in for the first time
-        // or if the user was deleted from the DB but not from the auth provider.
+        // This case handles first-time Google Sign-in where a DB profile needs to be created.
         await dbAdapter.ensureUserProfile(firebaseUser);
         const newUserProfile = await dbAdapter.getDoc<UserProfile>(`users/${firebaseUser.uid}`);
         setUser(newUserProfile);
@@ -59,8 +60,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [dbAdapter]);
   
   useEffect(() => {
-    // onAuthStateChanged is now an abstract method that works for both adapters.
-    // The specific adapter (Mongo or Firebase) will handle its own session logic.
+    // onAuthStateChanged works for both adapters.
+    // - FirebaseAdapter uses the native Firebase onIdTokenChanged.
+    // - MongoDbAdapter uses a custom implementation with localStorage and BroadcastChannel.
     setLoading(true);
     const unsubscribe = authAdapter.onAuthStateChanged(handleAuthChange);
     return () => unsubscribe();
@@ -68,24 +70,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   const login: IAuthAdapter['login'] = async (email, password) => {
     setLoading(true);
-    try {
-      const loggedInUser = await authAdapter.login(email, password);
-      // The onAuthStateChanged listener will handle setting the user state.
-      return loggedInUser;
-    } finally {
-      // Don't setLoading(false) here, as the listener will do it.
-    }
+    // The onAuthStateChanged listener will handle setting the user state.
+    return authAdapter.login(email, password);
   };
   
   const signup: IAuthAdapter['signup'] = async (email, password, name) => {
     setLoading(true);
-    try {
-      const signedUpUser = await authAdapter.signup(email, password, name);
-      // The onAuthStateChanged listener will handle setting the user state.
-      return signedUpUser;
-    } finally {
-       // Don't setLoading(false) here, as the listener will do it.
-    }
+    // The onAuthStateChanged listener will handle setting the user state.
+    return authAdapter.signup(email, password, name);
   };
   
   const signInWithGoogle: IAuthAdapter['signInWithGoogle'] = async () => {
@@ -97,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = async () => {
     await authAdapter.logout();
     setUser(null);
-    router.push('/login');
+    // No need to redirect here, AuthGuard will handle it.
   };
 
   const updateUserProfile = async (name: string) => {
