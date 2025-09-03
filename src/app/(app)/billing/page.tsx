@@ -1,3 +1,4 @@
+
 // src/app/(app)/billing/page.tsx
 'use client';
 import { useState } from 'react';
@@ -70,7 +71,7 @@ export default function BillingPage() {
         setUpdatingPlan(newPlan);
         try {
             await updateUserPlanAction(user.uid, newPlan);
-            await refetchPlan(); // Re-fetch plan to update UI
+            // No need to call refetch, the onSnapshot listener in usePlan will update it automatically
             toast({ title: "Plano atualizado com sucesso!", description: `Agora você está no plano ${newPlan}.`});
         } catch (error) {
             toast({ variant: 'destructive', title: 'Erro ao atualizar o plano.' });

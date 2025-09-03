@@ -315,7 +315,8 @@ export async function updateUserPlanAction(userId: string, plan: UserPlan): Prom
     const userRef = adminDb.doc(`users/${userId}`);
     
     // In a real scenario, this would involve payment processing via Stripe, etc.
-    // For this app, we'll just update the plan and reset/grant credits.
+    // For this app, we just update the plan. Credit refills would be handled
+    // by a separate webhook from the payment provider.
     const creditsMap = {
         'Básico': 0,
         'Pro': 100,
@@ -324,6 +325,6 @@ export async function updateUserPlanAction(userId: string, plan: UserPlan): Prom
 
     await userRef.update({
         plan: plan,
-        aiCredits: creditsMap[plan],
+        aiCredits: creditsMap[plan], // Reset credits on plan change
     });
 }
