@@ -61,7 +61,7 @@ const plans: {name: UserPlan, price: string, description: string, features: stri
 
 
 export default function BillingPage() {
-    const { plan: currentUserPlan, isLoading: isPlanLoading, refetchPlan } = usePlan();
+    const { plan: currentUserPlan, isLoading: isPlanLoading } = usePlan();
     const { user } = useAuth();
     const { toast } = useToast();
     const [updatingPlan, setUpdatingPlan] = useState<UserPlan | null>(null);
@@ -71,7 +71,7 @@ export default function BillingPage() {
         setUpdatingPlan(newPlan);
         try {
             await updateUserPlanAction(user.uid, newPlan);
-            // No need to call refetch, the onSnapshot listener in usePlan will update it automatically
+            // O listener onSnapshot no hook usePlan irá atualizar a UI automaticamente.
             toast({ title: "Plano atualizado com sucesso!", description: `Agora você está no plano ${newPlan}.`});
         } catch (error) {
             toast({ variant: 'destructive', title: 'Erro ao atualizar o plano.' });
