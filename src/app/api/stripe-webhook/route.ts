@@ -1,3 +1,4 @@
+
 // src/app/api/stripe-webhook/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
@@ -77,8 +78,10 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
         const adminDb = getAdminApp().firestore();
         const userRef = adminDb.doc(`users/${firebaseUID}`);
         
+        // This logic is for renewals. It resets the credits to the plan's amount.
+        // If you want credits to accumulate, change this to `firestore.FieldValue.increment(creditsMap[plan])`.
         await userRef.update({
-            aiCredits: firestore.FieldValue.increment(creditsMap[plan]), // Add new credits at the start of each billing cycle
+            aiCredits: creditsMap[plan], 
             stripeCurrentPeriodEnd: firestore.Timestamp.fromMillis(subscription.current_period_end * 1000),
         });
 
