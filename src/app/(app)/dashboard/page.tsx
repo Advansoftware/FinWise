@@ -13,6 +13,7 @@ import { SpendingChart } from "@/components/dashboard/spending-chart";
 import { AITipCard } from "@/components/dashboard/ai-tip-card";
 import { AddTransactionSheet } from "@/components/dashboard/add-transaction-sheet";
 import { ScanQRCodeDialog } from "@/components/dashboard/scan-qr-code-dialog";
+import { WalletCard } from "@/components/dashboard/wallet-card";
 
 export default function DashboardPage() {
     const { 
@@ -77,6 +78,7 @@ export default function DashboardPage() {
 
             {isLoading ? <DashboardSkeleton /> : (
                  <div className="grid gap-6">
+                    <WalletCard transactions={filteredTransactions} />
                     <div className="grid md:grid-cols-3 gap-6">
                         <StatsCards transactions={filteredTransactions} />
                     </div>
@@ -97,6 +99,7 @@ export default function DashboardPage() {
 function DashboardSkeleton() {
     return (
         <div className="grid gap-6">
+             <Skeleton className="h-44" />
             <div className="grid md:grid-cols-3 gap-6">
                 <Skeleton className="h-36" />
                 <Skeleton className="h-36" />

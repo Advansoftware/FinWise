@@ -107,11 +107,32 @@ export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTra
         <SheetHeader>
           <SheetTitle>Editar Transação</SheetTitle>
           <SheetDescription>
-            Modifique os detalhes da sua transação.
+            Modifique os detalhes da sua movimentação.
           </SheetDescription>
         </SheetHeader>
         <div className="flex-1 overflow-y-auto pr-6 -mr-6">
             <div className="grid gap-4 py-4">
+                <div className="grid grid-cols-4 items-center gap-4">
+                    <Label className="text-right">Tipo</Label>
+                     <div className="col-span-3 flex items-center justify-around p-1 rounded-full bg-muted">
+                       <Button 
+                            variant={formState.type === 'expense' ? 'destructive' : 'ghost'}
+                            size="sm" 
+                            className="w-full rounded-full"
+                            onClick={() => handleInputChange('type', 'expense')}
+                        >
+                            Despesa
+                        </Button>
+                        <Button 
+                             variant={formState.type === 'income' ? 'default' : 'ghost'}
+                             size="sm" 
+                             className="w-full rounded-full bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 data-[variant=default]:bg-emerald-600 data-[variant=default]:text-white"
+                             onClick={() => handleInputChange('type', 'income')}
+                        >
+                            Receita
+                        </Button>
+                    </div>
+                </div>
                 <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="item" className="text-right">Item</Label>
                     <Input id="item" className="col-span-3" value={formState.item || ''} onChange={(e) => handleInputChange('item', e.target.value)} />

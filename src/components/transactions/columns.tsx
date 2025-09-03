@@ -6,7 +6,7 @@ import { Transaction } from '@/lib/types';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
-import { ArrowUpDown, MoreHorizontal, Pen, Trash2 } from 'lucide-react';
+import { ArrowUpDown, MoreHorizontal, Pen, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '../ui/button';
 import { CategoryIcon } from '../icons';
 import { Checkbox } from '../ui/checkbox';
@@ -25,6 +25,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { cn } from '@/lib/utils';
 
 const ActionsCell = ({ row }: { row: any }) => {
     const transaction = row.original as Transaction;
@@ -142,10 +143,14 @@ export const columns: ColumnDef<Transaction>[] = [
     header: 'Item',
     cell: ({ row }) => {
       const establishment = row.original.establishment;
+      const type = row.original.type;
       return (
-        <div>
-          <div className="font-medium">{row.getValue('item')}</div>
-          {establishment && <div className="text-xs text-muted-foreground">{establishment}</div>}
+        <div className="flex items-center gap-2">
+           {type === 'income' ? <ArrowDown className="text-emerald-500 h-4 w-4"/> : <ArrowUp className="text-red-500 h-4 w-4"/>}
+          <div>
+            <div className="font-medium">{row.getValue('item')}</div>
+            {establishment && <div className="text-xs text-muted-foreground">{establishment}</div>}
+          </div>
         </div>
       )
     },
@@ -201,12 +206,20 @@ export const columns: ColumnDef<Transaction>[] = [
     },
     cell: ({ row }) => {
       const amount = parseFloat(row.getValue('amount'));
+      const type = row.original.type;
+
       const formatted = new Intl.NumberFormat('pt-BR', {
         style: 'currency',
         currency: 'BRL',
       }).format(amount);
 
-      return <div className="text-right font-medium text-red-400/90 whitespace-nowrap">{formatted}</div>;
+      return (
+        <div className={cn("text-right font-medium whitespace-nowrap",
+          type === 'income' ? 'text-emerald-500' : 'text-red-500/90'
+        )}>
+          {type === 'income' ? '+' : '-'} {formatted}
+        </div>
+      );
     },
     size: 50,
   },

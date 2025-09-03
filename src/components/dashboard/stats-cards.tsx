@@ -18,19 +18,22 @@ const generateSparklineData = (transactions: Transaction[]) => {
 
     sorted.forEach(t => {
         const date = t.date.split('T')[0];
-        dailyTotals[date] = (dailyTotals[date] || 0) + t.amount;
+        dailyTotals[date] = (dailyTotals[date] || 0) + (t.type === 'income' ? t.amount : -t.amount);
     });
 
     return Object.entries(dailyTotals).map(([date, total]) => ({ date, total }));
 }
 
-const ChartSparkline = ({ data, positive = false }: { data: any[], positive?: boolean}) => (
+const ChartSparkline = ({ data }: { data: any[]}) => {
+    const isPositive = data.length > 0 && data[data.length-1].total >= 0;
+
+    return (
     <ResponsiveContainer width="100%" height={40}>
         <AreaChart data={data}>
             <defs>
-                <linearGradient id={positive ? "colorPositive" : "colorNegative"} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor={positive ? "hsl(var(--chart-1))" : "hsl(var(--destructive))"} stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor={positive ? "hsl(var(--chart-1))" : "hsl(var(--destructive))"} stopOpacity={0}/>
+                <linearGradient id={isPositive ? "colorPositive" : "colorNegative"} x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor={isPositive ? "hsl(var(--chart-2))" : "hsl(var(--destructive))"} stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor={isPositive ? "hsl(var(--chart-2))" : "hsl(var(--destructive))"} stopOpacity={0}/>
                 </linearGradient>
             </defs>
             <Tooltip
@@ -45,19 +48,23 @@ const ChartSparkline = ({ data, positive = false }: { data: any[], positive?: bo
             <Area 
                 type="monotone" 
                 dataKey="total" 
-                stroke={positive ? "hsl(var(--chart-1))" : "hsl(var(--destructive))"}
+                stroke={isPositive ? "hsl(var(--chart-2))" : "hsl(var(--destructive))"}
                 strokeWidth={2}
                 fillOpacity={1} 
-                fill={`url(#${positive ? "colorPositive" : "colorNegative"})`}
+                fill={`url(#${isPositive ? "colorPositive" : "colorNegative"})`}
             />
         </AreaChart>
     </ResponsiveContainer>
-);
+)};
 
 export function StatsCards({ transactions }: StatsCardsProps) {
-  const totalSpending = transactions.reduce((sum, t) => sum + t.amount, 0);
+  const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+  const totalExpense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+  const balance = totalIncome - totalExpense;
 
-  const topCategoryMap = transactions
+  const expenseTransactions = transactions.filter(t => t.type === 'expense');
+
+  const topCategoryMap = expenseTransactions
     .reduce((acc, t) => {
         acc[t.category] = (acc[t.category] || 0) + t.amount;
         return acc;
@@ -76,17 +83,16 @@ export function StatsCards({ transactions }: StatsCardsProps) {
   
   const sparklineData = generateSparklineData(transactions);
 
-
   return (
     <>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Gasto no Período</CardTitle>
+          <CardTitle className="text-sm font-medium">Balanço do Período</CardTitle>
           <DollarSign className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">R$ {totalSpending.toFixed(2)}</div>
-          <p className="text-xs text-muted-foreground">Soma das transações filtradas</p>
+          <div className="text-2xl font-bold">R$ {balance.toFixed(2)}</div>
+          <p className="text-xs text-muted-foreground">Receitas vs Despesas</p>
            <div className="mt-2 h-[40px]">
              <ChartSparkline data={sparklineData} />
            </div>
@@ -94,7 +100,7 @@ export function StatsCards({ transactions }: StatsCardsProps) {
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Principal Categoria</CardTitle>
+          <CardTitle className="text-sm font-medium">Principal Categoria (Gastos)</CardTitle>
           <TrendingUp className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
@@ -105,7 +111,7 @@ export function StatsCards({ transactions }: StatsCardsProps) {
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Menor Categoria</CardTitle>
+          <CardTitle className="text-sm font-medium">Menor Categoria (Gastos)</CardTitle>
           <TrendingDown className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>

@@ -84,6 +84,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
           id: doc.id, 
           ...data,
           date: dateValue,
+          type: data.type || 'expense', // Default to expense if type is missing
         } as Transaction);
       });
       setAllTransactions(transactions);
@@ -110,6 +111,9 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
             "Educação": ["Cursos", "Livros", "Mensalidade"],
             "Lazer": ["Viagem", "Passeios", "Hobbies"],
             "Vestuário": ["Roupas", "Calçados", "Acessórios"],
+            "Salário": [],
+            "Vendas": [],
+            "Investimentos": [],
             "Outros": ["Presentes", "Serviços", "Impostos"],
         };
         await setDoc(categoriesDocRef, defaultCategories);
@@ -250,10 +254,8 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
         ? transactionDate >= dateRange.from && transactionDate <= toDate
         : true;
 
-      // Make category check more robust: it must exist and match, or filter is 'all'
       const categoryCondition = selectedCategory === 'all' || (t.category && t.category === selectedCategory);
 
-      // Make subcategory check more robust
       const subcategoryCondition = selectedCategory === 'all'
         || selectedSubcategory === 'all'
         || (t.subcategory && t.subcategory === selectedSubcategory);
@@ -263,15 +265,17 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   }, [allTransactions, dateRange, selectedCategory, selectedSubcategory]);
 
   const chartData = useMemo(() => {
+    const expenseTransactions = filteredTransactions.filter(t => t.type === 'expense');
+    
     if (selectedCategory === 'all') {
-      const categoryTotals = filteredTransactions.reduce((acc, t) => {
+      const categoryTotals = expenseTransactions.reduce((acc, t) => {
         const key = t.category || "Outros";
         acc[key] = (acc[key] || 0) + t.amount;
         return acc;
       }, {} as Record<string, number>);
       return Object.entries(categoryTotals).map(([name, total]) => ({ name, total }));
     } else {
-      const subcategoryTotals = filteredTransactions
+      const subcategoryTotals = expenseTransactions
         .filter(t => t.category === selectedCategory)
         .reduce((acc, t) => {
           const key = t.subcategory || 'Sem Subcategoria';

@@ -7,13 +7,14 @@ import { Badge } from '../ui/badge';
 import { CategoryIcon } from '../icons';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { MoreVertical, Pen, Trash2 } from 'lucide-react';
+import { MoreVertical, Pen, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
 import { Button } from '../ui/button';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
 import { EditTransactionSheet } from './edit-transaction-sheet';
 import { useTransactions } from '@/hooks/use-transactions';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 interface TransactionCardListProps {
   transactions: Transaction[];
@@ -80,8 +81,13 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
         <CardHeader className="p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-secondary rounded-full">
-                <CategoryIcon category={transaction.category} className="h-5 w-5" />
+              <div className={cn("p-2 rounded-full",
+                transaction.type === 'income' ? 'bg-emerald-500/20' : 'bg-secondary'
+              )}>
+                {transaction.type === 'income' ? 
+                  <ArrowDown className="h-5 w-5 text-emerald-400"/> : 
+                  <CategoryIcon category={transaction.category} className="h-5 w-5" />
+                }
               </div>
               <div className="flex-1">
                 <p className="font-semibold">{transaction.item}</p>
@@ -109,7 +115,11 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
           <div className="flex items-end justify-between">
             <div>
               <p className="text-xs text-muted-foreground">Valor</p>
-              <p className="text-lg font-bold text-red-400">-R$ {transaction.amount.toFixed(2)}</p>
+              <p className={cn("text-lg font-bold", 
+                transaction.type === 'income' ? 'text-emerald-400' : 'text-red-400'
+              )}>
+                {transaction.type === 'income' ? '+' : '-'}R$ {transaction.amount.toFixed(2)}
+              </p>
             </div>
             <div className="flex items-center gap-2">
                 <Badge variant="outline">{transaction.category}</Badge>
