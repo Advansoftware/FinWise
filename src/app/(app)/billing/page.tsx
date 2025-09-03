@@ -11,12 +11,14 @@ const plans = [
     {
         name: "Básico",
         price: "Grátis",
-        description: "Para quem está começando a organizar as finanças.",
+        description: "Controle financeiro manual completo para quem está começando.",
         features: [
             "Dashboard interativo",
             "Transações ilimitadas",
+            "Múltiplas carteiras e contas",
+            "Orçamentos manuais por categoria",
+            "Metas de economia",
             "Gerenciamento de categorias",
-            "Análises com IA (10/mês)",
         ],
         cta: "Seu Plano Atual",
         isCurrent: true,
@@ -24,11 +26,12 @@ const plans = [
     {
         name: "Pro",
         price: "R$ 19,90/mês",
-        description: "Para controle total e insights avançados.",
+        description: "Eficiência e insights para otimizar seu tempo e dinheiro.",
         features: [
-            "Tudo do plano Básico",
+            "Tudo do plano Básico, e mais:",
             "Análises e dicas com IA ilimitadas",
             "Assistente de Chat com IA",
+            "Relatórios inteligentes (Mensal/Anual)",
             "Escanear notas fiscais (OCR)",
             "Importação de extratos (CSV, OFX)",
             "Suporte prioritário",
@@ -39,13 +42,13 @@ const plans = [
     {
         name: "Plus",
         price: "R$ 39,90/mês",
-        description: "Para usuários avançados e planejamento futuro.",
+        description: "O piloto automático para sua vida financeira com IA preditiva.",
         features: [
-            "Tudo do plano Pro",
-            "Orçamentos inteligentes com IA",
-            "Previsão de gastos futuros",
-            "Múltiplas carteiras/contas",
-            "Exportação avançada de relatórios",
+            "Tudo do plano Pro, e mais:",
+            "Orçamentos inteligentes e automáticos",
+            "Previsão de gastos e saldos futuros",
+            "Conciliação automática de transações",
+            "Projeção de alcance de metas",
             "Acesso a novos recursos beta",
         ],
         cta: "Fazer Upgrade",
@@ -65,16 +68,17 @@ export default function BillingPage() {
                 <p className="text-muted-foreground">Gerencie seu plano e informações de pagamento.</p>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
                 {plans.map(plan => (
                      <Card 
                         key={plan.name} 
-                        className={`flex flex-col ${plan.name === currentUserPlan ? 'border-primary shadow-lg' : ''}`}
+                        className={`flex flex-col ${plan.name === 'Pro' ? 'border-primary shadow-lg' : ''}`}
                      >
                         <CardHeader>
                             <div className="flex justify-between items-center">
                                 <CardTitle>{plan.name}</CardTitle>
                                 {plan.name === currentUserPlan && <Badge variant="secondary">Plano Atual</Badge>}
+                                {plan.name === 'Pro' && <Badge>Mais Popular</Badge>}
                             </div>
                             <CardDescription>{plan.description}</CardDescription>
                         </CardHeader>
@@ -90,7 +94,7 @@ export default function BillingPage() {
                              </ul>
                         </CardContent>
                         <CardFooter>
-                            <Button className="w-full" disabled={plan.name === currentUserPlan}>
+                            <Button className="w-full" disabled={plan.name === currentUserPlan} variant={plan.name === 'Pro' ? 'default' : 'outline'}>
                                 {plan.cta}
                             </Button>
                         </CardFooter>

@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useEffect } from 'react';
@@ -177,7 +176,7 @@ export default function Page() {
                           Um plano para cada jornada financeira
                       </h2>
                       <p className="mt-4 text-lg text-muted-foreground text-center max-w-xl mx-auto">
-                        Comece gratuitamente e evolua seu controle financeiro com recursos de IA avançados.
+                        Comece gratuitamente com todas as ferramentas essenciais e evolua seu controle com o poder da IA.
                       </p>
                   </motion.div>
 
@@ -186,12 +185,15 @@ export default function Page() {
                           {
                               name: "Básico",
                               price: "Grátis",
-                              description: "Para quem está começando a organizar as finanças.",
+                              priceDetail: " para sempre",
+                              description: "Controle financeiro manual completo para quem está começando.",
                               features: [
                                   "Dashboard interativo",
                                   "Transações ilimitadas",
+                                  "Múltiplas carteiras e contas",
+                                  "Orçamentos manuais por categoria",
+                                  "Metas de economia",
                                   "Gerenciamento de categorias",
-                                  "Análises com IA (10/mês)",
                               ],
                               cta: "Começar Agora",
                               variant: "outline"
@@ -200,14 +202,15 @@ export default function Page() {
                               name: "Pro",
                               price: "R$ 19,90",
                               priceDetail: "/mês",
-                              description: "Para controle total e insights avançados com IA.",
+                              description: "Eficiência e insights para otimizar seu tempo e dinheiro.",
                               features: [
                                   "Tudo do plano Básico, e mais:",
                                   "Análises e dicas com IA ilimitadas",
                                   "Assistente de Chat com IA",
+                                  "Relatórios inteligentes (Mensal/Anual)",
                                   "Escanear notas fiscais (OCR)",
                                   "Importação de extratos (CSV, OFX)",
-                                  "Suporte prioritário"
+                                  "Suporte prioritário",
                               ],
                               cta: "Fazer Upgrade",
                               variant: "default",
@@ -217,14 +220,14 @@ export default function Page() {
                               name: "Plus",
                               price: "R$ 39,90",
                               priceDetail: "/mês",
-                              description: "Para usuários avançados e planejamento futuro.",
+                              description: "O piloto automático para sua vida financeira com IA preditiva.",
                               features: [
                                   "Tudo do plano Pro, e mais:",
-                                  "Orçamentos inteligentes com IA",
-                                  "Previsão de gastos futuros",
-                                  "Múltiplas carteiras/contas",
-                                  "Exportação avançada de relatórios",
-                                  "Acesso a novos recursos beta"
+                                  "Orçamentos inteligentes e automáticos",
+                                  "Previsão de gastos e saldos futuros",
+                                  "Conciliação automática de transações",
+                                  "Projeção de alcance de metas",
+                                  "Acesso a novos recursos beta",
                               ],
                               cta: "Assinar o Plus",
                               variant: "outline"
