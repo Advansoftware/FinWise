@@ -19,8 +19,6 @@ export class MongoDbAdapter implements IDatabaseAdapter {
         const authAdapter = getAuthAdapter();
         const token = await authAdapter.getToken();
         if (!token) {
-            // This case might happen during public page loads before auth state is known.
-            // API routes should handle requests without tokens gracefully (e.g., return 401).
             return {};
         }
         return { 'Authorization': `Bearer ${token}` };
@@ -41,7 +39,6 @@ export class MongoDbAdapter implements IDatabaseAdapter {
                         callback(data as T[]);
                     }
                 } else if (response.status === 401) {
-                    // User is not authenticated, clear the data
                     if(isSubscribed) {
                         callback([]);
                     }
@@ -54,10 +51,8 @@ export class MongoDbAdapter implements IDatabaseAdapter {
             }
         };
 
-        // Polling as a fallback for real-time, since SSE from Next.js API routes can be tricky.
-        const intervalId = setInterval(fetchData, 10000); // Poll every 10 seconds
+        const intervalId = setInterval(fetchData, 10000); 
 
-        // Initial fetch
         fetchData();
         
         const unsubscribe = () => {
@@ -72,12 +67,11 @@ export class MongoDbAdapter implements IDatabaseAdapter {
         const path = docPath.replace('users/USER_ID/', '');
         const response = await fetch(getApiUrl(path), { headers: await this.getAuthHeader() });
         if (!response.ok) {
-            if (response.status === 401) return null; // Not authorized means no doc
+            if (response.status === 401) return null;
             if (response.status === 404) return null;
             throw new Error(`Failed to get doc: ${await response.text()}`);
         }
         const data = await response.json();
-        // The API returns the document with _id. Map it to id and uid for consistency with Firebase adapter.
         if (data && data._id) {
             data.id = data._id;
             data.uid = data._id;
@@ -132,7 +126,6 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     }
 
     increment(value: number): any {
-       // This needs to be handled by the API. The API will receive a special object indicating an increment operation.
        return { __op: 'Increment', value };
     }
 

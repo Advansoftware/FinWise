@@ -36,32 +36,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const authAdapter = getAuthAdapter();
   const dbAdapter = getDatabaseAdapter();
-  const router = useRouter();
 
   const handleAuthChange = useCallback(async (firebaseUser: FirebaseUser | null) => {
     if (firebaseUser) {
-      // Regardless of auth method (Firebase native or our custom token), firebaseUser.uid will be the correct unique ID.
-      // For MongoDB, it's the ObjectId string. For Firebase, it's the Firebase UID.
       const userProfile = await dbAdapter.getDoc<UserProfile>(`users/${firebaseUser.uid}`);
-      
       if (userProfile) {
         setUser(userProfile);
       } else {
-        // This case should not be hit with the current backend logic, but remains as a safe fallback.
-        // The backend should always create the user profile on signup.
-        console.warn(`Profile for user ${firebaseUser.uid} not found in DB. Auth flow might be incorrect.`);
+        console.warn(`Profile for user ${firebaseUser.uid} not found in DB. Logging out.`);
+        await authAdapter.logout();
         setUser(null);
       }
     } else {
       setUser(null);
     }
     setLoading(false);
-  }, [dbAdapter]);
+  }, [dbAdapter, authAdapter]);
   
   useEffect(() => {
-    // onAuthStateChanged works for both adapters.
-    // - FirebaseAdapter uses the native Firebase onIdTokenChanged.
-    // - MongoDbAdapter uses a custom implementation with BroadcastChannel.
     setLoading(true);
     const unsubscribe = authAdapter.onAuthStateChanged(handleAuthChange);
     return () => unsubscribe();
@@ -69,26 +61,49 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   const login: IAuthAdapter['login'] = async (email, password) => {
     setLoading(true);
-    // The onAuthStateChanged listener will handle setting the user state.
-    await authAdapter.login(email, password);
+    try {
+      const loggedInUser = await authAdapter.login(email, password);
+      setUser(loggedInUser);
+      return loggedInUser;
+    } catch (error) {
+      setUser(null);
+      throw error; // Re-throw for the component to handle
+    } finally {
+      setLoading(false);
+    }
   };
   
   const signup: IAuthAdapter['signup'] = async (email, password, name) => {
     setLoading(true);
-    // The onAuthStateChanged listener will handle setting the user state.
-    await authAdapter.signup(email, password, name);
+    try {
+      const newUser = await authAdapter.signup(email, password, name);
+      setUser(newUser);
+      return newUser;
+    } catch (error) {
+       setUser(null);
+       throw error;
+    } finally {
+      setLoading(false);
+    }
   };
   
   const signInWithGoogle: IAuthAdapter['signInWithGoogle'] = async () => {
     setLoading(true);
-    // Google Sign-In will be handled by the onAuthStateChanged listener
-    return await authAdapter.signInWithGoogle();
+    try {
+      const googleUser = await authAdapter.signInWithGoogle();
+      setUser(googleUser);
+      return googleUser;
+    } catch (error) {
+      setUser(null);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
   };
 
   const logout = async () => {
     await authAdapter.logout();
     setUser(null);
-    // No need to redirect here, AuthGuard will handle it.
   };
 
   const updateUserProfile = async (name: string) => {

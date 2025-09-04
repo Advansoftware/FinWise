@@ -24,7 +24,7 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
         }
     }
 
-    async login(email: string, pass: string): Promise<void> {
+    async login(email: string, pass: string): Promise<UserProfile> {
         const response = await fetch('/api/users/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -35,10 +35,10 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
             throw new Error(data.error || "Login failed");
         }
         await this.exchangeCustomToken(data.token);
-        // The onAuthStateChanged listener will now handle setting user state correctly
+        return data.user;
     }
 
-    async signup(email: string, pass: string, name: string): Promise<void> {
+    async signup(email: string, pass: string, name: string): Promise<UserProfile> {
          const response = await fetch('/api/users/signup', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -49,7 +49,7 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
             throw new Error(data.error || "Signup failed");
         }
         await this.exchangeCustomToken(data.token);
-         // The onAuthStateChanged listener will now handle setting user state correctly
+        return data.user;
     }
 
     async logout(): Promise<void> {
@@ -57,9 +57,6 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
     }
     
     onAuthStateChanged(callback: AuthStateChangedCallback): Unsubscribe {
-        // We now solely rely on Firebase's auth state listener.
-        // After signInWithCustomToken, this will fire with the authenticated user,
-        // which contains the correct ID token.
         return this.auth.onIdTokenChanged(callback);
     }
     
@@ -87,7 +84,6 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
         if (!this.auth.currentUser) {
             return null;
         }
-        // This now correctly returns the ID token after it has been exchanged.
         return await this.auth.currentUser.getIdToken();
     }
 }

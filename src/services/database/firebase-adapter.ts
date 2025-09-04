@@ -45,8 +45,6 @@ export class FirebaseAdapter implements IDatabaseAdapter {
     }
 
     private resolvePath(path: string): string {
-        // Only attempt to resolve path if a user is logged in.
-        // This allows for edge cases where we might read public data (not applicable here, but good practice).
         if (this.auth.currentUser) {
             return path.replace('USER_ID', this.getUserId());
         }
@@ -104,7 +102,7 @@ export class FirebaseAdapter implements IDatabaseAdapter {
                     data[key] = data[key].toDate().toISOString();
                 }
             });
-            return { id: docSnap.id, uid: docSnap.id, ...data } as T; // add uid for consistency
+            return { id: docSnap.id, uid: docSnap.id, ...data } as T;
         }
         return null;
     }
