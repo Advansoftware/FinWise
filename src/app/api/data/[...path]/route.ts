@@ -61,17 +61,13 @@ async function handler(
     if (authProvider === 'firebase') {
         userId = await getUserIdFromToken(request);
     } else {
-        // For MongoDB, we trust the userId from the path, as it's coupled with the session on the client.
-        // The real security happens in the database query, which always filters by this userId.
+        const { searchParams } = new URL(request.url);
         const [collectionName, docOrUserId] = params.path;
-        if(collectionName === 'users') {
+        
+        if (collectionName === 'users' && docOrUserId) {
              userId = docOrUserId;
-        } else {
-             // For other collections, the userId might be passed differently, need a consistent way.
-             // Let's assume for now the user ID is the third path segment for nested collections.
-             if(params.path.length > 2 && params.path[0] === 'users') {
-                userId = params.path[1];
-             }
+        } else if (searchParams.has('userId')) {
+            userId = searchParams.get('userId');
         }
     }
    

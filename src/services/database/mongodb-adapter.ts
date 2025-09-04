@@ -48,7 +48,7 @@ export class MongoDbAdapter implements IDatabaseAdapter {
                 return;
             };
             try {
-                // When using Mongo, we pass the user ID in the path for collection queries
+                // For collection queries, we append the userId as a query parameter
                 const pathWithUser = `${resolvedPath}?userId=${this.auth.currentUser.uid}`;
                 const headers = await this.getHeaders();
                 const response = await fetch(getApiUrl(pathWithUser), { headers });
