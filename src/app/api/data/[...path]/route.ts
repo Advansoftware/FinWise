@@ -55,34 +55,37 @@ async function handler(
 ) {
     const { db } = await connectToDatabase();
     const authProvider = process.env.NEXT_PUBLIC_AUTH_PROVIDER || 'firebase';
-    const { searchParams } = new URL(request.url);
-
-    let userId: string | null = null;
-    const [collectionName, docId, ...rest] = params.path;
-
+    
+    let authenticatedUserId: string | null = null;
+    
     if (authProvider === 'firebase') {
-        userId = await getUserIdFromToken(request);
-    } else { 
-        userId = searchParams.get('userId');
+        authenticatedUserId = await getUserIdFromToken(request);
+    } else { // mongodb
+        const { searchParams } = new URL(request.url);
+        authenticatedUserId = searchParams.get('userId');
     }
    
-    if (!userId) {
+    if (!authenticatedUserId) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
+    const [collectionName, docId, ...rest] = params.path;
     let query: any = {};
-    
+
     if (collectionName === 'users') {
-        if (docId !== userId) {
-            return NextResponse.json({ error: 'Permission denied to access other user data' }, { status: 403 });
+        // A user can only access their own document.
+        // The docId in the path MUST match the authenticated user's ID.
+        if (docId !== authenticatedUserId) {
+             return NextResponse.json({ error: 'Permission denied to access other user data' }, { status: 403 });
         }
         try {
-            query = { _id: new ObjectId(docId) };
+            query._id = new ObjectId(docId);
         } catch (e) {
-            query = { _id: docId };
+            query._id = docId;
         }
     } else {
-        query = { userId };
+        // For all other collections, filter by the authenticated user's ID.
+        query.userId = authenticatedUserId;
         if (docId) { 
             try {
                query._id = new ObjectId(docId);
@@ -104,14 +107,14 @@ async function handler(
                 if (!item) return NextResponse.json({ error: 'Not found or permission denied' }, { status: 404 });
                 return NextResponse.json(item);
             } else { // Collection request
-                const items = await collection.find({ userId }).toArray();
+                const items = await collection.find({ userId: authenticatedUserId }).toArray();
                 return NextResponse.json(items);
             }
         }
 
         if (request.method === 'POST') {
             const body = await request.json();
-            const result = await collection.insertOne({ ...body, userId, createdAt: new Date() });
+            const result = await collection.insertOne({ ...body, userId: authenticatedUserId, createdAt: new Date() });
             return NextResponse.json({ insertedId: result.insertedId }, { status: 201 });
         }
 
@@ -127,7 +130,7 @@ async function handler(
                     delete body.email;
                     delete body.createdAt;
                  }
-                 updateOps = { $set: { ...body, userId } };
+                 updateOps = { $set: { ...body, userId: authenticatedUserId } };
             } else { // PATCH
                 updateOps = processUpdates(body);
                 if (!updateOps) {
