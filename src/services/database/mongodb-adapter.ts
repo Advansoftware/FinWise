@@ -1,3 +1,4 @@
+
 // src/services/database/mongodb-adapter.ts
 
 import { DocumentData } from "firebase/firestore";
@@ -107,7 +108,7 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     async addDoc<T extends DocumentData>(collectionPath: string, data: T): Promise<string> {
         if (!this.auth.currentUser) throw new Error("User not authenticated");
         const headers = await this.getHeaders();
-        const apiUrl = getApiUrl(collectionPath, this.auth.currentUser.uid);
+        const apiUrl = getApiul(collectionPath, this.auth.currentUser.uid);
         const response = await fetch(apiUrl, {
             method: 'POST',
             headers,
