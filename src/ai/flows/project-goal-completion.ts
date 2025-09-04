@@ -1,3 +1,4 @@
+
 'use server';
 /**
  * @fileOverview An AI flow to project the completion date for a financial goal.
@@ -5,7 +6,6 @@
  * - projectGoalCompletion - A function that handles the goal projection process.
  */
 import { z } from 'zod';
-import { ai } from '@/ai/genkit';
 import { createConfiguredAI, getModelReference } from '../genkit';
 import {
   ProjectGoalCompletionInputSchema,
@@ -59,8 +59,8 @@ export async function projectGoalCompletion(input: ProjectGoalCompletionInput, c
 
   const prompt = configuredAI.definePrompt({
     name: 'projectGoalPrompt',
-    input: { schema: ProjectGoalCompletionInputSchema },
-    output: { schema: ProjectGoalCompletionOutputSchema },
+    input: { schema: ProjectGoalCompletionInputSchema as z.ZodTypeAny },
+    output: { schema: ProjectGoalCompletionOutputSchema as z.ZodTypeAny },
     model: model,
     prompt: promptTemplate,
   });

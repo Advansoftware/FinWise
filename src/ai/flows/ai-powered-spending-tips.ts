@@ -5,6 +5,7 @@
  *
  * - generateSpendingTip - A function that generates personalized spending tips based on user spending habits.
  */
+import { z } from 'zod';
 import { SpendingTipInputSchema, SpendingTipOutputSchema } from '../ai-types';
 import type { SpendingTipInput } from '../ai-types';
 import { createConfiguredAI, getModelReference } from '../genkit';
@@ -28,8 +29,8 @@ export async function generateSpendingTip(input: SpendingTipInput, credential: A
     
     const prompt = configuredAI.definePrompt({
         name: 'generateSpendingTipPrompt',
-        input: { schema: SpendingTipInputSchema },
-        output: { schema: SpendingTipOutputSchema },
+        input: { schema: SpendingTipInputSchema as z.ZodTypeAny },
+        output: { schema: SpendingTipOutputSchema as z.ZodTypeAny },
         model: model,
         prompt: promptTemplate
     });

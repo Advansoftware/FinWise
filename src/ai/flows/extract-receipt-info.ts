@@ -5,6 +5,7 @@
  *
  * - extractReceiptInfo - A function that handles the receipt information extraction process.
  */
+import { z } from 'zod';
 import { ReceiptInfoInputSchema, ReceiptInfoOutputSchema } from '../ai-types';
 import type { ReceiptInfoInput } from '../ai-types';
 import { createConfiguredAI, getModelReference } from '../genkit';
@@ -31,8 +32,8 @@ export async function extractReceiptInfo(input: ReceiptInfoInput, credential: AI
     
     const extractReceiptInfoPrompt = configuredAI.definePrompt({
         name: 'extractReceiptInfoPrompt',
-        input: {schema: ReceiptInfoInputSchema},
-        output: {schema: ReceiptInfoOutputSchema},
+        input: {schema: ReceiptInfoInputSchema as z.ZodTypeAny},
+        output: {schema: ReceiptInfoOutputSchema as z.ZodTypeAny},
         model: model,
         prompt: promptTemplate,
     });

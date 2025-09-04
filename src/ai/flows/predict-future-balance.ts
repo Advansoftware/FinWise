@@ -5,6 +5,7 @@
  *
  * - predictFutureBalance - A function that handles the future balance prediction process.
  */
+import { z } from 'zod';
 import { AICredential } from '@/lib/types';
 import { createConfiguredAI, getModelReference } from '../genkit';
 import { PredictFutureBalanceInput, PredictFutureBalanceInputSchema, PredictFutureBalanceOutputSchema } from '../ai-types';
@@ -58,8 +59,8 @@ export async function predictFutureBalance(input: PredictFutureBalanceInput, cre
 
     const predictBalancePrompt = configuredAI.definePrompt({
         name: 'predictFutureBalancePrompt',
-        input: {schema: PredictFutureBalanceInputSchema},
-        output: {schema: PredictFutureBalanceOutputSchema},
+        input: {schema: PredictFutureBalanceInputSchema as z.ZodTypeAny},
+        output: {schema: PredictFutureBalanceOutputSchema as z.ZodTypeAny},
         model: model,
         prompt: finalPrompt,
     });

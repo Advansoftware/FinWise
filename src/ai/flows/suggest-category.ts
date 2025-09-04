@@ -5,6 +5,7 @@
  *
  * - suggestCategoryForItem - A function that handles the category suggestion process.
  */
+import { z } from 'zod';
 import { SuggestCategoryInputSchema, SuggestCategoryOutputSchema } from '../ai-types';
 import type { SuggestCategoryInput } from '../ai-types';
 import { createConfiguredAI, getModelReference } from '../genkit';
@@ -37,8 +38,8 @@ export async function suggestCategoryForItem(input: SuggestCategoryInput, creden
     
     const suggestCategoryPrompt = configuredAI.definePrompt({
         name: 'suggestCategoryPrompt',
-        input: {schema: SuggestCategoryInputSchema},
-        output: {schema: SuggestCategoryOutputSchema},
+        input: {schema: SuggestCategoryInputSchema as z.ZodTypeAny},
+        output: {schema: SuggestCategoryOutputSchema as z.ZodTypeAny},
         model: model,
         prompt: promptTemplate,
     });
