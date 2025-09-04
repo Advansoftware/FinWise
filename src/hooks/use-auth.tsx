@@ -1,3 +1,4 @@
+
 // src/hooks/use-auth.tsx
 'use client';
 
@@ -43,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         let userProfile = await dbAdapter.getDoc<UserProfile>(`users/${firebaseUser.uid}`);
         
         if (!userProfile) {
+            console.log(`No profile for ${firebaseUser.uid}, creating...`);
             const newUserProfileData: Omit<UserProfile, 'uid'|'id'> = {
                 email: firebaseUser.email,
                 displayName: firebaseUser.displayName,

@@ -1,3 +1,4 @@
+
 // src/app/api/data/[...path]/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -10,7 +11,10 @@ async function getUserIdFromToken(request: NextRequest): Promise<string | null> 
     if (!authHeader?.startsWith('Bearer ')) return null;
 
     const idToken = authHeader.split('Bearer ')[1];
+    if (!idToken) return null;
+
     try {
+        // This verifies the ID token that the Firebase client SDK generates.
         const decodedToken = await getAdminApp().auth().verifyIdToken(idToken);
         return decodedToken.uid;
     } catch (error) {
@@ -45,26 +49,21 @@ async function handler(
     try {
         let query: any = {};
         
-        // Security layer: Ensure the query always filters by the authenticated user's ID
+        // When accessing the 'users' collection, the document ID must be the authenticated user's ID.
         if (collectionName === 'users') {
-            // A user can only access their own user document.
             if (docId !== authenticatedUserId) {
                 return NextResponse.json({ error: 'Permission denied to access other user data' }, { status: 403 });
             }
-             try {
-                // Find user by their ObjectId, which is the authenticated user's ID.
-                query._id = new ObjectId(authenticatedUserId);
-            } catch (e) {
-                // If the ID is not a valid ObjectId (like in Firebase), use it as is.
-                query._id = authenticatedUserId;
-            }
+            // A user can only access their own user document.
+            query._id = new ObjectId(authenticatedUserId);
         } else {
-            // For other collections, filter by the userId field.
+            // For all other collections, filter by the userId field.
             query.userId = authenticatedUserId;
             if (docId) { 
                 try {
                    query._id = new ObjectId(docId);
                 } catch(e) {
+                     // Fallback for non-ObjectId compatible IDs if necessary
                      query._id = docId;
                 }
             }

@@ -1,3 +1,4 @@
+
 // src/services/auth/mongodb-auth-adapter.ts
 
 import { IAuthAdapter, AuthStateChangedCallback, Unsubscribe } from "./auth-adapter";

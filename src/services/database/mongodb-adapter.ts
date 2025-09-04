@@ -1,3 +1,4 @@
+
 // src/services/database/mongodb-adapter.ts
 
 import { DocumentData } from "firebase/firestore";
@@ -8,10 +9,14 @@ import { Auth } from "firebase/auth";
 // Helper to construct API URL, ensuring userId is always a query parameter.
 const getApiUrl = (path: string, userId: string): string => {
     const cleanPath = path.startsWith('/') ? path.substring(1) : path;
-    const baseUrl = `/api/data/${cleanPath}`;
+    let baseUrl = `/api/data/${cleanPath}`;
     
+    // Add the userId as a query parameter.
+    // This simplifies the backend logic to always expect the userId in the query.
     const separator = baseUrl.includes('?') ? '&' : '?';
-    return `${baseUrl}${separator}userId=${userId}`;
+    baseUrl = `${baseUrl}${separator}userId=${userId}`;
+
+    return baseUrl;
 };
 
 
@@ -24,10 +29,12 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     }
     
     private async getHeaders(): Promise<Record<string, string>> {
+        // This function is now the gatekeeper. It ensures we don't proceed without a valid ID token.
         if (!this.auth.currentUser) {
-            // Wait for user to be available
+            // This is a race condition scenario. We wait for a short period for the user state to propagate.
+            // A more robust solution might involve an event emitter or a state manager promise.
             await new Promise<void>(resolve => {
-                const unsubscribe = this.auth.onAuthStateChanged(user => {
+                const unsubscribe = this.auth.onIdTokenChanged(user => {
                     if (user) {
                         unsubscribe();
                         resolve();
@@ -37,10 +44,10 @@ export class MongoDbAdapter implements IDatabaseAdapter {
         }
         
         if (!this.auth.currentUser) {
-            throw new Error("User not authenticated to make API requests.");
+            throw new Error("User not authenticated. Cannot make API requests.");
         }
         
-        // Force refresh the token to ensure we are sending a valid ID token.
+        // Force refresh the token to ensure we are sending a valid ID token, not a custom token.
         const token = await this.auth.currentUser.getIdToken(true);
         return {
             'Content-Type': 'application/json',
@@ -53,8 +60,7 @@ export class MongoDbAdapter implements IDatabaseAdapter {
         if (userId) {
             return path.replace(/USER_ID/g, userId);
         }
-        // If no user, return a path that will likely fail but won't throw an error here.
-        // The getHeaders method will throw the authentication error.
+        // The getHeaders method will throw before this becomes a problem in most cases.
         return path;
     }
 
@@ -107,7 +113,8 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     }
 
     async getDoc<T>(docPath: string): Promise<T | null> {
-        if (!this.auth.currentUser) {
+         if (!this.auth.currentUser) {
+             console.warn("getDoc called before user was authenticated. This may lead to a race condition.");
              await new Promise(resolve => setTimeout(resolve, 500)); // Brief delay for auth state
              if (!this.auth.currentUser) return null;
         };
@@ -199,6 +206,7 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     }
 
     increment(value: number): any {
+       // This will be handled by the backend API route using $inc
        return { '$inc': { balance: value } }; 
     }
 
