@@ -32,9 +32,10 @@ export class MongoDbAdapter implements IDatabaseAdapter {
 
     private resolvePath(path: string): string {
         if (this.auth.currentUser) {
-            return path.replace('USER_ID', this.auth.currentUser.uid);
+            // Return path as is, we will add userId separately
+            return path;
         }
-        return path;
+        throw new Error("User not authenticated");
     }
 
     listenToCollection<T>(collectionPath: string, callback: (data: T[]) => void, constraints?: any[]): Unsubscribe {
@@ -47,11 +48,10 @@ export class MongoDbAdapter implements IDatabaseAdapter {
             };
 
             try {
-                // This is the key change: Make all collection fetches behave like the /users/[userId] call that works.
-                // The URL now becomes /api/data/[collectionName]/[userId]
-                const pathWithUser = `${collectionPath}/${this.auth.currentUser.uid}`;
+                // Always append the user ID to the collection path for collection-level fetches.
+                const finalCollectionPath = `${collectionPath}/${this.auth.currentUser.uid}`;
                 const headers = await this.getHeaders();
-                const response = await fetch(getApiUrl(pathWithUser), { headers });
+                const response = await fetch(getApiUrl(finalCollectionPath), { headers });
                 
                 if (response.ok) {
                     const data = await response.json();
@@ -125,9 +125,12 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     }
 
     async setDoc<T extends DocumentData>(docPath: string, data: T): Promise<void> {
+        if (!this.auth.currentUser) throw new Error("User not authenticated");
         const resolvedPath = this.resolvePath(docPath);
         const headers = await this.getHeaders();
-        const response = await fetch(getApiUrl(resolvedPath), {
+        // The API backend expects the userId in the query for auth checks on doc writes
+        const apiUrl = `${getApiUrl(resolvedPath)}?userId=${this.auth.currentUser.uid}`;
+        const response = await fetch(apiUrl, {
             method: 'PUT',
             headers,
             body: JSON.stringify(data),
@@ -136,9 +139,11 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     }
 
     async updateDoc(docPath: string, data: Partial<DocumentData>): Promise<void> {
+         if (!this.auth.currentUser) throw new Error("User not authenticated");
          const resolvedPath = this.resolvePath(docPath);
          const headers = await this.getHeaders();
-         const response = await fetch(getApiUrl(resolvedPath), {
+         const apiUrl = `${getApiUrl(resolvedPath)}?userId=${this.auth.currentUser.uid}`;
+         const response = await fetch(apiUrl, {
             method: 'PATCH',
             headers,
             body: JSON.stringify(data),
@@ -147,9 +152,11 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     }
 
     async deleteDoc(docPath: string): Promise<void> {
+        if (!this.auth.currentUser) throw new Error("User not authenticated");
         const resolvedPath = this.resolvePath(docPath);
         const headers = await this.getHeaders();
-        const response = await fetch(getApiUrl(resolvedPath), {
+        const apiUrl = `${getApiUrl(resolvedPath)}?userId=${this.auth.currentUser.uid}`;
+        const response = await fetch(apiUrl, {
             method: 'DELETE',
             headers
         });

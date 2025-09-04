@@ -73,15 +73,14 @@ async function handler(
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    // For MongoDB, docId is param2 for /users/[id] but param1 for other docs like /wallets/[id]
-    // The new unified logic: if param2 exists, it's either a userId (for collection) or a docId (for doc).
-    // If it's a collection, param2 is the userId.
     const docId = collectionName !== 'users' && rest.length === 0 ? param2 : (rest[0] || (collectionName === 'users' ? param2 : null));
 
     let query: any = {};
     
     if (collectionName === 'users') {
-         if (userId !== docId) {
+        // For /api/data/users/[userId]
+        const targetUserId = param2;
+         if (userId !== targetUserId) {
             return NextResponse.json({ error: 'Permission denied to access this user document' }, { status: 403 });
         }
          try {
@@ -90,8 +89,9 @@ async function handler(
             query = { _id: userId };
         }
     } else {
+        // For all other collections
         query = { userId };
-        if (docId) {
+        if (docId) { // Request for a single document
             try {
                query._id = new ObjectId(docId);
             } catch(e) {
@@ -107,12 +107,12 @@ async function handler(
     
     try {
         if (request.method === 'GET') {
-            if (docId) {
+            // Check if it's a request for a single document or a whole collection
+            if (docId) { // Single document request
                 const item = await collection.findOne(query);
                 if (!item) return NextResponse.json({ error: 'Not found or permission denied' }, { status: 404 });
                 return NextResponse.json(item);
-            } else {
-                // This now correctly handles calls like /api/data/[collection]/[userId]
+            } else { // Collection request
                 const items = await collection.find({ userId }).toArray();
                 return NextResponse.json(items);
             }
