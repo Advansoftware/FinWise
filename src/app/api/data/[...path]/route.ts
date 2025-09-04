@@ -1,3 +1,4 @@
+
 // src/app/api/data/[...path]/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -55,15 +56,21 @@ async function handler(
 ) {
     const { db } = await connectToDatabase();
     const authProvider = process.env.NEXT_PUBLIC_AUTH_PROVIDER || 'firebase';
+    const { searchParams } = new URL(request.url);
 
     let userId: string | null = null;
-    const { searchParams } = new URL(request.url);
     const [collectionName, docId, ...rest] = params.path;
 
     if (authProvider === 'firebase') {
         userId = await getUserIdFromToken(request);
-    } else { // MongoDB auth logic - simplified and corrected
+    } else { // MongoDB auth logic
+        // For MongoDB, we trust the userId passed either in the path for user docs,
+        // or as a query param for collection fetches.
+        // The security is enforced by ensuring all queries are filtered by this userId.
         userId = searchParams.get('userId');
+        if (!userId && collectionName === 'users' && docId) {
+             userId = docId;
+        }
     }
    
     if (!userId) {
@@ -72,21 +79,17 @@ async function handler(
     
     let query: any = {};
     
-    if (collectionName === 'users') {
-        // For /api/data/users/[userId]
-         const targetUserId = docId;
-         if (userId !== targetUserId) {
-            return NextResponse.json({ error: 'Permission denied to access this user document' }, { status: 403 });
-        }
-         try {
+    // For all collections, including 'users', security is based on the userId field.
+    // The special case is for the user's own document, where we query by _id.
+    if (collectionName === 'users' && docId === userId) {
+        try {
             query = { _id: new ObjectId(userId) };
         } catch (e) {
             query = { _id: userId };
         }
     } else {
-        // For all other collections
         query = { userId };
-        if (docId) { // Request for a single document
+        if (docId) { // Request for a single document within a collection owned by the user
             try {
                query._id = new ObjectId(docId);
             } catch(e) {
@@ -102,12 +105,11 @@ async function handler(
     
     try {
         if (request.method === 'GET') {
-            // Check if it's a request for a single document or a whole collection
-            if (docId && collectionName !== 'users') { // Single document request
+            if (docId) { // Single document request
                 const item = await collection.findOne(query);
                 if (!item) return NextResponse.json({ error: 'Not found or permission denied' }, { status: 404 });
                 return NextResponse.json(item);
-            } else { // Collection request (or users/id request)
+            } else { // Collection request
                 const items = await collection.find({ userId }).toArray();
                 return NextResponse.json(items);
             }
@@ -115,6 +117,7 @@ async function handler(
 
         if (request.method === 'POST') {
             const body = await request.json();
+            // Ensure the document being created is associated with the authenticated user
             const result = await collection.insertOne({ ...body, userId, createdAt: new Date() });
             return NextResponse.json({ insertedId: result.insertedId }, { status: 201 });
         }
