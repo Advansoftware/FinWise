@@ -1,4 +1,3 @@
-
 // src/app/api/data/[...path]/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';

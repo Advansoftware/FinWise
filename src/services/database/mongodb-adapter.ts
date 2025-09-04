@@ -1,4 +1,3 @@
-
 // src/services/database/mongodb-adapter.ts
 
 import { DocumentData } from "firebase/firestore";
@@ -8,7 +7,9 @@ import { Auth } from "firebase/auth";
 
 // Helper to construct API URL, ensuring userId is always a query parameter.
 const getApiUrl = (path: string, userId: string) => {
-    const baseUrl = `/api/data/${path}`;
+    // Ensure the path doesn't start with a slash that would be duplicated
+    const cleanPath = path.startsWith('/') ? path.substring(1) : path;
+    const baseUrl = `/api/data/${cleanPath}`;
     const separator = baseUrl.includes('?') ? '&' : '?';
     return `${baseUrl}${separator}userId=${userId}`;
 };
@@ -108,7 +109,7 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     async addDoc<T extends DocumentData>(collectionPath: string, data: T): Promise<string> {
         if (!this.auth.currentUser) throw new Error("User not authenticated");
         const headers = await this.getHeaders();
-        const apiUrl = getApiul(collectionPath, this.auth.currentUser.uid);
+        const apiUrl = getApiUrl(collectionPath, this.auth.currentUser.uid);
         const response = await fetch(apiUrl, {
             method: 'POST',
             headers,
