@@ -47,7 +47,8 @@ export class MongoDbAdapter implements IDatabaseAdapter {
             };
 
             try {
-                // Consistent URL structure: /api/data/[collectionName]/[userId]
+                // This is the key change: Make all collection fetches behave like the /users/[userId] call that works.
+                // The URL now becomes /api/data/[collectionName]/[userId]
                 const pathWithUser = `${collectionPath}/${this.auth.currentUser.uid}`;
                 const headers = await this.getHeaders();
                 const response = await fetch(getApiUrl(pathWithUser), { headers });

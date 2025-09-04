@@ -64,22 +64,19 @@ async function handler(
     if (authProvider === 'firebase') {
         userId = await getUserIdFromToken(request);
     } else { // MongoDB auth logic
-        // For collection fetches: /api/data/[collection]/[userId]
-        // For doc fetches: /api/data/[collection]/[docId]?userId=[userId]
-        if (collectionName === 'users') {
-            userId = param2;
-        } else {
-             // For collections, the userId is the second path param.
-             // For single docs, it's passed as a query param for security.
-            userId = param2 && rest.length === 0 ? param2 : searchParams.get('userId');
-        }
+        // This logic is now unified. For collection fetches, the userId is the second path param.
+        // For single docs, it's passed as a query param for security.
+        userId = param2 && rest.length === 0 ? param2 : searchParams.get('userId');
     }
    
     if (!userId) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    const docId = (collectionName !== 'users' && rest.length === 0) ? param2 : (rest[0] || (collectionName === 'users' ? param2 : null));
+    // For MongoDB, docId is param2 for /users/[id] but param1 for other docs like /wallets/[id]
+    // The new unified logic: if param2 exists, it's either a userId (for collection) or a docId (for doc).
+    // If it's a collection, param2 is the userId.
+    const docId = collectionName !== 'users' && rest.length === 0 ? param2 : (rest[0] || (collectionName === 'users' ? param2 : null));
 
     let query: any = {};
     
