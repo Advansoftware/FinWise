@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { headers } from 'next/headers';
-import { connectToDatabase } from '@/lib/mongodb'; // Importar a conexão direta
+import { connectToDatabase } from '@/lib/mongodb';
 import { UserPlan } from '@/lib/types';
 import { ObjectId } from 'mongodb';
 
@@ -30,41 +30,52 @@ async function updateUserPlanInDb(userId: string, updates: Record<string, any>) 
     );
 }
 
-
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
-    if (session.mode === 'subscription' && session.subscription) {
-        const subscriptionId = session.subscription as string;
-        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    if (session.mode !== 'subscription') {
+        console.log(`[Webhook] Skipped checkout session ${session.id} as it's not a subscription.`);
+        return;
+    }
+    
+    const subscriptionId = session.subscription as string;
+    if (!subscriptionId) {
+        console.error(`[Webhook Critical Error] Subscription ID missing from completed checkout session. Session ID: ${session.id}`);
+        return;
+    }
+    
+    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+    
+    // The userId should be in the subscription metadata.
+    // We also check the customer metadata from the session as a fallback.
+    const userId = subscription.metadata.userId || session.metadata?.userId;
+    const plan = subscription.metadata.plan as UserPlan;
+    const customerId = subscription.customer as string;
 
-        const userId = subscription.metadata.userId; // Use generic userId
-        const plan = subscription.metadata.plan as UserPlan;
+    if (!userId || !plan) {
+        console.error(`[Webhook Critical Error] userId or plan is missing from subscription metadata. Subscription ID: ${subscription.id}`);
+        return;
+    }
+
+    try {
+        await updateUserPlanInDb(userId, {
+            plan: plan,
+            aiCredits: creditsMap[plan] || 0,
+            stripeCustomerId: customerId,
+            stripeSubscriptionId: subscription.id,
+            stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        });
         
-        if (!userId || !plan) {
-            console.error(`[Webhook Critical Error] userId or plan is missing from subscription metadata. Subscription ID: ${subscription.id}`);
-            return;
-        }
+        console.log(`[Webhook] Successfully processed subscription ${subscription.id} for user ${userId} on plan ${plan}.`);
 
-        try {
-            await updateUserPlanInDb(userId, {
-                plan: plan,
-                aiCredits: creditsMap[plan] || 0,
-                stripeCustomerId: subscription.customer as string,
-                stripeSubscriptionId: subscription.id,
-                stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
-            });
-            
-            console.log(`[Webhook] Successfully processed subscription ${subscription.id} for user ${userId} on plan ${plan}.`);
-
-        } catch (error) {
-            console.error(`[Webhook] Error handling checkout.session.completed for user ${userId}:`, error);
-        }
-    } else {
-         console.log(`[Webhook] Skipped processing checkout session ${session.id} as it is not a subscription.`);
+    } catch (error) {
+        console.error(`[Webhook] Error handling checkout.session.completed for user ${userId}:`, error);
     }
 }
 
+
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
-    const userId = subscription.metadata.userId; // Use generic userId
+    // A subscription can be deleted if a payment fails or if it's cancelled by the user.
+    // In either case, we downgrade the user to the Básico plan.
+    const userId = subscription.metadata.userId;
     if (!userId) {
         console.error(`[Webhook] Cancellation Error: userId is missing from subscription metadata. Subscription ID: ${subscription.id}`);
         return; 
@@ -78,23 +89,28 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
             stripeCurrentPeriodEnd: null,
         });
 
-        console.log(`[Webhook] Successfully downgraded plan for user ${userId} upon subscription cancellation.`);
+        console.log(`[Webhook] Successfully downgraded plan for user ${userId} upon subscription cancellation/deletion.`);
     } catch (error) {
         console.error(`[Webhook] Error handling subscription cancellation for user ${userId}:`, error);
     }
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
-    const userId = subscription.metadata.userId; // Use generic userId
-    const newPlan = subscription.metadata.plan as UserPlan;
+    const userId = subscription.metadata.userId;
+    // The new plan is stored in the metadata of the subscription item
+    const newPlan = subscription.items.data[0]?.price?.metadata?.plan as UserPlan;
 
     if (!userId || !newPlan) {
         console.error(`[Webhook] Update Error: userId or plan is missing from subscription metadata. Subscription ID: ${subscription.id}`);
         return;
     }
 
-    if (subscription.status !== 'active') {
-        return handleSubscriptionDeleted(subscription);
+    // A subscription update can be a cancellation at the end of the period.
+    // If 'cancel_at_period_end' is true, we don't downgrade them immediately.
+    // The 'customer.subscription.deleted' event will handle the final downgrade.
+    if (subscription.cancel_at_period_end) {
+        console.log(`[Webhook] Subscription for user ${userId} is set to cancel at period end. No immediate action taken.`);
+        return;
     }
 
     try {

@@ -2,9 +2,10 @@
 // src/adapters/stripe-adapter.ts
 
 import { PaymentService, CheckoutInput, CheckoutOutput, PortalInput, PortalOutput } from "@/services/payment-service";
-import { getAdminApp } from '@/lib/firebase-admin';
 import Stripe from 'stripe';
 import { UserPlan } from "@/lib/types";
+import { connectToDatabase } from "@/lib/mongodb";
+import { ObjectId } from "mongodb";
 
 class StripeAdapter implements PaymentService {
     private stripe: Stripe;
@@ -42,11 +43,12 @@ class StripeAdapter implements PaymentService {
 
         try {
             const priceId = this.getPriceId(plan);
-            const adminDb = getAdminApp().firestore();
-            const userDocRef = adminDb.doc(`users/${userId}`);
-
-            const userDoc = await userDocRef.get();
-            let stripeCustomerId = userDoc.data()?.stripeCustomerId;
+            const { db } = await connectToDatabase();
+            const usersCollection = db.collection('users');
+            const userObjectId = new ObjectId(userId);
+            
+            const userDoc = await usersCollection.findOne({ _id: userObjectId });
+            let stripeCustomerId = userDoc?.stripeCustomerId;
 
             // Session configuration object
             const sessionConfig: Stripe.Checkout.SessionCreateParams = {
@@ -58,7 +60,7 @@ class StripeAdapter implements PaymentService {
                 }],
                 subscription_data: {
                     metadata: {
-                        userId: userId, // Use a generic userId
+                        userId: userId,
                         plan: plan,
                     }
                 },
@@ -70,12 +72,24 @@ class StripeAdapter implements PaymentService {
             if (stripeCustomerId) {
                 sessionConfig.customer = stripeCustomerId;
             } else {
-                // Otherwise, let Stripe create the customer during checkout.
+                // Otherwise, let Stripe create the customer during checkout and we will save it via webhook.
                 sessionConfig.customer_email = userEmail;
+                // Add metadata to the customer creation as well
+                sessionConfig.customer_creation = 'always';
+                sessionConfig.metadata = { userId };
             }
 
             const session = await this.stripe.checkout.sessions.create(sessionConfig);
 
+            // If a new customer was created by Stripe during checkout,
+            // we should store this ID now.
+            if (session.customer && !stripeCustomerId) {
+                 await usersCollection.updateOne(
+                    { _id: userObjectId },
+                    { $set: { stripeCustomerId: session.customer as string } }
+                );
+            }
+            
             return { url: session.url };
 
         } catch (error) {
@@ -92,10 +106,12 @@ class StripeAdapter implements PaymentService {
         }
 
         try {
-            const adminDb = getAdminApp().firestore();
-            const userDocRef = adminDb.doc(`users/${userId}`);
-            const userDoc = await userDocRef.get();
-            const stripeCustomerId = userDoc.data()?.stripeCustomerId;
+            const { db } = await connectToDatabase();
+            const usersCollection = db.collection('users');
+            const userObjectId = new ObjectId(userId);
+            
+            const userDoc = await usersCollection.findOne({ _id: userObjectId });
+            const stripeCustomerId = userDoc?.stripeCustomerId;
 
             if (!stripeCustomerId) {
                 console.error(`[StripeAdapter] Portal session error: No stripeCustomerId found for user ${userId}`);
