@@ -1,3 +1,4 @@
+
 // src/app/api/data/[...path]/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -58,49 +59,51 @@ async function handler(
     
     let authenticatedUserId: string | null = null;
     
-    if (authProvider === 'firebase') {
-        authenticatedUserId = await getUserIdFromToken(request);
-    } else { // mongodb
-        const { searchParams } = new URL(request.url);
-        authenticatedUserId = searchParams.get('userId');
-    }
-   
+    // Step 1: Always verify the token first
+    authenticatedUserId = await getUserIdFromToken(request);
     if (!authenticatedUserId) {
-        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        return NextResponse.json({ error: 'Unauthorized: Invalid or missing token' }, { status: 401 });
     }
     
-    const [collectionName, docId, ...rest] = params.path;
-    let query: any = {};
-
-    if (collectionName === 'users') {
-        // A user can only access their own document.
-        // The docId in the path MUST match the authenticated user's ID.
-        if (docId !== authenticatedUserId) {
-             return NextResponse.json({ error: 'Permission denied to access other user data' }, { status: 403 });
-        }
-        try {
-            query._id = new ObjectId(docId);
-        } catch (e) {
-            query._id = docId;
-        }
-    } else {
-        // For all other collections, filter by the authenticated user's ID.
-        query.userId = authenticatedUserId;
-        if (docId) { 
-            try {
-               query._id = new ObjectId(docId);
-            } catch(e) {
-                 query._id = docId;
-            }
-        }
-    }
-
-    if (!collectionName) {
-        return NextResponse.json({ error: 'Collection not specified' }, { status: 400 });
-    }
+    const [collectionName, docId] = params.path;
     const collection = db.collection(collectionName);
     
     try {
+        if (authProvider === 'mongodb') {
+            const { searchParams } = new URL(request.url);
+            const queryUserId = searchParams.get('userId');
+
+            // Security check: The userId from the query MUST match the token's userId
+            if (!queryUserId || queryUserId !== authenticatedUserId) {
+                 return NextResponse.json({ error: 'Unauthorized: User ID mismatch' }, { status: 403 });
+            }
+        }
+        
+        let query: any = {};
+        
+        if (collectionName === 'users') {
+            // For the 'users' collection, the document ID MUST be the user's own ID.
+            if (docId !== authenticatedUserId) {
+                return NextResponse.json({ error: 'Permission denied to access other user data' }, { status: 403 });
+            }
+            try {
+                query._id = new ObjectId(docId);
+            } catch (e) {
+                query._id = docId;
+            }
+        } else {
+            // For all other collections, filter by the authenticated user's ID.
+            query.userId = authenticatedUserId;
+            if (docId) { 
+                try {
+                   query._id = new ObjectId(docId);
+                } catch(e) {
+                     query._id = docId;
+                }
+            }
+        }
+        
+
         if (request.method === 'GET') {
             if (docId) { // Single document request
                 const item = await collection.findOne(query);
@@ -121,16 +124,18 @@ async function handler(
         if ((request.method === 'PUT' || request.method === 'PATCH') && docId) {
             const body = await request.json();
             let updateOps;
-
+            
+            // Build the update operation based on the request method
             if (request.method === 'PUT') {
                  delete body._id; 
                  delete body.id;
                  delete body.uid;
+                 delete body.userId; // UserID should not be changed
                  if (collectionName === 'users') {
-                    delete body.email;
+                    delete body.email; // Email should not be changed via this endpoint
                     delete body.createdAt;
                  }
-                 updateOps = { $set: { ...body, userId: authenticatedUserId } };
+                 updateOps = { $set: body };
             } else { // PATCH
                 updateOps = processUpdates(body);
                 if (!updateOps) {
