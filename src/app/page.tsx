@@ -4,7 +4,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BarChart, Bot, LayoutDashboard, Wallet, Check, Goal, FolderKanban, Upload, KeyRound } from "lucide-react";
+import { ArrowRight, BarChart, Bot, LayoutDashboard, Wallet, Check, Goal, FolderKanban, Upload, KeyRound, CheckCircle, XCircle } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { useAuth } from "@/hooks/use-auth";
@@ -13,6 +13,9 @@ import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from '@/components/ui/skeleton';
 import { AuthGuard } from '@/components/auth/auth-guard';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -25,6 +28,36 @@ const featureVariants = {
   animate: { opacity: 1, scale: 1 },
   transition: { duration: 0.5 }
 };
+
+const featureComparison = {
+    "Funcionalidades Principais": [
+        { feature: "Dashboard interativo", Básico: true, Pro: true, Plus: true, Infinity: true },
+        { feature: "Transações ilimitadas", Básico: true, Pro: true, Plus: true, Infinity: true },
+        { feature: "Múltiplas carteiras e contas", Básico: true, Pro: true, Plus: true, Infinity: true },
+        { feature: "Orçamentos manuais", Básico: true, Pro: true, Plus: true, Infinity: true },
+        { feature: "Metas de economia", Básico: true, Pro: true, Plus: true, Infinity: true },
+    ],
+    "Produtividade e IA": [
+        { feature: "Importação de extratos (CSV/OFX)", Básico: false, Pro: true, Plus: true, Infinity: true },
+        { feature: "Escanear notas fiscais (OCR)", Básico: false, Pro: true, Plus: true, Infinity: true },
+        { feature: "Relatórios inteligentes com IA", Básico: false, Pro: true, Plus: true, Infinity: true },
+        { feature: "Assistente de Chat com IA", Básico: false, Pro: true, Plus: true, Infinity: true },
+        { feature: "Créditos de IA / mês", Básico: "Até 10", Pro: "100", Plus: "300", Infinity: "500" },
+    ],
+    "Automação e Análise Avançada": [
+        { feature: "Orçamentos automáticos com IA", Básico: false, Pro: false, Plus: true, Infinity: true },
+        { feature: "Previsão de saldos futuros", Básico: false, Pro: false, Plus: true, Infinity: true },
+        { feature: "Projeção de metas com IA", Básico: false, Pro: false, Plus: true, Infinity: true },
+        { feature: "Uso de IA Local (Ollama)", Básico: false, Pro: false, Plus: true, Infinity: true },
+    ],
+    "Controle Total": [
+        { feature: "Uso de qualquer provedor (OpenAI, Google)", Básico: false, Pro: false, Plus: false, Infinity: true },
+        { feature: "Credenciais de IA ilimitadas", Básico: false, Pro: false, Plus: false, Infinity: true },
+        { feature: "Acesso a recursos beta", Básico: false, Pro: false, Plus: false, Infinity: true },
+        { feature: "Suporte prioritário", Básico: false, Pro: false, Plus: false, Infinity: true },
+    ],
+};
+
 
 export default function Page() {
   const { user, loading } = useAuth();
@@ -209,7 +242,7 @@ export default function Page() {
           </section>
 
           {/* Pricing Section */}
-          <section className="py-20 sm:py-32">
+          <section id="pricing" className="py-20 sm:py-32 bg-card/20 border-y border-border/20">
               <div className="container mx-auto px-4">
                   <motion.div {...fadeIn}>
                       <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-center">
@@ -318,6 +351,111 @@ export default function Page() {
                       ))}
                   </div>
               </div>
+          </section>
+
+           {/* Feature Comparison Section */}
+          <section className="py-20 sm:py-32">
+            <div className="container mx-auto px-4">
+              <motion.div {...fadeIn}>
+                <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-center">
+                  Compare os Planos em Detalhes
+                </h2>
+                <p className="mt-4 text-lg text-muted-foreground text-center max-w-2xl mx-auto">
+                  Encontre o conjunto de ferramentas perfeito para sua necessidade, desde o controle essencial até a automação completa com IA.
+                </p>
+              </motion.div>
+
+              {/* Desktop Table */}
+              <motion.div
+                variants={featureVariants}
+                initial="initial"
+                whileInView="animate"
+                viewport={{ once: true, amount: 0.2 }}
+                className="mt-16 hidden md:block"
+              >
+                <Table className="[&_td]:text-center [&_th]:text-center">
+                  <TableHeader>
+                    <TableRow className="[&_th]:text-base">
+                      <TableHead className="text-left w-1/3">Funcionalidade</TableHead>
+                      <TableHead>Básico</TableHead>
+                      <TableHead className="text-primary">Pro</TableHead>
+                      <TableHead>Plus</TableHead>
+                      <TableHead>Infinity</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {Object.entries(featureComparison).map(([category, features]) => (
+                      <React.Fragment key={category}>
+                        <TableRow className="bg-muted/30">
+                          <TableCell colSpan={5} className="text-left font-bold text-base py-3">
+                            {category}
+                          </TableCell>
+                        </TableRow>
+                        {features.map((item) => (
+                          <TableRow key={item.feature}>
+                            <TableCell className="text-left text-muted-foreground">{item.feature}</TableCell>
+                            {['Básico', 'Pro', 'Plus', 'Infinity'].map((plan) => {
+                              const value = item[plan as keyof typeof item];
+                              return (
+                                <TableCell key={plan}>
+                                  {typeof value === 'boolean' ? (
+                                    value ? <CheckCircle className="h-5 w-5 text-green-500 mx-auto" /> : <XCircle className="h-5 w-5 text-muted-foreground/50 mx-auto" />
+                                  ) : (
+                                    <span className="font-semibold">{value}</span>
+                                  )}
+                                </TableCell>
+                              );
+                            })}
+                          </TableRow>
+                        ))}
+                      </React.Fragment>
+                    ))}
+                  </TableBody>
+                </Table>
+              </motion.div>
+
+              {/* Mobile Cards */}
+              <div className="mt-12 grid grid-cols-1 gap-8 md:hidden">
+                {['Básico', 'Pro', 'Plus', 'Infinity'].map((plan, index) => (
+                    <motion.div 
+                      key={plan}
+                      variants={featureVariants}
+                      initial="initial"
+                      whileInView="animate"
+                      viewport={{ once: true, amount: 0.3 }}
+                      transition={{ ...featureVariants.transition, delay: index * 0.1 }}
+                    >
+                      <Card className={cn(plan === 'Pro' && 'border-primary')}>
+                        <CardHeader>
+                            <CardTitle className={cn(plan === 'Pro' && 'text-primary')}>{plan}</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {Object.entries(featureComparison).map(([category, features]) => (
+                               <div key={category}>
+                                   <h4 className="font-semibold mb-2">{category}</h4>
+                                   <ul className="space-y-2">
+                                       {features.map(item => {
+                                           const value = item[plan as keyof typeof item];
+                                           if (value === false) return null;
+                                           return (
+                                               <li key={item.feature} className="flex items-start gap-3">
+                                                    <Check className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
+                                                    <span className="text-muted-foreground">
+                                                        {item.feature}
+                                                        {typeof value !== 'boolean' && <strong className="ml-1 text-foreground/90">({value})</strong>}
+                                                    </span>
+                                               </li>
+                                           )
+                                       })}
+                                   </ul>
+                               </div>
+                            ))}
+                        </CardContent>
+                      </Card>
+                    </motion.div>
+                ))}
+              </div>
+            </div>
           </section>
 
         </main>
