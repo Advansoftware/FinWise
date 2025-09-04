@@ -24,14 +24,13 @@ async function handler(
     request: NextRequest,
     { params }: { params: { path: string[] } }
 ) {
-    const { db } = await connectToDatabase();
-    
     // Step 1: Always verify the token first
     const authenticatedUserId = await getUserIdFromToken(request);
     if (!authenticatedUserId) {
         return NextResponse.json({ error: 'Unauthorized: Invalid or missing token' }, { status: 401 });
     }
-
+    
+    const { db } = await connectToDatabase();
     const { searchParams } = new URL(request.url);
     const queryUserId = searchParams.get('userId');
 
@@ -92,7 +91,7 @@ async function handler(
 
         if ((request.method === 'PUT' || request.method === 'PATCH') && docId) {
              const body = await request.json();
-             // Ensure the update does not change the userId
+             // Ensure the update does not change the userId or _id
              delete body.userId;
              delete body._id;
 

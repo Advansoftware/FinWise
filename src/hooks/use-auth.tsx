@@ -67,42 +67,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [authAdapter, handleAuthChange]);
   
   const login: IAuthAdapter['login'] = async (email, password) => {
-    setLoading(true);
-    try {
-      const loggedInUser = await authAdapter.login(email, password);
-      setUser(loggedInUser); // onAuthStateChanged will also fire, this is for immediate UI update
-      return loggedInUser;
-    } catch (error) {
-      setUser(null);
-      setLoading(false);
-      throw error;
-    }
+    // setLoading(true); // Handled by onAuthStateChanged
+    const loggedInUser = await authAdapter.login(email, password);
+    // onAuthStateChanged will handle setting state and profile
+    return loggedInUser;
   };
   
   const signup: IAuthAdapter['signup'] = async (email, password, name) => {
-    setLoading(true);
-    try {
-      const newUser = await authAdapter.signup(email, password, name);
-       setUser(newUser); // onAuthStateChanged will also fire
-      return newUser;
-    } catch (error) {
-       setUser(null);
-       setLoading(false);
-       throw error;
-    }
+    // setLoading(true);
+    const newUser = await authAdapter.signup(email, password, name);
+    // onAuthStateChanged will handle setting state and profile
+    return newUser;
   };
   
   const signInWithGoogle: IAuthAdapter['signInWithGoogle'] = async () => {
-    setLoading(true);
-    try {
-      const googleUser = await authAdapter.signInWithGoogle();
-       // onAuthStateChanged will handle setting the user state and creating the profile
-      return googleUser;
-    } catch (error) {
-      setUser(null);
-      setLoading(false);
-      throw error;
-    }
+    // setLoading(true);
+    const googleUser = await authAdapter.signInWithGoogle();
+    // onAuthStateChanged will handle setting the user state and creating the profile
+    return googleUser;
   };
 
   const logout = async () => {
@@ -126,9 +108,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const updateUserPassword: IAuthAdapter['updateUserPassword'] = async (password) => {
+    // This action would require backend implementation in MongoDB mode
+    if (process.env.NEXT_PUBLIC_AUTH_PROVIDER === 'mongodb') {
+      throw new Error("Password update is not implemented for this authentication mode.");
+    }
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.updateDoc(`users/${user.uid}`, { password: 'password_update_not_supported_on_client' });
-    return authAdapter.updateUserPassword(password);
+    await authAdapter.updateUserPassword(password);
+    // No direct feedback needed, as reauthentication handles password verification
   }
 
   const value: AuthContextType = {
