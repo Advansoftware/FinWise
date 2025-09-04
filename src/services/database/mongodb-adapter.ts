@@ -1,4 +1,3 @@
-
 // src/services/database/mongodb-adapter.ts
 
 import { DocumentData } from "firebase/firestore";
@@ -6,14 +5,13 @@ import { IDatabaseAdapter, Unsubscribe } from "./database-adapter";
 import { getFirebase } from "@/lib/firebase";
 import { Auth } from "firebase/auth";
 
-// Helper to construct API URL
-const getApiUrl = (path: string, userId?: string) => {
-    let baseUrl = `/api/data/${path}`;
-    if (userId) {
-        // Append userId as a query parameter.
-        baseUrl += `?userId=${userId}`;
-    }
-    return baseUrl;
+// Helper to construct API URL, ensuring userId is always a query parameter.
+const getApiUrl = (path: string, userId: string) => {
+    // This function now expects the userId to be explicitly passed.
+    // It will be added as a query parameter to all requests.
+    const baseUrl = `/api/data/${path}`;
+    const separator = baseUrl.includes('?') ? '&' : '?';
+    return `${baseUrl}${separator}userId=${userId}`;
 };
 
 
@@ -26,14 +24,16 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     }
     
     private async getHeaders(): Promise<Record<string, string>> {
-        const token = await this.auth.currentUser?.getIdToken();
-        if (token) {
-            return {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            }
+        if (!this.auth.currentUser) {
+            throw new Error("User not authenticated to make API requests.");
         }
-        return { 'Content-Type': 'application/json' };
+        // Force refresh the token to ensure we are sending a valid ID token,
+        // not the initial custom token. This is crucial for the backend verification.
+        const token = await this.auth.currentUser.getIdToken(true);
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        };
     }
 
     listenToCollection<T>(collectionPath: string, callback: (data: T[]) => void, constraints?: any[]): Unsubscribe {

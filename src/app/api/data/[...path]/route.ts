@@ -1,4 +1,3 @@
-
 // src/app/api/data/[...path]/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -12,7 +11,9 @@ async function getUserIdFromToken(request: NextRequest): Promise<string | null> 
 
     const idToken = authHeader.split('Bearer ')[1];
     try {
-        const decodedToken = await getAdminApp().auth().verifyIdToken(idToken, true); 
+        // Use verifyIdToken WITHOUT the second parameter. This correctly verifies
+        // the ID token from the client SDK, not a custom token.
+        const decodedToken = await getAdminApp().auth().verifyIdToken(idToken);
         return decodedToken.uid;
     } catch (error) {
         console.error("Error verifying ID token:", error);
@@ -55,30 +56,26 @@ async function handler(
     { params }: { params: { path: string[] } }
 ) {
     const { db } = await connectToDatabase();
-    const authProvider = process.env.NEXT_PUBLIC_AUTH_PROVIDER || 'firebase';
-    
-    let authenticatedUserId: string | null = null;
     
     // Step 1: Always verify the token first
-    authenticatedUserId = await getUserIdFromToken(request);
+    const authenticatedUserId = await getUserIdFromToken(request);
     if (!authenticatedUserId) {
         return NextResponse.json({ error: 'Unauthorized: Invalid or missing token' }, { status: 401 });
+    }
+
+    // Step 2: Get the user ID from the query string. The client adapter MUST send it.
+    const { searchParams } = new URL(request.url);
+    const queryUserId = searchParams.get('userId');
+
+    // Security check: The userId from the query MUST match the token's userId
+    if (!queryUserId || queryUserId !== authenticatedUserId) {
+         return NextResponse.json({ error: 'Unauthorized: User ID mismatch or missing.' }, { status: 403 });
     }
     
     const [collectionName, docId] = params.path;
     const collection = db.collection(collectionName);
     
     try {
-        if (authProvider === 'mongodb') {
-            const { searchParams } = new URL(request.url);
-            const queryUserId = searchParams.get('userId');
-
-            // Security check: The userId from the query MUST match the token's userId
-            if (!queryUserId || queryUserId !== authenticatedUserId) {
-                 return NextResponse.json({ error: 'Unauthorized: User ID mismatch' }, { status: 403 });
-            }
-        }
-        
         let query: any = {};
         
         if (collectionName === 'users') {
