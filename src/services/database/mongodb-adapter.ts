@@ -1,4 +1,3 @@
-
 // src/services/database/mongodb-adapter.ts
 
 import { DocumentData } from "firebase/firestore";
@@ -32,8 +31,8 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     }
 
     private resolvePath(path: string): string {
-        // This method no longer replaces USER_ID. USER_ID is now passed as a query param.
-        return path;
+        if (!this.auth.currentUser) return path; 
+        return path.replace('USER_ID', this.auth.currentUser.uid);
     }
 
     listenToCollection<T>(collectionPath: string, callback: (data: T[]) => void, constraints?: any[]): Unsubscribe {
@@ -72,8 +71,7 @@ export class MongoDbAdapter implements IDatabaseAdapter {
             }
         };
 
-        // Poll for data. For a real app, WebSockets or another real-time solution would be better.
-        const intervalId = setInterval(fetchData, 15000); 
+        const intervalId = setInterval(fetchData, 5000); 
 
         // Initial fetch
         fetchData();
@@ -90,7 +88,6 @@ export class MongoDbAdapter implements IDatabaseAdapter {
         if (!this.auth.currentUser) return null;
         const resolvedPath = this.resolvePath(docPath);
         const headers = await this.getHeaders();
-        // For getDoc, userId is passed as a query param for permission check on the backend
         const apiUrl = `${getApiUrl(resolvedPath)}?userId=${this.auth.currentUser?.uid}`;
         const response = await fetch(apiUrl, { headers });
         
@@ -105,7 +102,6 @@ export class MongoDbAdapter implements IDatabaseAdapter {
         const data = await response.json();
         if (data && data._id) {
             data.id = data._id.toString();
-            // The uid is the same as the _id for the user document
             if(resolvedPath.startsWith('users/')) {
                 data.uid = data.id;
             }

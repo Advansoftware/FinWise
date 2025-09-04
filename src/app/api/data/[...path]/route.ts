@@ -1,4 +1,3 @@
-
 // src/app/api/data/[...path]/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -12,7 +11,7 @@ async function getUserIdFromToken(request: NextRequest): Promise<string | null> 
 
     const idToken = authHeader.split('Bearer ')[1];
     try {
-        const decodedToken = await getAdminApp().auth().verifyIdToken(idToken, true); // checkRevoked = true
+        const decodedToken = await getAdminApp().auth().verifyIdToken(idToken, true); 
         return decodedToken.uid;
     } catch (error) {
         console.error("Error verifying ID token:", error);
@@ -27,7 +26,7 @@ function processUpdates(body: any) {
     let hasSet = false;
 
     for (const key in body) {
-        if (key === '_id' || key === 'id' || key === 'uid' || key === 'userId') continue; // Don't allow changing IDs
+        if (key === '_id' || key === 'id' || key === 'uid' || key === 'userId') continue; 
         
         const value = body[key];
         if (value && typeof value === 'object' && value.__op === 'Increment') {
@@ -63,14 +62,8 @@ async function handler(
 
     if (authProvider === 'firebase') {
         userId = await getUserIdFromToken(request);
-    } else { // MongoDB auth logic
-        // For MongoDB, we trust the userId passed either in the path for user docs,
-        // or as a query param for collection fetches.
-        // The security is enforced by ensuring all queries are filtered by this userId.
+    } else { 
         userId = searchParams.get('userId');
-        if (!userId && collectionName === 'users' && docId) {
-             userId = docId;
-        }
     }
    
     if (!userId) {
@@ -79,8 +72,6 @@ async function handler(
     
     let query: any = {};
     
-    // For all collections, including 'users', security is based on the userId field.
-    // The special case is for the user's own document, where we query by _id.
     if (collectionName === 'users' && docId === userId) {
         try {
             query = { _id: new ObjectId(userId) };
@@ -89,7 +80,7 @@ async function handler(
         }
     } else {
         query = { userId };
-        if (docId) { // Request for a single document within a collection owned by the user
+        if (docId) { 
             try {
                query._id = new ObjectId(docId);
             } catch(e) {
@@ -117,7 +108,6 @@ async function handler(
 
         if (request.method === 'POST') {
             const body = await request.json();
-            // Ensure the document being created is associated with the authenticated user
             const result = await collection.insertOne({ ...body, userId, createdAt: new Date() });
             return NextResponse.json({ insertedId: result.insertedId }, { status: 201 });
         }
