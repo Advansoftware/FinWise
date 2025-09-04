@@ -21,7 +21,7 @@ const BudgetsContext = createContext<BudgetsContextType | undefined>(undefined);
 
 export function BudgetsProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { allTransactions } = useTransactions();
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -29,10 +29,13 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
 
   // Listener for budgets
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
     if (!user) {
       setIsLoading(false);
       setBudgets([]);
-      return () => {};
+      return;
     }
 
     setIsLoading(true);
@@ -51,7 +54,7 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
     );
 
     return () => unsubscribe();
-  }, [user, dbAdapter]);
+  }, [user, authLoading, dbAdapter]);
 
   const addBudget = async (budget: Omit<Budget, 'id' | 'createdAt' | 'currentSpending'>) => {
     if (!user) throw new Error("User not authenticated");
@@ -96,7 +99,7 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
 
   const value: BudgetsContextType = {
     budgets: budgetsWithSpending,
-    isLoading,
+    isLoading: isLoading || authLoading,
     addBudget,
     updateBudget,
     deleteBudget,

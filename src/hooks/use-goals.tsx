@@ -22,7 +22,7 @@ const GoalsContext = createContext<GoalsContextType | undefined>(undefined);
 
 export function GoalsProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [completedGoal, setCompletedGoal] = useState<Goal | null>(null);
@@ -47,10 +47,13 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
 
   // Listener for goals
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
     if (!user) {
       setIsLoading(false);
       setGoals([]);
-      return () => {};
+      return;
     }
 
     setIsLoading(true);
@@ -69,7 +72,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     );
     
     return () => unsubscribe();
-  }, [user, dbAdapter]);
+  }, [user, authLoading, dbAdapter]);
 
   const addGoal = async (goal: Omit<Goal, 'id' | 'createdAt' | 'currentAmount'>) => {
     if (!user) throw new Error("User not authenticated");
@@ -123,7 +126,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
 
   const value: GoalsContextType = {
     goals,
-    isLoading,
+    isLoading: isLoading || authLoading,
     addGoal,
     updateGoal,
     deleteGoal,

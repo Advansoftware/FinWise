@@ -76,7 +76,7 @@ async function performAtomicUpdate(dbAdapter: IDatabaseAdapter, updates: Partial
 
 export function TransactionsProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [categoryMap, setCategoryMap] = useState<CategoryMap>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -89,11 +89,14 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   const dbAdapter = getDatabaseAdapter();
   
   useEffect(() => {
+    if (authLoading) {
+      return; // Wait for authentication to resolve
+    }
     if (!user) {
       setIsLoading(false);
       setAllTransactions([]);
       setCategoryMap({});
-      return () => {};
+      return;
     }
 
     setIsLoading(true);
@@ -144,7 +147,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       unsubscribeTransactions();
       unsubscribeCategories();
     };
-  }, [user, dbAdapter]);
+  }, [user, authLoading, dbAdapter]);
   
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     if (!user) throw new Error("User not authenticated");
@@ -310,7 +313,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
 
   const value: TransactionsContextType = {
     allTransactions,
-    isLoading,
+    isLoading: isLoading || authLoading,
     filteredTransactions,
     chartData,
     dateRange,

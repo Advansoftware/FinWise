@@ -25,7 +25,7 @@ const LOCAL_STORAGE_KEY = 'finwise_last_report_check';
 
 export function ReportsProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { allTransactions, isLoading: isLoadingTransactions } = useTransactions();
   const [monthlyReports, setMonthlyReports] = useState<MonthlyReport[]>([]);
   const [annualReports, setAnnualReports] = useState<AnnualReport[]>([]);
@@ -34,11 +34,14 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
 
   // Listener for monthly and annual reports
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
     if (!user) {
       setIsLoading(false);
       setMonthlyReports([]);
       setAnnualReports([]);
-      return () => {};
+      return;
     }
 
     setIsLoading(true);
@@ -60,7 +63,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
         unsubscribeMonthly();
         unsubscribeAnnual();
     };
-  }, [user, toast, dbAdapter]);
+  }, [user, authLoading, toast, dbAdapter]);
   
   const generateMonthlyReport = useCallback(async (year: number, month: number, transactions: Transaction[], previousMonthReport?: MonthlyReport) => {
       if(!user) return null;
@@ -195,7 +198,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
   const value: ReportsContextType = {
     monthlyReports,
     annualReports,
-    isLoading,
+    isLoading: isLoading || authLoading || isLoadingTransactions,
     getMonthlyReport,
     getAnnualReport,
   };

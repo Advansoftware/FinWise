@@ -19,17 +19,20 @@ const WalletsContext = createContext<WalletsContextType | undefined>(undefined);
 
 export function WalletsProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const dbAdapter = getDatabaseAdapter();
 
   // Listener for wallets
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
     if (!user) {
       setIsLoading(false);
       setWallets([]);
-      return () => {};
+      return;
     }
 
     setIsLoading(true);
@@ -48,7 +51,7 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
     );
     
     return () => unsubscribe();
-  }, [user, dbAdapter]);
+  }, [user, authLoading, dbAdapter]);
 
   const addWallet = async (wallet: Omit<Wallet, 'id' | 'createdAt' | 'balance'>) => {
     if (!user) throw new Error("User not authenticated");
@@ -75,7 +78,7 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
 
   const value: WalletsContextType = {
     wallets,
-    isLoading,
+    isLoading: isLoading || authLoading,
     addWallet,
     updateWallet,
     deleteWallet,

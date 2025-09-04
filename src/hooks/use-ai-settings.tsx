@@ -21,7 +21,7 @@ const finwiseAICredential = {
 
 export function useAISettings() {
     const { toast } = useToast();
-    const { user } = useAuth();
+    const { user, loading: authLoading } = useAuth();
     const { plan, isPro, isPlus, isInfinity } = usePlan();
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -35,10 +35,13 @@ export function useAISettings() {
 
     // Function to load settings
     useEffect(() => {
+        if (authLoading) {
+            return;
+        }
         if (!user) {
             setIsLoading(false);
             setSettings(null);
-            return () => {};
+            return;
         }
 
         setIsLoading(true);
@@ -56,7 +59,7 @@ export function useAISettings() {
         );
        
         return () => unsubscribe();
-    }, [user, dbAdapter]);
+    }, [user, authLoading, dbAdapter]);
 
     const credentials = useMemo(() => settings?.credentials || [], [settings]);
     const activeCredentialId = useMemo(() => settings?.activeCredentialId || FINWISE_AI_CREDENTIAL_ID, [settings]);
@@ -77,12 +80,12 @@ export function useAISettings() {
 
      // Effect to reset active credential if it's no longer allowed by the current plan
     useEffect(() => {
-        if (!user) return;
+        if (!user || authLoading) return;
         const activeCredExistsInDisplayed = displayedCredentials.some(c => c.id === activeCredentialId);
         if (!activeCredExistsInDisplayed && activeCredentialId !== FINWISE_AI_CREDENTIAL_ID) {
             handleActivate(FINWISE_AI_CREDENTIAL_ID);
         }
-    }, [displayedCredentials, activeCredentialId, user]);
+    }, [displayedCredentials, activeCredentialId, user, authLoading]);
 
 
     // Function to save all settings
@@ -174,7 +177,7 @@ export function useAISettings() {
     };
 
     return {
-        isLoading,
+        isLoading: isLoading || authLoading,
         isSaving,
         credentials, // User-defined credentials
         displayedCredentials, // All credentials including FinWise AI

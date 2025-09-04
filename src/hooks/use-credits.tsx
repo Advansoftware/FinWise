@@ -26,10 +26,13 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
 
   // Listener for credit logs
   useEffect(() => {
+    if (authLoading) {
+      return;
+    }
     if (!user) {
       setIsLoading(false);
       setLogs([]);
-      return () => {};
+      return;
     }
 
     setIsLoading(true);
@@ -47,7 +50,7 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
     return () => {
         unsubscribeLogs();
     };
-  }, [user, toast, dbAdapter]);
+  }, [user, authLoading, toast, dbAdapter]);
 
 
   const value: CreditsContextType = {
