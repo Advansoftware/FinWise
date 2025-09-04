@@ -84,6 +84,7 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     }
 
     async getDoc<T>(docPath: string): Promise<T | null> {
+        if (!this.auth.currentUser) return null; // Prevent fetch if no user
         const resolvedPath = this.resolvePath(docPath);
         const headers = await this.getHeaders();
         // For individual docs, we pass userId as a query param for security checks
