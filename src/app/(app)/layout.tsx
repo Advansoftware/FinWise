@@ -17,7 +17,6 @@ import { WalletsProvider } from "@/hooks/use-wallets";
 import { ReportsProvider } from "@/hooks/use-reports";
 import { PlanProvider } from "@/hooks/use-plan";
 import { CreditsProvider } from "@/hooks/use-credits";
-import { AICreditIndicator } from "@/components/credits/ai-credit-indicator";
 import { GoalCompletionCelebration } from "@/components/goals/goal-celebration";
 import { useGoals } from "@/hooks/use-goals";
 
@@ -71,10 +70,9 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   )
 }
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+function InnerLayout({ children }: { children: React.ReactNode }) {
   return (
-    <AuthGuard isProtected>
-      <PlanProvider>
+     <PlanProvider>
         <CreditsProvider>
           <WalletsProvider>
             <TransactionsProvider>
@@ -89,6 +87,14 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           </WalletsProvider>
         </CreditsProvider>
       </PlanProvider>
+  )
+}
+
+
+export default function AppLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthGuard isProtected>
+      <InnerLayout>{children}</InnerLayout>
     </AuthGuard>
   );
 }
