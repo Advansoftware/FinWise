@@ -25,14 +25,11 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
   const { allTransactions } = useTransactions();
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const dbAdapter = getDatabaseAdapter();
+  const dbAdapter = useMemo(() => getDatabaseAdapter(), []);
 
   // Listener for budgets
   useEffect(() => {
-    if (authLoading) {
-      return;
-    }
-    if (!user) {
+    if (authLoading || !user) {
       setIsLoading(false);
       setBudgets([]);
       return;
@@ -45,7 +42,7 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
       : [];
 
     const unsubscribe = dbAdapter.listenToCollection<Budget>(
-      'users/USER_ID/budgets',
+      `users/${user.uid}/budgets`,
       (fetchedBudgets) => {
         setBudgets(fetchedBudgets.map(b => ({ ...b, currentSpending: 0 })));
         setIsLoading(false);
@@ -58,7 +55,7 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
 
   const addBudget = async (budget: Omit<Budget, 'id' | 'createdAt' | 'currentSpending'>) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.addDoc('users/USER_ID/budgets', {
+    await dbAdapter.addDoc(`users/${user.uid}/budgets`, {
         ...budget,
         createdAt: new Date()
     });
@@ -67,13 +64,13 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
 
   const updateBudget = async (budgetId: string, updates: Partial<Budget>) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.updateDoc(`users/USER_ID/budgets/${budgetId}`, updates);
+    await dbAdapter.updateDoc(`users/${user.uid}/budgets/${budgetId}`, updates);
     toast({ title: "Orçamento atualizado!" });
   }
 
   const deleteBudget = async (budgetId: string) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.deleteDoc(`users/USER_ID/budgets/${budgetId}`);
+    await dbAdapter.deleteDoc(`users/${user.uid}/budgets/${budgetId}`);
     toast({ title: "Orçamento excluído." });
   }
 

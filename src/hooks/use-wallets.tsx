@@ -1,7 +1,7 @@
 // src/hooks/use-wallets.tsx
 'use client';
 
-import { useState, useEffect, createContext, useContext, ReactNode } from "react";
+import { useState, useEffect, createContext, useContext, ReactNode, useMemo } from "react";
 import { Wallet } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
@@ -22,14 +22,11 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const dbAdapter = getDatabaseAdapter();
+  const dbAdapter = useMemo(() => getDatabaseAdapter(), []);
 
   // Listener for wallets
   useEffect(() => {
-    if (authLoading) {
-      return;
-    }
-    if (!user) {
+    if (authLoading || !user) {
       setIsLoading(false);
       setWallets([]);
       return;
@@ -42,7 +39,7 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
       : [];
 
     const unsubscribe = dbAdapter.listenToCollection<Wallet>(
-      'users/USER_ID/wallets',
+      `users/${user.uid}/wallets`,
       (fetchedWallets) => {
         setWallets(fetchedWallets);
         setIsLoading(false);
@@ -55,7 +52,7 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
 
   const addWallet = async (wallet: Omit<Wallet, 'id' | 'createdAt' | 'balance'>) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.addDoc('users/USER_ID/wallets',{
+    await dbAdapter.addDoc(`users/${user.uid}/wallets`,{
         ...wallet,
         balance: 0,
         createdAt: new Date()
@@ -65,14 +62,14 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
 
   const updateWallet = async (walletId: string, updates: Partial<Wallet>) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.updateDoc(`users/USER_ID/wallets/${walletId}`, updates);
+    await dbAdapter.updateDoc(`users/${user.uid}/wallets/${walletId}`, updates);
     toast({ title: "Carteira atualizada!" });
   }
 
   const deleteWallet = async (walletId: string) => {
     if (!user) throw new Error("User not authenticated");
     
-    await dbAdapter.deleteDoc(`users/USER_ID/wallets/${walletId}`);
+    await dbAdapter.deleteDoc(`users/${user.uid}/wallets/${walletId}`);
     toast({ title: "Carteira excluída." });
   }
 

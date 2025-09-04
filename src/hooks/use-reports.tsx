@@ -1,7 +1,7 @@
 // src/hooks/use-reports.tsx
 'use client';
 
-import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from "react";
+import { useState, useEffect, createContext, useContext, ReactNode, useCallback, useMemo } from "react";
 import { MonthlyReport, AnnualReport, Transaction } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
@@ -30,14 +30,11 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
   const [monthlyReports, setMonthlyReports] = useState<MonthlyReport[]>([]);
   const [annualReports, setAnnualReports] = useState<AnnualReport[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const dbAdapter = getDatabaseAdapter();
+  const dbAdapter = useMemo(() => getDatabaseAdapter(), []);
 
   // Listener for monthly and annual reports
   useEffect(() => {
-    if (authLoading) {
-      return;
-    }
-    if (!user) {
+    if (authLoading || !user) {
       setIsLoading(false);
       setMonthlyReports([]);
       setAnnualReports([]);
@@ -47,7 +44,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
 
     const unsubscribeMonthly = dbAdapter.listenToCollection<MonthlyReport>(
-        'users/USER_ID/reports',
+        `users/${user.uid}/reports`,
         (reports) => {
             setMonthlyReports(reports);
             setIsLoading(false);
@@ -55,7 +52,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
     );
     
     const unsubscribeAnnual = dbAdapter.listenToCollection<AnnualReport>(
-        'users/USER_ID/annualReports',
+        `users/${user.uid}/annualReports`,
         (reports) => setAnnualReports(reports)
     );
 
@@ -63,7 +60,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
         unsubscribeMonthly();
         unsubscribeAnnual();
     };
-  }, [user, authLoading, toast, dbAdapter]);
+  }, [user, authLoading, dbAdapter]);
   
   const generateMonthlyReport = useCallback(async (year: number, month: number, transactions: Transaction[], previousMonthReport?: MonthlyReport) => {
       if(!user) return null;
@@ -87,7 +84,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
             generatedAt: new Date().toISOString()
         }
 
-        await dbAdapter.setDoc(`users/USER_ID/reports/${reportId}`, newReport);
+        await dbAdapter.setDoc(`users/${user.uid}/reports/${reportId}`, newReport);
         
         return newReport;
 
@@ -117,7 +114,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
             generatedAt: new Date().toISOString()
         }
 
-        await dbAdapter.setDoc(`users/USER_ID/annualReports/${reportId}`, newReport);
+        await dbAdapter.setDoc(`users/${user.uid}/annualReports/${reportId}`, newReport);
         
         return newReport;
 
@@ -130,7 +127,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
 
   // Effect for automatic report generation
   useEffect(() => {
-    if (isLoading || isLoadingTransactions || !user) {
+    if (isLoading || isLoadingTransactions || authLoading || !user) {
         return;
     }
     
@@ -184,7 +181,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
 
     runAutomaticGeneration();
 
-  }, [isLoading, isLoadingTransactions, user, allTransactions, monthlyReports, annualReports, generateAnnualReport, generateMonthlyReport]);
+  }, [isLoading, isLoadingTransactions, user, allTransactions, monthlyReports, annualReports, generateAnnualReport, generateMonthlyReport, authLoading]);
 
   const getMonthlyReport = (year: number, month: number) => {
       const reportId = `${year}-${String(month).padStart(2, '0')}`;

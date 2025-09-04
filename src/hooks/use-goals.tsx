@@ -1,7 +1,7 @@
 // src/hooks/use-goals.tsx
 'use client';
 
-import { useState, useEffect, createContext, useContext, ReactNode, useRef } from "react";
+import { useState, useEffect, createContext, useContext, ReactNode, useRef, useMemo } from "react";
 import { Goal, Transaction } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
@@ -27,7 +27,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [completedGoal, setCompletedGoal] = useState<Goal | null>(null);
   const prevGoalsRef = useRef<Goal[]>([]);
-  const dbAdapter = getDatabaseAdapter();
+  const dbAdapter = useMemo(() => getDatabaseAdapter(), []);
 
 
   // Effect to check for newly completed goals
@@ -47,10 +47,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
 
   // Listener for goals
   useEffect(() => {
-    if (authLoading) {
-      return;
-    }
-    if (!user) {
+    if (authLoading || !user) {
       setIsLoading(false);
       setGoals([]);
       return;
@@ -63,7 +60,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
       : [];
 
     const unsubscribe = dbAdapter.listenToCollection<Goal>(
-      'users/USER_ID/goals',
+      `users/${user.uid}/goals`,
       (fetchedGoals) => {
         setGoals(fetchedGoals);
         setIsLoading(false);
@@ -76,7 +73,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
 
   const addGoal = async (goal: Omit<Goal, 'id' | 'createdAt' | 'currentAmount'>) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.addDoc('users/USER_ID/goals', {
+    await dbAdapter.addDoc(`users/${user.uid}/goals`, {
         ...goal,
         currentAmount: 0,
         createdAt: new Date()
@@ -86,13 +83,13 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
 
   const updateGoal = async (goalId: string, updates: Partial<Goal>) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.updateDoc(`users/USER_ID/goals/${goalId}`, updates);
+    await dbAdapter.updateDoc(`users/${user.uid}/goals/${goalId}`, updates);
     toast({ title: "Meta atualizada!" });
   }
 
   const deleteGoal = async (goalId: string) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.deleteDoc(`users/USER_ID/goals/${goalId}`);
+    await dbAdapter.deleteDoc(`users/${user.uid}/goals/${goalId}`);
     toast({ title: "Meta excluída." });
   }
 
@@ -100,7 +97,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
      if (!user) throw new Error("User not authenticated");
      
      await dbAdapter.runTransaction(async (transaction: any) => {
-        const goalDoc = await transaction.get(`users/USER_ID/goals/${goalId}`);
+        const goalDoc = await transaction.get(`users/${user.uid}/goals/${goalId}`);
         if (!goalDoc || !goalDoc.data()) throw new Error("Meta não encontrada.");
 
         const newTransaction: Omit<Transaction, 'id'> = {
@@ -111,10 +108,10 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
             type: 'transfer',
             walletId: walletId,
         };
-        await transaction.set(`users/USER_ID/transactions/${Date.now()}`, newTransaction);
+        await transaction.set(`users/${user.uid}/transactions/${Date.now()}`, newTransaction);
 
-        transaction.update(`users/USER_ID/wallets/${walletId}`, { balance: dbAdapter.increment(-amount) });
-        transaction.update(`users/USER_ID/goals/${goalId}`, { currentAmount: dbAdapter.increment(amount) });
+        transaction.update(`users/${user.uid}/wallets/${walletId}`, { balance: dbAdapter.increment(-amount) });
+        transaction.update(`users/${user.uid}/goals/${goalId}`, { currentAmount: dbAdapter.increment(amount) });
      });
 
      toast({ title: `Depósito de R$ ${amount.toFixed(2)} adicionado!`})

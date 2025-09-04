@@ -20,16 +20,13 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const [logs, setLogs] = useState<AICreditLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const dbAdapter = getDatabaseAdapter();
+  const dbAdapter = useMemo(() => getDatabaseAdapter(), []);
 
   const credits = useMemo(() => user?.aiCredits || 0, [user]);
 
   // Listener for credit logs
   useEffect(() => {
-    if (authLoading) {
-      return;
-    }
-    if (!user) {
+    if (authLoading || !user) {
       setIsLoading(false);
       setLogs([]);
       return;
@@ -39,7 +36,7 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
     
     // Listener for credit logs
     const unsubscribeLogs = dbAdapter.listenToCollection<AICreditLog>(
-        `users/USER_ID/aiCreditLogs`,
+        `users/${user.uid}/aiCreditLogs`,
         (fetchedLogs) => {
             setLogs(fetchedLogs);
             setIsLoading(false);
@@ -50,7 +47,7 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
     return () => {
         unsubscribeLogs();
     };
-  }, [user, authLoading, toast, dbAdapter]);
+  }, [user, authLoading, dbAdapter]);
 
 
   const value: CreditsContextType = {

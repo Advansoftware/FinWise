@@ -30,15 +30,12 @@ export function useAISettings() {
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingCredential, setEditingCredential] = useState<AICredential | null>(null);
-    const dbAdapter = getDatabaseAdapter();
+    const dbAdapter = useMemo(() => getDatabaseAdapter(), []);
 
 
     // Function to load settings
     useEffect(() => {
-        if (authLoading) {
-            return;
-        }
-        if (!user) {
+        if (authLoading || !user) {
             setIsLoading(false);
             setSettings(null);
             return;
@@ -46,7 +43,7 @@ export function useAISettings() {
 
         setIsLoading(true);
         const unsubscribe = dbAdapter.listenToCollection<{credentials: AICredential[], activeCredentialId: string | null}>(
-          'users/USER_ID/settings',
+          `users/${user.uid}/settings`,
           (settingsData) => {
              const aiSettings = settingsData.find(s => (s as any).id === 'ai');
              if (aiSettings) {
@@ -96,7 +93,7 @@ export function useAISettings() {
         }
         setIsSaving(true);
         try {
-            await dbAdapter.setDoc('users/USER_ID/settings/ai', newSettings);
+            await dbAdapter.setDoc(`users/${user.uid}/settings/ai`, newSettings);
             toast({ title: "Configurações de IA salvas!" });
             setSettings(newSettings);
         } catch (error) {
