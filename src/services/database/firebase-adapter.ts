@@ -1,4 +1,3 @@
-
 // src/services/database/firebase-adapter.ts
 
 import { getFirebase } from "@/lib/firebase";
@@ -89,20 +88,19 @@ export class FirebaseAdapter implements IDatabaseAdapter {
 
     async getDoc<T>(docPath: string): Promise<T | null> {
         const userId = this.getUserId();
-        if (!userId) return null;
         
         const docRef = doc(this.db, docPath);
         const docSnap = await fbGetDoc(docRef);
 
         if (docSnap.exists()) {
             const data = docSnap.data();
-            // Security check for sub-collections
-            if (data.userId && data.userId !== userId) {
+            // Security check for sub-collections, requires a userId to be present on doc
+            if (userId && data.userId && data.userId !== userId) {
                  console.warn(`Permission denied: User ${userId} tried to access doc ${docPath} owned by ${data.userId}`);
                  return null;
             }
              // Security check for top-level user doc
-            if (docPath.startsWith('users/') && docSnap.id !== userId) {
+            if (userId && docPath.startsWith('users/') && docSnap.id !== userId) {
                  console.warn(`Permission denied: User ${userId} tried to access user doc ${docPath}`);
                 return null;
             }
@@ -113,7 +111,14 @@ export class FirebaseAdapter implements IDatabaseAdapter {
                 }
             });
             
-            return { id: docSnap.id, uid: docSnap.id, ...data } as T;
+            const docId = docSnap.id;
+            const finalData = { ...data, id: docId };
+            // For user profile, ensure 'uid' field is consistent with other adapters
+            if (docPath.startsWith('users/')) {
+                (finalData as any).uid = docId;
+            }
+
+            return finalData as T;
         }
         return null;
     }
@@ -130,9 +135,8 @@ export class FirebaseAdapter implements IDatabaseAdapter {
 
     async setDoc<T extends DocumentData>(docPath: string, data: T): Promise<void> {
         const userId = this.getUserId();
-        if (!userId) throw new Error("User not authenticated");
-        
-        const dataWithUser = { ...data, userId };
+        // Allow setting doc even if user is not authenticated for initial user profile creation
+        const dataWithUser = userId ? { ...data, userId } : data;
         const serializedData = this.serializeData(dataWithUser);
         await fbSetDoc(doc(this.db, docPath), serializedData, { merge: true });
     }

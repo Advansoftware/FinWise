@@ -41,7 +41,7 @@ export class FirebaseAuthAdapter implements IAuthAdapter {
         const userCredential = await createUserWithEmailAndPassword(this.auth, email, pass);
         await updateProfile(userCredential.user, { displayName: name });
         
-        const newUserProfile: Omit<UserProfile, 'uid'> = {
+        const newUserProfile: Omit<UserProfile, 'uid'|'id'> = {
           email: userCredential.user.email,
           displayName: name,
           plan: 'Básico',
@@ -51,10 +51,10 @@ export class FirebaseAuthAdapter implements IAuthAdapter {
 
         await this.dbAdapter.setDoc(`users/${userCredential.user.uid}`, newUserProfile);
 
-        return {
-            ...newUserProfile,
-            uid: userCredential.user.uid,
-        };
+        const createdProfile = await this.dbAdapter.getDoc<UserProfile>(`users/${userCredential.user.uid}`);
+        if (!createdProfile) throw new Error("Failed to create user profile.");
+
+        return createdProfile;
     }
 
     async logout(): Promise<void> {

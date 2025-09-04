@@ -48,16 +48,19 @@ async function handler(
         
         // Security layer: Ensure the query always filters by the authenticated user's ID
         if (collectionName === 'users') {
+            // A user can only access their own user document.
             if (docId !== authenticatedUserId) {
                 return NextResponse.json({ error: 'Permission denied to access other user data' }, { status: 403 });
             }
              try {
-                query._id = new ObjectId(docId);
+                // Find user by their ObjectId, which is the authenticated user's ID.
+                query._id = new ObjectId(authenticatedUserId);
             } catch (e) {
                 // If the ID is not a valid ObjectId (like in Firebase), use it as is.
-                query._id = docId;
+                query._id = authenticatedUserId;
             }
         } else {
+            // For other collections, filter by the userId field.
             query.userId = authenticatedUserId;
             if (docId) { 
                 try {

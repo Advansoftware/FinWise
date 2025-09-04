@@ -8,6 +8,7 @@ import {
   useEffect,
   ReactNode,
   useCallback,
+  useMemo,
 } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
 import { getAuthAdapter, IAuthAdapter } from '@/services/auth/auth-service';
@@ -32,29 +33,29 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const authAdapter = getAuthAdapter();
-  const dbAdapter = getDatabaseAdapter();
+  
+  const authAdapter = useMemo(() => getAuthAdapter(), []);
+  const dbAdapter = useMemo(() => getDatabaseAdapter(), []);
 
   const handleAuthChange = useCallback(async (firebaseUser: FirebaseUser | null) => {
     if (firebaseUser) {
-      const userProfile = await dbAdapter.getDoc<UserProfile>(`users/${firebaseUser.uid}`);
-      if (userProfile) {
+        // Ensure profile exists, especially for social logins or new signups.
+        let userProfile = await dbAdapter.getDoc<UserProfile>(`users/${firebaseUser.uid}`);
+        
+        if (!userProfile) {
+            const newUserProfileData: Omit<UserProfile, 'uid'|'id'> = {
+                email: firebaseUser.email,
+                displayName: firebaseUser.displayName,
+                plan: 'Básico',
+                aiCredits: 0,
+                createdAt: new Date().toISOString(),
+            };
+             await dbAdapter.setDoc(`users/${firebaseUser.uid}`, newUserProfileData);
+             userProfile = await dbAdapter.getDoc<UserProfile>(`users/${firebaseUser.uid}`);
+        }
         setUser(userProfile);
-      } else {
-        // This case handles Google Sign-In where profile might not exist yet
-        const newUserProfile: Omit<UserProfile, 'uid'> = {
-          email: firebaseUser.email,
-          displayName: firebaseUser.displayName,
-          plan: 'Básico',
-          aiCredits: 0,
-          createdAt: new Date().toISOString(),
-        };
-        await dbAdapter.setDoc(`users/${firebaseUser.uid}`, newUserProfile);
-        const createdProfile = await dbAdapter.getDoc<UserProfile>(`users/${firebaseUser.uid}`);
-        setUser(createdProfile);
-      }
     } else {
-      setUser(null);
+        setUser(null);
     }
     setLoading(false);
   }, [dbAdapter]);
@@ -69,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const loggedInUser = await authAdapter.login(email, password);
-      setUser(loggedInUser);
+      setUser(loggedInUser); // onAuthStateChanged will also fire, this is for immediate UI update
       return loggedInUser;
     } catch (error) {
       setUser(null);
@@ -82,7 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const newUser = await authAdapter.signup(email, password, name);
-       setUser(newUser);
+       setUser(newUser); // onAuthStateChanged will also fire
       return newUser;
     } catch (error) {
        setUser(null);
@@ -95,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const googleUser = await authAdapter.signInWithGoogle();
-       // onAuthStateChanged will handle setting the user state
+       // onAuthStateChanged will handle setting the user state and creating the profile
       return googleUser;
     } catch (error) {
       setUser(null);

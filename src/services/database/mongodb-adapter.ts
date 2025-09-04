@@ -127,7 +127,11 @@ export class MongoDbAdapter implements IDatabaseAdapter {
             headers,
             body: JSON.stringify(data),
         });
-        if (!response.ok) throw new Error(`Failed to set doc: ${await response.text()}`);
+        if (!response.ok) {
+             const errorText = await response.text();
+             console.error("Failed to set doc:", errorText);
+             throw new Error(`Failed to set doc: ${errorText}`);
+        }
     }
 
     async updateDoc(docPath: string, data: Partial<DocumentData>): Promise<void> {
