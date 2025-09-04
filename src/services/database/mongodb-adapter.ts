@@ -1,4 +1,3 @@
-
 // src/services/database/mongodb-adapter.ts
 
 import { DocumentData } from "firebase/firestore";
@@ -12,7 +11,6 @@ const getApiUrl = (path: string, userId: string): string => {
     let baseUrl = `/api/data/${cleanPath}`;
     
     // Add the userId as a query parameter.
-    // This simplifies the backend logic to always expect the userId in the query.
     const separator = baseUrl.includes('?') ? '&' : '?';
     baseUrl = `${baseUrl}${separator}userId=${userId}`;
 
@@ -22,26 +20,32 @@ const getApiUrl = (path: string, userId: string): string => {
 
 export class MongoDbAdapter implements IDatabaseAdapter {
     private auth: Auth;
+    private authStatePromise: Promise<void>;
+    private resolveAuthState: () => void = () => {};
 
     constructor() {
         const { auth } = getFirebase();
         this.auth = auth;
+        
+        this.authStatePromise = new Promise(resolve => {
+            this.resolveAuthState = resolve;
+        });
+
+        this.auth.onIdTokenChanged(user => {
+            if (user) {
+                this.resolveAuthState();
+            } else {
+                // Reset promise if user logs out
+                this.authStatePromise = new Promise(resolve => {
+                    this.resolveAuthState = resolve;
+                });
+            }
+        });
     }
     
     private async getHeaders(): Promise<Record<string, string>> {
-        // This function is now the gatekeeper. It ensures we don't proceed without a valid ID token.
-        if (!this.auth.currentUser) {
-            // This is a race condition scenario. We wait for a short period for the user state to propagate.
-            // A more robust solution might involve an event emitter or a state manager promise.
-            await new Promise<void>(resolve => {
-                const unsubscribe = this.auth.onIdTokenChanged(user => {
-                    if (user) {
-                        unsubscribe();
-                        resolve();
-                    }
-                });
-            });
-        }
+        // Wait until the auth state has been resolved.
+        await this.authStatePromise;
         
         if (!this.auth.currentUser) {
             throw new Error("User not authenticated. Cannot make API requests.");
@@ -60,7 +64,8 @@ export class MongoDbAdapter implements IDatabaseAdapter {
         if (userId) {
             return path.replace(/USER_ID/g, userId);
         }
-        // The getHeaders method will throw before this becomes a problem in most cases.
+        // This should theoretically not be reached if getHeaders() is awaited,
+        // but it's a safe fallback.
         return path;
     }
 
@@ -69,10 +74,14 @@ export class MongoDbAdapter implements IDatabaseAdapter {
         let isSubscribed = true;
 
         const fetchData = async () => {
-            if (!isSubscribed || !this.auth.currentUser) {
-                if (isSubscribed) callback([]); 
-                return;
-            };
+            if (!isSubscribed) return;
+            
+            // Wait for auth to be ready before fetching
+            await this.authStatePromise;
+            if(!this.auth.currentUser) {
+                 if (isSubscribed) callback([]);
+                 return;
+            }
 
             try {
                 const resolvedPath = this.resolvePath(collectionPath);
@@ -87,7 +96,7 @@ export class MongoDbAdapter implements IDatabaseAdapter {
                         callback(data.map((d: any) => ({...d, id: d._id.toString() })) as T[]);
                     }
                 } else {
-                     if(isSubscribed && response.status !== 401) { // Don't warn on auth errors during logout
+                     if(isSubscribed && response.status !== 401) {
                         console.warn(`Listen failed on ${resolvedPath} with status ${response.status}.`);
                         callback([]);
                     }
@@ -101,7 +110,6 @@ export class MongoDbAdapter implements IDatabaseAdapter {
         };
 
         const intervalId = setInterval(fetchData, 5000); 
-
         fetchData();
         
         const unsubscribe = () => {
@@ -113,11 +121,8 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     }
 
     async getDoc<T>(docPath: string): Promise<T | null> {
-         if (!this.auth.currentUser) {
-             console.warn("getDoc called before user was authenticated. This may lead to a race condition.");
-             await new Promise(resolve => setTimeout(resolve, 500)); // Brief delay for auth state
-             if (!this.auth.currentUser) return null;
-        };
+        await this.authStatePromise;
+        if (!this.auth.currentUser) return null;
         
         const resolvedPath = this.resolvePath(docPath);
         const headers = await this.getHeaders();

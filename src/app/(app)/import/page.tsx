@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { UploadCloud, FileText, X, Loader2, Wand2, ChevronRight, ChevronLeft, Sparkles, Lock } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Transaction, TransactionCategory } from '@/lib/types';
+import { Transaction, TransactionCategory, Wallet } from "@/lib/types";
 import { useTransactions } from "@/hooks/use-transactions";
 import Papa from 'papaparse';
 import { default as toJs } from 'ofx-js';
@@ -17,6 +17,7 @@ import { suggestCategoryForItemAction } from '@/services/ai-actions';
 import { useAuth } from '@/hooks/use-auth';
 import { usePlan } from '@/hooks/use-plan';
 import { ProUpgradeCard } from '@/components/pro-upgrade-card';
+import { useWallets } from '@/hooks/use-wallets';
 
 type ParsedTransaction = Omit<Transaction, 'id' | 'walletId'> & { walletId?: string };
 
@@ -50,6 +51,7 @@ export default function ImportPage() {
     const { toast } = useToast();
     const { user } = useAuth();
     const { addTransaction, categories: userCategories, subcategories: userSubcategories } = useTransactions();
+    const { wallets } = useWallets();
     const { isPro, isPlus, isLoading: isPlanLoading } = usePlan();
     
     const canUseAICategorization = isPlus;
@@ -239,13 +241,12 @@ export default function ImportPage() {
         setStage('importing');
         try {
             for (const transaction of transactionsToImport) {
-                // Ensure walletId is set before adding
                 if (!transaction.walletId) {
                     toast({ variant: 'destructive', title: 'Carteira não selecionada', description: `Selecione uma carteira para a transação "${transaction.item}".` });
                     setStage('confirm');
                     return;
                 }
-                await addTransaction(transaction as Transaction);
+                await addTransaction(transaction as Omit<Transaction, 'id' | 'userId'>);
             }
             toast({ title: 'Sucesso!', description: `${transactionsToImport.length} transações importadas.` });
             handleReset();
@@ -383,10 +384,9 @@ export default function ImportPage() {
                                      <Select value={t.walletId} onValueChange={(val) => handleTransactionUpdate(i, 'walletId', val)}>
                                         <SelectTrigger><SelectValue placeholder="Selecione"/></SelectTrigger>
                                         <SelectContent>
-                                            {/* Wallets need to be fetched from a hook */}
-                                            {/* For now, using a placeholder */}
-                                            <SelectItem value="wallet1">Conta Principal</SelectItem>
-                                            <SelectItem value="wallet2">Cartão de Crédito</SelectItem>
+                                            {wallets.map(wallet => (
+                                                <SelectItem key={wallet.id} value={wallet.id}>{wallet.name}</SelectItem>
+                                            ))}
                                         </SelectContent>
                                     </Select>
                                 </TableCell>

@@ -1,4 +1,3 @@
-
 // src/hooks/use-auth.tsx
 'use client';
 
@@ -40,11 +39,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const handleAuthChange = useCallback(async (firebaseUser: FirebaseUser | null) => {
     if (firebaseUser) {
-        // Ensure profile exists, especially for social logins or new signups.
+        // We have a firebase user, now get the full profile from our DB
+        // This also handles creation on first login (e.g. social)
         let userProfile = await dbAdapter.getDoc<UserProfile>(`users/${firebaseUser.uid}`);
         
         if (!userProfile) {
-            console.log(`No profile for ${firebaseUser.uid}, creating...`);
             const newUserProfileData: Omit<UserProfile, 'uid'|'id'> = {
                 email: firebaseUser.email,
                 displayName: firebaseUser.displayName,
@@ -69,21 +68,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [authAdapter, handleAuthChange]);
   
   const login: IAuthAdapter['login'] = async (email, password) => {
-    // setLoading(true); // Handled by onAuthStateChanged
     const loggedInUser = await authAdapter.login(email, password);
     // onAuthStateChanged will handle setting state and profile
     return loggedInUser;
   };
   
   const signup: IAuthAdapter['signup'] = async (email, password, name) => {
-    // setLoading(true);
     const newUser = await authAdapter.signup(email, password, name);
     // onAuthStateChanged will handle setting state and profile
     return newUser;
   };
   
   const signInWithGoogle: IAuthAdapter['signInWithGoogle'] = async () => {
-    // setLoading(true);
     const googleUser = await authAdapter.signInWithGoogle();
     // onAuthStateChanged will handle setting the user state and creating the profile
     return googleUser;
@@ -110,13 +106,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const updateUserPassword: IAuthAdapter['updateUserPassword'] = async (password) => {
-    // This action would require backend implementation in MongoDB mode
     if (process.env.NEXT_PUBLIC_AUTH_PROVIDER === 'mongodb') {
       throw new Error("Password update is not implemented for this authentication mode.");
     }
     if (!user) throw new Error("User not authenticated");
     await authAdapter.updateUserPassword(password);
-    // No direct feedback needed, as reauthentication handles password verification
   }
 
   const value: AuthContextType = {

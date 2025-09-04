@@ -1,4 +1,3 @@
-
 // src/app/api/data/[...path]/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -14,7 +13,6 @@ async function getUserIdFromToken(request: NextRequest): Promise<string | null> 
     if (!idToken) return null;
 
     try {
-        // This verifies the ID token that the Firebase client SDK generates.
         const decodedToken = await getAdminApp().auth().verifyIdToken(idToken);
         return decodedToken.uid;
     } catch (error) {
@@ -28,7 +26,6 @@ async function handler(
     request: NextRequest,
     { params }: { params: { path: string[] } }
 ) {
-    // Step 1: Always verify the token first
     const authenticatedUserId = await getUserIdFromToken(request);
     if (!authenticatedUserId) {
         return NextResponse.json({ error: 'Unauthorized: Invalid or missing token' }, { status: 401 });
@@ -40,7 +37,7 @@ async function handler(
 
     // Security check: The userId from the query MUST match the token's userId
     if (!queryUserId || queryUserId !== authenticatedUserId) {
-         return NextResponse.json({ error: 'Unauthorized: User ID mismatch or missing.' }, { status: 403 });
+         return NextResponse.json({ error: 'Forbidden: User ID mismatch or missing.' }, { status: 403 });
     }
     
     const [collectionName, docId] = params.path;
@@ -54,8 +51,7 @@ async function handler(
             if (docId !== authenticatedUserId) {
                 return NextResponse.json({ error: 'Permission denied to access other user data' }, { status: 403 });
             }
-            // A user can only access their own user document.
-            query._id = new ObjectId(authenticatedUserId);
+            query._id = new ObjectId(docId);
         } else {
             // For all other collections, filter by the userId field.
             query.userId = authenticatedUserId;
@@ -63,18 +59,17 @@ async function handler(
                 try {
                    query._id = new ObjectId(docId);
                 } catch(e) {
-                     // Fallback for non-ObjectId compatible IDs if necessary
                      query._id = docId;
                 }
             }
         }
 
         if (request.method === 'GET') {
-            if (docId) { // Single document request
+            if (docId) { 
                 const item = await collection.findOne(query);
                 if (!item) return NextResponse.json({ error: 'Not found or permission denied' }, { status: 404 });
                 return NextResponse.json(item);
-            } else { // Collection request
+            } else { 
                 const items = await collection.find({ userId: authenticatedUserId }).toArray();
                 return NextResponse.json(items);
             }
@@ -82,7 +77,6 @@ async function handler(
 
         if (request.method === 'POST') {
             const body = await request.json();
-            // Ensure userId is the authenticated user's ID
             const docToInsert = { ...body, userId: authenticatedUserId, createdAt: new Date() };
             const result = await collection.insertOne(docToInsert);
             return NextResponse.json({ insertedId: result.insertedId }, { status: 201 });
@@ -90,7 +84,6 @@ async function handler(
 
         if ((request.method === 'PUT' || request.method === 'PATCH') && docId) {
              const body = await request.json();
-             // Ensure the update does not change the userId or _id
              delete body.userId;
              delete body._id;
 
