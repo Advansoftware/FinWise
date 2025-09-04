@@ -45,8 +45,8 @@ async function performAtomicUpdate(dbAdapter: IDatabaseAdapter, updates: Partial
     // 1. Revert original transaction amount from its wallet(s)
     if (originalTransaction.type === 'transfer') {
         if(originalTransaction.toWalletId) {
-             await dbAdapter.updateDoc(`users/USER_ID/wallets/${originalTransaction.walletId}`, { balance: dbAdapter.increment(originalTransaction.amount) });
-             await dbAdapter.updateDoc(`users/USER_ID/wallets/${originalTransaction.toWalletId}`, { balance: dbAdapter.increment(-originalTransaction.amount) });
+             await dbAdapter.updateDoc(`users/USER_ID/wallets/${originalTransaction.walletId}`, { balance: dbAdapter.increment(-originalTransaction.amount) });
+             await dbAdapter.updateDoc(`users/USER_ID/wallets/${originalTransaction.toWalletId}`, { balance: dbAdapter.increment(originalTransaction.amount) });
         }
     } else {
         const revertAmount = originalTransaction.type === 'income' ? -originalTransaction.amount : originalTransaction.amount;

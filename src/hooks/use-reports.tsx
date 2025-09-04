@@ -35,11 +35,13 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
   // Listener for monthly and annual reports
   useEffect(() => {
     if (!user) {
-      setIsLoading(true);
+      setIsLoading(false);
       setMonthlyReports([]);
       setAnnualReports([]);
       return () => {};
     }
+
+    setIsLoading(true);
 
     const unsubscribeMonthly = dbAdapter.listenToCollection<MonthlyReport>(
         'users/USER_ID/reports',

@@ -37,6 +37,7 @@ export function useAISettings() {
     useEffect(() => {
         if (!user) {
             setIsLoading(false);
+            setSettings(null);
             return () => {};
         }
 
@@ -76,11 +77,12 @@ export function useAISettings() {
 
      // Effect to reset active credential if it's no longer allowed by the current plan
     useEffect(() => {
+        if (!user) return;
         const activeCredExistsInDisplayed = displayedCredentials.some(c => c.id === activeCredentialId);
         if (!activeCredExistsInDisplayed && activeCredentialId !== FINWISE_AI_CREDENTIAL_ID) {
             handleActivate(FINWISE_AI_CREDENTIAL_ID);
         }
-    }, [displayedCredentials, activeCredentialId]);
+    }, [displayedCredentials, activeCredentialId, user]);
 
 
     // Function to save all settings
