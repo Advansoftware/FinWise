@@ -15,7 +15,6 @@ export function getDatabaseAdapter(): IDatabaseAdapter {
     if (typeof window === 'undefined') {
         // On the server, we might need a default or specific admin adapter.
         // For now, let's assume server-side data access uses a different mechanism (e.g., admin SDKs).
-        // This avoids instantiating client-side adapters on the server.
         // Returning FirebaseAdapter as a safe default for type consistency, though it shouldn't be used server-side from this factory.
         return new FirebaseAdapter();
     }
