@@ -32,10 +32,9 @@ export class MongoDbAdapter implements IDatabaseAdapter {
 
     private resolvePath(path: string): string {
         if (this.auth.currentUser) {
-            // Return path as is, we will add userId separately
-            return path;
+            return path.replace('USER_ID', this.auth.currentUser.uid);
         }
-        throw new Error("User not authenticated");
+        return path;
     }
 
     listenToCollection<T>(collectionPath: string, callback: (data: T[]) => void, constraints?: any[]): Unsubscribe {
@@ -48,10 +47,12 @@ export class MongoDbAdapter implements IDatabaseAdapter {
             };
 
             try {
-                // Always append the user ID to the collection path for collection-level fetches.
-                const finalCollectionPath = `${collectionPath}/${this.auth.currentUser.uid}`;
+                const resolvedPath = this.resolvePath(collectionPath);
                 const headers = await this.getHeaders();
-                const response = await fetch(getApiUrl(finalCollectionPath), { headers });
+                // Standardize to always pass userId as a query parameter for collection fetches
+                const apiUrl = `${getApiUrl(resolvedPath)}?userId=${this.auth.currentUser.uid}`;
+
+                const response = await fetch(apiUrl, { headers });
                 
                 if (response.ok) {
                     const data = await response.json();
@@ -60,7 +61,7 @@ export class MongoDbAdapter implements IDatabaseAdapter {
                     }
                 } else {
                      if(isSubscribed) {
-                        console.warn(`Listen failed on ${collectionPath} with status ${response.status}.`);
+                        console.warn(`Listen failed on ${resolvedPath} with status ${response.status}.`);
                         callback([]);
                     }
                 }
@@ -85,10 +86,9 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     }
 
     async getDoc<T>(docPath: string): Promise<T | null> {
-        if (!this.auth.currentUser) return null; // Prevent fetch if no user
+        if (!this.auth.currentUser) return null;
         const resolvedPath = this.resolvePath(docPath);
         const headers = await this.getHeaders();
-        // For individual docs, we pass userId as a query param for security checks
         const apiUrl = `${getApiUrl(resolvedPath)}?userId=${this.auth.currentUser?.uid}`;
         const response = await fetch(apiUrl, { headers });
         
@@ -104,7 +104,7 @@ export class MongoDbAdapter implements IDatabaseAdapter {
         if (data && data._id) {
             data.id = data._id.toString();
             if(resolvedPath.startsWith('users/')) {
-                data.uid = data._id.toString();
+                data.uid = data.id;
             }
             delete data._id;
         }
@@ -128,7 +128,6 @@ export class MongoDbAdapter implements IDatabaseAdapter {
         if (!this.auth.currentUser) throw new Error("User not authenticated");
         const resolvedPath = this.resolvePath(docPath);
         const headers = await this.getHeaders();
-        // The API backend expects the userId in the query for auth checks on doc writes
         const apiUrl = `${getApiUrl(resolvedPath)}?userId=${this.auth.currentUser.uid}`;
         const response = await fetch(apiUrl, {
             method: 'PUT',

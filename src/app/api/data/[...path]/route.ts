@@ -57,29 +57,24 @@ async function handler(
     const authProvider = process.env.NEXT_PUBLIC_AUTH_PROVIDER || 'firebase';
 
     let userId: string | null = null;
-    // Path params will now be [collectionName, docId_or_userId, ...]
-    const [collectionName, param2, ...rest] = params.path;
     const { searchParams } = new URL(request.url);
+    const [collectionName, docId, ...rest] = params.path;
 
     if (authProvider === 'firebase') {
         userId = await getUserIdFromToken(request);
-    } else { // MongoDB auth logic
-        // This logic is now unified. For collection fetches, the userId is the second path param.
-        // For single docs, it's passed as a query param for security.
-        userId = param2 && rest.length === 0 ? param2 : searchParams.get('userId');
+    } else { // MongoDB auth logic - simplified and corrected
+        userId = searchParams.get('userId');
     }
    
     if (!userId) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    const docId = collectionName !== 'users' && rest.length === 0 ? param2 : (rest[0] || (collectionName === 'users' ? param2 : null));
-
     let query: any = {};
     
     if (collectionName === 'users') {
         // For /api/data/users/[userId]
-        const targetUserId = param2;
+         const targetUserId = docId;
          if (userId !== targetUserId) {
             return NextResponse.json({ error: 'Permission denied to access this user document' }, { status: 403 });
         }
@@ -108,11 +103,11 @@ async function handler(
     try {
         if (request.method === 'GET') {
             // Check if it's a request for a single document or a whole collection
-            if (docId) { // Single document request
+            if (docId && collectionName !== 'users') { // Single document request
                 const item = await collection.findOne(query);
                 if (!item) return NextResponse.json({ error: 'Not found or permission denied' }, { status: 404 });
                 return NextResponse.json(item);
-            } else { // Collection request
+            } else { // Collection request (or users/id request)
                 const items = await collection.find({ userId }).toArray();
                 return NextResponse.json(items);
             }
