@@ -8,18 +8,21 @@ import * as admin from 'firebase-admin';
 
 const SALT_ROUNDS = 10;
 
-// This function is distinct from the one in data/route, it's for user actions
-async function getUserIdFromToken(request: NextRequest): Promise<string | null> {
+// This function is for SOCIAL LOGINS ONLY now.
+// It verifies the ID token from Google/etc. to get a trusted UID.
+async function getUserIdFromToken(request: NextRequest): Promise<{uid: string, name: string | undefined, email: string | undefined} | null> {
     const authHeader = request.headers.get('Authorization');
     if (authHeader?.startsWith('Bearer ')) {
         const idToken = authHeader.split('Bearer ')[1];
         try {
-            // For MongoDB auth, we issue a custom token. For Firebase, it's an ID token.
-            // Firebase Admin SDK can verify both.
             const decodedToken = await getAdminApp().auth().verifyIdToken(idToken);
-            return decodedToken.uid;
+            return {
+                uid: decodedToken.uid,
+                name: decodedToken.name,
+                email: decodedToken.email,
+            };
         } catch (error) {
-            console.error("Error verifying ID token:", error);
+            console.error("Error verifying social ID token:", error);
             return null;
         }
     }
@@ -62,13 +65,12 @@ async function handler(
             
             if (!userProfile) throw new Error("Could not retrieve created user");
 
-            const customToken = await getAdminApp().auth().createCustomToken(userProfile._id.toHexString());
-            
-            const { password: _, ...userToReturn } = userProfile;
-            userToReturn.uid = userProfile._id.toHexString(); // Add uid field for consistency
-            delete (userToReturn as any)._id;
+            const { password: _, ...userToReturn } = userProfile as any;
+            userToReturn.uid = userProfile._id.toHexString(); 
+            delete userToReturn._id;
 
-            return NextResponse.json({ user: userToReturn, token: customToken }, { status: 201 });
+            // No token is returned, session is managed client-side
+            return NextResponse.json({ user: userToReturn }, { status: 201 });
         }
 
         if (request.method === 'POST' && action === 'login') {
@@ -87,13 +89,42 @@ async function handler(
                 return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
             }
             
-            const customToken = await getAdminApp().auth().createCustomToken(user._id.toHexString());
+            const { password: _, ...userToReturn } = user as any;
+            userToReturn.uid = user._id.toHexString();
+            delete userToReturn._id;
 
-            const { password: _, ...userToReturn } = user;
-            userToReturn.uid = user._id.toHexString(); // Add uid field for consistency
-            delete (userToReturn as any)._id;
+            return NextResponse.json({ user: userToReturn });
+        }
 
-            return NextResponse.json({ user: userToReturn, token: customToken });
+        if (request.method === 'POST' && action === 'social-login') {
+            const socialUser = await getUserIdFromToken(request);
+            if (!socialUser) {
+                 return NextResponse.json({ error: 'Invalid social token' }, { status: 401 });
+            }
+
+            // Find user by their main email.
+            let user = await usersCollection.findOne({ email: socialUser.email });
+
+            if (!user) {
+                // If user doesn't exist, create a new one.
+                const newUser = {
+                    _id: new ObjectId(socialUser.uid), // Use the Firebase UID as the MongoDB ID
+                    displayName: socialUser.name || 'New User',
+                    email: socialUser.email,
+                    // No password for social logins
+                    plan: 'Básico' as const,
+                    aiCredits: 0,
+                    createdAt: new Date(),
+                };
+                await usersCollection.insertOne(newUser);
+                user = newUser;
+            }
+
+            const { password, ...userToReturn } = user as any;
+            userToReturn.uid = user._id.toHexString();
+            delete userToReturn._id;
+            
+            return NextResponse.json({ user: userToReturn });
         }
 
         return NextResponse.json({ error: `Action '${action}' not found.` }, { status: 404 });

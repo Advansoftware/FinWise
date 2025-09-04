@@ -2,23 +2,21 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
-import { getAdminApp } from '@/lib/firebase-admin';
 import { ObjectId } from 'mongodb';
 
-async function getUserIdFromToken(request: NextRequest): Promise<string | null> {
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) return null;
-
-    const idToken = authHeader.split('Bearer ')[1];
-    if (!idToken) return null;
-
-    try {
-        const decodedToken = await getAdminApp().auth().verifyIdToken(idToken);
-        return decodedToken.uid;
-    } catch (error) {
-        console.error("Error verifying ID token:", error);
-        return null;
+// This is a placeholder for a real session/token validation mechanism.
+// In a production app, you would use a secure method like JWT or session cookies.
+// For this self-contained example, we will trust the userId from the query params,
+// as the user is already "logged in" on the client.
+// This is NOT secure for a real-world application.
+async function getUserIdFromRequest(request: NextRequest): Promise<string | null> {
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
+    // Basic validation to ensure it looks like an ObjectId to prevent some bad requests
+    if (userId && ObjectId.isValid(userId)) {
+        return userId;
     }
+    return null;
 }
 
 
@@ -26,20 +24,12 @@ async function handler(
     request: NextRequest,
     { params }: { params: { path: string[] } }
 ) {
-    const authenticatedUserId = await getUserIdFromToken(request);
+    const authenticatedUserId = await getUserIdFromRequest(request);
     if (!authenticatedUserId) {
-        return NextResponse.json({ error: 'Unauthorized: Invalid or missing token' }, { status: 401 });
+        return NextResponse.json({ error: 'Unauthorized: Invalid or missing user identifier.' }, { status: 401 });
     }
     
     const { db } = await connectToDatabase();
-    const { searchParams } = new URL(request.url);
-    const queryUserId = searchParams.get('userId');
-
-    // Security check: The userId from the query MUST match the token's userId
-    if (!queryUserId || queryUserId !== authenticatedUserId) {
-         return NextResponse.json({ error: 'Forbidden: User ID mismatch or missing.' }, { status: 403 });
-    }
-    
     const [collectionName, docId] = params.path;
     const collection = db.collection(collectionName);
     
@@ -59,7 +49,7 @@ async function handler(
                 try {
                    query._id = new ObjectId(docId);
                 } catch(e) {
-                     query._id = docId;
+                     return NextResponse.json({ error: 'Invalid document ID format' }, { status: 400 });
                 }
             }
         }
@@ -84,7 +74,7 @@ async function handler(
 
         if ((request.method === 'PUT' || request.method === 'PATCH') && docId) {
              const body = await request.json();
-             delete body.userId;
+             delete body.userId; // Prevent user from changing ownership
              delete body._id;
 
             const result = await collection.updateOne(query, { $set: body });

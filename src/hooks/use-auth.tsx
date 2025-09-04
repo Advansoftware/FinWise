@@ -44,6 +44,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         let userProfile = await dbAdapter.getDoc<UserProfile>(`users/${firebaseUser.uid}`);
         
         if (!userProfile) {
+            // User exists in auth provider but not our DB, create them
             const newUserProfileData: Omit<UserProfile, 'uid'|'id'> = {
                 email: firebaseUser.email,
                 displayName: firebaseUser.displayName,
@@ -69,20 +70,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   
   const login: IAuthAdapter['login'] = async (email, password) => {
     const loggedInUser = await authAdapter.login(email, password);
-    // onAuthStateChanged will handle setting state and profile
+    setUser(loggedInUser);
     return loggedInUser;
   };
   
   const signup: IAuthAdapter['signup'] = async (email, password, name) => {
     const newUser = await authAdapter.signup(email, password, name);
-    // onAuthStateChanged will handle setting state and profile
+    setUser(newUser);
     return newUser;
   };
   
   const signInWithGoogle: IAuthAdapter['signInWithGoogle'] = async () => {
-    const googleUser = await authAdapter.signInWithGoogle();
-    // onAuthStateChanged will handle setting the user state and creating the profile
-    return googleUser;
+    // onAuthStateChanged will handle profile creation/retrieval
+    return await authAdapter.signInWithGoogle();
   };
 
   const logout = async () => {
@@ -92,8 +92,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateUserProfile = async (name: string) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.updateDoc(`users/${user.uid}`, { displayName: name });
-    setUser({ ...user, displayName: name });
+    const updates = { displayName: name };
+    await dbAdapter.updateDoc(`users/${user.uid}`, updates);
+    setUser({ ...user, ...updates });
   };
   
   const sendPasswordReset: IAuthAdapter['sendPasswordReset'] = async (email) => {
@@ -106,9 +107,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const updateUserPassword: IAuthAdapter['updateUserPassword'] = async (password) => {
-    if (process.env.NEXT_PUBLIC_AUTH_PROVIDER === 'mongodb') {
-      throw new Error("Password update is not implemented for this authentication mode.");
-    }
     if (!user) throw new Error("User not authenticated");
     await authAdapter.updateUserPassword(password);
   }

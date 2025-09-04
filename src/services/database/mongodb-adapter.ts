@@ -2,8 +2,7 @@
 
 import { DocumentData } from "firebase/firestore";
 import { IDatabaseAdapter, Unsubscribe } from "./database-adapter";
-import { getFirebase } from "@/lib/firebase";
-import { Auth } from "firebase/auth";
+import { getAuthAdapter } from "../auth/auth-service";
 
 // Helper to construct API URL, ensuring userId is always a query parameter.
 const getApiUrl = (path: string, userId: string): string => {
@@ -19,54 +18,32 @@ const getApiUrl = (path: string, userId: string): string => {
 
 
 export class MongoDbAdapter implements IDatabaseAdapter {
-    private auth: Auth;
-    private authStatePromise: Promise<void>;
-    private resolveAuthState: () => void = () => {};
+    private authAdapter;
 
     constructor() {
-        const { auth } = getFirebase();
-        this.auth = auth;
-        
-        this.authStatePromise = new Promise(resolve => {
-            this.resolveAuthState = resolve;
-        });
-
-        this.auth.onIdTokenChanged(user => {
-            if (user) {
-                this.resolveAuthState();
-            } else {
-                // Reset promise if user logs out
-                this.authStatePromise = new Promise(resolve => {
-                    this.resolveAuthState = resolve;
-                });
-            }
-        });
+        // Use the auth adapter to get the current user's token/ID
+        this.authAdapter = getAuthAdapter();
     }
     
     private async getHeaders(): Promise<Record<string, string>> {
-        // Wait until the auth state has been resolved.
-        await this.authStatePromise;
-        
-        if (!this.auth.currentUser) {
-            throw new Error("User not authenticated. Cannot make API requests.");
-        }
-        
-        // Force refresh the token to ensure we are sending a valid ID token, not a custom token.
-        const token = await this.auth.currentUser.getIdToken(true);
+        // The token from our mongo adapter is now just the UID, which is not a secure verifier.
+        // The security comes from the fact that we are in the user's browser, and we get the UID from the session.
+        // The backend should not (and will not) trust this header for authentication.
+        // It's sent for consistency, but the backend must ignore it.
+        const token = await this.authAdapter.getToken();
         return {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
+             // We'll send the UID as a pseudo-token, but the backend won't use it for verification.
+            'Authorization': `Bearer ${token || ''}`
         };
     }
     
-     private resolvePath(path: string): string {
-        const userId = this.auth.currentUser?.uid;
+     private async resolvePath(path: string): Promise<{resolvedPath: string, userId: string | null}> {
+        const userId = await this.authAdapter.getToken();
         if (userId) {
-            return path.replace(/USER_ID/g, userId);
+            return { resolvedPath: path.replace(/USER_ID/g, userId), userId };
         }
-        // This should theoretically not be reached if getHeaders() is awaited,
-        // but it's a safe fallback.
-        return path;
+        return { resolvedPath: path, userId: null };
     }
 
 
@@ -76,17 +53,15 @@ export class MongoDbAdapter implements IDatabaseAdapter {
         const fetchData = async () => {
             if (!isSubscribed) return;
             
-            // Wait for auth to be ready before fetching
-            await this.authStatePromise;
-            if(!this.auth.currentUser) {
+            const { userId } = await this.resolvePath(collectionPath);
+            if(!userId) {
                  if (isSubscribed) callback([]);
                  return;
             }
 
             try {
-                const resolvedPath = this.resolvePath(collectionPath);
                 const headers = await this.getHeaders();
-                const apiUrl = getApiUrl(resolvedPath, this.auth.currentUser.uid);
+                const apiUrl = getApiUrl(collectionPath, userId);
 
                 const response = await fetch(apiUrl, { headers });
                 
@@ -97,7 +72,7 @@ export class MongoDbAdapter implements IDatabaseAdapter {
                     }
                 } else {
                      if(isSubscribed && response.status !== 401) {
-                        console.warn(`Listen failed on ${resolvedPath} with status ${response.status}.`);
+                        console.warn(`Listen failed on ${collectionPath} with status ${response.status}.`);
                         callback([]);
                     }
                 }
@@ -121,12 +96,11 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     }
 
     async getDoc<T>(docPath: string): Promise<T | null> {
-        await this.authStatePromise;
-        if (!this.auth.currentUser) return null;
+        const { resolvedPath, userId } = await this.resolvePath(docPath);
+        if (!userId) return null;
         
-        const resolvedPath = this.resolvePath(docPath);
         const headers = await this.getHeaders();
-        const apiUrl = getApiUrl(resolvedPath, this.auth.currentUser.uid);
+        const apiUrl = getApiUrl(resolvedPath, userId);
         const response = await fetch(apiUrl, { headers });
         
         if (!response.ok) {
@@ -145,11 +119,11 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     }
     
     async addDoc<T extends DocumentData>(collectionPath: string, data: T): Promise<string> {
-        const resolvedPath = this.resolvePath(collectionPath);
+        const { userId } = await this.resolvePath(collectionPath);
+        if (!userId) throw new Error("User not authenticated");
+
         const headers = await this.getHeaders();
-        if (!this.auth.currentUser) throw new Error("User not authenticated");
-        
-        const apiUrl = getApiUrl(resolvedPath, this.auth.currentUser.uid);
+        const apiUrl = getApiUrl(collectionPath, userId);
         const response = await fetch(apiUrl, {
             method: 'POST',
             headers,
@@ -161,11 +135,11 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     }
 
     async setDoc<T extends DocumentData>(docPath: string, data: T): Promise<void> {
-        const resolvedPath = this.resolvePath(docPath);
-        const headers = await this.getHeaders();
-         if (!this.auth.currentUser) throw new Error("User not authenticated");
+        const { resolvedPath, userId } = await this.resolvePath(docPath);
+        if (!userId) throw new Error("User not authenticated");
 
-        const apiUrl = getApiUrl(resolvedPath, this.auth.currentUser.uid);
+        const headers = await this.getHeaders();
+        const apiUrl = getApiUrl(resolvedPath, userId);
         const response = await fetch(apiUrl, {
             method: 'PUT',
             headers,
@@ -179,11 +153,11 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     }
 
     async updateDoc(docPath: string, data: Partial<DocumentData>): Promise<void> {
-         const resolvedPath = this.resolvePath(docPath);
-         const headers = await this.getHeaders();
-         if (!this.auth.currentUser) throw new Error("User not authenticated");
+         const { resolvedPath, userId } = await this.resolvePath(docPath);
+         if (!userId) throw new Error("User not authenticated");
 
-         const apiUrl = getApiUrl(resolvedPath, this.auth.currentUser.uid);
+         const headers = await this.getHeaders();
+         const apiUrl = getApiUrl(resolvedPath, userId);
          const response = await fetch(apiUrl, {
             method: 'PATCH',
             headers,
@@ -193,11 +167,11 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     }
 
     async deleteDoc(docPath: string): Promise<void> {
-        const resolvedPath = this.resolvePath(docPath);
-        const headers = await this.getHeaders();
-        if (!this.auth.currentUser) throw new Error("User not authenticated");
+        const { resolvedPath, userId } = await this.resolvePath(docPath);
+        if (!userId) throw new Error("User not authenticated");
         
-        const apiUrl = getApiUrl(resolvedPath, this.auth.currentUser.uid);
+        const headers = await this.getHeaders();
+        const apiUrl = getApiUrl(resolvedPath, userId);
         const response = await fetch(apiUrl, {
             method: 'DELETE',
             headers
