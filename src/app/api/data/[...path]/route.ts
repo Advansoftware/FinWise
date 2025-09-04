@@ -5,16 +5,16 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { getAdminApp } from '@/lib/firebase-admin';
 import { ObjectId } from 'mongodb';
 
-async function getUserIdFromFirebaseToken(request: NextRequest): Promise<string | null> {
+async function getUserIdFromToken(request: NextRequest): Promise<string | null> {
     const authHeader = request.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) return null;
 
     const idToken = authHeader.split('Bearer ')[1];
     try {
-        const decodedToken = await getAdminApp().auth().verifyIdToken(idToken, true);
+        const decodedToken = await getAdminApp().auth().verifyIdToken(idToken, true); // checkRevoked = true
         return decodedToken.uid;
     } catch (error) {
-        console.error("Firebase ID token verification failed:", error);
+        console.error("Error verifying ID token:", error);
         return null;
     }
 }
@@ -58,28 +58,20 @@ async function handler(
 
     let userId: string | null = null;
     
-    if (authProvider === 'firebase') {
-        userId = await getUserIdFromFirebaseToken(request);
-    } else {
-        // For MongoDB auth, the userId is passed in the URL path for simplicity and to avoid token complexity.
-        // Security is maintained by ensuring all queries are scoped to this userId.
-        const authHeader = request.headers.get('Authorization');
-        if (authHeader?.startsWith('Bearer ')) { // Check if there's a session token
-             userId = params.path[1]; // e.g., /api/data/transactions/USER_ID
-        }
-    }
-
+    // With the unified auth approach, we always use a Firebase token for session management.
+    userId = await getUserIdFromToken(request);
+   
     if (!userId) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    // The collection name is the first part of the path
-    const [collectionName, pathParam1, pathParam2] = params.path;
-    let docId = authProvider === 'mongodb' ? pathParam2 : pathParam1;
+    // The collection name is the first part of the path, docId is the second.
+    const [collectionName, docId] = params.path;
     
     let query: any = {};
     
     if (collectionName === 'users') {
+         // Security check: A user can only access their own document.
          if (userId !== docId) {
             return NextResponse.json({ error: 'Permission denied to access this user document' }, { status: 403 });
         }
@@ -96,12 +88,7 @@ async function handler(
             try {
                query._id = new ObjectId(docId);
             } catch(e) {
-                // This will fail for Firebase-generated IDs, which is expected.
-                // In a pure Mongo setup, IDs would always be valid ObjectIds.
-                // For a hybrid or Firebase-first approach, we might need to handle this.
-                // For now, we assume if it's not an ObjectId, it's not a valid Mongo doc id for non-user collections.
-                // This might need adjustment if using Firebase IDs in Mongo.
-                // Let's assume for now this is fine.
+                // If it's not a valid ObjectId, assume it's a non-ObjectId string key (like 'ai' or 'categories' in settings)
                  query._id = docId;
             }
         }
