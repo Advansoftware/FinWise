@@ -1,11 +1,10 @@
+
 // src/services/auth/mongodb-auth-adapter.ts
 
 import { IAuthAdapter, AuthStateChangedCallback, Unsubscribe } from "./auth-adapter";
 import { UserProfile } from "@/lib/types";
-import { User as FirebaseUser } from "firebase/auth";
-
-const SESSION_KEY = 'finwise_mongo_session';
-const BROADCAST_CHANNEL_NAME = 'finwise_auth_channel';
+import { User as FirebaseUser, signInWithCustomToken } from "firebase/auth";
+import { getFirebase } from "@/lib/firebase";
 
 // This is the structure of the data we'll store in localStorage
 interface SessionData {
@@ -14,73 +13,16 @@ interface SessionData {
 }
 
 export class MongoDbAuthAdapter implements IAuthAdapter {
-    private channel: BroadcastChannel | null = null;
-    private authStateCallback: AuthStateChangedCallback | null = null;
-    private onIdTokenChangedUnsubscribe: Unsubscribe | null = null;
+    private auth;
 
     constructor() {
-        if (typeof window !== 'undefined') {
-            this.channel = new BroadcastChannel(BROADCAST_CHANNEL_NAME);
-            this.channel.onmessage = this.handleBroadcastMessage.bind(this);
-        }
-    }
-    
-    private handleBroadcastMessage(event: MessageEvent) {
-        if (event.data.type === 'LOGIN' || event.data.type === 'LOGOUT') {
-           if (this.authStateCallback) {
-              this.notifyAuthStateChange();
-           }
-        }
-    }
-    
-    private notifyAuthStateChange() {
-        if (this.authStateCallback) {
-            const session = this.getCurrentSession();
-            this.authStateCallback(session ? this.mapProfileToFirebaseUser(session.user) : null);
-        }
+        // We still need the firebase auth instance to exchange the custom token
+        const { auth } = getFirebase();
+        this.auth = auth;
     }
 
-    private saveSession(data: SessionData): void {
-        if (typeof window === 'undefined') return;
-        localStorage.setItem(SESSION_KEY, JSON.stringify(data));
-        this.channel?.postMessage({ type: 'LOGIN' });
-        this.notifyAuthStateChange();
-    }
-
-    private clearSession(): void {
-        if (typeof window === 'undefined') return;
-        localStorage.removeItem(SESSION_KEY);
-        this.channel?.postMessage({ type: 'LOGOUT' });
-        this.notifyAuthStateChange();
-    }
-
-    private getCurrentSession(): SessionData | null {
-        if (typeof window === 'undefined') return null;
-        const session = localStorage.getItem(SESSION_KEY);
-        return session ? JSON.parse(session) : null;
-    }
-    
-    // This is a mapping to satisfy the `User` type from `firebase/auth` expected by `useAuth`.
-    // It creates a "mock" Firebase user object from our MongoDB user profile.
-    private mapProfileToFirebaseUser(profile: UserProfile): FirebaseUser {
-       return {
-            uid: profile.uid,
-            email: profile.email,
-            displayName: profile.displayName,
-            providerId: 'password',
-            photoURL: null,
-            emailVerified: true,
-            isAnonymous: false,
-            metadata: {},
-            providerData: [],
-            refreshToken: '',
-            tenantId: null,
-            delete: async () => {},
-            getIdToken: async () => this.getToken() || '',
-            getIdTokenResult: async () => ({} as any),
-            reload: async () => {},
-            toJSON: () => ({...profile}),
-        } as unknown as FirebaseUser;
+    private async exchangeCustomToken(customToken: string): Promise<void> {
+        await signInWithCustomToken(this.auth, customToken);
     }
 
     async login(email: string, pass: string): Promise<UserProfile> {
@@ -93,7 +35,8 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
         if (!response.ok) {
             throw new Error(data.error || "Login failed");
         }
-        this.saveSession(data);
+        await this.exchangeCustomToken(data.token);
+        // The onAuthStateChanged listener will now pick up the user from the Firebase SDK
         return data.user;
     }
 
@@ -107,25 +50,19 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
         if (!response.ok) {
             throw new Error(data.error || "Signup failed");
         }
-        this.saveSession(data);
+        await this.exchangeCustomToken(data.token);
+        // The onAuthStateChanged listener will now pick up the user from the Firebase SDK
         return data.user;
     }
 
     async logout(): Promise<void> {
-        this.clearSession();
+        await this.auth.signOut();
     }
     
     onAuthStateChanged(callback: AuthStateChangedCallback): Unsubscribe {
-        this.authStateCallback = callback;
-        
-        // Initial check
-        this.notifyAuthStateChange();
-
-        // The unsubscribe function
-        return () => {
-            this.authStateCallback = null;
-            this.channel?.close();
-        };
+        // By using the actual onIdTokenChanged, we ensure consistency across adapters
+        // After login/signup, the custom token is exchanged, and this listener will fire
+        return this.auth.onIdTokenChanged(callback);
     }
     
     // These methods are not implemented for the MongoDB adapter and will throw errors if called.
@@ -147,7 +84,9 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
     }
 
     async getToken(): Promise<string | null> {
-        const session = this.getCurrentSession();
-        return session?.token || null;
+        if (!this.auth.currentUser) {
+            return null;
+        }
+        return await this.auth.currentUser.getIdToken();
     }
 }
