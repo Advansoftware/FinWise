@@ -1,3 +1,4 @@
+
 // src/services/database/firebase-adapter.ts
 
 import { getFirebase } from "@/lib/firebase";
@@ -102,7 +103,11 @@ export class FirebaseAdapter implements IDatabaseAdapter {
                     data[key] = data[key].toDate().toISOString();
                 }
             });
-            return { id: docSnap.id, uid: docSnap.id, ...data } as T;
+            // For user profile, the uid is the same as the id.
+            if(resolvedPath.startsWith('users/')) {
+                return { id: docSnap.id, uid: docSnap.id, ...data } as T;
+            }
+            return { id: docSnap.id, ...data } as T;
         }
         return null;
     }
