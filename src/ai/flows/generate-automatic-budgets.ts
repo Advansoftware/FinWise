@@ -5,7 +5,7 @@
  *
  * - generateAutomaticBudgets - A function that handles the automatic budget generation process.
  */
-import { z } from 'zod';
+import { type ZodTypeAny } from 'zod';
 import { AICredential } from '@/lib/types';
 import { createConfiguredAI, getModelReference } from '../genkit';
 import { GenerateAutomaticBudgetsInput, GenerateAutomaticBudgetsInputSchema, GenerateAutomaticBudgetsOutputSchema } from '../ai-types';
@@ -37,8 +37,8 @@ export async function generateAutomaticBudgets(input: GenerateAutomaticBudgetsIn
     
     const generateBudgetsPrompt = configuredAI.definePrompt({
         name: 'generateAutomaticBudgetsPrompt',
-        input: {schema: GenerateAutomaticBudgetsInputSchema as z.ZodTypeAny},
-        output: {schema: GenerateAutomaticBudgetsOutputSchema as z.ZodTypeAny},
+        input: {schema: GenerateAutomaticBudgetsInputSchema as unknown as ZodTypeAny},
+        output: {schema: GenerateAutomaticBudgetsOutputSchema as unknown as ZodTypeAny},
         model: model,
         prompt: promptTemplate,
     });

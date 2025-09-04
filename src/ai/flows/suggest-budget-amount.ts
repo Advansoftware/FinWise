@@ -5,7 +5,7 @@
  *
  * - suggestBudgetAmount - A function that handles the budget suggestion process.
  */
-import { z } from 'zod';
+import { type ZodTypeAny } from 'zod';
 import { AICredential } from '@/lib/types';
 import { createConfiguredAI, getModelReference } from '../genkit';
 import {
@@ -35,8 +35,8 @@ export async function suggestBudgetAmount(input: SuggestBudgetInput, credential:
 
   const prompt = configuredAI.definePrompt({
     name: 'suggestBudgetPrompt',
-    input: { schema: SuggestBudgetInputSchema as z.ZodTypeAny },
-    output: { schema: SuggestBudgetOutputSchema as z.ZodTypeAny },
+    input: { schema: SuggestBudgetInputSchema as unknown as ZodTypeAny },
+    output: { schema: SuggestBudgetOutputSchema as unknown as ZodTypeAny },
     model: model,
     prompt: promptTemplate,
   });

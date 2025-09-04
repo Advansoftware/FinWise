@@ -5,7 +5,7 @@
  *
  * - projectGoalCompletion - A function that handles the goal projection process.
  */
-import { z } from 'zod';
+import { type ZodTypeAny } from 'zod';
 import { createConfiguredAI, getModelReference } from '../genkit';
 import {
   ProjectGoalCompletionInputSchema,
@@ -59,8 +59,8 @@ export async function projectGoalCompletion(input: ProjectGoalCompletionInput, c
 
   const prompt = configuredAI.definePrompt({
     name: 'projectGoalPrompt',
-    input: { schema: ProjectGoalCompletionInputSchema as z.ZodTypeAny },
-    output: { schema: ProjectGoalCompletionOutputSchema as z.ZodTypeAny },
+    input: { schema: ProjectGoalCompletionInputSchema as unknown as ZodTypeAny },
+    output: { schema: ProjectGoalCompletionOutputSchema as unknown as ZodTypeAny },
     model: model,
     prompt: promptTemplate,
   });

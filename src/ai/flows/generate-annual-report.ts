@@ -5,7 +5,7 @@
  *
  * - generateAnnualReport - A function that analyzes 12 monthly reports and produces a structured annual report.
  */
-import { z } from 'zod';
+import { type ZodTypeAny } from 'zod';
 import { GenerateAnnualReportInputSchema, GenerateAnnualReportOutputSchema } from '../ai-types';
 import type { GenerateAnnualReportInput } from '../ai-types';
 import { createConfiguredAI, getModelReference } from '../genkit';
@@ -32,8 +32,8 @@ export async function generateAnnualReport(input: GenerateAnnualReportInput, cre
     
     const generateReportPrompt = configuredAI.definePrompt({
         name: 'generateAnnualReportPrompt',
-        input: {schema: GenerateAnnualReportInputSchema as z.ZodTypeAny},
-        output: {schema: GenerateAnnualReportOutputSchema as z.ZodTypeAny},
+        input: {schema: GenerateAnnualReportInputSchema as unknown as ZodTypeAny},
+        output: {schema: GenerateAnnualReportOutputSchema as unknown as ZodTypeAny},
         model: model,
         prompt: promptTemplate,
     });
