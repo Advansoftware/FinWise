@@ -22,8 +22,6 @@ export function AuthGuard({ children, isProtected = false }: { children: React.R
       return; // Wait for the auth state to be resolved.
     }
     
-    setIsChecking(true);
-
     const isAuthRoute = pathname.startsWith(LOGIN_ROOT) || pathname.startsWith('/signup');
     const isDocsRoute = pathname.startsWith('/docs');
 
