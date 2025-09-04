@@ -7,8 +7,6 @@ import { Auth } from "firebase/auth";
 
 // Helper to construct API URL, ensuring userId is always a query parameter.
 const getApiUrl = (path: string, userId: string) => {
-    // This function now expects the userId to be explicitly passed.
-    // It will be added as a query parameter to all requests.
     const baseUrl = `/api/data/${path}`;
     const separator = baseUrl.includes('?') ? '&' : '?';
     return `${baseUrl}${separator}userId=${userId}`;

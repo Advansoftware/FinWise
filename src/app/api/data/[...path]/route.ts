@@ -21,35 +21,6 @@ async function getUserIdFromToken(request: NextRequest): Promise<string | null> 
     }
 }
 
-// Handles increment operations sent from the client adapter
-function processUpdates(body: any) {
-    const updateOps: any = { $set: {}, $inc: {} };
-    let hasInc = false;
-    let hasSet = false;
-
-    for (const key in body) {
-        if (key === '_id' || key === 'id' || key === 'uid' || key === 'userId') continue; 
-        
-        const value = body[key];
-        if (value && typeof value === 'object' && value.__op === 'Increment') {
-            updateOps.$inc[key] = value.value;
-            hasInc = true;
-        } else {
-            updateOps.$set[key] = value;
-            hasSet = true;
-        }
-    }
-    
-    if (!hasInc) delete updateOps.$inc;
-    if (!hasSet) delete updateOps.$set;
-    
-    if (!hasInc && !hasSet) {
-        return null;
-    }
-
-    return updateOps;
-}
-
 
 async function handler(
     request: NextRequest,
@@ -78,18 +49,21 @@ async function handler(
     try {
         let query: any = {};
         
+        // Security layer: Ensure the query always filters by the authenticated user's ID,
+        // or for the 'users' collection, that the docId IS the authenticated user's ID.
         if (collectionName === 'users') {
-            // For the 'users' collection, the document ID MUST be the user's own ID.
+             // For the 'users' collection, a user can only access their own document.
             if (docId !== authenticatedUserId) {
                 return NextResponse.json({ error: 'Permission denied to access other user data' }, { status: 403 });
             }
-            try {
+             try {
                 query._id = new ObjectId(docId);
             } catch (e) {
+                // If the ID is not a valid ObjectId (like in Firebase), use it as is.
                 query._id = docId;
             }
         } else {
-            // For all other collections, filter by the authenticated user's ID.
+            // For all other collections, the query must be scoped to the user.
             query.userId = authenticatedUserId;
             if (docId) { 
                 try {
@@ -99,7 +73,6 @@ async function handler(
                 }
             }
         }
-        
 
         if (request.method === 'GET') {
             if (docId) { // Single document request
@@ -119,26 +92,14 @@ async function handler(
         }
 
         if ((request.method === 'PUT' || request.method === 'PATCH') && docId) {
-            const body = await request.json();
-            let updateOps;
-            
-            // Build the update operation based on the request method
-            if (request.method === 'PUT') {
-                 delete body._id; 
-                 delete body.id;
-                 delete body.uid;
-                 delete body.userId; // UserID should not be changed
-                 if (collectionName === 'users') {
-                    delete body.email; // Email should not be changed via this endpoint
-                    delete body.createdAt;
-                 }
-                 updateOps = { $set: body };
-            } else { // PATCH
-                updateOps = processUpdates(body);
-                if (!updateOps) {
-                    return NextResponse.json({ message: 'No update operations provided' }, { status: 200 });
-                }
-            }
+             const body = await request.json();
+             // Ensure the update does not change the userId
+             delete body.userId;
+             delete body.uid;
+             delete body._id;
+             delete body.id;
+
+             const updateOps = request.method === 'PUT' ? { $set: body } : { $set: body }; // Simplified for now
            
             const result = await collection.updateOne(query, updateOps);
             if (result.matchedCount === 0) return NextResponse.json({ error: 'Not found or permission denied' }, { status: 404 });
