@@ -5,7 +5,6 @@
  *
  * - generateMonthlyReport - A function that analyzes transactions for a given month and produces a structured report.
  */
-import { type ZodTypeAny } from 'zod';
 import { GenerateReportInputSchema, GenerateReportOutputSchema } from '../ai-types';
 import type { GenerateReportInput } from '../ai-types';
 import { createConfiguredAI, getModelReference } from '../genkit';
@@ -37,8 +36,8 @@ export async function generateMonthlyReport(input: GenerateReportInput, credenti
     
     const generateReportPrompt = configuredAI.definePrompt({
         name: 'generateMonthlyReportPrompt',
-        input: {schema: GenerateReportInputSchema as unknown as ZodTypeAny},
-        output: {schema: GenerateReportOutputSchema as unknown as ZodTypeAny},
+        input: {schema: GenerateReportInputSchema},
+        output: {schema: GenerateReportOutputSchema},
         model: model,
         prompt: promptTemplate,
     });

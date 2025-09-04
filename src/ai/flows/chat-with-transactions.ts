@@ -4,7 +4,6 @@
 import { ChatInput, ChatOutputSchema, ChatInputSchema } from '@/ai/ai-types';
 import { createConfiguredAI, getModelReference } from '@/ai/genkit';
 import { AICredential } from '@/lib/types';
-import { ZodTypeAny } from 'zod';
 
 const promptTemplate = `Você é FinWise, um assistente financeiro amigável e especialista. Sua principal tarefa é responder às perguntas do usuário sobre suas finanças com base nos dados fornecidos. Você deve responder em Português do Brasil.
 
@@ -58,8 +57,8 @@ export async function chatWithTransactions(input: ChatInput, credential: AICrede
 
     const chatWithTransactionsPrompt = configuredAI.definePrompt({
         name: 'chatWithTransactionsPrompt',
-        input: { schema: ChatInputSchema as unknown as ZodTypeAny },
-        output: { schema: ChatOutputSchema as unknown as ZodTypeAny },
+        input: { schema: ChatInputSchema },
+        output: { schema: ChatOutputSchema },
         model: modelRef, 
         prompt: promptTemplate,
     });
