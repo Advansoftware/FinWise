@@ -39,7 +39,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
 
   const handleAuthChange = useCallback(async (firebaseUser: FirebaseUser | null) => {
-    setLoading(true);
     if (firebaseUser) {
       // Regardless of auth method (Firebase native or our custom token), firebaseUser.uid will be the correct unique ID.
       // For MongoDB, it's the ObjectId string. For Firebase, it's the Firebase UID.
@@ -48,18 +47,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (userProfile) {
         setUser(userProfile);
       } else {
-        // This should theoretically not be hit if backend creates the profile,
-        // but it's a safe fallback for cases like first-time Google sign-in with Firebase.
-        const newUserProfile: UserProfile = {
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            displayName: firebaseUser.displayName,
-            plan: 'Básico',
-            aiCredits: 0,
-            createdAt: new Date().toISOString(),
-        };
-        await dbAdapter.setDoc(`users/${firebaseUser.uid}`, newUserProfile);
-        setUser(newUserProfile);
+        // This case should not be hit with the current backend logic, but remains as a safe fallback.
+        // The backend should always create the user profile on signup.
+        console.warn(`Profile for user ${firebaseUser.uid} not found in DB. Auth flow might be incorrect.`);
+        setUser(null);
       }
     } else {
       setUser(null);
@@ -79,13 +70,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login: IAuthAdapter['login'] = async (email, password) => {
     setLoading(true);
     // The onAuthStateChanged listener will handle setting the user state.
-    return authAdapter.login(email, password);
+    await authAdapter.login(email, password);
   };
   
   const signup: IAuthAdapter['signup'] = async (email, password, name) => {
     setLoading(true);
     // The onAuthStateChanged listener will handle setting the user state.
-    return authAdapter.signup(email, password, name);
+    await authAdapter.signup(email, password, name);
   };
   
   const signInWithGoogle: IAuthAdapter['signInWithGoogle'] = async () => {

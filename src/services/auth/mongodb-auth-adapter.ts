@@ -8,13 +8,11 @@ import { getFirebase } from "@/lib/firebase";
 
 export class MongoDbAuthAdapter implements IAuthAdapter {
     private auth;
-    private broadcastChannel: BroadcastChannel;
 
     constructor() {
         // We still need the firebase auth instance to exchange the custom token
         const { auth } = getFirebase();
         this.auth = auth;
-        this.broadcastChannel = new BroadcastChannel('auth');
     }
 
     private async exchangeCustomToken(customToken: string): Promise<void> {
@@ -26,7 +24,7 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
         }
     }
 
-    async login(email: string, pass: string): Promise<UserProfile> {
+    async login(email: string, pass: string): Promise<void> {
         const response = await fetch('/api/users/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -37,12 +35,10 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
             throw new Error(data.error || "Login failed");
         }
         await this.exchangeCustomToken(data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        this.broadcastChannel.postMessage({ type: 'LOGIN', payload: data.user });
-        return data.user;
+        // The onAuthStateChanged listener will now handle setting user state correctly
     }
 
-    async signup(email: string, pass: string, name: string): Promise<UserProfile> {
+    async signup(email: string, pass: string, name: string): Promise<void> {
          const response = await fetch('/api/users/signup', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -53,56 +49,18 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
             throw new Error(data.error || "Signup failed");
         }
         await this.exchangeCustomToken(data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        this.broadcastChannel.postMessage({ type: 'LOGIN', payload: data.user });
-        return data.user;
+         // The onAuthStateChanged listener will now handle setting user state correctly
     }
 
     async logout(): Promise<void> {
         await this.auth.signOut();
-        localStorage.removeItem('user');
-        this.broadcastChannel.postMessage({ type: 'LOGOUT' });
     }
     
     onAuthStateChanged(callback: AuthStateChangedCallback): Unsubscribe {
-        const handleAuthMessage = (event: MessageEvent) => {
-            if (event.data.type === 'LOGIN') {
-                callback(event.data.payload as FirebaseUser);
-            } else if (event.data.type === 'LOGOUT') {
-                callback(null);
-            }
-        };
-
-        this.broadcastChannel.addEventListener('message', handleAuthMessage);
-
-        // Also check initial state from localStorage
-        const storedUser = localStorage.getItem('user');
-        if (storedUser) {
-            try {
-                 // The object in localStorage is a UserProfile, not a FirebaseUser.
-                 // We need to create a mock FirebaseUser-like object for the callback.
-                const userProfile = JSON.parse(storedUser);
-                callback(userProfile as FirebaseUser);
-            } catch (e) {
-                callback(null);
-            }
-        }
-
-        // We also listen to Firebase's onIdTokenChanged to handle the initial token exchange
-        // and session persistence across reloads.
-        const firebaseUnsubscribe = this.auth.onIdTokenChanged((firebaseUser) => {
-            if (firebaseUser) {
-                // This will be called after signInWithCustomToken succeeds
-                 callback(firebaseUser);
-            } else {
-                 callback(null);
-            }
-        });
-        
-        return () => {
-            this.broadcastChannel.removeEventListener('message', handleAuthMessage);
-            firebaseUnsubscribe();
-        };
+        // We now solely rely on Firebase's auth state listener.
+        // After signInWithCustomToken, this will fire with the authenticated user,
+        // which contains the correct ID token.
+        return this.auth.onIdTokenChanged(callback);
     }
     
     async signInWithGoogle(): Promise<UserProfile> {
@@ -129,6 +87,7 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
         if (!this.auth.currentUser) {
             return null;
         }
+        // This now correctly returns the ID token after it has been exchanged.
         return await this.auth.currentUser.getIdToken();
     }
 }
