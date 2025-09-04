@@ -19,33 +19,34 @@ export function AuthGuard({ children, isProtected = false }: { children: React.R
 
   useEffect(() => {
     if (loading) {
-      return; // Wait for the auth state to be resolved.
+      return; // Still waiting for auth state to resolve.
     }
-    
+
     const isAuthRoute = pathname.startsWith(LOGIN_ROOT) || pathname.startsWith('/signup');
-    const isDocsRoute = pathname.startsWith('/docs');
 
-    if (isProtected) {
-      // If a protected route is being accessed and there's no user, redirect to login.
-      if (!user) {
+    // User is not logged in
+    if (!user) {
+      if (isProtected) {
+        // If on a protected route, redirect to login.
         router.replace(LOGIN_ROOT);
-        return; // Stop further execution
+      } else {
+        // On a public route without a user, stop checking and show the content.
+        setIsChecking(false);
       }
-    } else {
-      // If a public route is being accessed by an authenticated user...
-      if (user) {
-        // ...and it's a landing or auth page, redirect to the dashboard.
-        if (isAuthRoute || pathname === PUBLIC_ROOT) {
-          router.replace(PROTECTED_ROOT);
-          return; // Stop further execution
-        }
+      return;
+    }
+
+    // User is logged in
+    if (user) {
+       // If on an auth page (login/signup) or the landing page, redirect to the main dashboard.
+      if (isAuthRoute || pathname === PUBLIC_ROOT) {
+        router.replace(PROTECTED_ROOT);
+      } else {
+        // On any other page (protected or public docs), stop checking and show content.
+        setIsChecking(false);
       }
     }
-   
-    // If no redirection is needed, show the page content.
-    setIsChecking(false);
-
-  }, [user, loading, router, pathname, isProtected]);
+  }, [user, loading, isProtected, router]); // Removed pathname
 
   if (isChecking) {
     return (
