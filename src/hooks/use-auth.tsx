@@ -1,4 +1,3 @@
-
 // src/hooks/use-auth.tsx
 'use client';
 
@@ -12,11 +11,8 @@ import {
 } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
 import { getAuthAdapter, IAuthAdapter } from '@/services/auth/auth-service';
-import { useRouter } from 'next/navigation';
 import { UserProfile } from '@/lib/types';
 import { getDatabaseAdapter } from '@/services/database/database-service';
-import { MongoDbAdapter } from '@/services/database/mongodb-adapter';
-
 
 interface AuthContextType {
   user: UserProfile | null;
@@ -40,23 +36,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const dbAdapter = getDatabaseAdapter();
 
   const handleAuthChange = useCallback(async (firebaseUser: FirebaseUser | null) => {
-    const dbAdapter = getDatabaseAdapter(); // Get instance inside the callback
-    const token = await firebaseUser?.getIdToken() || null;
-
     if (firebaseUser) {
-      const userProfile = await dbAdapter.getDoc<UserProfile>(`users/${firebaseUser.uid}`, token, firebaseUser.uid);
+      const userProfile = await dbAdapter.getDoc<UserProfile>(`users/${firebaseUser.uid}`);
       if (userProfile) {
         setUser(userProfile);
       } else {
-        // This can happen briefly during signup before the profile is available.
-        // It will be resolved by the login/signup methods setting the user state.
         console.warn(`Profile for user ${firebaseUser.uid} not found in DB. This might be a race condition during signup.`);
       }
     } else {
       setUser(null);
     }
     setLoading(false);
-  }, []);
+  }, [dbAdapter]);
   
   useEffect(() => {
     setLoading(true);
@@ -75,9 +66,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return loggedInUser;
     } catch (error) {
       setUser(null);
+      setLoading(false);
       throw error;
-    } finally {
-      // Let the onAuthStateChanged listener set loading to false to ensure profile is fetched.
     }
   };
   
@@ -85,16 +75,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const newUser = await authAdapter.signup(email, password, name);
-      // For Mongo, the profile is returned directly. For Firebase, the onAuthStateChanged listener handles it.
        if (newUser) {
         setUser(newUser);
       }
       return newUser;
     } catch (error) {
        setUser(null);
+       setLoading(false);
        throw error;
-    } finally {
-       // Let the onAuthStateChanged listener set loading to false to ensure profile is fetched.
     }
   };
   
@@ -108,9 +96,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return googleUser;
     } catch (error) {
       setUser(null);
+      setLoading(false);
       throw error;
-    } finally {
-      // Let the onAuthStateChanged listener set loading to false
     }
   };
 
@@ -121,8 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateUserProfile = async (name: string) => {
     if (!user) throw new Error("User not authenticated");
-    const token = await authAdapter.getToken();
-    await dbAdapter.updateDoc(`users/${user.uid}`, { displayName: name }, token, user.uid);
+    await dbAdapter.updateDoc(`users/${user.uid}`, { displayName: name });
     setUser({ ...user, displayName: name });
   };
   

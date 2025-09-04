@@ -2,66 +2,64 @@
 
 import { DocumentData } from "firebase/firestore";
 import { IDatabaseAdapter, Unsubscribe } from "./database-adapter";
+import { getFirebase } from "@/lib/firebase";
+import { Auth } from "firebase/auth";
 
 // Helper to construct API URL
-const getApiUrl = (path: string, userId?: string | null) => {
-    // For collections that are user-specific but not nested in the URL structure (like settings)
-    if (path.includes('USER_ID') && userId) {
-        return `/api/data/${path.replace('USER_ID', userId)}`;
-    }
-    // For direct user document access or nested collections
-    if (userId) {
-        return `/api/data/${path}/${userId}`;
-    }
+const getApiUrl = (path: string) => {
     return `/api/data/${path}`;
 };
 
 
 export class MongoDbAdapter implements IDatabaseAdapter {
-    private async getAuthHeaderAndUserId(): Promise<{ headers: Record<string, string>, userId: string | null }> {
-        // This is a placeholder for a real auth token retrieval method
-        // In a real app, this would get the session token (e.g., JWT)
-        // For this context, we will assume the API route handles authorization
-        // based on a secure session mechanism (e.g., httpOnly cookie)
-        const response = await fetch('/api/auth/session'); // Dummy endpoint to get session info
-        if (response.ok) {
-            const { userId, token } = await response.json();
-            return {
-                headers: { 'Authorization': `Bearer ${token}` },
-                userId,
-            };
-        }
-        return { headers: {}, userId: null };
+    private auth: Auth;
+
+    constructor() {
+        const { auth } = getFirebase();
+        this.auth = auth;
     }
     
-    private resolvePath(path: string, userId: string | null): string {
-        if (userId) {
-            return path.replace('USER_ID', userId);
+    private async getHeaders(): Promise<Record<string, string>> {
+        const token = await this.auth.currentUser?.getIdToken();
+        if (token) {
+            return {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            }
+        }
+        return { 'Content-Type': 'application/json' };
+    }
+
+    private resolvePath(path: string): string {
+        if (this.auth.currentUser) {
+            return path.replace('USER_ID', this.auth.currentUser.uid);
         }
         // If no user, it's likely a path that doesn't need it, or it will fail at the API level
         return path;
     }
 
-    listenToCollection<T>(collectionPath: string, callback: (data: T[]) => void, constraints?: any[], token?: string, userId?: string): Unsubscribe {
-        const resolvedPath = this.resolvePath(collectionPath, userId || null);
+    listenToCollection<T>(collectionPath: string, callback: (data: T[]) => void, constraints?: any[]): Unsubscribe {
+        const resolvedPath = this.resolvePath(collectionPath);
         
         let isSubscribed = true;
 
         const fetchData = async () => {
-            if (!isSubscribed || !userId) {
+            if (!isSubscribed || !this.auth.currentUser) {
                 callback([]); // If not subscribed or user logs out, clear data.
                 return;
             };
             try {
-                const response = await fetch(getApiUrl(resolvedPath), { headers: { 'Authorization': `Bearer ${token}` } });
+                const headers = await this.getHeaders();
+                const response = await fetch(getApiUrl(resolvedPath), { headers });
+                
                 if (response.ok) {
                     const data = await response.json();
                     if(isSubscribed) {
                         callback(data.map((d: any) => ({...d, id: d._id.toString(), uid: d._id.toString()})) as T[]);
                     }
-                } else if (response.status === 401) {
-                    if(isSubscribed) {
-                        console.warn(`Unauthorized listen on ${resolvedPath}. Logging out or session expired.`);
+                } else {
+                     if(isSubscribed) {
+                        console.warn(`Listen failed on ${resolvedPath} with status ${response.status}.`);
                         callback([]);
                     }
                 }
@@ -85,16 +83,11 @@ export class MongoDbAdapter implements IDatabaseAdapter {
         return unsubscribe;
     }
 
-    async getDoc<T>(docPath: string, token?: string, userId?: string): Promise<T | null> {
-        const resolvedPath = this.resolvePath(docPath, userId || null);
-        const apiUrl = docPath.startsWith('users/') ? `/api/data/${resolvedPath}` : getApiUrl(docPath, userId);
-        
-        const response = await fetch(apiUrl, { headers: { 'Authorization': `Bearer ${token}` } });
+    async getDoc<T>(docPath: string): Promise<T | null> {
+        const resolvedPath = this.resolvePath(docPath);
+        const headers = await this.getHeaders();
+        const response = await fetch(getApiUrl(resolvedPath), { headers });
         if (!response.ok) {
-            if (response.status === 401) {
-                 console.error(`Unauthorized GET on ${apiUrl}`);
-                 return null;
-            }
             if (response.status === 404) return null;
             throw new Error(`Failed to get doc: ${await response.text()}`);
         }
@@ -110,11 +103,12 @@ export class MongoDbAdapter implements IDatabaseAdapter {
         return data;
     }
     
-    async addDoc<T extends DocumentData>(collectionPath: string, data: T, token?: string, userId?: string): Promise<string> {
-        const resolvedPath = this.resolvePath(collectionPath, userId || null);
+    async addDoc<T extends DocumentData>(collectionPath: string, data: T): Promise<string> {
+        const resolvedPath = this.resolvePath(collectionPath);
+        const headers = await this.getHeaders();
         const response = await fetch(getApiUrl(resolvedPath), {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            headers,
             body: JSON.stringify(data),
         });
         if (!response.ok) throw new Error(`Failed to add doc: ${await response.text()}`);
@@ -122,35 +116,34 @@ export class MongoDbAdapter implements IDatabaseAdapter {
         return insertedId;
     }
 
-    async setDoc<T extends DocumentData>(docPath: string, data: T, token?: string, userId?: string): Promise<void> {
-        const resolvedPath = this.resolvePath(docPath, userId || null);
-        const apiUrl = docPath.startsWith('users/') ? `/api/data/${resolvedPath}` : getApiUrl(docPath, userId);
-
-        const response = await fetch(apiUrl, {
+    async setDoc<T extends DocumentData>(docPath: string, data: T): Promise<void> {
+        const resolvedPath = this.resolvePath(docPath);
+        const headers = await this.getHeaders();
+        const response = await fetch(getApiUrl(resolvedPath), {
             method: 'PUT',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            headers,
             body: JSON.stringify(data),
         });
         if (!response.ok) throw new Error(`Failed to set doc: ${await response.text()}`);
     }
 
-    async updateDoc(docPath: string, data: Partial<DocumentData>, token?: string, userId?: string): Promise<void> {
-         const resolvedPath = this.resolvePath(docPath, userId || null);
-         const apiUrl = docPath.startsWith('users/') ? `/api/data/${resolvedPath}` : getApiUrl(docPath, userId);
-         const response = await fetch(apiUrl, {
+    async updateDoc(docPath: string, data: Partial<DocumentData>): Promise<void> {
+         const resolvedPath = this.resolvePath(docPath);
+         const headers = await this.getHeaders();
+         const response = await fetch(getApiUrl(resolvedPath), {
             method: 'PATCH',
-            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            headers,
             body: JSON.stringify(data),
         });
         if (!response.ok) throw new Error(`Failed to update doc: ${await response.text()}`);
     }
 
-    async deleteDoc(docPath: string, token?: string, userId?: string): Promise<void> {
-        const resolvedPath = this.resolvePath(docPath, userId || null);
-        const apiUrl = docPath.startsWith('users/') ? `/api/data/${resolvedPath}` : getApiUrl(docPath, userId);
-        const response = await fetch(apiUrl, {
+    async deleteDoc(docPath: string): Promise<void> {
+        const resolvedPath = this.resolvePath(docPath);
+        const headers = await this.getHeaders();
+        const response = await fetch(getApiUrl(resolvedPath), {
             method: 'DELETE',
-            headers: { 'Authorization': `Bearer ${token}` }
+            headers
         });
         if (!response.ok && response.status !== 204) throw new Error(`Failed to delete doc: ${await response.text()}`);
     }

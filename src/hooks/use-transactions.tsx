@@ -1,4 +1,3 @@
-
 // src/hooks/use-transactions.tsx
 "use client";
 
@@ -10,7 +9,6 @@ import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { getDatabaseAdapter } from "@/services/database/database-service";
 import { IDatabaseAdapter } from "@/services/database/database-adapter";
-import { MongoDbAdapter } from "@/services/database/mongodb-adapter";
 
 type CategoryMap = Partial<Record<TransactionCategory, string[]>>;
 
@@ -91,10 +89,6 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   const dbAdapter = getDatabaseAdapter();
   
   useEffect(() => {
-    if (dbAdapter instanceof MongoDbAdapter) {
-      dbAdapter.setCurrentUser(user?.uid || null);
-    }
-    
     if (!user) {
       setIsLoading(false);
       setAllTransactions([]);
@@ -216,7 +210,8 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     };
   }, [categoryMap]);
   
-  const saveCategories = async (userId: string, newCategories: CategoryMap) => {
+  const saveCategories = async (newCategories: CategoryMap) => {
+      if (!user) throw new Error("User not authenticated");
       await dbAdapter.setDoc('users/USER_ID/settings/categories', newCategories);
   };
 
@@ -227,14 +222,14 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       return;
     }
     const newCategoryMap = { ...categoryMap, [categoryName]: [] };
-    await saveCategories(user.uid, newCategoryMap);
+    await saveCategories(newCategoryMap);
   };
 
   const deleteCategory = async (categoryName: TransactionCategory) => {
     if (!user) throw new Error("User not authenticated");
      const newCategoryMap = { ...categoryMap };
      delete newCategoryMap[categoryName];
-     await saveCategories(user.uid, newCategoryMap);
+     await saveCategories(newCategoryMap);
      if (selectedCategory === categoryName) {
        setSelectedCategory('all');
      }
@@ -251,7 +246,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       ...categoryMap, 
       [categoryName]: [...subs, subcategoryName].sort() 
     };
-    await saveCategories(user.uid, newCategoryMap);
+    await saveCategories(newCategoryMap);
   }
 
   const deleteSubcategory = async (categoryName: TransactionCategory, subcategoryName: string) => {
@@ -261,7 +256,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       ...categoryMap,
       [categoryName]: subs.filter(s => s !== subcategoryName)
     };
-    await saveCategories(user.uid, newCategoryMap);
+    await saveCategories(newCategoryMap);
   }
 
   const handleCategoryChange = (category: string) => {
