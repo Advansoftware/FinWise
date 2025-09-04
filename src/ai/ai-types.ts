@@ -164,7 +164,7 @@ export const GenerateAutomaticBudgetsInputSchema = z.object({
   lastMonthTransactions: z.string().describe('A JSON string of all transactions from the previous month.'),
   existingBudgets: z.string().describe('A JSON string of already existing budget categories for the current month.'),
 });
-export type GenerateAutomaticBudgetsInput = z-infer<typeof GenerateAutomaticBudgetsInputSchema>;
+export type GenerateAutomaticBudgetsInput = z.infer<typeof GenerateAutomaticBudgetsInputSchema>;
 
 export const BudgetItemSchema = z.object({
   name: z.string().describe('A clear name for the budget (e.g., "Gastos com Supermercado").'),
