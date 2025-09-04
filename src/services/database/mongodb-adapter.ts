@@ -34,7 +34,6 @@ export class MongoDbAdapter implements IDatabaseAdapter {
         if (this.auth.currentUser) {
             return path.replace('USER_ID', this.auth.currentUser.uid);
         }
-        // If no user, it's likely a path that doesn't need it, or it will fail at the API level
         return path;
     }
 
@@ -45,17 +44,19 @@ export class MongoDbAdapter implements IDatabaseAdapter {
 
         const fetchData = async () => {
             if (!isSubscribed || !this.auth.currentUser) {
-                callback([]); // If not subscribed or user logs out, clear data.
+                callback([]); 
                 return;
             };
             try {
+                // When using Mongo, we pass the user ID in the path for collection queries
+                const pathWithUser = `${resolvedPath}?userId=${this.auth.currentUser.uid}`;
                 const headers = await this.getHeaders();
-                const response = await fetch(getApiUrl(resolvedPath), { headers });
+                const response = await fetch(getApiUrl(pathWithUser), { headers });
                 
                 if (response.ok) {
                     const data = await response.json();
                     if(isSubscribed) {
-                        callback(data.map((d: any) => ({...d, id: d._id.toString(), uid: d._id.toString()})) as T[]);
+                        callback(data.map((d: any) => ({...d, id: d._id.toString() })) as T[]);
                     }
                 } else {
                      if(isSubscribed) {
@@ -71,7 +72,7 @@ export class MongoDbAdapter implements IDatabaseAdapter {
             }
         };
 
-        const intervalId = setInterval(fetchData, 15000); // Poll every 15 seconds
+        const intervalId = setInterval(fetchData, 15000); 
 
         fetchData();
         
@@ -88,13 +89,16 @@ export class MongoDbAdapter implements IDatabaseAdapter {
         const headers = await this.getHeaders();
         const response = await fetch(getApiUrl(resolvedPath), { headers });
         if (!response.ok) {
+            if (response.status === 401) {
+                 console.error(`Unauthorized GET on ${getApiUrl(resolvedPath)}`);
+                 return null;
+            }
             if (response.status === 404) return null;
             throw new Error(`Failed to get doc: ${await response.text()}`);
         }
         const data = await response.json();
         if (data && data._id) {
             data.id = data._id.toString();
-            // For user profile, the uid is the same as the id.
             if(resolvedPath.startsWith('users/')) {
                 data.uid = data._id.toString();
             }

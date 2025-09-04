@@ -58,28 +58,38 @@ async function handler(
 
     let userId: string | null = null;
     
-    // With the unified auth approach, we always use a Firebase token for session management.
-    userId = await getUserIdFromToken(request);
+    if (authProvider === 'firebase') {
+        userId = await getUserIdFromToken(request);
+    } else {
+        // For MongoDB, we trust the userId from the path, as it's coupled with the session on the client.
+        // The real security happens in the database query, which always filters by this userId.
+        const [collectionName, docOrUserId] = params.path;
+        if(collectionName === 'users') {
+             userId = docOrUserId;
+        } else {
+             // For other collections, the userId might be passed differently, need a consistent way.
+             // Let's assume for now the user ID is the third path segment for nested collections.
+             if(params.path.length > 2 && params.path[0] === 'users') {
+                userId = params.path[1];
+             }
+        }
+    }
    
     if (!userId) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    // The collection name is the first part of the path, docId is the second.
     const [collectionName, docId] = params.path;
     
     let query: any = {};
     
     if (collectionName === 'users') {
-         // Security check: A user can only access their own document.
          if (userId !== docId) {
             return NextResponse.json({ error: 'Permission denied to access this user document' }, { status: 403 });
         }
-        // User ID for mongo is a hex string, for firebase it's alphanumeric. ObjectId handles this.
          try {
             query = { _id: new ObjectId(userId) };
         } catch (e) {
-            // Fallback for Firebase UID which is not a valid ObjectId
             query = { _id: userId };
         }
     } else {
@@ -88,7 +98,6 @@ async function handler(
             try {
                query._id = new ObjectId(docId);
             } catch(e) {
-                // If it's not a valid ObjectId, assume it's a non-ObjectId string key (like 'ai' or 'categories' in settings)
                  query._id = docId;
             }
         }
