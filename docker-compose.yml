@@ -1,0 +1,30 @@
+version: '3.8'
+
+services:
+  app:
+    container_name: finwise-app
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "9002:9002"
+    depends_on:
+      - mongo
+    env_file:
+      - .env
+    environment:
+      - MONGODB_URI=mongodb://mongo:27017
+      - MONGODB_DB=finwise
+      - NEXT_PUBLIC_DATABASE_TYPE=mongodb
+      - NEXT_PUBLIC_AUTH_PROVIDER=mongodb
+
+  mongo:
+    container_name: finwise-mongo
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+
+volumes:
+  mongo-data:

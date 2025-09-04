@@ -18,7 +18,8 @@ const nextConfig = {
             '@genkit-ai/googleai',
             'require-in-the-middle'
         ],
-    }
+    },
+    output: 'standalone'
 };
 
 module.exports = nextConfig;
