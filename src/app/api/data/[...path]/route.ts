@@ -63,6 +63,7 @@ async function handler(
     if (authProvider === 'firebase') {
         userId = await getUserIdFromToken(request);
     } else { 
+        // For MongoDB, the userId is ALWAYS expected as a query parameter for security.
         userId = searchParams.get('userId');
     }
    
@@ -74,9 +75,9 @@ async function handler(
     
     if (collectionName === 'users' && docId === userId) {
         try {
-            query = { _id: new ObjectId(userId) };
+            query = { _id: new ObjectId(docId) };
         } catch (e) {
-            query = { _id: userId };
+            query = { _id: docId };
         }
     } else {
         query = { userId };

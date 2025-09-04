@@ -6,8 +6,12 @@ import { getFirebase } from "@/lib/firebase";
 import { Auth } from "firebase/auth";
 
 // Helper to construct API URL
-const getApiUrl = (path: string) => {
-    return `/api/data/${path}`;
+const getApiUrl = (path: string, userId?: string) => {
+    const baseUrl = `/api/data/${path}`;
+    if (userId) {
+        return `${baseUrl}?userId=${userId}`;
+    }
+    return baseUrl;
 };
 
 
@@ -31,8 +35,10 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     }
 
     private resolvePath(path: string): string {
-        if (!this.auth.currentUser) return path; 
-        return path.replace('USER_ID', this.auth.currentUser.uid);
+        if (this.auth.currentUser) {
+            return path.replace('USER_ID', this.auth.currentUser.uid);
+        }
+        return path;
     }
 
     listenToCollection<T>(collectionPath: string, callback: (data: T[]) => void, constraints?: any[]): Unsubscribe {
@@ -47,8 +53,7 @@ export class MongoDbAdapter implements IDatabaseAdapter {
             try {
                 const resolvedPath = this.resolvePath(collectionPath);
                 const headers = await this.getHeaders();
-                // Standardize to always pass userId as a query parameter for collection fetches
-                const apiUrl = `${getApiUrl(resolvedPath)}?userId=${this.auth.currentUser.uid}`;
+                const apiUrl = getApiUrl(resolvedPath, this.auth.currentUser.uid);
 
                 const response = await fetch(apiUrl, { headers });
                 
@@ -88,14 +93,10 @@ export class MongoDbAdapter implements IDatabaseAdapter {
         if (!this.auth.currentUser) return null;
         const resolvedPath = this.resolvePath(docPath);
         const headers = await this.getHeaders();
-        const apiUrl = `${getApiUrl(resolvedPath)}?userId=${this.auth.currentUser?.uid}`;
+        const apiUrl = getApiUrl(resolvedPath, this.auth.currentUser.uid);
         const response = await fetch(apiUrl, { headers });
         
         if (!response.ok) {
-            if (response.status === 401) {
-                 console.error(`Unauthorized GET on ${apiUrl}`);
-                 return null;
-            }
             if (response.status === 404) return null;
             throw new Error(`Failed to get doc: ${await response.text()}`);
         }
@@ -111,9 +112,11 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     }
     
     async addDoc<T extends DocumentData>(collectionPath: string, data: T): Promise<string> {
+        if (!this.auth.currentUser) throw new Error("User not authenticated");
         const resolvedPath = this.resolvePath(collectionPath);
         const headers = await this.getHeaders();
-        const response = await fetch(getApiUrl(resolvedPath), {
+        const apiUrl = getApiUrl(resolvedPath, this.auth.currentUser.uid);
+        const response = await fetch(apiUrl, {
             method: 'POST',
             headers,
             body: JSON.stringify(data),
@@ -127,7 +130,7 @@ export class MongoDbAdapter implements IDatabaseAdapter {
         if (!this.auth.currentUser) throw new Error("User not authenticated");
         const resolvedPath = this.resolvePath(docPath);
         const headers = await this.getHeaders();
-        const apiUrl = `${getApiUrl(resolvedPath)}?userId=${this.auth.currentUser.uid}`;
+        const apiUrl = getApiUrl(resolvedPath, this.auth.currentUser.uid);
         const response = await fetch(apiUrl, {
             method: 'PUT',
             headers,
@@ -140,7 +143,7 @@ export class MongoDbAdapter implements IDatabaseAdapter {
          if (!this.auth.currentUser) throw new Error("User not authenticated");
          const resolvedPath = this.resolvePath(docPath);
          const headers = await this.getHeaders();
-         const apiUrl = `${getApiUrl(resolvedPath)}?userId=${this.auth.currentUser.uid}`;
+         const apiUrl = getApiUrl(resolvedPath, this.auth.currentUser.uid);
          const response = await fetch(apiUrl, {
             method: 'PATCH',
             headers,
@@ -153,7 +156,7 @@ export class MongoDbAdapter implements IDatabaseAdapter {
         if (!this.auth.currentUser) throw new Error("User not authenticated");
         const resolvedPath = this.resolvePath(docPath);
         const headers = await this.getHeaders();
-        const apiUrl = `${getApiUrl(resolvedPath)}?userId=${this.auth.currentUser.uid}`;
+        const apiUrl = getApiUrl(resolvedPath, this.auth.currentUser.uid);
         const response = await fetch(apiUrl, {
             method: 'DELETE',
             headers
