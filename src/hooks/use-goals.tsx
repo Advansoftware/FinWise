@@ -10,7 +10,7 @@ import { getDatabaseAdapter } from "@/services/database/database-service";
 interface GoalsContextType {
   goals: Goal[];
   isLoading: boolean;
-  addGoal: (goal: Omit<Goal, 'id' | 'createdAt' | 'currentAmount'>) => Promise<void>;
+  addGoal: (goal: Omit<Goal, 'id' | 'createdAt' | 'currentAmount' | 'userId'>) => Promise<void>;
   updateGoal: (goalId: string, updates: Partial<Goal>) => Promise<void>;
   deleteGoal: (goalId: string) => Promise<void>;
   addDeposit: (goalId: string, amount: number, walletId: string) => Promise<void>;
@@ -55,64 +55,62 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
 
     setIsLoading(true);
 
-    const constraints = (dbAdapter.constructor.name === 'FirebaseAdapter')
-      ? [dbAdapter.queryConstraint('orderBy', 'createdAt', 'desc')]
-      : [];
-
     const unsubscribe = dbAdapter.listenToCollection<Goal>(
-      `users/${user.uid}/goals`,
+      `goals`,
       (fetchedGoals) => {
         setGoals(fetchedGoals);
         setIsLoading(false);
-      },
-      constraints
+      }
     );
     
     return () => unsubscribe();
   }, [user, authLoading, dbAdapter]);
 
-  const addGoal = async (goal: Omit<Goal, 'id' | 'createdAt' | 'currentAmount'>) => {
+  const addGoal = async (goal: Omit<Goal, 'id' | 'createdAt' | 'currentAmount' | 'userId'>) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.addDoc(`users/${user.uid}/goals`, {
+    await dbAdapter.addDoc(`goals`, {
         ...goal,
+        userId: user.uid,
         currentAmount: 0,
-        createdAt: new Date()
+        createdAt: new Date().toISOString()
     });
     toast({ title: "Meta criada com sucesso!" });
   }
 
   const updateGoal = async (goalId: string, updates: Partial<Goal>) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.updateDoc(`users/${user.uid}/goals/${goalId}`, updates);
+    await dbAdapter.updateDoc(`goals/${goalId}`, updates);
     toast({ title: "Meta atualizada!" });
   }
 
   const deleteGoal = async (goalId: string) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.deleteDoc(`users/${user.uid}/goals/${goalId}`);
+    await dbAdapter.deleteDoc(`goals/${goalId}`);
     toast({ title: "Meta excluída." });
   }
 
   const addDeposit = async (goalId: string, amount: number, walletId: string) => {
      if (!user) throw new Error("User not authenticated");
      
-     await dbAdapter.runTransaction(async (transaction: any) => {
-        const goalDoc = await transaction.get(`users/${user.uid}/goals/${goalId}`);
-        if (!goalDoc || !goalDoc.data()) throw new Error("Meta não encontrada.");
+     // This would need to be a transactional API endpoint in a real MongoDB setup
+     // For now, we simulate the client-side orchestration.
+     const goal = goals.find(g => g.id === goalId);
+     if (!goal) throw new Error("Meta não encontrada.");
 
-        const newTransaction: Omit<Transaction, 'id'> = {
-            item: `Depósito para Meta: ${goalDoc.data().name}`,
-            amount: amount,
-            date: new Date().toISOString(),
-            category: "Transferência",
-            type: 'transfer',
-            walletId: walletId,
-        };
-        await transaction.set(`users/${user.uid}/transactions/${Date.now()}`, newTransaction);
+     const newTransaction: Omit<Transaction, 'id' | 'userId'> = {
+         item: `Depósito para Meta: ${goal.name}`,
+         amount: amount,
+         date: new Date().toISOString(),
+         category: "Transferência",
+         type: 'transfer',
+         walletId: walletId,
+         toWalletId: goalId, // Using goalId to signify transfer to goal
+     };
 
-        transaction.update(`users/${user.uid}/wallets/${walletId}`, { balance: dbAdapter.increment(-amount) });
-        transaction.update(`users/${user.uid}/goals/${goalId}`, { currentAmount: dbAdapter.increment(amount) });
-     });
+     await dbAdapter.addDoc('transactions', { ...newTransaction, userId: user.uid });
+     await dbAdapter.updateDoc(`goals/${goalId}`, { currentAmount: dbAdapter.increment(amount) });
+     await dbAdapter.updateDoc(`wallets/${walletId}`, { balance: dbAdapter.increment(-amount) });
+
 
      toast({ title: `Depósito de R$ ${amount.toFixed(2)} adicionado!`})
   }

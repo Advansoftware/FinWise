@@ -7,9 +7,10 @@ import { Auth } from "firebase/auth";
 
 // Helper to construct API URL, ensuring userId is always a query parameter.
 const getApiUrl = (path: string, userId: string) => {
-    // Ensure the path doesn't start with a slash that would be duplicated
     const cleanPath = path.startsWith('/') ? path.substring(1) : path;
     const baseUrl = `/api/data/${cleanPath}`;
+    
+    // Always add userId as a query parameter for authorization
     const separator = baseUrl.includes('?') ? '&' : '?';
     return `${baseUrl}${separator}userId=${userId}`;
 };
@@ -27,8 +28,7 @@ export class MongoDbAdapter implements IDatabaseAdapter {
         if (!this.auth.currentUser) {
             throw new Error("User not authenticated to make API requests.");
         }
-        // Force refresh the token to ensure we are sending a valid ID token,
-        // not the initial custom token. This is crucial for the backend verification.
+        // Force refresh the token to ensure we are sending a valid ID token, not the initial custom token.
         const token = await this.auth.currentUser.getIdToken(true);
         return {
             'Content-Type': 'application/json',
@@ -47,7 +47,6 @@ export class MongoDbAdapter implements IDatabaseAdapter {
 
             try {
                 const headers = await this.getHeaders();
-                // Pass the current user's UID to get the correct data
                 const apiUrl = getApiUrl(collectionPath, this.auth.currentUser.uid);
 
                 const response = await fetch(apiUrl, { headers });
@@ -87,7 +86,6 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     async getDoc<T>(docPath: string): Promise<T | null> {
         if (!this.auth.currentUser) return null;
         const headers = await this.getHeaders();
-        // Pass the user's UID to authorize the request
         const apiUrl = getApiUrl(docPath, this.auth.currentUser.uid);
         const response = await fetch(apiUrl, { headers });
         
@@ -157,11 +155,15 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     
     async runTransaction(updateFunction: (transaction: any) => Promise<any>): Promise<any> {
        console.warn("MongoDbAdapter: Client-side transactions are not supported. Operations must be atomic API endpoints.");
+       // This can be simulated by batching API calls, but it won't be truly atomic.
+       // For a real-world app, this should be a single API call to a dedicated backend transaction endpoint.
        throw new Error("Transactions not implemented for MongoDB adapter on the client-side.");
     }
 
     increment(value: number): any {
-       return { __op: 'Increment', value };
+       // This operation must be handled by the backend API.
+       // The client sends the operation, and the server interprets it.
+       return { '$inc': { balance: value } }; // Example for balance field
     }
 
     queryConstraint(type: 'orderBy' | 'where' | 'limit', field: string, operator: any, value?: any): any {

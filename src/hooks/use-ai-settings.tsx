@@ -42,10 +42,10 @@ export function useAISettings() {
         }
 
         setIsLoading(true);
-        const unsubscribe = dbAdapter.listenToCollection<{credentials: AICredential[], activeCredentialId: string | null}>(
-          `users/${user.uid}/settings`,
+        const unsubscribe = dbAdapter.listenToCollection<{id: string, credentials: AICredential[], activeCredentialId: string | null}>(
+          `settings`,
           (settingsData) => {
-             const aiSettings = settingsData.find(s => (s as any).id === 'ai');
+             const aiSettings = settingsData.find(s => s.id === `ai_${user.uid}`);
              if (aiSettings) {
                 setSettings(aiSettings);
              } else {
@@ -93,7 +93,7 @@ export function useAISettings() {
         }
         setIsSaving(true);
         try {
-            await dbAdapter.setDoc(`users/${user.uid}/settings/ai`, newSettings);
+            await dbAdapter.setDoc(`settings/ai_${user.uid}`, newSettings);
             toast({ title: "Configurações de IA salvas!" });
             setSettings(newSettings);
         } catch (error) {

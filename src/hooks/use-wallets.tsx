@@ -10,7 +10,7 @@ import { getDatabaseAdapter } from "@/services/database/database-service";
 interface WalletsContextType {
   wallets: Wallet[];
   isLoading: boolean;
-  addWallet: (wallet: Omit<Wallet, 'id' | 'createdAt' | 'balance'>) => Promise<void>;
+  addWallet: (wallet: Omit<Wallet, 'id' | 'createdAt' | 'balance' | 'userId'>) => Promise<void>;
   updateWallet: (walletId: string, updates: Partial<Wallet>) => Promise<void>;
   deleteWallet: (walletId: string) => Promise<void>;
 }
@@ -33,43 +33,39 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
     }
 
     setIsLoading(true);
-    
-    const constraints = (dbAdapter.constructor.name === 'FirebaseAdapter')
-      ? [dbAdapter.queryConstraint('orderBy', 'createdAt', 'desc')]
-      : [];
 
     const unsubscribe = dbAdapter.listenToCollection<Wallet>(
-      `users/${user.uid}/wallets`,
+      `wallets`,
       (fetchedWallets) => {
         setWallets(fetchedWallets);
         setIsLoading(false);
-      },
-      constraints
+      }
     );
     
     return () => unsubscribe();
   }, [user, authLoading, dbAdapter]);
 
-  const addWallet = async (wallet: Omit<Wallet, 'id' | 'createdAt' | 'balance'>) => {
+  const addWallet = async (wallet: Omit<Wallet, 'id' | 'createdAt' | 'balance' | 'userId'>) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.addDoc(`users/${user.uid}/wallets`,{
+    await dbAdapter.addDoc('wallets',{
         ...wallet,
+        userId: user.uid,
         balance: 0,
-        createdAt: new Date()
+        createdAt: new Date().toISOString()
     });
     toast({ title: "Carteira criada com sucesso!" });
   }
 
   const updateWallet = async (walletId: string, updates: Partial<Wallet>) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.updateDoc(`users/${user.uid}/wallets/${walletId}`, updates);
+    await dbAdapter.updateDoc(`wallets/${walletId}`, updates);
     toast({ title: "Carteira atualizada!" });
   }
 
   const deleteWallet = async (walletId: string) => {
     if (!user) throw new Error("User not authenticated");
     
-    await dbAdapter.deleteDoc(`users/${user.uid}/wallets/${walletId}`);
+    await dbAdapter.deleteDoc(`wallets/${walletId}`);
     toast({ title: "Carteira excluída." });
   }
 

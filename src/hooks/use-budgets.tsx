@@ -12,7 +12,7 @@ import { getDatabaseAdapter } from "@/services/database/database-service";
 interface BudgetsContextType {
   budgets: Budget[];
   isLoading: boolean;
-  addBudget: (budget: Omit<Budget, 'id' | 'createdAt' | 'currentSpending'>) => Promise<void>;
+  addBudget: (budget: Omit<Budget, 'id' | 'createdAt' | 'currentSpending' | 'userId'>) => Promise<void>;
   updateBudget: (budgetId: string, updates: Partial<Budget>) => Promise<void>;
   deleteBudget: (budgetId: string) => Promise<void>;
 }
@@ -37,40 +37,36 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
 
     setIsLoading(true);
 
-    const constraints = (dbAdapter.constructor.name === 'FirebaseAdapter') 
-      ? [dbAdapter.queryConstraint('orderBy', 'createdAt', 'desc')] 
-      : [];
-
     const unsubscribe = dbAdapter.listenToCollection<Budget>(
-      `users/${user.uid}/budgets`,
+      `budgets`,
       (fetchedBudgets) => {
         setBudgets(fetchedBudgets.map(b => ({ ...b, currentSpending: 0 })));
         setIsLoading(false);
-      },
-      constraints
+      }
     );
 
     return () => unsubscribe();
   }, [user, authLoading, dbAdapter]);
 
-  const addBudget = async (budget: Omit<Budget, 'id' | 'createdAt' | 'currentSpending'>) => {
+  const addBudget = async (budget: Omit<Budget, 'id' | 'createdAt' | 'currentSpending' | 'userId'>) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.addDoc(`users/${user.uid}/budgets`, {
+    await dbAdapter.addDoc(`budgets`, {
         ...budget,
-        createdAt: new Date()
+        userId: user.uid,
+        createdAt: new Date().toISOString()
     });
     toast({ title: "Orçamento criado com sucesso!" });
   }
 
   const updateBudget = async (budgetId: string, updates: Partial<Budget>) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.updateDoc(`users/${user.uid}/budgets/${budgetId}`, updates);
+    await dbAdapter.updateDoc(`budgets/${budgetId}`, updates);
     toast({ title: "Orçamento atualizado!" });
   }
 
   const deleteBudget = async (budgetId: string) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.deleteDoc(`users/${user.uid}/budgets/${budgetId}`);
+    await dbAdapter.deleteDoc(`budgets/${budgetId}`);
     toast({ title: "Orçamento excluído." });
   }
 

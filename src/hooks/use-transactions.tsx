@@ -26,7 +26,7 @@ interface TransactionsContextType {
   availableSubcategories: string[];
   selectedSubcategory: string;
   setSelectedSubcategory: (subcategory: string) => void;
-  addTransaction: (transaction: Omit<Transaction, 'id'>) => Promise<void>;
+  addTransaction: (transaction: Omit<Transaction, 'id' | 'userId'>) => Promise<void>;
   updateTransaction: (transactionId: string, updates: Partial<Transaction>, updateAllMatching: boolean, originalItemName: string) => Promise<void>;
   deleteTransaction: (transactionId: string) => Promise<void>;
   addCategory: (categoryName: TransactionCategory) => Promise<void>;
@@ -36,43 +36,6 @@ interface TransactionsContextType {
 }
 
 const TransactionsContext = createContext<TransactionsContextType | undefined>(undefined);
-
-async function performAtomicUpdate(dbAdapter: IDatabaseAdapter, updates: Partial<Transaction>, originalTransaction: Transaction) {
-    // This transaction logic is specific to adapters that support it, like Firebase.
-    // For MongoDB, this would be a single API call to a dedicated endpoint.
-    // Given the current structure, we'll implement the logic assuming client-side orchestration.
-    
-    // 1. Revert original transaction amount from its wallet(s)
-    if (originalTransaction.type === 'transfer') {
-        if(originalTransaction.toWalletId) {
-             await dbAdapter.updateDoc(`users/${originalTransaction.id}/wallets/${originalTransaction.walletId}`, { balance: dbAdapter.increment(-originalTransaction.amount) });
-             await dbAdapter.updateDoc(`users/${originalTransaction.id}/wallets/${originalTransaction.toWalletId}`, { balance: dbAdapter.increment(originalTransaction.amount) });
-        }
-    } else {
-        const revertAmount = originalTransaction.type === 'income' ? -originalTransaction.amount : originalTransaction.amount;
-        await dbAdapter.updateDoc(`users/${originalTransaction.id}/wallets/${originalTransaction.walletId}`, { balance: dbAdapter.increment(revertAmount) });
-    }
-
-    // 2. Apply new transaction amount to its new wallet(s)
-    const newType = updates.type || originalTransaction.type;
-    const newAmount = updates.amount || originalTransaction.amount;
-    const newWalletId = updates.walletId || originalTransaction.walletId;
-    const newToWalletId = updates.toWalletId || originalTransaction.toWalletId;
-
-    if (newType === 'transfer') {
-        if (newToWalletId) {
-            await dbAdapter.updateDoc(`users/${originalTransaction.id}/wallets/${newWalletId}`, { balance: dbAdapter.increment(-newAmount) });
-            await dbAdapter.updateDoc(`users/${originalTransaction.id}/wallets/${newToWalletId}`, { balance: dbAdapter.increment(newAmount) });
-        }
-    } else {
-        const applyAmount = newType === 'income' ? newAmount : -newAmount;
-        await dbAdapter.updateDoc(`users/${originalTransaction.id}/wallets/${newWalletId}`, { balance: dbAdapter.increment(applyAmount) });
-    }
-
-    // 3. Update the transaction document itself
-    await dbAdapter.updateDoc(`users/${originalTransaction.id}/transactions/${originalTransaction.id}`, updates);
-}
-
 
 export function TransactionsProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
@@ -97,26 +60,22 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     }
 
     setIsLoading(true);
-    
-    const transactionConstraints = (dbAdapter.constructor.name === 'FirebaseAdapter') 
-      ? [dbAdapter.queryConstraint('orderBy', 'date', 'desc')] 
-      : [];
 
     const unsubscribeTransactions = dbAdapter.listenToCollection<Transaction>(
-      `users/${user.uid}/transactions`,
+      `transactions`,
       (transactions) => {
         setAllTransactions(transactions);
         setIsLoading(false);
-      },
-      transactionConstraints
+      }
     );
 
-    const unsubscribeCategories = dbAdapter.listenToCollection<CategoryMap>(
-      `users/${user.uid}/settings`,
+    const unsubscribeCategories = dbAdapter.listenToCollection<{id: string, [key: string]: any}>(
+      `settings`,
       (settings) => {
-         const catSettings = settings.find(s => (s as any).id === 'categories');
+         const catSettings = settings.find(s => s.id === `categories_${user.uid}`);
          if (catSettings) {
-             setCategoryMap(catSettings as CategoryMap);
+             const { id, userId, ...cats} = catSettings;
+             setCategoryMap(cats as CategoryMap);
          } else {
             const defaultCategories: CategoryMap = {
                 "Supermercado": ["Mercearia", "Feira", "Açougue", "Bebidas"],
@@ -134,7 +93,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
                 "Transferência": [],
                 "Outros": ["Presentes", "Serviços", "Impostos"],
             };
-            dbAdapter.setDoc(`users/${user.uid}/settings/categories`, defaultCategories);
+            dbAdapter.setDoc(`settings/categories_${user.uid}`, {...defaultCategories, userId: user.uid });
          }
       }
     );
@@ -146,63 +105,31 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     };
   }, [user, authLoading, dbAdapter]);
   
-  const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
+  const addTransaction = async (transaction: Omit<Transaction, 'id' | 'userId'>) => {
     if (!user) throw new Error("User not authenticated");
 
-    await dbAdapter.runTransaction(async (t: any) => {
-      if (transaction.type === 'income' || transaction.type === 'expense') {
-        const amount = transaction.type === 'income' ? transaction.amount : -transaction.amount;
-        await dbAdapter.updateDoc(`users/${user.uid}/wallets/${transaction.walletId}`, { balance: dbAdapter.increment(amount) });
-      }
-      
-      if (transaction.type === 'transfer') {
-        if (!transaction.toWalletId) throw new Error("Destination wallet is required for transfers.");
-        await dbAdapter.updateDoc(`users/${user.uid}/wallets/${transaction.walletId}`, { balance: dbAdapter.increment(-transaction.amount) });
-        await dbAdapter.updateDoc(`users/${user.uid}/wallets/${transaction.toWalletId}`, { balance: dbAdapter.increment(transaction.amount) });
-      }
-
-      const newTransactionData = { ...transaction, amount: Math.abs(transaction.amount), date: new Date(transaction.date) };
-      await dbAdapter.addDoc(`users/${user.uid}/transactions`, newTransactionData);
-    });
+    const transactionWithUser = { ...transaction, userId: user.uid };
+    
+    // For MongoDB, we assume the backend API handles the balance update transactionally
+    await dbAdapter.addDoc('transactions', transactionWithUser);
   }
 
   const updateTransaction = async (transactionId: string, updates: Partial<Transaction>, updateAllMatching: boolean, originalItemName: string) => {
     if (!user) throw new Error("User not authenticated");
     
-     if (updateAllMatching) {
-        toast({ variant: "default", title: "Ação não suportada", description: "A atualização em lote não é suportada por este adaptador de banco de dados." });
-    }
-    
-    const originalTransaction = allTransactions.find(t => t.id === transactionId);
-    if (!originalTransaction) throw new Error("Transaction not found for update.");
-
-    await performAtomicUpdate(dbAdapter, updates, originalTransaction);
+    // For MongoDB, this complex logic should be a dedicated API endpoint if transactional integrity is needed.
+    // Here, we just update the transaction document.
+    await dbAdapter.updateDoc(`transactions/${transactionId}`, updates);
   };
   
   const deleteTransaction = async (transactionId: string) => {
      if (!user) throw new Error("User not authenticated");
-
-     const transactionToDelete = allTransactions.find(t => t.id === transactionId);
-     if (!transactionToDelete) throw new Error("Transaction not found");
-
-     await dbAdapter.runTransaction(async (t: any) => {
-        if (transactionToDelete.type === 'income' || transactionToDelete.type === 'expense') {
-            const amount = transactionToDelete.type === 'income' ? -transactionToDelete.amount : transactionToDelete.amount;
-            await dbAdapter.updateDoc(`users/${user.uid}/wallets/${transactionToDelete.walletId}`, { balance: dbAdapter.increment(amount) });
-        }
-
-        if (transactionToDelete.type === 'transfer') {
-           if (!transactionToDelete.toWalletId) throw new Error("Cannot reverse transfer without destination wallet.");
-           await dbAdapter.updateDoc(`users/${user.uid}/wallets/${transactionToDelete.walletId}`, { balance: dbAdapter.increment(transactionToDelete.amount) });
-           await dbAdapter.updateDoc(`users/${user.uid}/wallets/${transactionToDelete.toWalletId}`, { balance: dbAdapter.increment(-transactionToDelete.amount) });
-        }
-
-        await dbAdapter.deleteDoc(`users/${user.uid}/transactions/${transactionId}`);
-     });
+     // For MongoDB, balance updates should be handled by a dedicated API endpoint
+     await dbAdapter.deleteDoc(`transactions/${transactionId}`);
   }
 
   const { categories, subcategories } = useMemo(() => {
-    const { id, ...cats } = categoryMap as any;
+    const { id, userId, ...cats } = categoryMap as any;
     const categoryNames = Object.keys(cats) as TransactionCategory[];
     return {
       categories: categoryNames.sort(),
@@ -212,7 +139,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   
   const saveCategories = async (newCategories: CategoryMap) => {
       if (!user) throw new Error("User not authenticated");
-      await dbAdapter.setDoc(`users/${user.uid}/settings/categories`, newCategories);
+      await dbAdapter.setDoc(`settings/categories_${user.uid}`, {...newCategories, userId: user.uid });
   };
 
   const addCategory = async (categoryName: TransactionCategory) => {

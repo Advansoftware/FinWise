@@ -41,7 +41,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (userProfile) {
         setUser(userProfile);
       } else {
-        console.warn(`Profile for user ${firebaseUser.uid} not found in DB. This might be a race condition during signup.`);
+        // This case handles Google Sign-In where profile might not exist yet
+        const newUserProfile: Omit<UserProfile, 'uid'> = {
+          email: firebaseUser.email,
+          displayName: firebaseUser.displayName,
+          plan: 'Básico',
+          aiCredits: 0,
+          createdAt: new Date().toISOString(),
+        };
+        await dbAdapter.setDoc(`users/${firebaseUser.uid}`, newUserProfile);
+        const createdProfile = await dbAdapter.getDoc<UserProfile>(`users/${firebaseUser.uid}`);
+        setUser(createdProfile);
       }
     } else {
       setUser(null);
@@ -59,10 +69,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const loggedInUser = await authAdapter.login(email, password);
-      // For Mongo, the profile is returned directly. For Firebase, the onAuthStateChanged listener handles it.
-      if (loggedInUser) {
-        setUser(loggedInUser);
-      }
+      setUser(loggedInUser);
       return loggedInUser;
     } catch (error) {
       setUser(null);
@@ -75,9 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const newUser = await authAdapter.signup(email, password, name);
-       if (newUser) {
-        setUser(newUser);
-      }
+       setUser(newUser);
       return newUser;
     } catch (error) {
        setUser(null);
@@ -90,9 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(true);
     try {
       const googleUser = await authAdapter.signInWithGoogle();
-       if (googleUser) {
-        setUser(googleUser);
-      }
+       // onAuthStateChanged will handle setting the user state
       return googleUser;
     } catch (error) {
       setUser(null);
@@ -123,6 +126,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateUserPassword: IAuthAdapter['updateUserPassword'] = async (password) => {
     if (!user) throw new Error("User not authenticated");
+    await dbAdapter.updateDoc(`users/${user.uid}`, { password: 'password_update_not_supported_on_client' });
     return authAdapter.updateUserPassword(password);
   }
 

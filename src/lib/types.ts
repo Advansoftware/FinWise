@@ -8,6 +8,7 @@ export type WalletType = 'Conta Corrente' | 'Cartão de Crédito' | 'Poupança' 
 
 export interface Wallet {
     id: string;
+    userId: string;
     name: string;
     type: WalletType;
     balance: number;
@@ -16,6 +17,7 @@ export interface Wallet {
 
 export interface Transaction {
   id: string;
+  userId: string;
   date: string; // ISO 8601 format string
   item: string;
   category: TransactionCategory;
@@ -30,6 +32,7 @@ export interface Transaction {
 
 export interface Budget {
     id: string;
+    userId: string;
     name: string;
     category: TransactionCategory;
     amount: number;
@@ -40,6 +43,7 @@ export interface Budget {
 
 export interface Goal {
     id: string;
+    userId: string;
     name: string;
     targetAmount: number;
     currentAmount: number;

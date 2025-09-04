@@ -30,33 +30,31 @@ export class FirebaseAuthAdapter implements IAuthAdapter {
         this.dbAdapter = getDatabaseAdapter();
     }
 
-    private async ensureUserProfile(firebaseUser: FirebaseUser): Promise<UserProfile> {
-      let profile = await this.dbAdapter.getDoc<UserProfile>(`users/${firebaseUser.uid}`);
-      if (!profile) {
-        console.log(`Creating user profile for ${firebaseUser.uid}`);
-        const newUserProfile: Omit<UserProfile, 'uid'> = {
-          email: firebaseUser.email,
-          displayName: firebaseUser.displayName,
-          plan: 'Básico',
-          aiCredits: 0,
-          createdAt: new Date().toISOString(),
-        };
-        await this.dbAdapter.setDoc(`users/${firebaseUser.uid}`, newUserProfile);
-        profile = await this.dbAdapter.getDoc<UserProfile>(`users/${firebaseUser.uid}`);
-        if (!profile) throw new Error("Could not retrieve newly created user profile.");
-      }
-      return profile;
-    }
-
     async login(email: string, pass: string): Promise<UserProfile> {
         const userCredential = await signInWithEmailAndPassword(this.auth, email, pass);
-        return this.ensureUserProfile(userCredential.user);
+        const profile = await this.dbAdapter.getDoc<UserProfile>(`users/${userCredential.user.uid}`);
+        if (!profile) throw new Error("User profile not found after login.");
+        return profile;
     }
 
     async signup(email: string, pass: string, name: string): Promise<UserProfile> {
         const userCredential = await createUserWithEmailAndPassword(this.auth, email, pass);
         await updateProfile(userCredential.user, { displayName: name });
-        return this.ensureUserProfile(userCredential.user);
+        
+        const newUserProfile: Omit<UserProfile, 'uid'> = {
+          email: userCredential.user.email,
+          displayName: name,
+          plan: 'Básico',
+          aiCredits: 0,
+          createdAt: new Date().toISOString(),
+        };
+
+        await this.dbAdapter.setDoc(`users/${userCredential.user.uid}`, newUserProfile);
+
+        return {
+            ...newUserProfile,
+            uid: userCredential.user.uid,
+        };
     }
 
     async logout(): Promise<void> {
@@ -70,7 +68,15 @@ export class FirebaseAuthAdapter implements IAuthAdapter {
     async signInWithGoogle(): Promise<UserProfile> {
         const provider = new GoogleAuthProvider();
         const result = await signInWithPopup(this.auth, provider);
-        return this.ensureUserProfile(result.user);
+        // The onAuthStateChanged handler in use-auth.tsx will handle profile creation/retrieval
+        return {
+            uid: result.user.uid,
+            email: result.user.email,
+            displayName: result.user.displayName,
+            plan: 'Básico', // Default plan
+            aiCredits: 0,
+            createdAt: result.user.metadata.creationTime || new Date().toISOString(),
+        };
     }
 
     async sendPasswordReset(email: string): Promise<void> {

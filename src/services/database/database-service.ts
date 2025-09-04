@@ -5,29 +5,34 @@ import { IDatabaseAdapter } from "./database-adapter";
 import { FirebaseAdapter } from "./firebase-adapter";
 import { MongoDbAdapter } from "./mongodb-adapter";
 
+let adapterInstance: IDatabaseAdapter | null = null;
+let currentDbType: string | undefined = undefined;
+
+
 /**
  * Database Service Factory.
- * Determines which database adapter to use based on the environment variable on each call.
- * This is the single point of entry for all data persistence operations in the application.
- * It does not cache the adapter instance to ensure the .env variable is always respected.
+ * Determines which database adapter to use based on the environment variable.
+ * It caches the adapter instance to prevent re-creation on every call,
+ * but re-creates it if the environment variable changes.
  */
 export function getDatabaseAdapter(): IDatabaseAdapter {
-    if (typeof window === 'undefined') {
-        // On the server, we might need a default or specific admin adapter.
-        // For now, let's assume server-side data access uses a different mechanism (e.g., admin SDKs).
-        // Returning FirebaseAdapter as a safe default for type consistency, though it shouldn't be used server-side from this factory.
-        return new FirebaseAdapter();
+    const dbType = process.env.NEXT_PUBLIC_DATABASE_TYPE || 'firebase';
+
+    if (adapterInstance && currentDbType === dbType) {
+        return adapterInstance;
     }
-    
-    // Read the environment variable EVERY time the function is called.
-    const dbType = process.env.NEXT_PUBLIC_DATABASE_TYPE;
-    
-    // Instantiate the correct adapter based on the current .env value.
+
+    currentDbType = dbType;
+
     switch (dbType) {
         case 'mongodb':
-            return new MongoDbAdapter();
+            adapterInstance = new MongoDbAdapter();
+            break;
         case 'firebase':
         default:
-            return new FirebaseAdapter();
+            adapterInstance = new FirebaseAdapter();
+            break;
     }
+
+    return adapterInstance;
 }

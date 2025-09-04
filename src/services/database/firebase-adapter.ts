@@ -37,19 +37,8 @@ export class FirebaseAdapter implements IDatabaseAdapter {
         this.auth = auth;
     }
 
-    private getUserId(): string {
-        const currentUserId = this.auth.currentUser?.uid;
-        if (!currentUserId) {
-            throw new Error("User not authenticated for Firebase operations");
-        }
-        return currentUserId;
-    }
-
-    private resolvePath(path: string): string {
-        if (this.auth.currentUser) {
-            return path.replace('USER_ID', this.getUserId());
-        }
-        return path;
+    private getUserId(): string | undefined {
+        return this.auth.currentUser?.uid;
     }
     
     private serializeData(data: DocumentData): DocumentData {
@@ -66,9 +55,15 @@ export class FirebaseAdapter implements IDatabaseAdapter {
     }
 
     listenToCollection<T>(collectionPath: string, callback: (data: T[]) => void, constraints: FirebaseQueryConstraint[] = []): Unsubscribe {
+        const userId = this.getUserId();
+        if (!userId) {
+            callback([]);
+            return () => {};
+        }
+
         try {
-            const resolvedPath = this.resolvePath(collectionPath);
-            const q = query(collection(this.db, resolvedPath), ...constraints);
+            const finalConstraints = [where('userId', '==', userId), ...constraints];
+            const q = query(collection(this.db, collectionPath), ...finalConstraints);
 
             return onSnapshot(q, (querySnapshot) => {
                 const data: T[] = [];
@@ -83,7 +78,7 @@ export class FirebaseAdapter implements IDatabaseAdapter {
                 });
                 callback(data);
             }, (error) => {
-                console.error(`Firebase listener error on path ${resolvedPath}:`, error);
+                console.error(`Firebase listener error on path ${collectionPath}:`, error);
                 callback([]); // Return empty array on error
             });
         } catch (error) {
@@ -93,69 +88,82 @@ export class FirebaseAdapter implements IDatabaseAdapter {
     }
 
     async getDoc<T>(docPath: string): Promise<T | null> {
-        const resolvedPath = this.resolvePath(docPath);
-        const docRef = doc(this.db, resolvedPath);
+        const userId = this.getUserId();
+        if (!userId) return null;
+        
+        const docRef = doc(this.db, docPath);
         const docSnap = await fbGetDoc(docRef);
+
         if (docSnap.exists()) {
             const data = docSnap.data();
+            // Security check for sub-collections
+            if (data.userId && data.userId !== userId) {
+                 console.warn(`Permission denied: User ${userId} tried to access doc ${docPath} owned by ${data.userId}`);
+                 return null;
+            }
+             // Security check for top-level user doc
+            if (docPath.startsWith('users/') && docSnap.id !== userId) {
+                 console.warn(`Permission denied: User ${userId} tried to access user doc ${docPath}`);
+                return null;
+            }
+
             Object.keys(data).forEach(key => {
                 if (data[key] instanceof Timestamp) {
                     data[key] = data[key].toDate().toISOString();
                 }
             });
-            // For user profile, the uid is the same as the id.
-            if(resolvedPath.startsWith('users/')) {
-                return { id: docSnap.id, uid: docSnap.id, ...data } as T;
-            }
-            return { id: docSnap.id, ...data } as T;
+            
+            return { id: docSnap.id, uid: docSnap.id, ...data } as T;
         }
         return null;
     }
 
     async addDoc<T extends DocumentData>(collectionPath: string, data: T): Promise<string> {
-        const resolvedPath = this.resolvePath(collectionPath);
-        const serializedData = this.serializeData(data);
-        const docRef = await fbAddDoc(collection(this.db, resolvedPath), serializedData);
+        const userId = this.getUserId();
+        if (!userId) throw new Error("User not authenticated");
+
+        const dataWithUser = { ...data, userId };
+        const serializedData = this.serializeData(dataWithUser);
+        const docRef = await fbAddDoc(collection(this.db, collectionPath), serializedData);
         return docRef.id;
     }
 
     async setDoc<T extends DocumentData>(docPath: string, data: T): Promise<void> {
-        const resolvedPath = this.resolvePath(docPath);
-        const serializedData = this.serializeData(data);
-        await fbSetDoc(doc(this.db, resolvedPath), serializedData, { merge: true });
+        const userId = this.getUserId();
+        if (!userId) throw new Error("User not authenticated");
+        
+        const dataWithUser = { ...data, userId };
+        const serializedData = this.serializeData(dataWithUser);
+        await fbSetDoc(doc(this.db, docPath), serializedData, { merge: true });
     }
 
     async updateDoc(docPath: string, data: Partial<DocumentData>): Promise<void> {
-        const resolvedPath = this.resolvePath(docPath);
+        // Security: We trust Firestore rules to enforce ownership on update
         const serializedData = this.serializeData(data);
-        await fbUpdateDoc(doc(this.db, resolvedPath), serializedData);
+        await fbUpdateDoc(doc(this.db, docPath), serializedData);
     }
     
     async deleteDoc(docPath: string): Promise<void> {
-        const resolvedPath = this.resolvePath(docPath);
-        await fbDeleteDoc(doc(this.db, resolvedPath));
+        // Security: We trust Firestore rules to enforce ownership on delete
+        await fbDeleteDoc(doc(this.db, docPath));
     }
 
     async runTransaction(updateFunction: (transaction: any) => Promise<any>): Promise<any> {
         return await fbRunTransaction(this.db, async (firebaseTransaction) => {
             const wrappedTransaction = {
                 get: (docPath: string) => {
-                    const resolvedPath = this.resolvePath(docPath);
-                    return firebaseTransaction.get(doc(this.db, resolvedPath));
+                    return firebaseTransaction.get(doc(this.db, docPath));
                 },
                 set: (docPath: string, data: DocumentData) => {
-                    const resolvedPath = this.resolvePath(docPath);
                     const serializedData = this.serializeData(data);
-                    return firebaseTransaction.set(doc(this.db, resolvedPath), serializedData);
+                    return firebaseTransaction.set(doc(this.db, docPath), serializedData);
                 },
                 update: (docPath: string, data: Partial<DocumentData>) => {
-                     const resolvedPath = this.resolvePath(docPath);
                      const serializedData = this.serializeData(data);
-                     return firebaseTransaction.update(doc(this.db, resolvedPath), serializedData);
+                     return firebaseTransaction.update(doc(this.db, docPath), serializedData);
                 },
                 delete: (docPath: string) => {
-                     const resolvedPath = this.resolvePath(docPath);
-                     return firebaseTransaction.delete(doc(this.db, resolvedPath));
+                     return firebaseTransaction.delete(doc(this.db, docPath));
                 }
             };
             return updateFunction(wrappedTransaction);

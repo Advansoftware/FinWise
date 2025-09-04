@@ -44,7 +44,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
 
     const unsubscribeMonthly = dbAdapter.listenToCollection<MonthlyReport>(
-        `users/${user.uid}/reports`,
+        `reports`,
         (reports) => {
             setMonthlyReports(reports);
             setIsLoading(false);
@@ -52,7 +52,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
     );
     
     const unsubscribeAnnual = dbAdapter.listenToCollection<AnnualReport>(
-        `users/${user.uid}/annualReports`,
+        `annualReports`,
         (reports) => setAnnualReports(reports)
     );
 
@@ -84,7 +84,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
             generatedAt: new Date().toISOString()
         }
 
-        await dbAdapter.setDoc(`users/${user.uid}/reports/${reportId}`, newReport);
+        await dbAdapter.setDoc(`reports/${reportId}`, newReport);
         
         return newReport;
 
@@ -114,7 +114,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
             generatedAt: new Date().toISOString()
         }
 
-        await dbAdapter.setDoc(`users/${user.uid}/annualReports/${reportId}`, newReport);
+        await dbAdapter.setDoc(`annualReports/${reportId}`, newReport);
         
         return newReport;
 

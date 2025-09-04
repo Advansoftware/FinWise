@@ -36,12 +36,11 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
     
     // Listener for credit logs
     const unsubscribeLogs = dbAdapter.listenToCollection<AICreditLog>(
-        `users/${user.uid}/aiCreditLogs`,
+        `aiCreditLogs`,
         (fetchedLogs) => {
             setLogs(fetchedLogs);
             setIsLoading(false);
-        },
-        [dbAdapter.queryConstraint('orderBy', 'timestamp', 'desc')]
+        }
     );
 
     return () => {
