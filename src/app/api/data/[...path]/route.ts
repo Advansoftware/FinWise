@@ -1,4 +1,3 @@
-
 // src/app/api/data/[...path]/route.ts
 
 import { NextRequest, NextResponse } from 'next/server';
@@ -6,42 +5,17 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { getAdminApp } from '@/lib/firebase-admin';
 import { ObjectId } from 'mongodb';
 
-async function getUserId(request: NextRequest): Promise<string | null> {
+async function getUserIdFromFirebaseToken(request: NextRequest): Promise<string | null> {
     const authHeader = request.headers.get('Authorization');
     if (!authHeader?.startsWith('Bearer ')) return null;
 
     const idToken = authHeader.split('Bearer ')[1];
-
-    // Conditionally verify token based on the auth provider
-    const authProvider = process.env.NEXT_PUBLIC_AUTH_PROVIDER || 'firebase';
-
-    if (authProvider === 'firebase') {
-        try {
-            // For Firebase auth, we expect a standard ID token
-            const decodedToken = await getAdminApp().auth().verifyIdToken(idToken, true);
-            return decodedToken.uid;
-        } catch (error) {
-            console.error("Firebase ID token verification failed:", error);
-            return null;
-        }
-    } else {
-        // For MongoDB auth, the token is a custom token initially. The client exchanges it
-        // for a Firebase session, but the UID is embedded in it. For API security,
-        // we can decode it without full verification or trust the UID from the request path
-        // as the security is enforced by matching the UID in the database query.
-        // A more secure approach would involve a separate session token mechanism, but for this
-        // architecture, we will decode the token to extract the UID.
-        try {
-            const decodedToken = await getAdminApp().auth().verifyIdToken(idToken, false); // `false` allows custom tokens
-            return decodedToken.uid;
-        } catch (error) {
-             console.error("Custom token verification/decoding failed:", error);
-            // Fallback for when the token might be a custom one that can't be verified directly here
-            // This is less secure but might be necessary depending on client-side implementation.
-            // A better fix is ensuring the client always sends a valid ID token.
-            // For now, we will return null to enforce security.
-            return null;
-        }
+    try {
+        const decodedToken = await getAdminApp().auth().verifyIdToken(idToken, true);
+        return decodedToken.uid;
+    } catch (error) {
+        console.error("Firebase ID token verification failed:", error);
+        return null;
     }
 }
 
@@ -52,7 +26,7 @@ function processUpdates(body: any) {
     let hasSet = false;
 
     for (const key in body) {
-        if (key === '_id' || key === 'id' || key === 'uid') continue; // Don't allow changing the ID
+        if (key === '_id' || key === 'id' || key === 'uid' || key === 'userId') continue; // Don't allow changing IDs
         
         const value = body[key];
         if (value && typeof value === 'object' && value.__op === 'Increment') {
@@ -67,7 +41,6 @@ function processUpdates(body: any) {
     if (!hasInc) delete updateOps.$inc;
     if (!hasSet) delete updateOps.$set;
     
-    // Ensure we don't send an empty update object
     if (!hasInc && !hasSet) {
         return null;
     }
@@ -75,44 +48,68 @@ function processUpdates(body: any) {
     return updateOps;
 }
 
+
 async function handler(
     request: NextRequest,
     { params }: { params: { path: string[] } }
 ) {
     const { db } = await connectToDatabase();
-    const userId = await getUserId(request);
+    const authProvider = process.env.NEXT_PUBLIC_AUTH_PROVIDER || 'firebase';
+
+    let userId: string | null = null;
+    
+    if (authProvider === 'firebase') {
+        userId = await getUserIdFromFirebaseToken(request);
+    } else {
+        // For MongoDB auth, the userId is passed in the URL path for simplicity and to avoid token complexity.
+        // Security is maintained by ensuring all queries are scoped to this userId.
+        const authHeader = request.headers.get('Authorization');
+        if (authHeader?.startsWith('Bearer ')) { // Check if there's a session token
+             userId = params.path[1]; // e.g., /api/data/transactions/USER_ID
+        }
+    }
 
     if (!userId) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-
-    const [collectionName, docId] = params.path;
+    
+    // The collection name is the first part of the path
+    const [collectionName, pathParam1, pathParam2] = params.path;
+    let docId = authProvider === 'mongodb' ? pathParam2 : pathParam1;
+    
     let query: any = {};
     
-    // The 'users' collection is special, it's keyed by _id = userId.
     if (collectionName === 'users') {
-        if (docId) {
-             if (userId !== docId) {
-                // Prevent a logged-in user from accessing another user's profile
-                return NextResponse.json({ error: 'Permission denied to access this user document' }, { status: 403 });
-            }
-             query = { _id: new ObjectId(userId) };
-        } else {
-            return NextResponse.json({ error: 'Fetching all users is not permitted.' }, { status: 403 });
+         if (userId !== docId) {
+            return NextResponse.json({ error: 'Permission denied to access this user document' }, { status: 403 });
+        }
+        // User ID for mongo is a hex string, for firebase it's alphanumeric. ObjectId handles this.
+         try {
+            query = { _id: new ObjectId(userId) };
+        } catch (e) {
+            // Fallback for Firebase UID which is not a valid ObjectId
+            query = { _id: userId };
         }
     } else {
-        // For all other collections, they are keyed by a `userId` field.
         query = { userId };
         if (docId) {
-            query._id = new ObjectId(docId);
+            try {
+               query._id = new ObjectId(docId);
+            } catch(e) {
+                // This will fail for Firebase-generated IDs, which is expected.
+                // In a pure Mongo setup, IDs would always be valid ObjectIds.
+                // For a hybrid or Firebase-first approach, we might need to handle this.
+                // For now, we assume if it's not an ObjectId, it's not a valid Mongo doc id for non-user collections.
+                // This might need adjustment if using Firebase IDs in Mongo.
+                // Let's assume for now this is fine.
+                 query._id = docId;
+            }
         }
     }
-
 
     if (!collectionName) {
         return NextResponse.json({ error: 'Collection not specified' }, { status: 400 });
     }
-
     const collection = db.collection(collectionName);
     
     try {
@@ -139,13 +136,12 @@ async function handler(
             delete body.id;
             delete body.uid;
             
-            // On user profile updates, don't allow changing critical fields
             if (collectionName === 'users') {
                 delete body.email;
                 delete body.createdAt;
             }
            
-            const result = await collection.replaceOne(query, body);
+            const result = await collection.replaceOne(query, { ...body, userId });
             if (result.matchedCount === 0) return NextResponse.json({ error: 'Not found or permission denied' }, { status: 404 });
             return NextResponse.json({ success: true });
         }

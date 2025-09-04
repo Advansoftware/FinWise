@@ -10,29 +10,48 @@ import { getAuthAdapter } from "../auth/auth-service";
 const getApiUrl = (path: string) => `/api/data/${path}`;
 
 export class MongoDbAdapter implements IDatabaseAdapter {
+    private userId: string | null = null;
 
     constructor() {
       // No client-side initialization needed for this adapter
+    }
+
+    public setCurrentUser(userId: string | null) {
+        this.userId = userId;
     }
 
     private async getAuthHeader() {
         const authAdapter = getAuthAdapter();
         const token = await authAdapter.getToken();
         if (!token) {
+            // This might happen during sign-out, it's not necessarily an error.
             return {};
         }
         return { 'Authorization': `Bearer ${token}` };
     }
+    
+    private resolvePath(path: string): string {
+        if (!this.userId) {
+            // This is a critical issue if it happens during an operation that requires a user.
+            console.error("MongoDBAdapter: userId not set, cannot resolve path", path);
+            // We'll let it proceed, but the API will likely reject it, which is correct.
+            return path.replace('USER_ID', 'undefined');
+        }
+        return path.replace('USER_ID', this.userId);
+    }
 
     listenToCollection<T>(collectionPath: string, callback: (data: T[]) => void, constraints?: any[]): Unsubscribe {
-        const path = collectionPath.replace('users/USER_ID/', '');
+        const resolvedPath = this.resolvePath(collectionPath);
         
         let isSubscribed = true;
 
         const fetchData = async () => {
-            if (!isSubscribed) return;
+            if (!isSubscribed || !this.userId) {
+                callback([]); // If not subscribed or user logs out, clear data.
+                return;
+            };
             try {
-                const response = await fetch(getApiUrl(path), { headers: await this.getAuthHeader() });
+                const response = await fetch(getApiUrl(resolvedPath), { headers: await this.getAuthHeader() });
                 if (response.ok) {
                     const data = await response.json();
                     if(isSubscribed) {
@@ -40,18 +59,19 @@ export class MongoDbAdapter implements IDatabaseAdapter {
                     }
                 } else if (response.status === 401) {
                     if(isSubscribed) {
+                        console.warn(`Unauthorized listen on ${resolvedPath}. Logging out or session expired.`);
                         callback([]);
                     }
                 }
             } catch (error) {
-                console.error(`Fetch error for ${path}:`, error);
+                console.error(`Fetch error for ${resolvedPath}:`, error);
                  if(isSubscribed) {
                     callback([]);
                 }
             }
         };
 
-        const intervalId = setInterval(fetchData, 10000); 
+        const intervalId = setInterval(fetchData, 15000); // Poll every 15 seconds
 
         fetchData();
         
@@ -64,8 +84,8 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     }
 
     async getDoc<T>(docPath: string): Promise<T | null> {
-        const path = docPath.replace('users/USER_ID/', '');
-        const response = await fetch(getApiUrl(path), { headers: await this.getAuthHeader() });
+        const resolvedPath = this.resolvePath(docPath);
+        const response = await fetch(getApiUrl(resolvedPath), { headers: await this.getAuthHeader() });
         if (!response.ok) {
             if (response.status === 401) return null;
             if (response.status === 404) return null;
@@ -73,15 +93,19 @@ export class MongoDbAdapter implements IDatabaseAdapter {
         }
         const data = await response.json();
         if (data && data._id) {
-            data.id = data._id;
-            data.uid = data._id;
+            data.id = data._id.toString();
+            // For user profile, the uid is the same as the id.
+            if(resolvedPath.startsWith('users/')) {
+                data.uid = data._id.toString();
+            }
+            delete data._id;
         }
         return data;
     }
     
     async addDoc<T extends DocumentData>(collectionPath: string, data: T): Promise<string> {
-        const path = collectionPath.replace('users/USER_ID/', '');
-        const response = await fetch(getApiUrl(path), {
+        const resolvedPath = this.resolvePath(collectionPath);
+        const response = await fetch(getApiUrl(resolvedPath), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', ...(await this.getAuthHeader()) },
             body: JSON.stringify(data),
@@ -92,8 +116,8 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     }
 
     async setDoc<T extends DocumentData>(docPath: string, data: T): Promise<void> {
-        const path = docPath.replace('users/USER_ID/', '');
-        const response = await fetch(getApiUrl(path), {
+        const resolvedPath = this.resolvePath(docPath);
+        const response = await fetch(getApiUrl(resolvedPath), {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json', ...(await this.getAuthHeader()) },
             body: JSON.stringify(data),
@@ -102,8 +126,8 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     }
 
     async updateDoc(docPath: string, data: Partial<DocumentData>): Promise<void> {
-         const path = docPath.replace('users/USER_ID/', '');
-         const response = await fetch(getApiUrl(path), {
+         const resolvedPath = this.resolvePath(docPath);
+         const response = await fetch(getApiUrl(resolvedPath), {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json', ...(await this.getAuthHeader()) },
             body: JSON.stringify(data),
@@ -112,8 +136,8 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     }
 
     async deleteDoc(docPath: string): Promise<void> {
-        const path = docPath.replace('users/USER_ID/', '');
-        const response = await fetch(getApiUrl(path), {
+        const resolvedPath = this.resolvePath(docPath);
+        const response = await fetch(getApiUrl(resolvedPath), {
             method: 'DELETE',
             headers: await this.getAuthHeader()
         });

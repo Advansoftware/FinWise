@@ -10,6 +10,7 @@ import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { getDatabaseAdapter } from "@/services/database/database-service";
 import { IDatabaseAdapter } from "@/services/database/database-adapter";
+import { MongoDbAdapter } from "@/services/database/mongodb-adapter";
 
 type CategoryMap = Partial<Record<TransactionCategory, string[]>>;
 
@@ -90,6 +91,10 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   const dbAdapter = getDatabaseAdapter();
   
   useEffect(() => {
+    if (dbAdapter instanceof MongoDbAdapter) {
+      dbAdapter.setCurrentUser(user?.uid || null);
+    }
+    
     if (!user) {
       setIsLoading(false);
       setAllTransactions([]);
@@ -99,7 +104,9 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
 
     setIsLoading(true);
     
-    const transactionConstraints = [dbAdapter.queryConstraint('orderBy', 'date', 'desc')];
+    const transactionConstraints = (dbAdapter.constructor.name === 'FirebaseAdapter') 
+      ? [dbAdapter.queryConstraint('orderBy', 'date', 'desc')] 
+      : [];
 
     const unsubscribeTransactions = dbAdapter.listenToCollection<Transaction>(
       'users/USER_ID/transactions',
@@ -143,7 +150,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       unsubscribeTransactions();
       unsubscribeCategories();
     };
-  }, [user, toast, dbAdapter]);
+  }, [user, dbAdapter]);
   
   const addTransaction = async (transaction: Omit<Transaction, 'id'>) => {
     if (!user) throw new Error("User not authenticated");
