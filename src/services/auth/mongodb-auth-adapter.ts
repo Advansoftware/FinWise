@@ -1,16 +1,9 @@
-
 // src/services/auth/mongodb-auth-adapter.ts
 
 import { IAuthAdapter, AuthStateChangedCallback, Unsubscribe } from "./auth-adapter";
 import { UserProfile } from "@/lib/types";
 import { User as FirebaseUser, signInWithCustomToken } from "firebase/auth";
 import { getFirebase } from "@/lib/firebase";
-
-// This is the structure of the data we'll store in localStorage
-interface SessionData {
-    user: UserProfile;
-    token: string; 
-}
 
 export class MongoDbAuthAdapter implements IAuthAdapter {
     private auth;
@@ -22,7 +15,12 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
     }
 
     private async exchangeCustomToken(customToken: string): Promise<void> {
-        await signInWithCustomToken(this.auth, customToken);
+        try {
+            await signInWithCustomToken(this.auth, customToken);
+        } catch (error) {
+            console.error("Error signing in with custom token:", error);
+            throw new Error("Failed to establish a user session.");
+        }
     }
 
     async login(email: string, pass: string): Promise<UserProfile> {
@@ -36,7 +34,6 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
             throw new Error(data.error || "Login failed");
         }
         await this.exchangeCustomToken(data.token);
-        // The onAuthStateChanged listener will now pick up the user from the Firebase SDK
         return data.user;
     }
 
@@ -47,11 +44,10 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
             body: JSON.stringify({ email, password: pass, displayName: name }),
         });
         const data = await response.json();
-        if (!response.ok) {
+        if (!response.ok && response.status !== 201) {
             throw new Error(data.error || "Signup failed");
         }
         await this.exchangeCustomToken(data.token);
-        // The onAuthStateChanged listener will now pick up the user from the Firebase SDK
         return data.user;
     }
 
@@ -60,13 +56,9 @@ export class MongoDbAuthAdapter implements IAuthAdapter {
     }
     
     onAuthStateChanged(callback: AuthStateChangedCallback): Unsubscribe {
-        // By using the actual onIdTokenChanged, we ensure consistency across adapters
-        // After login/signup, the custom token is exchanged, and this listener will fire
         return this.auth.onIdTokenChanged(callback);
     }
     
-    // These methods are not implemented for the MongoDB adapter and will throw errors if called.
-    // The UI should prevent these calls when the MongoDB provider is active.
     async signInWithGoogle(): Promise<UserProfile> {
         throw new Error("signInWithGoogle is not supported when AUTH_PROVIDER is mongodb. Use the Firebase provider for this functionality.");
     }
