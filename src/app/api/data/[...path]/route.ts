@@ -63,7 +63,6 @@ async function handler(
     if (authProvider === 'firebase') {
         userId = await getUserIdFromToken(request);
     } else { 
-        // For MongoDB, the userId is ALWAYS expected as a query parameter for security.
         userId = searchParams.get('userId');
     }
    
@@ -73,7 +72,10 @@ async function handler(
     
     let query: any = {};
     
-    if (collectionName === 'users' && docId === userId) {
+    if (collectionName === 'users') {
+        if (docId !== userId) {
+            return NextResponse.json({ error: 'Permission denied to access other user data' }, { status: 403 });
+        }
         try {
             query = { _id: new ObjectId(docId) };
         } catch (e) {
