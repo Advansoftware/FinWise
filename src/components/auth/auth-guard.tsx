@@ -47,7 +47,7 @@ export function AuthGuard({ children, isProtected = false }: { children: React.R
 
   }, [user, loading, router, pathname, isProtected]);
 
-  if (loading || isChecking) {
+  if (isChecking) {
     return (
       <div className="flex h-screen flex-col items-center justify-center gap-4">
         <Logo className="h-12 w-12 animate-pulse" />

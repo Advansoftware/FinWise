@@ -48,9 +48,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (userProfile) {
         setUser(userProfile);
       } else {
-        // This case handles first-time Google Sign-in where a DB profile needs to be created.
-        await dbAdapter.ensureUserProfile(firebaseUser);
-        const newUserProfile = await dbAdapter.getDoc<UserProfile>(`users/${firebaseUser.uid}`);
+        // This should theoretically not be hit if backend creates the profile,
+        // but it's a safe fallback for cases like first-time Google sign-in with Firebase.
+        const newUserProfile: UserProfile = {
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+            plan: 'Básico',
+            aiCredits: 0,
+            createdAt: new Date().toISOString(),
+        };
+        await dbAdapter.setDoc(`users/${firebaseUser.uid}`, newUserProfile);
         setUser(newUserProfile);
       }
     } else {
@@ -62,7 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     // onAuthStateChanged works for both adapters.
     // - FirebaseAdapter uses the native Firebase onIdTokenChanged.
-    // - MongoDbAdapter uses a custom implementation with localStorage and BroadcastChannel.
+    // - MongoDbAdapter uses a custom implementation with BroadcastChannel.
     setLoading(true);
     const unsubscribe = authAdapter.onAuthStateChanged(handleAuthChange);
     return () => unsubscribe();

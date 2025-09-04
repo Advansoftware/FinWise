@@ -54,7 +54,7 @@ async function handler(
                 password: hashedPassword,
                 plan: 'Básico' as const,
                 aiCredits: 0,
-                createdAt: new Date(), // Use BSON Date
+                createdAt: new Date(),
             };
 
             const result = await usersCollection.insertOne(newUser);

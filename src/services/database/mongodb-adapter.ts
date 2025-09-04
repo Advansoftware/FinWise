@@ -112,7 +112,7 @@ export class MongoDbAdapter implements IDatabaseAdapter {
          const response = await fetch(getApiUrl(path), {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json', ...(await this.getAuthHeader()) },
-            body: JSON.stringify({ '$set': data }), // Use $set for updates
+            body: JSON.stringify(data),
         });
         if (!response.ok) throw new Error(`Failed to update doc: ${await response.text()}`);
     }
@@ -126,20 +126,6 @@ export class MongoDbAdapter implements IDatabaseAdapter {
         if (!response.ok && response.status !== 204) throw new Error(`Failed to delete doc: ${await response.text()}`);
     }
     
-    async ensureUserProfile(user: User): Promise<void> {
-       const profile = await this.getDoc(`users/${user.uid}`);
-       if (!profile) {
-           const newUserProfile: Omit<UserProfile, 'uid'> = {
-                email: user.email,
-                displayName: user.displayName,
-                plan: 'Básico',
-                aiCredits: 0,
-                createdAt: new Date().toISOString(),
-           };
-           await this.setDoc(`users/${user.uid}`, newUserProfile);
-       }
-    }
-
     async runTransaction(updateFunction: (transaction: any) => Promise<any>): Promise<any> {
        console.warn("MongoDbAdapter: Client-side transactions are not supported. Operations must be atomic API endpoints.");
        throw new Error("Transactions not implemented for MongoDB adapter on the client-side.");

@@ -109,23 +109,6 @@ export class FirebaseAdapter implements IDatabaseAdapter {
         return null;
     }
 
-     async ensureUserProfile(user: User): Promise<void> {
-        const userDocRef = doc(this.db, 'users', user.uid);
-        const userDoc = await fbGetDoc(userDocRef);
-
-        if (!userDoc.exists()) {
-            const newUserProfile: UserProfile = {
-                uid: user.uid,
-                email: user.email,
-                displayName: user.displayName,
-                plan: 'Básico',
-                aiCredits: 0,
-                createdAt: new Date().toISOString(),
-            };
-            await fbSetDoc(userDocRef, this.serializeData(newUserProfile));
-        }
-    }
-
     async addDoc<T extends DocumentData>(collectionPath: string, data: T): Promise<string> {
         const resolvedPath = this.resolvePath(collectionPath);
         const serializedData = this.serializeData(data);
