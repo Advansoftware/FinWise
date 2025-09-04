@@ -38,18 +38,17 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     }
 
     listenToCollection<T>(collectionPath: string, callback: (data: T[]) => void, constraints?: any[]): Unsubscribe {
-        const resolvedPath = this.resolvePath(collectionPath);
-        
         let isSubscribed = true;
 
         const fetchData = async () => {
             if (!isSubscribed || !this.auth.currentUser) {
-                callback([]); 
+                if (isSubscribed) callback([]); 
                 return;
             };
+
             try {
-                // For collection queries, we append the userId as a query parameter
-                const pathWithUser = `${resolvedPath}?userId=${this.auth.currentUser.uid}`;
+                // Consistent URL structure: /api/data/[collectionName]/[userId]
+                const pathWithUser = `${collectionPath}/${this.auth.currentUser.uid}`;
                 const headers = await this.getHeaders();
                 const response = await fetch(getApiUrl(pathWithUser), { headers });
                 
@@ -60,12 +59,12 @@ export class MongoDbAdapter implements IDatabaseAdapter {
                     }
                 } else {
                      if(isSubscribed) {
-                        console.warn(`Listen failed on ${resolvedPath} with status ${response.status}.`);
+                        console.warn(`Listen failed on ${collectionPath} with status ${response.status}.`);
                         callback([]);
                     }
                 }
             } catch (error) {
-                console.error(`Fetch error for ${resolvedPath}:`, error);
+                console.error(`Fetch error for ${collectionPath}:`, error);
                  if(isSubscribed) {
                     callback([]);
                 }
@@ -87,10 +86,13 @@ export class MongoDbAdapter implements IDatabaseAdapter {
     async getDoc<T>(docPath: string): Promise<T | null> {
         const resolvedPath = this.resolvePath(docPath);
         const headers = await this.getHeaders();
-        const response = await fetch(getApiUrl(resolvedPath), { headers });
+        // For individual docs, we pass userId as a query param for security checks
+        const apiUrl = `${getApiUrl(resolvedPath)}?userId=${this.auth.currentUser?.uid}`;
+        const response = await fetch(apiUrl, { headers });
+        
         if (!response.ok) {
             if (response.status === 401) {
-                 console.error(`Unauthorized GET on ${getApiUrl(resolvedPath)}`);
+                 console.error(`Unauthorized GET on ${apiUrl}`);
                  return null;
             }
             if (response.status === 404) return null;

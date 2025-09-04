@@ -57,17 +57,21 @@ async function handler(
     const authProvider = process.env.NEXT_PUBLIC_AUTH_PROVIDER || 'firebase';
 
     let userId: string | null = null;
-    
+    // Path params will now be [collectionName, docId_or_userId, ...]
+    const [collectionName, param2, ...rest] = params.path;
+    const { searchParams } = new URL(request.url);
+
     if (authProvider === 'firebase') {
         userId = await getUserIdFromToken(request);
-    } else {
-        const { searchParams } = new URL(request.url);
-        const [collectionName, docOrUserId] = params.path;
-        
-        if (collectionName === 'users' && docOrUserId) {
-             userId = docOrUserId;
-        } else if (searchParams.has('userId')) {
-            userId = searchParams.get('userId');
+    } else { // MongoDB auth logic
+        // For collection fetches: /api/data/[collection]/[userId]
+        // For doc fetches: /api/data/[collection]/[docId]?userId=[userId]
+        if (collectionName === 'users') {
+            userId = param2;
+        } else {
+             // For collections, the userId is the second path param.
+             // For single docs, it's passed as a query param for security.
+            userId = param2 && rest.length === 0 ? param2 : searchParams.get('userId');
         }
     }
    
@@ -75,8 +79,8 @@ async function handler(
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    const [collectionName, docId] = params.path;
-    
+    const docId = (collectionName !== 'users' && rest.length === 0) ? param2 : (rest[0] || (collectionName === 'users' ? param2 : null));
+
     let query: any = {};
     
     if (collectionName === 'users') {
@@ -111,6 +115,7 @@ async function handler(
                 if (!item) return NextResponse.json({ error: 'Not found or permission denied' }, { status: 404 });
                 return NextResponse.json(item);
             } else {
+                // This now correctly handles calls like /api/data/[collection]/[userId]
                 const items = await collection.find({ userId }).toArray();
                 return NextResponse.json(items);
             }
@@ -122,33 +127,29 @@ async function handler(
             return NextResponse.json({ insertedId: result.insertedId }, { status: 201 });
         }
 
-        if (request.method === 'PUT' && docId) {
+        if ((request.method === 'PUT' || request.method === 'PATCH') && docId) {
             const body = await request.json();
-            delete body._id; 
-            delete body.id;
-            delete body.uid;
-            
-            if (collectionName === 'users') {
-                delete body.email;
-                delete body.createdAt;
+            let updateOps;
+
+            if (request.method === 'PUT') {
+                 delete body._id; 
+                 delete body.id;
+                 delete body.uid;
+                 if (collectionName === 'users') {
+                    delete body.email;
+                    delete body.createdAt;
+                 }
+                 updateOps = { $set: { ...body, userId } };
+            } else { // PATCH
+                updateOps = processUpdates(body);
+                if (!updateOps) {
+                    return NextResponse.json({ message: 'No update operations provided' }, { status: 200 });
+                }
             }
            
-            const result = await collection.replaceOne(query, { ...body, userId });
+            const result = await collection.updateOne(query, updateOps);
             if (result.matchedCount === 0) return NextResponse.json({ error: 'Not found or permission denied' }, { status: 404 });
             return NextResponse.json({ success: true });
-        }
-        
-        if (request.method === 'PATCH' && docId) {
-             const body = await request.json();
-             const updateOps = processUpdates(body);
-
-             if (!updateOps) {
-                 return NextResponse.json({ message: 'No update operations provided' }, { status: 200 });
-             }
-            
-             const result = await collection.updateOne(query, updateOps);
-             if (result.matchedCount === 0) return NextResponse.json({ error: 'Not found or permission denied' }, { status: 404 });
-             return NextResponse.json({ success: true });
         }
 
         if (request.method === 'DELETE' && docId) {
