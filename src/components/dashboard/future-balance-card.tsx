@@ -12,10 +12,8 @@ import { useBudgets } from "@/hooks/use-budgets";
 import { useTransactions } from "@/hooks/use-transactions";
 import { predictFutureBalanceAction } from "@/services/ai-actions";
 import { PredictFutureBalanceOutput } from "@/ai/ai-types";
-import { subMonths, startOfMonth, isSameDay } from "date-fns";
+import { subMonths, startOfMonth } from "date-fns";
 import { cn } from "@/lib/utils";
-import { getFirebase } from "@/lib/firebase";
-import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
 import { usePlan } from "@/hooks/use-plan";
 
 export function FutureBalanceCard() {
@@ -42,18 +40,7 @@ export function FutureBalanceCard() {
 
     startTransition(async () => {
       setPrediction(null); // Clear previous prediction
-      const { db } = getFirebase();
-      const settingsRef = doc(db, "users", user.uid, "settings", "aiLastRan");
-
       try {
-        const docSnap = await getDoc(settingsRef);
-        const data = docSnap.data();
-        const lastRun = data?.lastPredictionTimestamp?.toDate();
-        const lastPrediction = data?.lastPredictionContent;
-
-        if (lastRun && isSameDay(lastRun, new Date()) && !forceRefresh && lastPrediction) {
-            setPrediction(lastPrediction);
-        } else {
           const last3MonthsStart = startOfMonth(subMonths(new Date(), 3));
           const last3MonthsTransactions = allTransactions.filter(t => new Date(t.date) >= last3MonthsStart);
           const recurringBills = budgets.map(b => ({ category: b.category, amount: b.amount }));
@@ -64,14 +51,6 @@ export function FutureBalanceCard() {
             recurringBills: JSON.stringify(recurringBills),
           }, user.uid, forceRefresh);
           setPrediction(result);
-
-          if (!forceRefresh) {
-            await setDoc(settingsRef, {
-                lastPredictionTimestamp: Timestamp.now(),
-                lastPredictionContent: result
-            }, { merge: true });
-          }
-        }
       } catch (error: any) {
         console.error("Error fetching future balance prediction:", error);
         setPrediction({

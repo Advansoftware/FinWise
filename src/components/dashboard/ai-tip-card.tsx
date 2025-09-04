@@ -9,18 +9,10 @@ import { getSpendingTip } from "@/services/ai-actions";
 import { Skeleton } from "../ui/skeleton";
 import { Transaction } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
-import { getFirebase } from "@/lib/firebase";
-import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
 import { usePlan } from "@/hooks/use-plan";
 
 interface AITipCardProps {
     transactions: Transaction[];
-}
-
-const isSameDay = (d1: Date, d2: Date) => {
-    return d1.getFullYear() === d2.getFullYear() &&
-           d1.getMonth() === d2.getMonth() &&
-           d1.getDate() === d2.getDate();
 }
 
 export function AITipCard({ transactions }: AITipCardProps) {
@@ -38,28 +30,9 @@ export function AITipCard({ transactions }: AITipCardProps) {
 
     startTransition(async () => {
         setTip(""); // Clear previous tip
-        const { db } = getFirebase();
-        const settingsRef = doc(db, "users", user.uid, "settings", "aiLastRan");
-        
         try {
-            const docSnap = await getDoc(settingsRef);
-            const data = docSnap.data();
-            const lastRun = data?.lastTipTimestamp?.toDate();
-            const lastTip = data?.lastTipContent;
-
-            if (lastRun && isSameDay(lastRun, new Date()) && !forceRefresh && lastTip) {
-                setTip(lastTip);
-            } else {
-                const newTip = await getSpendingTip(transactions, user.uid, forceRefresh);
-                setTip(newTip);
-                // Only cache the content if it was a free, automatic generation
-                if (!forceRefresh) {
-                    await setDoc(settingsRef, {
-                        lastTipTimestamp: Timestamp.now(),
-                        lastTipContent: newTip
-                    }, { merge: true });
-                }
-            }
+            const newTip = await getSpendingTip(transactions, user.uid, forceRefresh);
+            setTip(newTip);
         } catch (error: any) {
             console.error("Error fetching or setting spending tip:", error);
             setTip(error.message || "Não foi possível carregar a dica. Tente novamente.");

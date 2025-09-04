@@ -39,21 +39,39 @@ interface TransactionsContextType {
 const TransactionsContext = createContext<TransactionsContextType | undefined>(undefined);
 
 async function performAtomicUpdate(dbAdapter: IDatabaseAdapter, updates: Partial<Transaction>, originalTransaction: Transaction) {
-    await dbAdapter.runTransaction(async (t: any) => {
-        const originalWallet = await t.get(`users/USER_ID/wallets/${originalTransaction.walletId}`);
-        if (!originalWallet) throw new Error("Original wallet not found.");
-
-        // Revert the original transaction amount from its wallet
+    // This transaction logic is specific to adapters that support it, like Firebase.
+    // For MongoDB, this would be a single API call to a dedicated endpoint.
+    // Given the current structure, we'll implement the logic assuming client-side orchestration.
+    
+    // 1. Revert original transaction amount from its wallet(s)
+    if (originalTransaction.type === 'transfer') {
+        if(originalTransaction.toWalletId) {
+             await dbAdapter.updateDoc(`users/USER_ID/wallets/${originalTransaction.walletId}`, { balance: dbAdapter.increment(originalTransaction.amount) });
+             await dbAdapter.updateDoc(`users/USER_ID/wallets/${originalTransaction.toWalletId}`, { balance: dbAdapter.increment(-originalTransaction.amount) });
+        }
+    } else {
         const revertAmount = originalTransaction.type === 'income' ? -originalTransaction.amount : originalTransaction.amount;
-        t.update(`users/USER_ID/wallets/${originalTransaction.walletId}`, { balance: dbAdapter.increment(revertAmount) });
+        await dbAdapter.updateDoc(`users/USER_ID/wallets/${originalTransaction.walletId}`, { balance: dbAdapter.increment(revertAmount) });
+    }
 
-        // Apply the new transaction amount to its wallet
-        const newAmount = updates.type === 'income' ? updates.amount : -(updates.amount ?? 0);
-        t.update(`users/USER_ID/wallets/${updates.walletId}`, { balance: dbAdapter.increment(newAmount ?? 0) });
+    // 2. Apply new transaction amount to its new wallet(s)
+    const newType = updates.type || originalTransaction.type;
+    const newAmount = updates.amount || originalTransaction.amount;
+    const newWalletId = updates.walletId || originalTransaction.walletId;
+    const newToWalletId = updates.toWalletId || originalTransaction.toWalletId;
 
-        // Finally, update the transaction document itself
-        t.update(`users/USER_ID/transactions/${originalTransaction.id}`, updates);
-    });
+    if (newType === 'transfer') {
+        if (newToWalletId) {
+            await dbAdapter.updateDoc(`users/USER_ID/wallets/${newWalletId}`, { balance: dbAdapter.increment(-newAmount) });
+            await dbAdapter.updateDoc(`users/USER_ID/wallets/${newToWalletId}`, { balance: dbAdapter.increment(newAmount) });
+        }
+    } else {
+        const applyAmount = newType === 'income' ? newAmount : -newAmount;
+        await dbAdapter.updateDoc(`users/USER_ID/wallets/${newWalletId}`, { balance: dbAdapter.increment(applyAmount) });
+    }
+
+    // 3. Update the transaction document itself
+    await dbAdapter.updateDoc(`users/USER_ID/transactions/${originalTransaction.id}`, updates);
 }
 
 
@@ -133,17 +151,17 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     await dbAdapter.runTransaction(async (t: any) => {
       if (transaction.type === 'income' || transaction.type === 'expense') {
         const amount = transaction.type === 'income' ? transaction.amount : -transaction.amount;
-        t.update(`users/USER_ID/wallets/${transaction.walletId}`, { balance: dbAdapter.increment(amount) });
+        await dbAdapter.updateDoc(`users/USER_ID/wallets/${transaction.walletId}`, { balance: dbAdapter.increment(amount) });
       }
       
       if (transaction.type === 'transfer') {
         if (!transaction.toWalletId) throw new Error("Destination wallet is required for transfers.");
-        t.update(`users/USER_ID/wallets/${transaction.walletId}`, { balance: dbAdapter.increment(-transaction.amount) });
-        t.update(`users/USER_ID/wallets/${transaction.toWalletId}`, { balance: dbAdapter.increment(transaction.amount) });
+        await dbAdapter.updateDoc(`users/USER_ID/wallets/${transaction.walletId}`, { balance: dbAdapter.increment(-transaction.amount) });
+        await dbAdapter.updateDoc(`users/USER_ID/wallets/${transaction.toWalletId}`, { balance: dbAdapter.increment(transaction.amount) });
       }
 
       const newTransactionData = { ...transaction, amount: Math.abs(transaction.amount), date: new Date(transaction.date) };
-      await t.set(`users/USER_ID/transactions/${Date.now()}`, newTransactionData);
+      await dbAdapter.addDoc('users/USER_ID/transactions', newTransactionData);
     });
   }
 
@@ -163,26 +181,22 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   const deleteTransaction = async (transactionId: string) => {
      if (!user) throw new Error("User not authenticated");
 
+     const transactionToDelete = allTransactions.find(t => t.id === transactionId);
+     if (!transactionToDelete) throw new Error("Transaction not found");
+
      await dbAdapter.runTransaction(async (t: any) => {
-        const transactionDoc = await t.get(`users/USER_ID/transactions/${transactionId}`);
-        if (!transactionDoc || !transactionDoc.data()) {
-            throw new Error("Transaction does not exist!");
+        if (transactionToDelete.type === 'income' || transactionToDelete.type === 'expense') {
+            const amount = transactionToDelete.type === 'income' ? -transactionToDelete.amount : transactionToDelete.amount;
+            await dbAdapter.updateDoc(`users/USER_ID/wallets/${transactionToDelete.walletId}`, { balance: dbAdapter.increment(amount) });
         }
 
-        const transactionData = transactionDoc.data() as Transaction;
-        
-        if (transactionData.type === 'income' || transactionData.type === 'expense') {
-            const amount = transactionData.type === 'income' ? -transactionData.amount : transactionData.amount;
-            await t.update(`users/USER_ID/wallets/${transactionData.walletId}`, { balance: dbAdapter.increment(amount) });
+        if (transactionToDelete.type === 'transfer') {
+           if (!transactionToDelete.toWalletId) throw new Error("Cannot reverse transfer without destination wallet.");
+           await dbAdapter.updateDoc(`users/USER_ID/wallets/${transactionToDelete.walletId}`, { balance: dbAdapter.increment(transactionToDelete.amount) });
+           await dbAdapter.updateDoc(`users/USER_ID/wallets/${transactionToDelete.toWalletId}`, { balance: dbAdapter.increment(-transactionToDelete.amount) });
         }
 
-        if (transactionData.type === 'transfer') {
-           if (!transactionData.toWalletId) throw new Error("Cannot reverse transfer without destination wallet.");
-           await t.update(`users/USER_ID/wallets/${transactionData.walletId}`, { balance: dbAdapter.increment(transactionData.amount) });
-           await t.update(`users/USER_ID/wallets/${transactionData.toWalletId}`, { balance: dbAdapter.increment(-transactionData.amount) });
-        }
-
-        await t.delete(`users/USER_ID/transactions/${transactionId}`);
+        await dbAdapter.deleteDoc(`users/USER_ID/transactions/${transactionId}`);
      });
   }
 
@@ -196,7 +210,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   }, [categoryMap]);
   
   const saveCategories = async (userId: string, newCategories: CategoryMap) => {
-      await dbAdapter.setDoc(`users/USER_ID/settings/categories`, newCategories);
+      await dbAdapter.setDoc('users/USER_ID/settings/categories', newCategories);
   };
 
   const addCategory = async (categoryName: TransactionCategory) => {

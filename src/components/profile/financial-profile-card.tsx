@@ -11,15 +11,8 @@ import { useReports } from "@/hooks/use-reports";
 import { getFinancialProfile } from "@/services/ai-actions";
 import { Separator } from "../ui/separator";
 import { useAuth } from "@/hooks/use-auth";
-import { getFirebase } from "@/lib/firebase";
-import { doc, getDoc, setDoc, Timestamp } from "firebase/firestore";
-import { startOfMonth, getYear, isSameMonth } from "date-fns";
+import { startOfMonth, getYear } from "date-fns";
 import { FinancialProfileOutput } from "@/ai/ai-types";
-
-const isSameMonthAndYear = (d1: Date, d2: Date) => {
-    return d1.getFullYear() === d2.getFullYear() &&
-           d1.getMonth() === d2.getMonth();
-}
 
 export function FinancialProfileCard() {
   const [profile, setProfile] = useState<FinancialProfileOutput | null>(null);
@@ -42,18 +35,7 @@ export function FinancialProfileCard() {
 
     startTransition(async () => {
       setProfile(null); // Clear previous profile
-      const { db } = getFirebase();
-      const settingsRef = doc(db, "users", user.uid, "settings", "aiLastRan");
-
       try {
-        const docSnap = await getDoc(settingsRef);
-        const data = docSnap.data();
-        const lastRun = data?.lastProfileTimestamp?.toDate();
-        const lastProfile = data?.lastProfileContent;
-
-        if (lastRun && isSameMonthAndYear(lastRun, new Date()) && !forceRefresh && lastProfile) {
-          setProfile(lastProfile);
-        } else {
            const currentYear = getYear(new Date());
            const currentYearMonthlyReports = monthlyReports.filter(r => r.year === currentYear);
            const pastAnnualReports = annualReports.filter(r => r.year < currentYear);
@@ -65,13 +47,7 @@ export function FinancialProfileCard() {
           }, user.uid, forceRefresh);
 
           setProfile(newProfile);
-          if (!forceRefresh) {
-            await setDoc(settingsRef, {
-              lastProfileTimestamp: Timestamp.now(),
-              lastProfileContent: newProfile
-            }, { merge: true });
-          }
-        }
+        
       } catch (error: any) {
         console.error("Error fetching or setting financial profile:", error);
         setProfile({ profileName: "Erro", profileDescription: error.message || "Não foi possível carregar o perfil. Tente novamente."});
