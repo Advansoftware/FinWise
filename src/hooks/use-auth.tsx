@@ -1,3 +1,4 @@
+
 // src/hooks/use-auth.tsx
 'use client';
 
@@ -39,12 +40,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const dbAdapter = getDatabaseAdapter();
 
   const handleAuthChange = useCallback(async (firebaseUser: FirebaseUser | null) => {
-    if (dbAdapter instanceof MongoDbAdapter) {
-        dbAdapter.setCurrentUser(firebaseUser?.uid || null);
-    }
-    
+    const dbAdapter = getDatabaseAdapter(); // Get instance inside the callback
+    const token = await firebaseUser?.getIdToken() || null;
+
     if (firebaseUser) {
-      const userProfile = await dbAdapter.getDoc<UserProfile>(`users/${firebaseUser.uid}`);
+      const userProfile = await dbAdapter.getDoc<UserProfile>(`users/${firebaseUser.uid}`, token, firebaseUser.uid);
       if (userProfile) {
         setUser(userProfile);
       } else {
@@ -56,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(null);
     }
     setLoading(false);
-  }, [dbAdapter]);
+  }, []);
   
   useEffect(() => {
     setLoading(true);
@@ -121,7 +121,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const updateUserProfile = async (name: string) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.updateDoc(`users/${user.uid}`, { displayName: name });
+    const token = await authAdapter.getToken();
+    await dbAdapter.updateDoc(`users/${user.uid}`, { displayName: name }, token, user.uid);
     setUser({ ...user, displayName: name });
   };
   
