@@ -3,7 +3,7 @@
 import { MongoClient, Db } from 'mongodb';
 
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017';
-const MONGODB_DB = process.env.MONGODB_DB || 'finwise';
+const MONGODB_DB = process.env.MONGODB_DB || 'gastometria';
 
 let cachedClient: MongoClient;
 let cachedDb: Db;

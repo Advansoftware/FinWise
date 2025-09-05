@@ -1,13 +1,14 @@
 // src/hooks/use-ai-settings.tsx
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { AICredential } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { getDatabaseAdapter } from "@/services/database/database-service";
+import { apiClient } from "@/lib/api-client";
 import { v4 as uuidv4 } from 'uuid';
 import { usePlan } from "./use-plan";
+import { useMemo } from "react";
 
 const GASTOMETRIA_AI_CREDENTIAL_ID = 'gastometria-ai-default';
 
@@ -17,7 +18,6 @@ const gastometriaAICredential = {
     provider: 'gastometria',
     isReadOnly: true,
 } as const;
-
 
 export function useAISettings() {
     const { toast } = useToast();
@@ -30,8 +30,6 @@ export function useAISettings() {
 
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [editingCredential, setEditingCredential] = useState<AICredential | null>(null);
-    const dbAdapter = useMemo(() => getDatabaseAdapter(), []);
-
 
     // Function to load settings
     useEffect(() => {
@@ -41,22 +39,27 @@ export function useAISettings() {
             return;
         }
 
-        setIsLoading(true);
-        const unsubscribe = dbAdapter.listenToCollection<{id: string, credentials: AICredential[], activeCredentialId: string | null}>(
-          `settings`,
-          (settingsData) => {
-             const aiSettings = settingsData.find(s => s.id === `ai_${user.uid}`);
-             if (aiSettings) {
-                setSettings(aiSettings);
-             } else {
-                 setSettings({ credentials: [], activeCredentialId: GASTOMETRIA_AI_CREDENTIAL_ID });
-             }
-             setIsLoading(false);
-          }
-        );
-       
-        return () => unsubscribe();
-    }, [user, authLoading, dbAdapter]);
+        const loadSettings = async () => {
+            setIsLoading(true);
+            try {
+                const aiSettings = await apiClient.get('settings', user.uid);
+                const aiData = aiSettings?.ai_settings;
+                
+                if (aiData) {
+                    setSettings(aiData);
+                } else {
+                    setSettings({ credentials: [], activeCredentialId: GASTOMETRIA_AI_CREDENTIAL_ID });
+                }
+            } catch (error) {
+                console.error('Erro ao carregar configurações de IA:', error);
+                setSettings({ credentials: [], activeCredentialId: GASTOMETRIA_AI_CREDENTIAL_ID });
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        loadSettings();
+    }, [user, authLoading]);
 
     const credentials = useMemo(() => settings?.credentials || [], [settings]);
     const activeCredentialId = useMemo(() => settings?.activeCredentialId || GASTOMETRIA_AI_CREDENTIAL_ID, [settings]);
@@ -84,7 +87,6 @@ export function useAISettings() {
         }
     }, [displayedCredentials, activeCredentialId, user, authLoading]);
 
-
     // Function to save all settings
     const saveSettings = async (newSettings: {credentials: AICredential[], activeCredentialId: string | null}) => {
         if (!user) {
@@ -93,7 +95,13 @@ export function useAISettings() {
         }
         setIsSaving(true);
         try {
-            await dbAdapter.setDoc(`settings/ai_${user.uid}`, newSettings);
+            const currentSettings = await apiClient.get('settings', user.uid) || {};
+            
+            await apiClient.update('settings', user.uid, {
+                ...currentSettings,
+                ai_settings: newSettings
+            });
+            
             toast({ title: "Configurações de IA salvas!" });
             setSettings(newSettings);
         } catch (error) {

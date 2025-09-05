@@ -1,14 +1,14 @@
 // src/hooks/use-reports.tsx
 'use client';
 
-import { useState, useEffect, createContext, useContext, ReactNode, useCallback, useMemo } from "react";
+import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from "react";
 import { MonthlyReport, AnnualReport, Transaction } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { generateMonthlyReportAction, generateAnnualReportAction } from "@/services/ai-actions";
 import { useTransactions } from "./use-transactions";
 import { startOfMonth, subMonths, getYear, getMonth, isToday } from "date-fns";
-import { getDatabaseAdapter } from "@/services/database/database-service";
+import { apiClient } from "@/lib/api-client";
 
 interface ReportsContextType {
   monthlyReports: MonthlyReport[];
@@ -20,8 +20,7 @@ interface ReportsContextType {
 
 const ReportsContext = createContext<ReportsContextType | undefined>(undefined);
 
-const LOCAL_STORAGE_KEY = 'finwise_last_report_check';
-
+const LOCAL_STORAGE_KEY = 'gastometria_last_report_check';
 
 export function ReportsProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
@@ -30,9 +29,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
   const [monthlyReports, setMonthlyReports] = useState<MonthlyReport[]>([]);
   const [annualReports, setAnnualReports] = useState<AnnualReport[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const dbAdapter = useMemo(() => getDatabaseAdapter(), []);
 
-  // Listener for monthly and annual reports
   useEffect(() => {
     if (authLoading || !user) {
       setIsLoading(false);
@@ -41,26 +38,26 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    setIsLoading(true);
-
-    const unsubscribeMonthly = dbAdapter.listenToCollection<MonthlyReport>(
-        `reports`,
-        (reports) => {
-            setMonthlyReports(reports);
-            setIsLoading(false);
-        }
-    );
-    
-    const unsubscribeAnnual = dbAdapter.listenToCollection<AnnualReport>(
-        `annualReports`,
-        (reports) => setAnnualReports(reports)
-    );
-
-    return () => {
-        unsubscribeMonthly();
-        unsubscribeAnnual();
+    const loadReports = async () => {
+      setIsLoading(true);
+      try {
+        // Load monthly and annual reports from settings
+        const settings = await apiClient.get('settings', user.uid);
+        const monthlyFromStorage = settings?.monthlyReports || [];
+        setMonthlyReports(monthlyFromStorage);
+        
+        const annualFromStorage = settings?.annualReports || [];
+        setAnnualReports(annualFromStorage);
+        
+      } catch (error) {
+        console.error('Erro ao carregar relatórios:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
-  }, [user, authLoading, dbAdapter]);
+
+    loadReports();
+  }, [user, authLoading]);
   
   const generateMonthlyReport = useCallback(async (year: number, month: number, transactions: Transaction[], previousMonthReport?: MonthlyReport) => {
       if(!user) return null;
@@ -84,16 +81,24 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
             generatedAt: new Date().toISOString()
         }
 
-        await dbAdapter.setDoc(`reports/${reportId}`, newReport);
+        // Save to settings
+        const currentSettings = await apiClient.get('settings', user.uid) || {};
+        const updatedMonthlyReports = [...(currentSettings.monthlyReports || []), newReport];
+        
+        await apiClient.update('settings', user.uid, {
+          ...currentSettings,
+          monthlyReports: updatedMonthlyReports
+        });
+        
+        setMonthlyReports(updatedMonthlyReports);
         
         return newReport;
 
       } catch (error) {
           console.error("Failed to generate monthly report:", error);
-          // Don't toast automatic errors
           return null;
       }
-  }, [user, dbAdapter]);
+  }, [user]);
 
    const generateAnnualReport = useCallback(async (year: number, monthlyReportsForYear: MonthlyReport[]) => {
       if(!user) return null;
@@ -114,16 +119,24 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
             generatedAt: new Date().toISOString()
         }
 
-        await dbAdapter.setDoc(`annualReports/${reportId}`, newReport);
+        // Save to settings
+        const currentSettings = await apiClient.get('settings', user.uid) || {};
+        const updatedAnnualReports = [...(currentSettings.annualReports || []), newReport];
+        
+        await apiClient.update('settings', user.uid, {
+          ...currentSettings,
+          annualReports: updatedAnnualReports
+        });
+        
+        setAnnualReports(updatedAnnualReports);
         
         return newReport;
 
       } catch (error) {
           console.error("Failed to generate annual report:", error);
-          // Don't toast automatic errors
           return null;
       }
-  }, [user, dbAdapter]);
+  }, [user]);
 
   // Effect for automatic report generation
   useEffect(() => {

@@ -22,7 +22,6 @@ const formSchema = z.object({
 });
 
 export function UpdatePasswordForm() {
-  const { reauthenticate, updateUserPassword } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -38,22 +37,17 @@ export function UpdatePasswordForm() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     try {
-      await reauthenticate(values.currentPassword);
-      await updateUserPassword(values.newPassword);
+      // TODO: Implementar funcionalidade de alteração de senha
       toast({
-        title: 'Sucesso!',
-        description: 'Sua senha foi alterada.',
+        title: "Funcionalidade em desenvolvimento",
+        description: "A alteração de senha será implementada em breve.",
       });
       form.reset();
     } catch (error: any) {
-       let description = 'Não foi possível alterar sua senha. Tente novamente.';
-      if (error.code === 'auth/wrong-password') {
-        description = 'A senha atual está incorreta.';
-      }
-      toast({
+       toast({
         variant: 'destructive',
         title: 'Erro ao alterar senha',
-        description,
+        description: 'Não foi possível alterar sua senha. Tente novamente.',
       });
     } finally {
       setIsLoading(false);

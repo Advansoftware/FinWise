@@ -1,6 +1,6 @@
 // This is a basic service worker for PWA functionality.
 
-const CACHE_NAME = 'finwise-cache-v1';
+const CACHE_NAME = 'gastometria-cache-v1';
 const urlsToCache = [
   '/',
   '/transactions',
@@ -34,7 +34,7 @@ self.addEventListener('fetch', event => {
         }
         return fetch(event.request);
       }
-    )
+      )
   );
 });
 

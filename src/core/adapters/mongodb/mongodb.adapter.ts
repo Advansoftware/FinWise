@@ -7,10 +7,11 @@ import {
   ITransactionRepository,
   IWalletRepository,
   IBudgetRepository,
+  IGoalRepository,
   IAICreditLogRepository,
   ISettingsRepository
 } from '@/core/ports/database.port';
-import { Transaction, Wallet, Budget, UserProfile } from '@/lib/types';
+import { Transaction, Wallet, Budget, Goal, UserProfile } from '@/lib/types';
 import { AICreditLog } from '@/ai/ai-types';
 
 class MongoUserRepository implements IUserRepository {
@@ -286,6 +287,71 @@ class MongoBudgetRepository implements IBudgetRepository {
   }
 }
 
+class MongoGoalRepository implements IGoalRepository {
+  constructor(private db: Db) { }
+
+  async findByUserId(userId: string): Promise<Goal[]> {
+    const goals = await this.db.collection('goals')
+      .find({ userId })
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    return goals.map(g => ({
+      id: g._id.toString(),
+      userId: g.userId,
+      name: g.name,
+      targetAmount: g.targetAmount,
+      currentAmount: g.currentAmount || 0,
+      targetDate: g.targetDate,
+      monthlyDeposit: g.monthlyDeposit,
+      createdAt: g.createdAt
+    }));
+  }
+
+  async findById(id: string): Promise<Goal | null> {
+    const goal = await this.db.collection('goals').findOne({ _id: new ObjectId(id) });
+    if (!goal) return null;
+
+    return {
+      id: goal._id.toString(),
+      userId: goal.userId,
+      name: goal.name,
+      targetAmount: goal.targetAmount,
+      currentAmount: goal.currentAmount || 0,
+      targetDate: goal.targetDate,
+      monthlyDeposit: goal.monthlyDeposit,
+      createdAt: goal.createdAt
+    };
+  }
+
+  async create(goalData: Omit<Goal, 'id'>): Promise<Goal> {
+    const dataWithDefaults = {
+      ...goalData,
+      currentAmount: goalData.currentAmount || 0,
+      createdAt: goalData.createdAt || new Date().toISOString()
+    };
+
+    const result = await this.db.collection('goals').insertOne(dataWithDefaults);
+
+    return {
+      id: result.insertedId.toString(),
+      ...dataWithDefaults
+    };
+  }
+
+  async update(id: string, updates: Partial<Goal>): Promise<void> {
+    const { id: _, ...updateData } = updates;
+    await this.db.collection('goals').updateOne(
+      { _id: new ObjectId(id) },
+      { $set: updateData }
+    );
+  }
+
+  async delete(id: string): Promise<void> {
+    await this.db.collection('goals').deleteOne({ _id: new ObjectId(id) });
+  }
+}
+
 class MongoAICreditLogRepository implements IAICreditLogRepository {
   constructor(private db: Db) { }
 
@@ -357,6 +423,7 @@ export class MongoDBAdapter implements IDatabaseAdapter {
   public transactions!: ITransactionRepository;
   public wallets!: IWalletRepository;
   public budgets!: IBudgetRepository;
+  public goals!: IGoalRepository;
   public aiCreditLogs!: IAICreditLogRepository;
   public settings!: ISettingsRepository;
 
@@ -366,7 +433,7 @@ export class MongoDBAdapter implements IDatabaseAdapter {
     }
 
     const uri = process.env.MONGODB_URI;
-    const dbName = process.env.MONGODB_DB || 'finwise';
+    const dbName = process.env.MONGODB_DB || 'gastometria';
 
     if (!uri) {
       throw new Error('MONGODB_URI environment variable is not set');
@@ -381,6 +448,7 @@ export class MongoDBAdapter implements IDatabaseAdapter {
     this.transactions = new MongoTransactionRepository(this.db);
     this.wallets = new MongoWalletRepository(this.db);
     this.budgets = new MongoBudgetRepository(this.db);
+    this.goals = new MongoGoalRepository(this.db);
     this.aiCreditLogs = new MongoAICreditLogRepository(this.db);
     this.settings = new MongoSettingsRepository(this.db);
   }

@@ -7,7 +7,7 @@ import { Budget } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { useTransactions } from "./use-transactions";
-import { getDatabaseAdapter } from "@/services/database/database-service";
+import { apiClient } from "@/lib/api-client";
 
 interface BudgetsContextType {
   budgets: Budget[];
@@ -25,9 +25,7 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
   const { allTransactions } = useTransactions();
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const dbAdapter = useMemo(() => getDatabaseAdapter(), []);
 
-  // Listener for budgets
   useEffect(() => {
     if (authLoading || !user) {
       setIsLoading(false);
@@ -35,40 +33,53 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    setIsLoading(true);
-
-    const unsubscribe = dbAdapter.listenToCollection<Budget>(
-      `budgets`,
-      (fetchedBudgets) => {
-        setBudgets(fetchedBudgets.map(b => ({ ...b, currentSpending: 0 })));
+    const loadBudgets = async () => {
+      setIsLoading(true);
+      try {
+        const fetchedBudgets = await apiClient.get('budgets', user.uid);
+        setBudgets(fetchedBudgets.map((b: Budget) => ({ ...b, currentSpending: 0 })));
+      } catch (error) {
+        console.error('Erro ao carregar orçamentos:', error);
+      } finally {
         setIsLoading(false);
       }
-    );
+    };
 
-    return () => unsubscribe();
-  }, [user, authLoading, dbAdapter]);
+    loadBudgets();
+  }, [user, authLoading]);
 
   const addBudget = async (budget: Omit<Budget, 'id' | 'createdAt' | 'currentSpending' | 'userId'>) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.addDoc(`budgets`, {
-        ...budget,
-        userId: user.uid,
-        createdAt: new Date().toISOString()
-    });
+    
+    const budgetWithUser = {
+      ...budget,
+      userId: user.uid,
+      createdAt: new Date().toISOString(),
+      currentSpending: 0
+    };
+    
+    const newBudget = await apiClient.create('budgets', budgetWithUser);
+    setBudgets(prev => [...prev, newBudget]);
     toast({ title: "Orçamento criado com sucesso!" });
-  }
+  };
 
   const updateBudget = async (budgetId: string, updates: Partial<Budget>) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.updateDoc(`budgets/${budgetId}`, updates);
+    
+    await apiClient.update('budgets', budgetId, updates);
+    setBudgets(prev => 
+      prev.map(b => b.id === budgetId ? { ...b, ...updates } : b)
+    );
     toast({ title: "Orçamento atualizado!" });
-  }
+  };
 
   const deleteBudget = async (budgetId: string) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.deleteDoc(`budgets/${budgetId}`);
+    
+    await apiClient.delete('budgets', budgetId);
+    setBudgets(prev => prev.filter(b => b.id !== budgetId));
     toast({ title: "Orçamento excluído." });
-  }
+  };
 
   // Calculate current spending for each budget
   const budgetsWithSpending = useMemo(() => {
@@ -78,17 +89,16 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
     return budgets.map(budget => {
       const spending = allTransactions
         .filter(t => 
-            t.category === budget.category &&
-            t.type === 'expense' &&
-            new Date(t.date) >= currentMonthStart &&
-            new Date(t.date) <= currentMonthEnd
+          t.category === budget.category &&
+          t.type === 'expense' &&
+          new Date(t.date) >= currentMonthStart &&
+          new Date(t.date) <= currentMonthEnd
         )
         .reduce((sum, t) => sum + t.amount, 0);
 
       return { ...budget, currentSpending: spending };
     });
   }, [budgets, allTransactions]);
-
 
   const value: BudgetsContextType = {
     budgets: budgetsWithSpending,
@@ -100,9 +110,9 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
 
   return (
     <BudgetsContext.Provider value={value}>
-        {children}
+      {children}
     </BudgetsContext.Provider>
-  )
+  );
 }
 
 export function useBudgets() {

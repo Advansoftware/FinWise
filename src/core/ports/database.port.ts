@@ -1,6 +1,6 @@
 // src/core/ports/database.port.ts
 
-import { Transaction, Wallet, Budget, UserProfile } from '@/lib/types';
+import { Transaction, Wallet, Budget, Goal, UserProfile } from '@/lib/types';
 import { AICreditLog } from '@/ai/ai-types';
 
 export interface IUserRepository {
@@ -37,6 +37,14 @@ export interface IBudgetRepository {
   delete(id: string): Promise<void>;
 }
 
+export interface IGoalRepository {
+  findByUserId(userId: string): Promise<Goal[]>;
+  findById(id: string): Promise<Goal | null>;
+  create(goal: Omit<Goal, 'id'>): Promise<Goal>;
+  update(id: string, updates: Partial<Goal>): Promise<void>;
+  delete(id: string): Promise<void>;
+}
+
 export interface IAICreditLogRepository {
   findByUserId(userId: string): Promise<AICreditLog[]>;
   create(log: Omit<AICreditLog, 'id'>): Promise<AICreditLog>;
@@ -54,6 +62,7 @@ export interface IDatabaseAdapter {
   transactions: ITransactionRepository;
   wallets: IWalletRepository;
   budgets: IBudgetRepository;
+  goals: IGoalRepository;
   aiCreditLogs: IAICreditLogRepository;
   settings: ISettingsRepository;
 

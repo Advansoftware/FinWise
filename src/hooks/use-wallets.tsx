@@ -1,11 +1,11 @@
 // src/hooks/use-wallets.tsx
 'use client';
 
-import { useState, useEffect, createContext, useContext, ReactNode, useMemo } from "react";
+import { useState, useEffect, createContext, useContext, ReactNode } from "react";
 import { Wallet } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
-import { getDatabaseAdapter } from "@/services/database/database-service";
+import { apiClient } from "@/lib/api-client";
 
 interface WalletsContextType {
   wallets: Wallet[];
@@ -22,9 +22,7 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
   const { user, loading: authLoading } = useAuth();
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const dbAdapter = useMemo(() => getDatabaseAdapter(), []);
 
-  // Listener for wallets
   useEffect(() => {
     if (authLoading || !user) {
       setIsLoading(false);
@@ -32,42 +30,53 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    setIsLoading(true);
-
-    const unsubscribe = dbAdapter.listenToCollection<Wallet>(
-      `wallets`,
-      (fetchedWallets) => {
+    const loadWallets = async () => {
+      setIsLoading(true);
+      try {
+        const fetchedWallets = await apiClient.get('wallets', user.uid);
         setWallets(fetchedWallets);
+      } catch (error) {
+        console.error('Erro ao carregar carteiras:', error);
+      } finally {
         setIsLoading(false);
       }
-    );
-    
-    return () => unsubscribe();
-  }, [user, authLoading, dbAdapter]);
+    };
+
+    loadWallets();
+  }, [user, authLoading]);
 
   const addWallet = async (wallet: Omit<Wallet, 'id' | 'createdAt' | 'balance' | 'userId'>) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.addDoc('wallets',{
-        ...wallet,
-        userId: user.uid,
-        balance: 0,
-        createdAt: new Date().toISOString()
-    });
-    toast({ title: "Carteira criada com sucesso!" });
-  }
+    
+    const walletWithUser = {
+      ...wallet,
+      balance: 0, // Default balance
+      userId: user.uid,
+      createdAt: new Date().toISOString()
+    };
+    
+    const newWallet = await apiClient.create('wallets', walletWithUser);
+    setWallets(prev => [...prev, newWallet]);
+    toast({ title: "Carteira adicionada com sucesso!" });
+  };
 
   const updateWallet = async (walletId: string, updates: Partial<Wallet>) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.updateDoc(`wallets/${walletId}`, updates);
+    
+    await apiClient.update('wallets', walletId, updates);
+    setWallets(prev => 
+      prev.map(w => w.id === walletId ? { ...w, ...updates } : w)
+    );
     toast({ title: "Carteira atualizada!" });
-  }
+  };
 
   const deleteWallet = async (walletId: string) => {
     if (!user) throw new Error("User not authenticated");
     
-    await dbAdapter.deleteDoc(`wallets/${walletId}`);
+    await apiClient.delete('wallets', walletId);
+    setWallets(prev => prev.filter(w => w.id !== walletId));
     toast({ title: "Carteira excluída." });
-  }
+  };
 
   const value: WalletsContextType = {
     wallets,
@@ -79,9 +88,9 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
 
   return (
     <WalletsContext.Provider value={value}>
-        {children}
+      {children}
     </WalletsContext.Provider>
-  )
+  );
 }
 
 export function useWallets() {

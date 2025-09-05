@@ -22,7 +22,6 @@ export function ResetPasswordDialog({ children }: { children: React.ReactNode })
   const [email, setEmail] = useState('');
   const [isSending, setIsSending] = useState(false);
   const [isSent, setIsSent] = useState(false);
-  const { sendPasswordReset } = useAuth();
   const { toast } = useToast();
 
   const handleReset = async () => {
@@ -36,7 +35,11 @@ export function ResetPasswordDialog({ children }: { children: React.ReactNode })
     }
     setIsSending(true);
     try {
-      await sendPasswordReset(email);
+      // TODO: Implementar funcionalidade de reset de senha
+      toast({
+        title: "Funcionalidade em desenvolvimento",
+        description: "A recuperação de senha será implementada em breve.",
+      });
       setIsSent(true);
     } catch (error: any) {
       toast({
@@ -56,7 +59,7 @@ export function ResetPasswordDialog({ children }: { children: React.ReactNode })
   }
 
   return (
-    <Dialog onOpenChange={(open) => !open && handleClose()}>
+    <Dialog onOpenChange={(open: boolean) => !open && handleClose()}>
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent>
         <DialogHeader>

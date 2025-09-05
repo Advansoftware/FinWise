@@ -5,7 +5,7 @@ import { useState, useEffect, createContext, useContext, ReactNode, useMemo } fr
 import { useAuth } from "./use-auth";
 import { useToast } from "./use-toast";
 import { AICreditLog } from "@/ai/ai-types";
-import { getDatabaseAdapter } from "@/services/database/database-service";
+import { apiClient } from "@/lib/api-client";
 
 interface CreditsContextType {
   credits: number;
@@ -20,11 +20,9 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const [logs, setLogs] = useState<AICreditLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const dbAdapter = useMemo(() => getDatabaseAdapter(), []);
 
   const credits = useMemo(() => user?.aiCredits || 0, [user]);
 
-  // Listener for credit logs
   useEffect(() => {
     if (authLoading || !user) {
       setIsLoading(false);
@@ -32,22 +30,20 @@ export function CreditsProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    setIsLoading(true);
-    
-    // Listener for credit logs
-    const unsubscribeLogs = dbAdapter.listenToCollection<AICreditLog>(
-        `aiCreditLogs`,
-        (fetchedLogs) => {
-            setLogs(fetchedLogs);
-            setIsLoading(false);
-        }
-    );
-
-    return () => {
-        unsubscribeLogs();
+    const loadLogs = async () => {
+      setIsLoading(true);
+      try {
+        const fetchedLogs = await apiClient.get('aiCreditLogs', user.uid);
+        setLogs(fetchedLogs);
+      } catch (error) {
+        console.error('Erro ao carregar logs de créditos:', error);
+      } finally {
+        setIsLoading(false);
+      }
     };
-  }, [user, authLoading, dbAdapter]);
 
+    loadLogs();
+  }, [user, authLoading]);
 
   const value: CreditsContextType = {
     credits,

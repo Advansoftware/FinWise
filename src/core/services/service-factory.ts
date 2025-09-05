@@ -25,18 +25,8 @@ class ServiceFactory {
       return this.databaseAdapter;
     }
 
-    const databaseType = process.env.DATABASE_TYPE || 'firebase';
-    console.log(`🔧 Initializing ${databaseType} database adapter...`);
-
-    switch (databaseType.toLowerCase()) {
-      case 'mongodb':
-        await this.initializeMongoDBAdapter();
-        break;
-      case 'firebase':
-      default:
-        await this.initializeFirebaseAdapter();
-        break;
-    }
+    console.log('🔧 Initializing MongoDB database adapter...');
+    await this.initializeMongoDBAdapter();
 
     if (!this.databaseAdapter) {
       throw new Error('Failed to initialize database adapter');
@@ -50,18 +40,8 @@ class ServiceFactory {
       return this.authService;
     }
 
-    const databaseType = process.env.DATABASE_TYPE || 'firebase';
-    console.log(`🔧 Initializing ${databaseType} auth service...`);
-
-    switch (databaseType.toLowerCase()) {
-      case 'mongodb':
-        await this.initializeMongoDBAuth();
-        break;
-      case 'firebase':
-      default:
-        await this.initializeFirebaseAuth();
-        break;
-    }
+    console.log('🔧 Initializing MongoDB auth service...');
+    await this.initializeMongoDBAuth();
 
     if (!this.authService) {
       throw new Error('Failed to initialize auth service');
@@ -83,23 +63,10 @@ class ServiceFactory {
     }
   }
 
-  private async initializeFirebaseAdapter(): Promise<void> {
-    try {
-      const { FirebaseAdapter } = await import('@/core/adapters/firebase');
-      this.databaseAdapter = new FirebaseAdapter();
-      await this.databaseAdapter.connect();
-
-      console.log('✅ Firebase Database Adapter initialized successfully');
-    } catch (error) {
-      console.error('❌ Failed to initialize Firebase adapter:', error);
-      throw error;
-    }
-  }
-
   private async initializeMongoDBAuth(): Promise<void> {
     try {
       const uri = process.env.MONGODB_URI;
-      const dbName = process.env.MONGODB_DB || 'finwise';
+      const dbName = process.env.MONGODB_DB || 'gastometria';
 
       if (!uri) {
         throw new Error('MONGODB_URI environment variable is required when using MongoDB');
@@ -116,18 +83,6 @@ class ServiceFactory {
       console.log('✅ MongoDB Auth Service initialized successfully');
     } catch (error) {
       console.error('❌ Failed to initialize MongoDB auth service:', error);
-      throw error;
-    }
-  }
-
-  private async initializeFirebaseAuth(): Promise<void> {
-    try {
-      const { FirebaseAuthService } = await import('@/core/adapters/firebase');
-      this.authService = new FirebaseAuthService();
-
-      console.log('✅ Firebase Auth Service initialized successfully');
-    } catch (error) {
-      console.error('❌ Failed to initialize Firebase auth service:', error);
       throw error;
     }
   }
@@ -159,7 +114,7 @@ class ServiceFactory {
   }
 
   getDatabaseType(): string {
-    return process.env.DATABASE_TYPE || 'firebase';
+    return 'mongodb';
   }
 
   isInitialized(): { database: boolean; auth: boolean } {

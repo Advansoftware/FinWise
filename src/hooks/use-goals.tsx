@@ -1,11 +1,11 @@
 // src/hooks/use-goals.tsx
 'use client';
 
-import { useState, useEffect, createContext, useContext, ReactNode, useRef, useMemo } from "react";
+import { useState, useEffect, createContext, useContext, ReactNode, useRef } from "react";
 import { Goal, Transaction } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
-import { getDatabaseAdapter } from "@/services/database/database-service";
+import { apiClient } from "@/lib/api-client";
 
 interface GoalsContextType {
   goals: Goal[];
@@ -27,8 +27,6 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [completedGoal, setCompletedGoal] = useState<Goal | null>(null);
   const prevGoalsRef = useRef<Goal[]>([]);
-  const dbAdapter = useMemo(() => getDatabaseAdapter(), []);
-
 
   // Effect to check for newly completed goals
   useEffect(() => {
@@ -44,8 +42,6 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     prevGoalsRef.current = goals;
   }, [goals]);
 
-
-  // Listener for goals
   useEffect(() => {
     if (authLoading || !user) {
       setIsLoading(false);
@@ -53,71 +49,97 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    setIsLoading(true);
-
-    const unsubscribe = dbAdapter.listenToCollection<Goal>(
-      `goals`,
-      (fetchedGoals) => {
+    const loadGoals = async () => {
+      setIsLoading(true);
+      try {
+        const fetchedGoals = await apiClient.get('goals', user.uid);
         setGoals(fetchedGoals);
+      } catch (error) {
+        console.error('Erro ao carregar metas:', error);
+      } finally {
         setIsLoading(false);
       }
-    );
-    
-    return () => unsubscribe();
-  }, [user, authLoading, dbAdapter]);
+    };
+
+    loadGoals();
+  }, [user, authLoading]);
 
   const addGoal = async (goal: Omit<Goal, 'id' | 'createdAt' | 'currentAmount' | 'userId'>) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.addDoc(`goals`, {
-        ...goal,
-        userId: user.uid,
-        currentAmount: 0,
-        createdAt: new Date().toISOString()
-    });
+    
+    const goalWithUser = {
+      ...goal,
+      userId: user.uid,
+      currentAmount: 0,
+      createdAt: new Date().toISOString()
+    };
+    
+    const newGoal = await apiClient.create('goals', goalWithUser);
+    setGoals(prev => [...prev, newGoal]);
     toast({ title: "Meta criada com sucesso!" });
-  }
+  };
 
   const updateGoal = async (goalId: string, updates: Partial<Goal>) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.updateDoc(`goals/${goalId}`, updates);
+    
+    await apiClient.update('goals', goalId, updates);
+    setGoals(prev => 
+      prev.map(g => g.id === goalId ? { ...g, ...updates } : g)
+    );
     toast({ title: "Meta atualizada!" });
-  }
+  };
 
   const deleteGoal = async (goalId: string) => {
     if (!user) throw new Error("User not authenticated");
-    await dbAdapter.deleteDoc(`goals/${goalId}`);
+    
+    await apiClient.delete('goals', goalId);
+    setGoals(prev => prev.filter(g => g.id !== goalId));
     toast({ title: "Meta excluída." });
-  }
+  };
 
   const addDeposit = async (goalId: string, amount: number, walletId: string) => {
-     if (!user) throw new Error("User not authenticated");
+    if (!user) throw new Error("User not authenticated");
      
-     // This would need to be a transactional API endpoint in a real MongoDB setup
-     // For now, we simulate the client-side orchestration.
-     const goal = goals.find(g => g.id === goalId);
-     if (!goal) throw new Error("Meta não encontrada.");
+    const goal = goals.find(g => g.id === goalId);
+    if (!goal) throw new Error("Meta não encontrada.");
 
-     const newTransaction: Omit<Transaction, 'id' | 'userId'> = {
-         item: `Depósito para Meta: ${goal.name}`,
-         amount: amount,
-         date: new Date().toISOString(),
-         category: "Transferência",
-         type: 'transfer',
-         walletId: walletId,
-         toWalletId: goalId, // Using goalId to signify transfer to goal
-     };
+    const newTransaction: Omit<Transaction, 'id' | 'userId'> = {
+      item: `Depósito para Meta: ${goal.name}`,
+      amount: amount,
+      date: new Date().toISOString(),
+      category: "Transferência",
+      type: 'transfer',
+      walletId: walletId,
+      toWalletId: goalId, // Using goalId to signify transfer to goal
+    };
 
-     await dbAdapter.addDoc('transactions', { ...newTransaction, userId: user.uid });
-     await dbAdapter.updateDoc(`goals/${goalId}`, { currentAmount: dbAdapter.increment(amount) });
-     await dbAdapter.updateDoc(`wallets/${walletId}`, { balance: dbAdapter.increment(-amount) });
+    // Create transaction
+    await apiClient.create('transactions', { ...newTransaction, userId: user.uid });
+    
+    // Update goal amount
+    await apiClient.update('goals', goalId, { 
+      currentAmount: goal.currentAmount + amount 
+    });
+    
+    // Update wallet balance  
+    const wallet = await apiClient.get('wallets', user.uid, walletId);
+    if (wallet) {
+      await apiClient.update('wallets', walletId, { 
+        balance: wallet.balance - amount 
+      });
+    }
 
+    // Update local state
+    setGoals(prev => 
+      prev.map(g => g.id === goalId ? { ...g, currentAmount: g.currentAmount + amount } : g)
+    );
 
-     toast({ title: `Depósito de R$ ${amount.toFixed(2)} adicionado!`})
-  }
+    toast({ title: `Depósito de R$ ${amount.toFixed(2)} adicionado!` });
+  };
 
   const clearCompletedGoal = () => {
     setCompletedGoal(null);
-  }
+  };
 
   const value: GoalsContextType = {
     goals,
@@ -134,7 +156,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     <GoalsContext.Provider value={value}>
         {children}
     </GoalsContext.Provider>
-  )
+  );
 }
 
 export function useGoals() {

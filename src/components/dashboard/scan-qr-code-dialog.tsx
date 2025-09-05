@@ -47,7 +47,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
     const { wallets } = useWallets();
     const { isPlus } = usePlan();
     const { displayedCredentials, activeCredentialId } = useAISettings();
-    const [selectedAI, setSelectedAI] = useState(activeCredentialId || 'finwise-ai-default');
+    const [selectedAI, setSelectedAI] = useState(activeCredentialId || 'gastometria-ai-default');
 
     const canSelectProvider = isPlus; // Plus and Infinity can select
     const ollamaIsSelected = displayedCredentials.find(c => c.id === selectedAI)?.provider === 'ollama';
@@ -65,7 +65,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
         setReceiptImage(null);
         setExtractedData(null);
         setHasCameraPermission(null);
-        setSelectedAI(activeCredentialId || 'finwise-ai-default');
+        setSelectedAI(activeCredentialId || 'gastometria-ai-default');
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
         }

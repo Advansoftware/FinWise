@@ -7,8 +7,7 @@ import { startOfMonth, endOfDay } from "date-fns";
 import { Transaction, TransactionCategory } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
-import { getDatabaseAdapter } from "@/services/database/database-service";
-import { IDatabaseAdapter } from "@/services/database/database-adapter";
+import { apiClient } from "@/lib/api-client";
 
 type CategoryMap = Partial<Record<TransactionCategory, string[]>>;
 
@@ -49,7 +48,6 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   });
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('all');
-  const dbAdapter = useMemo(() => getDatabaseAdapter(), []);
   
   useEffect(() => {
     if (authLoading || !user) {
@@ -59,87 +57,67 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    setIsLoading(true);
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        // Load transactions
+        const fetchedTransactions = await apiClient.get('transactions', user.uid);
+        setAllTransactions(fetchedTransactions);
 
-    const unsubscribeTransactions = dbAdapter.listenToCollection<Transaction>(
-      `transactions`,
-      (transactions) => {
-        setAllTransactions(transactions);
+        // Load categories from settings
+        const settings = await apiClient.get('settings', user.uid);
+        setCategoryMap(settings?.categories || {});
+      } catch (error) {
+        console.error('Erro ao carregar dados:', error);
+      } finally {
         setIsLoading(false);
       }
-    );
-
-    const unsubscribeCategories = dbAdapter.listenToCollection<{id: string, [key: string]: any}>(
-      `settings`,
-      (settings) => {
-         const catSettings = settings.find(s => s.id === `categories_${user.uid}`);
-         if (catSettings) {
-             const { id, userId, ...cats} = catSettings;
-             setCategoryMap(cats as CategoryMap);
-         } else {
-            const defaultCategories: CategoryMap = {
-                "Supermercado": ["Mercearia", "Feira", "Açougue", "Bebidas"],
-                "Transporte": ["Combustível", "Uber/99", "Metrô/Ônibus", "Estacionamento"],
-                "Restaurante": ["Almoço", "Jantar", "Café", "Lanche"],
-                "Contas": ["Aluguel", "Luz", "Água", "Internet", "Celular", "Condomínio"],
-                "Entretenimento": ["Cinema", "Show", "Streaming", "Jogos"],
-                "Saúde": ["Farmácia", "Consulta", "Plano de Saúde"],
-                "Educação": ["Cursos", "Livros", "Mensalidade"],
-                "Lazer": ["Viagem", "Passeios", "Hobbies"],
-                "Vestuário": ["Roupas", "Calçados", "Acessórios"],
-                "Salário": [],
-                "Vendas": [],
-                "Investimentos": [],
-                "Transferência": [],
-                "Outros": ["Presentes", "Serviços", "Impostos"],
-            };
-            dbAdapter.setDoc(`settings/categories_${user.uid}`, {...defaultCategories, userId: user.uid });
-         }
-      }
-    );
-
-
-    return () => {
-      unsubscribeTransactions();
-      unsubscribeCategories();
     };
-  }, [user, authLoading, dbAdapter]);
+
+    loadData();
+  }, [user, authLoading]);
   
   const addTransaction = async (transaction: Omit<Transaction, 'id' | 'userId'>) => {
     if (!user) throw new Error("User not authenticated");
 
     const transactionWithUser = { ...transaction, userId: user.uid };
-    
-    // For MongoDB, we assume the backend API handles the balance update transactionally
-    await dbAdapter.addDoc('transactions', transactionWithUser);
-  }
+    const newTransaction = await apiClient.create('transactions', transactionWithUser);
+    setAllTransactions(prev => [...prev, newTransaction]);
+  };
 
   const updateTransaction = async (transactionId: string, updates: Partial<Transaction>, updateAllMatching: boolean, originalItemName: string) => {
     if (!user) throw new Error("User not authenticated");
     
-    // For MongoDB, this complex logic should be a dedicated API endpoint if transactional integrity is needed.
-    // Here, we just update the transaction document.
-    await dbAdapter.updateDoc(`transactions/${transactionId}`, updates);
+    await apiClient.update('transactions', transactionId, updates);
+    setAllTransactions(prev => 
+      prev.map(t => t.id === transactionId ? { ...t, ...updates } : t)
+    );
   };
   
   const deleteTransaction = async (transactionId: string) => {
-     if (!user) throw new Error("User not authenticated");
-     // For MongoDB, balance updates should be handled by a dedicated API endpoint
-     await dbAdapter.deleteDoc(`transactions/${transactionId}`);
-  }
+    if (!user) throw new Error("User not authenticated");
+    
+    await apiClient.delete('transactions', transactionId);
+    setAllTransactions(prev => prev.filter(t => t.id !== transactionId));
+  };
 
   const { categories, subcategories } = useMemo(() => {
-    const { id, userId, ...cats } = categoryMap as any;
-    const categoryNames = Object.keys(cats) as TransactionCategory[];
+    const categoryNames = Object.keys(categoryMap) as TransactionCategory[];
     return {
       categories: categoryNames.sort(),
-      subcategories: cats
+      subcategories: categoryMap
     };
   }, [categoryMap]);
   
   const saveCategories = async (newCategories: CategoryMap) => {
-      if (!user) throw new Error("User not authenticated");
-      await dbAdapter.setDoc(`settings/categories_${user.uid}`, {...newCategories, userId: user.uid });
+    if (!user) throw new Error("User not authenticated");
+    
+    const currentSettings = await apiClient.get('settings', user.uid) || {};
+    await apiClient.update('settings', user.uid, { 
+      ...currentSettings, 
+      categories: newCategories 
+    });
+    setCategoryMap(newCategories);
   };
 
   const addCategory = async (categoryName: TransactionCategory) => {
@@ -154,27 +132,27 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
 
   const deleteCategory = async (categoryName: TransactionCategory) => {
     if (!user) throw new Error("User not authenticated");
-     const newCategoryMap = { ...categoryMap };
-     delete newCategoryMap[categoryName];
-     await saveCategories(newCategoryMap);
-     if (selectedCategory === categoryName) {
-       setSelectedCategory('all');
-     }
+    const newCategoryMap = { ...categoryMap };
+    delete newCategoryMap[categoryName];
+    await saveCategories(newCategoryMap);
+    if (selectedCategory === categoryName) {
+      setSelectedCategory('all');
+    }
   };
 
   const addSubcategory = async (categoryName: TransactionCategory, subcategoryName: string) => {
     if (!user) throw new Error("User not authenticated");
     const subs = categoryMap[categoryName] || [];
     if (subs.includes(subcategoryName)) {
-       toast({ variant: "destructive", title: "Subcategoria já existe" });
-       return;
+      toast({ variant: "destructive", title: "Subcategoria já existe" });
+      return;
     }
     const newCategoryMap = { 
       ...categoryMap, 
       [categoryName]: [...subs, subcategoryName].sort() 
     };
     await saveCategories(newCategoryMap);
-  }
+  };
 
   const deleteSubcategory = async (categoryName: TransactionCategory, subcategoryName: string) => {
     if (!user) throw new Error("User not authenticated");
@@ -184,7 +162,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       [categoryName]: subs.filter(s => s !== subcategoryName)
     };
     await saveCategories(newCategoryMap);
-  }
+  };
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
@@ -260,9 +238,9 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
 
   return (
     <TransactionsContext.Provider value={value}>
-        {children}
+      {children}
     </TransactionsContext.Provider>
-  )
+  );
 }
 
 export function useTransactions() {

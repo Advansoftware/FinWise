@@ -107,7 +107,7 @@ export function FutureBalanceCard() {
                     </div>
                 </div>
                  <CardDescription className="text-xs text-primary/70 mt-2 pl-12">
-                    Gerado 1x por dia. Atualizar custa 3 créditos da FinWise AI.
+                    Gerado 1x por dia. Atualizar custa 3 créditos da Gastometria AI.
                 </CardDescription>
             </div>
             <Button

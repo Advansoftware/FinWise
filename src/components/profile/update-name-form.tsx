@@ -17,7 +17,7 @@ const formSchema = z.object({
 });
 
 export function UpdateNameForm() {
-  const { user, updateUserProfile } = useAuth();
+  const { user, updateUser } = useAuth();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
@@ -31,7 +31,7 @@ export function UpdateNameForm() {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
     try {
-      await updateUserProfile(values.name);
+      await updateUser({ displayName: values.name });
       toast({
         title: 'Sucesso!',
         description: 'Seu nome foi atualizado.',
