@@ -7,8 +7,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { CheckCircle2, Loader2, Gem, BrainCircuit, Rocket } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { usePlan } from "@/hooks/use-plan";
+import { usePayment } from "@/hooks/use-payment";
 import { UserPlan } from "@/lib/types";
-import { createCheckoutAction, createPortalAction } from '@/services/payment-actions';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { UpgradeCelebration } from '@/components/billing/upgrade-celebration';
@@ -82,7 +82,7 @@ function BillingPageContent() {
     const { plan: currentUserPlan, isLoading: isPlanLoading } = usePlan();
     const { user } = useAuth();
     const { toast } = useToast();
-    const [isProcessing, setIsProcessing] = useState(false);
+    const { isProcessing, createCheckoutSession, openCustomerPortal } = usePayment();
     const [showCelebration, setShowCelebration] = useState(false);
     const [showCancelFeedback, setShowCancelFeedback] = useState(false);
     const searchParams = useSearchParams();
@@ -113,45 +113,19 @@ function BillingPageContent() {
 
     const handleUpgrade = async (newPlan: Exclude<UserPlan, 'Básico'>) => {
         if (!user || !user.email) return;
-        setIsProcessing(true);
         try {
-            const result = await createCheckoutAction({ userId: user.uid, userEmail: user.email, plan: newPlan });
-            if (result.url) {
-                window.location.href = result.url;
-            } else {
-                throw new Error(result.error || "Não foi possível iniciar o checkout.");
-            }
+            await createCheckoutSession(newPlan);
         } catch (error) {
-            console.error("Stripe checkout error:", error);
-            toast({ 
-                variant: 'destructive', 
-                title: 'Erro no Checkout',
-                description: 'Não foi possível redirecionar para a página de pagamento. Tente novamente mais tarde.'
-            });
-        } finally {
-            setIsProcessing(false);
+            // Error handling is done in the hook
         }
     }
     
     const handleManageSubscription = async () => {
         if (!user) return;
-        setIsProcessing(true);
         try {
-            const { url, error } = await createPortalAction({ userId: user.uid });
-            if (url) {
-                window.location.href = url;
-            } else {
-                throw new Error(error || "Não foi possível abrir o portal de gerenciamento.");
-            }
+            await openCustomerPortal();
         } catch (error) {
-            console.error("Stripe portal error:", error);
-            toast({ 
-                variant: 'destructive', 
-                title: 'Erro',
-                description: 'Não foi possível abrir o portal de gerenciamento. Tente novamente mais tarde.'
-            });
-        } finally {
-            setIsProcessing(false);
+            // Error handling is done in the hook
         }
     }
 

@@ -11,6 +11,8 @@ import {
   IAICreditLogRepository,
   ISettingsRepository
 } from '@/core/ports/database.port';
+import { IPaymentRepository } from '@/core/ports/payment.port';
+import { MongoPaymentRepository } from './mongodb-payment.adapter';
 import { Transaction, Wallet, Budget, Goal, UserProfile } from '@/lib/types';
 import { AICreditLog } from '@/ai/ai-types';
 
@@ -426,6 +428,7 @@ export class MongoDBAdapter implements IDatabaseAdapter {
   public goals!: IGoalRepository;
   public aiCreditLogs!: IAICreditLogRepository;
   public settings!: ISettingsRepository;
+  public payments!: IPaymentRepository;
 
   async connect(): Promise<void> {
     if (this.client && this.db) {
@@ -451,6 +454,7 @@ export class MongoDBAdapter implements IDatabaseAdapter {
     this.goals = new MongoGoalRepository(this.db);
     this.aiCreditLogs = new MongoAICreditLogRepository(this.db);
     this.settings = new MongoSettingsRepository(this.db);
+    this.payments = new MongoPaymentRepository(this.db);
   }
 
   async disconnect(): Promise<void> {
