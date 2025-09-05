@@ -21,7 +21,7 @@ import { usePlan } from "@/hooks/use-plan";
 const credentialSchema = z.object({
   id: z.string().optional(),
   name: z.string().min(1, "O nome é obrigatório."),
-  provider: z.enum(["ollama", "googleai", "openai", "finwise"]),
+  provider: z.enum(["ollama", "googleai", "openai", "gastometria"]),
   ollamaModel: z.string().optional(),
   ollamaServerAddress: z.string().optional(),
   googleAIApiKey: z.string().optional(),

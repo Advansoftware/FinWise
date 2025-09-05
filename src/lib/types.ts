@@ -58,14 +58,14 @@ export interface Category {
   subcategories: string[];
 }
 
-export type AIProvider = 'ollama' | 'googleai' | 'openai' | 'finwise';
+export type AIProvider = 'ollama' | 'googleai' | 'openai' | 'gastometria';
 export type OpenAIModel = 'gpt-3.5-turbo' | 'gpt-4' | 'gpt-4-vision-preview' | 'gpt-4o';
 
 export interface AICredential {
   id: string;
   name: string; // User-defined name for the credential
   provider: AIProvider;
-  isReadOnly?: boolean; // To lock the FinWise AI credential
+  isReadOnly?: boolean; // To lock the Gastometria AI credential
   ollamaModel?: string;
   ollamaServerAddress?: string;
   googleAIApiKey?: string;

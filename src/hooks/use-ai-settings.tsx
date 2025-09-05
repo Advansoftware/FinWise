@@ -9,12 +9,12 @@ import { getDatabaseAdapter } from "@/services/database/database-service";
 import { v4 as uuidv4 } from 'uuid';
 import { usePlan } from "./use-plan";
 
-const FINWISE_AI_CREDENTIAL_ID = 'finwise-ai-default';
+const GASTOMETRIA_AI_CREDENTIAL_ID = 'gastometria-ai-default';
 
-const finwiseAICredential = {
-    id: FINWISE_AI_CREDENTIAL_ID,
-    name: 'FinWise AI',
-    provider: 'finwise',
+const gastometriaAICredential = {
+    id: GASTOMETRIA_AI_CREDENTIAL_ID,
+    name: 'Gastometria AI',
+    provider: 'gastometria',
     isReadOnly: true,
 } as const;
 
@@ -49,7 +49,7 @@ export function useAISettings() {
              if (aiSettings) {
                 setSettings(aiSettings);
              } else {
-                 setSettings({ credentials: [], activeCredentialId: FINWISE_AI_CREDENTIAL_ID });
+                 setSettings({ credentials: [], activeCredentialId: GASTOMETRIA_AI_CREDENTIAL_ID });
              }
              setIsLoading(false);
           }
@@ -59,9 +59,9 @@ export function useAISettings() {
     }, [user, authLoading, dbAdapter]);
 
     const credentials = useMemo(() => settings?.credentials || [], [settings]);
-    const activeCredentialId = useMemo(() => settings?.activeCredentialId || FINWISE_AI_CREDENTIAL_ID, [settings]);
+    const activeCredentialId = useMemo(() => settings?.activeCredentialId || GASTOMETRIA_AI_CREDENTIAL_ID, [settings]);
 
-    // Memoize displayed credentials to include the default FinWise AI and filter based on plan
+    // Memoize displayed credentials to include the default Gastometria AI and filter based on plan
     const displayedCredentials = useMemo(() => {
         let userCredentials = credentials;
         
@@ -72,15 +72,15 @@ export function useAISettings() {
         }
         // Infinity plan sees all credentials
 
-        return [finwiseAICredential, ...userCredentials];
+        return [gastometriaAICredential, ...userCredentials];
     }, [credentials, isPro, isPlus, isInfinity]);
 
      // Effect to reset active credential if it's no longer allowed by the current plan
     useEffect(() => {
         if (!user || authLoading) return;
         const activeCredExistsInDisplayed = displayedCredentials.some(c => c.id === activeCredentialId);
-        if (!activeCredExistsInDisplayed && activeCredentialId !== FINWISE_AI_CREDENTIAL_ID) {
-            handleActivate(FINWISE_AI_CREDENTIAL_ID);
+        if (!activeCredExistsInDisplayed && activeCredentialId !== GASTOMETRIA_AI_CREDENTIAL_ID) {
+            handleActivate(GASTOMETRIA_AI_CREDENTIAL_ID);
         }
     }, [displayedCredentials, activeCredentialId, user, authLoading]);
 
@@ -107,7 +107,7 @@ export function useAISettings() {
     const handleSaveCredential = async (credentialData: Omit<AICredential, 'id'> & { id?: string }) => {
         const isEditing = !!credentialData.id;
         
-        const finalCredential: Partial<AICredential> & { id?: string, name: string, provider: 'ollama' | 'googleai' | 'openai' | 'finwise' } = {
+        const finalCredential: Partial<AICredential> & { id?: string, name: string, provider: 'ollama' | 'googleai' | 'openai' | 'gastometria' } = {
             id: credentialData.id,
             name: credentialData.name,
             provider: credentialData.provider,
@@ -135,7 +135,7 @@ export function useAISettings() {
             newCredentials = [...credentials, newCredential];
         }
 
-        const newActiveId = activeCredentialId || (newCredentials.length === 1 ? newCredentials[0].id : FINWISE_AI_CREDENTIAL_ID);
+        const newActiveId = activeCredentialId || (newCredentials.length === 1 ? newCredentials[0].id : GASTOMETRIA_AI_CREDENTIAL_ID);
         
         try {
             await saveSettings({ credentials: newCredentials, activeCredentialId: newActiveId });
@@ -150,7 +150,7 @@ export function useAISettings() {
         const newCredentials = credentials.filter(c => c.id !== id);
         let newActiveId = activeCredentialId;
         if (activeCredentialId === id) {
-            newActiveId = FINWISE_AI_CREDENTIAL_ID; // Fallback to default
+            newActiveId = GASTOMETRIA_AI_CREDENTIAL_ID; // Fallback to default
         }
         
         try {
@@ -177,7 +177,7 @@ export function useAISettings() {
         isLoading: isLoading || authLoading,
         isSaving,
         credentials, // User-defined credentials
-        displayedCredentials, // All credentials including FinWise AI
+        displayedCredentials, // All credentials including Gastometria AI
         activeCredentialId,
         handleSaveCredential,
         handleDelete,

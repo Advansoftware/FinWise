@@ -1,4 +1,3 @@
-
 // src/app/(app)/billing/page.tsx
 'use client';
 import { useState, useEffect, Suspense } from 'react';
@@ -27,7 +26,7 @@ const plans = [
             "Orçamentos manuais por categoria",
             "Metas de economia",
             "Gerenciamento de categorias",
-            "Acesso à FinWise AI (limitado)",
+            "Acesso à Gastometria AI (limitado)",
         ],
         cta: "Plano Atual",
         planId: 'Básico' as UserPlan,
@@ -242,7 +241,7 @@ function BillingPageContent() {
                     <CardTitle>Como funcionam os Créditos de IA?</CardTitle>
                 </CardHeader>
                 <CardContent className="text-muted-foreground space-y-2">
-                    <p>Créditos são consumidos **apenas ao usar a FinWise AI**, nossa IA integrada. Se você configurar seu próprio provedor (Ollama no plano Plus, ou qualquer outro no plano Infinity), o uso é ilimitado e **não consome seus créditos**.</p>
+                    <p>Créditos são consumidos **apenas ao usar a Gastometria AI**, nossa IA integrada. Se você configurar seu próprio provedor (Ollama no plano Plus, ou qualquer outro no plano Infinity), o uso é ilimitado e **não consome seus créditos**.</p>
                     <ul className="list-disc pl-5 space-y-1 text-sm">
                         <li><span className="font-semibold text-foreground">Ações Simples (1-2 créditos):</span> Gerar dicas, responder no chat, sugerir um orçamento.</li>
                         <li><span className="font-semibold text-foreground">Ações Complexas (5 créditos):</span> Gerar um relatório mensal, analisar um grupo de transações.</li>

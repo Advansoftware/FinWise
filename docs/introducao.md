@@ -1,12 +1,12 @@
-# Introdução ao FinWise
+# Introdução ao Gastometria
 
-Bem-vindo ao FinWise! Este é o ponto de partida para você dominar suas finanças. Projetamos cada ferramenta para ser poderosa, mas fácil de usar.
+Bem-vindo ao Gastometria! Este é o ponto de partida para você dominar suas finanças. Projetamos cada ferramenta para ser poderosa, mas fácil de usar.
 
 Nossa documentação foi criada para guiá-lo em cada passo, explicando não apenas **como** usar, mas **por que** cada funcionalidade é importante para sua saúde financeira.
 
-## O que é o FinWise?
+## O que é o Gastometria?
 
-O FinWise é mais que um aplicativo de controle de gastos; é seu assistente financeiro pessoal. Ele ajuda você a:
+O Gastometria é mais que um aplicativo de controle de gastos; é seu assistente financeiro pessoal. Ele ajuda você a:
 -   **Entender** para onde seu dinheiro vai.
 -   **Planejar** seus gastos com orçamentos inteligentes.
 -   **Alcançar** seus sonhos com metas de economia.
@@ -22,4 +22,4 @@ Recomendamos começar pelos guias abaixo para entender os conceitos fundamentais
 -   **[Guia de Metas de Economia](./metas)**: Transforme seus sonhos em planos concretos e acompanhe seu progresso.
 -   **[Guia de Relatórios](./relatorios)**: Gere análises mensais e anuais com insights da IA para entender sua evolução financeira.
 -   **[Guia de Importação de Extratos](./importacao)**: Economize tempo importando dezenas de transações de uma só vez a partir de arquivos do seu banco.
--   **[Guia de Configuração da IA](./configuracao-ia)**: Libere todo o poder do FinWise configurando um provedor de IA para dicas, chat e análises.
+-   **[Guia de Configuração da IA](./configuracao-ia)**: Libere todo o poder do Gastometria configurando um provedor de IA para dicas, chat e análises.

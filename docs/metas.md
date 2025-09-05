@@ -5,7 +5,7 @@ order: 5
 
 # Guia de Metas de Economia
 
-Economizar dinheiro pode ser difícil quando não temos um objetivo claro. A funcionalidade de **Metas** do FinWise foi criada para transformar seus sonhos em planos concretos e motivadores.
+Economizar dinheiro pode ser difícil quando não temos um objetivo claro. A funcionalidade de **Metas** do Gastometria foi criada para transformar seus sonhos em planos concretos e motivadores.
 
 ## O que é uma Meta?
 
@@ -19,16 +19,16 @@ Você define um **nome** para o seu sonho e um **valor alvo**, e acompanha seu p
 -   **Clareza**: Você sabe exatamente para quê está economizando, o que ajuda a tomar decisões de gastos mais inteligentes no dia a dia.
 -   **Organização**: Permite separar o dinheiro das economias do dinheiro para os gastos correntes, mesmo que eles estejam na mesma conta bancária na vida real.
 
-## Como as Metas funcionam no FinWise
+## Como as Metas funcionam no Gastometria
 
 O sistema de metas é totalmente integrado com suas **Carteiras**.
 
 1.  **Criar a Meta**: Você define um nome e o valor total que precisa economizar.
-2.  **Fazer um Depósito**: Para adicionar dinheiro à sua meta, você faz um "depósito". Isso cria uma **transação de transferência** no FinWise.
+2.  **Fazer um Depósito**: Para adicionar dinheiro à sua meta, você faz um "depósito". Isso cria uma **transação de transferência** no Gastometria.
 3.  **A Mágica da Transferência**: Ao fazer um depósito, você informa:
     -   O valor do depósito.
     -   De qual **Carteira** o dinheiro está "saindo" (ex: sua Conta Corrente).
-    O FinWise então:
+    O Gastometria então:
     -   **Soma** o valor ao progresso da sua meta.
     -   **Subtrai** o valor do saldo da carteira de origem.
 

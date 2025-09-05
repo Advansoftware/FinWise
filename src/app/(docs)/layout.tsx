@@ -1,4 +1,3 @@
-
 // src/app/(docs)/layout.tsx
 
 import { Logo } from "@/components/logo";
@@ -14,7 +13,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
               <div className="container mx-auto flex h-14 items-center justify-between">
                   <Link href="/" className="flex items-center gap-2">
                     <Logo className="w-8 h-8"/>
-                    <span className="text-xl font-bold">FinWise</span>
+                    <span className="text-xl font-bold">Gastometria</span>
                   </Link>
                   <Button asChild>
                       <Link href="/login">Acessar Painel</Link>

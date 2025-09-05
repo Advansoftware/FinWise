@@ -19,6 +19,7 @@ import { PlanProvider } from "@/hooks/use-plan";
 import { CreditsProvider } from "@/hooks/use-credits";
 import { GoalCompletionCelebration } from "@/components/goals/goal-celebration";
 import { useGoals } from "@/hooks/use-goals";
+import { AICreditIndicator } from "@/components/credits/ai-credit-indicator";
 
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const { completedGoal, clearCompletedGoal } = useGoals();
@@ -31,7 +32,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
               <SidebarHeader>
                   <div className="flex items-center justify-center h-12 group-data-[state=expanded]:justify-start group-data-[state=expanded]:gap-2">
                       <Logo className="w-8 h-auto"/>
-                      <span className="text-lg font-semibold group-data-[state=collapsed]:hidden">FinWise</span>
+                      <span className="text-lg font-semibold group-data-[state=collapsed]:hidden">Gastometria</span>
                   </div>
               </SidebarHeader>
               <SidebarContent className="flex-1 p-3">

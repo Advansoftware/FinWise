@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   app:
-    container_name: finwise-app
+    container_name: gastometria-app
     build:
       context: .
       dockerfile: Dockerfile
@@ -14,12 +14,12 @@ services:
       - .env
     environment:
       - MONGODB_URI=mongodb://mongo:27017
-      - MONGODB_DB=finwise
+      - MONGODB_DB=gastometria
       - NEXT_PUBLIC_DATABASE_TYPE=mongodb
       - NEXT_PUBLIC_AUTH_PROVIDER=mongodb
 
   mongo:
-    container_name: finwise-mongo
+    container_name: gastometria-mongo
     image: mongo:latest
     ports:
       - "27017:27017"

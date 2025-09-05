@@ -59,7 +59,7 @@ export function AITipCard({ transactions }: AITipCardProps) {
                 <CardTitle className="text-lg text-primary/90">Dica Financeira com IA</CardTitle>
             </div>
             <CardDescription className="text-xs text-primary/70 mt-1">
-                Gerado automaticamente 1x por dia. Atualizar custa 1 crédito da FinWise AI.
+                Gerado automaticamente 1x por dia. Atualizar custa 1 crédito da Gastometria AI.
             </CardDescription>
         </div>
         <Button

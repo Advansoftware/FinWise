@@ -5,7 +5,7 @@ order: 2
 
 # Guia de Carteiras
 
-As **Carteiras** são o conceito mais importante do FinWise. Elas são a base de todo o seu controle financeiro.
+As **Carteiras** são o conceito mais importante do Gastometria. Elas são a base de todo o seu controle financeiro.
 
 ## O que é uma Carteira?
 
@@ -18,7 +18,7 @@ Pense em uma carteira como qualquer lugar onde você guarda ou de onde você gas
 -   Uma conta de **Investimentos**.
 -   Até mesmo uma "dívida" recorrente, como a conta do mercadinho que você paga no final do mês.
 
-Cada transação que você registra no FinWise (uma despesa ou uma receita) precisa estar ligada a uma carteira. É isso que permite ao sistema manter seus saldos sempre atualizados e corretos.
+Cada transação que você registra no Gastometria (uma despesa ou uma receita) precisa estar ligada a uma carteira. É isso que permite ao sistema manter seus saldos sempre atualizados e corretos.
 
 ## Por que elas são importantes?
 

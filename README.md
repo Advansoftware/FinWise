@@ -1,6 +1,6 @@
-# FinWise - Seu Dashboard Financeiro Inteligente
+# Gastometria - Seu Dashboard Financeiro Inteligente
 
-Bem-vindo ao FinWise, um dashboard de finanças pessoais moderno, construído com as tecnologias mais recentes para fornecer uma experiência de usuário rápida, intuitiva e poderosa.
+Bem-vindo ao Gastometria, um dashboard de finanças pessoais moderno, construído com as tecnologias mais recentes para fornecer uma experiência de usuário rápida, intuitiva e poderosa.
 
 Este projeto foi desenvolvido com o Firebase Studio e serve como um exemplo robusto de como construir uma aplicação web completa com Next.js (App Router), TypeScript, Tailwind CSS, ShadCN para componentes de UI, e Genkit (Firebase) para funcionalidades de IA.
 
@@ -40,11 +40,11 @@ Este projeto foi desenvolvido com o Firebase Studio e serve como um exemplo robu
 
 1.  Clone o repositório:
     ```bash
-    git clone git@github.com:Advansoftware/FinWise.git
+    git clone git@github.com:Advansoftware/Gastometria.git
     ```
 2.  Navegue até o diretório do projeto:
     ```bash
-    cd FinWise
+    cd Gastometria
     ```
 3.  Instale as dependências:
     ```bash

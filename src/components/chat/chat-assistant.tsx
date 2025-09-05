@@ -165,7 +165,7 @@ export function ChatAssistant() {
                             <CardHeader className="flex flex-row items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <Bot className="text-primary" />
-                                    <CardTitle className="text-lg">Assistente FinWise</CardTitle>
+                                    <CardTitle className="text-lg">Assistente Gastometria</CardTitle>
                                     {messages.length > 0 && <Badge variant="secondary">{messages.length}</Badge>}
                                 </div>
                                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsOpen(false)}>

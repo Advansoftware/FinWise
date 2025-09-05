@@ -5,7 +5,7 @@ order: 6
 
 # Guia de Relatórios e Insights
 
-A página de **Relatórios** é onde o FinWise transforma seus dados brutos em conhecimento. Usando o poder da Inteligência Artificial, o aplicativo analisa seus fechamentos mensais e anuais para fornecer uma visão clara da sua saúde financeira.
+A página de **Relatórios** é onde o Gastometria transforma seus dados brutos em conhecimento. Usando o poder da Inteligência Artificial, o aplicativo analisa seus fechamentos mensais e anuais para fornecer uma visão clara da sua saúde financeira.
 
 ## Por que gerar Relatórios?
 
@@ -17,7 +17,7 @@ Registrar transações é o primeiro passo. Analisá-las é o que gera a mudanç
 
 ## Como Funciona
 
-O FinWise utiliza um sistema de relatórios em dois níveis:
+O Gastometria utiliza um sistema de relatórios em dois níveis:
 
 ### 1. Relatórios Mensais
 
@@ -39,4 +39,4 @@ O FinWise utiliza um sistema de relatórios em dois níveis:
     2.  Se todos os 12 relatórios mensais daquele ano já foram gerados, o botão **"Gerar Relatório Anual"** será ativado.
     3.  Ao clicar, a IA consolida os dados mensais para criar um resumo estratégico do seu ano.
 
-A geração de relatórios é o segredo para um FinWise cada vez mais rápido e inteligente. Recomendamos gerar o relatório ao final de cada mês para manter suas análises sempre otimizadas.
+A geração de relatórios é o segredo para um Gastometria cada vez mais rápido e inteligente. Recomendamos gerar o relatório ao final de cada mês para manter suas análises sempre otimizadas.

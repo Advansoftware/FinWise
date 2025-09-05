@@ -30,7 +30,7 @@ export function createAIPlugins(credential: AICredential): any[] {
     const plugins: any[] = [];
 
     switch (credential.provider) {
-        case 'finwise': // This case is now handled by the server-side settings service
+        case 'gastometria': // This case is now handled by the server-side settings service
             // The resolved credential will have the actual provider (googleai, openai, etc.)
             // We handle the specific provider keys below.
              if (process.env.GEMINI_API_KEY) {
@@ -90,7 +90,7 @@ export function getModelReference(credential: AICredential): string {
     switch (credential.provider) {
         case 'ollama':
             return `ollama/${credential.ollamaModel || 'llama3'}`;
-         case 'finwise':
+         case 'gastometria':
             // The actual provider is resolved on the server, but we need a client-side hint.
             // The createAIPlugins function will load the correct plugin based on env vars.
             // The model name will also be determined by the default provider env vars.
@@ -120,7 +120,7 @@ export function createConfiguredAI(credential: AICredential): Genkit {
  */
 export function validateAISettings(credential: AICredential): boolean {
     switch (credential.provider) {
-        case 'finwise':
+        case 'gastometria':
             // Check if ANY of the default provider keys are set
             return !!process.env.GEMINI_API_KEY || !!process.env.OPENAI_API_KEY;
         case 'ollama':
@@ -139,8 +139,8 @@ export function validateAISettings(credential: AICredential): boolean {
  */
 export function getModelConfigString(credential: AICredential): string {
     switch (credential.provider) {
-        case 'finwise':
-            return `FinWise AI (Otimizado)`;
+        case 'gastometria':
+            return `Gastometria AI (Otimizado)`;
         case 'ollama':
             return `Ollama (${credential.ollamaModel}) @ ${credential.ollamaServerAddress}`;
         case 'googleai':

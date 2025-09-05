@@ -9,12 +9,12 @@ import { getAdminApp } from '@/lib/firebase-admin';
 // For now, it's still tied to Firebase Admin SDK because that's our trusted server environment.
 // A more advanced setup would have this service use an admin-level adapter.
 
-const FINWISE_AI_CREDENTIAL_ID = 'finwise-ai-default';
+const GASTOMETRIA_AI_CREDENTIAL_ID = 'gastometria-ai-default';
 
-const finwiseAICredential = {
-    id: FINWISE_AI_CREDENTIAL_ID,
-    name: 'FinWise AI',
-    provider: 'finwise',
+const gastometriaAICredential = {
+    id: GASTOMETRIA_AI_CREDENTIAL_ID,
+    name: 'Gastometria AI',
+    provider: 'gastometria',
     isReadOnly: true,
 } as const;
 
@@ -29,7 +29,7 @@ const DEFAULT_AI_FALLBACK_CREDENTIAL: AICredential = {
 
 /**
  * Constructs the default AI credential based on environment variables.
- * This allows the default "FinWise AI" to be powered by any supported provider.
+ * This allows the default "Gastometria AI" to be powered by any supported provider.
  */
 function getDefaultAICredentialFromEnv(): AICredential {
     const provider = process.env.DEFAULT_AI_PROVIDER || 'googleai';
@@ -37,14 +37,14 @@ function getDefaultAICredentialFromEnv(): AICredential {
     switch (provider) {
         case 'openai':
             return {
-                ...finwiseAICredential,
+                ...gastometriaAICredential,
                 provider: 'openai',
                 openAIModel: process.env.DEFAULT_OPENAI_MODEL || 'gpt-4o',
                 openAIApiKey: process.env.OPENAI_API_KEY
             };
         case 'ollama':
             return {
-                ...finwiseAICredential,
+                ...gastometriaAICredential,
                 provider: 'ollama',
                 ollamaModel: process.env.DEFAULT_OLLAMA_MODEL || 'llama3',
                 ollamaServerAddress: process.env.DEFAULT_OLLAMA_URL || 'http://127.0.0.1:11434',
@@ -52,7 +52,7 @@ function getDefaultAICredentialFromEnv(): AICredential {
         case 'googleai':
         default:
              return {
-                ...finwiseAICredential,
+                ...gastometriaAICredential,
                 provider: 'googleai',
                 googleAIApiKey: process.env.GEMINI_API_KEY,
             };
@@ -75,8 +75,8 @@ export async function getActiveAICredential(userId: string): Promise<AICredentia
     if (docSnap.exists()) {
       const settings = docSnap.data();
       if (settings && settings.activeCredentialId && settings.credentials) {
-        // If the active credential is the default FinWise AI, construct it from env
-        if (settings.activeCredentialId === FINWISE_AI_CREDENTIAL_ID) {
+        // If the active credential is the default Gastometria AI, construct it from env
+        if (settings.activeCredentialId === GASTOMETRIA_AI_CREDENTIAL_ID) {
           return getDefaultAICredentialFromEnv();
         }
         
@@ -89,7 +89,7 @@ export async function getActiveAICredential(userId: string): Promise<AICredentia
       }
     }
     
-    // If no specific setting is found, default to FinWise AI constructed from env
+    // If no specific setting is found, default to Gastometria AI constructed from env
     return getDefaultAICredentialFromEnv();
     
   } catch (error) {

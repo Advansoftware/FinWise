@@ -1,4 +1,3 @@
-
 // src/services/ai-actions.ts
 'use server';
 
@@ -48,7 +47,7 @@ import { AICredential } from '@/lib/types';
 async function getCredentialAndHandleCredits(userId: string, cost: number, action: AICreditLogAction, isFreeAction: boolean = false): Promise<any> {
     const credential = await getActiveAICredential(userId);
 
-    if (credential.provider === 'finwise' || (!credential.provider && process.env.DEFAULT_AI_PROVIDER)) {
+    if (credential.provider === 'gastometria' || (!credential.provider && process.env.DEFAULT_AI_PROVIDER)) {
         await consumeAICredits(userId, cost, action, isFreeAction);
     }
     

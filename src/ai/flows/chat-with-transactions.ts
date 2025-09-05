@@ -4,8 +4,9 @@
 import { ChatInput, ChatOutputSchema, ChatInputSchema } from '@/ai/ai-types';
 import { createConfiguredAI, getModelReference } from '@/ai/genkit';
 import { AICredential } from '@/lib/types';
+import { z } from 'zod';
 
-const promptTemplate = `Você é FinWise, um assistente financeiro amigável e especialista. Sua principal tarefa é responder às perguntas do usuário sobre suas finanças com base nos dados fornecidos. Você deve responder em Português do Brasil.
+const promptTemplate = `Você é Gastometria, um assistente financeiro amigável e especialista. Sua principal tarefa é responder às perguntas do usuário sobre suas finanças com base nos dados fornecidos. Você deve responder em Português do Brasil.
 
 Para otimizar suas respostas, você tem acesso a uma hierarquia de dados. Use a fonte mais específica e eficiente possível para cada pergunta.
 

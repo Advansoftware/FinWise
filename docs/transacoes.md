@@ -5,11 +5,11 @@ order: 3
 
 # Guia de Transações
 
-Registrar suas transações é a atividade principal no FinWise. É o que alimenta todos os gráficos, relatórios e insights. Uma transação é qualquer movimentação de dinheiro: uma compra, o recebimento do seu salário, ou uma transferência entre contas.
+Registrar suas transações é a atividade principal no Gastometria. É o que alimenta todos os gráficos, relatórios e insights. Uma transação é qualquer movimentação de dinheiro: uma compra, o recebimento do seu salário, ou uma transferência entre contas.
 
 ## Tipos de Transação
 
-Existem três tipos de transação no FinWise:
+Existem três tipos de transação no Gastometria:
 
 1.  **Despesa**: Qualquer dinheiro que **sai**. Uma compra no supermercado, o pagamento de uma conta, um lanche. Despesas diminuem o saldo da carteira selecionada.
 2.  **Receita**: Qualquer dinheiro que **entra**. Seu salário, um pagamento por um serviço, o rendimento de um investimento. Receitas aumentam o saldo da carteira selecionada.
@@ -32,7 +32,7 @@ Ao adicionar manualmente, você preencherá os seguintes campos:
 
 ### O Formulário Inteligente
 
--   Ao digitar o **Item**, o FinWise sugere transações passadas para autocompletar os outros campos, agilizando o processo.
+-   Ao digitar o **Item**, o Gastometria sugere transações passadas para autocompletar os outros campos, agilizando o processo.
 -   Ao escolher o tipo **Transferência**, o formulário muda para pedir uma **Carteira de Origem** e uma **Carteira de Destino**.
 
 ## Gerenciando Transações

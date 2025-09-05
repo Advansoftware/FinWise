@@ -87,7 +87,7 @@ export default function Page() {
             >
               <Link href="/" className="flex items-center gap-2">
                   <Logo className="w-8 h-8"/>
-                  <span className="text-xl font-bold">FinWise</span>
+                  <span className="text-xl font-bold">Gastometria</span>
               </Link>
             </motion.div>
             <motion.div 
@@ -123,7 +123,7 @@ export default function Page() {
               transition={{ ...fadeIn.transition, delay: 0.2 }}
               className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto"
             >
-              FinWise une um design intuitivo com o poder da Inteligência Artificial para transformar a forma como você gerencia seu dinheiro.
+              Gastometria une um design intuitivo com o poder da Inteligência Artificial para transformar a forma como você gerencia seu dinheiro.
             </motion.p>
             <motion.div 
               {...fadeIn}
@@ -145,7 +145,7 @@ export default function Page() {
               <div className="relative rounded-xl shadow-2xl shadow-primary/10 border border-border/20 bg-card/50">
                 <Image
                   src="https://picsum.photos/1200/700"
-                  alt="Dashboard FinWise"
+                  alt="Dashboard Gastometria"
                   width={1200}
                   height={700}
                   data-ai-hint="dashboard finance"
@@ -171,7 +171,7 @@ export default function Page() {
                     O Controle Financeiro é a Chave para a sua Liberdade
                 </h2>
                 <p className="mt-4 text-lg text-muted-foreground max-w-3xl mx-auto">
-                    Não se trata apenas de números e planilhas. Trata-se de trocar a ansiedade pela confiança. De saber exatamente para onde seu dinheiro vai, você ganha o poder de direcioná-lo para o que realmente importa: suas metas, seus sonhos e sua tranquilidade. O FinWise foi criado para ser essa chave.
+                    Não se trata apenas de números e planilhas. Trata-se de trocar a ansiedade pela confiança. De saber exatamente para onde seu dinheiro vai, você ganha o poder de direcioná-lo para o que realmente importa: suas metas, seus sonhos e sua tranquilidade. O Gastometria foi criado para ser essa chave.
                 </p>
             </motion.div>
           </section>
@@ -185,7 +185,7 @@ export default function Page() {
                           Ferramentas poderosas para sua vida financeira
                       </h2>
                       <p className="mt-4 text-lg text-muted-foreground text-center max-w-2xl mx-auto">
-                        Cada recurso do FinWise foi projetado para te dar clareza e controle. Deixe de adivinhar e comece a tomar decisões financeiras com confiança.
+                        Cada recurso do Gastometria foi projetado para te dar clareza e controle. Deixe de adivinhar e comece a tomar decisões financeiras com confiança.
                       </p>
                   </motion.div>
 
@@ -266,7 +266,7 @@ export default function Page() {
                                   "Transações e contas ilimitadas",
                                   "Orçamentos manuais",
                                   "Metas de economia",
-                                  "Uso limitado da FinWise AI",
+                                  "Uso limitado da Gastometria AI",
                               ],
                               cta: "Começar Agora",
                               variant: "outline"
@@ -463,7 +463,7 @@ export default function Page() {
 
         <footer className="p-4 md:p-6 border-t border-border/20">
             <div className="container mx-auto text-center text-sm text-muted-foreground">
-                  © {new Date().getFullYear()} FinWise. Todos os direitos reservados.
+                  © {new Date().getFullYear()} Gastometria. Todos os direitos reservados.
             </div>
         </footer>
       </div>
