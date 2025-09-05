@@ -11,7 +11,7 @@ class ServiceFactory {
   private authService: IAuthService | null = null;
   private mongoClient: MongoClient | null = null;
 
-  private constructor() {}
+  private constructor() { }
 
   static getInstance(): ServiceFactory {
     if (!ServiceFactory.instance) {
@@ -112,7 +112,7 @@ class ServiceFactory {
 
       const { MongoDBAuthService } = await import('@/core/adapters/mongodb');
       this.authService = new MongoDBAuthService(this.mongoClient, dbName);
-      
+
       console.log('✅ MongoDB Auth Service initialized successfully');
     } catch (error) {
       console.error('❌ Failed to initialize MongoDB auth service:', error);
@@ -124,7 +124,7 @@ class ServiceFactory {
     try {
       const { FirebaseAuthService } = await import('@/core/adapters/firebase');
       this.authService = new FirebaseAuthService();
-      
+
       console.log('✅ Firebase Auth Service initialized successfully');
     } catch (error) {
       console.error('❌ Failed to initialize Firebase auth service:', error);

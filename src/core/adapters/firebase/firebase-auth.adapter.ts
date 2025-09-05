@@ -37,14 +37,14 @@ export class FirebaseAuthService implements IAuthService {
         data.email,
         data.password
       );
-      
+
       const user = userCredential.user;
-      
+
       // Update the user profile with display name
       await updateProfile(user, {
         displayName: data.displayName
       });
-      
+
       // Create user document in Firestore
       await setDoc(doc(this.db, 'users', user.uid), {
         email: user.email,
@@ -53,7 +53,7 @@ export class FirebaseAuthService implements IAuthService {
         aiCredits: 10, // Free credits for new users
         createdAt: new Date().toISOString()
       });
-      
+
       return {
         user: {
           uid: user.uid,
@@ -78,13 +78,13 @@ export class FirebaseAuthService implements IAuthService {
         data.email,
         data.password
       );
-      
+
       const user = userCredential.user;
-      
+
       // Get additional user data from Firestore
       const userDoc = await getDoc(doc(this.db, 'users', user.uid));
       const userData = userDoc.data();
-      
+
       return {
         user: {
           uid: user.uid,
@@ -207,7 +207,7 @@ export class FirebaseAuthService implements IAuthService {
       // Delete user data from Firestore first
       // This would require admin privileges or a cloud function
       // For now, we'll just delete the auth account
-      
+
       await user.delete();
       return { success: true };
     } catch (error: any) {
@@ -224,7 +224,7 @@ export class FirebaseAuthService implements IAuthService {
         // Get additional user data from Firestore
         const userDoc = await getDoc(doc(this.db, 'users', user.uid));
         const userData = userDoc.data();
-        
+
         callback({
           uid: user.uid,
           email: user.email,

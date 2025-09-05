@@ -42,7 +42,7 @@ export class MongoDBAuthService implements IAuthService {
   private currentUserId: string | null = null;
   private authStateCallbacks: ((user: any) => void)[] = [];
 
-  constructor(private client: MongoClient, private dbName: string) {}
+  constructor(private client: MongoClient, private dbName: string) { }
 
   async connect(): Promise<void> {
     if (!this.db) {
@@ -74,7 +74,7 @@ export class MongoDBAuthService implements IAuthService {
   async signUp(data: SignUpData): Promise<{ user: any; success: boolean; error?: string }> {
     try {
       await this.connect();
-      
+
       // Check if user already exists
       const existingUser = await this.userCollection.findOne({ email: data.email });
       if (existingUser) {
@@ -138,7 +138,7 @@ export class MongoDBAuthService implements IAuthService {
   async signIn(data: LoginData): Promise<{ user: any; success: boolean; error?: string }> {
     try {
       await this.connect();
-      
+
       // Find user
       const user = await this.userCollection.findOne({ email: data.email });
       if (!user) {
@@ -162,7 +162,7 @@ export class MongoDBAuthService implements IAuthService {
       // Create session
       const token = this.generateToken();
       const userId = user._id!.toString();
-      
+
       await this.sessionCollection.insertOne({
         userId,
         token,
@@ -203,7 +203,7 @@ export class MongoDBAuthService implements IAuthService {
         this.currentUserId = null;
         this.notifyAuthStateChanged(null);
       }
-      
+
       return { success: true };
     } catch (error: any) {
       return {
@@ -216,7 +216,7 @@ export class MongoDBAuthService implements IAuthService {
   async resetPassword(email: string): Promise<{ success: boolean; error?: string }> {
     try {
       await this.connect();
-      
+
       // Check if user exists
       const user = await this.userCollection.findOne({ email });
       if (!user) {
@@ -232,17 +232,17 @@ export class MongoDBAuthService implements IAuthService {
 
       await this.userCollection.updateOne(
         { email },
-        { 
-          $set: { 
+        {
+          $set: {
             resetToken,
-            resetExpires 
-          } 
+            resetExpires
+          }
         }
       );
 
       // In a real implementation, you would send an email with the reset token
       console.log(`Password reset token for ${email}: ${resetToken}`);
-      
+
       return {
         success: true
       };
@@ -257,7 +257,7 @@ export class MongoDBAuthService implements IAuthService {
   async updateUserProfile(userId: string, updates: { displayName?: string; email?: string }): Promise<{ success: boolean; error?: string }> {
     try {
       await this.connect();
-      
+
       const result = await this.userCollection.updateOne(
         { _id: new ObjectId(userId) },
         { $set: updates }
@@ -304,9 +304,9 @@ export class MongoDBAuthService implements IAuthService {
       }
 
       await this.connect();
-      
+
       const passwordHash = this.hashPassword(newPassword);
-      
+
       const result = await this.userCollection.updateOne(
         { _id: new ObjectId(this.currentUserId) },
         { $set: { passwordHash } }
@@ -335,7 +335,7 @@ export class MongoDBAuthService implements IAuthService {
 
     try {
       await this.connect();
-      
+
       const user = await this.userCollection.findOne({ _id: new ObjectId(this.currentUserId) });
       if (!user) {
         return null;
@@ -356,25 +356,25 @@ export class MongoDBAuthService implements IAuthService {
   async deleteAccount(userId: string): Promise<{ success: boolean; error?: string }> {
     try {
       await this.connect();
-      
+
       if (!this.db) {
         throw new Error('Database not connected');
       }
-      
+
       await this.userCollection.deleteOne({ _id: new ObjectId(userId) });
-      
+
       // Also delete related data
       await this.db.collection('transactions').deleteMany({ userId });
       await this.db.collection('wallets').deleteMany({ userId });
       await this.db.collection('budgets').deleteMany({ userId });
       await this.db.collection('aiCreditLogs').deleteMany({ userId });
       await this.sessionCollection.deleteMany({ userId });
-      
+
       if (this.currentUserId === userId) {
         this.currentUserId = null;
         this.notifyAuthStateChanged(null);
       }
-      
+
       return { success: true };
     } catch (error: any) {
       return {
@@ -386,10 +386,10 @@ export class MongoDBAuthService implements IAuthService {
 
   onAuthStateChanged(callback: (user: any) => void): () => void {
     this.authStateCallbacks.push(callback);
-    
+
     // Immediately call with current state
     this.getCurrentUser().then(callback);
-    
+
     // Return unsubscribe function
     return () => {
       const index = this.authStateCallbacks.indexOf(callback);

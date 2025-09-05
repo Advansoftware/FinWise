@@ -1,23 +1,23 @@
 // src/core/adapters/firebase/firebase.adapter.ts
 
-import { 
-  getFirestore, 
-  collection, 
-  doc, 
-  getDoc, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  query, 
-  where, 
-  orderBy, 
+import {
+  getFirestore,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  query,
+  where,
+  orderBy,
   runTransaction,
   Timestamp,
   increment
 } from 'firebase/firestore';
 import { getApp } from 'firebase/app';
-import { 
+import {
   IDatabaseAdapter,
   IUserRepository,
   ITransactionRepository,
@@ -35,11 +35,11 @@ class FirebaseUserRepository implements IUserRepository {
   async findById(id: string): Promise<UserProfile | null> {
     const docRef = doc(this.db, 'users', id);
     const docSnap = await getDoc(docRef);
-    
+
     if (!docSnap.exists()) {
       return null;
     }
-    
+
     const data = docSnap.data();
     return {
       uid: docSnap.id,
@@ -57,7 +57,7 @@ class FirebaseUserRepository implements IUserRepository {
       ...userData,
       createdAt: userData.createdAt || new Date().toISOString()
     });
-    
+
     return {
       uid: docRef.id,
       ...userData,
@@ -92,10 +92,10 @@ class FirebaseTransactionRepository implements ITransactionRepository {
       where('userId', '==', userId),
       orderBy('date', 'desc')
     );
-    
+
     const querySnapshot = await getDocs(q);
     const transactions: Transaction[] = [];
-    
+
     querySnapshot.forEach((doc) => {
       const data = doc.data();
       transactions.push({
@@ -113,18 +113,18 @@ class FirebaseTransactionRepository implements ITransactionRepository {
         toWalletId: data.toWalletId
       });
     });
-    
+
     return transactions;
   }
 
   async findById(id: string): Promise<Transaction | null> {
     const docRef = doc(this.db, 'transactions', id);
     const docSnap = await getDoc(docRef);
-    
+
     if (!docSnap.exists()) {
       return null;
     }
-    
+
     const data = docSnap.data();
     return {
       id: docSnap.id,
@@ -144,7 +144,7 @@ class FirebaseTransactionRepository implements ITransactionRepository {
 
   async create(transactionData: Omit<Transaction, 'id'>): Promise<Transaction> {
     const docRef = await addDoc(collection(this.db, 'transactions'), transactionData);
-    
+
     return {
       id: docRef.id,
       ...transactionData
@@ -170,10 +170,10 @@ class FirebaseTransactionRepository implements ITransactionRepository {
       where('date', '<=', endDate),
       orderBy('date', 'desc')
     );
-    
+
     const querySnapshot = await getDocs(q);
     const transactions: Transaction[] = [];
-    
+
     querySnapshot.forEach((doc) => {
       const data = doc.data();
       transactions.push({
@@ -191,7 +191,7 @@ class FirebaseTransactionRepository implements ITransactionRepository {
         toWalletId: data.toWalletId
       });
     });
-    
+
     return transactions;
   }
 }
@@ -205,10 +205,10 @@ class FirebaseWalletRepository implements IWalletRepository {
       where('userId', '==', userId),
       orderBy('createdAt', 'asc')
     );
-    
+
     const querySnapshot = await getDocs(q);
     const wallets: Wallet[] = [];
-    
+
     querySnapshot.forEach((doc) => {
       const data = doc.data();
       wallets.push({
@@ -220,18 +220,18 @@ class FirebaseWalletRepository implements IWalletRepository {
         createdAt: data.createdAt
       });
     });
-    
+
     return wallets;
   }
 
   async findById(id: string): Promise<Wallet | null> {
     const docRef = doc(this.db, 'wallets', id);
     const docSnap = await getDoc(docRef);
-    
+
     if (!docSnap.exists()) {
       return null;
     }
-    
+
     const data = docSnap.data();
     return {
       id: docSnap.id,
@@ -248,9 +248,9 @@ class FirebaseWalletRepository implements IWalletRepository {
       ...walletData,
       createdAt: walletData.createdAt || new Date().toISOString()
     };
-    
+
     const docRef = await addDoc(collection(this.db, 'wallets'), dataWithDefaults);
-    
+
     return {
       id: docRef.id,
       ...dataWithDefaults
@@ -285,10 +285,10 @@ class FirebaseBudgetRepository implements IBudgetRepository {
       where('userId', '==', userId),
       orderBy('createdAt', 'desc')
     );
-    
+
     const querySnapshot = await getDocs(q);
     const budgets: Budget[] = [];
-    
+
     querySnapshot.forEach((doc) => {
       const data = doc.data();
       budgets.push({
@@ -302,18 +302,18 @@ class FirebaseBudgetRepository implements IBudgetRepository {
         createdAt: data.createdAt
       });
     });
-    
+
     return budgets;
   }
 
   async findById(id: string): Promise<Budget | null> {
     const docRef = doc(this.db, 'budgets', id);
     const docSnap = await getDoc(docRef);
-    
+
     if (!docSnap.exists()) {
       return null;
     }
-    
+
     const data = docSnap.data();
     return {
       id: docSnap.id,
@@ -333,9 +333,9 @@ class FirebaseBudgetRepository implements IBudgetRepository {
       currentSpending: budgetData.currentSpending || 0,
       createdAt: budgetData.createdAt || new Date().toISOString()
     };
-    
+
     const docRef = await addDoc(collection(this.db, 'budgets'), dataWithDefaults);
-    
+
     return {
       id: docRef.id,
       ...dataWithDefaults
@@ -363,10 +363,10 @@ class FirebaseAICreditLogRepository implements IAICreditLogRepository {
       where('userId', '==', userId),
       orderBy('timestamp', 'desc')
     );
-    
+
     const querySnapshot = await getDocs(q);
     const logs: AICreditLog[] = [];
-    
+
     querySnapshot.forEach((doc) => {
       const data = doc.data();
       logs.push({
@@ -377,13 +377,13 @@ class FirebaseAICreditLogRepository implements IAICreditLogRepository {
         timestamp: data.timestamp
       });
     });
-    
+
     return logs;
   }
 
   async create(logData: Omit<AICreditLog, 'id'>): Promise<AICreditLog> {
     const docRef = await addDoc(collection(this.db, 'aiCreditLogs'), logData);
-    
+
     return {
       id: docRef.id,
       ...logData
@@ -398,10 +398,10 @@ class FirebaseAICreditLogRepository implements IAICreditLogRepository {
       where('timestamp', '<=', endDate),
       orderBy('timestamp', 'desc')
     );
-    
+
     const querySnapshot = await getDocs(q);
     const logs: AICreditLog[] = [];
-    
+
     querySnapshot.forEach((doc) => {
       const data = doc.data();
       logs.push({
@@ -412,7 +412,7 @@ class FirebaseAICreditLogRepository implements IAICreditLogRepository {
         timestamp: data.timestamp
       });
     });
-    
+
     return logs;
   }
 }
@@ -423,11 +423,11 @@ class FirebaseSettingsRepository implements ISettingsRepository {
   async findByUserId(userId: string): Promise<any> {
     const docRef = doc(this.db, 'users', userId, 'settings', 'ai');
     const docSnap = await getDoc(docRef);
-    
+
     if (!docSnap.exists()) {
       return null;
     }
-    
+
     return docSnap.data();
   }
 

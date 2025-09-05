@@ -56,11 +56,11 @@ export interface IDatabaseAdapter {
   budgets: IBudgetRepository;
   aiCreditLogs: IAICreditLogRepository;
   settings: ISettingsRepository;
-  
+
   // Connection management
   connect(): Promise<void>;
   disconnect(): Promise<void>;
-  
+
   // Transaction support
   withTransaction<T>(operation: () => Promise<T>): Promise<T>;
 }

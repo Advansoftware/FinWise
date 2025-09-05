@@ -1,7 +1,7 @@
 // src/core/adapters/mongodb/mongodb.adapter.ts
 
 import { MongoClient, Db, ObjectId, ClientSession } from 'mongodb';
-import { 
+import {
   IDatabaseAdapter,
   IUserRepository,
   ITransactionRepository,
@@ -14,12 +14,12 @@ import { Transaction, Wallet, Budget, UserProfile } from '@/lib/types';
 import { AICreditLog } from '@/ai/ai-types';
 
 class MongoUserRepository implements IUserRepository {
-  constructor(private db: Db) {}
+  constructor(private db: Db) { }
 
   async findById(id: string): Promise<UserProfile | null> {
     const user = await this.db.collection('users').findOne({ _id: new ObjectId(id) });
     if (!user) return null;
-    
+
     return {
       uid: user._id.toString(),
       email: user.email,
@@ -36,7 +36,7 @@ class MongoUserRepository implements IUserRepository {
       ...userData,
       createdAt: userData.createdAt || new Date().toISOString()
     });
-    
+
     return {
       uid: result.insertedId.toString(),
       ...userData,
@@ -64,14 +64,14 @@ class MongoUserRepository implements IUserRepository {
 }
 
 class MongoTransactionRepository implements ITransactionRepository {
-  constructor(private db: Db) {}
+  constructor(private db: Db) { }
 
   async findByUserId(userId: string): Promise<Transaction[]> {
     const transactions = await this.db.collection('transactions')
       .find({ userId })
       .sort({ date: -1 })
       .toArray();
-    
+
     return transactions.map(t => ({
       id: t._id.toString(),
       userId: t.userId,
@@ -91,7 +91,7 @@ class MongoTransactionRepository implements ITransactionRepository {
   async findById(id: string): Promise<Transaction | null> {
     const transaction = await this.db.collection('transactions').findOne({ _id: new ObjectId(id) });
     if (!transaction) return null;
-    
+
     return {
       id: transaction._id.toString(),
       userId: transaction.userId,
@@ -110,7 +110,7 @@ class MongoTransactionRepository implements ITransactionRepository {
 
   async create(transactionData: Omit<Transaction, 'id'>): Promise<Transaction> {
     const result = await this.db.collection('transactions').insertOne(transactionData);
-    
+
     return {
       id: result.insertedId.toString(),
       ...transactionData
@@ -137,7 +137,7 @@ class MongoTransactionRepository implements ITransactionRepository {
       })
       .sort({ date: -1 })
       .toArray();
-    
+
     return transactions.map(t => ({
       id: t._id.toString(),
       userId: t.userId,
@@ -156,14 +156,14 @@ class MongoTransactionRepository implements ITransactionRepository {
 }
 
 class MongoWalletRepository implements IWalletRepository {
-  constructor(private db: Db) {}
+  constructor(private db: Db) { }
 
   async findByUserId(userId: string): Promise<Wallet[]> {
     const wallets = await this.db.collection('wallets')
       .find({ userId })
       .sort({ createdAt: 1 })
       .toArray();
-    
+
     return wallets.map(w => ({
       id: w._id.toString(),
       userId: w.userId,
@@ -177,7 +177,7 @@ class MongoWalletRepository implements IWalletRepository {
   async findById(id: string): Promise<Wallet | null> {
     const wallet = await this.db.collection('wallets').findOne({ _id: new ObjectId(id) });
     if (!wallet) return null;
-    
+
     return {
       id: wallet._id.toString(),
       userId: wallet.userId,
@@ -193,7 +193,7 @@ class MongoWalletRepository implements IWalletRepository {
       ...walletData,
       createdAt: walletData.createdAt || new Date().toISOString()
     });
-    
+
     return {
       id: result.insertedId.toString(),
       ...walletData,
@@ -222,14 +222,14 @@ class MongoWalletRepository implements IWalletRepository {
 }
 
 class MongoBudgetRepository implements IBudgetRepository {
-  constructor(private db: Db) {}
+  constructor(private db: Db) { }
 
   async findByUserId(userId: string): Promise<Budget[]> {
     const budgets = await this.db.collection('budgets')
       .find({ userId })
       .sort({ createdAt: -1 })
       .toArray();
-    
+
     return budgets.map(b => ({
       id: b._id.toString(),
       userId: b.userId,
@@ -245,7 +245,7 @@ class MongoBudgetRepository implements IBudgetRepository {
   async findById(id: string): Promise<Budget | null> {
     const budget = await this.db.collection('budgets').findOne({ _id: new ObjectId(id) });
     if (!budget) return null;
-    
+
     return {
       id: budget._id.toString(),
       userId: budget.userId,
@@ -264,9 +264,9 @@ class MongoBudgetRepository implements IBudgetRepository {
       currentSpending: budgetData.currentSpending || 0,
       createdAt: budgetData.createdAt || new Date().toISOString()
     };
-    
+
     const result = await this.db.collection('budgets').insertOne(dataWithDefaults);
-    
+
     return {
       id: result.insertedId.toString(),
       ...dataWithDefaults
@@ -287,14 +287,14 @@ class MongoBudgetRepository implements IBudgetRepository {
 }
 
 class MongoAICreditLogRepository implements IAICreditLogRepository {
-  constructor(private db: Db) {}
+  constructor(private db: Db) { }
 
   async findByUserId(userId: string): Promise<AICreditLog[]> {
     const logs = await this.db.collection('aiCreditLogs')
       .find({ userId })
       .sort({ timestamp: -1 })
       .toArray();
-    
+
     return logs.map(l => ({
       id: l._id.toString(),
       userId: l.userId,
@@ -306,7 +306,7 @@ class MongoAICreditLogRepository implements IAICreditLogRepository {
 
   async create(logData: Omit<AICreditLog, 'id'>): Promise<AICreditLog> {
     const result = await this.db.collection('aiCreditLogs').insertOne(logData);
-    
+
     return {
       id: result.insertedId.toString(),
       ...logData
@@ -321,7 +321,7 @@ class MongoAICreditLogRepository implements IAICreditLogRepository {
       })
       .sort({ timestamp: -1 })
       .toArray();
-    
+
     return logs.map(l => ({
       id: l._id.toString(),
       userId: l.userId,
@@ -333,7 +333,7 @@ class MongoAICreditLogRepository implements IAICreditLogRepository {
 }
 
 class MongoSettingsRepository implements ISettingsRepository {
-  constructor(private db: Db) {}
+  constructor(private db: Db) { }
 
   async findByUserId(userId: string): Promise<any> {
     const settings = await this.db.collection('settings').findOne({ userId });
@@ -399,7 +399,7 @@ export class MongoDBAdapter implements IDatabaseAdapter {
     }
 
     const session = this.client.startSession();
-    
+
     try {
       return await session.withTransaction(async () => {
         return await operation();
