@@ -1,8 +1,8 @@
 # Fase 1: Instalação de dependências
 FROM node:20-alpine AS deps
 WORKDIR /app
-COPY package.json ./
-RUN npm install
+COPY package.json package-lock.json ./
+RUN npm ci --only=production
 
 # Fase 2: Build da aplicação
 FROM node:20-alpine AS builder

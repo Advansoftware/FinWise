@@ -16,7 +16,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
+    console.log('🔧 Getting database adapter...');
     const db = await getDatabaseAdapter();
+    console.log('✅ Database adapter obtained:', !!db);
+
+    if (!db) {
+      return NextResponse.json(
+        { error: 'Database adapter not available' },
+        { status: 500 }
+      );
+    }
+
+    console.log('🔧 Checking db.transactions:', !!db.transactions);
 
     switch (collection) {
       case 'transactions':

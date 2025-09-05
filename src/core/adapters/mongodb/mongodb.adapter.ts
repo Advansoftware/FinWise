@@ -442,6 +442,7 @@ export class MongoDBAdapter implements IDatabaseAdapter {
       throw new Error('MONGODB_URI environment variable is not set');
     }
 
+    console.log('🔧 Connecting to MongoDB...');
     this.client = new MongoClient(uri);
     await this.client.connect();
     this.db = this.client.db(dbName);
@@ -455,6 +456,8 @@ export class MongoDBAdapter implements IDatabaseAdapter {
     this.aiCreditLogs = new MongoAICreditLogRepository(this.db);
     this.settings = new MongoSettingsRepository(this.db);
     this.payments = new MongoPaymentRepository(this.db);
+
+    console.log('✅ MongoDB connected and repositories initialized');
   }
 
   async disconnect(): Promise<void> {

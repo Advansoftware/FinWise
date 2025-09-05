@@ -64,7 +64,6 @@ export class StripePaymentAdapter implements IPaymentService {
         success_url: `${appUrl}/billing?success=true`,
         cancel_url: `${appUrl}/billing?canceled=true`,
         customer_email: userEmail,
-        customer_creation: 'always',
         metadata: { userId },
       };
 
