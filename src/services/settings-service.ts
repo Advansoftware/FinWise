@@ -1,7 +1,7 @@
 // src/services/settings-service.ts
 'use server';
 
-import { AICredential } from '@/lib/types';
+import { AICredential, OpenAIModel } from '@/lib/types';
 import { getAdminApp } from '@/lib/firebase-admin';
 
 // This service will now act as a server-side reader for settings,
@@ -12,10 +12,10 @@ import { getAdminApp } from '@/lib/firebase-admin';
 const GASTOMETRIA_AI_CREDENTIAL_ID = 'gastometria-ai-default';
 
 const gastometriaAICredential = {
-    id: GASTOMETRIA_AI_CREDENTIAL_ID,
-    name: 'Gastometria AI',
-    provider: 'gastometria',
-    isReadOnly: true,
+  id: GASTOMETRIA_AI_CREDENTIAL_ID,
+  name: 'Gastometria AI',
+  provider: 'gastometria',
+  isReadOnly: true,
 } as const;
 
 // Default AI settings for fallback ONLY.
@@ -32,31 +32,31 @@ const DEFAULT_AI_FALLBACK_CREDENTIAL: AICredential = {
  * This allows the default "Gastometria AI" to be powered by any supported provider.
  */
 function getDefaultAICredentialFromEnv(): AICredential {
-    const provider = process.env.DEFAULT_AI_PROVIDER || 'googleai';
+  const provider = process.env.DEFAULT_AI_PROVIDER || 'googleai';
 
-    switch (provider) {
-        case 'openai':
-            return {
-                ...gastometriaAICredential,
-                provider: 'openai',
-                openAIModel: process.env.DEFAULT_OPENAI_MODEL || 'gpt-4o',
-                openAIApiKey: process.env.OPENAI_API_KEY
-            };
-        case 'ollama':
-            return {
-                ...gastometriaAICredential,
-                provider: 'ollama',
-                ollamaModel: process.env.DEFAULT_OLLAMA_MODEL || 'llama3',
-                ollamaServerAddress: process.env.DEFAULT_OLLAMA_URL || 'http://127.0.0.1:11434',
-            };
-        case 'googleai':
-        default:
-             return {
-                ...gastometriaAICredential,
-                provider: 'googleai',
-                googleAIApiKey: process.env.GEMINI_API_KEY,
-            };
-    }
+  switch (provider) {
+    case 'openai':
+      return {
+        ...gastometriaAICredential,
+        provider: 'openai',
+        openAIModel: (process.env.DEFAULT_OPENAI_MODEL || 'gpt-4o') as OpenAIModel,
+        openAIApiKey: process.env.OPENAI_API_KEY
+      };
+    case 'ollama':
+      return {
+        ...gastometriaAICredential,
+        provider: 'ollama',
+        ollamaModel: process.env.DEFAULT_OLLAMA_MODEL || 'llama3',
+        ollamaServerAddress: process.env.DEFAULT_OLLAMA_URL || 'http://127.0.0.1:11434',
+      };
+    case 'googleai':
+    default:
+      return {
+        ...gastometriaAICredential,
+        provider: 'googleai',
+        googleAIApiKey: process.env.GEMINI_API_KEY,
+      };
+  }
 }
 
 
@@ -72,14 +72,14 @@ export async function getActiveAICredential(userId: string): Promise<AICredentia
     const settingsRef = adminDb.doc(`users/${userId}/settings/ai`);
     const docSnap = await settingsRef.get();
 
-    if (docSnap.exists()) {
+    if (docSnap.exists) {
       const settings = docSnap.data();
       if (settings && settings.activeCredentialId && settings.credentials) {
         // If the active credential is the default Gastometria AI, construct it from env
         if (settings.activeCredentialId === GASTOMETRIA_AI_CREDENTIAL_ID) {
           return getDefaultAICredentialFromEnv();
         }
-        
+
         // Otherwise, find the user-defined credential
         const activeCredential = settings.credentials.find((c: AICredential) => c.id === settings.activeCredentialId);
         if (activeCredential) {
@@ -88,10 +88,10 @@ export async function getActiveAICredential(userId: string): Promise<AICredentia
         }
       }
     }
-    
+
     // If no specific setting is found, default to Gastometria AI constructed from env
     return getDefaultAICredentialFromEnv();
-    
+
   } catch (error) {
     console.error("Error getting AI settings from Firestore with Admin SDK:", error);
     // In case of error (e.g., permissions), return defaults to avoid breaking the app

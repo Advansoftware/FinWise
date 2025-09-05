@@ -25,11 +25,11 @@ User's transactions:
 export async function generateSpendingTip(input: SpendingTipInput, credential: AICredential) {
     const configuredAI = createConfiguredAI(credential);
     const model = getModelReference(credential);
-    
+
     const prompt = configuredAI.definePrompt({
         name: 'generateSpendingTipPrompt',
-        input: { schema: SpendingTipInputSchema },
-        output: { schema: SpendingTipOutputSchema },
+        input: { schema: SpendingTipInputSchema as any },
+        output: { schema: SpendingTipOutputSchema as any },
         model: model,
         prompt: promptTemplate
     });

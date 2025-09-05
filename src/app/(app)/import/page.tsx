@@ -17,6 +17,7 @@ import { suggestCategoryForItemAction } from '@/services/ai-actions';
 import { useAuth } from '@/hooks/use-auth';
 import { usePlan } from '@/hooks/use-plan';
 import { ProUpgradeCard } from '@/components/pro-upgrade-card';
+import { ProUpgradeButton } from '@/components/pro-upgrade-button';
 import { useWallets } from '@/hooks/use-wallets';
 
 type ParsedTransaction = Omit<Transaction, 'id' | 'walletId'> & { walletId?: string };
@@ -25,14 +26,18 @@ type FileStage = 'upload' | 'mapping' | 'categorizing' | 'confirm' | 'importing'
 
 const REQUIRED_FIELDS: (keyof ParsedTransaction)[] = ['date', 'item', 'amount'];
 
-const MAPPABLE_FIELDS: Record<keyof Omit<Transaction, 'id' | 'type' | 'walletId' | 'toWalletId'>, string> = {
+const MAPPABLE_FIELDS: Record<keyof Omit<Transaction, 'id'>, string> = {
+    userId: 'ID do Usuário',
     date: 'Data*',
     item: 'Item/Descrição*',
     amount: 'Valor*',
-    category: 'Categoria',
+    category: 'Categoria*',
     subcategory: 'Subcategoria',
     establishment: 'Estabelecimento',
     quantity: 'Quantidade',
+    type: 'Tipo',
+    walletId: 'Carteira',
+    toWalletId: 'Carteira Destino',
 };
 
 export default function ImportPage() {
@@ -41,7 +46,7 @@ export default function ImportPage() {
     const [parsedData, setParsedData] = useState<any[]>([]);
     const [headers, setHeaders] = useState<string[]>([]);
     const [fieldMapping, setFieldMapping] = useState<Record<keyof ParsedTransaction, string>>({
-        date: '', item: '', amount: '', category: '', subcategory: '', quantity: '', establishment: '', type: 'expense', walletId: ''
+        userId: '', date: '', item: '', amount: '', category: '', subcategory: '', quantity: '', establishment: '', type: 'expense', walletId: '', toWalletId: ''
     });
     const [transactionsToImport, setTransactionsToImport] = useState<ParsedTransaction[]>([]);
     const [stage, setStage] = useState<FileStage>('upload');
@@ -136,6 +141,7 @@ export default function ImportPage() {
             transactionList = Array.isArray(transactionList) ? transactionList : [transactionList];
 
             const transactions = transactionList.map((t: any): ParsedTransaction => ({
+                userId: '', // será preenchido depois
                 date: new Date(`${t.DTPOSTED.slice(0, 4)}-${t.DTPOSTED.slice(4, 6)}-${t.DTPOSTED.slice(6, 8)}T12:00:00Z`).toISOString(),
                 item: t.MEMO,
                 amount: Math.abs(parseFloat(t.TRNAMT)),
@@ -261,7 +267,7 @@ export default function ImportPage() {
         setFileType(null);
         setParsedData([]);
         setHeaders([]);
-        setFieldMapping({ date: '', item: '', amount: '', category: '', subcategory: '', quantity: '', establishment: '', type: 'expense', walletId: '' });
+        setFieldMapping({ userId: '', date: '', item: '', amount: '', category: '', subcategory: '', quantity: '', establishment: '', type: 'expense', walletId: '', toWalletId: '' });
         setTransactionsToImport([]);
         setIsParsing(false);
         setIsCategorizing(false);

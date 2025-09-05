@@ -18,7 +18,7 @@ import { Transaction, TransactionCategory } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { SingleDatePicker } from "../single-date-picker";
-import { useTransactions } from "@/hooks/use-transactions.tsx";
+import { useTransactions } from "@/hooks/use-transactions";
 import { Switch } from "../ui/switch";
 import { cn } from "@/lib/utils";
 import { useWallets } from "@/hooks/use-wallets";
@@ -42,7 +42,7 @@ export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTra
     if (transaction) {
       setFormState({
         ...transaction,
-        date: transaction.date ? new Date(transaction.date) : new Date(),
+        date: transaction.date || new Date().toISOString(),
       });
     }
   }, [transaction]);
@@ -75,7 +75,7 @@ export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTra
     try {
         const updates: Partial<Transaction> = {
             ...formState,
-            date: (formState.date as Date).toISOString(),
+            date: new Date(formState.date || new Date()).toISOString(),
             amount: Number(formState.amount),
             quantity: Number(formState.quantity),
         };
@@ -152,7 +152,7 @@ export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTra
                 <div className="grid grid-cols-4 items-center gap-4">
                     <Label htmlFor="date" className="text-right">Data</Label>
                     <div className="col-span-3">
-                        <SingleDatePicker date={formState.date as Date} setDate={(d) => handleInputChange('date', d)} />
+                        <SingleDatePicker date={new Date(formState.date || new Date())} setDate={(d) => handleInputChange('date', d?.toISOString() || new Date().toISOString())} />
                     </div>
                 </div>
                 <div className="grid grid-cols-4 items-center gap-4">

@@ -26,9 +26,9 @@ import {
   GenerateAutomaticBudgetsOutput,
   PredictFutureBalanceInput,
   PredictFutureBalanceOutput,
-  AICreditLogAction,
-  Transaction
+  AICreditLogAction
 } from '@/ai/ai-types';
+import { Transaction } from '@/lib/types';
 import { getActiveAICredential } from './settings-service';
 import { consumeAICredits } from './credits-service';
 import { generateSpendingTip } from '@/ai/flows/ai-powered-spending-tips';
@@ -45,13 +45,13 @@ import { createConfiguredAI, getModelReference } from '@/ai/genkit';
 import { AICredential } from '@/lib/types';
 
 async function getCredentialAndHandleCredits(userId: string, cost: number, action: AICreditLogAction, isFreeAction: boolean = false): Promise<any> {
-    const credential = await getActiveAICredential(userId);
+  const credential = await getActiveAICredential(userId);
 
-    if (credential.provider === 'gastometria' || (!credential.provider && process.env.DEFAULT_AI_PROVIDER)) {
-        await consumeAICredits(userId, cost, action, isFreeAction);
-    }
-    
-    return credential;
+  if (credential.provider === 'gastometria' || (!credential.provider && process.env.DEFAULT_AI_PROVIDER)) {
+    await consumeAICredits(userId, cost, action, isFreeAction);
+  }
+
+  return credential;
 }
 
 
@@ -60,7 +60,7 @@ async function getCredentialAndHandleCredits(userId: string, cost: number, actio
 export async function getSpendingTip(transactions: any, userId: string, forceRefresh: boolean = false): Promise<string> {
   const cost = forceRefresh ? 1 : 0;
   const credential = await getCredentialAndHandleCredits(userId, cost, 'Dica Rápida', !forceRefresh);
-  
+
   try {
     const result = await generateSpendingTip({
       transactions: JSON.stringify(transactions, null, 2)
@@ -84,8 +84,8 @@ export async function getFinancialProfile(input: FinancialProfileInput, userId: 
 
     const prompt = configuredAI.definePrompt({
       name: 'financialProfilePrompt',
-      input: { schema: FinancialProfileInputSchema },
-      output: { schema: FinancialProfileOutputSchema },
+      input: { schema: FinancialProfileInputSchema as any },
+      output: { schema: FinancialProfileOutputSchema as any },
       model: modelRef,
       prompt: `Você é um analista financeiro sagaz e positivo. Sua tarefa é criar um perfil financeiro para o usuário, incluindo um **título criativo** e uma **descrição**.
 
@@ -132,8 +132,8 @@ export async function analyzeTransactionsAction(transactions: Transaction[], use
 
     const prompt = configuredAI.definePrompt({
       name: 'analyzeTransactionsPrompt',
-      input: { schema: AnalyzeTransactionsInputSchema },
-      output: { schema: AnalyzeTransactionsOutputSchema },
+      input: { schema: AnalyzeTransactionsInputSchema as any },
+      output: { schema: AnalyzeTransactionsOutputSchema as any },
       model: modelRef,
       prompt: `You are a meticulous financial auditor. Analyze this small batch of transactions and provide a brief analysis in markdown. Look for anomalies (e.g., unusually high amounts), patterns (e.g., frequent small purchases), or potential recategorization (e.g., a "Padaria" purchase in "Restaurante" could be "Supermercado"). Be concise. All output must be in Brazilian Portuguese.
 

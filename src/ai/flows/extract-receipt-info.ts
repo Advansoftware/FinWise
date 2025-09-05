@@ -28,11 +28,11 @@ export async function extractReceiptInfo(input: ReceiptInfoInput, credential: AI
     const configuredAI = createConfiguredAI(credential);
     // Para extração de imagem, sempre usar um modelo com capacidade de visão.
     const model = credential.provider === 'openai' ? 'openai/gpt-4-vision-preview' : 'googleai/gemini-1.5-flash-latest';
-    
+
     const extractReceiptInfoPrompt = configuredAI.definePrompt({
         name: 'extractReceiptInfoPrompt',
-        input: {schema: ReceiptInfoInputSchema},
-        output: {schema: ReceiptInfoOutputSchema},
+        input: { schema: ReceiptInfoInputSchema as any },
+        output: { schema: ReceiptInfoOutputSchema as any },
         model: model,
         prompt: promptTemplate,
     });

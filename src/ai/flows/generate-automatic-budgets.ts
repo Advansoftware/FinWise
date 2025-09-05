@@ -34,11 +34,11 @@ const promptTemplate = `Você é um consultor financeiro pessoal que ajuda usuá
 export async function generateAutomaticBudgets(input: GenerateAutomaticBudgetsInput, credential: AICredential) {
     const configuredAI = createConfiguredAI(credential);
     const model = getModelReference(credential);
-    
+
     const generateBudgetsPrompt = configuredAI.definePrompt({
         name: 'generateAutomaticBudgetsPrompt',
-        input: {schema: GenerateAutomaticBudgetsInputSchema},
-        output: {schema: GenerateAutomaticBudgetsOutputSchema},
+        input: { schema: GenerateAutomaticBudgetsInputSchema as any },
+        output: { schema: GenerateAutomaticBudgetsOutputSchema as any },
         model: model,
         prompt: promptTemplate,
     });

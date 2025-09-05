@@ -33,11 +33,11 @@ Sua análise deve ser:
 export async function generateMonthlyReport(input: GenerateReportInput, credential: AICredential) {
     const configuredAI = createConfiguredAI(credential);
     const model = getModelReference(credential);
-    
+
     const generateReportPrompt = configuredAI.definePrompt({
         name: 'generateMonthlyReportPrompt',
-        input: {schema: GenerateReportInputSchema},
-        output: {schema: GenerateReportOutputSchema},
+        input: { schema: GenerateReportInputSchema as any },
+        output: { schema: GenerateReportOutputSchema as any },
         model: model,
         prompt: promptTemplate,
     });

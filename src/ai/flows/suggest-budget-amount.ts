@@ -34,15 +34,15 @@ export async function suggestBudgetAmount(input: SuggestBudgetInput, credential:
 
   const prompt = configuredAI.definePrompt({
     name: 'suggestBudgetPrompt',
-    input: { schema: SuggestBudgetInputSchema },
-    output: { schema: SuggestBudgetOutputSchema },
+    input: { schema: SuggestBudgetInputSchema as any },
+    output: { schema: SuggestBudgetOutputSchema as any },
     model: model,
     prompt: promptTemplate,
   });
 
   const { output } = await prompt(input);
   if (!output) {
-      throw new Error("Failed to suggest budget amount.");
+    throw new Error("Failed to suggest budget amount.");
   }
   return output;
 }

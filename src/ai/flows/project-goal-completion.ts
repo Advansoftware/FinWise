@@ -58,8 +58,8 @@ export async function projectGoalCompletion(input: ProjectGoalCompletionInput, c
 
   const prompt = configuredAI.definePrompt({
     name: 'projectGoalPrompt',
-    input: { schema: ProjectGoalCompletionInputSchema },
-    output: { schema: ProjectGoalCompletionOutputSchema },
+    input: { schema: ProjectGoalCompletionInputSchema as any },
+    output: { schema: ProjectGoalCompletionOutputSchema as any },
     model: model,
     prompt: promptTemplate,
   });
@@ -67,7 +67,7 @@ export async function projectGoalCompletion(input: ProjectGoalCompletionInput, c
   const { output } = await prompt(input);
 
   if (!output) {
-      throw new Error("Failed to project goal completion.");
+    throw new Error("Failed to project goal completion.");
   }
 
   return output;

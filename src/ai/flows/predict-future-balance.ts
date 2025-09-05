@@ -45,7 +45,7 @@ Seja pragmático e baseie sua análise nos dados fornecidos.
 export async function predictFutureBalance(input: PredictFutureBalanceInput, credential: AICredential) {
     const configuredAI = createConfiguredAI(credential);
     const model = getModelReference(credential);
-    
+
     // Enrich the prompt with current date context
     const now = new Date();
     const currentDayOfMonth = now.getDate();
@@ -53,14 +53,14 @@ export async function predictFutureBalance(input: PredictFutureBalanceInput, cre
     const daysRemainingInMonth = lastDayOfMonth - currentDayOfMonth;
 
     const finalPrompt = promptTemplate
-      .replace('{currentDayOfMonth}', String(currentDayOfMonth))
-      .replace('{daysRemainingInMonth}', String(daysRemainingInMonth))
-      .replace('{currentBalance}', String(input.currentBalance));
+        .replace('{currentDayOfMonth}', String(currentDayOfMonth))
+        .replace('{daysRemainingInMonth}', String(daysRemainingInMonth))
+        .replace('{currentBalance}', String(input.currentBalance));
 
     const predictBalancePrompt = configuredAI.definePrompt({
         name: 'predictFutureBalancePrompt',
-        input: {schema: PredictFutureBalanceInputSchema},
-        output: {schema: PredictFutureBalanceOutputSchema},
+        input: { schema: PredictFutureBalanceInputSchema as any },
+        output: { schema: PredictFutureBalanceOutputSchema as any },
         model: model,
         prompt: finalPrompt,
     });

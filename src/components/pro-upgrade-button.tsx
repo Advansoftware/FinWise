@@ -18,7 +18,7 @@ interface ProUpgradeButtonProps {
 export function ProUpgradeButton({ children, requiredPlan, tooltipContent, className }: ProUpgradeButtonProps) {
     const { plan, isLoading } = usePlan();
     
-    const planHierarchy = { 'Básico': 0, 'Pro': 1, 'Plus': 2 };
+    const planHierarchy = { 'Básico': 0, 'Pro': 1, 'Plus': 2, 'Infinity': 3 };
 
     const hasAccess = !isLoading && planHierarchy[plan] >= planHierarchy[requiredPlan];
 

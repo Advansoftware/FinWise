@@ -132,11 +132,13 @@ export function CreateBudgetDialog({ children, initialData }: CreateBudgetDialog
       if (initialData) {
         await updateBudget(initialData.id, {
             ...data,
+            category: data.category as TransactionCategory,
             amount: Number(data.amount),
         });
       } else {
         await addBudget({
             ...data,
+            category: data.category as TransactionCategory,
             amount: Number(data.amount),
             period: 'monthly'
         });

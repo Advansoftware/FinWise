@@ -22,8 +22,9 @@ import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import { useTransactions } from "@/hooks/use-transactions";
-import { Transaction } from "@/lib/types";
+import { Transaction, TransactionCategory } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
+import { useWallets } from "@/hooks/use-wallets";
 import { usePlan } from "@/hooks/use-plan";
 import { useAISettings } from "@/hooks/use-ai-settings";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
@@ -43,6 +44,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
     const [isSaving, startSaving] = useTransition();
     const { addTransaction } = useTransactions();
     const { user } = useAuth();
+    const { wallets } = useWallets();
     const { isPlus } = usePlan();
     const { displayedCredentials, activeCredentialId } = useAISettings();
     const [selectedAI, setSelectedAI] = useState(activeCredentialId || 'finwise-ai-default');
@@ -167,11 +169,16 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
             try {
                 const transactionPromises = extractedData.items.map((item: any) => {
                      const newTransaction: Omit<Transaction, 'id'> = {
+                        userId: user?.uid || '',
                         item: item.item,
                         amount: parseFloat(item.amount),
                         date: extractedData.date ? new Date(extractedData.date).toISOString() : new Date().toISOString(),
-                        category: "Supermercado", // Categoria padrão
+                        category: "Supermercado" as TransactionCategory,
                         type: "expense",
+                        walletId: wallets[0]?.id || '',
+                        quantity: 1,
+                        establishment: '',
+                        subcategory: ''
                     };
                     return addTransaction(newTransaction);
                 });

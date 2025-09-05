@@ -58,9 +58,9 @@ export async function chatWithTransactions(input: ChatInput, credential: AICrede
 
     const chatWithTransactionsPrompt = configuredAI.definePrompt({
         name: 'chatWithTransactionsPrompt',
-        input: { schema: ChatInputSchema },
-        output: { schema: ChatOutputSchema },
-        model: modelRef, 
+        input: { schema: ChatInputSchema as any },
+        output: { schema: ChatOutputSchema as any },
+        model: modelRef,
         prompt: promptTemplate,
     });
 

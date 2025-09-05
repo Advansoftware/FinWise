@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { z } from "zod";
+import { TransactionCategory } from "@/lib/types";
 import {
   Dialog,
   DialogContent,
@@ -58,7 +59,7 @@ export function AutomaticBudgetDialog({ isOpen, setIsOpen, suggestedBudgets }: A
         const creationPromises = selectedBudgets.map(b => 
             addBudget({
                 name: b.name,
-                category: b.category,
+                category: b.category as TransactionCategory,
                 amount: b.amount,
                 period: 'monthly'
             })

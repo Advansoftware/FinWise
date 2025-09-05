@@ -28,11 +28,11 @@ JSON dos Relatórios Mensais:
 export async function generateAnnualReport(input: GenerateAnnualReportInput, credential: AICredential) {
     const configuredAI = createConfiguredAI(credential);
     const model = getModelReference(credential);
-    
+
     const generateReportPrompt = configuredAI.definePrompt({
         name: 'generateAnnualReportPrompt',
-        input: {schema: GenerateAnnualReportInputSchema},
-        output: {schema: GenerateAnnualReportOutputSchema},
+        input: { schema: GenerateAnnualReportInputSchema as any },
+        output: { schema: GenerateAnnualReportOutputSchema as any },
         model: model,
         prompt: promptTemplate,
     });

@@ -11,7 +11,8 @@ import {
   useMemo,
 } from 'react';
 import { User as FirebaseUser } from 'firebase/auth';
-import { getAuthAdapter, IAuthAdapter } from '@/services/auth/auth-service';
+import { getAuthAdapter } from '@/services/auth/auth-service';
+import { IAuthAdapter } from '@/services/auth/auth-adapter';
 import { UserProfile } from '@/lib/types';
 import { getDatabaseAdapter } from '@/services/database/database-service';
 

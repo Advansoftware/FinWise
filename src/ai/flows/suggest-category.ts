@@ -34,11 +34,11 @@ Responda apenas com a categoria e a subcategoria mais prováveis. Se não tiver 
 export async function suggestCategoryForItem(input: SuggestCategoryInput, credential: AICredential) {
     const configuredAI = createConfiguredAI(credential);
     const model = getModelReference(credential);
-    
+
     const suggestCategoryPrompt = configuredAI.definePrompt({
         name: 'suggestCategoryPrompt',
-        input: {schema: SuggestCategoryInputSchema},
-        output: {schema: SuggestCategoryOutputSchema},
+        input: { schema: SuggestCategoryInputSchema as any },
+        output: { schema: SuggestCategoryOutputSchema as any },
         model: model,
         prompt: promptTemplate,
     });

@@ -19,7 +19,8 @@ import { Transaction, TransactionCategory } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { SingleDatePicker } from "../single-date-picker";
-import { useTransactions } from "@/hooks/use-transactions.tsx";
+import { useTransactions } from "@/hooks/use-transactions";
+import { useAuth } from "@/hooks/use-auth";
 import { useWallets } from "@/hooks/use-wallets";
 import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from "../ui/popover";
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
@@ -35,6 +36,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
   const { toast } = useToast();
   const { addTransaction, categories, subcategories, allTransactions } = useTransactions();
   const { wallets } = useWallets();
+  const { user } = useAuth();
   
   const [formState, setFormState] = useState({
       item: '',
@@ -156,6 +158,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
     setIsSubmitting(true);
     try {
         const newTransaction: Omit<Transaction, 'id'> = {
+            userId: user?.uid || '',
             ...formState,
             item: finalItem,
             amount: parseFloat(formState.amount),
@@ -163,7 +166,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
             quantity: parseInt(formState.quantity),
             walletId,
             toWalletId: formState.type === 'transfer' ? formState.toWalletId : undefined,
-            category: formState.type === 'transfer' ? 'Transferência' : formState.category,
+            category: formState.type === 'transfer' ? 'Transferência' : (formState.category || 'Outros') as TransactionCategory,
         };
         await addTransaction(newTransaction);
 
@@ -274,7 +277,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                                         value={itemInputValue} 
                                         onChange={(e) => setItemInputValue(e.target.value)}
                                         autoComplete="off"
-                                        disabled={formState.type === 'transfer'}
+                                        disabled={(formState.type as any) === 'transfer'}
                                     />
                                 </PopoverAnchor>
                                 <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" onOpenAutoFocus={(e) => e.preventDefault()}>
