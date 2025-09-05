@@ -22,6 +22,9 @@ COPY --from=builder /app/public ./public
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
+# Copia o arquivo de credenciais do Firebase se existir
+COPY firebase-credentials.json* ./
+
 EXPOSE 9002
 
 ENV PORT=9002

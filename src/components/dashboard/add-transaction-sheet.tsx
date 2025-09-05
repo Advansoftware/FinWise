@@ -26,7 +26,6 @@ import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from "../ui/po
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
 import { cn } from "@/lib/utils";
 import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group";
-import { FormDescription } from "../ui/form";
 
 
 export function AddTransactionSheet({ children }: { children: React.ReactNode }) {
@@ -199,142 +198,175 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
   return (
     <Sheet open={isOpen} onOpenChange={(open) => { setIsOpen(open); if(!open) resetForm(); }}>
       <SheetTrigger asChild>{children}</SheetTrigger>
-      <SheetContent className="flex flex-col">
-        <SheetHeader>
+      <SheetContent className="w-full sm:max-w-md flex flex-col h-full sm:h-auto">
+        <SheetHeader className="space-y-2 pb-4">
           <SheetTitle>Adicionar Nova Transação</SheetTitle>
           <SheetDescription>
             Insira os detalhes da sua movimentação.
           </SheetDescription>
         </SheetHeader>
-        <div className="flex-1 overflow-y-auto pr-6 -mr-6">
-            <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label className="text-right">Tipo</Label>
-                     <ToggleGroup type="single" value={formState.type} onValueChange={(value) => handleInputChange('type', value || 'expense')} className="col-span-3">
-                        <ToggleGroupItem value="expense" aria-label="Despesa" className="w-full data-[state=on]:bg-destructive/80 data-[state=on]:text-white">Despesa</ToggleGroupItem>
-                        <ToggleGroupItem value="income" aria-label="Receita" className="w-full data-[state=on]:bg-emerald-600 data-[state=on]:text-white">Receita</ToggleGroupItem>
-                        <ToggleGroupItem value="transfer" aria-label="Transferência" className="w-full data-[state=on]:bg-sky-600 data-[state=on]:text-white">Transfer</ToggleGroupItem>
-                    </ToggleGroup>
-                </div>
+        
+        <div className="flex-1 overflow-y-auto space-y-6">
+            {/* Tipo de Transação */}
+            <div className="space-y-3">
+                <Label className="text-sm font-medium">Tipo</Label>
+                <ToggleGroup type="single" value={formState.type} onValueChange={(value) => handleInputChange('type', value || 'expense')} className="grid grid-cols-3 gap-2">
+                    <ToggleGroupItem value="expense" aria-label="Despesa" className="data-[state=on]:bg-destructive/80 data-[state=on]:text-white">
+                        Despesa
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="income" aria-label="Receita" className="data-[state=on]:bg-emerald-600 data-[state=on]:text-white">
+                        Receita
+                    </ToggleGroupItem>
+                    <ToggleGroupItem value="transfer" aria-label="Transferência" className="data-[state=on]:bg-sky-600 data-[state=on]:text-white">
+                        Transfer
+                    </ToggleGroupItem>
+                </ToggleGroup>
+                <p className="text-xs text-muted-foreground">
+                    {typeDescriptions[formState.type]}
+                </p>
+            </div>
 
-                <div className="col-start-2 col-span-3">
-                    <FormDescription className="text-xs -mt-2">
-                        {typeDescriptions[formState.type]}
-                    </FormDescription>
-                </div>
+            {/* Valor */}
+            <div className="space-y-2">
+                <Label htmlFor="amount" className="text-sm font-medium">Valor</Label>
+                <Input 
+                    id="amount" 
+                    type="number" 
+                    placeholder="ex: 50.00" 
+                    value={formState.amount} 
+                    onChange={(e) => handleInputChange('amount', e.target.value)} 
+                />
+            </div>
 
+            {/* Data */}
+            <div className="space-y-2">
+                <Label htmlFor="date" className="text-sm font-medium">Data</Label>
+                <SingleDatePicker date={formState.date} setDate={(d) => handleInputChange('date', d)} />
+            </div>
 
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="amount" className="text-right">Valor</Label>
-                    <Input id="amount" type="number" placeholder="ex: 50.00" className="col-span-3" value={formState.amount} onChange={(e) => handleInputChange('amount', e.target.value)} />
-                </div>
-                 <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="date" className="text-right">Data</Label>
-                    <div className="col-span-3">
-                    <SingleDatePicker date={formState.date} setDate={(d) => handleInputChange('date', d)} />
-                    </div>
-                </div>
-
-                {formState.type === 'transfer' ? (
-                  <>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="wallet" className="text-right">De</Label>
+            {formState.type === 'transfer' ? (
+                <>
+                    {/* Carteira de Origem */}
+                    <div className="space-y-2">
+                        <Label htmlFor="wallet" className="text-sm font-medium">De</Label>
                         <Select value={formState.walletId} onValueChange={(value) => handleInputChange('walletId', value)}>
-                            <SelectTrigger className="col-span-3">
+                            <SelectTrigger>
                                 <SelectValue placeholder="Carteira de Origem" />
                             </SelectTrigger>
                             <SelectContent>
                                 {wallets.map(wallet => (
-                                <SelectItem key={wallet.id} value={wallet.id}>{wallet.name}</SelectItem>
+                                    <SelectItem key={wallet.id} value={wallet.id}>{wallet.name}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="toWallet" className="text-right">Para</Label>
-                         <Select value={formState.toWalletId} onValueChange={(value) => handleInputChange('toWalletId', value)}>
-                            <SelectTrigger className="col-span-3">
+
+                    {/* Carteira de Destino */}
+                    <div className="space-y-2">
+                        <Label htmlFor="toWallet" className="text-sm font-medium">Para</Label>
+                        <Select value={formState.toWalletId} onValueChange={(value) => handleInputChange('toWalletId', value)}>
+                            <SelectTrigger>
                                 <SelectValue placeholder="Carteira de Destino" />
                             </SelectTrigger>
                             <SelectContent>
-                                 {wallets.filter(w => w.id !== formState.walletId).map(wallet => (
-                                <SelectItem key={wallet.id} value={wallet.id}>{wallet.name}</SelectItem>
+                                {wallets.filter(w => w.id !== formState.walletId).map(wallet => (
+                                    <SelectItem key={wallet.id} value={wallet.id}>{wallet.name}</SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
                     </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="item" className="text-right">Item</Label>
-                         <div className="col-span-3">
-                            <Popover open={isItemPopoverOpen} onOpenChange={setIsItemPopoverOpen}>
-                                <PopoverAnchor>
-                                    <Input 
-                                        id="item" 
-                                        placeholder="ex: Café" 
-                                        value={itemInputValue} 
-                                        onChange={(e) => setItemInputValue(e.target.value)}
-                                        autoComplete="off"
-                                        disabled={(formState.type as any) === 'transfer'}
-                                    />
-                                </PopoverAnchor>
-                                <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" onOpenAutoFocus={(e) => e.preventDefault()}>
-                                    <Command>
-                                        <CommandList>
-                                            <CommandEmpty>Nenhuma sugestão encontrada.</CommandEmpty>
-                                            <CommandGroup>
+                </>
+            ) : (
+                <>
+                    {/* Item */}
+                    <div className="space-y-2">
+                        <Label htmlFor="item" className="text-sm font-medium">Item</Label>
+                        <Popover open={isItemPopoverOpen} onOpenChange={setIsItemPopoverOpen}>
+                            <PopoverAnchor>
+                                <Input 
+                                    id="item" 
+                                    placeholder="ex: Café" 
+                                    value={itemInputValue} 
+                                    onChange={(e) => setItemInputValue(e.target.value)}
+                                    autoComplete="off"
+                                    disabled={(formState.type as any) === 'transfer'}
+                                />
+                            </PopoverAnchor>
+                            <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" onOpenAutoFocus={(e) => e.preventDefault()}>
+                                <Command>
+                                    <CommandList>
+                                        <CommandEmpty>Nenhuma sugestão encontrada.</CommandEmpty>
+                                        <CommandGroup>
                                             {filteredItems.map((transaction) => (
                                                 <CommandItem key={transaction.id} onSelect={() => handleItemSelect(transaction)}>
                                                     {transaction.item}
                                                 </CommandItem>
                                             ))}
-                                            </CommandGroup>
-                                        </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
-                        </div>
+                                        </CommandGroup>
+                                    </CommandList>
+                                </Command>
+                            </PopoverContent>
+                        </Popover>
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="establishment" className="text-right">Estabelecimento</Label>
-                        <Input id="establishment" placeholder="ex: Padaria do Zé" className="col-span-3" value={formState.establishment} onChange={(e) => handleInputChange('establishment', e.target.value)} />
+
+                    {/* Estabelecimento */}
+                    <div className="space-y-2">
+                        <Label htmlFor="establishment" className="text-sm font-medium">Estabelecimento</Label>
+                        <Input 
+                            id="establishment" 
+                            placeholder="ex: Padaria do Zé" 
+                            value={formState.establishment} 
+                            onChange={(e) => handleInputChange('establishment', e.target.value)} 
+                        />
                     </div>
-                     <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="quantity" className="text-right">Qtd.</Label>
-                        <Input id="quantity" type="number" placeholder="ex: 1" className="col-span-3" value={formState.quantity} onChange={(e) => handleInputChange('quantity', e.target.value)} />
+
+                    {/* Quantidade */}
+                    <div className="space-y-2">
+                        <Label htmlFor="quantity" className="text-sm font-medium">Quantidade</Label>
+                        <Input 
+                            id="quantity" 
+                            type="number" 
+                            placeholder="ex: 1" 
+                            value={formState.quantity} 
+                            onChange={(e) => handleInputChange('quantity', e.target.value)} 
+                        />
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="wallet" className="text-right">Carteira</Label>
+
+                    {/* Carteira */}
+                    <div className="space-y-2">
+                        <Label htmlFor="wallet" className="text-sm font-medium">Carteira</Label>
                         <Select value={formState.walletId} onValueChange={(value) => handleInputChange('walletId', value)}>
-                        <SelectTrigger className="col-span-3">
-                            <SelectValue placeholder="Selecione uma carteira" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {wallets.map(wallet => (
-                            <SelectItem key={wallet.id} value={wallet.id}>{wallet.name}</SelectItem>
-                            ))}
-                        </SelectContent>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecione uma carteira" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {wallets.map(wallet => (
+                                    <SelectItem key={wallet.id} value={wallet.id}>{wallet.name}</SelectItem>
+                                ))}
+                            </SelectContent>
                         </Select>
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="category" className="text-right">Categoria</Label>
+
+                    {/* Categoria */}
+                    <div className="space-y-2">
+                        <Label htmlFor="category" className="text-sm font-medium">Categoria</Label>
                         <Select value={formState.category} onValueChange={(value) => handleInputChange('category', value as TransactionCategory)}>
-                        <SelectTrigger className="col-span-3">
-                            <SelectValue placeholder="Selecione uma categoria" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {categories.filter(c => c !== 'Transferência').map(cat => (
-                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                            ))}
-                        </SelectContent>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecione uma categoria" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {categories.filter(c => c !== 'Transferência').map(cat => (
+                                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                ))}
+                            </SelectContent>
                         </Select>
                     </div>
-                    <div className="grid grid-cols-4 items-center gap-4">
-                        <Label htmlFor="subcategory" className="text-right">Subcategoria</Label>
+
+                    {/* Subcategoria */}
+                    <div className="space-y-2">
+                        <Label htmlFor="subcategory" className="text-sm font-medium">Subcategoria</Label>
                         <Select value={formState.subcategory} onValueChange={(v) => handleInputChange('subcategory', v)} disabled={!formState.category || availableSubcategories.length === 0}>
-                            <SelectTrigger className="col-span-3">
+                            <SelectTrigger>
                                 <SelectValue placeholder={availableSubcategories.length > 0 ? "Selecione" : "Nenhuma"} />
                             </SelectTrigger>
                             <SelectContent>
@@ -344,12 +376,16 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                             </SelectContent>
                         </Select>
                     </div>
-                  </>
-                )}
-            </div>
+                </>
+            )}
         </div>
-        <SheetFooter>
-            <Button onClick={handleSubmit} disabled={isSubmitting || wallets.length === 0}>
+        
+        <SheetFooter className="pt-6">
+            <Button 
+                onClick={handleSubmit} 
+                disabled={isSubmitting || wallets.length === 0}
+                className="w-full"
+            >
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {wallets.length === 0 ? "Crie uma carteira primeiro" : "Salvar Transação"}
             </Button>

@@ -32,6 +32,7 @@ interface TransactionsContextType {
   deleteCategory: (categoryName: TransactionCategory) => Promise<void>;
   addSubcategory: (categoryName: TransactionCategory, subcategoryName: string) => Promise<void>;
   deleteSubcategory: (categoryName: TransactionCategory, subcategoryName: string) => Promise<void>;
+  refreshTransactions: () => Promise<void>;
 }
 
 const TransactionsContext = createContext<TransactionsContextType | undefined>(undefined);
@@ -77,12 +78,28 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     loadData();
   }, [user, authLoading]);
   
+  const refreshTransactions = async () => {
+    if (!user) return;
+    
+    try {
+      const fetchedTransactions = await apiClient.get('transactions', user.uid);
+      setAllTransactions(fetchedTransactions);
+    } catch (error) {
+      console.error('Error refreshing transactions:', error);
+    }
+  };
+  
   const addTransaction = async (transaction: Omit<Transaction, 'id' | 'userId'>) => {
     if (!user) throw new Error("User not authenticated");
 
     const transactionWithUser = { ...transaction, userId: user.uid };
     const newTransaction = await apiClient.create('transactions', transactionWithUser);
     setAllTransactions(prev => [...prev, newTransaction]);
+    
+    // Refresh to ensure data consistency
+    setTimeout(() => {
+      refreshTransactions();
+    }, 1000);
   };
 
   const updateTransaction = async (transactionId: string, updates: Partial<Transaction>, updateAllMatching: boolean, originalItemName: string) => {
@@ -234,6 +251,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     deleteCategory,
     addSubcategory,
     deleteSubcategory,
+    refreshTransactions,
   };
 
   return (

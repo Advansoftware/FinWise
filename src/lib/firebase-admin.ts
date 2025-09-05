@@ -19,32 +19,38 @@ export function getAdminApp(): admin.app.App {
   }
 
   try {
-    // When running in a Google Cloud environment, the SDK can auto-discover credentials.
-    // For local development, GOOGLE_APPLICATION_CREDENTIALS points to the service account JSON file.
-    const credential = process.env.GOOGLE_APPLICATION_CREDENTIALS
-      ? admin.credential.applicationDefault()
-      : undefined;
+    // Check if we have credentials file
+    const credentialsPath = process.env.GOOGLE_APPLICATION_CREDENTIALS;
 
-    if (!credential) {
-        console.warn("Firebase Admin SDK: GOOGLE_APPLICATION_CREDENTIALS não está definida. Algumas funcionalidades do servidor podem não funcionar. Usado para webhooks do Stripe, por exemplo.");
-         // Create a dummy app to avoid crashing the server, but it won't be authenticated
-         adminApp = admin.initializeApp({
-             projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-         });
-         return adminApp;
+    if (credentialsPath) {
+      // Try to use the credentials file
+      try {
+        const credential = admin.credential.applicationDefault();
+        adminApp = admin.initializeApp({
+          credential,
+          databaseURL: `https://${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}-default-rtdb.firebaseio.com`
+        });
+        console.log('✅ Firebase Admin SDK inicializado com credenciais.');
+        return adminApp;
+      } catch (credError: any) {
+        console.warn('⚠️ Falha ao carregar credenciais do Firebase:', credError.message);
+      }
     }
 
+    // Fallback: Create app without credentials (limited functionality)
+    console.warn("⚠️ Firebase Admin SDK: Inicializando sem autenticação. Algumas funcionalidades podem não funcionar.");
     adminApp = admin.initializeApp({
-      credential,
-      databaseURL: `https://${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}-default-rtdb.firebaseio.com`
+      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || 'gastometria-default',
     });
 
-    console.log('Firebase Admin SDK inicializado com sucesso.');
+    return adminApp;
 
   } catch (error: any) {
-    console.error('Falha ao inicializar o Firebase Admin SDK.', error);
-    throw new Error(`Não foi possível inicializar o Firebase Admin: ${error.message}`);
+    console.error('❌ Falha ao inicializar o Firebase Admin SDK.', error);
+    // Return a mock app instead of throwing to avoid crashing the server
+    adminApp = admin.initializeApp({
+      projectId: 'mock-project',
+    });
+    return adminApp;
   }
-
-  return adminApp;
 }

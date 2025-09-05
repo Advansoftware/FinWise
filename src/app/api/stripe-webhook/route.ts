@@ -19,43 +19,74 @@ const creditsMap: Record<UserPlan, number> = {
 
 // Helper function to update user plan in MongoDB
 async function updateUserPlanInDb(userId: string, updates: Record<string, any>) {
+    console.log(`[Webhook DB] Updating user ${userId} with data:`, updates);
+
     const { db } = await connectToDatabase();
     const usersCollection = db.collection('users');
-    
+
     const userObjectId = new ObjectId(userId);
 
-    await usersCollection.updateOne(
+    // Check if user exists first
+    const userExists = await usersCollection.findOne({ _id: userObjectId });
+    if (!userExists) {
+        console.error(`[Webhook DB] ❌ User ${userId} not found in database!`);
+        throw new Error(`User ${userId} not found`);
+    }
+
+    console.log(`[Webhook DB] User found, current plan: ${userExists.plan}, updating to: ${updates.plan}`);
+
+    const result = await usersCollection.updateOne(
         { _id: userObjectId },
         { $set: updates }
     );
+
+    console.log(`[Webhook DB] Update result:`, {
+        matched: result.matchedCount,
+        modified: result.modifiedCount,
+        acknowledged: result.acknowledged
+    });
+
+    if (result.modifiedCount === 0) {
+        console.warn(`[Webhook DB] ⚠️ No documents were modified for user ${userId}`);
+    } else {
+        console.log(`[Webhook DB] ✅ Successfully updated user ${userId} plan`);
+    }
 }
 
 async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) {
+    console.log(`[Webhook] Processing checkout.session.completed: ${session.id}`);
+
     if (session.mode !== 'subscription') {
         console.log(`[Webhook] Skipped checkout session ${session.id} as it's not a subscription.`);
         return;
     }
-    
+
     const subscriptionId = session.subscription as string;
     if (!subscriptionId) {
         console.error(`[Webhook Critical Error] Subscription ID missing from completed checkout session. Session ID: ${session.id}`);
         return;
     }
-    
+
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-    
+    console.log(`[Webhook] Retrieved subscription ${subscription.id}, metadata:`, subscription.metadata);
+
     // The userId should be in the subscription metadata.
     // We also check the customer metadata from the session as a fallback.
     const userId = subscription.metadata.userId || session.metadata?.userId;
     const plan = subscription.metadata.plan as UserPlan;
     const customerId = subscription.customer as string;
 
+    console.log(`[Webhook] Extracted data: userId=${userId}, plan=${plan}, customerId=${customerId}`);
+
     if (!userId || !plan) {
         console.error(`[Webhook Critical Error] userId or plan is missing from subscription metadata. Subscription ID: ${subscription.id}`);
+        console.error(`[Webhook] Available metadata:`, subscription.metadata);
         return;
     }
 
     try {
+        console.log(`[Webhook] Updating user ${userId} to plan ${plan} with ${creditsMap[plan]} credits`);
+
         await updateUserPlanInDb(userId, {
             plan: plan,
             aiCredits: creditsMap[plan] || 0,
@@ -63,11 +94,11 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
             stripeSubscriptionId: subscription.id,
             stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
         });
-        
-        console.log(`[Webhook] Successfully processed subscription ${subscription.id} for user ${userId} on plan ${plan}.`);
+
+        console.log(`[Webhook] ✅ Successfully processed subscription ${subscription.id} for user ${userId} on plan ${plan}.`);
 
     } catch (error) {
-        console.error(`[Webhook] Error handling checkout.session.completed for user ${userId}:`, error);
+        console.error(`[Webhook] ❌ Error handling checkout.session.completed for user ${userId}:`, error);
     }
 }
 
@@ -78,9 +109,9 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     const userId = subscription.metadata.userId;
     if (!userId) {
         console.error(`[Webhook] Cancellation Error: userId is missing from subscription metadata. Subscription ID: ${subscription.id}`);
-        return; 
+        return;
     }
-    
+
     try {
         await updateUserPlanInDb(userId, {
             plan: 'Básico',
@@ -146,10 +177,10 @@ export async function POST(req: NextRequest) {
 
     try {
         switch (event.type) {
-             case 'checkout.session.completed':
+            case 'checkout.session.completed':
                 await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
                 break;
-            
+
             case 'customer.subscription.updated':
                 await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
                 break;
@@ -157,9 +188,9 @@ export async function POST(req: NextRequest) {
             case 'customer.subscription.deleted':
                 await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
                 break;
-            
+
             default:
-                // Unhandled event type
+            // Unhandled event type
         }
     } catch (error) {
         console.error("[Webhook Error] Error processing webhook:", error);

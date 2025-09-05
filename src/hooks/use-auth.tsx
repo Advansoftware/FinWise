@@ -19,6 +19,7 @@ interface AuthContextType {
   signup: (email: string, password: string, name: string) => Promise<UserProfile>;
   logout: () => Promise<void>;
   updateUser: (updates: Partial<UserProfile>) => Promise<void>;
+  refreshUser: () => Promise<UserProfile | null>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -26,6 +27,18 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // Refresh user data from server
+  const refreshUser = useCallback(async () => {
+    try {
+      const currentUser = await authClient.getCurrentUser();
+      setUser(currentUser);
+      return currentUser;
+    } catch (error) {
+      console.error('Error refreshing user:', error);
+      return null;
+    }
+  }, []);
 
   // Check for existing user on mount
   useEffect(() => {
@@ -43,6 +56,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     checkUser();
   }, []);
+
+  // Periodic refresh to catch plan changes
+  useEffect(() => {
+    if (!user) return;
+
+    const interval = setInterval(() => {
+      refreshUser();
+    }, 30000); // Refresh every 30 seconds
+
+    // Listen for manual refresh events (e.g., after payment completion)
+    const handlePlanUpdate = () => {
+      console.log('[Auth] Manual plan update triggered');
+      refreshUser();
+    };
+
+    window.addEventListener('planUpdated', handlePlanUpdate);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('planUpdated', handlePlanUpdate);
+    };
+  }, [user, refreshUser]);
 
   const login = useCallback(async (email: string, password: string): Promise<UserProfile> => {
     setLoading(true);
@@ -114,6 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     signup,
     logout,
     updateUser,
+    refreshUser,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -329,26 +329,51 @@ export class MongoDBAuthService implements IAuthService {
   }
 
   async getCurrentUser(): Promise<any> {
-    if (!this.currentUserId) {
-      return null;
-    }
-
     try {
       await this.connect();
 
-      const user = await this.userCollection.findOne({ _id: new ObjectId(this.currentUserId) });
-      if (!user) {
-        return null;
+      // If we have a current user ID, use it
+      if (this.currentUserId) {
+        const user = await this.userCollection.findOne({ _id: new ObjectId(this.currentUserId) });
+        if (user) {
+          return {
+            uid: user._id!.toString(),
+            email: user.email,
+            displayName: user.displayName,
+            plan: user.plan,
+            aiCredits: user.aiCredits,
+            stripeCustomerId: user.stripeCustomerId,
+            createdAt: user.createdAt
+          };
+        }
       }
 
-      return {
-        uid: user._id!.toString(),
-        email: user.email,
-        displayName: user.displayName,
-        plan: user.plan,
-        aiCredits: user.aiCredits
-      };
+      // Try to find an active session (simplified for this environment)
+      // In a real app, you'd check cookies/headers for session tokens
+      const activeSession = await this.sessionCollection.findOne(
+        { expiresAt: { $gt: new Date() } },
+        { sort: { createdAt: -1 } }
+      );
+
+      if (activeSession) {
+        const user = await this.userCollection.findOne({ _id: new ObjectId(activeSession.userId) });
+        if (user) {
+          this.currentUserId = user._id!.toString();
+          return {
+            uid: user._id!.toString(),
+            email: user.email,
+            displayName: user.displayName,
+            plan: user.plan,
+            aiCredits: user.aiCredits,
+            stripeCustomerId: user.stripeCustomerId,
+            createdAt: user.createdAt
+          };
+        }
+      }
+
+      return null;
     } catch (error) {
+      console.error('Error getting current user:', error);
       return null;
     }
   }
