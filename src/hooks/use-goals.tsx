@@ -6,6 +6,7 @@ import { Goal, Transaction } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { apiClient } from "@/lib/api-client";
+import { getSmartGoalPrediction } from "@/services/ai-automation-service";
 
 interface GoalsContextType {
   goals: Goal[];
@@ -117,8 +118,9 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     await apiClient.create('transactions', { ...newTransaction, userId: user.uid });
     
     // Update goal amount
+    const updatedGoal = { ...goal, currentAmount: goal.currentAmount + amount };
     await apiClient.update('goals', goalId, { 
-      currentAmount: goal.currentAmount + amount 
+      currentAmount: updatedGoal.currentAmount 
     });
     
     // Update wallet balance  
@@ -133,6 +135,25 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     setGoals(prev => 
       prev.map(g => g.id === goalId ? { ...g, currentAmount: g.currentAmount + amount } : g)
     );
+
+    // 🤖 Gerar previsão de IA para meta (1x por dia)
+    try {
+      // Buscar transações do usuário para a IA
+      const userTransactions = await apiClient.get('transactions', user.uid);
+      const transactionsJson = JSON.stringify(userTransactions, null, 2);
+      
+      await getSmartGoalPrediction(goalId, {
+        goalName: updatedGoal.name,
+        targetAmount: updatedGoal.targetAmount,
+        currentAmount: updatedGoal.currentAmount,
+        targetDate: updatedGoal.targetDate,
+        monthlyDeposit: updatedGoal.monthlyDeposit,
+        transactions: transactionsJson,
+      }, user.uid);
+    } catch (error) {
+      console.log('Erro ao gerar previsão de meta:', error);
+      // Não interrompe o fluxo do depósito por erro na IA
+    }
 
     toast({ title: `Depósito de R$ ${amount.toFixed(2)} adicionado!` });
   };

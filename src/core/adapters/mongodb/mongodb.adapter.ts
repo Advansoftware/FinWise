@@ -446,6 +446,23 @@ class MongoAIGeneratedDataRepository implements IAIGeneratedDataRepository {
     return result?.data || null;
   }
 
+  async findByUserIdTypeAndDate(userId: string, type: string, date: string): Promise<any | null> {
+    const targetDate = new Date(date);
+    const startOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate());
+    const endOfDay = new Date(targetDate.getFullYear(), targetDate.getMonth(), targetDate.getDate() + 1);
+
+    const result = await this.db.collection('ai_generated_data').findOne({
+      userId,
+      type,
+      generatedAt: {
+        $gte: startOfDay,
+        $lt: endOfDay
+      }
+    });
+
+    return result?.data || null;
+  }
+
   async create(data: {
     userId: string;
     type: string;
@@ -453,6 +470,7 @@ class MongoAIGeneratedDataRepository implements IAIGeneratedDataRepository {
     generatedAt: Date;
     month: number;
     year: number;
+    relatedId?: string;
   }): Promise<void> {
     await this.db.collection('ai_generated_data').insertOne(data);
   }
@@ -464,6 +482,7 @@ class MongoAIGeneratedDataRepository implements IAIGeneratedDataRepository {
     generatedAt: Date;
     month: number;
     year: number;
+    relatedId?: string;
   }): Promise<void> {
     const now = new Date();
     const currentMonth = now.getMonth() + 1;

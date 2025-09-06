@@ -2,10 +2,10 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
+import { SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
 import { Home, History, Settings, FolderKanban, Upload, Gem, UserCircle, Target, Goal, Wallet, FileText } from 'lucide-react';
-import { useSidebar } from '@/components/ui/sidebar';
 import { cn } from '@/lib/utils';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const navItems = [
     { href: '/dashboard', label: 'Painel', icon: Home },
@@ -23,7 +23,15 @@ const navItems = [
 
 export function AppNav() {
     const pathname = usePathname();
-    const { state } = useSidebar();
+    const { state, setOpenMobile } = useSidebar();
+    const isMobile = useIsMobile();
+
+    const handleNavClick = () => {
+        // Fecha o sidebar apenas no mobile
+        if (isMobile) {
+            setOpenMobile(false);
+        }
+    };
 
     return (
         <SidebarMenu>
@@ -33,6 +41,7 @@ export function AppNav() {
                     <SidebarMenuItem key={item.href}>
                         <Link 
                             href={item.href} 
+                            onClick={handleNavClick}
                             className={cn(
                                 "flex items-center w-full px-3 py-2 text-sm rounded-md transition-colors hover:bg-accent hover:text-accent-foreground",
                                 isActive ? "bg-accent text-accent-foreground" : "text-muted-foreground",

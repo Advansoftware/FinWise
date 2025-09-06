@@ -60,6 +60,7 @@ export interface ISettingsRepository {
 export interface IAIGeneratedDataRepository {
   findByUserIdAndType(userId: string, type: string): Promise<any | null>;
   findLatestByUserIdAndType(userId: string, type: string): Promise<any | null>;
+  findByUserIdTypeAndDate(userId: string, type: string, date: string): Promise<any | null>;
   create(data: {
     userId: string;
     type: string;
@@ -67,6 +68,7 @@ export interface IAIGeneratedDataRepository {
     generatedAt: Date;
     month: number;
     year: number;
+    relatedId?: string; // Para vincular a metas específicas
   }): Promise<void>;
   replaceByUserIdAndType(userId: string, type: string, data: {
     userId: string;
@@ -75,6 +77,7 @@ export interface IAIGeneratedDataRepository {
     generatedAt: Date;
     month: number;
     year: number;
+    relatedId?: string;
   }): Promise<void>;
   deleteOldData(beforeDate: Date): Promise<void>;
 }

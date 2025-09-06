@@ -46,37 +46,27 @@ export default function DashboardPage() {
                     </p>
                 </div>
                 
-                {/* Action Buttons - Alinhados à direita */}
+                {/* Action Buttons - Mobile Stack, Desktop Side by Side */}
                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:justify-end">
-                    <AddTransactionSheet>
-                        <Button className="w-full sm:w-auto order-3 sm:order-1">
-                            <PlusCircle className="mr-2 h-4 w-4"/>
-                            Adicionar Transação
-                        </Button>
-                    </AddTransactionSheet>
-                    
-                    <AddTransactionSheet>
-                        <Button 
-                            variant="outline" 
-                            className="w-full sm:w-auto order-2"
-                        >
-                            <PlusCircle className="mr-2 h-4 w-4"/>
-                            Adicionar Transferência
-                        </Button>
-                    </AddTransactionSheet>
-                    
                     <ProUpgradeButton requiredPlan="Pro">
                        <ScanQRCodeDialog>
                            <Button 
                                variant="outline" 
                                disabled={!isPro}
-                               className="w-full sm:w-auto order-1 sm:order-3"
+                               className="w-full sm:w-auto order-1 sm:order-1"
                            >
                                 <ScanLine className="mr-2 h-4 w-4"/>
                                 Escanear Nota
                             </Button>
                         </ScanQRCodeDialog>
                     </ProUpgradeButton>
+                    
+                    <AddTransactionSheet>
+                        <Button className="w-full sm:w-auto order-2 sm:order-2">
+                            <PlusCircle className="mr-2 h-4 w-4"/>
+                            Adicionar Transação
+                        </Button>
+                    </AddTransactionSheet>
                 </div>
             </div>
 

@@ -19,7 +19,7 @@
 
 import { getDatabaseAdapter } from '@/core/services/service-factory';
 import { Transaction } from '@/lib/types';
-import { getSpendingTip, getFinancialProfile, generateMonthlyReportAction, generateAnnualReportAction, predictFutureBalanceAction } from './ai-actions';
+import { getSpendingTip, getFinancialProfile, generateMonthlyReportAction, generateAnnualReportAction, predictFutureBalanceAction, projectGoalCompletionAction } from './ai-actions';
 
 /**
  * Salva dado gerado automaticamente
@@ -196,6 +196,70 @@ export async function getSmartFutureBalance(
 }
 
 /**
+ * Gera previsão inteligente para meta (1x por dia quando há depósito)
+ */
+export async function getSmartGoalPrediction(
+  goalId: string,
+  goalData: any,
+  userId: string,
+  forceRefresh: boolean = false
+): Promise<any> {
+  const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+  const type = `goal_prediction_${goalId}`;
+
+  // Se forçar refresh, usa a função normal que consome créditos
+  if (forceRefresh) {
+    const prediction = await projectGoalCompletionAction(goalData, userId);
+
+    // Salva nova previsão
+    await saveGeneratedDataWithRelatedId(userId, type, prediction, goalId, true);
+    return prediction;
+  }
+
+  // Verifica se já foi gerada hoje
+  const db = await getDatabaseAdapter();
+  const todayPrediction = await db.aiGeneratedData.findByUserIdTypeAndDate(userId, type, today);
+  if (todayPrediction) {
+    return todayPrediction;
+  }
+
+  // Se não tem, gera primeira vez sem consumir créditos
+  const prediction = await projectGoalCompletionAction(goalData, userId);
+  await saveGeneratedDataWithRelatedId(userId, type, prediction, goalId);
+  return prediction;
+}
+
+/**
+ * Salva dado gerado com relatedId (para metas específicas)
+ */
+async function saveGeneratedDataWithRelatedId(
+  userId: string,
+  type: string,
+  data: any,
+  relatedId: string,
+  forceReplace: boolean = false
+): Promise<void> {
+  const db = await getDatabaseAdapter();
+  const now = new Date();
+  const currentMonth = now.getMonth() + 1;
+  const currentYear = now.getFullYear();
+
+  const dataToSave = {
+    userId,
+    type,
+    data,
+    generatedAt: now,
+    month: currentMonth,
+    year: currentYear,
+    relatedId
+  };
+
+  if (forceReplace) {
+    await db.aiGeneratedData.replaceByUserIdAndType(userId, type, dataToSave);
+  } else {
+    await db.aiGeneratedData.create(dataToSave);
+  }
+}/**
  * Limpa dados antigos (manter apenas últimos 6 meses)
  */
 export async function cleanupOldAIData(): Promise<void> {

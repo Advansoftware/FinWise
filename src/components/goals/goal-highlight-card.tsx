@@ -4,7 +4,7 @@
 import { useGoals } from "@/hooks/use-goals";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "../ui/card";
 import { Skeleton } from "../ui/skeleton";
-import { Target, PiggyBank, Sparkles } from "lucide-react";
+import { Target, PiggyBank, Sparkles, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { Button } from "../ui/button";
 import { Progress } from "../ui/progress";
@@ -12,7 +12,7 @@ import { AddDepositDialog } from "./add-deposit-dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useState, useEffect, useTransition, useMemo } from "react";
-import { projectGoalCompletionAction } from "@/services/ai-actions";
+import { getSmartGoalPrediction } from "@/services/ai-automation-service";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -37,17 +37,17 @@ export function GoalHighlightCard() {
 
     const transactionsJson = useMemo(() => JSON.stringify(allTransactions, null, 2), [allTransactions]);
 
-    // Carrega projeção apenas uma vez
+    // Carrega projeção usando sistema inteligente
     useEffect(() => {
-        if (user && allTransactions.length > 0 && firstGoal && firstGoal.currentAmount < firstGoal.targetAmount && !hasLoadedProjection) {
+        if (user && firstGoal && firstGoal.currentAmount < firstGoal.targetAmount && !hasLoadedProjection) {
             startProjecting(async () => {
                  try {
-                    const result = await projectGoalCompletionAction({
+                    const result = await getSmartGoalPrediction(firstGoal.id, {
                         goalName: firstGoal.name,
                         targetAmount: firstGoal.targetAmount,
                         currentAmount: firstGoal.currentAmount,
-                        monthlyDeposit: firstGoal.monthlyDeposit,
                         targetDate: firstGoal.targetDate,
+                        monthlyDeposit: firstGoal.monthlyDeposit,
                         transactions: transactionsJson,
                     }, user.uid);
                     setProjectionResult(result);
@@ -62,7 +62,32 @@ export function GoalHighlightCard() {
             setProjectionResult({ projection: "Meta concluída!" });
             setHasLoadedProjection(true);
         }
-    }, [firstGoal, user, hasLoadedProjection]); // Removido dependências que causavam re-renders
+    }, [firstGoal, user, hasLoadedProjection, transactionsJson]);
+
+    // Função para refresh manual da projeção
+    const refreshProjection = () => {
+        if (!user || !firstGoal) return;
+        
+        setHasLoadedProjection(false);
+        startProjecting(async () => {
+            try {
+                const result = await getSmartGoalPrediction(firstGoal.id, {
+                    goalName: firstGoal.name,
+                    targetAmount: firstGoal.targetAmount,
+                    currentAmount: firstGoal.currentAmount,
+                    targetDate: firstGoal.targetDate,
+                    monthlyDeposit: firstGoal.monthlyDeposit,
+                    transactions: transactionsJson,
+                }, user.uid, true); // forceRefresh = true
+                setProjectionResult(result);
+                setHasLoadedProjection(true);
+            } catch (e) {
+                console.error("Projection error:", e);
+                setProjectionResult({ projection: "Erro ao calcular." });
+                setHasLoadedProjection(true);
+            }
+        });
+    };
 
 
     if (isLoading) {
@@ -118,12 +143,25 @@ export function GoalHighlightCard() {
                     <p className="text-lg font-bold text-foreground">R$ {firstGoal.currentAmount.toFixed(2)}</p>
                     <p className="text-xs text-muted-foreground">de R$ {firstGoal.targetAmount.toFixed(2)}</p>
                 </div>
-                 <div className="text-xs text-muted-foreground h-3 flex items-center gap-1">
-                    <Sparkles className={cn("h-3 w-3 text-primary/80", isProjecting && "animate-pulse")} />
-                     {isProjecting ? (
-                        <span>Calculando...</span>
-                    ) : (
-                       getProjectionText()
+                 <div className="text-xs text-muted-foreground h-3 flex items-center gap-1 justify-between">
+                    <div className="flex items-center gap-1">
+                        <Sparkles className={cn("h-3 w-3 text-primary/80", isProjecting && "animate-pulse")} />
+                         {isProjecting ? (
+                            <span>Calculando...</span>
+                        ) : (
+                           getProjectionText()
+                        )}
+                    </div>
+                    {projectionResult && !isProjecting && (
+                        <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="h-4 w-4 p-0 text-muted-foreground hover:text-primary"
+                            onClick={refreshProjection}
+                            title="Atualizar previsão"
+                        >
+                            <RefreshCw className="h-3 w-3" />
+                        </Button>
                     )}
                 </div>
             </CardContent>

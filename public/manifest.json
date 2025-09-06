@@ -16,9 +16,25 @@
       "purpose": "any maskable"
     }
   ],
-  "theme_color": "#09090B",
+  "theme_color": "#7C3AED",
   "background_color": "#09090B",
-  "start_url": "/",
+  "start_url": "/dashboard",
   "display": "standalone",
-  "orientation": "portrait"
+  "orientation": "portrait",
+  "scope": "/",
+  "categories": [
+    "finance",
+    "productivity",
+    "business"
+  ],
+  "display_override": [
+    "standalone",
+    "minimal-ui"
+  ],
+  "edge_side_panel": {
+    "preferred_width": 400
+  },
+  "launch_handler": {
+    "client_mode": "navigate-existing"
+  }
 }
