@@ -23,15 +23,15 @@ interface TransactionCardListProps {
 export function TransactionCardList({ transactions }: TransactionCardListProps) {
   if (transactions.length === 0) {
     return (
-      <div className="text-center py-12 text-muted-foreground">
-        <p>Nenhuma transação encontrada.</p>
-        <p className="text-sm">Tente selecionar outro período ou filtro.</p>
+      <div className="text-center py-12 px-4 text-muted-foreground">
+        <p className="text-base sm:text-lg">Nenhuma transação encontrada.</p>
+        <p className="text-sm sm:text-base mt-2">Tente selecionar outro período ou filtro.</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3 sm:space-y-4">
       {transactions.map(transaction => (
         <TransactionCard key={transaction.id} transaction={transaction} />
       ))}
@@ -77,26 +77,28 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
           </AlertDialogContent>
       </AlertDialog>
 
-      <Card>
-        <CardHeader className="p-4">
+      <Card className="transition-colors hover:bg-muted/50">
+        <CardHeader className="p-3 sm:p-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className={cn("p-2 rounded-full",
+            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+              <div className={cn("p-1.5 sm:p-2 rounded-full shrink-0",
                 transaction.type === 'income' ? 'bg-emerald-500/20' : 'bg-secondary'
               )}>
                 {transaction.type === 'income' ? 
-                  <ArrowDown className="h-5 w-5 text-emerald-400"/> : 
-                  <CategoryIcon category={transaction.category} className="h-5 w-5" />
+                  <ArrowDown className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-400"/> : 
+                  <CategoryIcon category={transaction.category} className="h-4 w-4 sm:h-5 sm:w-5" />
                 }
               </div>
-              <div className="flex-1">
-                <p className="font-semibold">{transaction.item}</p>
-                {transaction.establishment && <p className="text-xs text-muted-foreground">{transaction.establishment}</p>}
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-sm sm:text-base truncate">{transaction.item}</p>
+                {transaction.establishment && (
+                  <p className="text-xs text-muted-foreground truncate">{transaction.establishment}</p>
+                )}
               </div>
             </div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8">
+                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
                   <MoreVertical className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
@@ -111,24 +113,33 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
             </DropdownMenu>
           </div>
         </CardHeader>
-        <CardContent className="p-4 pt-0">
-          <div className="flex items-end justify-between">
-            <div>
+        
+        <CardContent className="p-3 sm:p-4 pt-0">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <div className="min-w-0">
               <p className="text-xs text-muted-foreground">Valor</p>
-              <p className={cn("text-lg font-bold", 
+              <p className={cn("text-lg sm:text-xl font-bold", 
                 transaction.type === 'income' ? 'text-emerald-400' : 'text-red-400'
               )}>
                 {transaction.type === 'income' ? '+' : '-'}R$ {transaction.amount.toFixed(2)}
               </p>
             </div>
-            <div className="flex items-center gap-2">
-                <Badge variant="outline">{transaction.category}</Badge>
-                {transaction.subcategory && <Badge variant="secondary">{transaction.subcategory}</Badge>}
+            <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2">
+                <Badge variant="outline" className="text-xs">{transaction.category}</Badge>
+                {transaction.subcategory && (
+                  <Badge variant="secondary" className="text-xs">{transaction.subcategory}</Badge>
+                )}
             </div>
           </div>
         </CardContent>
-        <CardFooter className="p-4 text-xs text-muted-foreground bg-muted/50 rounded-b-lg">
-            {format(new Date(transaction.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+        
+        <CardFooter className="p-3 sm:p-4 text-xs text-muted-foreground bg-muted/30 rounded-b-lg">
+            <div className="flex items-center justify-between w-full">
+              <span>{format(new Date(transaction.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
+              {(transaction.quantity && transaction.quantity > 1) && (
+                <span className="text-xs">Qtd: {transaction.quantity}</span>
+              )}
+            </div>
         </CardFooter>
       </Card>
     </>

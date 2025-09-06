@@ -8,6 +8,7 @@ import { Transaction, TransactionCategory } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { apiClient } from "@/lib/api-client";
+import { offlineStorage } from "@/lib/offline-storage";
 
 type CategoryMap = Partial<Record<TransactionCategory, string[]>>;
 
@@ -33,6 +34,7 @@ interface TransactionsContextType {
   addSubcategory: (categoryName: TransactionCategory, subcategoryName: string) => Promise<void>;
   deleteSubcategory: (categoryName: TransactionCategory, subcategoryName: string) => Promise<void>;
   refreshTransactions: () => Promise<void>;
+  refreshOnPageVisit: () => Promise<void>;
 }
 
 const TransactionsContext = createContext<TransactionsContextType | undefined>(undefined);
@@ -75,17 +77,48 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       }
     };
 
+    // Online event listener for auto-sync
+    const handleOnline = async () => {
+      console.log('Back online - syncing data...');
+      await refreshOnPageVisit();
+    };
+
     loadData();
+    window.addEventListener('online', handleOnline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+    };
   }, [user, authLoading]);
   
   const refreshTransactions = async () => {
     if (!user) return;
     
     try {
-      const fetchedTransactions = await apiClient.get('transactions', user.uid);
-      setAllTransactions(fetchedTransactions);
+      if (navigator.onLine) {
+        // Online: fetch from server
+        const fetchedTransactions = await apiClient.get('transactions', user.uid);
+        setAllTransactions(fetchedTransactions);
+        
+        // Update offline storage
+        for (const transaction of fetchedTransactions) {
+          await offlineStorage.saveTransaction(transaction, true);
+        }
+      } else {
+        // Offline: load from local storage
+        const offlineTransactions = await offlineStorage.getTransactions(user.uid);
+        setAllTransactions(offlineTransactions);
+      }
     } catch (error) {
       console.error('Error refreshing transactions:', error);
+      
+      // Fallback to offline data if online request fails
+      try {
+        const offlineTransactions = await offlineStorage.getTransactions(user.uid);
+        setAllTransactions(offlineTransactions);
+      } catch (offlineError) {
+        console.error('Error loading offline transactions:', offlineError);
+      }
     }
   };
   
@@ -93,13 +126,41 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     if (!user) throw new Error("User not authenticated");
 
     const transactionWithUser = { ...transaction, userId: user.uid };
-    const newTransaction = await apiClient.create('transactions', transactionWithUser);
-    setAllTransactions(prev => [...prev, newTransaction]);
     
-    // Refresh to ensure data consistency
-    setTimeout(() => {
-      refreshTransactions();
-    }, 1000);
+    try {
+      if (navigator.onLine) {
+        // Online: save to server and update local state
+        const newTransaction = await apiClient.create('transactions', transactionWithUser);
+        setAllTransactions(prev => [newTransaction, ...prev]);
+        
+        // Also save to offline storage for caching
+        await offlineStorage.saveTransaction(newTransaction, true);
+      } else {
+        // Offline: save locally with temporary ID
+        const tempId = `temp-${Date.now()}-${Math.random()}`;
+        const offlineTransaction = { ...transactionWithUser, id: tempId };
+        
+        // Add to local state immediately
+        setAllTransactions(prev => [offlineTransaction, ...prev]);
+        
+        // Save to offline storage as unsynced
+        await offlineStorage.saveTransaction(offlineTransaction, false);
+        
+        // Queue for sync when online
+        await offlineStorage.addPendingAction({
+          type: 'create',
+          data: transactionWithUser
+        });
+        
+        toast({
+          title: "Salvo Offline",
+          description: "Transação será sincronizada quando voltar online.",
+        });
+      }
+    } catch (error) {
+      console.error('Error adding transaction:', error);
+      throw error;
+    }
   };
 
   const updateTransaction = async (transactionId: string, updates: Partial<Transaction>, updateAllMatching: boolean, originalItemName: string) => {
@@ -228,6 +289,20 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     }
   }, [filteredTransactions, selectedCategory]);
 
+  const refreshOnPageVisit = async () => {
+    // Esta função é chamada quando o usuário navega para páginas específicas
+    // para garantir que os dados estejam atualizados
+    if (navigator.onLine) {
+      await refreshTransactions();
+      
+      // Sync pending offline actions
+      await offlineStorage.syncWhenOnline();
+    } else {
+      // Load offline data
+      await refreshTransactions();
+    }
+  };
+
   const availableSubcategories = subcategories[selectedCategory as TransactionCategory] || [];
 
   const value: TransactionsContextType = {
@@ -252,6 +327,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     addSubcategory,
     deleteSubcategory,
     refreshTransactions,
+    refreshOnPageVisit,
   };
 
   return (

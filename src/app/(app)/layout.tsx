@@ -20,49 +20,66 @@ import { CreditsProvider } from "@/hooks/use-credits";
 import { GoalCompletionCelebration } from "@/components/goals/goal-celebration";
 import { useGoals } from "@/hooks/use-goals";
 import { AICreditIndicator } from "@/components/credits/ai-credit-indicator";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const { completedGoal, clearCompletedGoal } = useGoals();
+  const isMobile = useIsMobile();
 
   return (
-    <SidebarProvider defaultOpen={true}>
+    <SidebarProvider defaultOpen={!isMobile}>
        {completedGoal && <GoalCompletionCelebration goal={completedGoal} onComplete={clearCompletedGoal} />}
       <div className="flex min-h-screen">
-          <Sidebar className="flex flex-col">
-              <SidebarHeader>
-                  <div className="flex items-center justify-center h-12 group-data-[state=expanded]:justify-start group-data-[state=expanded]:gap-2">
-                      <Logo className="w-8 h-auto"/>
-                      <span className="text-lg font-semibold group-data-[state=collapsed]:hidden">Gastometria</span>
+          {/* Sidebar - Hidden on mobile by default */}
+          <Sidebar className="flex flex-col border-r">
+              <SidebarHeader className="border-b p-4">
+                  <div className="flex items-center gap-3 group-data-[state=collapsed]:justify-center">
+                      <Logo className="w-8 h-8 shrink-0"/>
+                      <span className="text-lg font-semibold group-data-[state=collapsed]:hidden">
+                        Gastometria
+                      </span>
                   </div>
               </SidebarHeader>
-              <SidebarContent className="flex-1 p-3">
-                <ScrollArea className="h-full">
+              <SidebarContent className="flex-1">
+                <ScrollArea className="h-full px-3 py-4">
                     <AppNav />
                 </ScrollArea>
               </SidebarContent>
-              <SidebarFooter>
+              <SidebarFooter className="border-t p-4">
                   <UserNav />
               </SidebarFooter>
           </Sidebar>
-          <main className="flex-1">
-              <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background/80 backdrop-blur-sm px-4 md:px-6 md:hidden">
-                  <div className="flex items-center gap-2">
-                      <SidebarTrigger/>
-                      <Logo className="w-8 h-8"/>
+
+          {/* Main Content */}
+          <main className="flex-1 flex flex-col min-w-0">
+              {/* Mobile Header */}
+              <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 lg:hidden">
+                  <div className="flex items-center gap-3">
+                      <SidebarTrigger className="shrink-0" />
+                      <Logo className="w-8 h-8 shrink-0"/>
+                      <span className="text-lg font-semibold">Gastometria</span>
                   </div>
-                  <div className="flex-1">
-                      {/* O título da página pode ir aqui */}
+                  <div className="flex-1" />
+                  <div className="lg:hidden">
+                      <UserNav />
                   </div>
-                  <UserNav />
               </header>
-              <ScrollArea className="h-[calc(100vh-theme(space.14))] md:h-screen">
-                <div className="flex-1 p-4 md:p-6">
+
+              {/* Page Content */}
+              <ScrollArea className="flex-1 h-[calc(100vh-3.5rem)] lg:h-screen">
+                <div className="container mx-auto px-4 py-4 lg:px-6 lg:py-6 max-w-7xl">
                     {children}
                 </div>
               </ScrollArea>
+
+              {/* Fixed Elements */}
               <PWAUpdater />
-              <div className="fixed bottom-4 right-4 sm:right-8 z-50 flex items-end gap-3">
-                <AICreditIndicator />
+              
+              {/* Floating Action Buttons - Mobile Optimized */}
+              <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-3">
+                <div className="flex items-center gap-2">
+                  <AICreditIndicator />
+                </div>
                 <ChatAssistant />
               </div>
           </main>
@@ -90,7 +107,6 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
       </PlanProvider>
   )
 }
-
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (

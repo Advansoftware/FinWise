@@ -36,45 +36,56 @@ export default function DashboardPage() {
     const { isPro, isPlus } = usePlan();
 
     return (
-        <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Painel</h1>
-                    <p className="text-muted-foreground">Aqui está uma visão geral das suas finanças.</p>
+        <div className="flex flex-col gap-4 sm:gap-6 px-4 sm:px-6 lg:px-8">
+            {/* Header - Mobile First */}
+            <div className="flex flex-col gap-3 sm:gap-4">
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Painel</h1>
+                    <p className="text-sm sm:text-base text-muted-foreground">
+                        Aqui está uma visão geral das suas finanças.
+                    </p>
                 </div>
-                <div className="flex gap-2 items-center">
+                
+                {/* Action Buttons - Mobile Stack, Desktop Row */}
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                    <AddTransactionSheet>
+                        <Button className="w-full sm:w-auto order-1">
+                            <PlusCircle className="mr-2 h-4 w-4"/>
+                            Adicionar Transação
+                        </Button>
+                    </AddTransactionSheet>
+                    
                     <ProUpgradeButton requiredPlan="Pro">
                        <ScanQRCodeDialog>
-                           <Button variant="outline" disabled={!isPro}>
+                           <Button 
+                               variant="outline" 
+                               disabled={!isPro}
+                               className="w-full sm:w-auto order-2"
+                           >
                                 <ScanLine className="mr-2 h-4 w-4"/>
                                 Escanear Nota
                             </Button>
                         </ScanQRCodeDialog>
                     </ProUpgradeButton>
-                    <AddTransactionSheet>
-                        <Button>
-                            <PlusCircle className="mr-2 h-4 w-4"/>
-                            Adicionar Transação
-                        </Button>
-                    </AddTransactionSheet>
                 </div>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-4">
+            {/* Filters - Mobile Stack, Desktop Row */}
+            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                <DateRangePicker 
-                    className="w-full md:w-auto" 
+                    className="w-full sm:w-auto min-w-[200px]" 
                     initialDate={dateRange} 
                     onUpdate={setDateRange}
                 />
                 <ItemFilter 
-                    className="w-full md:w-64"
+                    className="w-full sm:flex-1 sm:max-w-[200px]"
                     placeholder="Todas as Categorias"
                     items={['all', ...categories]} 
                     selectedItem={selectedCategory} 
                     onItemSelected={handleCategoryChange}
                 />
                 <ItemFilter 
-                    className="w-full md:w-64"
+                    className="w-full sm:flex-1 sm:max-w-[200px]"
                     placeholder="Todas as Subcategorias"
                     items={['all', ...availableSubcategories]} 
                     selectedItem={selectedSubcategory} 
@@ -85,52 +96,67 @@ export default function DashboardPage() {
 
             {isLoading ? <DashboardSkeleton /> : (
                 <>
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    {/* Main Wallet Card and Goals - Mobile Stack, Desktop Side by Side */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                         <div className="lg:col-span-2">
                            <WalletCard transactions={filteredTransactions} />
                         </div>
-                        <div className="space-y-6">
+                        <div className="space-y-4 sm:space-y-6">
                            <GoalHighlightCard />
                            {isPlus && <FutureBalanceCard />}
                         </div>
                     </div>
-                    <div className="grid md:grid-cols-3 gap-6">
+
+                    {/* Stats Cards - Always Stacked on Mobile */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                         <StatsCards transactions={filteredTransactions} />
                     </div>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                       <div className="lg:col-span-2">
+
+                    {/* Chart and Recent Transactions - Mobile Stack, Desktop Side by Side */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                       <div className="lg:col-span-2 order-2 lg:order-1">
                          <SpendingChart data={chartData} />
                        </div>
-                       <RecentTransactions transactions={filteredTransactions} />
+                       <div className="order-1 lg:order-2">
+                         <RecentTransactions transactions={filteredTransactions} />
+                       </div>
                     </div>
-                     {isPro && <AITipCard transactions={filteredTransactions} />}
+
+                    {/* AI Tip Card - Full Width */}
+                    {isPro && <AITipCard transactions={filteredTransactions} />}
                 </>
             )}
         </div>
     );
 }
 
-
 function DashboardSkeleton() {
     return (
         <>
-             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <Skeleton className="lg:col-span-2 h-36" />
-                <div className="space-y-6">
-                  <Skeleton className="h-44"/>
-                  <Skeleton className="h-36" />
+             {/* Main Section Skeleton */}
+             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                <Skeleton className="lg:col-span-2 h-32 sm:h-36" />
+                <div className="space-y-4 sm:space-y-6">
+                  <Skeleton className="h-36 sm:h-44"/>
+                  <Skeleton className="h-28 sm:h-36" />
                 </div>
              </div>
-            <div className="grid md:grid-cols-3 gap-6">
-                <Skeleton className="h-36" />
-                <Skeleton className="h-36" />
-                <Skeleton className="h-36" />
+
+             {/* Stats Cards Skeleton */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                <Skeleton className="h-32 sm:h-36" />
+                <Skeleton className="h-32 sm:h-36" />
+                <Skeleton className="h-32 sm:h-36" />
             </div>
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <Skeleton className="h-[450px] lg:col-span-2" />
-                <Skeleton className="h-[450px]" />
+
+            {/* Chart and Recent Transactions Skeleton */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                <Skeleton className="h-[300px] sm:h-[400px] lg:h-[450px] lg:col-span-2 order-2 lg:order-1" />
+                <Skeleton className="h-[300px] sm:h-[400px] lg:h-[450px] order-1 lg:order-2" />
             </div>
-            <Skeleton className="h-28" />
+
+            {/* AI Tip Skeleton */}
+            <Skeleton className="h-24 sm:h-28" />
         </>
     );
 }

@@ -25,7 +25,7 @@ const credentialSchema = z.object({
   ollamaModel: z.string().optional(),
   ollamaServerAddress: z.string().optional(),
   googleAIApiKey: z.string().optional(),
-  openAIModel: z.enum(["gpt-3.5-turbo", "gpt-4", "gpt-4-vision-preview", "gpt-4o"]).optional(),
+  openAIModel: z.enum(["gpt-3.5-turbo", "gpt-4", "gpt-4-vision-preview", "gpt-4o", "gpt-4o-mini", "gpt-4-turbo"]).optional(),
   openAIApiKey: z.string().optional(),
 }).superRefine((data, ctx) => {
     if (data.provider === 'ollama') {
@@ -76,7 +76,7 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
       name: "",
       provider: "ollama",
       ollamaServerAddress: "http://127.0.0.1:11434",
-      openAIModel: "gpt-4o",
+      openAIModel: "gpt-4o-mini",
     },
   });
 
@@ -91,7 +91,7 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
                 name: "",
                 provider: "ollama",
                 ollamaServerAddress: "http://127.0.0.1:11434",
-                openAIModel: "gpt-4o",
+                openAIModel: "gpt-4o-mini",
             });
         }
     }

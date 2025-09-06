@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useTransactions } from "@/hooks/use-transactions";
 import { columns } from "@/components/transactions/columns";
@@ -23,41 +24,53 @@ export default function TransactionsPage() {
         selectedCategory,
         availableSubcategories,
         selectedSubcategory,
-        setSelectedSubcategory
+        setSelectedSubcategory,
+        refreshOnPageVisit
     } = useTransactions();
     
     const isMobile = useIsMobile();
 
+    // Refresh data when page loads to ensure it's up to date
+    useEffect(() => {
+        refreshOnPageVisit();
+    }, [refreshOnPageVisit]);
+
     return (
-        <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Transações</h1>
-                    <p className="text-muted-foreground">Visualize e gerencie suas transações com filtros e paginação.</p>
+        <div className="flex flex-col gap-4 sm:gap-6 px-4 sm:px-6 lg:px-8">
+            {/* Header - Mobile First */}
+            <div className="flex flex-col gap-3 sm:gap-4">
+                <div className="flex flex-col gap-2">
+                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Transações</h1>
+                    <p className="text-sm sm:text-base text-muted-foreground">
+                        Visualize e gerencie suas transações com filtros e paginação.
+                    </p>
                 </div>
-                 <AddTransactionSheet>
-                    <Button>
+                
+                {/* Add Transaction Button - Mobile Full Width */}
+                <AddTransactionSheet>
+                    <Button className="w-full sm:w-auto">
                         <PlusCircle className="mr-2 h-4 w-4"/>
                         Adicionar Transação
                     </Button>
                 </AddTransactionSheet>
             </div>
             
-             <div className="flex flex-col md:flex-row gap-4">
+            {/* Filters - Mobile Stack, Desktop Row */}
+             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
                <DateRangePicker 
-                    className="w-full md:w-auto" 
+                    className="w-full sm:w-auto min-w-[200px]" 
                     initialDate={dateRange} 
                     onUpdate={setDateRange}
                 />
                 <ItemFilter 
-                    className="w-full md:w-64"
+                    className="w-full sm:flex-1 sm:max-w-[200px]"
                     placeholder="Todas as Categorias"
                     items={['all', ...categories]} 
                     selectedItem={selectedCategory} 
                     onItemSelected={handleCategoryChange}
                 />
                 <ItemFilter 
-                    className="w-full md:w-64"
+                    className="w-full sm:flex-1 sm:max-w-[200px]"
                     placeholder="Todas as Subcategorias"
                     items={['all', ...availableSubcategories]} 
                     selectedItem={selectedSubcategory} 
@@ -66,10 +79,12 @@ export default function TransactionsPage() {
                 />
             </div>
 
+            {/* Content */}
             {isLoading ? (
-                 <div className="space-y-4">
-                    <Skeleton className="h-12 w-full" />
-                    <Skeleton className="h-64 w-full" />
+                 <div className="space-y-3 sm:space-y-4">
+                    <Skeleton className="h-10 sm:h-12 w-full" />
+                    <Skeleton className="h-48 sm:h-64 w-full" />
+                    <Skeleton className="h-48 sm:h-64 w-full lg:hidden" />
                 </div>
             ) : isMobile ? (
                 <TransactionCardList transactions={filteredTransactions} />

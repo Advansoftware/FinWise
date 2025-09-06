@@ -3,17 +3,77 @@
  * For server actions, use the functions in actions.ts instead
  */
 
-import { AICredential } from '@/lib/types';
+import { AICredential, AIProvider } from '@/lib/types';
 
-// Default AI settings
+// Default AI settings - Gastometria IA (baseado nas configurações do .env)
 export const DEFAULT_AI_CREDENTIAL: AICredential = {
-  id: 'default-fallback',
-  name: 'Default Fallback Ollama',
-  provider: 'ollama',
-  ollamaModel: 'llama3',
-  ollamaServerAddress: 'http://127.0.0.1:11434',
-  openAIModel: 'gpt-3.5-turbo'
+  id: 'gastometria-ai-default',
+  name: 'Gastometria IA',
+  provider: (process.env.DEFAULT_AI_PROVIDER as any) || 'openai',
+  ollamaModel: process.env.DEFAULT_OLLAMA_MODEL || 'llama3',
+  ollamaServerAddress: process.env.DEFAULT_OLLAMA_URL || 'http://127.0.0.1:11434',
+  openAIModel: (process.env.DEFAULT_OPENAI_MODEL as any) || 'gpt-4o-mini'
 };
+
+// Modelos que suportam processamento de imagem/visão
+export const VISION_SUPPORTED_MODELS = {
+  openai: [
+    'gpt-4o',
+    'gpt-4o-mini',
+    'gpt-4-vision-preview',
+    'gpt-4-turbo'
+  ] as const,
+  googleai: [
+    'gemini-pro-vision',
+    'gemini-1.5-pro',
+    'gemini-1.5-flash'
+  ] as const,
+  // Alguns modelos Ollama com suporte a visão (menos seguros/precisos)
+  ollama: [
+    'llava',
+    'llava:7b',
+    'llava:13b',
+    'llava:34b',
+    'bakllava',
+    'moondream'
+  ] as const
+};
+
+/**
+ * Verifica se um modelo suporta processamento de imagem
+ */
+export function isVisionSupportedModel(provider: AIProvider, model: string): boolean {
+  if (provider === 'openai') {
+    return VISION_SUPPORTED_MODELS.openai.includes(model as any);
+  }
+  if (provider === 'googleai') {
+    return VISION_SUPPORTED_MODELS.googleai.includes(model as any);
+  }
+  // Ollama não suporta visão
+  return false;
+}
+
+/**
+ * Retorna modelos disponíveis com suporte a visão para um usuário
+ * SEMPRE prioriza o Gastometria IA como primeiro da lista
+ */
+export function getVisionCapableModels(userCredentials: AICredential[]): AICredential[] {
+  const visionCapableList = userCredentials.filter(credential => {
+    if (credential.provider === 'openai' && credential.openAIModel) {
+      return isVisionSupportedModel('openai', credential.openAIModel);
+    }
+    if (credential.provider === 'googleai') {
+      return true; // Assumindo que credenciais Google usam modelos com visão
+    }
+    if (credential.provider === 'ollama' && credential.ollamaModel) {
+      return isVisionSupportedModel('ollama', credential.ollamaModel);
+    }
+    return false;
+  });
+
+  // Sempre retorna o Gastometria IA primeiro, depois outros modelos
+  return [DEFAULT_AI_CREDENTIAL, ...visionCapableList.filter(c => c.id !== DEFAULT_AI_CREDENTIAL.id)];
+}
 
 // Cache for AI settings
 interface CacheEntry {

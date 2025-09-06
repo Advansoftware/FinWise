@@ -7,12 +7,12 @@ export type TransactionCategory = "Supermercado" | "Transporte" | "Entreteniment
 export type WalletType = 'Conta Corrente' | 'Cartão de Crédito' | 'Poupança' | 'Investimentos' | 'Dinheiro' | 'Outros';
 
 export interface Wallet {
-    id: string;
-    userId: string;
-    name: string;
-    type: WalletType;
-    balance: number;
-    createdAt: string; // ISO 8601 format string
+  id: string;
+  userId: string;
+  name: string;
+  type: WalletType;
+  balance: number;
+  createdAt: string; // ISO 8601 format string
 }
 
 export interface Transaction {
@@ -31,25 +31,25 @@ export interface Transaction {
 }
 
 export interface Budget {
-    id: string;
-    userId: string;
-    name: string;
-    category: TransactionCategory;
-    amount: number;
-    period: 'monthly'; // For now, only monthly budgets
-    createdAt: string; // ISO 8601 format string
-    currentSpending: number; // This will be calculated client-side
+  id: string;
+  userId: string;
+  name: string;
+  category: TransactionCategory;
+  amount: number;
+  period: 'monthly'; // For now, only monthly budgets
+  createdAt: string; // ISO 8601 format string
+  currentSpending: number; // This will be calculated client-side
 }
 
 export interface Goal {
-    id: string;
-    userId: string;
-    name: string;
-    targetAmount: number;
-    currentAmount: number;
-    createdAt: string; // ISO 8601 format string
-    monthlyDeposit?: number; // Optional monthly deposit amount
-    targetDate?: string; // Optional target completion date (ISO 8601)
+  id: string;
+  userId: string;
+  name: string;
+  targetAmount: number;
+  currentAmount: number;
+  createdAt: string; // ISO 8601 format string
+  monthlyDeposit?: number; // Optional monthly deposit amount
+  targetDate?: string; // Optional target completion date (ISO 8601)
 }
 
 
@@ -59,7 +59,7 @@ export interface Category {
 }
 
 export type AIProvider = 'ollama' | 'googleai' | 'openai' | 'gastometria';
-export type OpenAIModel = 'gpt-3.5-turbo' | 'gpt-4' | 'gpt-4-vision-preview' | 'gpt-4o';
+export type OpenAIModel = 'gpt-3.5-turbo' | 'gpt-4' | 'gpt-4-vision-preview' | 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo';
 
 export interface AICredential {
   id: string;
@@ -106,11 +106,11 @@ export interface AnnualReport {
 }
 
 export interface UserProfile {
-    uid: string;
-    email: string | null;
-    displayName: string | null;
-    plan: UserPlan;
-    aiCredits: number;
-    stripeCustomerId?: string;
-    createdAt: string;
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  plan: UserPlan;
+  aiCredits: number;
+  stripeCustomerId?: string;
+  createdAt: string;
 }
