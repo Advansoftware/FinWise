@@ -25,6 +25,7 @@ export function GoalHighlightCard() {
     const { user } = useAuth();
     const [isProjecting, startProjecting] = useTransition();
     const [projectionResult, setProjectionResult] = useState<ProjectGoalCompletionOutput | null>(null);
+    const [hasLoadedProjection, setHasLoadedProjection] = useState(false);
 
     const isLoading = isGoalsLoading || isTxLoading;
 
@@ -36,8 +37,9 @@ export function GoalHighlightCard() {
 
     const transactionsJson = useMemo(() => JSON.stringify(allTransactions, null, 2), [allTransactions]);
 
+    // Carrega projeção apenas uma vez
     useEffect(() => {
-        if (user && allTransactions.length > 0 && firstGoal && firstGoal.currentAmount < firstGoal.targetAmount) {
+        if (user && allTransactions.length > 0 && firstGoal && firstGoal.currentAmount < firstGoal.targetAmount && !hasLoadedProjection) {
             startProjecting(async () => {
                  try {
                     const result = await projectGoalCompletionAction({
@@ -49,15 +51,18 @@ export function GoalHighlightCard() {
                         transactions: transactionsJson,
                     }, user.uid);
                     setProjectionResult(result);
+                    setHasLoadedProjection(true);
                 } catch (e) {
                     console.error("Projection error:", e);
                     setProjectionResult({ projection: "Erro ao calcular." });
+                    setHasLoadedProjection(true);
                 }
             });
-        } else if (firstGoal && firstGoal.currentAmount >= firstGoal.targetAmount) {
+        } else if (firstGoal && firstGoal.currentAmount >= firstGoal.targetAmount && !hasLoadedProjection) {
             setProjectionResult({ projection: "Meta concluída!" });
+            setHasLoadedProjection(true);
         }
-    }, [firstGoal, user, allTransactions.length, transactionsJson]);
+    }, [firstGoal, user, hasLoadedProjection]); // Removido dependências que causavam re-renders
 
 
     if (isLoading) {
@@ -96,39 +101,39 @@ export function GoalHighlightCard() {
 
     return (
         <Card className="flex flex-col h-full">
-            <CardHeader>
-                <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-full bg-primary/20">
-                        <Target className="h-6 w-6 text-primary"/>
+            <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-full bg-primary/20">
+                        <Target className="h-4 w-4 text-primary"/>
                     </div>
                     <div>
-                         <CardTitle className="text-lg">{firstGoal.name}</CardTitle>
-                         <CardDescription>Sua meta em destaque</CardDescription>
+                         <CardTitle className="text-base">{firstGoal.name}</CardTitle>
+                         <CardDescription className="text-xs">Sua meta em destaque</CardDescription>
                     </div>
                 </div>
             </CardHeader>
-            <CardContent className="flex-1 space-y-2">
-                <Progress value={Math.min(percentage, 100)} />
+            <CardContent className="flex-1 space-y-2 pb-3">
+                <Progress value={Math.min(percentage, 100)} className="h-2" />
                  <div className="flex justify-between items-baseline">
-                    <p className="text-xl font-bold text-foreground">R$ {firstGoal.currentAmount.toFixed(2)}</p>
-                    <p className="text-sm text-muted-foreground">de R$ {firstGoal.targetAmount.toFixed(2)}</p>
+                    <p className="text-lg font-bold text-foreground">R$ {firstGoal.currentAmount.toFixed(2)}</p>
+                    <p className="text-xs text-muted-foreground">de R$ {firstGoal.targetAmount.toFixed(2)}</p>
                 </div>
-                 <div className="text-xs text-muted-foreground h-4 flex items-center gap-2">
-                    <Sparkles className={cn("h-3.5 w-3.5 text-primary/80", isProjecting && "animate-pulse")} />
+                 <div className="text-xs text-muted-foreground h-3 flex items-center gap-1">
+                    <Sparkles className={cn("h-3 w-3 text-primary/80", isProjecting && "animate-pulse")} />
                      {isProjecting ? (
-                        <span>Calculando projeção...</span>
+                        <span>Calculando...</span>
                     ) : (
                        getProjectionText()
                     )}
                 </div>
             </CardContent>
-             <CardFooter className="flex gap-2">
-                 <Button asChild variant="outline" className="flex-1">
+             <CardFooter className="flex gap-2 pt-2">
+                 <Button asChild variant="outline" className="flex-1" size="sm">
                     <Link href="/goals">Ver Todas</Link>
                  </Button>
                   <AddDepositDialog goal={firstGoal}>
-                    <Button className="flex-1" disabled={firstGoal.currentAmount >= firstGoal.targetAmount}>
-                        <PiggyBank className="mr-2 h-4 w-4"/>Depositar
+                    <Button className="flex-1" size="sm" disabled={firstGoal.currentAmount >= firstGoal.targetAmount}>
+                        <PiggyBank className="mr-1 h-3 w-3"/>Depositar
                     </Button>
                 </AddDepositDialog>
              </CardFooter>

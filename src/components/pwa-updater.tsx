@@ -119,21 +119,18 @@ export function PWAUpdater() {
           console.log('[PWA] Falha ao registrar Service Worker:', err);
         });
 
-      // Verificar atualizações periodicamente
-      const checkForUpdates = () => {
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.getRegistration().then(reg => {
-            if (reg) {
-              reg.update();
-            }
-          });
-        }
-      };
-
-      // Verificar atualizações a cada 30 minutos
-      const updateInterval = setInterval(checkForUpdates, 30 * 60 * 1000);
-
-      return () => clearInterval(updateInterval);
+      // REMOVIDO: Verificação automática de atualizações que causava refresh
+      // const checkForUpdates = () => {
+      //   if ('serviceWorker' in navigator) {
+      //     navigator.serviceWorker.getRegistration().then(reg => {
+      //       if (reg) {
+      //         reg.update();
+      //       }
+      //     });
+      //   }
+      // };
+      // const updateInterval = setInterval(checkForUpdates, 30 * 60 * 1000);
+      // return () => clearInterval(updateInterval);
     }
   }, []);
 
@@ -145,8 +142,9 @@ export function PWAUpdater() {
           if (navigator.serviceWorker.controller) {
             setWaitingWorker(newWorker);
           } else {
-            // First time install, just reload
-            window.location.reload();
+            // MODIFICADO: Não fazer reload automático, deixar o usuário decidir
+            console.log('[PWA] Primeira instalação, aguardando ação do usuário');
+            setWaitingWorker(newWorker);
           }
         }
       });

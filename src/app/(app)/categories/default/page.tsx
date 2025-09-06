@@ -37,19 +37,25 @@ export default function DefaultCategoriesPreview() {
     }
 
     try {
+      // Importação correta
       const { migrateExistingUser } = await import('@/services/default-setup-service');
       await migrateExistingUser(user.uid);
       
       toast({
         title: "Sucesso!",
-        description: "Categorias padrão aplicadas com sucesso"
+        description: "Categorias padrão aplicadas com sucesso ao seu perfil!"
       });
+      
+      // Recarrega a página após 2 segundos para mostrar as novas categorias
+      setTimeout(() => {
+        window.location.href = '/categories';
+      }, 2000);
     } catch (error) {
       console.error('Erro ao aplicar categorias:', error);
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Erro ao aplicar categorias padrão"
+        description: "Erro ao aplicar categorias padrão. Tente novamente."
       });
     }
   };

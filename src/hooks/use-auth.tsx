@@ -57,13 +57,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkUser();
   }, []);
 
-  // Periodic refresh to catch plan changes
+  // Periodic refresh to catch plan changes - REMOVED AUTOMATIC REFRESH
   useEffect(() => {
     if (!user) return;
-
-    const interval = setInterval(() => {
-      refreshUser();
-    }, 30000); // Refresh every 30 seconds
 
     // Listen for manual refresh events (e.g., after payment completion)
     const handlePlanUpdate = () => {
@@ -74,7 +70,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     window.addEventListener('planUpdated', handlePlanUpdate);
 
     return () => {
-      clearInterval(interval);
       window.removeEventListener('planUpdated', handlePlanUpdate);
     };
   }, [user, refreshUser]);

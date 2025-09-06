@@ -114,3 +114,27 @@ export interface UserProfile {
   stripeCustomerId?: string;
   createdAt: string;
 }
+
+export type AICreditLogAction =
+  | 'Dica Rápida'
+  | 'Chat com Assistente'
+  | 'Sugestão de Categoria'
+  | 'Sugestão de Orçamento'
+  | 'Projeção de Meta'
+  | 'Perfil Financeiro'
+  | 'Análise de Transações'
+  | 'Relatório Mensal'
+  | 'Relatório Anual'
+  | 'Orçamentos Automáticos'
+  | 'Previsão de Saldo'
+  | 'Leitura de Nota Fiscal (OCR)'
+  | 'Criação de Orçamentos Automáticos';
+
+export interface AICreditLog {
+  id: string;
+  userId: string;
+  action: AICreditLogAction;
+  creditsUsed: number;
+  timestamp: string; // ISO 8601 format string
+  isFreeAction: boolean; // True when it's an automatic generation that doesn't consume credits
+}

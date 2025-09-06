@@ -57,6 +57,28 @@ export interface ISettingsRepository {
   updateByUserId(userId: string, settings: any): Promise<void>;
 }
 
+export interface IAIGeneratedDataRepository {
+  findByUserIdAndType(userId: string, type: string): Promise<any | null>;
+  findLatestByUserIdAndType(userId: string, type: string): Promise<any | null>;
+  create(data: {
+    userId: string;
+    type: string;
+    data: any;
+    generatedAt: Date;
+    month: number;
+    year: number;
+  }): Promise<void>;
+  replaceByUserIdAndType(userId: string, type: string, data: {
+    userId: string;
+    type: string;
+    data: any;
+    generatedAt: Date;
+    month: number;
+    year: number;
+  }): Promise<void>;
+  deleteOldData(beforeDate: Date): Promise<void>;
+}
+
 // Main database interface that contains all repositories
 export interface IDatabaseAdapter {
   users: IUserRepository;
@@ -66,6 +88,7 @@ export interface IDatabaseAdapter {
   goals: IGoalRepository;
   aiCreditLogs: IAICreditLogRepository;
   settings: ISettingsRepository;
+  aiGeneratedData: IAIGeneratedDataRepository;
   payments: IPaymentRepository;
 
   // Connection management

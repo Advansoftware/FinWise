@@ -9,7 +9,8 @@ import {
   IBudgetRepository,
   IGoalRepository,
   IAICreditLogRepository,
-  ISettingsRepository
+  ISettingsRepository,
+  IAIGeneratedDataRepository
 } from '@/core/ports/database.port';
 import { IPaymentRepository } from '@/core/ports/payment.port';
 import { MongoPaymentRepository } from './mongodb-payment.adapter';
@@ -417,6 +418,76 @@ class MongoSettingsRepository implements ISettingsRepository {
   }
 }
 
+class MongoAIGeneratedDataRepository implements IAIGeneratedDataRepository {
+  constructor(private db: Db) { }
+
+  async findByUserIdAndType(userId: string, type: string): Promise<any | null> {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+
+    const result = await this.db.collection('ai_generated_data').findOne({
+      userId,
+      type,
+      month: currentMonth,
+      year: currentYear
+    });
+
+    return result?.data || null;
+  }
+
+  async findLatestByUserIdAndType(userId: string, type: string): Promise<any | null> {
+    const result = await this.db.collection('ai_generated_data')
+      .findOne(
+        { userId, type },
+        { sort: { generatedAt: -1 } }
+      );
+
+    return result?.data || null;
+  }
+
+  async create(data: {
+    userId: string;
+    type: string;
+    data: any;
+    generatedAt: Date;
+    month: number;
+    year: number;
+  }): Promise<void> {
+    await this.db.collection('ai_generated_data').insertOne(data);
+  }
+
+  async replaceByUserIdAndType(userId: string, type: string, data: {
+    userId: string;
+    type: string;
+    data: any;
+    generatedAt: Date;
+    month: number;
+    year: number;
+  }): Promise<void> {
+    const now = new Date();
+    const currentMonth = now.getMonth() + 1;
+    const currentYear = now.getFullYear();
+
+    await this.db.collection('ai_generated_data').replaceOne(
+      {
+        userId,
+        type,
+        month: currentMonth,
+        year: currentYear
+      },
+      data,
+      { upsert: true }
+    );
+  }
+
+  async deleteOldData(beforeDate: Date): Promise<void> {
+    await this.db.collection('ai_generated_data').deleteMany({
+      generatedAt: { $lt: beforeDate }
+    });
+  }
+}
+
 export class MongoDBAdapter implements IDatabaseAdapter {
   private client: MongoClient | null = null;
   private db: Db | null = null;
@@ -428,6 +499,7 @@ export class MongoDBAdapter implements IDatabaseAdapter {
   public goals!: IGoalRepository;
   public aiCreditLogs!: IAICreditLogRepository;
   public settings!: ISettingsRepository;
+  public aiGeneratedData!: IAIGeneratedDataRepository;
   public payments!: IPaymentRepository;
 
   async connect(): Promise<void> {
@@ -455,6 +527,7 @@ export class MongoDBAdapter implements IDatabaseAdapter {
     this.goals = new MongoGoalRepository(this.db);
     this.aiCreditLogs = new MongoAICreditLogRepository(this.db);
     this.settings = new MongoSettingsRepository(this.db);
+    this.aiGeneratedData = new MongoAIGeneratedDataRepository(this.db);
     this.payments = new MongoPaymentRepository(this.db);
 
     console.log('✅ MongoDB connected and repositories initialized');

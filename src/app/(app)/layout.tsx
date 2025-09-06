@@ -67,7 +67,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
 
               {/* Page Content - Fixed height with own scroll */}
               <div className="flex-1 h-[calc(100vh-3.5rem)] lg:h-screen overflow-y-auto">
-                <div className="container mx-auto px-4 py-4 lg:px-6 lg:py-6 max-w-7xl">
+                <div className="container mx-auto px-4 py-4 lg:px-6 lg:py-6 max-w-7xl pb-24 lg:pb-6">
                     {children}
                 </div>
               </div>

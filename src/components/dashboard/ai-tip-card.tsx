@@ -18,6 +18,7 @@ interface AITipCardProps {
 export function AITipCard({ transactions }: AITipCardProps) {
   const [tip, setTip] = useState("");
   const [isPending, startTransition] = useTransition();
+  const [hasLoaded, setHasLoaded] = useState(false);
   const { user } = useAuth();
   const { isPro } = usePlan();
 
@@ -25,28 +26,33 @@ export function AITipCard({ transactions }: AITipCardProps) {
     if (!user) return;
     if (transactions.length === 0 && !forceRefresh) {
       setTip("Adicione transações para receber sua primeira dica.");
+      setHasLoaded(true);
       return;
     }
 
     startTransition(async () => {
-        setTip(""); // Clear previous tip
+        if (forceRefresh) setTip(""); // Clear previous tip only on refresh
         try {
             const newTip = await getSmartSpendingTip(transactions, user.uid, forceRefresh);
             setTip(newTip);
+            setHasLoaded(true);
         } catch (error: any) {
             console.error("Error fetching or setting spending tip:", error);
             setTip(error.message || "Não foi possível carregar a dica. Tente novamente.");
+            setHasLoaded(true);
         }
     });
   }, [transactions, user]);
 
+  // Carrega apenas uma vez quando o componente monta
   useEffect(() => {
-    if(user && isPro && transactions.length > 0) {
-      fetchTip();
-    } else if (transactions.length === 0) {
+    if(user && isPro && transactions.length > 0 && !hasLoaded) {
+      fetchTip(false); // Sempre false para não consumir créditos no carregamento inicial
+    } else if (transactions.length === 0 && !hasLoaded) {
       setTip("Adicione transações para receber sua primeira dica.");
+      setHasLoaded(true);
     }
-  }, [transactions.length, user, isPro, fetchTip]);
+  }, [user, isPro, hasLoaded]); // Removido transactions.length das dependências
 
   if (!isPro) return null;
 
@@ -59,7 +65,7 @@ export function AITipCard({ transactions }: AITipCardProps) {
                 <CardTitle className="text-lg text-primary/90">Dica Financeira com IA</CardTitle>
             </div>
             <CardDescription className="text-xs text-primary/70 mt-1">
-                Gerado automaticamente 1x por mês. Atualizar custa 1 crédito da Gastometria AI.
+                Dados salvos no banco. Atualizar manualmente custa 1 crédito.
             </CardDescription>
         </div>
         <Button
