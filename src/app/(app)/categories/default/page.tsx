@@ -10,6 +10,7 @@ import { TransactionCategory } from '@/lib/types';
 import { ChevronDown, ChevronRight, Users, Package, Settings } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { apiClient } from '@/lib/api-client';
 
 export default function DefaultCategoriesPreview() {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
@@ -37,21 +38,20 @@ export default function DefaultCategoriesPreview() {
     }
 
     try {
-      // Importação correta
-      const { migrateExistingUser } = await import('@/services/default-setup-service');
-      await migrateExistingUser(user.uid);
-      
+      // Aplicar categorias padrão via API
+      await apiClient.update('settings', user.uid, { categories: DEFAULT_CATEGORIES });
+
       toast({
         title: "Sucesso!",
         description: "Categorias padrão aplicadas com sucesso ao seu perfil!"
       });
-      
-      // Recarrega a página após 2 segundos para mostrar as novas categorias
+
+      // Recarrega a página após 1 segundo para mostrar as novas categorias
       setTimeout(() => {
         window.location.href = '/categories';
-      }, 2000);
+      }, 1000);
     } catch (error) {
-      console.error('Erro ao aplicar categorias:', error);
+      console.error('Erro ao aplicar categorias via API:', error);
       toast({
         variant: "destructive",
         title: "Erro",

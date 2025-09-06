@@ -74,14 +74,15 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
         // Se o usuário não tem categorias configuradas, configura as padrão
         if (Object.keys(categories).length === 0) {
           try {
-            const { migrateExistingUser } = await import('@/services/default-setup-service');
-            await migrateExistingUser(user.uid);
-            
-            // Recarrega as configurações após a migração
+            // Aplicar categorias padrão via API (cliente)
+            const { DEFAULT_CATEGORIES } = await import('@/services/default-setup-service');
+            await apiClient.update('settings', user.uid, { categories: DEFAULT_CATEGORIES });
+
+            // Recarrega as configurações após a atualização
             const updatedSettings = await apiClient.get('settings', user.uid);
             setCategoryMap(updatedSettings?.categories || {});
           } catch (migrationError) {
-            console.error('Erro na migração de categorias:', migrationError);
+            console.error('Erro na aplicação das categorias padrão:', migrationError);
             setCategoryMap({});
           }
         } else {
@@ -191,9 +192,55 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   
   const deleteTransaction = async (transactionId: string) => {
     if (!user) throw new Error("User not authenticated");
-    
-    await apiClient.delete('transactions', transactionId);
+    // Capture transaction data before removing from state so we can match pending actions
+    const txToDelete = allTransactions.find(t => t.id === transactionId);
+
+    try {
+      await apiClient.delete('transactions', transactionId);
+    } catch (err) {
+      // Server delete may fail when offline or if id is temporary - continue local cleanup
+      console.warn('Server delete failed or unavailable, proceeding to remove locally:', err);
+    }
+
+    // Remove from local state so UI updates immediately (charts, lists, etc.)
     setAllTransactions(prev => prev.filter(t => t.id !== transactionId));
+
+    // Remove from offline DB
+    try {
+      await offlineStorage.deleteTransaction(transactionId);
+    } catch (err) {
+      console.warn('Failed to delete transaction from offline storage:', err);
+    }
+
+    // Also remove any pending offline actions that would recreate or modify this transaction
+    try {
+      const pending = await offlineStorage.getPendingActions();
+      if (pending && pending.length > 0) {
+        for (const action of pending) {
+          // If the pending action references this exact id, remove it
+          if (action.data && (action.data.id === transactionId || action.data._id === transactionId)) {
+            await offlineStorage.removePendingAction(action.id);
+            continue;
+          }
+
+          // Heuristic: if it's a create action and fields match the deleted transaction, remove it
+          if (action.type === 'create' && txToDelete) {
+            const d = action.data || {};
+            const isMatch = (
+              d.item === txToDelete.item &&
+              Number(d.amount) === Number(txToDelete.amount) &&
+              d.date === txToDelete.date &&
+              (d.walletId === txToDelete.walletId || d.toWalletId === txToDelete.toWalletId)
+            );
+            if (isMatch) {
+              await offlineStorage.removePendingAction(action.id);
+            }
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Failed to cleanup pending offline actions:', err);
+    }
   };
 
   const { categories, subcategories } = useMemo(() => {
