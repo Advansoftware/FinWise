@@ -5,7 +5,7 @@ import { useState, useEffect, useTransition, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Sparkles } from "lucide-react";
-import { getSpendingTip } from "@/services/ai-actions";
+import { getSmartSpendingTip } from "@/services/ai-automation-service";
 import { Skeleton } from "../ui/skeleton";
 import { Transaction } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
@@ -31,7 +31,7 @@ export function AITipCard({ transactions }: AITipCardProps) {
     startTransition(async () => {
         setTip(""); // Clear previous tip
         try {
-            const newTip = await getSpendingTip(transactions, user.uid, forceRefresh);
+            const newTip = await getSmartSpendingTip(transactions, user.uid, forceRefresh);
             setTip(newTip);
         } catch (error: any) {
             console.error("Error fetching or setting spending tip:", error);
@@ -59,7 +59,7 @@ export function AITipCard({ transactions }: AITipCardProps) {
                 <CardTitle className="text-lg text-primary/90">Dica Financeira com IA</CardTitle>
             </div>
             <CardDescription className="text-xs text-primary/70 mt-1">
-                Gerado automaticamente 1x por dia. Atualizar custa 1 crédito da Gastometria AI.
+                Gerado automaticamente 1x por mês. Atualizar custa 1 crédito da Gastometria AI.
             </CardDescription>
         </div>
         <Button

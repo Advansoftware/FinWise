@@ -5,7 +5,7 @@ import React from 'react';
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BarChart, Bot, LayoutDashboard, Wallet, Check, Goal, FolderKanban, Upload, KeyRound, CheckCircle, XCircle } from "lucide-react";
+import { ArrowRight, BarChart, Bot, LayoutDashboard, Wallet, Check, Goal, FolderKanban, Upload, KeyRound, CheckCircle, XCircle, HelpCircle, BookOpen, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { useAuth } from "@/hooks/use-auth";
@@ -68,11 +68,11 @@ export default function Page() {
   if (loading) {
     return (
       <div className="flex flex-col min-h-screen items-center justify-center">
-         <div className="container mx-auto px-4 py-20 sm:py-32 flex flex-col items-center">
-            <Skeleton className="h-16 w-3/4 mb-6" />
-            <Skeleton className="h-8 w-1/2 mb-8" />
-            <Skeleton className="h-12 w-48 mb-16" />
-            <Skeleton className="h-[400px] w-full max-w-5xl" />
+         <div className="container mx-auto px-3 sm:px-4 py-12 sm:py-20 md:py-32 flex flex-col items-center">
+            <Skeleton className="h-12 sm:h-16 w-full max-w-lg mb-4 sm:mb-6" />
+            <Skeleton className="h-6 sm:h-8 w-3/4 max-w-md mb-6 sm:mb-8" />
+            <Skeleton className="h-10 sm:h-12 w-full max-w-48 mb-8 sm:mb-16" />
+            <Skeleton className="h-48 sm:h-64 md:h-[400px] w-full max-w-5xl rounded-lg" />
         </div>
       </div>
     )
@@ -103,31 +103,31 @@ export default function Page() {
         />
       </Head>
       <div className="flex flex-col min-h-screen bg-background text-foreground overflow-x-hidden">
-        <header className="sticky top-0 z-50 px-4 md:px-6 h-14 flex items-center justify-between bg-background/50 backdrop-blur-lg border-b border-border/50">
+        <header className="sticky top-0 z-50 px-3 sm:px-4 md:px-6 h-14 sm:h-16 flex items-center justify-between bg-background/50 backdrop-blur-lg border-b border-border/50">
             <motion.div 
               initial={{ opacity: 0, x: -20 }} 
               animate={{ opacity: 1, x: 0 }} 
               transition={{ duration: 0.5 }}
             >
               <Link href="/" className="flex items-center gap-2">
-                  <Logo className="w-8 h-8"/>
-                  <span className="text-xl font-bold">Gastometria</span>
+                  <Logo className="w-6 h-6 sm:w-8 sm:h-8"/>
+                  <span className="text-lg sm:text-xl font-bold">Gastometria</span>
               </Link>
             </motion.div>
             <motion.div 
               initial={{ opacity: 0, x: 20 }} 
               animate={{ opacity: 1, x: 0 }} 
               transition={{ duration: 0.5, delay: 0.2 }} 
-              className="flex items-center gap-4"
+              className="flex items-center gap-2 sm:gap-4"
             >
-              <Button asChild variant="ghost" className="hidden md:inline-flex">
+              <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
                   <Link href="/docs">
                       Documentação
                   </Link>
               </Button>
-              <Button asChild>
+              <Button asChild size="sm" className="text-xs sm:text-sm">
                   <Link href={user ? "/dashboard" : "/login"}>
-                      {user ? "Acessar Painel" : "Entrar"}
+                      {user ? "Painel" : "Entrar"}
                   </Link>
               </Button>
             </motion.div>
@@ -135,66 +135,66 @@ export default function Page() {
 
         <main className="flex-1">
           {/* Hero Section */}
-          <section className="container mx-auto flex flex-col items-center text-center px-4 py-20 sm:py-32">
+          <section className="container mx-auto flex flex-col items-center text-center px-3 sm:px-4 py-12 sm:py-20 md:py-32">
             <motion.h1 
               {...fadeIn}
-              className="text-4xl md:text-6xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary/80 to-primary/60"
+              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary/80 to-primary/60 leading-tight"
             >
               Sua vida financeira, sob seu controle.
             </motion.h1>
             <motion.p 
               {...fadeIn}
               transition={{ ...fadeIn.transition, delay: 0.2 }}
-              className="mt-6 text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto"
+              className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
             >
               Gastometria une um design intuitivo com o poder da Inteligência Artificial para transformar a forma como você gerencia seu dinheiro.
             </motion.p>
             <motion.div 
               {...fadeIn}
               transition={{ ...fadeIn.transition, delay: 0.4 }}
-              className="mt-8 flex justify-center"
+              className="mt-6 sm:mt-8 flex justify-center"
             >
-              <Button asChild size="lg" className="shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-shadow">
-                <Link href={user ? "/dashboard" : "/login"}>
+              <Button asChild size="lg" className="shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-shadow w-full sm:w-auto px-6 sm:px-8">
+                <Link href={user ? "/dashboard" : "/login"} className="text-sm sm:text-base">
                   Comece Agora Gratuitamente
-                  <ArrowRight className="ml-2 h-5 w-5" />
+                  <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
                 </Link>
               </Button>
             </motion.div>
             <motion.div 
               {...fadeIn}
               transition={{...fadeIn.transition, delay: 0.6}}
-              className="mt-16 w-full max-w-5xl"
+              className="mt-8 sm:mt-12 md:mt-16 w-full max-w-5xl"
             >
-              <div className="relative rounded-xl shadow-2xl shadow-primary/10 border border-border/20 bg-card/50">
+              <div className="relative rounded-lg sm:rounded-xl shadow-2xl shadow-primary/10 border border-border/20 bg-card/50">
                 <Image
                   src="https://picsum.photos/1200/700"
                   alt="Dashboard Gastometria"
                   width={1200}
                   height={700}
                   data-ai-hint="dashboard finance"
-                  className="rounded-lg opacity-80"
+                  className="rounded-lg sm:rounded-xl opacity-80 w-full h-auto"
                   priority
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent rounded-lg sm:rounded-xl"></div>
               </div>
             </motion.div>
           </section>
 
           {/* Why Section */}
-          <section className="py-20 sm:py-24 bg-card/20 border-y border-border/20">
+          <section className="py-12 sm:py-16 md:py-20 lg:py-24 bg-card/20 border-y border-border/20">
             <motion.div 
                 {...fadeIn}
                 viewport={{ once: true, amount: 0.5 }}
-                className="container mx-auto px-4 text-center"
+                className="container mx-auto px-3 sm:px-4 text-center"
             >
-                <div className="inline-block rounded-full bg-primary/10 p-3 text-primary mb-4">
-                    <KeyRound className="h-8 w-8"/>
+                <div className="inline-block rounded-full bg-primary/10 p-2 sm:p-3 text-primary mb-3 sm:mb-4">
+                    <KeyRound className="h-6 w-6 sm:h-8 sm:w-8"/>
                 </div>
-                <h2 className="text-3xl md:text-4xl font-bold tracking-tight">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight leading-tight">
                     O Controle Financeiro é a Chave para a sua Liberdade
                 </h2>
-                <p className="mt-4 text-lg text-muted-foreground max-w-3xl mx-auto">
+                <p className="mt-3 sm:mt-4 text-base sm:text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
                     Não se trata apenas de números e planilhas. Trata-se de trocar a ansiedade pela confiança. De saber exatamente para onde seu dinheiro vai, você ganha o poder de direcioná-lo para o que realmente importa: suas metas, seus sonhos e sua tranquilidade. O Gastometria foi criado para ser essa chave.
                 </p>
             </motion.div>
@@ -202,18 +202,18 @@ export default function Page() {
 
 
           {/* Features Section */}
-          <section className="py-20 sm:py-32">
-              <div className="container mx-auto px-4">
+          <section className="py-12 sm:py-16 md:py-20 lg:py-32">
+              <div className="container mx-auto px-3 sm:px-4">
                   <motion.div {...fadeIn}>
-                      <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-center">
+                      <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-center leading-tight">
                           Ferramentas poderosas para sua vida financeira
                       </h2>
-                      <p className="mt-4 text-lg text-muted-foreground text-center max-w-2xl mx-auto">
+                      <p className="mt-3 sm:mt-4 text-base sm:text-lg text-muted-foreground text-center max-w-2xl mx-auto leading-relaxed">
                         Cada recurso do Gastometria foi projetado para te dar clareza e controle. Deixe de adivinhar e comece a tomar decisões financeiras com confiança.
                       </p>
                   </motion.div>
 
-                  <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                  <div className="mt-8 sm:mt-12 md:mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
                       {[
                           { 
                             icon: LayoutDashboard, 
@@ -253,13 +253,13 @@ export default function Page() {
                             whileInView="animate"
                             viewport={{ once: true, amount: 0.5 }}
                             transition={{ ...featureVariants.transition, delay: index * 0.1 }}
-                            className="flex flex-col items-start text-left p-6 rounded-lg bg-card/50 border border-border/20 transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
+                            className="flex flex-col items-start text-left p-4 sm:p-6 rounded-lg bg-card/50 border border-border/20 transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
                           >
-                              <div className="flex items-center justify-center h-12 w-12 rounded-full bg-primary/10 text-primary">
-                                  <feature.icon className="h-6 w-6"/>
+                              <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary/10 text-primary">
+                                  <feature.icon className="h-5 w-5 sm:h-6 sm:w-6"/>
                               </div>
-                              <h3 className="mt-4 text-xl font-semibold">{feature.title}</h3>
-                              <p className="mt-2 text-muted-foreground">{feature.description}</p>
+                              <h3 className="mt-3 sm:mt-4 text-lg sm:text-xl font-semibold leading-tight">{feature.title}</h3>
+                              <p className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed">{feature.description}</p>
                           </motion.div>
                       ))}
                   </div>
@@ -267,18 +267,18 @@ export default function Page() {
           </section>
 
           {/* Pricing Section */}
-          <section id="pricing" className="py-20 sm:py-32 bg-card/20 border-y border-border/20">
-              <div className="container mx-auto px-4">
+          <section id="pricing" className="py-12 sm:py-16 md:py-20 lg:py-32 bg-card/20 border-y border-border/20">
+              <div className="container mx-auto px-3 sm:px-4">
                   <motion.div {...fadeIn}>
-                      <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-center">
+                      <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-center leading-tight">
                           Um plano para cada jornada financeira
                       </h2>
-                      <p className="mt-4 text-lg text-muted-foreground text-center max-w-xl mx-auto">
+                      <p className="mt-3 sm:mt-4 text-base sm:text-lg text-muted-foreground text-center max-w-xl mx-auto leading-relaxed">
                         Comece gratuitamente com todas as ferramentas essenciais e evolua seu controle com o poder da IA.
                       </p>
                   </motion.div>
 
-                  <div className="mt-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-start">
+                  <div className="mt-8 sm:mt-12 md:mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 items-start">
                       {[
                           {
                               name: "Básico",
@@ -352,24 +352,24 @@ export default function Page() {
                               whileInView="animate"
                               viewport={{ once: true, amount: 0.3 }}
                               transition={{ ...featureVariants.transition, delay: index * 0.1 }}
-                              className={`flex flex-col rounded-lg border p-6 h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-2 ${plan.highlight ? 'border-primary shadow-primary/20 shadow-lg' : 'border-border bg-card/30'}`}
+                              className={`flex flex-col rounded-lg border p-4 sm:p-6 h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-2 ${plan.highlight ? 'border-primary shadow-primary/20 shadow-lg' : 'border-border bg-card/30'}`}
                           >
-                              {plan.highlight && <Badge className="w-fit mb-4 -mt-2">Mais Popular</Badge>}
-                              <h3 className="text-2xl font-bold">{plan.name}</h3>
-                              <p className="mt-2 text-muted-foreground">{plan.description}</p>
-                              <div className="mt-6">
-                                  <span className="text-4xl font-extrabold">{plan.price}</span>
-                                  {plan.priceDetail && <span className="text-muted-foreground">{plan.priceDetail}</span>}
+                              {plan.highlight && <Badge className="w-fit mb-3 sm:mb-4 -mt-1 sm:-mt-2 text-xs">Mais Popular</Badge>}
+                              <h3 className="text-xl sm:text-2xl font-bold">{plan.name}</h3>
+                              <p className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed">{plan.description}</p>
+                              <div className="mt-4 sm:mt-6">
+                                  <span className="text-2xl sm:text-3xl lg:text-4xl font-extrabold">{plan.price}</span>
+                                  {plan.priceDetail && <span className="text-sm sm:text-base text-muted-foreground">{plan.priceDetail}</span>}
                               </div>
-                              <ul className="mt-8 space-y-4 flex-1">
+                              <ul className="mt-6 sm:mt-8 space-y-3 sm:space-y-4 flex-1">
                                   {plan.features.map(feature => (
-                                      <li key={feature} className="flex items-start gap-3">
-                                          <Check className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
-                                          <span dangerouslySetInnerHTML={{ __html: feature.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-foreground/90">$1</strong>') }} className="text-muted-foreground"></span>
+                                      <li key={feature} className="flex items-start gap-2 sm:gap-3">
+                                          <Check className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 mt-0.5 shrink-0" />
+                                          <span dangerouslySetInnerHTML={{ __html: feature.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-foreground/90">$1</strong>') }} className="text-sm sm:text-base text-muted-foreground leading-relaxed"></span>
                                       </li>
                                   ))}
                               </ul>
-                              <Button asChild size="lg" className="w-full mt-8" variant={plan.variant as any}>
+                              <Button asChild size="lg" className="w-full mt-6 sm:mt-8 text-sm sm:text-base" variant={plan.variant as any}>
                                   <Link href="/login">{plan.cta}</Link>
                               </Button>
                           </motion.div>
@@ -379,13 +379,13 @@ export default function Page() {
           </section>
 
            {/* Feature Comparison Section */}
-          <section className="py-20 sm:py-32">
-            <div className="container mx-auto px-4">
+          <section className="py-12 sm:py-16 md:py-20 lg:py-32">
+            <div className="container mx-auto px-3 sm:px-4">
               <motion.div {...fadeIn}>
-                <h2 className="text-3xl md:text-4xl font-bold tracking-tight text-center">
+                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-center leading-tight">
                   Compare os Planos em Detalhes
                 </h2>
-                <p className="mt-4 text-lg text-muted-foreground text-center max-w-2xl mx-auto">
+                <p className="mt-3 sm:mt-4 text-base sm:text-lg text-muted-foreground text-center max-w-2xl mx-auto leading-relaxed">
                   Encontre o conjunto de ferramentas perfeito para sua necessidade, desde o controle essencial até a automação completa com IA.
                 </p>
               </motion.div>
@@ -396,11 +396,11 @@ export default function Page() {
                 initial="initial"
                 whileInView="animate"
                 viewport={{ once: true, amount: 0.2 }}
-                className="mt-16 hidden md:block"
+                className="mt-8 sm:mt-12 md:mt-16 hidden lg:block overflow-x-auto"
               >
                 <Table className="[&_td]:text-center [&_th]:text-center">
                   <TableHeader>
-                    <TableRow className="[&_th]:text-base">
+                    <TableRow className="[&_th]:text-sm lg:[&_th]:text-base">
                       <TableHead className="text-left w-1/3">Funcionalidade</TableHead>
                       <TableHead>Básico</TableHead>
                       <TableHead className="text-primary">Pro</TableHead>
@@ -412,21 +412,21 @@ export default function Page() {
                     {Object.entries(featureComparison).map(([category, features]) => (
                       <React.Fragment key={category}>
                         <TableRow className="bg-muted/30">
-                          <TableCell colSpan={5} className="text-left font-bold text-base py-3">
+                          <TableCell colSpan={5} className="text-left font-bold text-sm lg:text-base py-3">
                             {category}
                           </TableCell>
                         </TableRow>
                         {features.map((item) => (
                           <TableRow key={item.feature}>
-                            <TableCell className="text-left text-muted-foreground">{item.feature}</TableCell>
+                            <TableCell className="text-left text-muted-foreground text-sm lg:text-base">{item.feature}</TableCell>
                             {['Básico', 'Pro', 'Plus', 'Infinity'].map((plan) => {
                               const value = item[plan as keyof typeof item];
                               return (
                                 <TableCell key={plan}>
                                   {typeof value === 'boolean' ? (
-                                    value ? <CheckCircle className="h-5 w-5 text-green-500 mx-auto" /> : <XCircle className="h-5 w-5 text-muted-foreground/50 mx-auto" />
+                                    value ? <CheckCircle className="h-4 w-4 lg:h-5 lg:w-5 text-green-500 mx-auto" /> : <XCircle className="h-4 w-4 lg:h-5 lg:w-5 text-muted-foreground/50 mx-auto" />
                                   ) : (
-                                    <span className="font-semibold">{value}</span>
+                                    <span className="font-semibold text-sm lg:text-base">{value}</span>
                                   )}
                                 </TableCell>
                               );
@@ -440,7 +440,7 @@ export default function Page() {
               </motion.div>
 
               {/* Mobile Cards */}
-              <div className="mt-12 grid grid-cols-1 gap-8 md:hidden">
+              <div className="mt-8 sm:mt-12 grid grid-cols-1 gap-4 sm:gap-6 lg:hidden">
                 {['Básico', 'Pro', 'Plus', 'Infinity'].map((plan, index) => (
                     <motion.div 
                       key={plan}
@@ -451,21 +451,21 @@ export default function Page() {
                       transition={{ ...featureVariants.transition, delay: index * 0.1 }}
                     >
                       <Card className={cn(plan === 'Pro' && 'border-primary')}>
-                        <CardHeader>
-                            <CardTitle className={cn(plan === 'Pro' && 'text-primary')}>{plan}</CardTitle>
+                        <CardHeader className="pb-3 sm:pb-4">
+                            <CardTitle className={cn("text-lg sm:text-xl", plan === 'Pro' && 'text-primary')}>{plan}</CardTitle>
                         </CardHeader>
-                        <CardContent className="space-y-4">
+                        <CardContent className="space-y-3 sm:space-y-4">
                             {Object.entries(featureComparison).map(([category, features]) => (
                                <div key={category}>
-                                   <h4 className="font-semibold mb-2">{category}</h4>
+                                   <h4 className="font-semibold text-sm sm:text-base mb-2">{category}</h4>
                                    <ul className="space-y-2">
                                        {features.map(item => {
                                            const value = item[plan as keyof typeof item];
                                            if (value === false) return null;
                                            return (
-                                               <li key={item.feature} className="flex items-start gap-3">
-                                                    <Check className="h-5 w-5 text-green-500 mt-0.5 shrink-0" />
-                                                    <span className="text-muted-foreground">
+                                               <li key={item.feature} className="flex items-start gap-2 sm:gap-3">
+                                                    <Check className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 mt-0.5 shrink-0" />
+                                                    <span className="text-sm sm:text-base text-muted-foreground leading-relaxed">
                                                         {item.feature}
                                                         {typeof value !== 'boolean' && <strong className="ml-1 text-foreground/90">({value})</strong>}
                                                     </span>
@@ -483,10 +483,171 @@ export default function Page() {
             </div>
           </section>
 
+          {/* FAQ Preview Section */}
+          <section className="py-12 sm:py-16 md:py-20 lg:py-32 bg-card/20 border-y border-border/20">
+            <div className="container mx-auto px-3 sm:px-4">
+              <motion.div {...fadeIn}>
+                <div className="text-center mb-8 sm:mb-12">
+                  <div className="inline-block rounded-full bg-primary/10 p-2 sm:p-3 text-primary mb-3 sm:mb-4">
+                    <HelpCircle className="h-6 w-6 sm:h-8 sm:w-8"/>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight leading-tight">
+                    Dúvidas Frequentes
+                  </h2>
+                  <p className="mt-3 sm:mt-4 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                    Respostas para as perguntas mais comuns sobre o Gastometria
+                  </p>
+                </div>
+              </motion.div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto">
+                {[
+                  {
+                    question: "O Gastometria é gratuito?",
+                    answer: "Sim! Oferecemos um plano Básico gratuito com funcionalidades essenciais. Para recursos avançados com IA, temos planos a partir de R$ 19,90/mês."
+                  },
+                  {
+                    question: "Como funciona a inteligência artificial?",
+                    answer: "Nossa IA analisa seus padrões de gastos para gerar relatórios automáticos, sugerir orçamentos personalizados e fornecer insights através do assistente de chat."
+                  },
+                  {
+                    question: "Meus dados estão seguros?",
+                    answer: "Absolutamente! Utilizamos criptografia de ponta e seguimos as melhores práticas de segurança. Não compartilhamos suas informações com terceiros."
+                  },
+                  {
+                    question: "Posso importar dados do meu banco?",
+                    answer: "Sim! Suportamos importação de extratos bancários nos formatos CSV e OFX, além de OCR para digitalizar notas fiscais nos planos pagos."
+                  }
+                ].map((faq, index) => (
+                  <motion.div
+                    key={index}
+                    variants={featureVariants}
+                    initial="initial"
+                    whileInView="animate"
+                    viewport={{ once: true, amount: 0.3 }}
+                    transition={{ ...featureVariants.transition, delay: index * 0.1 }}
+                    className="p-4 sm:p-6 rounded-lg bg-card/50 border border-border/20 transition-all duration-300 hover:border-primary/50"
+                  >
+                    <h3 className="font-semibold text-sm sm:text-base mb-2 sm:mb-3 leading-tight">{faq.question}</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{faq.answer}</p>
+                  </motion.div>
+                ))}
+              </div>
+
+              <motion.div 
+                {...fadeIn}
+                transition={{ ...fadeIn.transition, delay: 0.6 }}
+                className="text-center mt-8 sm:mt-12"
+              >
+                <Button asChild variant="outline" size="lg">
+                  <Link href="/faq" className="text-sm sm:text-base">
+                    Ver Todas as Perguntas
+                    <ChevronRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+                  </Link>
+                </Button>
+              </motion.div>
+            </div>
+          </section>
+
+          {/* Blog Preview Section */}
+          <section className="py-12 sm:py-16 md:py-20 lg:py-32">
+            <div className="container mx-auto px-3 sm:px-4">
+              <motion.div {...fadeIn}>
+                <div className="text-center mb-8 sm:mb-12">
+                  <div className="inline-block rounded-full bg-primary/10 p-2 sm:p-3 text-primary mb-3 sm:mb-4">
+                    <BookOpen className="h-6 w-6 sm:h-8 sm:w-8"/>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight leading-tight">
+                    Educação Financeira
+                  </h2>
+                  <p className="mt-3 sm:mt-4 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+                    Artigos e dicas para melhorar sua relação com o dinheiro
+                  </p>
+                </div>
+              </motion.div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-6xl mx-auto">
+                {[
+                  {
+                    title: "10 Dicas Essenciais para Controlar seus Gastos em 2025",
+                    description: "Estratégias práticas para manter suas finanças organizadas e alcançar seus objetivos.",
+                    category: "Educação Financeira",
+                    readTime: 8,
+                    slug: "controlar-gastos-2025"
+                  },
+                  {
+                    title: "Como a IA Pode Revolucionar suas Finanças",
+                    description: "Entenda como a inteligência artificial pode ajudar no controle financeiro e análise de gastos.",
+                    category: "Tecnologia",
+                    readTime: 12,
+                    slug: "ia-revoluciona-financas"
+                  },
+                  {
+                    title: "Orçamento 50/30/20: O Método que Funciona",
+                    description: "Aprenda a aplicar a regra 50/30/20 na prática e organize suas finanças de forma simples.",
+                    category: "Planejamento",
+                    readTime: 6,
+                    slug: "orcamento-50-30-20"
+                  }
+                ].map((post, index) => (
+                  <motion.div
+                    key={index}
+                    variants={featureVariants}
+                    initial="initial"
+                    whileInView="animate"
+                    viewport={{ once: true, amount: 0.3 }}
+                    transition={{ ...featureVariants.transition, delay: index * 0.1 }}
+                    className="group"
+                  >
+                    <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                      <CardHeader className="pb-3 sm:pb-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <Badge variant="outline" className="text-xs">
+                            {post.category}
+                          </Badge>
+                          <span className="text-xs text-muted-foreground">
+                            {post.readTime} min
+                          </span>
+                        </div>
+                        <CardTitle className="text-base sm:text-lg leading-tight group-hover:text-primary transition-colors">
+                          {post.title}
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="pt-0">
+                        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-4">
+                          {post.description}
+                        </p>
+                        <Button asChild variant="ghost" size="sm" className="p-0 h-auto text-xs sm:text-sm">
+                          <Link href={`/blog/${post.slug}`} className="flex items-center">
+                            Ler artigo
+                            <ArrowRight className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
+                          </Link>
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                ))}
+              </div>
+
+              <motion.div 
+                {...fadeIn}
+                transition={{ ...fadeIn.transition, delay: 0.6 }}
+                className="text-center mt-8 sm:mt-12"
+              >
+                <Button asChild variant="outline" size="lg">
+                  <Link href="/blog" className="text-sm sm:text-base">
+                    Ver Todos os Artigos
+                    <ChevronRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
+                  </Link>
+                </Button>
+              </motion.div>
+            </div>
+          </section>
+
         </main>
 
-        <footer className="p-4 md:p-6 border-t border-border/20">
-            <div className="container mx-auto text-center text-sm text-muted-foreground">
+        <footer className="p-3 sm:p-4 md:p-6 border-t border-border/20">
+            <div className="container mx-auto text-center text-xs sm:text-sm text-muted-foreground">
                   © {new Date().getFullYear()} Gastometria. Todos os direitos reservados.
             </div>
         </footer>

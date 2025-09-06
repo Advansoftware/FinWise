@@ -5,7 +5,7 @@ import { useState, useEffect, createContext, useContext, ReactNode, useCallback 
 import { MonthlyReport, AnnualReport, Transaction } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
-import { generateMonthlyReportAction, generateAnnualReportAction } from "@/services/ai-actions";
+import { getSmartMonthlyReport, getSmartAnnualReport } from "@/services/ai-automation-service";
 import { useTransactions } from "./use-transactions";
 import { startOfMonth, subMonths, getYear, getMonth, isToday } from "date-fns";
 import { apiClient } from "@/lib/api-client";
@@ -65,7 +65,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
       const reportId = `${year}-${String(month).padStart(2, '0')}`;
       
       try {
-        const aiResult = await generateMonthlyReportAction({
+        const aiResult = await getSmartMonthlyReport({
             transactions: JSON.stringify(transactions, null, 2),
             year: String(year),
             month: String(month).padStart(2, '0'),
@@ -106,7 +106,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
       const reportId = String(year);
       
       try {
-        const aiResult = await generateAnnualReportAction({
+        const aiResult = await getSmartAnnualReport({
             monthlyReports: JSON.stringify(monthlyReportsForYear, null, 2),
             year: String(year),
         }, user.uid, true);

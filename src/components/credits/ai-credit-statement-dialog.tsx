@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -16,6 +17,7 @@ interface CreditStatementDialogProps {
 }
 
 export function CreditStatementDialog({ open, onOpenChange }: CreditStatementDialogProps) {
+  const router = useRouter()
   const { 
     currentCredits,
     plan,
@@ -237,8 +239,9 @@ export function CreditStatementDialog({ open, onOpenChange }: CreditStatementDia
             <Button 
               className="flex-1"
               onClick={() => {
-                // Implementar navegação para configurações de IA
+                // Navegar para configurações de IA
                 onOpenChange(false)
+                router.push('/settings')
               }}
             >
               <Settings className="h-4 w-4 mr-2" />

@@ -46,12 +46,22 @@ export default function DashboardPage() {
                     </p>
                 </div>
                 
-                {/* Action Buttons - Mobile Stack, Desktop Row */}
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                {/* Action Buttons - Alinhados à direita */}
+                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:justify-end">
                     <AddTransactionSheet>
-                        <Button className="w-full sm:w-auto order-1">
+                        <Button className="w-full sm:w-auto order-3 sm:order-1">
                             <PlusCircle className="mr-2 h-4 w-4"/>
                             Adicionar Transação
+                        </Button>
+                    </AddTransactionSheet>
+                    
+                    <AddTransactionSheet>
+                        <Button 
+                            variant="outline" 
+                            className="w-full sm:w-auto order-2"
+                        >
+                            <PlusCircle className="mr-2 h-4 w-4"/>
+                            Adicionar Transferência
                         </Button>
                     </AddTransactionSheet>
                     
@@ -60,7 +70,7 @@ export default function DashboardPage() {
                            <Button 
                                variant="outline" 
                                disabled={!isPro}
-                               className="w-full sm:w-auto order-2"
+                               className="w-full sm:w-auto order-1 sm:order-3"
                            >
                                 <ScanLine className="mr-2 h-4 w-4"/>
                                 Escanear Nota

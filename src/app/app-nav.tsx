@@ -1,9 +1,11 @@
 "use client"
 
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
 import { Home, History, Settings, FolderKanban, Upload, Gem, UserCircle, Target, Goal, Wallet, FileText } from 'lucide-react';
 import { useSidebar } from '@/components/ui/sidebar';
+import { cn } from '@/lib/utils';
 
 const navItems = [
     { href: '/dashboard', label: 'Painel', icon: Home },
@@ -25,18 +27,24 @@ export function AppNav() {
 
     return (
         <SidebarMenu>
-            {navItems.map(item => (
-                <SidebarMenuItem key={item.href}>
-                     <SidebarMenuButton 
-                        href={item.href} 
-                        isActive={pathname === item.href}
-                        tooltip={{children: item.label, side: "right", align: "center"}}
-                    >
-                        <item.icon className="h-4 w-4 shrink-0" />
-                        <span className="flex-1 ml-2 truncate group-data-[state=collapsed]:hidden">{item.label}</span>
-                    </SidebarMenuButton>
-                </SidebarMenuItem>
-            ))}
+            {navItems.map(item => {
+                const isActive = pathname === item.href;
+                return (
+                    <SidebarMenuItem key={item.href}>
+                        <Link 
+                            href={item.href} 
+                            className={cn(
+                                "flex items-center w-full px-3 py-2 text-sm rounded-md transition-colors hover:bg-accent hover:text-accent-foreground",
+                                isActive ? "bg-accent text-accent-foreground" : "text-muted-foreground",
+                                "group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:px-2"
+                            )}
+                        >
+                            <item.icon className="h-4 w-4 shrink-0" />
+                            <span className="flex-1 ml-2 truncate group-data-[state=collapsed]:hidden">{item.label}</span>
+                        </Link>
+                    </SidebarMenuItem>
+                );
+            })}
         </SidebarMenu>
     );
 }

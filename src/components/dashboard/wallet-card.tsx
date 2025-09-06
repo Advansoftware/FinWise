@@ -21,44 +21,44 @@ export function WalletCard({ transactions }: WalletCardProps) {
 
     return (
         <Card className="relative overflow-hidden bg-card/80 backdrop-blur-xl h-full">
-            <CardHeader className="pb-4">
-                <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-full bg-primary/20 text-primary">
-                        <Wallet className="h-6 w-6"/>
+            <CardHeader className="pb-3">
+                <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-full bg-primary/20 text-primary">
+                        <Wallet className="h-4 w-4"/>
                     </div>
                     <div>
-                        <CardTitle>Carteira Consolidada</CardTitle>
-                        <CardDescription>Balanço total e do período selecionado</CardDescription>
+                        <CardTitle className="text-base">Carteira Consolidada</CardTitle>
+                        <CardDescription className="text-xs">Balanço total e do período</CardDescription>
                     </div>
                 </div>
             </CardHeader>
-            <CardContent>
-                <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-                     <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">Saldo Total</p>
-                        <p className={cn("text-4xl font-bold tracking-tight", totalBalance >= 0 ? "text-foreground" : "text-destructive")}>
+            <CardContent className="pb-4">
+                <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                     <div className="space-y-0.5">
+                        <p className="text-xs text-muted-foreground">Saldo Total</p>
+                        <p className={cn("text-2xl md:text-3xl font-bold tracking-tight", totalBalance >= 0 ? "text-foreground" : "text-destructive")}>
                             R$ {totalBalance.toFixed(2)}
                         </p>
                     </div>
-                    <div className="flex gap-4 md:gap-8">
-                         <div className="flex items-center gap-2">
-                             <div className="p-2 rounded-full bg-emerald-500/10">
-                                <ArrowDown className="h-5 w-5 text-emerald-500" />
+                    <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
+                         <div className="flex items-center gap-1.5">
+                             <div className="p-1 rounded-full bg-emerald-500/10">
+                                <ArrowDown className="h-3 w-3 text-emerald-500" />
                             </div>
                             <div>
-                                <p className="text-sm text-muted-foreground">Receitas (período)</p>
-                                <p className="font-semibold text-emerald-500">
+                                <p className="text-xs text-muted-foreground">Receitas</p>
+                                <p className="text-sm font-semibold text-emerald-500">
                                     +R$ {totalIncome.toFixed(2)}
                                 </p>
                             </div>
                         </div>
-                         <div className="flex items-center gap-2">
-                            <div className="p-2 rounded-full bg-red-500/10">
-                                <ArrowUp className="h-5 w-5 text-red-500" />
+                         <div className="flex items-center gap-1.5">
+                            <div className="p-1 rounded-full bg-red-500/10">
+                                <ArrowUp className="h-3 w-3 text-red-500" />
                             </div>
                             <div>
-                                <p className="text-sm text-muted-foreground">Despesas (período)</p>
-                                <p className="font-semibold text-red-500">
+                                <p className="text-xs text-muted-foreground">Despesas</p>
+                                <p className="text-sm font-semibold text-red-500">
                                     -R$ {totalExpense.toFixed(2)}
                                 </p>
                             </div>

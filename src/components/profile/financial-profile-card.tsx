@@ -8,7 +8,7 @@ import { RefreshCw, Sparkles } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useReports } from "@/hooks/use-reports";
-import { getFinancialProfile } from "@/services/ai-actions";
+import { getSmartFinancialProfile } from "@/services/ai-automation-service";
 import { Separator } from "../ui/separator";
 import { useAuth } from "@/hooks/use-auth";
 import { startOfMonth, getYear } from "date-fns";
@@ -40,7 +40,7 @@ export function FinancialProfileCard() {
            const currentYearMonthlyReports = monthlyReports.filter(r => r.year === currentYear);
            const pastAnnualReports = annualReports.filter(r => r.year < currentYear);
 
-          const newProfile = await getFinancialProfile({
+          const newProfile = await getSmartFinancialProfile({
             monthlyReports: JSON.stringify(currentYearMonthlyReports, null, 2),
             annualReports: JSON.stringify(pastAnnualReports, null, 2),
             currentMonthTransactions: JSON.stringify(currentMonthTransactions, null, 2),

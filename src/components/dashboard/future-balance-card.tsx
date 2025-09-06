@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useWallets } from "@/hooks/use-wallets";
 import { useBudgets } from "@/hooks/use-budgets";
 import { useTransactions } from "@/hooks/use-transactions";
-import { predictFutureBalanceAction } from "@/services/ai-actions";
+import { getSmartFutureBalance } from "@/services/ai-automation-service";
 import { PredictFutureBalanceOutput } from "@/ai/ai-types";
 import { subMonths, startOfMonth } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -45,7 +45,7 @@ export function FutureBalanceCard() {
           const last3MonthsTransactions = allTransactions.filter(t => new Date(t.date) >= last3MonthsStart);
           const recurringBills = budgets.map(b => ({ category: b.category, amount: b.amount }));
 
-          const result = await predictFutureBalanceAction({
+          const result = await getSmartFutureBalance({
             last3MonthsTransactions: JSON.stringify(last3MonthsTransactions),
             currentBalance: currentBalance,
             recurringBills: JSON.stringify(recurringBills),
@@ -107,7 +107,7 @@ export function FutureBalanceCard() {
                     </div>
                 </div>
                  <CardDescription className="text-xs text-primary/70 mt-2 pl-12">
-                    Gerado 1x por dia. Atualizar custa 3 créditos da Gastometria AI.
+                    Gerado 1x por mês. Atualizar custa 5 créditos da Gastometria AI.
                 </CardDescription>
             </div>
             <Button

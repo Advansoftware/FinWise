@@ -31,7 +31,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
        {completedGoal && <GoalCompletionCelebration goal={completedGoal} onComplete={clearCompletedGoal} />}
       <div className="flex min-h-screen">
           {/* Sidebar - Hidden on mobile by default */}
-          <Sidebar className="flex flex-col border-r">
+          <Sidebar className="flex flex-col border-r fixed h-full z-40 lg:relative lg:z-auto">
               <SidebarHeader className="border-b p-4">
                   <div className="flex items-center gap-3 group-data-[state=collapsed]:justify-center">
                       <Logo className="w-8 h-8 shrink-0"/>
@@ -40,10 +40,10 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                       </span>
                   </div>
               </SidebarHeader>
-              <SidebarContent className="flex-1">
-                <ScrollArea className="h-full px-3 py-4">
+              <SidebarContent className="flex-1 overflow-hidden">
+                <div className="h-full px-3 py-4 overflow-y-auto">
                     <AppNav />
-                </ScrollArea>
+                </div>
               </SidebarContent>
               <SidebarFooter className="border-t p-4">
                   <UserNav />
@@ -51,7 +51,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
           </Sidebar>
 
           {/* Main Content */}
-          <main className="flex-1 flex flex-col min-w-0">
+          <main className="flex-1 flex flex-col min-w-0 lg:ml-0">
               {/* Mobile Header */}
               <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 lg:hidden">
                   <div className="flex items-center gap-3">
@@ -65,12 +65,12 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                   </div>
               </header>
 
-              {/* Page Content */}
-              <ScrollArea className="flex-1 h-[calc(100vh-3.5rem)] lg:h-screen">
+              {/* Page Content - Fixed height with own scroll */}
+              <div className="flex-1 h-[calc(100vh-3.5rem)] lg:h-screen overflow-y-auto">
                 <div className="container mx-auto px-4 py-4 lg:px-6 lg:py-6 max-w-7xl">
                     {children}
                 </div>
-              </ScrollArea>
+              </div>
 
               {/* Fixed Elements */}
               <PWAUpdater />
