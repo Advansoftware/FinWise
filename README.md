@@ -40,7 +40,7 @@ Este projeto foi desenvolvido com o Firebase Studio e serve como um exemplo robu
 
 1.  Clone o repositório:
     ```bash
-    git clone git@github.com:Advansoftware/Gastometria.git
+    git clone git@github.com:gastometria/gastometria.git
     ```
 2.  Navegue até o diretório do projeto:
     ```bash

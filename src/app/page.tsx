@@ -17,6 +17,8 @@ import { AuthGuard } from '@/components/auth/auth-guard';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { structuredData, organizationData, websiteData, breadcrumbData, faqData } from '@/lib/structured-data';
+import Head from 'next/head';
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -78,6 +80,28 @@ export default function Page() {
   
   return (
     <AuthGuard>
+      <Head>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
+        />
+        <script
+          type="application/ld+json" 
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationData) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteData) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbData) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(faqData) }}
+        />
+      </Head>
       <div className="flex flex-col min-h-screen bg-background text-foreground overflow-x-hidden">
         <header className="sticky top-0 z-50 px-4 md:px-6 h-14 flex items-center justify-between bg-background/50 backdrop-blur-lg border-b border-border/50">
             <motion.div 

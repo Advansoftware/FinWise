@@ -8,6 +8,7 @@ import matter from 'gray-matter';
 import ReactMarkdown from 'react-markdown';
 import { DocSidebarNav } from '@/app/(docs)/docs/_components/docs-sidebar-nav';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Metadata } from 'next';
 
 const docsDirectory = path.join(process.cwd(), 'docs');
 
@@ -20,6 +21,40 @@ async function getDocContent(slug: string) {
     } catch (error) {
         return null;
     }
+}
+
+export async function generateMetadata(
+  { params }: { params: { slug?: string[] } }
+): Promise<Metadata> {
+  const slug = params.slug?.join('/') || 'introducao';
+  const doc = await getDocContent(slug);
+  
+  if (!doc) {
+    return {
+      title: 'Página não encontrada | Gastometria Docs',
+    };
+  }
+
+  const descriptions: Record<string, string> = {
+    introducao: 'Guia completo para começar a usar o Gastometria. Aprenda os conceitos básicos do dashboard financeiro inteligente.',
+    transacoes: 'Como adicionar, editar e gerenciar suas transações no Gastometria. Guia completo de controle de gastos.',
+    carteiras: 'Aprenda a criar e gerenciar carteiras no Gastometria. Organize suas contas e cartões de crédito.',
+    orcamentos: 'Como criar e monitorar orçamentos inteligentes no Gastometria. Controle seus gastos por categoria.',
+    metas: 'Defina e acompanhe suas metas financeiras no Gastometria. Planeje sua independência financeira.',
+    relatorios: 'Gere relatórios automáticos com IA no Gastometria. Análises detalhadas de seus gastos e tendências.',
+    importacao: 'Como importar extratos bancários (CSV/OFX) no Gastometria. Automatize o registro de transações.',
+    'configuracao-ia': 'Configure provedores de IA no Gastometria. Use OpenAI, Google AI ou Ollama local.',
+  };
+
+  return {
+    title: `${doc.title} | Gastometria Docs`,
+    description: descriptions[slug] || `Documentação do Gastometria: ${doc.title}`,
+    openGraph: {
+      title: `${doc.title} | Gastometria Docs`,
+      description: descriptions[slug] || `Aprenda sobre ${doc.title} no Gastometria`,
+      url: `https://gastometria.com.br/docs/${slug}`,
+    },
+  };
 }
 
 async function getDocs() {
