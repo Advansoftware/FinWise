@@ -120,6 +120,15 @@ export class MongoDBAuthService implements IAuthService {
         aiCredits: 10
       };
 
+      // Configurar dados padrão para o novo usuário (categorias, configurações, etc.)
+      try {
+        const { setupDefaultUserData } = await import('@/services/default-setup-service');
+        await setupDefaultUserData(userId);
+      } catch (setupError) {
+        console.error('Erro ao configurar dados padrão:', setupError);
+        // Não falha o cadastro se houver erro na configuração padrão
+      }
+
       this.notifyAuthStateChanged(userResponse);
 
       return {

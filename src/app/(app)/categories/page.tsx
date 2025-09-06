@@ -8,7 +8,7 @@ import { TransactionCategory } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { CategoryIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, MoreVertical, Edit, Trash2, Wand2, X, Check, Loader2 } from "lucide-react";
+import { PlusCircle, MoreVertical, Edit, Trash2, Wand2, X, Check, Loader2, Settings } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
@@ -36,6 +36,7 @@ import {
 import { suggestCategoryForItemAction } from "@/services/ai-actions";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import Link from "next/link";
 
 
 export default function CategoriesPage() {
@@ -110,6 +111,12 @@ export default function CategoriesPage() {
                     <p className="text-muted-foreground">Gerencie suas categorias e veja os gastos de cada uma.</p>
                 </div>
                  <div className="flex gap-2 items-center">
+                    <Link href="/categories/default">
+                        <Button variant="outline" size="sm">
+                            <Settings className="mr-2 h-4 w-4"/>
+                            Ver Padrão
+                        </Button>
+                    </Link>
                     <Dialog>
                         <DialogTrigger asChild>
                             <Button variant="outline" disabled={!user}><Wand2 className="mr-2 h-4 w-4"/>Sugerir por IA</Button>

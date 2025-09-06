@@ -69,7 +69,24 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
 
         // Load categories from settings
         const settings = await apiClient.get('settings', user.uid);
-        setCategoryMap(settings?.categories || {});
+        const categories = settings?.categories || {};
+        
+        // Se o usuário não tem categorias configuradas, configura as padrão
+        if (Object.keys(categories).length === 0) {
+          try {
+            const { migrateExistingUser } = await import('@/services/default-setup-service');
+            await migrateExistingUser(user.uid);
+            
+            // Recarrega as configurações após a migração
+            const updatedSettings = await apiClient.get('settings', user.uid);
+            setCategoryMap(updatedSettings?.categories || {});
+          } catch (migrationError) {
+            console.error('Erro na migração de categorias:', migrationError);
+            setCategoryMap({});
+          }
+        } else {
+          setCategoryMap(categories);
+        }
       } catch (error) {
         console.error('Erro ao carregar dados:', error);
       } finally {
