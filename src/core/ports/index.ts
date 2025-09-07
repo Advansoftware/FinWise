@@ -2,3 +2,4 @@
 
 export * from './database.port';
 export * from './auth.port';
+export * from './reports.port';

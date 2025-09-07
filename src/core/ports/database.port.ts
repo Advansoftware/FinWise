@@ -3,6 +3,7 @@
 import { Transaction, Wallet, Budget, Goal, UserProfile } from '@/lib/types';
 import { AICreditLog } from '@/ai/ai-types';
 import { IPaymentRepository } from './payment.port';
+import { IReportsRepository } from './reports.port';
 
 export interface IUserRepository {
   findById(id: string): Promise<UserProfile | null>;
@@ -93,6 +94,7 @@ export interface IDatabaseAdapter {
   settings: ISettingsRepository;
   aiGeneratedData: IAIGeneratedDataRepository;
   payments: IPaymentRepository;
+  reports: IReportsRepository;
 
   // Connection management
   connect(): Promise<void>;

@@ -37,8 +37,8 @@ export function FinancialProfileCard() {
       setProfile(null); // Clear previous profile
       try {
            const currentYear = getYear(new Date());
-           const currentYearMonthlyReports = monthlyReports.filter(r => r.year === currentYear);
-           const pastAnnualReports = annualReports.filter(r => r.year < currentYear);
+           const currentYearMonthlyReports = monthlyReports.filter(r => r.period.startsWith(currentYear.toString()));
+           const pastAnnualReports = annualReports.filter(r => parseInt(r.period) < currentYear);
 
           const newProfile = await getSmartFinancialProfile({
             monthlyReports: JSON.stringify(currentYearMonthlyReports, null, 2),

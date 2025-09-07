@@ -64,8 +64,8 @@ export function ChatAssistant() {
 
                 // Prepare data for the AI
                 const currentMonthTransactions = allTransactions.filter(t => new Date(t.date) >= startOfCurrentMonth);
-                const currentYearMonthlyReports = monthlyReports.filter(r => r.year === currentYear);
-                const pastAnnualReports = annualReports.filter(r => r.year < currentYear);
+                const currentYearMonthlyReports = monthlyReports.filter(r => r.period.startsWith(currentYear.toString()));
+                const pastAnnualReports = annualReports.filter(r => parseInt(r.period) < currentYear);
 
                 const response = await getChatbotResponse({
                     history: messages,
