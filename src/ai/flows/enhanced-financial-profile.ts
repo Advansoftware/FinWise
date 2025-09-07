@@ -49,35 +49,17 @@ export async function generateEnhancedFinancialProfile(
   const configuredAI = createConfiguredAI(credential);
   const model = getModelReference(credential);
 
-  const prompt = configuredAI.prompt({
+  const prompt = configuredAI.definePrompt({
     name: 'enhancedFinancialProfile',
-    input: {
-      schema: FinancialProfileInputSchema,
-    },
-    output: {
-      schema: FinancialProfileOutputSchema,
-    },
-    config: {
-      temperature: 0.7,
-    },
+    input: { schema: FinancialProfileInputSchema as any },
+    output: { schema: FinancialProfileOutputSchema as any },
+    model: model,
+    prompt: promptTemplate,
   });
 
-  const result = await prompt(
-    {
-      currentMonthTransactions: input.currentMonthTransactions,
-      monthlyReports: input.monthlyReports,
-      annualReports: input.annualReports,
-      gamificationData: input.gamificationData || 'Dados de gamificação não disponíveis',
-    },
-    {
-      model,
-      config: {
-        template: promptTemplate,
-        temperature: 0.7,
-        maxOutputTokens: 1000
-      }
-    }
-  );
-
-  return result.output;
+  const { output } = await prompt(input);
+  if (!output) {
+    throw new Error("Failed to generate enhanced financial profile.");
+  }
+  return output;
 }

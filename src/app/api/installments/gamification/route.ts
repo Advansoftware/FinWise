@@ -2,9 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuth } from 'firebase-admin/auth';
-import { MongoInstallmentsRepository } from '@/core/adapters/mongodb/mongodb-installments.adapter';
-import { IInstallmentsRepository } from '@/core/ports/installments.port';
-import { connectToDatabase } from '@/lib/mongodb';
+import { getDatabaseAdapter } from '@/core/services/service-factory';
 
 export async function GET(request: NextRequest) {
   try {
@@ -35,8 +33,8 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const installmentsRepository = container.get<InstallmentsRepositoryPort>('InstallmentsRepository');
-    const summary = await installmentsRepository.getSummary(userId);
+    const db = await getDatabaseAdapter();
+    const summary = await db.installments.getInstallmentSummary(userId);
 
     if (!summary) {
       return NextResponse.json({
