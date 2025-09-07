@@ -499,11 +499,78 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
 
   private calculateLevel(points: number) {
     const levels = [
-      { level: 1, name: 'Iniciante', pointsRequired: 0, benefits: ['Controle básico de parcelamentos'] },
-      { level: 2, name: 'Organizador', pointsRequired: 100, benefits: ['Relatórios mensais', 'Notificações avançadas'] },
-      { level: 3, name: 'Disciplinado', pointsRequired: 300, benefits: ['Projeções automáticas', 'Análise de tendências'] },
-      { level: 4, name: 'Expert', pointsRequired: 600, benefits: ['Otimização automática', 'Consultoria IA'] },
-      { level: 5, name: 'Mestre', pointsRequired: 1000, benefits: ['Recursos premium', 'Suporte prioritário'] }
+      {
+        level: 1,
+        name: 'Iniciante',
+        pointsRequired: 0,
+        benefits: [
+          'Controle básico de parcelamentos',
+          'Criação de até 5 parcelamentos',
+          'Lembretes de vencimento'
+        ]
+      },
+      {
+        level: 2,
+        name: 'Organizador',
+        pointsRequired: 100,
+        benefits: [
+          'Criação de até 15 parcelamentos',
+          'Relatórios mensais básicos',
+          'Notificações avançadas',
+          'Categorização automática'
+        ]
+      },
+      {
+        level: 3,
+        name: 'Disciplinado',
+        pointsRequired: 300,
+        benefits: [
+          'Parcelamentos ilimitados',
+          'Projeções automáticas de conclusão',
+          'Análise de tendências de pagamento',
+          'Exportação de relatórios',
+          'Metas de quitação personalizadas'
+        ]
+      },
+      {
+        level: 4,
+        name: 'Expert',
+        pointsRequired: 600,
+        benefits: [
+          'Otimização automática de pagamentos',
+          'Consultoria IA avançada',
+          'Simulações de cenários',
+          'Alertas preditivos',
+          'Integração com bancos',
+          'Suporte prioritário'
+        ]
+      },
+      {
+        level: 5,
+        name: 'Mestre',
+        pointsRequired: 1000,
+        benefits: [
+          'Acesso a recursos beta',
+          'Consultoria financeira personalizada',
+          'API de integração',
+          'Relatórios executivos',
+          'Análise comportamental avançada',
+          'Badge de usuário VIP'
+        ]
+      },
+      {
+        level: 6,
+        name: 'Lenda',
+        pointsRequired: 1500,
+        benefits: [
+          'Status de usuário Lenda',
+          'Influência em novas funcionalidades',
+          'Acesso antecipado a atualizações',
+          'Programa de embaixadores',
+          'Consultoria ilimitada',
+          'Certificado digital de excelência'
+        ]
+      }
     ];
 
     let currentLevel = levels[0];

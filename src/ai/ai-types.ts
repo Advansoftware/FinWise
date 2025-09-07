@@ -18,12 +18,19 @@ export const FinancialProfileInputSchema = z.object({
   currentMonthTransactions: z.string().describe("A JSON string representing the user's transactions for the current, ongoing month."),
   monthlyReports: z.string().describe('A JSON string representing an array of pre-computed monthly financial summary reports from the current year.'),
   annualReports: z.string().describe('A JSON string representing an array of pre-computed annual financial summary reports from past years.'),
+  gamificationData: z.string().optional().describe('A JSON string representing the user gamification profile including points, level, badges, achievements, streak, and completion rates.'),
 });
 export type FinancialProfileInput = z.infer<typeof FinancialProfileInputSchema>;
 
 export const FinancialProfileOutputSchema = z.object({
   profileName: z.string().describe('A creative, catchy name for the user financial profile, in Brazilian Portuguese. For example: "O Estrategista Cauteloso", "O Explorador de Sabores", "O Acumulador de Metas".'),
-  profileDescription: z.string().describe('A short, encouraging, and insightful description of the user spending habits that justifies the profileName, in Brazilian Portuguese.'),
+  profileDescription: z.string().describe('A comprehensive, encouraging, and insightful description of the user spending habits that justifies the profileName, in Brazilian Portuguese. Should include insights about their gamification achievements, discipline level, and payment consistency.'),
+  gamificationInfluence: z.object({
+    disciplineLevel: z.enum(['Iniciante', 'Intermediário', 'Avançado', 'Expert']).describe('User discipline level based on gamification data'),
+    paymentConsistency: z.enum(['Irregular', 'Regular', 'Muito Regular', 'Exemplar']).describe('Payment consistency based on streak and completion rates'),
+    strengthsFromGamification: z.array(z.string()).describe('Financial strengths derived from gamification achievements'),
+    improvementAreas: z.array(z.string()).describe('Areas for improvement based on gamification metrics')
+  }).optional().describe('Gamification-influenced profile insights'),
 });
 export type FinancialProfileOutput = z.infer<typeof FinancialProfileOutputSchema>;
 

@@ -17,15 +17,22 @@ import {
   Clock, 
   Plus,
   TrendingUp,
-  PieChart
+  PieChart,
+  Trophy,
+  Award,
+  Flame,
+  Zap,
+  Target
 } from 'lucide-react';
 import { useInstallments } from '@/hooks/use-installments';
 import { CreateInstallmentDialog } from '@/components/installments/create-installment-dialog';
 import { InstallmentCard } from '@/components/installments/installment-card';
 import { PaymentSchedule } from '@/components/installments/payment-schedule';
 import { MonthlyProjections } from '@/components/installments/monthly-projections';
+import { GamificationGuide } from '@/components/installments/gamification-guide';
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
+import { motion } from 'framer-motion';
 
 export default function InstallmentsPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -63,10 +70,17 @@ export default function InstallmentsPage() {
             Gerencie suas prestações, acompanhe pagamentos e projete compromissos futuros.
           </p>
         </div>
-        <Button onClick={() => setIsCreateOpen(true)} className="w-full sm:w-auto">
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Parcelamento
-        </Button>
+        <div className="flex flex-col sm:flex-row gap-2">
+          <GamificationGuide 
+            currentPoints={summary?.gamification.points}
+            currentLevel={summary?.gamification.level}
+            badges={summary?.gamification.badges}
+          />
+          <Button onClick={() => setIsCreateOpen(true)} className="w-full sm:w-auto">
+            <Plus className="h-4 w-4 mr-2" />
+            Novo Parcelamento
+          </Button>
+        </div>
       </div>
 
       {/* Alerta de Atraso */}
@@ -207,8 +221,9 @@ export default function InstallmentsPage() {
 
       {/* Main Content */}
       <Tabs defaultValue="active" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="active">Ativos</TabsTrigger>
+          <TabsTrigger value="gamification">🏆 Progresso</TabsTrigger>
           <TabsTrigger value="schedule">Cronograma</TabsTrigger>
           <TabsTrigger value="projections">Projeções</TabsTrigger>
           <TabsTrigger value="completed">Concluídos</TabsTrigger>
@@ -238,6 +253,169 @@ export default function InstallmentsPage() {
                   showActions
                 />
               ))}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="gamification" className="space-y-6">
+          {summary && (
+            <div className="space-y-6">
+              {/* Header da Gamificação com Guia */}
+              <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
+                        <Trophy className="h-6 w-6 text-white" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-xl">
+                          Nível {summary.gamification.level.level} - {summary.gamification.level.name}
+                        </CardTitle>
+                        <CardDescription>
+                          {summary.gamification.points} pontos acumulados
+                        </CardDescription>
+                      </div>
+                    </div>
+                    <GamificationGuide />
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Progresso para o próximo nível</span>
+                      <span>{summary.gamification.level.pointsToNext} pontos restantes</span>
+                    </div>
+                    <Progress 
+                      value={(summary.gamification.points / (summary.gamification.level.pointsRequired + summary.gamification.level.pointsToNext)) * 100} 
+                      className="h-3"
+                    />
+                  </div>
+                  
+                  {summary.gamification.streak > 0 && (
+                    <div className="flex items-center gap-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                      <Flame className="h-5 w-5 text-orange-500" />
+                      <span className="font-medium text-orange-700">
+                        Sequência de {summary.gamification.streak} meses pagando tudo em dia! 🔥
+                      </span>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Badges Conquistadas */}
+              {summary.gamification.badges.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Award className="h-5 w-5" />
+                      Badges Conquistadas
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                      {summary.gamification.badges.map((badge) => (
+                        <motion.div
+                          key={badge.id}
+                          initial={{ scale: 0, rotate: -180 }}
+                          animate={{ scale: 1, rotate: 0 }}
+                          className="text-center p-4 border rounded-lg bg-gradient-to-b from-yellow-50 to-yellow-100 border-yellow-200"
+                        >
+                          <div className="text-3xl mb-2">{badge.icon}</div>
+                          <h4 className="font-medium text-sm">{badge.name}</h4>
+                          <p className="text-xs text-muted-foreground">{badge.description}</p>
+                          <Badge 
+                            variant="outline" 
+                            className={`mt-2 text-xs ${
+                              badge.rarity === 'legendary' ? 'border-yellow-400 text-yellow-700' :
+                              badge.rarity === 'epic' ? 'border-purple-400 text-purple-700' :
+                              badge.rarity === 'rare' ? 'border-blue-400 text-blue-700' :
+                              'border-gray-400 text-gray-700'
+                            }`}
+                          >
+                            {badge.rarity}
+                          </Badge>
+                        </motion.div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Conquistas em Progresso */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Target className="h-5 w-5" />
+                    Conquistas em Progresso
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    {summary.gamification.achievements.map((achievement) => (
+                      <div key={achievement.id} className="border rounded-lg p-4">
+                        <div className="flex items-center gap-3 mb-3">
+                          <div className="text-2xl">{achievement.icon}</div>
+                          <div className="flex-1">
+                            <h4 className="font-medium">{achievement.name}</h4>
+                            <p className="text-sm text-muted-foreground">{achievement.description}</p>
+                          </div>
+                          <Badge variant="outline">{achievement.points} pts</Badge>
+                        </div>
+                        
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span>Progresso</span>
+                            <span>{achievement.progress}/{achievement.target}</span>
+                          </div>
+                          <Progress 
+                            value={(achievement.progress / achievement.target) * 100} 
+                            className="h-2"
+                          />
+                          {achievement.isCompleted && (
+                            <div className="flex items-center gap-1 text-sm text-green-600">
+                              <CheckCircle2 className="h-4 w-4" />
+                              Conquista completada!
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Dicas Motivacionais */}
+              <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+                <CardContent className="pt-6">
+                  <div className="text-center space-y-3">
+                    <div className="flex justify-center">
+                      <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center">
+                        <Zap className="h-6 w-6 text-white" />
+                      </div>
+                    </div>
+                    <h3 className="font-semibold text-lg text-green-800">Dicas para Ganhar Mais Pontos</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                      <div className="p-3 bg-white rounded-lg border border-green-200">
+                        <h4 className="font-medium text-green-700 mb-1">Pague em Dia</h4>
+                        <p className="text-sm text-green-600">+5 pontos de bônus por pagamento pontual</p>
+                      </div>
+                      <div className="p-3 bg-white rounded-lg border border-green-200">
+                        <h4 className="font-medium text-green-700 mb-1">Complete Parcelamentos</h4>
+                        <p className="text-sm text-green-600">+50 pontos por cada parcelamento finalizado</p>
+                      </div>
+                      <div className="p-3 bg-white rounded-lg border border-green-200">
+                        <h4 className="font-medium text-green-700 mb-1">Evite Atrasos</h4>
+                        <p className="text-sm text-green-600">Atrasos reduzem seus pontos (-2 por dia)</p>
+                      </div>
+                      <div className="p-3 bg-white rounded-lg border border-green-200">
+                        <h4 className="font-medium text-green-700 mb-1">Mantenha Consistência</h4>
+                        <p className="text-sm text-green-600">Sequências de pagamentos aumentam seu streak</p>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           )}
         </TabsContent>

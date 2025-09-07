@@ -149,6 +149,13 @@ export async function getFinancialProfile(input: FinancialProfileInput, userId: 
   const credential = await getCredentialAndHandleCredits(userId, cost, 'Perfil Financeiro', !forceRefresh);
 
   try {
+    // Se temos dados de gamificação, usa o flow aprimorado
+    if (input.gamificationData) {
+      const { generateEnhancedFinancialProfile } = await import('@/ai/flows/enhanced-financial-profile');
+      return await generateEnhancedFinancialProfile(input, credential);
+    }
+
+    // Fallback para o flow original
     const configuredAI = createConfiguredAI(credential);
     const modelRef = getModelReference(credential);
 

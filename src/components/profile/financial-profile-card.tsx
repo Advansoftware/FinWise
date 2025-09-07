@@ -4,21 +4,25 @@
 import { useState, useEffect, useTransition, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Sparkles } from "lucide-react";
+import { RefreshCw, Sparkles, Trophy, Award, Target, Zap } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useReports } from "@/hooks/use-reports";
+import { useGamification } from "@/hooks/use-gamification";
 import { getSmartFinancialProfile } from "@/services/ai-automation-service";
 import { Separator } from "../ui/separator";
 import { useAuth } from "@/hooks/use-auth";
 import { startOfMonth, getYear } from "date-fns";
 import { FinancialProfileOutput } from "@/ai/ai-types";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
 
 export function FinancialProfileCard() {
   const [profile, setProfile] = useState<FinancialProfileOutput | null>(null);
   const [isPending, startTransition] = useTransition();
   const { allTransactions } = useTransactions();
   const { monthlyReports, annualReports } = useReports();
+  const { gamificationData, profileInsights } = useGamification();
   const { user } = useAuth();
 
   const currentMonthTransactions = useMemo(() => {
@@ -97,11 +101,77 @@ export function FinancialProfileCard() {
             <Skeleton className="h-4 w-4/5 bg-primary/10" />
           </div>
         ) : (
-          <div className="pt-2">
-            <h4 className="font-bold text-xl text-foreground">{profile.profileName}</h4>
-            <p className="text-foreground/90 mt-2 text-sm whitespace-pre-line">
-              {profile.profileDescription}
-            </p>
+          <div className="pt-2 space-y-4">
+            <div>
+              <h4 className="font-bold text-xl text-foreground">{profile.profileName}</h4>
+              <p className="text-foreground/90 mt-2 text-sm whitespace-pre-line">
+                {profile.profileDescription}
+              </p>
+            </div>
+
+            {/* Seção de Gamificação */}
+            {profile.gamificationInfluence && profileInsights && (
+              <div className="space-y-3">
+                <Separator className="my-3" />
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium text-primary">
+                    <Trophy className="h-4 w-4" />
+                    Perfil Gamificado
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 bg-muted/50 rounded-lg">
+                      <div className="text-xs text-muted-foreground">Disciplina</div>
+                      <Badge variant="outline" className="mt-1">
+                        {profile.gamificationInfluence.disciplineLevel}
+                      </Badge>
+                    </div>
+                    <div className="p-3 bg-muted/50 rounded-lg">
+                      <div className="text-xs text-muted-foreground">Consistência</div>
+                      <Badge variant="outline" className="mt-1">
+                        {profile.gamificationInfluence.paymentConsistency}
+                      </Badge>
+                    </div>
+                  </div>
+
+                  {profileInsights.financialMaturity > 0 && (
+                    <div className="p-3 bg-gradient-to-r from-primary/5 to-primary/10 rounded-lg">
+                      <div className="flex items-center justify-between text-xs mb-2">
+                        <span className="text-muted-foreground">Maturidade Financeira</span>
+                        <span className="font-medium">{profileInsights.financialMaturity}%</span>
+                      </div>
+                      <Progress value={profileInsights.financialMaturity} className="h-2" />
+                    </div>
+                  )}
+
+                  {profile.gamificationInfluence.strengthsFromGamification && 
+                   profile.gamificationInfluence.strengthsFromGamification.length > 0 && (
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-1 text-xs font-medium text-green-700">
+                        <Award className="h-3 w-3" />
+                        Pontos Fortes
+                      </div>
+                      {profile.gamificationInfluence.strengthsFromGamification.slice(0, 2).map((strength, index) => (
+                        <div key={index} className="text-xs text-green-600 bg-green-50 p-2 rounded">
+                          • {strength}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {profileInsights.motivationalTip && (
+                    <div className="p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400 rounded-r-lg">
+                      <div className="flex items-start gap-2">
+                        <Zap className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
+                        <p className="text-xs text-blue-700 leading-relaxed">
+                          {profileInsights.motivationalTip}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </CardContent>

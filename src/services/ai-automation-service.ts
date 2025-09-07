@@ -87,9 +87,27 @@ export async function getSmartFinancialProfile(
   userId: string,
   forceRefresh: boolean = false
 ): Promise<any> {
+  // Busca dados de gamificação para enriquecer o perfil
+  let gamificationData = null;
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/installments/gamification?userId=${userId}`);
+    if (response.ok) {
+      const data = await response.json();
+      gamificationData = data;
+    }
+  } catch (error) {
+    console.log('Não foi possível carregar dados de gamificação para o perfil:', error);
+  }
+
+  // Adiciona gamificação ao input se disponível
+  const enrichedInput = {
+    ...input,
+    gamificationData: gamificationData ? JSON.stringify(gamificationData, null, 2) : undefined
+  };
+
   // Se forçar refresh, usa a função normal que consome créditos
   if (forceRefresh) {
-    const profile = await getFinancialProfile(input, userId, true);
+    const profile = await getFinancialProfile(enrichedInput, userId, true);
 
     // Substitui dados antigos
     await saveGeneratedData(userId, 'financial_profile', profile, true);
@@ -103,7 +121,7 @@ export async function getSmartFinancialProfile(
   }
 
   // Se não tem, gera primeira vez sem consumir créditos
-  const profile = await getFinancialProfile(input, userId, false);
+  const profile = await getFinancialProfile(enrichedInput, userId, false);
   await saveGeneratedData(userId, 'financial_profile', profile);
   return profile;
 }
