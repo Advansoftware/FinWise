@@ -21,26 +21,26 @@ export function WalletCard({ transactions }: WalletCardProps) {
 
     return (
         <Card className="relative overflow-hidden bg-card/80 backdrop-blur-xl h-full">
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-2 sm:pb-3">
                 <div className="flex items-center gap-2">
                     <div className="p-1.5 rounded-full bg-primary/20 text-primary">
                         <Wallet className="h-4 w-4"/>
                     </div>
                     <div>
-                        <CardTitle className="text-base">Carteira Consolidada</CardTitle>
+                        <CardTitle className="text-sm sm:text-base">Carteira Consolidada</CardTitle>
                         <CardDescription className="text-xs">Balanço total e do período</CardDescription>
                     </div>
                 </div>
             </CardHeader>
-            <CardContent className="pb-4">
+            <CardContent className="pb-3 sm:pb-4">
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                      <div className="space-y-0.5">
                         <p className="text-xs text-muted-foreground">Saldo Total</p>
-                        <p className={cn("text-2xl md:text-3xl font-bold tracking-tight", totalBalance >= 0 ? "text-foreground" : "text-destructive")}>
+                        <p className={cn("text-xl sm:text-2xl md:text-3xl font-bold tracking-tight", totalBalance >= 0 ? "text-foreground" : "text-destructive")}>
                             R$ {totalBalance.toFixed(2)}
                         </p>
                     </div>
-                    <div className="flex flex-col sm:flex-row gap-3 md:gap-4">
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 md:gap-4">
                          <div className="flex items-center gap-1.5">
                              <div className="p-1 rounded-full bg-emerald-500/10">
                                 <ArrowDown className="h-3 w-3 text-emerald-500" />

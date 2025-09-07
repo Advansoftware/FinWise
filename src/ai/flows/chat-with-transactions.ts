@@ -36,13 +36,19 @@ Para otimizar suas respostas, você tem acesso a uma hierarquia de dados. Use a 
 {{/each}}
 
 **Relatórios Anuais (para contexto de anos anteriores):**
-{{{jsonStringify annualReports}}}
+{{#each annualReports}}
+- Ano {{year}}: Receitas R$ {{totalIncome}}, Despesas R$ {{totalExpense}}, Saldo R$ {{balance}}
+{{/each}}
 
 **Relatórios Mensais (para contexto do ano atual):**
-{{{jsonStringify monthlyReports}}}
+{{#each monthlyReports}}
+- {{monthName}}/{{year}}: Receitas R$ {{totalIncome}}, Despesas R$ {{totalExpense}}
+{{/each}}
 
 **Transações Detalhadas (para o mês atual ou detalhes):**
-{{{jsonStringify transactions}}}
+{{#each transactions}}
+- {{date}}: {{item}} - R$ {{amount}} ({{category}})
+{{/each}}
 
 ---
 

@@ -93,8 +93,8 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
             const constraints: MediaStreamConstraints = {
                 video: {
                     facingMode: facing,
-                    width: { ideal: 1920 },
-                    height: { ideal: 1080 }
+                    width: { ideal: 1920, min: 640 },
+                    height: { ideal: 1080, min: 480 }
                 }
             };
 
@@ -104,6 +104,13 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
 
             if (videoRef.current) {
                 videoRef.current.srcObject = stream;
+                
+                // Aguardar o vídeo carregar antes de exibir
+                videoRef.current.onloadedmetadata = () => {
+                    if (videoRef.current) {
+                        videoRef.current.play().catch(console.error);
+                    }
+                };
             }
 
             // Check if flash is available
@@ -452,10 +459,11 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                                 <div className="relative w-full">
                                     <video 
                                         ref={videoRef} 
-                                        className="w-full h-[60vh] object-cover rounded-lg bg-black" 
+                                        className="w-full h-[60vh] object-cover rounded-lg" 
                                         autoPlay 
                                         muted 
                                         playsInline 
+                                        style={{ backgroundColor: '#000' }}
                                     />
                                     {/* Camera overlay */}
                                     <div className="absolute inset-0">

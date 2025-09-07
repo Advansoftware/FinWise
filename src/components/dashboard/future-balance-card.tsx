@@ -94,19 +94,19 @@ export function FutureBalanceCard() {
 
   return (
     <Card className="relative overflow-hidden bg-card/80 backdrop-blur-xl border-primary/20">
-       <CardHeader className="pb-4">
+       <CardHeader className="pb-3 p-4">
           <div className="flex items-start justify-between">
              <div className="flex-1">
-                <div className="flex items-center gap-3">
-                    <div className={cn("p-2 rounded-full", prediction?.isRiskOfNegativeBalance ? "bg-destructive/20 text-destructive" : "bg-primary/20 text-primary")}>
-                        {prediction?.isRiskOfNegativeBalance ? <AlertTriangle className="h-6 w-6"/> : <TrendingUp className="h-6 w-6"/>}
+                <div className="flex items-center gap-2">
+                    <div className={cn("p-1.5 rounded-full", prediction?.isRiskOfNegativeBalance ? "bg-destructive/20 text-destructive" : "bg-primary/20 text-primary")}>
+                        {prediction?.isRiskOfNegativeBalance ? <AlertTriangle className="h-4 w-4"/> : <TrendingUp className="h-4 w-4"/>}
                     </div>
                     <div>
-                        <CardTitle>Previsão de Saldo</CardTitle>
-                        <CardDescription>Projeção para o fim deste mês</CardDescription>
+                        <CardTitle className="text-sm">Previsão de Saldo</CardTitle>
+                        <CardDescription className="text-xs">Projeção para o fim deste mês</CardDescription>
                     </div>
                 </div>
-                 <CardDescription className="text-xs text-primary/70 mt-2 pl-12">
+                 <CardDescription className="text-xs text-primary/70 mt-1 pl-8">
                     Gerado 1x por mês. Atualizar custa 5 créditos da Gastometria AI.
                 </CardDescription>
             </div>
@@ -115,13 +115,13 @@ export function FutureBalanceCard() {
                 size="icon"
                 onClick={() => fetchPrediction(true)}
                 disabled={isPending || !user}
-                className="text-primary/70 hover:bg-primary/10 hover:text-primary rounded-full h-8 w-8 -mt-1"
+                className="text-primary/70 hover:bg-primary/10 hover:text-primary rounded-full h-7 w-7 -mt-1"
             >
-                <RefreshCw className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
+                <RefreshCw className={`h-3.5 w-3.5 ${isPending ? "animate-spin" : ""}`} />
             </Button>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-4 pt-0">
          {renderContent()}
       </CardContent>
     </Card>

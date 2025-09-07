@@ -80,12 +80,24 @@ export function useAISettings() {
 
      // Effect to reset active credential if it's no longer allowed by the current plan
     useEffect(() => {
-        if (!user || authLoading) return;
+        if (!user || authLoading || !settings) return;
+        
+        // Só resetar se a credencial ativa não for do Gastometria E não existir nas credenciais exibidas
         const activeCredExistsInDisplayed = displayedCredentials.some(c => c.id === activeCredentialId);
+        
+        // Se o usuário tem uma IA personalizada ativa e ela existe nas credenciais do usuário, manter
+        if (activeCredentialId !== GASTOMETRIA_AI_CREDENTIAL_ID) {
+            const userHasThisCredential = credentials.some(c => c.id === activeCredentialId);
+            if (userHasThisCredential && activeCredExistsInDisplayed) {
+                return; // Manter a configuração do usuário
+            }
+        }
+        
+        // Só resetar se realmente não existir
         if (!activeCredExistsInDisplayed && activeCredentialId !== GASTOMETRIA_AI_CREDENTIAL_ID) {
             handleActivate(GASTOMETRIA_AI_CREDENTIAL_ID);
         }
-    }, [displayedCredentials, activeCredentialId, user, authLoading]);
+    }, [displayedCredentials, activeCredentialId, user, authLoading, settings, credentials]);
 
     // Function to save all settings
     const saveSettings = async (newSettings: {credentials: AICredential[], activeCredentialId: string | null}) => {
@@ -170,9 +182,15 @@ export function useAISettings() {
 
     const handleActivate = async (id: string) => {
         try {
-            await saveSettings({ credentials, activeCredentialId: id });
+            // Salvar as configurações com a nova credencial ativa
+            const newSettings = { credentials, activeCredentialId: id };
+            await saveSettings(newSettings);
+            
+            // Forçar atualização local para garantir que a mudança seja refletida imediatamente
+            setSettings(newSettings);
         } catch (error) {
             console.error("Failed to activate credential", error);
+            toast({ variant: "destructive", title: "Erro ao ativar configuração de IA." });
         }
     };
 

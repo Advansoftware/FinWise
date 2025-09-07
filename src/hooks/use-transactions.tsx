@@ -80,10 +80,12 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
 
             // Recarrega as configurações após a atualização
             const updatedSettings = await apiClient.get('settings', user.uid);
-            setCategoryMap(updatedSettings?.categories || {});
+            setCategoryMap(updatedSettings?.categories || DEFAULT_CATEGORIES);
           } catch (migrationError) {
             console.error('Erro na aplicação das categorias padrão:', migrationError);
-            setCategoryMap({});
+            // Se falhar, usar as categorias padrão localmente
+            const { DEFAULT_CATEGORIES } = await import('@/services/default-setup-service');
+            setCategoryMap(DEFAULT_CATEGORIES);
           }
         } else {
           setCategoryMap(categories);

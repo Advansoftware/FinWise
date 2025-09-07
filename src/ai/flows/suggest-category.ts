@@ -17,7 +17,7 @@ A descrição da transação pode estar abreviada, como em um extrato bancário.
 Toda a saída DEVE ser em Português do Brasil.
 
 Item: {{{itemName}}}
-Categorias Existentes: {{{jsonStringify existingCategories}}}
+Categorias Existentes: {{#each existingCategories}}{{this}}{{#unless @last}}, {{/unless}}{{/each}}
 
 Exemplos:
 - Item: "Pag*Conta de luz" -> Categoria: "Contas", Subcategoria: "Eletricidade"

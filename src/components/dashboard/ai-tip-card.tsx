@@ -58,11 +58,11 @@ export function AITipCard({ transactions }: AITipCardProps) {
 
   return (
     <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
-      <CardHeader className="flex flex-row items-start justify-between pb-2">
+      <CardHeader className="flex flex-row items-start justify-between pb-2 p-4">
         <div className="flex-1">
             <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary animate-pulse" />
-                <CardTitle className="text-lg text-primary/90">Dica Financeira com IA</CardTitle>
+                <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+                <CardTitle className="text-sm text-primary/90">Dica Financeira com IA</CardTitle>
             </div>
             <CardDescription className="text-xs text-primary/70 mt-1">
                 Dados salvos no banco. Atualizar manualmente custa 1 crédito.
@@ -73,19 +73,19 @@ export function AITipCard({ transactions }: AITipCardProps) {
             size="icon"
             onClick={() => fetchTip(true)}
             disabled={isPending || !user}
-            className="text-primary/70 hover:bg-primary/10 hover:text-primary rounded-full"
+            className="text-primary/70 hover:bg-primary/10 hover:text-primary rounded-full h-7 w-7"
         >
-            <RefreshCw className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
+            <RefreshCw className={`h-3.5 w-3.5 ${isPending ? "animate-spin" : ""}`} />
         </Button>
       </CardHeader>
-      <CardContent>
+      <CardContent className="p-4 pt-0">
         {isPending ? (
-           <div className="space-y-2 pt-2">
-            <Skeleton className="h-4 w-full bg-primary/10" />
-            <Skeleton className="h-4 w-4/5 bg-primary/10" />
+           <div className="space-y-2">
+            <Skeleton className="h-3 w-full bg-primary/10" />
+            <Skeleton className="h-3 w-4/5 bg-primary/10" />
           </div>
         ) : (
-          <p className="text-foreground/90 pt-2 text-sm">
+          <p className="text-foreground/90 text-sm">
             {tip}
           </p>
         )}

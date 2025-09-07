@@ -30,7 +30,7 @@ const ChartSparkline = ({ data, positiveColor, negativeColor }: { data: any[], p
     const strokeColor = isPositive ? positiveColor : negativeColor;
 
     return (
-    <ResponsiveContainer width="100%" height={40}>
+    <ResponsiveContainer width="100%" height={35}>
         <AreaChart data={data}>
             <defs>
                 <linearGradient id={colorId} x1="0" y1="0" x2="0" y2="1">
@@ -51,7 +51,7 @@ const ChartSparkline = ({ data, positiveColor, negativeColor }: { data: any[], p
                 type="monotone" 
                 dataKey="total" 
                 stroke={strokeColor}
-                strokeWidth={2}
+                strokeWidth={1.5}
                 fillOpacity={1} 
                 fill={`url(#${colorId})`}
             />
@@ -86,40 +86,40 @@ export function StatsCards({ transactions }: StatsCardsProps) {
   return (
     <>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Balanço do Período</CardTitle>
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-4">
+          <CardTitle className="text-xs font-medium">Balanço do Período</CardTitle>
+          <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">R$ {balance.toFixed(2)}</div>
+        <CardContent className="p-4 pt-0">
+          <div className="text-xl font-bold">R$ {balance.toFixed(2)}</div>
           <p className="text-xs text-muted-foreground">Receitas vs Despesas no período</p>
-           <div className="mt-2 h-[40px]">
+           <div className="mt-2 h-[35px]">
              <ChartSparkline data={balanceSparklineData} positiveColor="hsl(var(--primary))" negativeColor="hsl(var(--destructive))" />
            </div>
         </CardContent>
       </Card>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total de Receitas</CardTitle>
-          <TrendingUp className="h-4 w-4 text-emerald-500" />
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-4">
+          <CardTitle className="text-xs font-medium">Total de Receitas</CardTitle>
+          <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
         </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-emerald-500">+ R$ {totalIncome.toFixed(2)}</div>
+        <CardContent className="p-4 pt-0">
+          <div className="text-xl font-bold text-emerald-500">+ R$ {totalIncome.toFixed(2)}</div>
           <p className="text-xs text-muted-foreground">Total de entradas no período</p>
-           <div className="mt-2 h-[40px]">
+           <div className="mt-2 h-[35px]">
              <ChartSparkline data={incomeSparklineData} positiveColor="hsl(var(--chart-2))" negativeColor="hsl(var(--chart-2))" />
            </div>
         </CardContent>
       </Card>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">Total de Despesas</CardTitle>
-          <TrendingDown className="h-4 w-4 text-red-500" />
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-4">
+          <CardTitle className="text-xs font-medium">Total de Despesas</CardTitle>
+          <TrendingDown className="h-3.5 w-3.5 text-red-500" />
         </CardHeader>
-        <CardContent>
-           <div className="text-2xl font-bold text-red-500">- R$ {totalExpense.toFixed(2)}</div>
+        <CardContent className="p-4 pt-0">
+           <div className="text-xl font-bold text-red-500">- R$ {totalExpense.toFixed(2)}</div>
            <p className="text-xs text-muted-foreground">Total de saídas no período</p>
-           <div className="mt-2 h-[40px]">
+           <div className="mt-2 h-[35px]">
               <ChartSparkline data={expenseSparklineData} positiveColor="hsl(var(--destructive))" negativeColor="hsl(var(--destructive))" />
            </div>
         </CardContent>

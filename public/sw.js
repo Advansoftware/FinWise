@@ -58,81 +58,89 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch event - estratégia de cache
+// Fetch event - interceptar requisições de rede
 self.addEventListener('fetch', event => {
-  const { request } = event;
-  const url = new URL(request.url);
+  // Só lidar com requests GET para navegação
+  if (event.request.method !== 'GET') return;
 
-  // Estratégias diferentes para diferentes tipos de requisições
-  if (request.method === 'GET') {
-    // Para páginas HTML - Network First com fallback para cache
-    if (request.headers.get('accept')?.includes('text/html')) {
-      event.respondWith(
-        fetch(request)
-          .then(response => {
-            // Clonar a resposta porque é um stream
-            const responseToCache = response.clone();
-            caches.open(RUNTIME_CACHE).then(cache => {
-              cache.put(request, responseToCache);
-            });
-            return response;
-          })
-          .catch(() => {
-            return caches.match(request).then(response => {
-              return response || caches.match('/');
-            });
-          })
-      );
-      return;
-    }
+  const url = new URL(event.request.url);
 
-    // Para APIs de dados - Cache First com atualização em background
-    if (API_CACHE_PATTERNS.some(pattern => pattern.test(url.pathname))) {
-      event.respondWith(
-        caches.open(DATA_CACHE).then(cache => {
-          return cache.match(request).then(cachedResponse => {
-            const fetchPromise = fetch(request).then(networkResponse => {
-              // Atualizar cache em background
-              cache.put(request, networkResponse.clone());
-              return networkResponse;
-            }).catch(() => {
-              // Se não há internet, retornar dados em cache
-              return cachedResponse;
-            });
+  // Ignorar requests para outros domínios
+  if (url.origin !== location.origin) return;
 
-            // Retornar cache imediatamente se disponível, senão esperar network
-            return cachedResponse || fetchPromise;
-          });
-        })
-      );
-      return;
-    }
-
-    // Para recursos estáticos - Cache First
-    if (request.url.includes('/icons/') ||
-      request.url.includes('/logo.svg') ||
-      request.url.includes('/_next/static/')) {
-      event.respondWith(
-        caches.match(request).then(response => {
-          return response || fetch(request).then(response => {
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME).then(cache => {
-              cache.put(request, responseToCache);
-            });
+  // Para navegação de páginas (documentos HTML)
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // Se conseguir buscar da rede, armazenar no cache e retornar
+          return caches.open(RUNTIME_CACHE).then(cache => {
+            cache.put(event.request, response.clone());
             return response;
           });
         })
-      );
-      return;
-    }
+        .catch(() => {
+          // Se falhar (offline), tentar buscar no cache
+          return caches.match(event.request)
+            .then(response => {
+              if (response) {
+                return response;
+              }
+              // Se não estiver no cache, retornar a página principal (SPA)
+              return caches.match('/');
+            });
+        })
+    );
+    return;
   }
 
-  // Para todas as outras requisições - Network First
-  event.respondWith(
-    fetch(request).catch(() => {
-      return caches.match(request);
-    })
-  );
+  // Para recursos estáticos (CSS, JS, imagens)
+  if (event.request.destination === 'style' ||
+    event.request.destination === 'script' ||
+    event.request.destination === 'image' ||
+    event.request.url.includes('/_next/')) {
+    event.respondWith(
+      caches.match(event.request)
+        .then(response => {
+          if (response) {
+            return response;
+          }
+          return fetch(event.request)
+            .then(response => {
+              const responseClone = response.clone();
+              caches.open(RUNTIME_CACHE)
+                .then(cache => {
+                  cache.put(event.request, responseClone);
+                });
+              return response;
+            });
+        })
+    );
+    return;
+  }
+
+  // Para APIs (cache com network first para dados dinâmicos)
+  if (url.pathname.startsWith('/api/')) {
+    // Strategy: Network First (sempre tentar rede primeiro, cache como fallback)
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // Só cachear respostas bem-sucedidas para dados
+          if (response.status === 200) {
+            const responseClone = response.clone();
+            caches.open(DATA_CACHE)
+              .then(cache => {
+                cache.put(event.request, responseClone);
+              });
+          }
+          return response;
+        })
+        .catch(() => {
+          // Se falhar, tentar buscar no cache
+          return caches.match(event.request);
+        })
+    );
+  }
 });
 
 // Background Sync para quando voltar online

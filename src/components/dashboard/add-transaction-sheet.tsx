@@ -130,6 +130,9 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
   }, [formState.category, subcategories]);
 
   const handleSubmit = async () => {
+    // Evitar múltiplas submissões
+    if (isSubmitting) return;
+    
     const finalItem = itemInputValue;
     const { amount, date, category, walletId, toWalletId, type } = formState;
 
