@@ -14,8 +14,10 @@ import {
 } from '@/core/ports/database.port';
 import { IPaymentRepository } from '@/core/ports/payment.port';
 import { IReportsRepository } from '@/core/ports/reports.port';
+import { IInstallmentsRepository } from '@/core/ports/installments.port';
 import { MongoPaymentRepository } from './mongodb-payment.adapter';
 import { MongoReportsRepository } from './mongodb-reports.adapter';
+import { MongoInstallmentsRepository } from './mongodb-installments.adapter';
 import { Transaction, Wallet, Budget, Goal, UserProfile } from '@/lib/types';
 import { AICreditLog } from '@/ai/ai-types';
 
@@ -523,6 +525,7 @@ export class MongoDBAdapter implements IDatabaseAdapter {
   public aiGeneratedData!: IAIGeneratedDataRepository;
   public payments!: IPaymentRepository;
   public reports!: IReportsRepository;
+  public installments!: IInstallmentsRepository;
 
   async connect(): Promise<void> {
     if (this.client && this.db) {
@@ -552,6 +555,7 @@ export class MongoDBAdapter implements IDatabaseAdapter {
     this.aiGeneratedData = new MongoAIGeneratedDataRepository(this.db);
     this.payments = new MongoPaymentRepository(this.db);
     this.reports = new MongoReportsRepository(this.db);
+    this.installments = new MongoInstallmentsRepository(this.db);
 
     console.log('✅ MongoDB connected and repositories initialized');
   }

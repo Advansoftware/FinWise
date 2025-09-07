@@ -38,6 +38,7 @@ const plans = [
         features: [
             "Tudo do plano Básico, e mais:",
             "**100 Créditos de IA** por mês",
+            "**Gestão de Parcelamentos** com gamificação",
             "Assistente de Chat com IA",
             "Relatórios inteligentes (Mensal/Anual)",
             "Escanear notas fiscais (OCR)",

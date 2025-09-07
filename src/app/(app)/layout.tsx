@@ -15,6 +15,7 @@ import { BudgetsProvider } from "@/hooks/use-budgets";
 import { GoalsProvider } from "@/hooks/use-goals";
 import { WalletsProvider } from "@/hooks/use-wallets";
 import { ReportsProvider } from "@/hooks/use-reports";
+import { InstallmentsProvider } from "@/hooks/use-installments";
 import { PlanProvider } from "@/hooks/use-plan";
 import { CreditsProvider } from "@/hooks/use-credits";
 import { GoalCompletionCelebration } from "@/components/goals/goal-celebration";
@@ -95,11 +96,13 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
           <WalletsProvider>
             <TransactionsProvider>
               <ReportsProvider>
-                <BudgetsProvider>
-                  <GoalsProvider>
-                    <AppLayoutContent>{children}</AppLayoutContent>
-                  </GoalsProvider>
-                </BudgetsProvider>
+                <InstallmentsProvider>
+                  <BudgetsProvider>
+                    <GoalsProvider>
+                      <AppLayoutContent>{children}</AppLayoutContent>
+                    </GoalsProvider>
+                  </BudgetsProvider>
+                </InstallmentsProvider>
               </ReportsProvider>
             </TransactionsProvider>
           </WalletsProvider>

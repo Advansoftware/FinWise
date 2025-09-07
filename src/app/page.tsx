@@ -41,6 +41,7 @@ const featureComparison = {
         { feature: "Metas de economia", Básico: true, Pro: true, Plus: true, Infinity: true },
     ],
     "Produtividade e IA": [
+        { feature: "Gestão de Parcelamentos com gamificação", Básico: false, Pro: true, Plus: true, Infinity: true },
         { feature: "Importação de extratos (CSV/OFX)", Básico: false, Pro: true, Plus: true, Infinity: true },
         { feature: "Escanear notas fiscais (OCR)", Básico: false, Pro: true, Plus: true, Infinity: true },
         { feature: "Relatórios inteligentes com IA", Básico: false, Pro: true, Plus: true, Infinity: true },
@@ -219,6 +220,11 @@ export default function Page() {
                             icon: LayoutDashboard, 
                             title: "Dashboard Centralizado", 
                             description: "Tenha uma visão completa de suas finanças em um só lugar. Acompanhe seu patrimônio líquido, receitas, despesas e transações recentes sem esforço."
+                          },
+                          { 
+                            icon: FolderKanban, 
+                            title: "Gestão de Parcelamentos", 
+                            description: "Controle total de compras parceladas com gamificação. Acompanhe parcelas pagas, pendentes, ganhe pontos e badges por manter os pagamentos em dia!"
                           },
                           { 
                             icon: Wallet, 

@@ -18,6 +18,7 @@ import { GoalHighlightCard } from "@/components/goals/goal-highlight-card";
 import { FutureBalanceCard } from "@/components/dashboard/future-balance-card";
 import { usePlan } from "@/hooks/use-plan";
 import { ProUpgradeButton } from "@/components/pro-upgrade-button";
+import { InstallmentsSummaryCard } from "@/components/dashboard/installments-summary-card";
 
 export default function DashboardPage() {
     const { 
@@ -103,6 +104,7 @@ export default function DashboardPage() {
                         </div>
                         <div className="space-y-4 sm:space-y-6">
                            <GoalHighlightCard />
+                           <InstallmentsSummaryCard />
                            {isPlus && <FutureBalanceCard />}
                         </div>
                     </div>

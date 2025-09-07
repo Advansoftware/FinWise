@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
-import { Home, History, Settings, FolderKanban, Upload, Gem, UserCircle, Target, Goal, Wallet, FileText } from 'lucide-react';
+import { Home, History, Settings, FolderKanban, Upload, Gem, UserCircle, Target, Goal, Wallet, FileText, CreditCard } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -14,6 +14,7 @@ const navItems = [
     { href: '/categories', label: 'Categorias', icon: FolderKanban },
     { href: '/budgets', label: 'Orçamentos', icon: Target },
     { href: '/goals', label: 'Metas', icon: Goal },
+    { href: '/installments', label: 'Parcelamentos', icon: CreditCard },
     { href: '/reports', label: 'Relatórios', icon: FileText },
     { href: '/import', label: 'Importar', icon: Upload },
     { href: '/settings', label: 'Configurações', icon: Settings },
