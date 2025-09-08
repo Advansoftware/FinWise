@@ -48,9 +48,14 @@ export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTra
   }, [transaction]);
 
   const handleInputChange = (field: keyof Transaction, value: any) => {
-    setFormState(prev => ({...prev, [field]: value}));
     if(field === 'category') {
-        setFormState(prev => ({...prev, subcategory: ''})); // Reset subcategory when category changes
+        setFormState(prev => ({
+            ...prev, 
+            [field]: value,
+            subcategory: undefined // Reset subcategory when category changes
+        })); 
+    } else {
+        setFormState(prev => ({...prev, [field]: value}));
     }
   }
   
@@ -185,9 +190,10 @@ export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTra
                     <Label htmlFor="subcategory" className="text-right">Subcategoria</Label>
                     <Select value={formState.subcategory || ''} onValueChange={(v) => handleInputChange('subcategory', v)} disabled={!formState.category || availableSubcategories.length === 0}>
                         <SelectTrigger className="col-span-3">
-                            <SelectValue placeholder={availableSubcategories.length > 0 ? "Selecione" : "Nenhuma"} />
+                            <SelectValue placeholder={!formState.category ? "Selecione uma categoria primeiro" : availableSubcategories.length > 0 ? "Selecione uma subcategoria" : "Nenhuma subcategoria disponível"} />
                         </SelectTrigger>
                         <SelectContent>
+                            <SelectItem value="">Nenhuma</SelectItem>
                             {availableSubcategories.map(sub => (
                                 <SelectItem key={sub} value={sub}>{sub}</SelectItem>
                             ))}
