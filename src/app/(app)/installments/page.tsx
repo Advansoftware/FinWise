@@ -70,13 +70,13 @@ export default function InstallmentsPage() {
             Gerencie suas prestações, acompanhe pagamentos e projete compromissos futuros.
           </p>
         </div>
-        <div className="flex flex-col gap-2">
+        <div className="flex flex-col md:flex-row gap-2 md:justify-end">
           <GamificationGuide 
             currentPoints={summary?.gamification.points}
             currentLevel={summary?.gamification.level}
             badges={summary?.gamification.badges}
           />
-          <Button onClick={() => setIsCreateOpen(true)} className="w-full">
+          <Button onClick={() => setIsCreateOpen(true)} className="w-full md:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Novo Parcelamento
           </Button>
@@ -219,13 +219,15 @@ export default function InstallmentsPage() {
 
       {/* Main Content */}
       <Tabs defaultValue="active" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 h-auto">
-          <TabsTrigger value="active" className="text-xs md:text-sm py-2">Ativos</TabsTrigger>
-          <TabsTrigger value="gamification" className="text-xs md:text-sm py-2">🏆</TabsTrigger>
-          <TabsTrigger value="schedule" className="text-xs md:text-sm py-2 hidden md:inline-flex">Cronograma</TabsTrigger>
-          <TabsTrigger value="projections" className="text-xs md:text-sm py-2 hidden md:inline-flex">Projeções</TabsTrigger>
-          <TabsTrigger value="completed" className="text-xs md:text-sm py-2">Finalizados</TabsTrigger>
-        </TabsList>
+        <div className="overflow-x-auto">
+          <TabsList className="flex w-max min-w-full md:grid md:grid-cols-5 h-auto">
+            <TabsTrigger value="active" className="text-xs md:text-sm py-2 whitespace-nowrap flex-shrink-0">Ativos</TabsTrigger>
+            <TabsTrigger value="gamification" className="text-xs md:text-sm py-2 whitespace-nowrap flex-shrink-0">Progresso</TabsTrigger>
+            <TabsTrigger value="schedule" className="text-xs md:text-sm py-2 whitespace-nowrap flex-shrink-0">Cronograma</TabsTrigger>
+            <TabsTrigger value="projections" className="text-xs md:text-sm py-2 whitespace-nowrap flex-shrink-0">Projeções</TabsTrigger>
+            <TabsTrigger value="completed" className="text-xs md:text-sm py-2 whitespace-nowrap flex-shrink-0">Finalizados</TabsTrigger>
+          </TabsList>
+        </div>
 
         <TabsContent value="active" className="space-y-4">
           {activeInstallments.length === 0 ? (
@@ -259,7 +261,7 @@ export default function InstallmentsPage() {
           {summary && (
             <div className="space-y-6">
               {/* Header da Gamificação com Guia */}
-              <Card className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200">
+              <Card className="bg-gradient-to-r from-slate-800/50 to-slate-900/50 dark:from-slate-800/50 dark:to-slate-900/50 border-slate-700 dark:border-slate-700">
                 <CardHeader>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -267,20 +269,22 @@ export default function InstallmentsPage() {
                         <Trophy className="h-6 w-6 text-white" />
                       </div>
                       <div>
-                        <CardTitle className="text-xl">
+                        <CardTitle className="text-xl text-slate-100 dark:text-slate-100">
                           Nível {summary.gamification.level.level} - {summary.gamification.level.name}
                         </CardTitle>
-                        <CardDescription>
+                        <CardDescription className="text-slate-300 dark:text-slate-300">
                           {summary.gamification.points} pontos acumulados
                         </CardDescription>
                       </div>
                     </div>
-                    <GamificationGuide />
+                    <div className="flex-shrink-0">
+                      <GamificationGuide />
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between text-sm text-slate-200 dark:text-slate-200">
                       <span>Progresso para o próximo nível</span>
                       <span>{summary.gamification.level.pointsToNext} pontos restantes</span>
                     </div>
@@ -293,7 +297,7 @@ export default function InstallmentsPage() {
                   {summary.gamification.streak > 0 && (
                     <div className="flex items-center gap-2 p-3 bg-orange-500/10 border border-orange-200 dark:border-orange-900/50 rounded-lg">
                       <Flame className="h-5 w-5 text-orange-500" />
-                      <span className="font-medium text-orange-700 dark:text-orange-400">
+                      <span className="font-medium text-orange-700 dark:text-orange-400 text-sm md:text-base break-words">
                         Sequência de {summary.gamification.streak} meses pagando tudo em dia! 🔥
                       </span>
                     </div>

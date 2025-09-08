@@ -1,5 +1,5 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, TrendingUp, TrendingDown } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, PieChart } from "lucide-react";
 import { Transaction } from "@/lib/types";
 import { Area, AreaChart, ResponsiveContainer, Tooltip } from "recharts";
 
@@ -122,6 +122,21 @@ export function StatsCards({ transactions }: StatsCardsProps) {
            <div className="mt-2 h-[35px]">
               <ChartSparkline data={expenseSparklineData} positiveColor="hsl(var(--destructive))" negativeColor="hsl(var(--destructive))" />
            </div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-4">
+          <CardTitle className="text-xs font-medium">Categoria Principal</CardTitle>
+          <PieChart className="h-3.5 w-3.5 text-muted-foreground" />
+        </CardHeader>
+        <CardContent className="p-4 pt-0">
+          <div className="text-xl font-bold">R$ {topCategoryValue.toFixed(2)}</div>
+          <p className="text-xs text-muted-foreground truncate">{topCategoryName}</p>
+          <div className="mt-2 flex items-center">
+            <div className="text-xs text-muted-foreground">
+              {transactions.length > 0 ? `${Math.round((topCategoryValue / totalExpense) * 100)}% do total` : 'Sem dados'}
+            </div>
+          </div>
         </CardContent>
       </Card>
     </>

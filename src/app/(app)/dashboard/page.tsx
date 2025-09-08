@@ -97,24 +97,37 @@ export default function DashboardPage() {
 
             {isLoading ? <DashboardSkeleton /> : (
                 <>
-                    {/* Main Wallet Card and Goals - Mobile Stack, Desktop Side by Side */}
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                    {/* Top Section - Optimized Grid Layout */}
+                    <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
+                        {/* Main Wallet Card - Takes 2 columns */}
                         <div className="lg:col-span-2">
                            <WalletCard transactions={filteredTransactions} />
                         </div>
-                        <div className="space-y-4 sm:space-y-6">
+                        {/* Goals Card - Takes 1 column */}
+                        <div>
                            <GoalHighlightCard />
+                        </div>
+                        {/* Installments Card - Takes 1 column */}
+                        <div>
                            <InstallmentsSummaryCard />
-                           {isPlus && <FutureBalanceCard />}
                         </div>
                     </div>
 
-                    {/* Stats Cards - Always Stacked on Mobile */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                    {/* Second Row - Future Balance if Pro/Plus */}
+                    {isPlus && (
+                        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
+                            <div className="lg:col-span-2 lg:col-start-3">
+                                <FutureBalanceCard />
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Stats Cards - 4 columns for better distribution */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
                         <StatsCards transactions={filteredTransactions} />
                     </div>
 
-                    {/* Chart and Recent Transactions - Mobile Stack, Desktop Side by Side */}
+                    {/* Chart and Recent Transactions - Maintain current layout */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
                        <div className="lg:col-span-2 order-2 lg:order-1">
                          <SpendingChart data={chartData} />
@@ -135,17 +148,21 @@ export default function DashboardPage() {
 function DashboardSkeleton() {
     return (
         <>
-             {/* Main Section Skeleton */}
-             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+             {/* Top Section Skeleton - New 4-column layout */}
+             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
                 <Skeleton className="lg:col-span-2 h-32 sm:h-36" />
-                <div className="space-y-4 sm:space-y-6">
-                  <Skeleton className="h-36 sm:h-44"/>
-                  <Skeleton className="h-28 sm:h-36" />
-                </div>
+                <Skeleton className="h-36 sm:h-44"/>
+                <Skeleton className="h-36 sm:h-44" />
              </div>
 
-             {/* Stats Cards Skeleton */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+             {/* Future Balance Skeleton - Conditional */}
+             <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
+                <Skeleton className="lg:col-span-2 lg:col-start-3 h-28 sm:h-36" />
+             </div>
+
+             {/* Stats Cards Skeleton - 4 columns */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                <Skeleton className="h-32 sm:h-36" />
                 <Skeleton className="h-32 sm:h-36" />
                 <Skeleton className="h-32 sm:h-36" />
                 <Skeleton className="h-32 sm:h-36" />

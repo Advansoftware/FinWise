@@ -184,13 +184,13 @@ export function GamificationGuide({
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2">
-          <HelpCircle className="h-4 w-4" />
-          Como Funciona a Gamificação?
+        <Button variant="outline" size="sm" className="gap-2 text-xs md:text-sm px-2 md:px-3 py-1 h-auto min-w-0 max-w-full overflow-hidden">
+          <HelpCircle className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
+          <span className="truncate">Como Funciona?</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden">
-        <DialogHeader>
+      <DialogContent className="w-[95vw] h-[95vh] md:max-w-4xl md:max-h-[80vh] overflow-hidden flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Trophy className="h-5 w-5 text-yellow-500" />
             Sistema de Gamificação - Parcelamentos
@@ -200,28 +200,30 @@ export function GamificationGuide({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col h-full">
+        <div className="flex flex-col h-full overflow-hidden">
           {/* Tabs */}
-          <div className="flex gap-1 mb-4 bg-muted p-1 rounded-lg">
-            {[
-              { id: 'overview', label: 'Visão Geral', icon: Star },
-              { id: 'levels', label: 'Níveis', icon: TrendingUp },
-              { id: 'badges', label: 'Badges', icon: Award },
-              { id: 'achievements', label: 'Conquistas', icon: Trophy }
-            ].map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                onClick={() => setActiveTab(id as any)}
-                className={`flex-1 flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors ${
-                  activeTab === id 
-                    ? 'bg-background text-foreground shadow-sm' 
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                <Icon className="h-4 w-4" />
-                {label}
-              </button>
-            ))}
+          <div className="flex-shrink-0 mb-4 overflow-x-auto">
+            <div className="flex gap-1 bg-muted p-1 rounded-lg min-w-max">
+              {[
+                { id: 'overview', label: 'Visão Geral', icon: Star },
+                { id: 'levels', label: 'Níveis', icon: TrendingUp },
+                { id: 'badges', label: 'Badges', icon: Award },
+                { id: 'achievements', label: 'Conquistas', icon: Trophy }
+              ].map(({ id, label, icon: Icon }) => (
+                <button
+                  key={id}
+                  onClick={() => setActiveTab(id as any)}
+                  className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors whitespace-nowrap ${
+                    activeTab === id 
+                      ? 'bg-background text-foreground shadow-sm' 
+                      : 'text-muted-foreground hover:text-foreground'
+                  }`}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span className="hidden sm:inline">{label}</span>
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Content */}
