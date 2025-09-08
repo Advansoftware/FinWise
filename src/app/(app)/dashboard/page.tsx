@@ -99,26 +99,22 @@ export default function DashboardPage() {
                 <>
                     {/* Main Grid - 12 column system for precise control */}
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
-                        {/* First Row */}
-                        {/* Wallet Card - 6 columns */}
+                        {/* Left Side - Wallet Card - 6 columns */}
                         <div className="lg:col-span-6">
                            <WalletCard transactions={filteredTransactions} />
                         </div>
-                        {/* Goals Card - 3 columns */}
-                        <div className="lg:col-span-3">
-                           <GoalHighlightCard />
+                        
+                        {/* Right Side - Goals, Installments, and Future Balance - 6 columns */}
+                        <div className="lg:col-span-6 space-y-4 sm:space-y-6">
+                            {/* Goals Card */}
+                            <GoalHighlightCard />
+                            
+                            {/* Installments Card */}
+                            <InstallmentsSummaryCard />
+                            
+                            {/* Future Balance Card for Pro/Plus users */}
+                            {isPlus && <FutureBalanceCard />}
                         </div>
-                        {/* Installments Card - 3 columns */}
-                        <div className="lg:col-span-3">
-                           <InstallmentsSummaryCard />
-                        </div>
-
-                        {/* Second Row - Future Balance Card for Pro/Plus users */}
-                        {isPlus && (
-                            <div className="lg:col-span-6 lg:col-start-7">
-                                <FutureBalanceCard />
-                            </div>
-                        )}
                     </div>
 
                     {/* Stats Cards - 4 equal columns */}
@@ -149,13 +145,15 @@ function DashboardSkeleton() {
         <>
              {/* Main Grid Skeleton - 12 column layout */}
              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
-                {/* First Row */}
+                {/* Left Side - Wallet Skeleton */}
                 <Skeleton className="lg:col-span-6 h-40 sm:h-48" />
-                <Skeleton className="lg:col-span-3 h-40 sm:h-48"/>
-                <Skeleton className="lg:col-span-3 h-40 sm:h-48" />
                 
-                {/* Second Row - Future Balance Skeleton */}
-                <Skeleton className="lg:col-span-6 lg:col-start-7 h-32 sm:h-36" />
+                {/* Right Side - Goals, Installments, Future Balance Skeleton */}
+                <div className="lg:col-span-6 space-y-4 sm:space-y-6">
+                    <Skeleton className="h-32 sm:h-36" />
+                    <Skeleton className="h-32 sm:h-36" />
+                    <Skeleton className="h-32 sm:h-36" />
+                </div>
              </div>
 
              {/* Stats Cards Skeleton - 4 equal columns */}
