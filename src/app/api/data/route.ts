@@ -19,6 +19,8 @@ export async function GET(request: NextRequest) {
     console.log('🔧 Getting database adapter...');
     const db = await getDatabaseAdapter();
     console.log('✅ Database adapter obtained:', !!db);
+    console.log('🔧 Checking db.transactions:', !!db.transactions);
+    console.log('🔧 Checking db.transactions.findByUserId:', !!db.transactions?.findByUserId);
 
     if (!db) {
       return NextResponse.json(
@@ -27,7 +29,13 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log('🔧 Checking db.transactions:', !!db.transactions);
+    if (!db.transactions) {
+      console.error('❌ Transactions repository not initialized');
+      return NextResponse.json(
+        { error: 'Transactions repository not available' },
+        { status: 500 }
+      );
+    }
 
     switch (collection) {
       case 'transactions':

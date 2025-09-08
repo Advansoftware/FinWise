@@ -82,7 +82,7 @@ export function EditInstallmentDialog({
       category: '',
       subcategory: '',
       establishment: '',
-      sourceWalletId: '',
+      sourceWalletId: 'none',
     },
   });
 
@@ -95,7 +95,7 @@ export function EditInstallmentDialog({
         category: installment.category,
         subcategory: installment.subcategory || '',
         establishment: installment.establishment || '',
-        sourceWalletId: installment.sourceWalletId || '',
+        sourceWalletId: installment.sourceWalletId || 'none',
       });
     }
   }, [installment, open, form]);
@@ -111,7 +111,7 @@ export function EditInstallmentDialog({
         category: data.category,
         subcategory: data.subcategory,
         establishment: data.establishment,
-        sourceWalletId: data.sourceWalletId,
+        sourceWalletId: data.sourceWalletId === 'none' ? undefined : data.sourceWalletId,
         updatedAt: new Date().toISOString(),
       });
 
@@ -244,7 +244,7 @@ export function EditInstallmentDialog({
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      <SelectItem value="">Nenhuma</SelectItem>
+                      <SelectItem value="none">Nenhuma</SelectItem>
                       {wallets.map((wallet) => (
                         <SelectItem key={wallet.id} value={wallet.id}>
                           {wallet.name}

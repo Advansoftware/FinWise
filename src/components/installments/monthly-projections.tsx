@@ -29,7 +29,7 @@ export function MonthlyProjections() {
   const [projections, setProjections] = useState<MonthlyProjection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedMonths, setSelectedMonths] = useState(12);
-  const [includePastMonths, setIncludePastMonths] = useState(6);
+  const [includePastMonths, setIncludePastMonths] = useState(0);
   
   const { getMonthlyProjections } = useInstallments();
 
