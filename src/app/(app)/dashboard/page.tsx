@@ -106,14 +106,36 @@ export default function DashboardPage() {
                         
                         {/* Right Side - Goals, Installments, and Future Balance - 6 columns */}
                         <div className="lg:col-span-6 space-y-4 sm:space-y-6">
-                            {/* Goals Card */}
-                            <GoalHighlightCard />
+                            {/* Goals and Installments side by side */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                                {/* Goals Card */}
+                                <GoalHighlightCard />
+                                
+                                {/* Installments Card */}
+                                <InstallmentsSummaryCard />
+                            </div>
                             
-                            {/* Installments Card */}
-                            <InstallmentsSummaryCard />
-                            
-                            {/* Future Balance Card for Pro/Plus users */}
-                            {isPlus && <FutureBalanceCard />}
+                            {/* Future Balance Card - always show, with upgrade prompt if needed */}
+                            {isPlus ? (
+                                <FutureBalanceCard />
+                            ) : (
+                                <div className="relative">
+                                    <FutureBalanceCard />
+                                    <div className="absolute inset-0 bg-background/80 backdrop-blur-sm rounded-lg flex items-center justify-center">
+                                        <div className="text-center space-y-3 p-6">
+                                            <h3 className="font-semibold text-lg">Previsão de Saldo Plus</h3>
+                                            <p className="text-sm text-muted-foreground max-w-xs">
+                                                Desbloqueie previsões inteligentes do seu saldo futuro com IA
+                                            </p>
+                                            <ProUpgradeButton requiredPlan="Plus">
+                                                <Button className="w-full">
+                                                    Fazer Upgrade para Plus
+                                                </Button>
+                                            </ProUpgradeButton>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -150,8 +172,12 @@ function DashboardSkeleton() {
                 
                 {/* Right Side - Goals, Installments, Future Balance Skeleton */}
                 <div className="lg:col-span-6 space-y-4 sm:space-y-6">
-                    <Skeleton className="h-32 sm:h-36" />
-                    <Skeleton className="h-32 sm:h-36" />
+                    {/* Goals and Installments side by side */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                        <Skeleton className="h-32 sm:h-36" />
+                        <Skeleton className="h-32 sm:h-36" />
+                    </div>
+                    {/* Future Balance full width - always show */}
                     <Skeleton className="h-32 sm:h-36" />
                 </div>
              </div>
