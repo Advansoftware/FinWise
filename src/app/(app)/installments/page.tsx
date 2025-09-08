@@ -40,13 +40,13 @@ export default function InstallmentsPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-6 p-4 sm:p-6">
+      <div className="space-y-4 p-4">
         <div className="flex flex-col gap-2">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-4 w-96" />
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-32" />
           ))}
@@ -61,22 +61,22 @@ export default function InstallmentsPage() {
   const completedInstallments = installments.filter(i => i.isCompleted);
 
   return (
-    <div className="space-y-6 p-4 sm:p-6">
+    <div className="space-y-4 p-4">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Parcelamentos</h1>
-          <p className="text-muted-foreground">
+          <h1 className="text-2xl font-bold tracking-tight">Parcelamentos</h1>
+          <p className="text-muted-foreground text-sm">
             Gerencie suas prestações, acompanhe pagamentos e projete compromissos futuros.
           </p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-2">
+        <div className="flex flex-col gap-2">
           <GamificationGuide 
             currentPoints={summary?.gamification.points}
             currentLevel={summary?.gamification.level}
             badges={summary?.gamification.badges}
           />
-          <Button onClick={() => setIsCreateOpen(true)} className="w-full sm:w-auto">
+          <Button onClick={() => setIsCreateOpen(true)} className="w-full">
             <Plus className="h-4 w-4 mr-2" />
             Novo Parcelamento
           </Button>
@@ -106,17 +106,17 @@ export default function InstallmentsPage() {
                 const daysOverdue = Math.floor((new Date().getTime() - new Date(payment.dueDate).getTime()) / (1000 * 60 * 60 * 24));
                 
                 return (
-                  <div key={payment.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-red-200">
+                  <div key={payment.id} className="flex items-center justify-between p-3 bg-red-500/5 dark:bg-red-500/10 rounded-lg border border-red-200 dark:border-red-900/50">
                     <div className="flex-1">
-                      <div className="font-medium text-red-900">
+                      <div className="font-medium text-red-900 dark:text-red-400">
                         {installment?.name || 'Parcelamento'} - Parcela {payment.installmentNumber}
                       </div>
-                      <div className="text-sm text-red-600">
+                      <div className="text-sm text-red-600 dark:text-red-400">
                         Venceu em {new Date(payment.dueDate).toLocaleDateString('pt-BR')} • {daysOverdue} dias de atraso
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-semibold text-red-700">
+                      <div className="font-semibold text-red-700 dark:text-red-400">
                         {formatCurrency(payment.scheduledAmount)}
                       </div>
                       <Badge variant="destructive" className="text-xs">
@@ -147,14 +147,14 @@ export default function InstallmentsPage() {
       )}
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Parcelamentos Ativos</CardTitle>
+            <CardTitle className="text-xs font-medium">Parcelamentos Ativos</CardTitle>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{summary?.totalActiveInstallments || 0}</div>
+            <div className="text-xl font-bold">{summary?.totalActiveInstallments || 0}</div>
             <p className="text-xs text-muted-foreground">
               {activeInstallments.length} em andamento
             </p>
@@ -163,11 +163,11 @@ export default function InstallmentsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Compromisso Mensal</CardTitle>
+            <CardTitle className="text-xs font-medium">Compromisso Mensal</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-lg font-bold">
               {formatCurrency(summary?.totalMonthlyCommitment || 0)}
             </div>
             <p className="text-xs text-muted-foreground">
@@ -176,9 +176,9 @@ export default function InstallmentsPage() {
           </CardContent>
         </Card>
 
-        <Card className={summary && summary.overduePayments.length > 0 ? "border-red-200" : ""}>
+        <Card className={`col-span-2 lg:col-span-1 ${summary && summary.overduePayments.length > 0 ? "border-red-200" : ""}`}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
+            <CardTitle className="text-xs font-medium">
               {summary && summary.overduePayments.length > 0 ? "Parcelas em Atraso" : "Próximos Vencimentos"}
             </CardTitle>
             {summary && summary.overduePayments.length > 0 ? (
@@ -188,7 +188,7 @@ export default function InstallmentsPage() {
             )}
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${summary && summary.overduePayments.length > 0 ? "text-red-600" : ""}`}>
+            <div className={`text-xl font-bold ${summary && summary.overduePayments.length > 0 ? "text-red-600" : ""}`}>
               {summary && summary.overduePayments.length > 0 
                 ? summary.overduePayments.length 
                 : summary?.upcomingPayments.length || 0
@@ -203,17 +203,15 @@ export default function InstallmentsPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="col-span-2 lg:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Em Atraso</CardTitle>
-            <AlertTriangle className="h-4 w-4 text-destructive" />
+            <CardTitle className="text-xs font-medium">Parcelamentos Quitados</CardTitle>
+            <CheckCircle2 className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive">
-              {summary?.overduePayments.length || 0}
-            </div>
+            <div className="text-xl font-bold text-green-600">{completedInstallments.length}</div>
             <p className="text-xs text-muted-foreground">
-              Parcelas vencidas
+              Finalizados com sucesso
             </p>
           </CardContent>
         </Card>
@@ -221,12 +219,12 @@ export default function InstallmentsPage() {
 
       {/* Main Content */}
       <Tabs defaultValue="active" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="active">Ativos</TabsTrigger>
-          <TabsTrigger value="gamification">🏆 Progresso</TabsTrigger>
-          <TabsTrigger value="schedule">Cronograma</TabsTrigger>
-          <TabsTrigger value="projections">Projeções</TabsTrigger>
-          <TabsTrigger value="completed">Concluídos</TabsTrigger>
+        <TabsList className="grid w-full grid-cols-3 md:grid-cols-5 h-auto">
+          <TabsTrigger value="active" className="text-xs md:text-sm py-2">Ativos</TabsTrigger>
+          <TabsTrigger value="gamification" className="text-xs md:text-sm py-2">🏆</TabsTrigger>
+          <TabsTrigger value="schedule" className="text-xs md:text-sm py-2 hidden md:inline-flex">Cronograma</TabsTrigger>
+          <TabsTrigger value="projections" className="text-xs md:text-sm py-2 hidden md:inline-flex">Projeções</TabsTrigger>
+          <TabsTrigger value="completed" className="text-xs md:text-sm py-2">Finalizados</TabsTrigger>
         </TabsList>
 
         <TabsContent value="active" className="space-y-4">
@@ -293,9 +291,9 @@ export default function InstallmentsPage() {
                   </div>
                   
                   {summary.gamification.streak > 0 && (
-                    <div className="flex items-center gap-2 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                    <div className="flex items-center gap-2 p-3 bg-orange-500/10 border border-orange-200 dark:border-orange-900/50 rounded-lg">
                       <Flame className="h-5 w-5 text-orange-500" />
-                      <span className="font-medium text-orange-700">
+                      <span className="font-medium text-orange-700 dark:text-orange-400">
                         Sequência de {summary.gamification.streak} meses pagando tudo em dia! 🔥
                       </span>
                     </div>
@@ -386,7 +384,7 @@ export default function InstallmentsPage() {
               </Card>
 
               {/* Dicas Motivacionais */}
-              <Card className="bg-gradient-to-r from-green-50 to-emerald-50 border-green-200">
+              <Card className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/20">
                 <CardContent className="pt-6">
                   <div className="text-center space-y-3">
                     <div className="flex justify-center">
@@ -394,23 +392,23 @@ export default function InstallmentsPage() {
                         <Zap className="h-6 w-6 text-white" />
                       </div>
                     </div>
-                    <h3 className="font-semibold text-lg text-green-800">Dicas para Ganhar Mais Pontos</h3>
+                    <h3 className="font-semibold text-lg text-green-800 dark:text-green-400">Dicas para Ganhar Mais Pontos</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                      <div className="p-3 bg-white rounded-lg border border-green-200">
-                        <h4 className="font-medium text-green-700 mb-1">Pague em Dia</h4>
-                        <p className="text-sm text-green-600">+5 pontos de bônus por pagamento pontual</p>
+                      <div className="p-3 bg-green-500/5 dark:bg-green-500/10 rounded-lg border border-green-200 dark:border-green-900/50">
+                        <h4 className="font-medium text-green-700 dark:text-green-400 mb-1">Pague em Dia</h4>
+                        <p className="text-sm text-green-600 dark:text-green-400">+5 pontos de bônus por pagamento pontual</p>
                       </div>
-                      <div className="p-3 bg-white rounded-lg border border-green-200">
-                        <h4 className="font-medium text-green-700 mb-1">Complete Parcelamentos</h4>
-                        <p className="text-sm text-green-600">+50 pontos por cada parcelamento finalizado</p>
+                      <div className="p-3 bg-green-500/5 dark:bg-green-500/10 rounded-lg border border-green-200 dark:border-green-900/50">
+                        <h4 className="font-medium text-green-700 dark:text-green-400 mb-1">Complete Parcelamentos</h4>
+                        <p className="text-sm text-green-600 dark:text-green-400">+50 pontos por cada parcelamento finalizado</p>
                       </div>
-                      <div className="p-3 bg-white rounded-lg border border-green-200">
-                        <h4 className="font-medium text-green-700 mb-1">Evite Atrasos</h4>
-                        <p className="text-sm text-green-600">Atrasos reduzem seus pontos (-2 por dia)</p>
+                      <div className="p-3 bg-green-500/5 dark:bg-green-500/10 rounded-lg border border-green-200 dark:border-green-900/50">
+                        <h4 className="font-medium text-green-700 dark:text-green-400 mb-1">Evite Atrasos</h4>
+                        <p className="text-sm text-green-600 dark:text-green-400">Mantenha sua sequência sem perdas de pontos</p>
                       </div>
-                      <div className="p-3 bg-white rounded-lg border border-green-200">
-                        <h4 className="font-medium text-green-700 mb-1">Mantenha Consistência</h4>
-                        <p className="text-sm text-green-600">Sequências de pagamentos aumentam seu streak</p>
+                      <div className="p-3 bg-green-500/5 dark:bg-green-500/10 rounded-lg border border-green-200 dark:border-green-900/50">
+                        <h4 className="font-medium text-green-700 dark:text-green-400 mb-1">Organize-se</h4>
+                        <p className="text-sm text-green-600 dark:text-green-400">Use notificações para nunca esquecer</p>
                       </div>
                     </div>
                   </div>

@@ -24,25 +24,25 @@ export function RecentTransactions({ transactions }: RecentTransactionsProps) {
       <CardContent className="flex-1 flex flex-col gap-4">
         {transactions.length > 0 ? (
             <ScrollArea className="flex-1">
-                <div className="space-y-6 pr-4">
+                <div className="space-y-4 pr-4">
                 {recentTransactions.map((transaction) => (
-                    <div key={transaction.id} className="flex items-center">
-                        <Avatar className="h-9 w-9">
+                    <div key={transaction.id} className="flex items-start gap-3">
+                        <Avatar className="h-8 w-8 flex-shrink-0">
                             <AvatarFallback className={cn("bg-secondary border border-border text-foreground",
                               transaction.type === 'income' && "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
                               transaction.type === 'expense' && "bg-red-500/20 text-red-400 border-red-500/30"
                             )}>
-                                {transaction.type === 'income' ? <ArrowDown className="h-4 w-4"/> : <ArrowUp className="h-4 w-4"/>}
+                                {transaction.type === 'income' ? <ArrowDown className="h-3 w-3"/> : <ArrowUp className="h-3 w-3"/>}
                             </AvatarFallback>
                         </Avatar>
-                    <div className="ml-4 space-y-1">
-                        <p className="text-sm font-medium leading-none">{transaction.item}</p>
-                        <p className="text-sm text-muted-foreground">
+                    <div className="flex-1 min-w-0 space-y-1">
+                        <p className="text-sm font-medium leading-none truncate">{transaction.item}</p>
+                        <p className="text-xs text-muted-foreground truncate">
                             {transaction.category}
                             {transaction.subcategory && ` / ${transaction.subcategory}`}
                         </p>
                     </div>
-                    <div className={cn("ml-auto font-medium text-right",
+                    <div className={cn("flex-shrink-0 font-medium text-right text-sm",
                        transaction.type === 'income' ? 'text-emerald-400' : 'text-red-400'
                     )}>
                         {transaction.type === 'income' ? '+' : '-'}R$ {transaction.amount.toFixed(2)}

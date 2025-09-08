@@ -37,7 +37,7 @@ export default function DashboardPage() {
     const { isPro, isPlus } = usePlan();
 
     return (
-        <div className="flex flex-col gap-4 sm:gap-6 px-4 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-4 sm:gap-6">
             {/* Header - Mobile First */}
             <div className="flex flex-col gap-3 sm:gap-4">
                 <div className="flex flex-col gap-2">

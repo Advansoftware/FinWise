@@ -72,8 +72,8 @@ export function PWAUpdater() {
         description: 'Adicione o Gastometria à sua tela inicial para acesso mais rápido.',
         duration: 10000,
         action: (
-          <Button onClick={handleInstallClick} size="sm">
-            <ArrowDownToLine className="mr-2 h-4 w-4" />
+          <Button onClick={handleInstallClick} size="sm" className="h-8 px-3 py-1">
+            <ArrowDownToLine className="mr-2 h-3 w-3" />
             Instalar
           </Button>
         ),
@@ -172,8 +172,8 @@ export function PWAUpdater() {
         description: 'Uma nova versão do Gastometria está pronta para usar.',
         duration: Infinity,
         action: (
-          <Button onClick={handleUpdate} size="sm">
-            <ArrowDownToLine className="mr-2 h-4 w-4" />
+          <Button onClick={handleUpdate} size="sm" className="h-8 px-3 py-1">
+            <ArrowDownToLine className="mr-2 h-3 w-3" />
             Atualizar
           </Button>
         ),

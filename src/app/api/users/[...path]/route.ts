@@ -69,6 +69,16 @@ async function handler(
             userToReturn.uid = userProfile._id.toHexString(); 
             delete userToReturn._id;
 
+            // Configurar dados padrão para o novo usuário (categorias, configurações, etc.)
+            try {
+                const { setupDefaultUserData } = await import('@/services/default-setup-service');
+                await setupDefaultUserData(userToReturn.uid);
+                console.log(`✅ Dados padrão configurados para novo usuário ${userToReturn.uid}`);
+            } catch (setupError) {
+                console.error('Erro ao configurar dados padrão na API:', setupError);
+                // Não falha o cadastro se houver erro na configuração padrão
+            }
+
             // No token is returned, session is managed client-side
             return NextResponse.json({ user: userToReturn }, { status: 201 });
         }
@@ -118,6 +128,16 @@ async function handler(
                 };
                 await usersCollection.insertOne(newUser);
                 user = newUser;
+
+                // Configurar dados padrão para o novo usuário social (categorias, configurações, etc.)
+                try {
+                    const { setupDefaultUserData } = await import('@/services/default-setup-service');
+                    await setupDefaultUserData(socialUser.uid);
+                    console.log(`✅ Dados padrão configurados para novo usuário social ${socialUser.uid}`);
+                } catch (setupError) {
+                    console.error('Erro ao configurar dados padrão para usuário social:', setupError);
+                    // Não falha o cadastro se houver erro na configuração padrão
+                }
             }
 
             const { password, ...userToReturn } = user as any;

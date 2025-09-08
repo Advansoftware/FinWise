@@ -91,12 +91,28 @@ export function GoalHighlightCard() {
 
 
     if (isLoading) {
-        return <Skeleton className="h-full"/>;
+        return (
+            <Card>
+                <CardHeader className="pb-2">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                        <PiggyBank className="h-4 w-4" />
+                        Metas
+                    </CardTitle>
+                </CardHeader>
+                <CardContent className="pb-3">
+                    <div className="space-y-2">
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-3 w-full" />
+                        <Skeleton className="h-2 w-full" />
+                    </div>
+                </CardContent>
+            </Card>
+        );
     }
 
     if (!firstGoal) {
         return (
-             <Card className="flex flex-col items-center justify-center text-center p-4 h-full">
+             <Card className="flex flex-col items-center justify-center text-center p-4">
                 <Target className="h-8 w-8 text-primary/70 mb-2"/>
                 <CardTitle className="text-base">Crie sua Primeira Meta</CardTitle>
                 <CardContent className="p-0 mt-1 mb-3">
@@ -125,32 +141,34 @@ export function GoalHighlightCard() {
     }
 
     return (
-        <Card className="flex flex-col h-full">
-            <CardHeader className="pb-2 p-4">
+        <Card className="flex flex-col">
+            <CardHeader className="pb-2">
                 <div className="flex items-center gap-2">
                     <div className="p-1 rounded-full bg-primary/20">
                         <Target className="h-3 w-3 text-primary"/>
                     </div>
-                    <div>
-                         <CardTitle className="text-sm">{firstGoal.name}</CardTitle>
+                    <div className="min-w-0 flex-1">
+                         <CardTitle className="text-sm truncate">{firstGoal.name}</CardTitle>
                          <CardDescription className="text-xs">Sua meta em destaque</CardDescription>
                     </div>
                 </div>
             </CardHeader>
-            <CardContent className="flex-1 space-y-1.5 p-4 pt-0">
+            <CardContent className="space-y-2 pb-3">
                 <Progress value={Math.min(percentage, 100)} className="h-1.5" />
                  <div className="flex justify-between items-baseline">
                     <p className="text-base font-bold text-foreground">R$ {firstGoal.currentAmount.toFixed(2)}</p>
                     <p className="text-xs text-muted-foreground">de R$ {firstGoal.targetAmount.toFixed(2)}</p>
                 </div>
-                 <div className="text-xs text-muted-foreground h-3 flex items-center gap-1 justify-between">
-                    <div className="flex items-center gap-1">
-                        <Sparkles className={cn("h-3 w-3 text-primary/80", isProjecting && "animate-pulse")} />
+                 <div className="text-xs text-muted-foreground flex items-center gap-1 justify-between">
+                    <div className="flex items-center gap-1 min-w-0">
+                        <Sparkles className={cn("h-3 w-3 text-primary/80 flex-shrink-0", isProjecting && "animate-pulse")} />
+                         <span className="truncate">
                          {isProjecting ? (
-                            <span>Calculando...</span>
+                            "Calculando..."
                         ) : (
                            getProjectionText()
                         )}
+                         </span>
                     </div>
                     {projectionResult && !isProjecting && (
                         <Button 

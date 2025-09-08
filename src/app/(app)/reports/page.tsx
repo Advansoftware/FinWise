@@ -54,9 +54,9 @@ export default function ReportsPage() {
             </div>
             
             <Tabs defaultValue={String(getYear(new Date()))} className="w-full">
-                <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 w-full md:w-auto">
+                <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 w-full md:w-auto bg-card">
                     {availableYears.slice(0, 4).map(year => (
-                        <TabsTrigger key={year} value={String(year)} className="text-xs md:text-sm">
+                        <TabsTrigger key={year} value={String(year)} className="text-xs md:text-sm data-[state=active]:bg-primary/20">
                             {year}
                         </TabsTrigger>
                     ))}
@@ -85,11 +85,11 @@ function YearlyReportView({ year }: { year: number }) {
 
     return (
         <Tabs defaultValue="monthly" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="monthly" className="text-xs md:text-sm">
+            <TabsList className="grid w-full grid-cols-2 bg-card">
+                <TabsTrigger value="monthly" className="text-xs md:text-sm data-[state=active]:bg-primary/20">
                     Visão Mensal
                 </TabsTrigger>
-                <TabsTrigger value="annual" disabled className="text-xs md:text-sm">
+                <TabsTrigger value="annual" disabled className="text-xs md:text-sm opacity-50">
                     Visão Anual (Pendente)
                 </TabsTrigger>
             </TabsList>

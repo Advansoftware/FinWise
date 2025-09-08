@@ -38,8 +38,9 @@ export default function DefaultCategoriesPreview() {
     }
 
     try {
-      // Aplicar categorias padrão via API
-      await apiClient.update('settings', user.uid, { categories: DEFAULT_CATEGORIES });
+      // Aplicar categorias padrão usando setupDefaultUserData diretamente
+      const { setupDefaultUserData } = await import('@/services/default-setup-service');
+      await setupDefaultUserData(user.uid);
 
       toast({
         title: "Sucesso!",
@@ -51,7 +52,7 @@ export default function DefaultCategoriesPreview() {
         window.location.href = '/categories';
       }, 1000);
     } catch (error) {
-      console.error('Erro ao aplicar categorias via API:', error);
+      console.error('Erro ao aplicar categorias:', error);
       toast({
         variant: "destructive",
         title: "Erro",
