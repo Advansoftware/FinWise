@@ -36,6 +36,7 @@ import { motion } from 'framer-motion';
 
 export default function InstallmentsPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState('active');
   const { installments, summary, isLoading } = useInstallments();
 
   if (isLoading) {
@@ -85,15 +86,15 @@ export default function InstallmentsPage() {
 
       {/* Alerta de Atraso */}
       {summary && summary.overduePayments.length > 0 && (
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-destructive/20 dark:border-destructive/20 bg-destructive/10 dark:bg-destructive/10">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-red-600" />
-              <CardTitle className="text-red-700">
+              <AlertTriangle className="h-5 w-5 text-destructive dark:text-destructive" />
+              <CardTitle className="text-destructive dark:text-destructive">
                 {summary.overduePayments.length} Parcela{summary.overduePayments.length > 1 ? 's' : ''} em Atraso
               </CardTitle>
             </div>
-            <CardDescription className="text-red-600">
+            <CardDescription className="text-destructive/80 dark:text-destructive/80">
               Você tem pagamentos vencidos que precisam de atenção imediata.
             </CardDescription>
           </CardHeader>
@@ -106,17 +107,17 @@ export default function InstallmentsPage() {
                 const daysOverdue = Math.floor((new Date().getTime() - new Date(payment.dueDate).getTime()) / (1000 * 60 * 60 * 24));
                 
                 return (
-                  <div key={payment.id} className="flex items-center justify-between p-3 bg-red-500/5 dark:bg-red-500/10 rounded-lg border border-red-200 dark:border-red-900/50">
+                  <div key={payment.id} className="flex items-center justify-between p-3 bg-destructive/5 dark:bg-destructive/5 rounded-lg border border-destructive/20 dark:border-destructive/20">
                     <div className="flex-1">
-                      <div className="font-medium text-red-900 dark:text-red-400">
+                      <div className="font-medium text-destructive dark:text-destructive">
                         {installment?.name || 'Parcelamento'} - Parcela {payment.installmentNumber}
                       </div>
-                      <div className="text-sm text-red-600 dark:text-red-400">
+                      <div className="text-sm text-destructive/80 dark:text-destructive/80">
                         Venceu em {new Date(payment.dueDate).toLocaleDateString('pt-BR')} • {daysOverdue} dias de atraso
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-semibold text-red-700 dark:text-red-400">
+                      <div className="font-semibold text-destructive dark:text-destructive">
                         {formatCurrency(payment.scheduledAmount)}
                       </div>
                       <Badge variant="destructive" className="text-xs">
@@ -129,16 +130,28 @@ export default function InstallmentsPage() {
             </div>
             
             {summary.overduePayments.length > 3 && (
-              <div className="text-sm text-red-600 text-center py-2 border-t border-red-200">
+              <div className="text-sm text-destructive/80 dark:text-destructive/80 text-center py-2 border-t border-destructive/20 dark:border-destructive/20">
                 E mais {summary.overduePayments.length - 3} parcela{summary.overduePayments.length - 3 > 1 ? 's' : ''} em atraso
               </div>
             )}
             
             <div className="flex gap-2 pt-2">
-              <Button size="sm" className="bg-red-600 hover:bg-red-700 flex-1">
+              <Button 
+                size="sm" 
+                className="bg-destructive hover:bg-destructive/90 dark:bg-destructive dark:hover:bg-destructive/90 flex-1"
+                onClick={() => {
+                  // TODO: Implementar funcionalidade de quitar múltiplas pendências
+                  setActiveTab('active');
+                }}
+              >
                 Quitar Pendências
               </Button>
-              <Button size="sm" variant="outline" className="border-red-200 text-red-700 hover:bg-red-50">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                className="border-destructive/20 dark:border-destructive/20 text-destructive dark:text-destructive hover:bg-destructive/10 dark:hover:bg-destructive/10"
+                onClick={() => setActiveTab('schedule')}
+              >
                 Ver Cronograma
               </Button>
             </div>
@@ -176,25 +189,25 @@ export default function InstallmentsPage() {
           </CardContent>
         </Card>
 
-        <Card className={`col-span-2 lg:col-span-1 ${summary && summary.overduePayments.length > 0 ? "border-red-200" : ""}`}>
+        <Card className={`col-span-2 lg:col-span-1 ${summary && summary.overduePayments.length > 0 ? "border-destructive/20 dark:border-destructive/20" : ""}`}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xs font-medium">
               {summary && summary.overduePayments.length > 0 ? "Parcelas em Atraso" : "Próximos Vencimentos"}
             </CardTitle>
             {summary && summary.overduePayments.length > 0 ? (
-              <AlertTriangle className="h-4 w-4 text-red-500" />
+              <AlertTriangle className="h-4 w-4 text-destructive dark:text-destructive" />
             ) : (
               <Clock className="h-4 w-4 text-muted-foreground" />
             )}
           </CardHeader>
           <CardContent>
-            <div className={`text-xl font-bold ${summary && summary.overduePayments.length > 0 ? "text-red-600" : ""}`}>
+            <div className={`text-xl font-bold ${summary && summary.overduePayments.length > 0 ? "text-destructive dark:text-destructive" : ""}`}>
               {summary && summary.overduePayments.length > 0 
                 ? summary.overduePayments.length 
                 : summary?.upcomingPayments.length || 0
               }
             </div>
-            <p className={`text-xs ${summary && summary.overduePayments.length > 0 ? "text-red-600" : "text-muted-foreground"}`}>
+            <p className={`text-xs ${summary && summary.overduePayments.length > 0 ? "text-destructive/80 dark:text-destructive/80" : "text-muted-foreground"}`}>
               {summary && summary.overduePayments.length > 0 
                 ? "Precisam de atenção" 
                 : "Próximos 30 dias"
@@ -218,7 +231,7 @@ export default function InstallmentsPage() {
       </div>
 
       {/* Main Content */}
-      <Tabs defaultValue="active" className="space-y-4">
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="overflow-x-auto">
           <TabsList className="flex w-max min-w-full md:grid md:grid-cols-5 h-auto">
             <TabsTrigger value="active" className="text-xs md:text-sm py-2 whitespace-nowrap flex-shrink-0">Ativos</TabsTrigger>

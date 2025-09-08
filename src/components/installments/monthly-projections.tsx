@@ -29,19 +29,20 @@ export function MonthlyProjections() {
   const [projections, setProjections] = useState<MonthlyProjection[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedMonths, setSelectedMonths] = useState(12);
+  const [includePastMonths, setIncludePastMonths] = useState(6);
   
   const { getMonthlyProjections } = useInstallments();
 
   useEffect(() => {
     const loadProjections = async () => {
       setIsLoading(true);
-      const data = await getMonthlyProjections(selectedMonths);
+      const data = await getMonthlyProjections(selectedMonths + includePastMonths);
       setProjections(data);
       setIsLoading(false);
     };
 
     loadProjections();
-  }, [getMonthlyProjections, selectedMonths]);
+  }, [getMonthlyProjections, selectedMonths, includePastMonths]);
 
   const formatMonthYear = (monthString: string) => {
     const [year, month] = monthString.split('-');
@@ -78,7 +79,7 @@ export function MonthlyProjections() {
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(totalCommitment)}</div>
             <p className="text-xs text-muted-foreground">
-              Próximos {selectedMonths} meses
+              Próximos {selectedMonths} + últimos {includePastMonths} meses
             </p>
           </CardContent>
         </Card>
@@ -111,28 +112,67 @@ export function MonthlyProjections() {
       </div>
 
       {/* Period Selector */}
-      <div className="flex gap-2">
-        <Button
-          variant={selectedMonths === 6 ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setSelectedMonths(6)}
-        >
-          6 meses
-        </Button>
-        <Button
-          variant={selectedMonths === 12 ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setSelectedMonths(12)}
-        >
-          12 meses
-        </Button>
-        <Button
-          variant={selectedMonths === 24 ? 'default' : 'outline'}
-          size="sm"
-          onClick={() => setSelectedMonths(24)}
-        >
-          24 meses
-        </Button>
+      <div className="space-y-4">
+        <div>
+          <h3 className="text-sm font-medium mb-2">Período futuro:</h3>
+          <div className="flex gap-2">
+            <Button
+              variant={selectedMonths === 6 ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setSelectedMonths(6)}
+            >
+              6 meses
+            </Button>
+            <Button
+              variant={selectedMonths === 12 ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setSelectedMonths(12)}
+            >
+              12 meses
+            </Button>
+            <Button
+              variant={selectedMonths === 24 ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setSelectedMonths(24)}
+            >
+              24 meses
+            </Button>
+          </div>
+        </div>
+        
+        <div>
+          <h3 className="text-sm font-medium mb-2">Incluir histórico:</h3>
+          <div className="flex gap-2">
+            <Button
+              variant={includePastMonths === 0 ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setIncludePastMonths(0)}
+            >
+              Nenhum
+            </Button>
+            <Button
+              variant={includePastMonths === 3 ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setIncludePastMonths(3)}
+            >
+              3 meses
+            </Button>
+            <Button
+              variant={includePastMonths === 6 ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setIncludePastMonths(6)}
+            >
+              6 meses
+            </Button>
+            <Button
+              variant={includePastMonths === 12 ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setIncludePastMonths(12)}
+            >
+              12 meses
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Projections */}
@@ -142,7 +182,7 @@ export function MonthlyProjections() {
             <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
             <h3 className="text-lg font-semibold mb-2">Nenhuma projeção disponível</h3>
             <p className="text-muted-foreground text-center">
-              Não há parcelas previstas para os próximos {selectedMonths} meses.
+              Não há parcelas previstas para o período selecionado.
             </p>
           </CardContent>
         </Card>

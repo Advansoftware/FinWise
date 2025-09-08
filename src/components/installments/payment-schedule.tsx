@@ -55,29 +55,29 @@ export function PaymentSchedule() {
       if (payment.status === 'paid') {
         return {
           icon: CheckCircle2,
-          color: 'text-green-600',
-          bgColor: 'bg-green-50 border-green-200',
+          color: 'text-green-600 dark:text-green-400',
+          bgColor: 'bg-green-50 dark:bg-green-950/50 border-green-200 dark:border-green-900/50',
           label: 'Pago'
         };
       } else if (isPast(dueDate) && !isToday(dueDate)) {
         return {
           icon: AlertTriangle,
-          color: 'text-red-600',
-          bgColor: 'bg-red-50 border-red-200',
+          color: 'text-destructive dark:text-destructive',
+          bgColor: 'bg-destructive/10 dark:bg-destructive/10 border-destructive/20 dark:border-destructive/20',
           label: 'Em Atraso'
         };
       } else if (isToday(dueDate)) {
         return {
           icon: Clock,
-          color: 'text-orange-600',
-          bgColor: 'bg-orange-50 border-orange-200',
+          color: 'text-orange-600 dark:text-orange-400',
+          bgColor: 'bg-orange-50 dark:bg-orange-950/50 border-orange-200 dark:border-orange-900/50',
           label: 'Vence Hoje'
         };
       } else {
         return {
           icon: Calendar,
-          color: 'text-blue-600',
-          bgColor: 'bg-blue-50 border-blue-200',
+          color: 'text-blue-600 dark:text-blue-400',
+          bgColor: 'bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-900/50',
           label: 'Pendente'
         };
       }
@@ -185,12 +185,12 @@ export function PaymentSchedule() {
             </Card>
           ) : (
             <>
-              <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
+              <div className="bg-destructive/10 dark:bg-destructive/10 border border-destructive/20 dark:border-destructive/20 rounded-lg p-4">
                 <div className="flex items-start gap-3">
-                  <AlertTriangle className="h-5 w-5 text-destructive mt-0.5" />
+                  <AlertTriangle className="h-5 w-5 text-destructive dark:text-destructive mt-0.5" />
                   <div>
-                    <h4 className="font-semibold text-destructive">Atenção: Parcelas em Atraso</h4>
-                    <p className="text-sm text-destructive/80 mt-1">
+                    <h4 className="font-semibold text-destructive dark:text-destructive">Atenção: Parcelas em Atraso</h4>
+                    <p className="text-sm text-destructive/80 dark:text-destructive/80 mt-1">
                       Você tem {overduePayments.length} parcela(s) em atraso. 
                       Considere quitar esses pagamentos o quanto antes.
                     </p>

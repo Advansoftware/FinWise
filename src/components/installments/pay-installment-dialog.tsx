@@ -194,7 +194,7 @@ export function PayInstallmentDialog({
 
               {/* Wallet Balance Warning */}
               {selectedWallet && (
-                <div className="text-sm p-2 rounded-md bg-blue-50 text-blue-700 border border-blue-200">
+                <div className="text-sm p-2 rounded-md bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50">
                   <div className="flex items-center gap-2">
                     <WalletIcon className="h-4 w-4" />
                     <span>Saldo disponível: <strong>{formatCurrency(selectedWallet.balance)}</strong></span>
@@ -224,7 +224,7 @@ export function PayInstallmentDialog({
 
               {/* Insufficient Balance Warning */}
               {hasInsufficientBalance && (
-                <div className="text-sm p-2 rounded-md bg-red-50 text-red-700 border border-red-200">
+                <div className="text-sm p-2 rounded-md bg-destructive/10 dark:bg-destructive/10 text-destructive dark:text-destructive border border-destructive/20 dark:border-destructive/20">
                   <div className="flex items-center gap-2">
                     <AlertCircle className="h-4 w-4" />
                     <span>Saldo insuficiente na carteira selecionada</span>
@@ -236,8 +236,8 @@ export function PayInstallmentDialog({
               {difference !== 0 && !hasInsufficientBalance && (
                 <div className={`text-sm p-2 rounded-md ${
                   difference > 0 
-                    ? 'bg-green-50 text-green-700 border border-green-200' 
-                    : 'bg-yellow-50 text-yellow-700 border border-yellow-200'
+                    ? 'bg-green-50 dark:bg-green-950/50 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-900/50' 
+                    : 'bg-yellow-50 dark:bg-yellow-950/50 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-900/50'
                 }`}>
                   {difference > 0 ? (
                     <>Você está pagando <strong>{formatCurrency(difference)} a mais</strong> que o previsto.</>

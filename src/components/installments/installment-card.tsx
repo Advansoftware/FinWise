@@ -12,7 +12,9 @@ import {
   MoreVertical,
   CheckCircle2,
   Clock,
-  AlertTriangle
+  AlertTriangle,
+  Edit3,
+  Trash2
 } from 'lucide-react';
 import {
   DropdownMenu,
@@ -20,12 +22,23 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Installment } from '@/core/ports/installments.port';
 import { formatCurrency } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useInstallments } from '@/hooks/use-installments';
 import { PayInstallmentDialog } from './pay-installment-dialog';
+import { EditInstallmentDialog } from './edit-installment-dialog';
 
 interface InstallmentCardProps {
   installment: Installment;
@@ -34,6 +47,8 @@ interface InstallmentCardProps {
 
 export function InstallmentCard({ installment, showActions = true }: InstallmentCardProps) {
   const [isPayDialogOpen, setIsPayDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { deleteInstallment } = useInstallments();
 
   const progressPercentage = (installment.paidInstallments / installment.totalInstallments) * 100;
@@ -64,9 +79,8 @@ export function InstallmentCard({ installment, showActions = true }: Installment
   };
 
   const handleDelete = async () => {
-    if (confirm('Tem certeza que deseja excluir este parcelamento? Esta ação não pode ser desfeita.')) {
-      await deleteInstallment(installment.id);
-    }
+    await deleteInstallment(installment.id);
+    setIsDeleteDialogOpen(false);
   };
 
   return (
@@ -91,7 +105,15 @@ export function InstallmentCard({ installment, showActions = true }: Installment
                       Registrar Pagamento
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem onClick={handleDelete} className="text-destructive">
+                  <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+                    <Edit3 className="h-4 w-4 mr-2" />
+                    Editar
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={() => setIsDeleteDialogOpen(true)} 
+                    className="text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4 mr-2" />
                     Excluir
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -138,10 +160,10 @@ export function InstallmentCard({ installment, showActions = true }: Installment
           
           {/* Next Payment */}
           {nextPayment && !installment.isCompleted && (
-            <div className={`border-t pt-4 ${nextPayment.status === 'overdue' ? 'bg-red-50 border-red-200 -mx-6 -mb-6 px-6 pb-6 rounded-b-lg' : ''}`}>
+            <div className={`border-t pt-4 ${nextPayment.status === 'overdue' ? 'bg-destructive/10 dark:bg-destructive/10 border-destructive/20 dark:border-destructive/20 -mx-6 -mb-6 px-6 pb-6 rounded-b-lg' : ''}`}>
               {/* Alerta de atraso */}
               {nextPayment.status === 'overdue' && (
-                <div className="flex items-center gap-2 mb-3 text-red-700">
+                <div className="flex items-center gap-2 mb-3 text-destructive dark:text-destructive">
                   <AlertTriangle className="h-4 w-4" />
                   <span className="text-sm font-medium">Parcela em atraso!</span>
                 </div>
@@ -152,18 +174,18 @@ export function InstallmentCard({ installment, showActions = true }: Installment
                   <p className="text-xs text-muted-foreground">
                     {nextPayment.status === 'overdue' ? 'Venceu em' : 'Próximo Vencimento'}
                   </p>
-                  <p className={`font-semibold ${nextPayment.status === 'overdue' ? 'text-red-600' : ''}`}>
+                  <p className={`font-semibold ${nextPayment.status === 'overdue' ? 'text-destructive dark:text-destructive' : ''}`}>
                     {format(parseISO(nextPayment.dueDate), 'dd/MM/yyyy', { locale: ptBR })}
                   </p>
                   {nextPayment.status === 'overdue' && (
-                    <p className="text-xs text-red-600 mt-1">
+                    <p className="text-xs text-destructive dark:text-destructive mt-1">
                       {Math.floor((new Date().getTime() - parseISO(nextPayment.dueDate).getTime()) / (1000 * 60 * 60 * 24))} dias de atraso
                     </p>
                   )}
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-muted-foreground">Parcela {nextPayment.installmentNumber}</p>
-                  <p className={`font-semibold ${nextPayment.status === 'overdue' ? 'text-red-600' : ''}`}>
+                  <p className={`font-semibold ${nextPayment.status === 'overdue' ? 'text-destructive dark:text-destructive' : ''}`}>
                     {formatCurrency(nextPayment.scheduledAmount)}
                   </p>
                 </div>
@@ -171,8 +193,8 @@ export function InstallmentCard({ installment, showActions = true }: Installment
               
               {/* Alertas adicionais para atraso */}
               {overdueCount > 1 && (
-                <div className="mt-3 p-2 bg-red-100 border border-red-200 rounded-md">
-                  <p className="text-sm text-red-700">
+                <div className="mt-3 p-2 bg-destructive/10 dark:bg-destructive/10 border border-destructive/20 dark:border-destructive/20 rounded-md">
+                  <p className="text-sm text-destructive dark:text-destructive">
                     <AlertTriangle className="h-4 w-4 inline mr-1" />
                     Você tem <strong>{overdueCount} parcelas em atraso</strong>
                   </p>
@@ -182,7 +204,7 @@ export function InstallmentCard({ installment, showActions = true }: Installment
               {showActions && (
                 <Button 
                   onClick={() => setIsPayDialogOpen(true)}
-                  className={`w-full mt-3 ${nextPayment.status === 'overdue' ? 'bg-red-600 hover:bg-red-700' : ''}`}
+                  className={`w-full mt-3 ${nextPayment.status === 'overdue' ? 'bg-destructive hover:bg-destructive/90 dark:bg-destructive dark:hover:bg-destructive/90' : ''}`}
                   size="sm"
                 >
                   <DollarSign className="h-4 w-4 mr-2" />
@@ -212,6 +234,36 @@ export function InstallmentCard({ installment, showActions = true }: Installment
         open={isPayDialogOpen}
         onOpenChange={setIsPayDialogOpen}
       />
+
+      {/* Edit Dialog */}
+      <EditInstallmentDialog
+        installment={installment}
+        open={isEditDialogOpen}
+        onOpenChange={setIsEditDialogOpen}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o parcelamento "{installment.name}"? 
+              Esta ação não pode ser desfeita e todas as informações de pagamento serão perdidas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={handleDelete}
+              className="bg-destructive hover:bg-destructive/90 dark:bg-destructive dark:hover:bg-destructive/90"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
