@@ -99,6 +99,7 @@ export default function DashboardPage() {
                 <>
                     {/* Main Grid - 12 column system for precise control */}
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
+                        {/* First Row */}
                         {/* Wallet Card - 6 columns */}
                         <div className="lg:col-span-6">
                            <WalletCard transactions={filteredTransactions} />
@@ -111,16 +112,14 @@ export default function DashboardPage() {
                         <div className="lg:col-span-3">
                            <InstallmentsSummaryCard />
                         </div>
-                    </div>
 
-                    {/* Future Balance Card - Only show for Pro/Plus, positioned to fill space */}
-                    {isPlus && (
-                        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
+                        {/* Second Row - Future Balance Card for Pro/Plus users */}
+                        {isPlus && (
                             <div className="lg:col-span-6 lg:col-start-7">
                                 <FutureBalanceCard />
                             </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
 
                     {/* Stats Cards - 4 equal columns */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -150,13 +149,12 @@ function DashboardSkeleton() {
         <>
              {/* Main Grid Skeleton - 12 column layout */}
              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
+                {/* First Row */}
                 <Skeleton className="lg:col-span-6 h-40 sm:h-48" />
                 <Skeleton className="lg:col-span-3 h-40 sm:h-48"/>
                 <Skeleton className="lg:col-span-3 h-40 sm:h-48" />
-             </div>
-
-             {/* Future Balance Skeleton - Conditional */}
-             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
+                
+                {/* Second Row - Future Balance Skeleton */}
                 <Skeleton className="lg:col-span-6 lg:col-start-7 h-32 sm:h-36" />
              </div>
 
