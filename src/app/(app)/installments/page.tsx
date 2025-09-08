@@ -277,7 +277,7 @@ export default function InstallmentsPage() {
                         </CardDescription>
                       </div>
                     </div>
-                    <div className="flex-shrink-0">
+                    <div className="flex-shrink-0 hidden md:block">
                       <GamificationGuide />
                     </div>
                   </div>

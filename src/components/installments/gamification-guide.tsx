@@ -292,7 +292,7 @@ export function GamificationGuide({
                   </Card>
 
                   {/* Motivação */}
-                  <Card className="bg-gradient-to-r from-blue-50 to-purple-50 border-blue-200">
+                  <Card className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-blue-500/20 dark:from-blue-400/10 dark:to-purple-400/10 dark:border-blue-400/20">
                     <CardContent className="pt-6">
                       <div className="text-center space-y-3">
                         <Flame className="h-8 w-8 text-orange-500 mx-auto" />

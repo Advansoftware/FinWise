@@ -112,7 +112,7 @@ export function CreateInstallmentDialog({ open, onOpenChange }: CreateInstallmen
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl w-[95vw] h-[95vh] sm:h-auto max-h-[95vh] overflow-y-auto flex flex-col">
+      <DialogContent className="sm:max-w-2xl w-[95vw] h-[95vh] sm:h-auto max-h-[95vh] flex flex-col">
         <DialogHeader className="flex-shrink-0">
           <DialogTitle>Novo Parcelamento</DialogTitle>
           <DialogDescription>
@@ -120,7 +120,7 @@ export function CreateInstallmentDialog({ open, onOpenChange }: CreateInstallmen
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto pr-2">
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -313,29 +313,34 @@ export function CreateInstallmentDialog({ open, onOpenChange }: CreateInstallmen
                 )}
               />
             </div>
-
-            <DialogFooter className="flex-shrink-0 pt-4 flex flex-col sm:flex-row gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isSubmitting}
-                className="w-full sm:w-auto"
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isSubmitting} className="w-full sm:w-auto">
-                {isSubmitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Plus className="h-4 w-4 mr-2" />
-                )}
-                Criar Parcelamento
-              </Button>
-            </DialogFooter>
           </form>
         </Form>
         </div>
+
+        <DialogFooter className="flex-shrink-0 pt-4 flex flex-col sm:flex-row gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
+            className="w-full sm:w-auto"
+          >
+            Cancelar
+          </Button>
+          <Button 
+            type="submit" 
+            disabled={isSubmitting} 
+            className="w-full sm:w-auto"
+            onClick={form.handleSubmit(onSubmit)}
+          >
+            {isSubmitting ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Plus className="h-4 w-4 mr-2" />
+            )}
+            Criar Parcelamento
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

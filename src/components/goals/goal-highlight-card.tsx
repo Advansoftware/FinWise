@@ -141,8 +141,8 @@ export function GoalHighlightCard() {
     }
 
     return (
-        <Card className="flex flex-col">
-            <CardHeader className="pb-2">
+        <Card className="flex flex-col h-full">
+            <CardHeader className="pb-2 flex-shrink-0">
                 <div className="flex items-center gap-2">
                     <div className="p-1 rounded-full bg-primary/20">
                         <Target className="h-3 w-3 text-primary"/>
@@ -153,7 +153,7 @@ export function GoalHighlightCard() {
                     </div>
                 </div>
             </CardHeader>
-            <CardContent className="space-y-2 pb-3">
+            <CardContent className="space-y-2 pb-3 flex-1">
                 <Progress value={Math.min(percentage, 100)} className="h-1.5" />
                  <div className="flex justify-between items-baseline">
                     <p className="text-base font-bold text-foreground">R$ {firstGoal.currentAmount.toFixed(2)}</p>
@@ -174,7 +174,7 @@ export function GoalHighlightCard() {
                         <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="h-4 w-4 p-0 text-muted-foreground hover:text-primary"
+                            className="h-4 w-4 p-0 text-muted-foreground hover:text-primary flex-shrink-0"
                             onClick={refreshProjection}
                             title="Atualizar previsão"
                         >
@@ -183,7 +183,7 @@ export function GoalHighlightCard() {
                     )}
                 </div>
             </CardContent>
-             <CardFooter className="flex gap-2 p-4 pt-0">
+             <CardFooter className="flex gap-2 p-4 pt-0 flex-shrink-0">
                  <Button asChild variant="outline" className="flex-1" size="sm">
                     <Link href="/goals">Ver Todas</Link>
                  </Button>

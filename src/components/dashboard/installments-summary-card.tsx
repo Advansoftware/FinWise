@@ -104,8 +104,8 @@ export function InstallmentsSummaryCard() {
   const overdueCount = summary.overduePayments.length;
 
   return (
-    <Card className="overflow-hidden">
-      <CardHeader className="pb-3">
+    <Card className="overflow-hidden h-full flex flex-col">
+      <CardHeader className="pb-3 flex-shrink-0">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg flex items-center gap-2">
             <CreditCard className="h-5 w-5 text-primary" />
@@ -130,7 +130,7 @@ export function InstallmentsSummaryCard() {
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-4">
+      <CardContent className="space-y-4 flex-1">
         {/* Status Geral */}
         <div className="grid grid-cols-2 gap-3">
           <div className="text-center">
@@ -162,46 +162,46 @@ export function InstallmentsSummaryCard() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="space-y-2 p-3 bg-red-50 border border-red-200 rounded-lg"
+            className="space-y-2 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-900/50 rounded-lg"
           >
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-red-600" />
-              <span className="text-sm font-semibold text-red-700">
+              <span className="text-sm font-semibold text-red-700 dark:text-red-400">
                 {overdueCount} parcela{overdueCount > 1 ? 's' : ''} em atraso
               </span>
             </div>
             
             {/* Mostrar as parcelas em atraso mais urgentes */}
-            {summary.overduePayments.slice(0, 2).map((payment) => {
+            {summary.overduePayments.slice(0, 1).map((payment) => {
               const daysOverdue = Math.floor((new Date().getTime() - new Date(payment.dueDate).getTime()) / (1000 * 60 * 60 * 24));
               return (
                 <div key={payment.id} className="flex items-center justify-between text-xs">
-                  <span className="text-red-600">
+                  <span className="text-red-600 dark:text-red-400 truncate">
                     Parcela {payment.installmentNumber} • {daysOverdue} dias
                   </span>
-                  <span className="font-medium text-red-700">
+                  <span className="font-medium text-red-700 dark:text-red-400 flex-shrink-0 ml-2">
                     {formatCurrency(payment.scheduledAmount)}
                   </span>
                 </div>
               );
             })}
             
-            {summary.overduePayments.length > 2 && (
-              <div className="text-xs text-red-600 pt-1 border-t border-red-200">
-                E mais {summary.overduePayments.length - 2} parcela{summary.overduePayments.length - 2 > 1 ? 's' : ''} em atraso
+            {summary.overduePayments.length > 1 && (
+              <div className="text-xs text-red-600 dark:text-red-400 pt-1 border-t border-red-200 dark:border-red-900/50">
+                E mais {summary.overduePayments.length - 1} parcela{summary.overduePayments.length - 1 > 1 ? 's' : ''} em atraso
               </div>
             )}
           </motion.div>
         )}
 
-        {/* Próximos Pagamentos */}
-        {nextPayments.length > 0 && (
+        {/* Próximos Pagamentos - mais compacto */}
+        {nextPayments.length > 0 && !overdueCount && (
           <div className="space-y-2">
             <div className="text-xs text-muted-foreground flex items-center gap-1">
               <Clock className="h-3 w-3" />
               Próximos pagamentos
             </div>
-            {nextPayments.map((payment, index) => (
+            {nextPayments.slice(0, 2).map((payment) => (
               <div key={payment.id} className="flex items-center justify-between py-1">
                 <div className="flex-1 min-w-0">
                   <div className="text-xs font-medium truncate">
@@ -214,7 +214,7 @@ export function InstallmentsSummaryCard() {
                     })}
                   </div>
                 </div>
-                <div className="text-xs font-medium">
+                <div className="text-xs font-medium flex-shrink-0 ml-2">
                   {formatCurrency(payment.scheduledAmount)}
                 </div>
               </div>
@@ -222,7 +222,7 @@ export function InstallmentsSummaryCard() {
           </div>
         )}
 
-        {/* Badges recentes */}
+        {/* Badges recentes - mais compacto */}
         {gamification.badges.length > 0 && (
           <div className="flex items-center gap-1">
             {gamification.badges.slice(0, 3).map((badge) => (
@@ -230,7 +230,7 @@ export function InstallmentsSummaryCard() {
                 key={badge.id}
                 initial={{ scale: 0, rotate: -180 }}
                 animate={{ scale: 1, rotate: 0 }}
-                className="w-6 h-6 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center"
+                className="w-6 h-6 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center flex-shrink-0"
                 title={badge.name}
               >
                 <Star className="h-3 w-3 text-white" />
@@ -243,8 +243,10 @@ export function InstallmentsSummaryCard() {
             )}
           </div>
         )}
+      </CardContent>
 
-        {/* Botão de ação */}
+      {/* Botão de ação */}
+      <CardContent className="pt-0 pb-4 flex-shrink-0">
         <Link href="/installments" passHref>
           <Button size="sm" variant="outline" className="w-full">
             Ver Detalhes <ChevronRight className="h-4 w-4 ml-1" />

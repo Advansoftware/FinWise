@@ -51,8 +51,8 @@ export function WalletCard({ transactions }: WalletCardProps) {
         .sort(([,a], [,b]) => b - a)[0];
 
     return (
-        <Card className="relative overflow-hidden bg-card/80 backdrop-blur-xl">
-            <CardHeader className="pb-2">
+        <Card className="relative overflow-hidden bg-card/80 backdrop-blur-xl h-full flex flex-col">
+            <CardHeader className="pb-2 flex-shrink-0">
                 <div className="flex items-center gap-2">
                     <div className="p-1.5 rounded-full bg-primary/20 text-primary">
                         <Wallet className="h-4 w-4"/>
@@ -63,8 +63,8 @@ export function WalletCard({ transactions }: WalletCardProps) {
                     </div>
                 </div>
             </CardHeader>
-            <CardContent className="pb-3">
-                <div className="flex flex-col gap-4">
+            <CardContent className="pb-3 flex-1">
+                <div className="flex flex-col gap-3 h-full">
                     {/* Saldo Total */}
                     <div className="space-y-0.5">
                         <p className="text-xs text-muted-foreground">Saldo Total</p>
@@ -119,14 +119,14 @@ export function WalletCard({ transactions }: WalletCardProps) {
                         <div className="space-y-1">
                             <div className="flex items-center gap-1">
                                 <BarChart3 className="h-3 w-3 text-muted-foreground" />
-                                <span className="text-muted-foreground">Gasto Médio/Dia</span>
+                                <span className="text-muted-foreground">Gasto/Dia</span>
                             </div>
                             <p className="font-medium">R$ {avgDailyExpense.toFixed(2)}</p>
                         </div>
                         <div className="space-y-1">
                             <div className="flex items-center gap-1">
                                 <PieChart className="h-3 w-3 text-muted-foreground" />
-                                <span className="text-muted-foreground">Taxa de Economia</span>
+                                <span className="text-muted-foreground">Taxa Economia</span>
                             </div>
                             <div className="flex items-center gap-1">
                                 <p className={cn("font-medium", savingsRate >= 0 ? "text-emerald-500" : "text-red-500")}>
@@ -139,20 +139,20 @@ export function WalletCard({ transactions }: WalletCardProps) {
                     
                     {/* Maior Categoria */}
                     {topCategory && (
-                        <div className="p-2 rounded-lg border border-border/50">
+                        <div className="p-2 rounded-lg border border-border/50 mt-auto">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <div className="w-2 h-2 rounded-full bg-primary"></div>
                                     <span className="text-xs text-muted-foreground">Maior Gasto</span>
                                 </div>
-                                <span className="text-xs font-medium">{topCategory[0]}</span>
+                                <span className="text-xs font-medium truncate ml-2">{topCategory[0]}</span>
                             </div>
                             <div className="mt-1 flex items-center justify-between">
                                 <Progress 
                                     value={totalExpense > 0 ? (topCategory[1] / totalExpense) * 100 : 0} 
                                     className="flex-1 h-1 mr-2" 
                                 />
-                                <span className="text-xs font-semibold text-red-500">
+                                <span className="text-xs font-semibold text-red-500 flex-shrink-0">
                                     R$ {topCategory[1].toFixed(2)}
                                 </span>
                             </div>
