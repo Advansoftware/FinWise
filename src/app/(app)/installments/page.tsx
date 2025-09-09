@@ -37,9 +37,9 @@ import { useGamification } from '@/hooks/use-gamification';
 
 export default function InstallmentsPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState('active');
+  const [activeTab, setActiveTab] = useState('gamification'); // Progresso é a aba padrão
   const { installments, summary, isLoading } = useInstallments();
-  const { gamificationData } = useGamification();
+  const { gamificationData, isLoading: isGamificationLoading } = useGamification();
 
   // Função para traduzir raridade dos badges
   const translateRarity = (rarity: string) => {
@@ -248,8 +248,8 @@ export default function InstallmentsPage() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
         <div className="overflow-x-auto">
           <TabsList className="flex w-max min-w-full md:grid md:grid-cols-5 h-auto">
-            <TabsTrigger value="active" className="text-xs md:text-sm py-2 whitespace-nowrap flex-shrink-0">Ativos</TabsTrigger>
             <TabsTrigger value="gamification" className="text-xs md:text-sm py-2 whitespace-nowrap flex-shrink-0">Progresso</TabsTrigger>
+            <TabsTrigger value="active" className="text-xs md:text-sm py-2 whitespace-nowrap flex-shrink-0">Ativos</TabsTrigger>
             <TabsTrigger value="schedule" className="text-xs md:text-sm py-2 whitespace-nowrap flex-shrink-0">Cronograma</TabsTrigger>
             <TabsTrigger value="projections" className="text-xs md:text-sm py-2 whitespace-nowrap flex-shrink-0">Projeções</TabsTrigger>
             <TabsTrigger value="completed" className="text-xs md:text-sm py-2 whitespace-nowrap flex-shrink-0">Finalizados</TabsTrigger>
@@ -285,7 +285,13 @@ export default function InstallmentsPage() {
         </TabsContent>
 
         <TabsContent value="gamification" className="space-y-6">
-          {gamificationData && (
+          {isGamificationLoading ? (
+            <div className="space-y-4">
+              <Skeleton className="h-40 w-full" />
+              <Skeleton className="h-24 w-full" />
+              <Skeleton className="h-64 w-full" />
+            </div>
+          ) : gamificationData ? (
             <div className="space-y-6">
               {/* Header da Gamificação com Guia */}
               <Card className="bg-gradient-to-r from-slate-800/50 to-slate-900/50 dark:from-slate-800/50 dark:to-slate-900/50 border-slate-700 dark:border-slate-700">
@@ -413,39 +419,21 @@ export default function InstallmentsPage() {
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Dicas Motivacionais */}
-              <Card className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 border-green-500/20">
-                <CardContent className="pt-6">
-                  <div className="text-center space-y-3">
-                    <div className="flex justify-center">
-                      <div className="w-12 h-12 rounded-full bg-green-500 flex items-center justify-center">
-                        <Zap className="h-6 w-6 text-white" />
-                      </div>
-                    </div>
-                    <h3 className="font-semibold text-lg text-green-800 dark:text-green-400">Dicas para Ganhar Mais Pontos</h3>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                      <div className="p-3 bg-green-500/5 dark:bg-green-500/10 rounded-lg border border-green-200 dark:border-green-900/50">
-                        <h4 className="font-medium text-green-700 dark:text-green-400 mb-1">Pague em Dia</h4>
-                        <p className="text-sm text-green-600 dark:text-green-400">+5 pontos de bônus por pagamento pontual</p>
-                      </div>
-                      <div className="p-3 bg-green-500/5 dark:bg-green-500/10 rounded-lg border border-green-200 dark:border-green-900/50">
-                        <h4 className="font-medium text-green-700 dark:text-green-400 mb-1">Complete Parcelamentos</h4>
-                        <p className="text-sm text-green-600 dark:text-green-400">+50 pontos por cada parcelamento finalizado</p>
-                      </div>
-                      <div className="p-3 bg-green-500/5 dark:bg-green-500/10 rounded-lg border border-green-200 dark:border-green-900/50">
-                        <h4 className="font-medium text-green-700 dark:text-green-400 mb-1">Evite Atrasos</h4>
-                        <p className="text-sm text-green-600 dark:text-green-400">Mantenha sua sequência sem perdas de pontos</p>
-                      </div>
-                      <div className="p-3 bg-green-500/5 dark:bg-green-500/10 rounded-lg border border-green-200 dark:border-green-900/50">
-                        <h4 className="font-medium text-green-700 dark:text-green-400 mb-1">Organize-se</h4>
-                        <p className="text-sm text-green-600 dark:text-green-400">Use notificações para nunca esquecer</p>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
+          ) : (
+             <Card>
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <Trophy className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Jornada de Progresso</h3>
+                <p className="text-muted-foreground text-center mb-4">
+                  Crie e pague seus parcelamentos em dia para ganhar pontos, subir de nível e desbloquear conquistas!
+                </p>
+                <Button onClick={() => setActiveTab('active')}>
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Ver Meus Parcelamentos
+                </Button>
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
 
