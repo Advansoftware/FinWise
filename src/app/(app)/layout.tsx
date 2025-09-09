@@ -15,7 +15,6 @@ import { WalletsProvider } from "@/hooks/use-wallets";
 import { ReportsProvider } from "@/hooks/use-reports";
 import { InstallmentsProvider } from "@/hooks/use-installments";
 import { PlanProvider } from "@/hooks/use-plan";
-import { CreditsProvider } from "@/hooks/use-credits";
 import { GoalCompletionCelebration } from "@/components/goals/goal-celebration";
 import { useGoals } from "@/hooks/use-goals";
 import { AICreditIndicator } from "@/components/credits/ai-credit-indicator";
@@ -68,11 +67,9 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                 </div>
               </div>
 
-              <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-3">
-                <div className="flex items-center gap-2">
-                  <AICreditIndicator />
-                </div>
+              <div className="fixed bottom-4 right-4 z-50 flex flex-col md:flex-row-reverse items-end gap-3">
                 <ChatAssistant />
+                <AICreditIndicator />
               </div>
           </main>
       </div>

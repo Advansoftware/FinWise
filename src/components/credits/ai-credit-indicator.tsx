@@ -68,21 +68,24 @@ export function AICreditIndicator() {
                 <TooltipTrigger asChild>
                   <Button
                       variant="outline"
-                      className="rounded-full shadow-lg backdrop-blur-sm bg-background/70 hover:bg-background h-11"
+                      className="rounded-full shadow-lg backdrop-blur-sm bg-background/70 hover:bg-background h-11 px-3 md:px-4"
                       onClick={() => setIsDialogOpen(true)}
                   >
                       {isLoading ? (
-                          <Skeleton className="h-5 w-20" />
+                          <Skeleton className="h-5 w-16" />
                       ) : (
-                          <>
-                              <Sparkles className="h-5 w-5 mr-2 text-primary" />
+                          <div className="flex items-center gap-2">
+                              <Sparkles className="h-5 w-5 text-primary" />
                               <span className={`font-bold text-base ${getCreditColor(credits)}`}>{credits}</span>
-                              <span className="text-muted-foreground text-sm ml-1.5">créditos</span>
-                          </>
+                              <span className="hidden md:inline text-muted-foreground text-sm ml-1">créditos</span>
+                          </div>
                       )}
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-xs">
+                <TooltipContent side="top" align="end" className="max-w-xs md:hidden">
+                   <p>{credits} créditos restantes</p>
+                </TooltipContent>
+                 <TooltipContent side="top" align="end" className="hidden md:block max-w-xs">
                   <div className="space-y-2">
                     <p className="font-medium">Plano {plan} - {credits} créditos disponíveis</p>
                     <p className="text-xs text-muted-foreground">
@@ -103,27 +106,29 @@ export function AICreditIndicator() {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Badge 
-                      variant="outline" 
-                      className={isUsingGastometriaAI 
-                        ? "bg-blue-500/10 text-blue-600 border-blue-500/20" 
-                        : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                      }
-                    >
-                      {isUsingGastometriaAI ? (
-                        <>
-                          <Sparkles className="h-3 w-3 mr-1" />
-                          Gastometria IA
-                        </>
-                      ) : (
-                        <>
-                          <Zap className="h-3 w-3 mr-1" />
-                          IA Própria
-                        </>
-                      )}
-                    </Badge>
+                    <div className="hidden md:block">
+                        <Badge 
+                        variant="outline" 
+                        className={isUsingGastometriaAI 
+                            ? "bg-blue-500/10 text-blue-600 border-blue-500/20" 
+                            : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                        }
+                        >
+                        {isUsingGastometriaAI ? (
+                            <>
+                            <Sparkles className="h-3 w-3 mr-1" />
+                            Gastometria IA
+                            </>
+                        ) : (
+                            <>
+                            <Zap className="h-3 w-3 mr-1" />
+                            IA Própria
+                            </>
+                        )}
+                        </Badge>
+                    </div>
                   </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-xs">
+                  <TooltipContent side="top" align="end" className="max-w-xs">
                     {isUsingGastometriaAI ? (
                       <div className="space-y-1">
                         <p className="font-medium">Usando Gastometria IA</p>

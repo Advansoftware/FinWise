@@ -202,8 +202,8 @@ export function ChatAssistant() {
             </AnimatePresence>
 
             <Button
-                size="lg"
-                className="rounded-full shadow-lg w-16 h-16"
+                size="icon"
+                className="rounded-full shadow-lg w-14 h-14 md:w-16 md:h-16"
                 onClick={() => setIsOpen(prev => !prev)}
             >
                 {isOpen ? <X className="h-6 w-6" /> : <Sparkles className="h-6 w-6" />}
