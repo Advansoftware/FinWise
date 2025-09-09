@@ -1,4 +1,5 @@
 
+// src/app/(app)/dashboard/page.tsx
 'use client';
 
 import { Button } from "@/components/ui/button";
@@ -19,6 +20,7 @@ import { FutureBalanceCard } from "@/components/dashboard/future-balance-card";
 import { usePlan } from "@/hooks/use-plan";
 import { ProUpgradeButton } from "@/components/pro-upgrade-button";
 import { InstallmentsSummaryCard } from "@/components/dashboard/installments-summary-card";
+import { GamificationSummary } from "@/components/profile/gamification-summary";
 
 export default function DashboardPage() {
     const { 
@@ -99,23 +101,19 @@ export default function DashboardPage() {
                 <>
                     {/* Main Grid - 12 column system for precise control */}
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
-                        {/* Left Side - Wallet Card - 6 columns */}
-                        <div className="lg:col-span-6">
+                        {/* Left Side - Wallet Card and Gamification - 6 columns */}
+                        <div className="lg:col-span-6 space-y-4 sm:space-y-6">
                            <WalletCard transactions={filteredTransactions} />
+                           {isPro && <GamificationSummary />}
                         </div>
                         
                         {/* Right Side - Goals, Installments, and Future Balance - 6 columns */}
                         <div className="lg:col-span-6 space-y-4 sm:space-y-6">
-                            {/* Goals and Installments side by side */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                                {/* Goals Card */}
                                 <GoalHighlightCard />
-                                
-                                {/* Installments Card */}
                                 <InstallmentsSummaryCard />
                             </div>
                             
-                            {/* Future Balance Card - always show, with upgrade prompt if needed */}
                             {isPlus ? (
                                 <FutureBalanceCard />
                             ) : (
@@ -154,7 +152,6 @@ export default function DashboardPage() {
                        </div>
                     </div>
 
-                    {/* AI Tip Card - Full Width */}
                     {isPro && <AITipCard transactions={filteredTransactions} />}
                 </>
             )}
@@ -167,17 +164,18 @@ function DashboardSkeleton() {
         <>
              {/* Main Grid Skeleton - 12 column layout */}
              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
-                {/* Left Side - Wallet Skeleton */}
-                <Skeleton className="lg:col-span-6 h-40 sm:h-48" />
+                {/* Left Side - Wallet & Gamification Skeleton */}
+                <div className="lg:col-span-6 space-y-4 sm:space-y-6">
+                    <Skeleton className="h-40 sm:h-48" />
+                    <Skeleton className="h-32 sm:h-36" />
+                </div>
                 
                 {/* Right Side - Goals, Installments, Future Balance Skeleton */}
                 <div className="lg:col-span-6 space-y-4 sm:space-y-6">
-                    {/* Goals and Installments side by side */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                        <Skeleton className="h-32 sm:h-36" />
-                        <Skeleton className="h-32 sm:h-36" />
+                        <Skeleton className="h-40 sm:h-48" />
+                        <Skeleton className="h-40 sm:h-48" />
                     </div>
-                    {/* Future Balance full width - always show */}
                     <Skeleton className="h-32 sm:h-36" />
                 </div>
              </div>

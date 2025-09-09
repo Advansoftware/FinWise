@@ -1,14 +1,14 @@
+
 // src/hooks/use-transactions.tsx
 "use client";
 
-import { useState, useMemo, useEffect, createContext, useContext, ReactNode } from "react";
+import { useState, useMemo, useEffect, createContext, useContext, ReactNode, useCallback } from "react";
 import { DateRange } from "react-day-picker";
 import { startOfMonth, endOfDay } from "date-fns";
 import { Transaction, TransactionCategory, Wallet } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { apiClient } from "@/lib/api-client";
-import { offlineStorage } from "@/lib/offline-storage";
 import { useWallets } from "./use-wallets";
 
 interface TransactionsProviderProps {
@@ -32,13 +32,12 @@ interface TransactionsContextType {
   selectedSubcategory: string;
   setSelectedSubcategory: (subcategory: string) => void;
   addTransaction: (transaction: Omit<Transaction, 'id' | 'userId'>) => Promise<void>;
-  updateTransaction: (transactionId: string, updates: Partial<Transaction>, updateAllMatching: boolean, originalItemName: string) => Promise<void>;
-  deleteTransaction: (transactionId: string) => Promise<void>;
+  updateTransaction: (transactionId: string, updates: Partial<Transaction>, originalTransaction: Transaction) => Promise<void>;
+  deleteTransaction: (transaction: Transaction) => Promise<void>;
   addCategory: (categoryName: TransactionCategory) => Promise<void>;
   deleteCategory: (categoryName: TransactionCategory) => Promise<void>;
   addSubcategory: (categoryName: TransactionCategory, subcategoryName: string) => Promise<void>;
   deleteSubcategory: (categoryName: TransactionCategory, subcategoryName: string) => Promise<void>;
-  refreshTransactions: () => Promise<void>;
   refreshOnPageVisit: () => Promise<void>;
 }
 
@@ -58,7 +57,7 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('all');
   
-  const refreshData = async () => {
+  const refreshData = useCallback(async () => {
     if (!user) return;
     setIsLoading(true);
     try {
@@ -68,13 +67,14 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
       ]);
       setAllTransactions(fetchedTransactions);
       setCategoryMap(settings?.categories || {});
-      await refreshWallets();
+      // Wallet refresh is critical after transaction changes
+      await refreshWallets(); 
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user, refreshWallets]);
 
   useEffect(() => {
     if (authLoading || !user) {
@@ -84,51 +84,9 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
       return;
     }
 
-    const loadData = async () => {
-      setIsLoading(true);
-      try {
-        const [fetchedTransactions, settings] = await Promise.all([
-          apiClient.get('transactions', user.uid),
-          apiClient.get('settings', user.uid)
-        ]);
-
-        setAllTransactions(fetchedTransactions);
-        
-        const categories = settings?.categories || {};
-        if (Object.keys(categories).length === 0) {
-          try {
-            const { DEFAULT_CATEGORIES } = await import('@/lib/default-categories');
-            await apiClient.update('settings', user.uid, { categories: DEFAULT_CATEGORIES });
-            const updatedSettings = await apiClient.get('settings', user.uid);
-            setCategoryMap(updatedSettings?.categories || DEFAULT_CATEGORIES);
-          } catch (migrationError) {
-            console.error('Erro na aplicação das categorias padrão:', migrationError);
-            const { DEFAULT_CATEGORIES } = await import('@/lib/default-categories');
-            setCategoryMap(DEFAULT_CATEGORIES);
-          }
-        } else {
-          setCategoryMap(categories);
-        }
-      } catch (error) {
-        console.error('Erro ao carregar dados:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadData();
-  }, [user, authLoading]);
+    refreshData();
+  }, [user, authLoading, refreshData]);
   
-  const refreshTransactions = async () => {
-    if (!user) return;
-    try {
-      const fetchedTransactions = await apiClient.get('transactions', user.uid);
-      setAllTransactions(fetchedTransactions);
-    } catch (error) {
-      console.error('Error refreshing transactions:', error);
-    }
-  };
-
   const addTransaction = async (transaction: Omit<Transaction, 'id' | 'userId'>) => {
     if (!user) throw new Error("User not authenticated");
     const transactionWithUser = { ...transaction, userId: user.uid };
@@ -136,16 +94,23 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
     await refreshData();
   };
 
-  const updateTransaction = async (transactionId: string, updates: Partial<Transaction>, updateAllMatching: boolean, originalItemName: string) => {
+  const updateTransaction = async (transactionId: string, updates: Partial<Transaction>, originalTransaction: Transaction) => {
     if (!user) throw new Error("User not authenticated");
     
-    await apiClient.update('transactions', transactionId, updates);
+    // We send the original transaction along with the updates
+    // so the backend can correctly revert the old balance and apply the new one.
+    const payload = {
+        updates,
+        originalTransaction
+    };
+    await apiClient.update('transactions', transactionId, payload);
     await refreshData();
   };
   
-  const deleteTransaction = async (transactionId: string) => {
+  const deleteTransaction = async (transaction: Transaction) => {
     if (!user) throw new Error("User not authenticated");
-    await apiClient.delete('transactions', transactionId);
+    // We send the entire transaction object on delete so the backend knows how to adjust wallet balance.
+    await apiClient.delete('transactions', transaction.id, transaction);
     await refreshData();
   };
 
@@ -232,7 +197,7 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
   }, [filteredTransactions, selectedCategory]);
 
   const refreshOnPageVisit = async () => {
-    await refreshTransactions();
+    await refreshData();
   };
 
   const availableSubcategories = subcategories[selectedCategory as TransactionCategory] || [];
@@ -258,7 +223,6 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
     deleteCategory,
     addSubcategory,
     deleteSubcategory,
-    refreshTransactions,
     refreshOnPageVisit,
   };
 

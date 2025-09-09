@@ -1,3 +1,4 @@
+
 // src/lib/api-client.ts
 
 // API client for interacting with our data API
@@ -50,10 +51,15 @@ export class ApiClient {
     return response.json();
   }
 
-  async delete(collection: string, id: string) {
+  async delete(collection: string, id: string, data?: any) {
     const params = new URLSearchParams({ collection, id });
     const response = await fetch(`${this.baseUrl}?${params}`, {
       method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      // Include data in the body for delete operations if provided
+      body: data ? JSON.stringify(data) : undefined,
     });
 
     if (!response.ok) {
