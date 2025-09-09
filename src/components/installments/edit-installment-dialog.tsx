@@ -117,7 +117,7 @@ export function EditInstallmentDialog({
         name: data.name,
         description: data.description,
         category: data.category,
-        subcategory: data.subcategory,
+        subcategory: data.subcategory || undefined,
         establishment: data.establishment,
         sourceWalletId: data.sourceWalletId === 'none' ? undefined : data.sourceWalletId,
         updatedAt: new Date().toISOString(),
@@ -138,7 +138,7 @@ export function EditInstallmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Edit3 className="h-5 w-5" />
@@ -149,42 +149,44 @@ export function EditInstallmentDialog({
           </DialogDescription>
         </DialogHeader>
 
+        <div className="flex-1 overflow-y-auto px-1">
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Nome do parcelamento" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Nome do Parcelamento</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Ex: Compra no Magazine Luiza" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Descrição (opcional)</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Descrição adicional"
-                      className="resize-none"
-                      rows={2}
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Descrição (Opcional)</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Detalhes sobre o parcelamento..."
+                        className="resize-none"
+                        rows={2}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            <div className="grid grid-cols-2 gap-2">
               <FormField
                 control={form.control}
                 name="category"
@@ -194,7 +196,7 @@ export function EditInstallmentDialog({
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione" />
+                          <SelectValue placeholder="Selecione a categoria" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
@@ -215,7 +217,7 @@ export function EditInstallmentDialog({
                 name="subcategory"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Subcategoria</FormLabel>
+                    <FormLabel>Subcategoria (Opcional)</FormLabel>
                     <Select 
                       onValueChange={field.onChange} 
                       defaultValue={field.value}
@@ -223,11 +225,10 @@ export function EditInstallmentDialog({
                     >
                       <FormControl>
                         <SelectTrigger>
-                          <SelectValue placeholder="Opcional" />
+                          <SelectValue placeholder="Selecione a subcategoria" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="">Nenhuma</SelectItem>
                         {availableSubcategories.map((subcategory) => (
                           <SelectItem key={subcategory} value={subcategory}>
                             {subcategory}
@@ -239,47 +240,47 @@ export function EditInstallmentDialog({
                   </FormItem>
                 )}
               />
-            </div>
 
-            <FormField
-              control={form.control}
-              name="establishment"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Estabelecimento (opcional)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Local da compra" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="sourceWalletId"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Carteira de Débito (opcional)</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+              <FormField
+                control={form.control}
+                name="establishment"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Estabelecimento (Opcional)</FormLabel>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma carteira" />
-                      </SelectTrigger>
+                      <Input placeholder="Ex: Loja ABC, Magazine Luiza..." {...field} />
                     </FormControl>
-                    <SelectContent>
-                      <SelectItem value="none">Nenhuma</SelectItem>
-                      {wallets.map((wallet) => (
-                        <SelectItem key={wallet.id} value={wallet.id}>
-                          {wallet.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="sourceWalletId"
+                render={({ field }) => (
+                  <FormItem className="md:col-span-2">
+                    <FormLabel>Carteira de Débito (Opcional)</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione a carteira" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">Nenhuma</SelectItem>
+                        {wallets.map((wallet) => (
+                          <SelectItem key={wallet.id} value={wallet.id}>
+                            {wallet.name} ({wallet.type})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
 
             <DialogFooter>
               <Button
@@ -301,6 +302,7 @@ export function EditInstallmentDialog({
             </DialogFooter>
           </form>
         </Form>
+        </div>
       </DialogContent>
     </Dialog>
   );

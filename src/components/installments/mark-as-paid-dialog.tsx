@@ -28,9 +28,12 @@ import { useInstallments } from '@/hooks/use-installments';
 import { formatCurrency } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { SingleDatePicker } from '@/components/single-date-picker';
 
 const markAsPaidSchema = z.object({
-  paidDate: z.string().min(1, 'Data do pagamento é obrigatória'),
+  paidDate: z.date({
+    required_error: 'Data do pagamento é obrigatória',
+  }),
 });
 
 type MarkAsPaidForm = z.infer<typeof markAsPaidSchema>;
@@ -54,7 +57,7 @@ export function MarkAsPaidDialog({
   const form = useForm<MarkAsPaidForm>({
     resolver: zodResolver(markAsPaidSchema),
     defaultValues: {
-      paidDate: new Date().toISOString().split('T')[0], // Data atual como padrão
+      paidDate: new Date(), // Data atual como padrão
     },
   });
 
@@ -73,7 +76,7 @@ export function MarkAsPaidDialog({
           installmentId: installment.id,
           installmentNumber: payment.installmentNumber,
           paidAmount: payment.scheduledAmount,
-          paidDate: new Date(data.paidDate).toISOString(),
+          paidDate: data.paidDate.toISOString(),
           markOnly: true, // Flag para indicar que é apenas marcação, sem transação
         }),
       });
@@ -150,10 +153,13 @@ export function MarkAsPaidDialog({
                   <FormItem>
                     <FormLabel>Data do Pagamento</FormLabel>
                     <FormControl>
-                      <Input
-                        type="date"
-                        {...field}
-                        max={new Date().toISOString().split('T')[0]} // Não permitir datas futuras
+                      <SingleDatePicker
+                        date={field.value}
+                        setDate={(date) => {
+                          if (date && date <= new Date()) {
+                            field.onChange(date);
+                          }
+                        }}
                       />
                     </FormControl>
                     <FormMessage />
