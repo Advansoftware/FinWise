@@ -21,6 +21,7 @@ import { GoalCompletionCelebration } from "@/components/goals/goal-celebration";
 import { useGoals } from "@/hooks/use-goals";
 import { AICreditIndicator } from "@/components/credits/ai-credit-indicator";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { GamificationProvider } from "@/hooks/use-gamification";
 
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const { completedGoal, clearCompletedGoal } = useGoals();
@@ -87,13 +88,15 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
           <WalletsProvider>
             <TransactionsProvider>
               <ReportsProvider>
-                <InstallmentsProvider>
-                  <BudgetsProvider>
-                    <GoalsProvider>
-                      <AppLayoutContent>{children}</AppLayoutContent>
-                    </GoalsProvider>
-                  </BudgetsProvider>
-                </InstallmentsProvider>
+                 <GamificationProvider>
+                    <InstallmentsProvider>
+                      <BudgetsProvider>
+                        <GoalsProvider>
+                          <AppLayoutContent>{children}</AppLayoutContent>
+                        </GoalsProvider>
+                      </BudgetsProvider>
+                    </InstallmentsProvider>
+                 </GamificationProvider>
               </ReportsProvider>
             </TransactionsProvider>
           </WalletsProvider>

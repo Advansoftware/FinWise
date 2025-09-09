@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 
 export function GamificationSummary() {
-  const { gamificationData, profileInsights, isLoading } = useGamification();
+  const { gamificationData, isLoading } = useGamification();
 
   if (isLoading) {
     return (

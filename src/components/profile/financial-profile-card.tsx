@@ -48,6 +48,7 @@ export function FinancialProfileCard() {
             monthlyReports: JSON.stringify(currentYearMonthlyReports, null, 2),
             annualReports: JSON.stringify(pastAnnualReports, null, 2),
             currentMonthTransactions: JSON.stringify(currentMonthTransactions, null, 2),
+            gamificationData: gamificationData ? JSON.stringify(gamificationData, null, 2) : undefined
           }, user.uid, forceRefresh);
 
           setProfile(newProfile);
@@ -57,7 +58,7 @@ export function FinancialProfileCard() {
         setProfile({ profileName: "Erro", profileDescription: error.message || "Não foi possível carregar o perfil. Tente novamente."});
       }
     });
-  }, [allTransactions, monthlyReports, annualReports, currentMonthTransactions, user]);
+  }, [allTransactions, monthlyReports, annualReports, currentMonthTransactions, user, gamificationData]);
 
   useEffect(() => {
     if(user && allTransactions.length > 0) {
@@ -65,7 +66,7 @@ export function FinancialProfileCard() {
     } else if (allTransactions.length === 0) {
         setProfile({ profileName: "Aguardando Dados", profileDescription: "Adicione transações para gerar seu primeiro perfil."});
     }
-  }, [allTransactions.length, user, fetchProfile]);
+  }, [allTransactions.length, user]);
 
   return (
     <Card className="h-full bg-card/50 backdrop-blur-sm border-primary/20">

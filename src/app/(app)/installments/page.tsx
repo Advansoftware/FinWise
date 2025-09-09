@@ -33,11 +33,13 @@ import { GamificationGuide } from '@/components/installments/gamification-guide'
 import { formatCurrency } from '@/lib/utils';
 import { Skeleton } from '@/components/ui/skeleton';
 import { motion } from 'framer-motion';
+import { useGamification } from '@/hooks/use-gamification';
 
 export default function InstallmentsPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('active');
   const { installments, summary, isLoading } = useInstallments();
+  const { gamificationData } = useGamification();
 
   // Função para traduzir raridade dos badges
   const translateRarity = (rarity: string) => {
@@ -85,9 +87,9 @@ export default function InstallmentsPage() {
         </div>
         <div className="flex flex-col md:flex-row gap-2 md:justify-end">
           <GamificationGuide 
-            currentPoints={summary?.gamification.points}
-            currentLevel={summary?.gamification.level}
-            badges={summary?.gamification.badges}
+            currentPoints={gamificationData?.points}
+            currentLevel={gamificationData?.level}
+            badges={gamificationData?.badges}
           />
           <Button onClick={() => setIsCreateOpen(true)} className="w-full md:w-auto">
             <Plus className="h-4 w-4 mr-2" />
@@ -283,7 +285,7 @@ export default function InstallmentsPage() {
         </TabsContent>
 
         <TabsContent value="gamification" className="space-y-6">
-          {summary && (
+          {gamificationData && (
             <div className="space-y-6">
               {/* Header da Gamificação com Guia */}
               <Card className="bg-gradient-to-r from-slate-800/50 to-slate-900/50 dark:from-slate-800/50 dark:to-slate-900/50 border-slate-700 dark:border-slate-700">
@@ -295,10 +297,10 @@ export default function InstallmentsPage() {
                       </div>
                       <div>
                         <CardTitle className="text-xl text-slate-100 dark:text-slate-100">
-                          Nível {summary.gamification.level.level} - {summary.gamification.level.name}
+                          Nível {gamificationData.level.level} - {gamificationData.level.name}
                         </CardTitle>
                         <CardDescription className="text-slate-300 dark:text-slate-300">
-                          {summary.gamification.points} pontos acumulados
+                          {gamificationData.points} pontos acumulados
                         </CardDescription>
                       </div>
                     </div>
@@ -311,19 +313,19 @@ export default function InstallmentsPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm text-slate-200 dark:text-slate-200">
                       <span>Progresso para o próximo nível</span>
-                      <span>{summary.gamification.level.pointsToNext} pontos restantes</span>
+                      <span>{gamificationData.level.pointsToNext} pontos restantes</span>
                     </div>
                     <Progress 
-                      value={(summary.gamification.points / (summary.gamification.level.pointsRequired + summary.gamification.level.pointsToNext)) * 100} 
+                      value={(gamificationData.points / (gamificationData.level.pointsRequired + gamificationData.level.pointsToNext)) * 100} 
                       className="h-3"
                     />
                   </div>
                   
-                  {summary.gamification.streak > 0 && (
+                  {gamificationData.streak > 0 && (
                     <div className="flex items-center gap-2 p-3 bg-orange-500/10 border border-orange-200 dark:border-orange-900/50 rounded-lg">
                       <Flame className="h-5 w-5 text-orange-500" />
                       <span className="font-medium text-orange-700 dark:text-orange-400 text-sm md:text-base break-words">
-                        Sequência de {summary.gamification.streak} meses pagando tudo em dia! 🔥
+                        Sequência de {gamificationData.streak} meses pagando tudo em dia! 🔥
                       </span>
                     </div>
                   )}
@@ -331,7 +333,7 @@ export default function InstallmentsPage() {
               </Card>
 
               {/* Badges Conquistadas */}
-              {summary.gamification.badges.length > 0 && (
+              {gamificationData.badges.length > 0 && (
                 <Card>
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2">
@@ -341,7 +343,7 @@ export default function InstallmentsPage() {
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {summary.gamification.badges.map((badge) => (
+                      {gamificationData.badges.map((badge) => (
                         <motion.div
                           key={badge.id}
                           initial={{ scale: 0, rotate: -180 }}
@@ -379,7 +381,7 @@ export default function InstallmentsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {summary.gamification.achievements.map((achievement) => (
+                    {gamificationData.achievements.map((achievement) => (
                       <div key={achievement.id} className="border rounded-lg p-4">
                         <div className="flex items-center gap-3 mb-3">
                           <div className="text-2xl">{achievement.icon}</div>

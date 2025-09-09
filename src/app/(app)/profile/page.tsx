@@ -47,7 +47,10 @@ export default function ProfilePage() {
                             <GamificationSummary />
                         </>
                     ) : (
-                        <ProUpgradeCard featureName="Análise de Perfil com IA" />
+                        <div className="space-y-6">
+                           <ProUpgradeCard featureName="Análise de Perfil com IA" />
+                           <ProUpgradeCard featureName="Progresso Gamificado" />
+                        </div>
                     )}
                 </div>
             </div>

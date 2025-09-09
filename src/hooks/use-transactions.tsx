@@ -44,18 +44,10 @@ interface TransactionsContextType {
 
 const TransactionsContext = createContext<TransactionsContextType | undefined>(undefined);
 
-// Helper function to apply balance changes locally
-const applyBalanceChange = (wallets: Wallet[], walletId: string, amount: number) => {
-  return wallets.map(w => 
-    w.id === walletId ? { ...w, balance: w.balance + amount } : w
-  );
-};
-
-
 export function TransactionsProvider({ children }: TransactionsProviderProps) {
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
-  const { wallets, setWallets } = useWallets(); // Get setWallets from useWallets
+  const { refreshWallets } = useWallets(); 
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [categoryMap, setCategoryMap] = useState<CategoryMap>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -66,6 +58,24 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('all');
   
+  const refreshData = async () => {
+    if (!user) return;
+    setIsLoading(true);
+    try {
+      const [fetchedTransactions, settings] = await Promise.all([
+        apiClient.get('transactions', user.uid),
+        apiClient.get('settings', user.uid)
+      ]);
+      setAllTransactions(fetchedTransactions);
+      setCategoryMap(settings?.categories || {});
+      await refreshWallets();
+    } catch (error) {
+      console.error('Erro ao carregar dados:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (authLoading || !user) {
       setIsLoading(false);
@@ -77,12 +87,14 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
     const loadData = async () => {
       setIsLoading(true);
       try {
-        const fetchedTransactions = await apiClient.get('transactions', user.uid);
-        setAllTransactions(fetchedTransactions);
+        const [fetchedTransactions, settings] = await Promise.all([
+          apiClient.get('transactions', user.uid),
+          apiClient.get('settings', user.uid)
+        ]);
 
-        const settings = await apiClient.get('settings', user.uid);
-        const categories = settings?.categories || {};
+        setAllTransactions(fetchedTransactions);
         
+        const categories = settings?.categories || {};
         if (Object.keys(categories).length === 0) {
           try {
             const { DEFAULT_CATEGORIES } = await import('@/services/default-setup-service');
@@ -116,70 +128,25 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
       console.error('Error refreshing transactions:', error);
     }
   };
-  
-  const updateWalletBalance = (transaction: Omit<Transaction, 'id' | 'userId'>, factor: 1 | -1) => {
-    setWallets(currentWallets => {
-      let newWallets = [...currentWallets];
-      
-      // Affects the source wallet
-      if (transaction.walletId) {
-        let balanceChange = 0;
-        if (transaction.type === 'income') balanceChange = transaction.amount;
-        if (transaction.type === 'expense') balanceChange = -transaction.amount;
-        if (transaction.type === 'transfer') balanceChange = -transaction.amount;
-        newWallets = applyBalanceChange(newWallets, transaction.walletId, balanceChange * factor);
-      }
-
-      // Affects the destination wallet in a transfer
-      if (transaction.type === 'transfer' && transaction.toWalletId) {
-        newWallets = applyBalanceChange(newWallets, transaction.toWalletId, transaction.amount * factor);
-      }
-      
-      return newWallets;
-    });
-  };
 
   const addTransaction = async (transaction: Omit<Transaction, 'id' | 'userId'>) => {
     if (!user) throw new Error("User not authenticated");
     const transactionWithUser = { ...transaction, userId: user.uid };
-    const newTransaction = await apiClient.create('transactions', transactionWithUser);
-    setAllTransactions(prev => [newTransaction, ...prev].sort((a,b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
-    updateWalletBalance(transaction, 1);
+    await apiClient.create('transactions', transactionWithUser);
+    await refreshData();
   };
 
   const updateTransaction = async (transactionId: string, updates: Partial<Transaction>, updateAllMatching: boolean, originalItemName: string) => {
     if (!user) throw new Error("User not authenticated");
     
-    const originalTransaction = allTransactions.find(t => t.id === transactionId);
-    if (!originalTransaction) return;
-
-    // Revert old balance
-    updateWalletBalance(originalTransaction, -1);
-    
     await apiClient.update('transactions', transactionId, updates);
-    
-    // Apply new balance
-    const updatedTransactionData = { ...originalTransaction, ...updates };
-    updateWalletBalance(updatedTransactionData, 1);
-
-    // Update local state
-    setAllTransactions(prev => 
-      prev.map(t => t.id === transactionId ? { ...t, ...updates } as Transaction : t)
-    );
+    await refreshData();
   };
   
   const deleteTransaction = async (transactionId: string) => {
     if (!user) throw new Error("User not authenticated");
-    const transactionToDelete = allTransactions.find(t => t.id === transactionId);
-    if (!transactionToDelete) return;
-    
     await apiClient.delete('transactions', transactionId);
-    
-    // Revert balance
-    updateWalletBalance(transactionToDelete, -1);
-    
-    // Update local state
-    setAllTransactions(prev => prev.filter(t => t.id !== transactionId));
+    await refreshData();
   };
 
   const { categories, subcategories } = useMemo(() => {
