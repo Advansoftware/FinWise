@@ -2,18 +2,7 @@
 
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
 import { useAuth } from '@/hooks/use-auth';
-import { InstallmentBadge, InstallmentLevel, InstallmentAchievement } from '@/core/ports/installments.port';
-
-interface GamificationData {
-  points: number;
-  level: InstallmentLevel;
-  badges: InstallmentBadge[];
-  achievements: InstallmentAchievement[];
-  streak: number;
-  completionRate: number;
-  financialHealthScore: number; 
-  motivationalInsights: string[]; 
-}
+import { GamificationData, InstallmentBadge, InstallmentLevel, InstallmentAchievement } from '@/core/ports/installments.port';
 
 interface GamificationProfileInsights {
   disciplineLevel: 'Iniciante' | 'Intermediário' | 'Avançado' | 'Expert';
@@ -48,8 +37,11 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
     
     setIsLoading(true);
     try {
-      // Usar uma API route para buscar os dados de gamificação
-      const response = await fetch(`/api/installments/gamification?userId=${user.uid}`);
+      const response = await fetch(`/api/installments/gamification?userId=${user.uid}`, {
+        headers: {
+          'Authorization': `Bearer ${await user.getIdToken()}`
+        }
+      });
       
       if (!response.ok) {
         throw new Error('Falha ao carregar dados de gamificação');
@@ -65,7 +57,7 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.uid]);
+  }, [user]);
 
   useEffect(() => {
     fetchGamificationData();

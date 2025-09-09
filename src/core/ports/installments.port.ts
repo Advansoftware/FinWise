@@ -87,15 +87,20 @@ export interface InstallmentSummary {
   }>;
 
   // Elementos de gamificação
-  gamification: {
-    completionRate: number; // Percentual geral de conclusão
-    streak: number; // Sequência de pagamentos em dia
-    badges: InstallmentBadge[];
-    points: number; // Pontos acumulados
-    level: InstallmentLevel;
-    achievements: InstallmentAchievement[];
-  };
+  gamification: GamificationData;
 }
+
+export interface GamificationData {
+  completionRate: number; // Percentual geral de conclusão
+  streak: number; // Sequência de pagamentos em dia
+  badges: InstallmentBadge[];
+  points: number; // Pontos acumulados
+  level: InstallmentLevel;
+  achievements: InstallmentAchievement[];
+  financialHealthScore: number;
+  motivationalInsights: string[];
+}
+
 
 export interface InstallmentBadge {
   id: string;
@@ -103,7 +108,7 @@ export interface InstallmentBadge {
   description: string;
   icon: string;
   earnedAt: string;
-  rarity: 'common' | 'rare' | 'epic' | 'legendary';
+  rarity: 'common' | 'rare' | 'epic' | 'legendary' | 'mythic';
 }
 
 export interface InstallmentLevel {
@@ -143,7 +148,7 @@ export interface IInstallmentsRepository {
   findActiveInstallments(userId: string): Promise<Installment[]>;
   findUpcomingPayments(userId: string, days: number): Promise<InstallmentPayment[]>;
   findOverduePayments(userId: string): Promise<InstallmentPayment[]>;
-  getInstallmentSummary(userId: string): Promise<InstallmentSummary>;
+  getInstallmentSummary(userId: string): Promise<InstallmentSummary | null>;
 
   // Projeções e análises
   projectMonthlyCommitments(userId: string, months: number): Promise<Array<{

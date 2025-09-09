@@ -9,6 +9,8 @@ import { Trophy, Award, Target, Flame, Star } from "lucide-react";
 import { useGamification } from "@/hooks/use-gamification";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
+import Link from "next/link";
+import { Button } from "../ui/button";
 
 export function GamificationSummary() {
   const { gamificationData, isLoading } = useGamification();
@@ -36,57 +38,58 @@ export function GamificationSummary() {
       <Card>
         <CardContent className="p-6 text-center text-muted-foreground">
           <Trophy className="mx-auto h-8 w-8 mb-2 opacity-50" />
-          <p className="text-sm">Crie parcelamentos para ver seu progresso!</p>
+          <p className="text-sm">Comece a usar o app para ganhar pontos e subir de nível!</p>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="bg-gradient-to-br from-purple-50 to-blue-50 border-purple-200">
+    <Card className="bg-gradient-to-br from-purple-50 via-blue-50 to-green-50 dark:from-purple-950/20 dark:via-blue-950/20 dark:to-green-950/20 border-purple-200 dark:border-purple-800/50">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-purple-800">
+        <CardTitle className="flex items-center gap-2 text-purple-800 dark:text-purple-300">
           <Trophy className="h-5 w-5" />
-          Progresso Gamificado
+          Seu Progresso
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Nível e Pontos */}
         <div className="flex items-center justify-between">
           <div>
-            <div className="text-lg font-bold text-purple-900">
+            <div className="text-lg font-bold text-purple-900 dark:text-purple-200">
               Nível {gamificationData.level.level}
             </div>
-            <div className="text-sm text-purple-700">
+            <div className="text-sm text-purple-700 dark:text-purple-400">
               {gamificationData.level.name}
             </div>
           </div>
           <div className="text-right">
-            <div className="text-lg font-bold text-purple-900">
+            <div className="text-lg font-bold text-purple-900 dark:text-purple-200">
               {gamificationData.points}
             </div>
-            <div className="text-xs text-purple-600">pontos</div>
+            <div className="text-xs text-purple-600 dark:text-purple-400">pontos</div>
           </div>
         </div>
 
         {/* Barra de Progresso */}
         <div className="space-y-2">
-          <div className="flex justify-between text-xs text-purple-700">
+          <div className="flex justify-between text-xs text-purple-700 dark:text-purple-400">
             <span>Próximo nível</span>
             <span>{gamificationData.level.pointsToNext} pontos</span>
           </div>
           <Progress 
             value={(gamificationData.points / (gamificationData.level.pointsRequired + gamificationData.level.pointsToNext)) * 100} 
             className="h-2 bg-purple-200"
+            indicatorClassName="bg-gradient-to-r from-purple-500 to-blue-500"
           />
         </div>
 
         {/* Streak */}
         {gamificationData.streak > 0 && (
-          <div className="flex items-center gap-2 p-2 bg-orange-100 border border-orange-200 rounded-lg">
+          <div className="flex items-center gap-2 p-2 bg-orange-100 dark:bg-orange-900/50 border border-orange-200 dark:border-orange-800/50 rounded-lg">
             <Flame className="h-4 w-4 text-orange-500" />
-            <span className="text-sm font-medium text-orange-700">
-              {gamificationData.streak} meses consecutivos
+            <span className="text-sm font-medium text-orange-700 dark:text-orange-300">
+              {gamificationData.streak} meses de pagamentos em dia
             </span>
           </div>
         )}
@@ -94,7 +97,7 @@ export function GamificationSummary() {
         {/* Badges Recentes */}
         {gamificationData.badges.length > 0 && (
           <div className="space-y-2">
-            <div className="flex items-center gap-1 text-xs font-medium text-purple-700">
+            <div className="flex items-center gap-1 text-xs font-medium text-purple-700 dark:text-purple-400">
               <Award className="h-3 w-3" />
               Badges Recentes
             </div>
@@ -112,8 +115,8 @@ export function GamificationSummary() {
                 </motion.div>
               ))}
               {gamificationData.badges.length > 4 && (
-                <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
-                  <span className="text-xs text-gray-600">
+                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                  <span className="text-xs text-gray-600 dark:text-gray-300">
                     +{gamificationData.badges.length - 4}
                   </span>
                 </div>
@@ -121,42 +124,12 @@ export function GamificationSummary() {
             </div>
           </div>
         )}
-
-        {/* Score de Saúde Financeira */}
-        {gamificationData.financialHealthScore > 0 && (
-          <div className="p-3 bg-white/70 rounded-lg border border-purple-200">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-medium text-purple-700">Saúde Financeira</span>
-              <Badge 
-                variant="outline" 
-                className={`text-xs ${
-                  gamificationData.financialHealthScore >= 80 ? 'border-green-500 text-green-700' :
-                  gamificationData.financialHealthScore >= 60 ? 'border-blue-500 text-blue-700' :
-                  gamificationData.financialHealthScore >= 40 ? 'border-yellow-500 text-yellow-700' :
-                  'border-red-500 text-red-700'
-                }`}
-              >
-                {gamificationData.financialHealthScore}%
-              </Badge>
-            </div>
-            <Progress 
-              value={gamificationData.financialHealthScore} 
-              className="h-2"
-            />
-          </div>
-        )}
-
-        {/* Insights Motivacionais */}
-        {gamificationData.motivationalInsights.length > 0 && (
-          <div className="p-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
-            <div className="flex items-start gap-2">
-              <Star className="h-4 w-4 text-green-500 mt-0.5 flex-shrink-0" />
-              <p className="text-xs text-green-700 leading-relaxed">
-                {gamificationData.motivationalInsights[0]}
-              </p>
-            </div>
-          </div>
-        )}
+        
+        <Button asChild variant="outline" className="w-full mt-4">
+            <Link href="/installments?tab=gamification">
+                Ver todos os detalhes
+            </Link>
+        </Button>
       </CardContent>
     </Card>
   );

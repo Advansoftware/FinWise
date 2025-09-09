@@ -1,7 +1,9 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, TrendingUp, TrendingDown, PieChart } from "lucide-react";
+import { DollarSign, TrendingUp, TrendingDown, PieChart, Trophy } from "lucide-react";
 import { Transaction } from "@/lib/types";
 import { Area, AreaChart, ResponsiveContainer, Tooltip } from "recharts";
+import { useGamification } from "@/hooks/use-gamification";
+import { Skeleton } from "../ui/skeleton";
 
 interface StatsCardsProps {
   transactions: Transaction[];
@@ -83,6 +85,8 @@ export function StatsCards({ transactions }: StatsCardsProps) {
   const incomeSparklineData = generateSparklineData(incomeTransactions);
   const expenseSparklineData = generateSparklineData(expenseTransactions);
 
+  const { gamificationData, isLoading: isGamificationLoading } = useGamification();
+
   return (
     <>
       <Card>
@@ -126,17 +130,22 @@ export function StatsCards({ transactions }: StatsCardsProps) {
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-4">
-          <CardTitle className="text-xs font-medium">Categoria Principal</CardTitle>
-          <PieChart className="h-3.5 w-3.5 text-muted-foreground" />
+          <CardTitle className="text-xs font-medium">Nível de Gamificação</CardTitle>
+          <Trophy className="h-3.5 w-3.5 text-muted-foreground" />
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <div className="text-xl font-bold">R$ {(topCategoryValue || 0).toFixed(2)}</div>
-          <p className="text-xs text-muted-foreground truncate">{topCategoryName}</p>
-          <div className="mt-2 flex items-center">
-            <div className="text-xs text-muted-foreground">
-              {transactions.length > 0 ? `${Math.round((topCategoryValue / totalExpense) * 100)}% do total` : 'Sem dados'}
+          {isGamificationLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-6 w-1/2" />
+              <Skeleton className="h-4 w-3/4" />
             </div>
-          </div>
+          ) : (
+            <>
+              <div className="text-xl font-bold">Nível {gamificationData?.level?.level || 1}</div>
+              <p className="text-xs text-muted-foreground">{gamificationData?.level?.name || 'Iniciante'}</p>
+              <p className="text-xs text-muted-foreground mt-2">{gamificationData?.points || 0} pontos</p>
+            </>
+          )}
         </CardContent>
       </Card>
     </>
