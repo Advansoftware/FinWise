@@ -37,11 +37,7 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
     
     setIsLoading(true);
     try {
-      const response = await fetch(`/api/installments/gamification?userId=${user.uid}`, {
-        headers: {
-          'Authorization': `Bearer ${await user.getIdToken()}`
-        }
-      });
+      const response = await fetch(`/api/installments/gamification?userId=${user.uid}`);
       
       if (!response.ok) {
         throw new Error('Falha ao carregar dados de gamificação');

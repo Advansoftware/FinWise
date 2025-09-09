@@ -42,7 +42,7 @@ interface GamificationGuideProps {
     id: string;
     name: string;
     icon: string;
-    rarity: 'common' | 'rare' | 'epic' | 'legendary';
+    rarity: 'common' | 'rare' | 'epic' | 'legendary' | 'mythic';
   }>;
 }
 

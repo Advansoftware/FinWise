@@ -97,13 +97,13 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
         const categories = settings?.categories || {};
         if (Object.keys(categories).length === 0) {
           try {
-            const { DEFAULT_CATEGORIES } = await import('@/services/default-setup-service');
+            const { DEFAULT_CATEGORIES } = await import('@/lib/default-categories');
             await apiClient.update('settings', user.uid, { categories: DEFAULT_CATEGORIES });
             const updatedSettings = await apiClient.get('settings', user.uid);
             setCategoryMap(updatedSettings?.categories || DEFAULT_CATEGORIES);
           } catch (migrationError) {
             console.error('Erro na aplicação das categorias padrão:', migrationError);
-            const { DEFAULT_CATEGORIES } = await import('@/services/default-setup-service');
+            const { DEFAULT_CATEGORIES } = await import('@/lib/default-categories');
             setCategoryMap(DEFAULT_CATEGORIES);
           }
         } else {

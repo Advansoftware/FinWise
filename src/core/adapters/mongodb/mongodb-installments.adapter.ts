@@ -404,7 +404,9 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
       badges,
       points,
       level,
-      achievements
+      achievements,
+      financialHealthScore: Math.round(completionRate), // Basic health score based on completion rate
+      motivationalInsights: [] // Empty for now, can be enhanced later
     };
   }
 

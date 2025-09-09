@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { CategoryIcon } from '@/components/icons';
-import { DEFAULT_CATEGORIES } from '@/services/default-setup-service';
+import { DEFAULT_CATEGORIES } from '@/lib/default-categories';
 import { TransactionCategory } from '@/lib/types';
 import { ChevronDown, ChevronRight, Users, Package, Settings } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
