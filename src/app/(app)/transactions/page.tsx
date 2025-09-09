@@ -33,7 +33,7 @@ export default function TransactionsPage() {
     // Refresh data when page loads to ensure it's up to date
     useEffect(() => {
         refreshOnPageVisit();
-    }, [refreshOnPageVisit]);
+    }, []); // Remove refreshOnPageVisit from dependencies to avoid infinite loop
 
     return (
         <div className="flex flex-col gap-4 sm:gap-6 px-4 sm:px-6 lg:px-8">

@@ -72,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       window.removeEventListener('planUpdated', handlePlanUpdate);
     };
-  }, [user, refreshUser]);
+  }, [user]); // Remove refreshUser to prevent potential loop
 
   const login = useCallback(async (email: string, password: string): Promise<UserProfile> => {
     setLoading(true);

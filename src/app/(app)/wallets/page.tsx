@@ -132,7 +132,7 @@ function WalletCard({ wallet, onDelete }: { wallet: Wallet, onDelete: () => void
             <CardContent className="space-y-4">
                 <div>
                      <p className="text-sm text-muted-foreground">Saldo Atual</p>
-                    <p className={cn("text-2xl font-bold text-foreground", wallet.balance < 0 && "text-red-500")}>R$ {wallet.balance.toFixed(2)}</p>
+                    <p className={cn("text-2xl font-bold text-foreground", (wallet.balance || 0) < 0 && "text-red-500")}>R$ {(wallet.balance || 0).toFixed(2)}</p>
                 </div>
             </CardContent>
         </Card>

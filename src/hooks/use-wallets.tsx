@@ -13,6 +13,7 @@ interface WalletsContextType {
   addWallet: (wallet: Omit<Wallet, 'id' | 'createdAt' | 'balance' | 'userId'>) => Promise<void>;
   updateWallet: (walletId: string, updates: Partial<Wallet>) => Promise<void>;
   deleteWallet: (walletId: string) => Promise<void>;
+  refreshWallets: () => Promise<void>;
 }
 
 const WalletsContext = createContext<WalletsContextType | undefined>(undefined);
@@ -78,12 +79,24 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
     toast({ title: "Carteira excluída." });
   };
 
+  const refreshWallets = async () => {
+    if (!user) return;
+    
+    try {
+      const fetchedWallets = await apiClient.get('wallets', user.uid);
+      setWallets(fetchedWallets);
+    } catch (error) {
+      console.error('Erro ao recarregar carteiras:', error);
+    }
+  };
+
   const value: WalletsContextType = {
     wallets,
     isLoading: isLoading || authLoading,
     addWallet,
     updateWallet,
     deleteWallet,
+    refreshWallets,
   };
 
   return (

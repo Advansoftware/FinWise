@@ -91,7 +91,7 @@ export function StatsCards({ transactions }: StatsCardsProps) {
           <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <div className="text-xl font-bold">R$ {balance.toFixed(2)}</div>
+          <div className="text-xl font-bold">R$ {(balance || 0).toFixed(2)}</div>
           <p className="text-xs text-muted-foreground">Receitas vs Despesas no período</p>
            <div className="mt-2 h-[35px]">
              <ChartSparkline data={balanceSparklineData} positiveColor="hsl(var(--primary))" negativeColor="hsl(var(--destructive))" />
@@ -104,7 +104,7 @@ export function StatsCards({ transactions }: StatsCardsProps) {
           <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <div className="text-xl font-bold text-emerald-500">+ R$ {totalIncome.toFixed(2)}</div>
+          <div className="text-xl font-bold text-emerald-500">+ R$ {(totalIncome || 0).toFixed(2)}</div>
           <p className="text-xs text-muted-foreground">Total de entradas no período</p>
            <div className="mt-2 h-[35px]">
              <ChartSparkline data={incomeSparklineData} positiveColor="hsl(var(--chart-2))" negativeColor="hsl(var(--chart-2))" />
@@ -117,7 +117,7 @@ export function StatsCards({ transactions }: StatsCardsProps) {
           <TrendingDown className="h-3.5 w-3.5 text-red-500" />
         </CardHeader>
         <CardContent className="p-4 pt-0">
-           <div className="text-xl font-bold text-red-500">- R$ {totalExpense.toFixed(2)}</div>
+           <div className="text-xl font-bold text-red-500">- R$ {(totalExpense || 0).toFixed(2)}</div>
            <p className="text-xs text-muted-foreground">Total de saídas no período</p>
            <div className="mt-2 h-[35px]">
               <ChartSparkline data={expenseSparklineData} positiveColor="hsl(var(--destructive))" negativeColor="hsl(var(--destructive))" />
@@ -130,7 +130,7 @@ export function StatsCards({ transactions }: StatsCardsProps) {
           <PieChart className="h-3.5 w-3.5 text-muted-foreground" />
         </CardHeader>
         <CardContent className="p-4 pt-0">
-          <div className="text-xl font-bold">R$ {topCategoryValue.toFixed(2)}</div>
+          <div className="text-xl font-bold">R$ {(topCategoryValue || 0).toFixed(2)}</div>
           <p className="text-xs text-muted-foreground truncate">{topCategoryName}</p>
           <div className="mt-2 flex items-center">
             <div className="text-xs text-muted-foreground">

@@ -85,7 +85,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
     };
 
     loadReports();
-  }, [user, authLoading, fetchReports]);
+  }, [user, authLoading]); // Remove fetchReports from dependencies to prevent infinite loop
   
   const generateMonthlyReport = useCallback(async (year: number, month: number, force: boolean = false): Promise<Report | null> => {
     if (!user) return null;
@@ -366,7 +366,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
 
     runAutomaticGeneration();
 
-  }, [isLoading, isLoadingTransactions, user, monthlyReports, annualReports, generateAnnualReport, generateMonthlyReport, authLoading, generatePeriod]);
+  }, [isLoading, isLoadingTransactions, user, monthlyReports, annualReports, authLoading]); // Remove function dependencies to prevent loop
 
   const getMonthlyReport = (year: number, month: number) => {
     const period = `${year}-${String(month).padStart(2, '0')}`;

@@ -101,7 +101,7 @@ export function AddDepositDialog({ children, goal }: AddDepositDialogProps) {
                     </FormControl>
                     <SelectContent>
                       {wallets.map(wallet => (
-                        <SelectItem key={wallet.id} value={wallet.id}>{wallet.name} (R$ {wallet.balance.toFixed(2)})</SelectItem>
+                        <SelectItem key={wallet.id} value={wallet.id}>{wallet.name} (R$ {(wallet.balance || 0).toFixed(2)})</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>

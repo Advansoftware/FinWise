@@ -68,8 +68,8 @@ export function WalletCard({ transactions }: WalletCardProps) {
                     {/* Saldo Total */}
                     <div className="space-y-0.5">
                         <p className="text-xs text-muted-foreground">Saldo Total</p>
-                        <p className={cn("text-xl font-bold tracking-tight", totalBalance >= 0 ? "text-foreground" : "text-destructive")}>
-                            R$ {totalBalance.toFixed(2)}
+                        <p className={cn("text-xl font-bold tracking-tight", (totalBalance || 0) >= 0 ? "text-foreground" : "text-destructive")}>
+                            R$ {(totalBalance || 0).toFixed(2)}
                         </p>
                     </div>
                     
@@ -82,7 +82,7 @@ export function WalletCard({ transactions }: WalletCardProps) {
                             <div className="min-w-0">
                                 <p className="text-xs text-muted-foreground">Receitas</p>
                                 <p className="text-sm font-semibold text-emerald-500 truncate">
-                                    +R$ {totalIncome.toFixed(2)}
+                                    +R$ {(totalIncome || 0).toFixed(2)}
                                 </p>
                             </div>
                         </div>
@@ -93,7 +93,7 @@ export function WalletCard({ transactions }: WalletCardProps) {
                             <div className="min-w-0">
                                 <p className="text-xs text-muted-foreground">Despesas</p>
                                 <p className="text-sm font-semibold text-red-500 truncate">
-                                    -R$ {totalExpense.toFixed(2)}
+                                    -R$ {(totalExpense || 0).toFixed(2)}
                                 </p>
                             </div>
                         </div>
@@ -109,8 +109,8 @@ export function WalletCard({ transactions }: WalletCardProps) {
                             )}
                             <span className="text-xs text-muted-foreground">Fluxo Líquido</span>
                         </div>
-                        <span className={cn("text-sm font-semibold", netFlow >= 0 ? "text-emerald-500" : "text-red-500")}>
-                            R$ {netFlow.toFixed(2)}
+                        <span className={cn("text-sm font-semibold", (netFlow || 0) >= 0 ? "text-emerald-500" : "text-red-500")}>
+                            R$ {(netFlow || 0).toFixed(2)}
                         </span>
                     </div>
                     
@@ -121,7 +121,7 @@ export function WalletCard({ transactions }: WalletCardProps) {
                                 <BarChart3 className="h-3 w-3 text-muted-foreground" />
                                 <span className="text-muted-foreground">Gasto/Dia</span>
                             </div>
-                            <p className="font-medium">R$ {avgDailyExpense.toFixed(2)}</p>
+                            <p className="font-medium">R$ {(avgDailyExpense || 0).toFixed(2)}</p>
                         </div>
                         <div className="space-y-1">
                             <div className="flex items-center gap-1">
@@ -153,7 +153,7 @@ export function WalletCard({ transactions }: WalletCardProps) {
                                     className="flex-1 h-1 mr-2" 
                                 />
                                 <span className="text-xs font-semibold text-red-500 flex-shrink-0">
-                                    R$ {topCategory[1].toFixed(2)}
+                                    R$ {(topCategory[1] || 0).toFixed(2)}
                                 </span>
                             </div>
                         </div>

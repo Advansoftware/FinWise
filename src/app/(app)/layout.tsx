@@ -13,7 +13,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { BudgetsProvider } from "@/hooks/use-budgets";
 import { GoalsProvider } from "@/hooks/use-goals";
-import { WalletsProvider } from "@/hooks/use-wallets";
+import { WalletsProvider, useWallets } from "@/hooks/use-wallets";
 import { ReportsProvider } from "@/hooks/use-reports";
 import { InstallmentsProvider } from "@/hooks/use-installments";
 import { PlanProvider } from "@/hooks/use-plan";
@@ -94,7 +94,7 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
      <PlanProvider>
         <CreditsProvider>
           <WalletsProvider>
-            <TransactionsProvider>
+            <TransactionsProviderWithWallets>
               <ReportsProvider>
                 <InstallmentsProvider>
                   <BudgetsProvider>
@@ -104,11 +104,21 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
                   </BudgetsProvider>
                 </InstallmentsProvider>
               </ReportsProvider>
-            </TransactionsProvider>
+            </TransactionsProviderWithWallets>
           </WalletsProvider>
         </CreditsProvider>
       </PlanProvider>
   )
+}
+
+function TransactionsProviderWithWallets({ children }: { children: React.ReactNode }) {
+  const { refreshWallets } = useWallets();
+  
+  return (
+    <TransactionsProvider refreshWallets={refreshWallets}>
+      {children}
+    </TransactionsProvider>
+  );
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

@@ -9,6 +9,12 @@ import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { apiClient } from "@/lib/api-client";
 import { offlineStorage } from "@/lib/offline-storage";
+import { WalletBalanceService } from "@/services/wallet-balance-service";
+
+interface TransactionsProviderProps {
+  children: ReactNode;
+  refreshWallets?: () => Promise<void>;
+}
 
 type CategoryMap = Partial<Record<TransactionCategory, string[]>>;
 
@@ -39,7 +45,7 @@ interface TransactionsContextType {
 
 const TransactionsContext = createContext<TransactionsContextType | undefined>(undefined);
 
-export function TransactionsProvider({ children }: { children: ReactNode }) {
+export function TransactionsProvider({ children, refreshWallets }: TransactionsProviderProps) {
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
@@ -97,18 +103,7 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
       }
     };
 
-    // Online event listener for auto-sync
-    const handleOnline = async () => {
-      console.log('Back online - syncing data...');
-      await refreshOnPageVisit();
-    };
-
     loadData();
-    window.addEventListener('online', handleOnline);
-
-    return () => {
-      window.removeEventListener('online', handleOnline);
-    };
   }, [user, authLoading]);
   
   const refreshTransactions = async () => {
@@ -153,6 +148,15 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
         const newTransaction = await apiClient.create('transactions', transactionWithUser);
         setAllTransactions(prev => [newTransaction, ...prev]);
         
+        // Update wallet balance after creating transaction
+        if (newTransaction.walletId) {
+          await WalletBalanceService.updateBalanceForTransaction(newTransaction);
+          // Refresh wallets to show updated balance
+          if (refreshWallets) {
+            await refreshWallets();
+          }
+        }
+        
         // Also save to offline storage for caching
         await offlineStorage.saveTransaction(newTransaction, true);
       } else {
@@ -186,10 +190,30 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
   const updateTransaction = async (transactionId: string, updates: Partial<Transaction>, updateAllMatching: boolean, originalItemName: string) => {
     if (!user) throw new Error("User not authenticated");
     
+    // Get original transaction for wallet balance reversion
+    const originalTransaction = allTransactions.find(t => t.id === transactionId);
+    
+    // Revert original balance impact
+    if (originalTransaction && originalTransaction.walletId) {
+      await WalletBalanceService.revertBalanceForTransaction(originalTransaction);
+    }
+    
     await apiClient.update('transactions', transactionId, updates);
+    
+    // Update local state
+    const updatedTransaction = { ...originalTransaction, ...updates } as Transaction;
     setAllTransactions(prev => 
-      prev.map(t => t.id === transactionId ? { ...t, ...updates } : t)
+      prev.map(t => t.id === transactionId ? updatedTransaction : t)
     );
+    
+    // Apply new balance impact
+    if (updatedTransaction.walletId) {
+      await WalletBalanceService.updateBalanceForTransaction(updatedTransaction);
+      // Refresh wallets to show updated balance
+      if (refreshWallets) {
+        await refreshWallets();
+      }
+    }
   };
   
   const deleteTransaction = async (transactionId: string) => {
@@ -198,6 +222,15 @@ export function TransactionsProvider({ children }: { children: ReactNode }) {
     const txToDelete = allTransactions.find(t => t.id === transactionId);
 
     try {
+      // Revert wallet balance before deleting transaction
+      if (txToDelete && txToDelete.walletId) {
+        await WalletBalanceService.revertBalanceForTransaction(txToDelete);
+        // Refresh wallets to show updated balance
+        if (refreshWallets) {
+          await refreshWallets();
+        }
+      }
+      
       await apiClient.delete('transactions', transactionId);
     } catch (err) {
       // Server delete may fail when offline or if id is temporary - continue local cleanup

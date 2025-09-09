@@ -146,14 +146,14 @@ export function useGamification() {
 
   useEffect(() => {
     fetchGamificationData();
-  }, [fetchGamificationData]);
+  }, [user?.uid]); // Depend directly on user?.uid instead of fetchGamificationData
 
   useEffect(() => {
     if (gamificationData) {
       const insights = generateProfileInsights(gamificationData);
       setProfileInsights(insights);
     }
-  }, [gamificationData, generateProfileInsights]);
+  }, [gamificationData]); // Remove generateProfileInsights to prevent loop
 
   return {
     gamificationData,

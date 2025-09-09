@@ -81,7 +81,7 @@ export function FutureBalanceCard() {
     return (
         <>
             <p className={cn("text-3xl font-bold tracking-tight", prediction.isRiskOfNegativeBalance ? "text-destructive" : "text-foreground")}>
-              R$ {prediction.projectedEndOfMonthBalance.toFixed(2)}
+              R$ {(prediction.projectedEndOfMonthBalance || 0).toFixed(2)}
             </p>
             <p className="text-sm text-muted-foreground mt-1">
               {prediction.summary}
