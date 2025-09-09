@@ -72,7 +72,7 @@ class MongoUserRepository implements IUserRepository {
 }
 
 class MongoTransactionRepository implements ITransactionRepository {
-  constructor(private db: Db) { }
+  constructor(private db: Db, private client: MongoClient) { }
 
   async findByUserId(userId: string): Promise<Transaction[]> {
     const transactions = await this.db.collection('transactions')
@@ -117,24 +117,218 @@ class MongoTransactionRepository implements ITransactionRepository {
   }
 
   async create(transactionData: Omit<Transaction, 'id'>): Promise<Transaction> {
-    const result = await this.db.collection('transactions').insertOne(transactionData);
+    const session = this.client.startSession();
 
-    return {
-      id: result.insertedId.toString(),
-      ...transactionData
-    };
+    try {
+      const result = await session.withTransaction(async () => {
+        // Criar a transação
+        const transactionResult = await this.db.collection('transactions').insertOne(transactionData, { session });
+
+        // Atualizar saldo da carteira baseado no tipo de transação
+        if (transactionData.walletId) {
+          let balanceChange = 0;
+
+          switch (transactionData.type) {
+            case 'income':
+              // Receitas aumentam o saldo
+              balanceChange = transactionData.amount;
+              break;
+            case 'expense':
+              // Despesas diminuem o saldo
+              balanceChange = -transactionData.amount;
+              break;
+            case 'transfer':
+              // Transferências diminuem o saldo da carteira de origem
+              balanceChange = -transactionData.amount;
+              break;
+          }
+
+          if (balanceChange !== 0) {
+            await this.db.collection('wallets').updateOne(
+              { _id: new ObjectId(transactionData.walletId) },
+              { $inc: { balance: balanceChange } },
+              { session }
+            );
+          }
+        }
+
+        // Para transferências, atualizar também a carteira de destino
+        if (transactionData.type === 'transfer' && transactionData.toWalletId) {
+          await this.db.collection('wallets').updateOne(
+            { _id: new ObjectId(transactionData.toWalletId) },
+            { $inc: { balance: transactionData.amount } },
+            { session }
+          );
+        }
+
+        return transactionResult;
+      });
+
+      return {
+        id: result.insertedId.toString(),
+        ...transactionData
+      };
+    } finally {
+      await session.endSession();
+    }
   }
 
   async update(id: string, updates: Partial<Transaction>): Promise<void> {
-    const { id: _, ...updateData } = updates;
-    await this.db.collection('transactions').updateOne(
-      { _id: new ObjectId(id) },
-      { $set: updateData }
-    );
+    const session = this.client.startSession();
+
+    try {
+      await session.withTransaction(async () => {
+        // Buscar a transação original
+        const originalTransaction = await this.db.collection('transactions').findOne(
+          { _id: new ObjectId(id) },
+          { session }
+        );
+
+        if (!originalTransaction) {
+          throw new Error('Transação não encontrada');
+        }
+
+        // Reverter o impacto da transação original no saldo
+        if (originalTransaction.walletId) {
+          let reverseBalanceChange = 0;
+
+          switch (originalTransaction.type) {
+            case 'income':
+              reverseBalanceChange = -originalTransaction.amount;
+              break;
+            case 'expense':
+              reverseBalanceChange = originalTransaction.amount;
+              break;
+            case 'transfer':
+              reverseBalanceChange = originalTransaction.amount;
+              break;
+          }
+
+          if (reverseBalanceChange !== 0) {
+            await this.db.collection('wallets').updateOne(
+              { _id: new ObjectId(originalTransaction.walletId) },
+              { $inc: { balance: reverseBalanceChange } },
+              { session }
+            );
+          }
+        }
+
+        // Para transferências, reverter também na carteira de destino
+        if (originalTransaction.type === 'transfer' && originalTransaction.toWalletId) {
+          await this.db.collection('wallets').updateOne(
+            { _id: new ObjectId(originalTransaction.toWalletId) },
+            { $inc: { balance: -originalTransaction.amount } },
+            { session }
+          );
+        }
+
+        // Atualizar a transação
+        const { id: _, ...updateData } = updates;
+        await this.db.collection('transactions').updateOne(
+          { _id: new ObjectId(id) },
+          { $set: updateData },
+          { session }
+        );
+
+        // Aplicar o novo impacto no saldo (usando os valores atualizados)
+        const updatedTransaction = { ...originalTransaction, ...updateData };
+
+        if (updatedTransaction.walletId && updatedTransaction.amount !== undefined) {
+          let newBalanceChange = 0;
+
+          switch (updatedTransaction.type) {
+            case 'income':
+              newBalanceChange = updatedTransaction.amount;
+              break;
+            case 'expense':
+              newBalanceChange = -updatedTransaction.amount;
+              break;
+            case 'transfer':
+              newBalanceChange = -updatedTransaction.amount;
+              break;
+          }
+
+          if (newBalanceChange !== 0) {
+            await this.db.collection('wallets').updateOne(
+              { _id: new ObjectId(updatedTransaction.walletId) },
+              { $inc: { balance: newBalanceChange } },
+              { session }
+            );
+          }
+        }
+
+        // Para transferências, aplicar também na carteira de destino
+        if (updatedTransaction.type === 'transfer' && updatedTransaction.toWalletId && updatedTransaction.amount !== undefined) {
+          await this.db.collection('wallets').updateOne(
+            { _id: new ObjectId(updatedTransaction.toWalletId) },
+            { $inc: { balance: updatedTransaction.amount } },
+            { session }
+          );
+        }
+      });
+    } finally {
+      await session.endSession();
+    }
   }
 
   async delete(id: string): Promise<void> {
-    await this.db.collection('transactions').deleteOne({ _id: new ObjectId(id) });
+    const session = this.client.startSession();
+
+    try {
+      await session.withTransaction(async () => {
+        // Buscar a transação antes de deletar
+        const transaction = await this.db.collection('transactions').findOne(
+          { _id: new ObjectId(id) },
+          { session }
+        );
+
+        if (!transaction) {
+          throw new Error('Transação não encontrada');
+        }
+
+        // Reverter o impacto da transação no saldo
+        if (transaction.walletId) {
+          let reverseBalanceChange = 0;
+
+          switch (transaction.type) {
+            case 'income':
+              reverseBalanceChange = -transaction.amount;
+              break;
+            case 'expense':
+              reverseBalanceChange = transaction.amount;
+              break;
+            case 'transfer':
+              reverseBalanceChange = transaction.amount;
+              break;
+          }
+
+          if (reverseBalanceChange !== 0) {
+            await this.db.collection('wallets').updateOne(
+              { _id: new ObjectId(transaction.walletId) },
+              { $inc: { balance: reverseBalanceChange } },
+              { session }
+            );
+          }
+        }
+
+        // Para transferências, reverter também na carteira de destino
+        if (transaction.type === 'transfer' && transaction.toWalletId) {
+          await this.db.collection('wallets').updateOne(
+            { _id: new ObjectId(transaction.toWalletId) },
+            { $inc: { balance: -transaction.amount } },
+            { session }
+          );
+        }
+
+        // Deletar a transação
+        await this.db.collection('transactions').deleteOne(
+          { _id: new ObjectId(id) },
+          { session }
+        );
+      });
+    } finally {
+      await session.endSession();
+    }
   }
 
   async findByUserIdAndDateRange(userId: string, startDate: string, endDate: string): Promise<Transaction[]> {
@@ -546,7 +740,7 @@ export class MongoDBAdapter implements IDatabaseAdapter {
 
     // Initialize repositories
     this.users = new MongoUserRepository(this.db);
-    this.transactions = new MongoTransactionRepository(this.db);
+    this.transactions = new MongoTransactionRepository(this.db, this.client);
     this.wallets = new MongoWalletRepository(this.db);
     this.budgets = new MongoBudgetRepository(this.db);
     this.goals = new MongoGoalRepository(this.db);
