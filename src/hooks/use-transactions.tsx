@@ -67,14 +67,12 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
       ]);
       setAllTransactions(fetchedTransactions);
       setCategoryMap(settings?.categories || {});
-      // Wallet refresh is critical after transaction changes
-      await refreshWallets(); 
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
     } finally {
       setIsLoading(false);
     }
-  }, [user, refreshWallets]);
+  }, [user?.uid]);
 
   useEffect(() => {
     if (authLoading || !user) {
@@ -85,13 +83,15 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
     }
 
     refreshData();
-  }, [user, authLoading, refreshData]);
+  }, [user?.uid, authLoading]);
   
   const addTransaction = async (transaction: Omit<Transaction, 'id' | 'userId'>) => {
     if (!user) throw new Error("User not authenticated");
     const transactionWithUser = { ...transaction, userId: user.uid };
     await apiClient.create('transactions', transactionWithUser);
     await refreshData();
+    // Refresh wallets after transaction changes
+    refreshWallets();
   };
 
   const updateTransaction = async (transactionId: string, updates: Partial<Transaction>, originalTransaction: Transaction) => {
@@ -105,6 +105,8 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
     };
     await apiClient.update('transactions', transactionId, payload);
     await refreshData();
+    // Refresh wallets after transaction changes
+    refreshWallets();
   };
   
   const deleteTransaction = async (transaction: Transaction) => {
@@ -112,6 +114,8 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
     // We send the entire transaction object on delete so the backend knows how to adjust wallet balance.
     await apiClient.delete('transactions', transaction.id, transaction);
     await refreshData();
+    // Refresh wallets after transaction changes
+    refreshWallets();
   };
 
   const { categories, subcategories } = useMemo(() => {

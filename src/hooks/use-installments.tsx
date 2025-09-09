@@ -76,13 +76,13 @@ export function InstallmentsProvider({ children }: { children: React.ReactNode }
     setIsLoading(true);
     await Promise.all([fetchInstallments(), fetchSummary()]);
     setIsLoading(false);
-  }, [fetchInstallments, fetchSummary]);
+  }, [user?.uid]);
 
   useEffect(() => {
     if (user?.uid) {
       refreshData();
     }
-  }, [user?.uid, refreshData]);
+  }, [user?.uid]);
 
   const createInstallment = useCallback(async (data: CreateInstallmentInput): Promise<Installment | null> => {
     if (!user?.uid) return null;

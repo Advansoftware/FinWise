@@ -56,10 +56,10 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   useEffect(() => {
-    if (!authLoading) {
+    if (!authLoading && user?.uid) {
         fetchGamificationData();
     }
-  }, [fetchGamificationData, authLoading]);
+  }, [user?.uid, authLoading]);
 
   const value: GamificationContextType = {
       gamificationData,
