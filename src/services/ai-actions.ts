@@ -131,8 +131,8 @@ export async function getFinancialProfile(input: FinancialProfileInput, userId: 
 
     const prompt = configuredAI.definePrompt({
       name: 'financialProfilePrompt',
-      input: { schema: FinancialProfileInputSchema as unknown as z.ZodTypeAny },
-      output: { schema: FinancialProfileOutputSchema as unknown as z.ZodTypeAny },
+      input: { schema: FinancialProfileInputSchema as any },
+      output: { schema: FinancialProfileOutputSchema as any },
       model: modelRef,
       prompt: `Você é um analista financeiro sagaz e positivo. Sua tarefa é criar um perfil financeiro para o usuário, incluindo um **título criativo** e uma **descrição**.
 
@@ -179,8 +179,8 @@ export async function analyzeTransactionsAction(transactions: Transaction[], use
 
     const prompt = configuredAI.definePrompt({
       name: 'analyzeTransactionsPrompt',
-      input: { schema: AnalyzeTransactionsInputSchema as unknown as z.ZodTypeAny },
-      output: { schema: AnalyzeTransactionsOutputSchema as unknown as z.ZodTypeAny },
+      input: { schema: AnalyzeTransactionsInputSchema as any },
+      output: { schema: AnalyzeTransactionsOutputSchema as any },
       model: modelRef,
       prompt: `You are a meticulous financial auditor. Analyze this small batch of transactions and provide a brief analysis in markdown. Look for anomalies (e.g., unusually high amounts), patterns (e.g., frequent small purchases), or potential recategorization (e.g., a "Padaria" purchase in "Restaurante" could be "Supermercado"). Be concise. All output must be in Brazilian Portuguese.
 
