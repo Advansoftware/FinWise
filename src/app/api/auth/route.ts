@@ -1,3 +1,4 @@
+
 // src/app/api/auth/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { getAuthService, getDatabaseAdapter } from '@/core/services/service-factory';

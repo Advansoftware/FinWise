@@ -1,3 +1,4 @@
+
 // src/hooks/use-auth.tsx
 'use client';
 
@@ -72,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       window.removeEventListener('planUpdated', handlePlanUpdate);
     };
-  }, [user]); // Remove refreshUser to prevent potential loop
+  }, [user, refreshUser]);
 
   const login = useCallback(async (email: string, password: string): Promise<UserProfile> => {
     setLoading(true);

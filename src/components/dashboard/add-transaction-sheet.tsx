@@ -209,7 +209,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
           </SheetDescription>
         </SheetHeader>
         
-        <div className="flex-1 overflow-y-auto space-y-6">
+        <div className="flex-1 overflow-y-auto space-y-6 pr-2">
             {/* Tipo de Transação */}
             <div className="space-y-3">
                 <Label className="text-sm font-medium">Tipo</Label>

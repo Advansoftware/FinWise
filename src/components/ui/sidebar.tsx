@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -181,7 +182,7 @@ const Sidebar = React.forwardRef<
           <SheetContent
             data-sidebar="sidebar"
             data-mobile="true"
-            className="w-[var(--sidebar-width)] bg-sidebar p-0 text-sidebar-foreground"
+            className="w-full max-w-[var(--sidebar-width)] bg-sidebar p-0 text-sidebar-foreground"
             style={
               {
                 "--sidebar-width": SIDEBAR_WIDTH_MOBILE,

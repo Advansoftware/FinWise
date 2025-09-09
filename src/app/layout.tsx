@@ -84,7 +84,6 @@ export const metadata: Metadata = {
     canonical: 'https://gastometria.com.br',
     languages: {
       'pt-BR': 'https://gastometria.com.br',
-      'en-US': 'https://gastometria.com.br/en',
     },
   },
   category: 'finance',

@@ -1,3 +1,4 @@
+
 // src/app/(app)/categories/page.tsx
 'use client';
 import { useState, useTransition } from "react";

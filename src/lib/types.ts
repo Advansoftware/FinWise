@@ -1,3 +1,4 @@
+
 // src/lib/types.ts
 
 export type UserPlan = 'Básico' | 'Pro' | 'Plus' | 'Infinity';

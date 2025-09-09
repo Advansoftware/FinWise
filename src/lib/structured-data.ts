@@ -1,3 +1,4 @@
+
 export const structuredData = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
@@ -157,16 +158,18 @@ export const websiteData = {
   }
 };
 
-export const breadcrumbData = (items: Array<{ name: string; url: string }>) => ({
+export const breadcrumbData = {
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
-  "itemListElement": items.map((item, index) => ({
-    "@type": "ListItem",
-    "position": index + 1,
-    "name": item.name,
-    "item": item.url
-  }))
-});
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Início",
+      "item": "https://gastometria.com.br"
+    }
+  ]
+};
 
 export const faqData = {
   "@context": "https://schema.org",
