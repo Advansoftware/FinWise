@@ -15,6 +15,7 @@ import { WalletsProvider } from "@/hooks/use-wallets";
 import { ReportsProvider } from "@/hooks/use-reports";
 import { InstallmentsProvider } from "@/hooks/use-installments";
 import { PlanProvider } from "@/hooks/use-plan";
+import { CreditsProvider } from "@/hooks/use-credits";
 import { GoalCompletionCelebration } from "@/components/goals/goal-celebration";
 import { useGoals } from "@/hooks/use-goals";
 import { AICreditIndicator } from "@/components/credits/ai-credit-indicator";

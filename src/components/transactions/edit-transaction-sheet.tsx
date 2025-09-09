@@ -88,7 +88,7 @@ export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTra
         };
         delete updates.id; // Don't try to update the ID
 
-        await updateTransaction(transaction.id, updates, updateAll, transaction.item);
+        await updateTransaction(transaction.id, updates, transaction);
 
         toast({
             title: "Sucesso!",

@@ -47,7 +47,7 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
 
     const handleDelete = async () => {
         try {
-            await deleteTransaction(transaction.id);
+            await deleteTransaction(transaction);
             toast({ title: "Transação excluída com sucesso." });
         } catch (error) {
             toast({ variant: "destructive", title: "Erro ao excluir transação." });
