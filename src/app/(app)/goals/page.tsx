@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, MoreVertical, Trash2, Edit, Target, PiggyBank, CircleDollarSign, Sparkles, Loader2 } from "lucide-react";
+import { PlusCircle, MoreVertical, Trash2, Edit, Target, PiggyBank, CircleDollarSign, Sparkles, Loader2, Trophy } from "lucide-react";
 import { useGoals } from "@/hooks/use-goals";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
@@ -23,16 +23,21 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Goal } from "@/lib/types";
-import { useState, useTransition, useEffect, useMemo, useRef } from "react";
+import { useState, useTransition, useEffect, useMemo } from "react";
 import { projectGoalCompletionAction } from "@/services/ai-actions";
 import { useAuth } from "@/hooks/use-auth";
 import { useTransactions } from "@/hooks/use-transactions";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ProjectGoalCompletionOutput } from "@/ai/ai-types";
+import { useGamification } from "@/hooks/use-gamification";
+import { formatCurrency } from "@/lib/utils";
 
 export default function GoalsPage() {
     const { goals, isLoading, deleteGoal } = useGoals();
+    const { gamificationData } = useGamification();
+
+    const completedGoalsCount = goals.filter(g => g.currentAmount >= g.targetAmount).length;
     
     if (isLoading) {
         return <GoalsSkeleton />
@@ -51,6 +56,40 @@ export default function GoalsPage() {
                     </Button>
                 </CreateGoalDialog>
             </div>
+
+            {/* Gamification Summary for Goals */}
+            {gamificationData && (
+                <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-lg text-yellow-800 dark:text-yellow-300">
+                            <Trophy className="h-5 w-5"/>
+                            Jornada das Metas
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                        <div className="p-3 bg-background/50 rounded-lg">
+                            <p className="text-2xl font-bold">{goals.length}</p>
+                            <p className="text-xs text-muted-foreground">Metas Ativas</p>
+                        </div>
+                        <div className="p-3 bg-background/50 rounded-lg">
+                            <p className="text-2xl font-bold text-green-600">{completedGoalsCount}</p>
+                            <p className="text-xs text-muted-foreground">Metas Concluídas</p>
+                        </div>
+                        <div className="p-3 bg-background/50 rounded-lg">
+                           <p className="text-2xl font-bold text-blue-600">
+                                {formatCurrency(goals.reduce((sum, g) => sum + g.currentAmount, 0))}
+                           </p>
+                           <p className="text-xs text-muted-foreground">Total Economizado</p>
+                        </div>
+                         <div className="p-3 bg-background/50 rounded-lg">
+                            <p className="text-2xl font-bold text-purple-600">
+                                {gamificationData.badges.filter(b => b.id === 'finisher' || b.id === 'goal-setter').length}
+                            </p>
+                            <p className="text-xs text-muted-foreground">Conquistas de Metas</p>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
             
             {goals.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -106,7 +145,7 @@ function GoalCard({ goal, onDelete }: { goal: Goal, onDelete: () => void }) {
         } else if (goal.currentAmount >= goal.targetAmount) {
             setProjectionResult({ projection: "Meta concluída!" });
         }
-    }, [goal, user]);
+    }, [goal, user, allTransactions.length, transactionsJson]);
 
     const getProjectionText = () => {
         if (!projectionResult) return null;

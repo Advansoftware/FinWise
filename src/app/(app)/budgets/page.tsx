@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, MoreVertical, Trash2, Edit, PiggyBank, Sparkles } from "lucide-react";
+import { PlusCircle, MoreVertical, Trash2, Edit, PiggyBank, Sparkles, Trophy, CheckCircle, Flame, Award } from "lucide-react";
 import { useBudgets } from "@/hooks/use-budgets";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
@@ -24,10 +24,13 @@ import {
 import { Budget } from "@/lib/types";
 import { AutomaticBudgetCard } from "@/components/budgets/automatic-budget-card";
 import { usePlan } from "@/hooks/use-plan";
+import { useGamification } from "@/hooks/use-gamification";
+import { formatCurrency } from "@/lib/utils";
 
 export default function BudgetsPage() {
     const { budgets, isLoading, deleteBudget } = useBudgets();
     const { isPlus } = usePlan();
+    const { gamificationData } = useGamification();
     
     if (isLoading) {
         return <BudgetsSkeleton />
@@ -46,6 +49,43 @@ export default function BudgetsPage() {
                     </Button>
                 </CreateBudgetDialog>
             </div>
+            
+            {/* Gamification Summary for Budgets */}
+            {gamificationData && (
+                 <Card className="bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-950/20 dark:to-green-950/20">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-lg text-blue-800 dark:text-blue-300">
+                            <Trophy className="h-5 w-5"/>
+                            Desempenho dos Orçamentos
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                        <div className="p-3 bg-background/50 rounded-lg">
+                            <p className="text-2xl font-bold">{budgets.length}</p>
+                            <p className="text-xs text-muted-foreground">Orçamentos Ativos</p>
+                        </div>
+                        <div className="p-3 bg-background/50 rounded-lg">
+                            <p className="text-2xl font-bold text-green-600">
+                                {gamificationData.achievements.find(a => a.id === 'budget-master')?.progress || 0}
+                            </p>
+                            <p className="text-xs text-muted-foreground">Orçamentos Cumpridos</p>
+                        </div>
+                        <div className="p-3 bg-background/50 rounded-lg">
+                            <p className="text-2xl font-bold text-red-500">
+                                 {gamificationData.achievements.find(a => a.id === 'overspending-avoider')?.progress || 0}
+                            </p>
+                            <p className="text-xs text-muted-foreground">Orçamentos Estourados</p>
+                        </div>
+                        <div className="p-3 bg-background/50 rounded-lg">
+                            <p className="text-2xl font-bold text-orange-500 flex items-center justify-center gap-1">
+                                <Flame className="h-5 w-5"/> {gamificationData.streak || 0}
+                            </p>
+                            <p className="text-xs text-muted-foreground">Meses no Controle</p>
+                        </div>
+                    </CardContent>
+                </Card>
+            )}
+
 
             {isPlus && <AutomaticBudgetCard />}
             
@@ -76,13 +116,17 @@ export default function BudgetsPage() {
 function BudgetCard({ budget, onDelete }: { budget: Budget, onDelete: () => void }) {
     const percentage = Math.round((budget.currentSpending / budget.amount) * 100);
     const progressColor = percentage > 100 ? "bg-red-600" : percentage > 80 ? "bg-yellow-500" : "bg-primary";
-    
+    const remainingAmount = budget.amount - budget.currentSpending;
+
     return (
         <Card>
             <CardHeader>
                 <div className="flex items-start justify-between">
                     <div>
-                         <CardTitle>{budget.name}</CardTitle>
+                         <CardTitle className="flex items-center gap-2">
+                             {budget.currentSpending <= budget.amount && <Award className="h-4 w-4 text-yellow-500" />}
+                            {budget.name}
+                         </CardTitle>
                         <CardDescription>Categoria: {budget.category}</CardDescription>
                     </div>
                      <DropdownMenu>
@@ -126,17 +170,17 @@ function BudgetCard({ budget, onDelete }: { budget: Budget, onDelete: () => void
                      <Progress value={Math.min(percentage, 100)} indicatorClassName={cn(progressColor)} />
                 </div>
                 <div className="flex justify-between items-baseline">
-                    <p className="text-lg font-bold text-foreground">R$ {budget.currentSpending.toFixed(2)}</p>
-                    <p className="text-sm text-muted-foreground">de R$ {budget.amount.toFixed(2)}</p>
+                    <p className="text-lg font-bold text-foreground">{formatCurrency(budget.currentSpending)}</p>
+                    <p className="text-sm text-muted-foreground">de {formatCurrency(budget.amount)}</p>
                 </div>
                  <div className="text-right">
                     <p className={cn(
                         "text-sm font-semibold",
-                        budget.amount - budget.currentSpending >= 0 ? "text-green-500" : "text-red-500"
+                        remainingAmount >= 0 ? "text-green-500" : "text-red-500"
                     )}>
-                        {budget.amount - budget.currentSpending >= 0 
-                            ? `R$ ${(budget.amount - budget.currentSpending).toFixed(2)} restantes`
-                            : `R$ ${(Math.abs(budget.amount - budget.currentSpending)).toFixed(2)} acima`
+                        {remainingAmount >= 0 
+                            ? `${formatCurrency(remainingAmount)} restantes`
+                            : `${formatCurrency(Math.abs(remainingAmount))} acima do limite`
                         }
                     </p>
                 </div>

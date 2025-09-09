@@ -27,7 +27,7 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
   const [profileInsights, setProfileInsights] = useState<GamificationProfileInsights | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const fetchGamificationData = useCallback(async () => {
     if (!user?.uid) {
@@ -56,8 +56,10 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   useEffect(() => {
-    fetchGamificationData();
-  }, [fetchGamificationData]);
+    if (!authLoading) {
+        fetchGamificationData();
+    }
+  }, [fetchGamificationData, authLoading]);
 
   const value: GamificationContextType = {
       gamificationData,
