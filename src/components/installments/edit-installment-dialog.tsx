@@ -1,6 +1,6 @@
 // src/components/installments/edit-installment-dialog.tsx
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -34,6 +34,7 @@ import { Loader2, Edit3 } from 'lucide-react';
 import { Installment } from '@/core/ports/installments.port';
 import { useInstallments } from '@/hooks/use-installments';
 import { useWallets } from '@/hooks/use-wallets';
+import { useTransactions } from '@/hooks/use-transactions';
 
 const editInstallmentSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
@@ -52,19 +53,6 @@ interface EditInstallmentDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const CATEGORIES = [
-  'Alimentação',
-  'Transporte',
-  'Moradia',
-  'Saúde',
-  'Educação',
-  'Lazer',
-  'Roupas',
-  'Tecnologia',
-  'Serviços',
-  'Outros'
-];
-
 export function EditInstallmentDialog({ 
   installment, 
   open, 
@@ -73,7 +61,11 @@ export function EditInstallmentDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { updateInstallment } = useInstallments();
   const { wallets } = useWallets();
+  const { categories, subcategories } = useTransactions();
 
+  // Get available categories and subcategories
+  const availableCategories = Object.keys(categories);
+  
   const form = useForm<EditInstallmentForm>({
     resolver: zodResolver(editInstallmentSchema),
     defaultValues: {
@@ -85,6 +77,12 @@ export function EditInstallmentDialog({
       sourceWalletId: 'none',
     },
   });
+
+  const selectedCategory = form.watch('category');
+  const availableSubcategories = useMemo(() => {
+    if (!selectedCategory) return [];
+    return subcategories[selectedCategory as keyof typeof subcategories] || [];
+  }, [selectedCategory, subcategories]);
 
   // Reset form when installment changes
   useEffect(() => {
@@ -99,6 +97,16 @@ export function EditInstallmentDialog({
       });
     }
   }, [installment, open, form]);
+
+  // Reset subcategory when category changes
+  useEffect(() => {
+    if (selectedCategory) {
+      const currentSubcategory = form.getValues('subcategory');
+      if (currentSubcategory && !availableSubcategories.includes(currentSubcategory)) {
+        form.setValue('subcategory', '');
+      }
+    }
+  }, [selectedCategory, availableSubcategories, form]);
 
   const onSubmit = async (data: EditInstallmentForm) => {
     if (!installment) return;
@@ -190,7 +198,7 @@ export function EditInstallmentDialog({
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {CATEGORIES.map((category) => (
+                        {availableCategories.map((category) => (
                           <SelectItem key={category} value={category}>
                             {category}
                           </SelectItem>
@@ -208,9 +216,25 @@ export function EditInstallmentDialog({
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Subcategoria</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Opcional" {...field} />
-                    </FormControl>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                      disabled={!selectedCategory || availableSubcategories.length === 0}
+                    >
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Opcional" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="">Nenhuma</SelectItem>
+                        {availableSubcategories.map((subcategory) => (
+                          <SelectItem key={subcategory} value={subcategory}>
+                            {subcategory}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}

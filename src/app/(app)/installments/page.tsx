@@ -39,6 +39,18 @@ export default function InstallmentsPage() {
   const [activeTab, setActiveTab] = useState('active');
   const { installments, summary, isLoading } = useInstallments();
 
+  // Função para traduzir raridade dos badges
+  const translateRarity = (rarity: string) => {
+    const translations: Record<string, string> = {
+      'common': 'Comum',
+      'rare': 'Raro',
+      'epic': 'Épico',
+      'legendary': 'Lendário',
+      'mythic': 'Mítico'
+    };
+    return translations[rarity] || rarity;
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-4 p-4">
@@ -86,7 +98,7 @@ export default function InstallmentsPage() {
 
       {/* Alerta de Atraso */}
       {summary && summary.overduePayments.length > 0 && (
-        <Card className="border-destructive/20 dark:border-destructive/20 bg-destructive/10 dark:bg-destructive/10">
+        <Card className="border-destructive/20 dark:border-destructive/20 bg-destructive/5 dark:bg-destructive/5">
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive dark:text-destructive" />
@@ -94,7 +106,7 @@ export default function InstallmentsPage() {
                 {summary.overduePayments.length} Parcela{summary.overduePayments.length > 1 ? 's' : ''} em Atraso
               </CardTitle>
             </div>
-            <CardDescription className="text-destructive/80 dark:text-destructive/80">
+            <CardDescription className="text-destructive/70 dark:text-destructive/70">
               Você tem pagamentos vencidos que precisam de atenção imediata.
             </CardDescription>
           </CardHeader>
@@ -107,17 +119,17 @@ export default function InstallmentsPage() {
                 const daysOverdue = Math.floor((new Date().getTime() - new Date(payment.dueDate).getTime()) / (1000 * 60 * 60 * 24));
                 
                 return (
-                  <div key={payment.id} className="flex items-center justify-between p-3 bg-destructive/5 dark:bg-destructive/5 rounded-lg border border-destructive/20 dark:border-destructive/20">
+                  <div key={payment.id} className="flex items-center justify-between p-3 bg-background/50 dark:bg-background/50 rounded-lg border border-destructive/30 dark:border-destructive/30">
                     <div className="flex-1">
-                      <div className="font-medium text-destructive dark:text-destructive">
+                      <div className="font-medium text-foreground dark:text-foreground">
                         {installment?.name || 'Parcelamento'} - Parcela {payment.installmentNumber}
                       </div>
-                      <div className="text-sm text-destructive/80 dark:text-destructive/80">
+                      <div className="text-sm text-muted-foreground dark:text-muted-foreground">
                         Venceu em {new Date(payment.dueDate).toLocaleDateString('pt-BR')} • {daysOverdue} dias de atraso
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-semibold text-destructive dark:text-destructive">
+                      <div className="font-semibold text-foreground dark:text-foreground">
                         {formatCurrency(payment.scheduledAmount)}
                       </div>
                       <Badge variant="destructive" className="text-xs">
@@ -130,7 +142,7 @@ export default function InstallmentsPage() {
             </div>
             
             {summary.overduePayments.length > 3 && (
-              <div className="text-sm text-destructive/80 dark:text-destructive/80 text-center py-2 border-t border-destructive/20 dark:border-destructive/20">
+              <div className="text-sm text-muted-foreground dark:text-muted-foreground text-center py-2 border-t border-destructive/20 dark:border-destructive/20">
                 E mais {summary.overduePayments.length - 3} parcela{summary.overduePayments.length - 3 > 1 ? 's' : ''} em atraso
               </div>
             )}
@@ -149,7 +161,7 @@ export default function InstallmentsPage() {
               <Button 
                 size="sm" 
                 variant="outline" 
-                className="border-destructive/20 dark:border-destructive/20 text-destructive dark:text-destructive hover:bg-destructive/10 dark:hover:bg-destructive/10"
+                className="border-destructive/30 dark:border-destructive/30 text-foreground dark:text-foreground hover:bg-destructive/10 dark:hover:bg-destructive/10"
                 onClick={() => setActiveTab('schedule')}
               >
                 Ver Cronograma
@@ -348,7 +360,7 @@ export default function InstallmentsPage() {
                               'border-gray-400 text-gray-700'
                             }`}
                           >
-                            {badge.rarity}
+                            {translateRarity(badge.rarity)}
                           </Badge>
                         </motion.div>
                       ))}

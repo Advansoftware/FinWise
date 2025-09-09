@@ -63,7 +63,7 @@ export function PaymentSchedule() {
         return {
           icon: AlertTriangle,
           color: 'text-destructive dark:text-destructive',
-          bgColor: 'bg-destructive/10 dark:bg-destructive/10 border-destructive/20 dark:border-destructive/20',
+          bgColor: 'bg-destructive/5 dark:bg-destructive/5 border-destructive/20 dark:border-destructive/20',
           label: 'Em Atraso'
         };
       } else if (isToday(dueDate)) {
@@ -185,12 +185,12 @@ export function PaymentSchedule() {
             </Card>
           ) : (
             <>
-              <div className="bg-destructive/10 dark:bg-destructive/10 border border-destructive/20 dark:border-destructive/20 rounded-lg p-4">
+              <div className="bg-destructive/5 dark:bg-destructive/5 border border-destructive/20 dark:border-destructive/20 rounded-lg p-4">
                 <div className="flex items-start gap-3">
                   <AlertTriangle className="h-5 w-5 text-destructive dark:text-destructive mt-0.5" />
                   <div>
                     <h4 className="font-semibold text-destructive dark:text-destructive">Atenção: Parcelas em Atraso</h4>
-                    <p className="text-sm text-destructive/80 dark:text-destructive/80 mt-1">
+                    <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">
                       Você tem {overduePayments.length} parcela(s) em atraso. 
                       Considere quitar esses pagamentos o quanto antes.
                     </p>

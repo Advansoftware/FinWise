@@ -224,7 +224,7 @@ export function PayInstallmentDialog({
 
               {/* Insufficient Balance Warning */}
               {hasInsufficientBalance && (
-                <div className="text-sm p-2 rounded-md bg-destructive/10 dark:bg-destructive/10 text-destructive dark:text-destructive border border-destructive/20 dark:border-destructive/20">
+                <div className="text-sm p-2 rounded-md bg-destructive/5 dark:bg-destructive/5 text-destructive dark:text-destructive border border-destructive/20 dark:border-destructive/20">
                   <div className="flex items-center gap-2">
                     <AlertCircle className="h-4 w-4" />
                     <span>Saldo insuficiente na carteira selecionada</span>

@@ -39,6 +39,7 @@ import { ptBR } from 'date-fns/locale';
 import { useInstallments } from '@/hooks/use-installments';
 import { PayInstallmentDialog } from './pay-installment-dialog';
 import { EditInstallmentDialog } from './edit-installment-dialog';
+import { MarkAsPaidDialog } from './mark-as-paid-dialog';
 
 interface InstallmentCardProps {
   installment: Installment;
@@ -49,6 +50,7 @@ export function InstallmentCard({ installment, showActions = true }: Installment
   const [isPayDialogOpen, setIsPayDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isMarkAsPaidOpen, setIsMarkAsPaidOpen] = useState(false);
   const { deleteInstallment } = useInstallments();
 
   const progressPercentage = (installment.paidInstallments / installment.totalInstallments) * 100;
@@ -160,7 +162,7 @@ export function InstallmentCard({ installment, showActions = true }: Installment
           
           {/* Next Payment */}
           {nextPayment && !installment.isCompleted && (
-            <div className={`border-t pt-4 ${nextPayment.status === 'overdue' ? 'bg-destructive/10 dark:bg-destructive/10 border-destructive/20 dark:border-destructive/20 -mx-6 -mb-6 px-6 pb-6 rounded-b-lg' : ''}`}>
+            <div className={`border-t pt-4 ${nextPayment.status === 'overdue' ? 'bg-destructive/5 dark:bg-destructive/5 border-destructive/20 dark:border-destructive/20 -mx-6 -mb-6 px-6 pb-6 rounded-b-lg' : ''}`}>
               {/* Alerta de atraso */}
               {nextPayment.status === 'overdue' && (
                 <div className="flex items-center gap-2 mb-3 text-destructive dark:text-destructive">
@@ -174,18 +176,18 @@ export function InstallmentCard({ installment, showActions = true }: Installment
                   <p className="text-xs text-muted-foreground">
                     {nextPayment.status === 'overdue' ? 'Venceu em' : 'Próximo Vencimento'}
                   </p>
-                  <p className={`font-semibold ${nextPayment.status === 'overdue' ? 'text-destructive dark:text-destructive' : ''}`}>
+                  <p className={`font-semibold ${nextPayment.status === 'overdue' ? 'text-foreground dark:text-foreground' : ''}`}>
                     {format(parseISO(nextPayment.dueDate), 'dd/MM/yyyy', { locale: ptBR })}
                   </p>
                   {nextPayment.status === 'overdue' && (
-                    <p className="text-xs text-destructive dark:text-destructive mt-1">
+                    <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1">
                       {Math.floor((new Date().getTime() - parseISO(nextPayment.dueDate).getTime()) / (1000 * 60 * 60 * 24))} dias de atraso
                     </p>
                   )}
                 </div>
                 <div className="text-right">
                   <p className="text-xs text-muted-foreground">Parcela {nextPayment.installmentNumber}</p>
-                  <p className={`font-semibold ${nextPayment.status === 'overdue' ? 'text-destructive dark:text-destructive' : ''}`}>
+                  <p className={`font-semibold ${nextPayment.status === 'overdue' ? 'text-foreground dark:text-foreground' : ''}`}>
                     {formatCurrency(nextPayment.scheduledAmount)}
                   </p>
                 </div>
@@ -193,8 +195,8 @@ export function InstallmentCard({ installment, showActions = true }: Installment
               
               {/* Alertas adicionais para atraso */}
               {overdueCount > 1 && (
-                <div className="mt-3 p-2 bg-destructive/10 dark:bg-destructive/10 border border-destructive/20 dark:border-destructive/20 rounded-md">
-                  <p className="text-sm text-destructive dark:text-destructive">
+                <div className="mt-3 p-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-md">
+                  <p className="text-sm text-amber-800 dark:text-amber-300">
                     <AlertTriangle className="h-4 w-4 inline mr-1" />
                     Você tem <strong>{overdueCount} parcelas em atraso</strong>
                   </p>
@@ -202,14 +204,29 @@ export function InstallmentCard({ installment, showActions = true }: Installment
               )}
               
               {showActions && (
-                <Button 
-                  onClick={() => setIsPayDialogOpen(true)}
-                  className={`w-full mt-3 ${nextPayment.status === 'overdue' ? 'bg-destructive hover:bg-destructive/90 dark:bg-destructive dark:hover:bg-destructive/90' : ''}`}
-                  size="sm"
-                >
-                  <DollarSign className="h-4 w-4 mr-2" />
-                  {nextPayment.status === 'overdue' ? 'Pagar Atraso' : 'Registrar Pagamento'}
-                </Button>
+                <div className="space-y-2 mt-3">
+                  <Button 
+                    onClick={() => setIsPayDialogOpen(true)}
+                    className={`w-full ${nextPayment.status === 'overdue' ? 'bg-destructive hover:bg-destructive/90 dark:bg-destructive dark:hover:bg-destructive/90' : ''}`}
+                    size="sm"
+                  >
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    {nextPayment.status === 'overdue' ? 'Pagar Atraso' : 'Registrar Pagamento'}
+                  </Button>
+                  
+                  {/* Mostrar botão "Marcar como Pago" apenas para parcelas em atraso */}
+                  {nextPayment.status === 'overdue' && (
+                    <Button 
+                      onClick={() => setIsMarkAsPaidOpen(true)}
+                      variant="outline"
+                      className="w-full"
+                      size="sm"
+                    >
+                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                      Marcar como Pago
+                    </Button>
+                  )}
+                </div>
               )}
             </div>
           )}
@@ -240,6 +257,14 @@ export function InstallmentCard({ installment, showActions = true }: Installment
         installment={installment}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
+      />
+
+      {/* Mark as Paid Dialog */}
+      <MarkAsPaidDialog
+        installment={installment}
+        payment={nextPayment}
+        open={isMarkAsPaidOpen}
+        onOpenChange={setIsMarkAsPaidOpen}
       />
 
       {/* Delete Confirmation Dialog */}
