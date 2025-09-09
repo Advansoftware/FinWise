@@ -42,7 +42,7 @@ const editInstallmentSchema = z.object({
   category: z.string().min(1, 'Categoria é obrigatória'),
   subcategory: z.string().optional(),
   establishment: z.string().optional(),
-  sourceWalletId: z.string().optional(),
+  sourceWalletId: z.string().min(1, 'A carteira de origem é obrigatória'),
 });
 
 type EditInstallmentForm = z.infer<typeof editInstallmentSchema>;
@@ -63,8 +63,7 @@ export function EditInstallmentDialog({
   const { wallets } = useWallets();
   const { categories, subcategories } = useTransactions();
 
-  // Get available categories and subcategories
-  const availableCategories = Object.keys(categories);
+  const availableCategories = categories;
   
   const form = useForm<EditInstallmentForm>({
     resolver: zodResolver(editInstallmentSchema),
@@ -74,7 +73,7 @@ export function EditInstallmentDialog({
       category: '',
       subcategory: '',
       establishment: '',
-      sourceWalletId: 'none',
+      sourceWalletId: '',
     },
   });
 
@@ -93,7 +92,7 @@ export function EditInstallmentDialog({
         category: installment.category,
         subcategory: installment.subcategory || '',
         establishment: installment.establishment || '',
-        sourceWalletId: installment.sourceWalletId || 'none',
+        sourceWalletId: installment.sourceWalletId || '',
       });
     }
   }, [installment, open, form]);
@@ -119,7 +118,7 @@ export function EditInstallmentDialog({
         category: data.category,
         subcategory: data.subcategory || undefined,
         establishment: data.establishment,
-        sourceWalletId: data.sourceWalletId === 'none' ? undefined : data.sourceWalletId,
+        sourceWalletId: data.sourceWalletId,
         updatedAt: new Date().toISOString(),
       });
 
@@ -138,171 +137,190 @@ export function EditInstallmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="sm:max-w-2xl w-[95vw] h-[95vh] sm:h-auto max-h-[95vh] flex flex-col">
+        <DialogHeader className="flex-shrink-0">
           <DialogTitle className="flex items-center gap-2">
             <Edit3 className="h-5 w-5" />
             Editar Parcelamento
           </DialogTitle>
           <DialogDescription>
-            Atualize as informações do parcelamento {installment.name}
+            Atualize as informações do parcelamento "{installment.name}"
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto px-1">
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Nome do Parcelamento</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ex: Compra no Magazine Luiza" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="description"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Descrição (Opcional)</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Detalhes sobre o parcelamento..."
-                        className="resize-none"
-                        rows={2}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Categoria</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+        <div className="flex-1 overflow-y-auto pr-2">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Nome do Parcelamento</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a categoria" />
-                        </SelectTrigger>
+                        <Input placeholder="Ex: Compra no Magazine Luiza" {...field} />
                       </FormControl>
-                      <SelectContent>
-                        {availableCategories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="subcategory"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Subcategoria (Opcional)</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
-                      disabled={!selectedCategory || availableSubcategories.length === 0}
-                    >
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Descrição (Opcional)</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a subcategoria" />
-                        </SelectTrigger>
+                        <Textarea 
+                          placeholder="Detalhes sobre o parcelamento..."
+                          className="resize-none"
+                          rows={2}
+                          {...field}
+                        />
                       </FormControl>
-                      <SelectContent>
-                        {availableSubcategories.map((subcategory) => (
-                          <SelectItem key={subcategory} value={subcategory}>
-                            {subcategory}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <div className="md:col-span-2 grid grid-cols-2 gap-4">
+                   <div className="p-3 bg-muted rounded-md">
+                    <p className="text-sm text-muted-foreground">Valor Total</p>
+                    <p className="text-lg font-semibold">
+                      {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(installment.totalAmount)}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-muted rounded-md">
+                    <p className="text-sm text-muted-foreground">Nº de Parcelas</p>
+                    <p className="text-lg font-semibold">
+                      {installment.paidInstallments}/{installment.totalInstallments}
+                    </p>
+                  </div>
+                </div>
 
-              <FormField
-                control={form.control}
-                name="establishment"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Estabelecimento (Opcional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ex: Loja ABC, Magazine Luiza..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+                <FormField
+                  control={form.control}
+                  name="category"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Categoria</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a categoria" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {availableCategories.map((category) => (
+                            <SelectItem key={category} value={category}>
+                              {category}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-              <FormField
-                control={form.control}
-                name="sourceWalletId"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Carteira de Débito (Opcional)</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <FormField
+                  control={form.control}
+                  name="subcategory"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Subcategoria (Opcional)</FormLabel>
+                      <Select 
+                        onValueChange={field.onChange} 
+                        value={field.value}
+                        disabled={!selectedCategory || availableSubcategories.length === 0}
+                      >
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a subcategoria" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {availableSubcategories.map((subcategory) => (
+                            <SelectItem key={subcategory} value={subcategory}>
+                              {subcategory}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="establishment"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Estabelecimento (Opcional)</FormLabel>
                       <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a carteira" />
-                        </SelectTrigger>
+                        <Input placeholder="Ex: Loja ABC, Magazine Luiza..." {...field} />
                       </FormControl>
-                      <SelectContent>
-                        <SelectItem value="none">Nenhuma</SelectItem>
-                        {wallets.map((wallet) => (
-                          <SelectItem key={wallet.id} value={wallet.id}>
-                            {wallet.name} ({wallet.type})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isSubmitting}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Edit3 className="h-4 w-4 mr-2" />
-                )}
-                Salvar Alterações
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+                <FormField
+                  control={form.control}
+                  name="sourceWalletId"
+                  render={({ field }) => (
+                    <FormItem className="md:col-span-2">
+                      <FormLabel>Carteira de Pagamento</FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Selecione a carteira" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          {wallets.map((wallet) => (
+                            <SelectItem key={wallet.id} value={wallet.id}>
+                              {wallet.name} ({wallet.type})
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </form>
+          </Form>
         </div>
+
+        <DialogFooter className="flex-shrink-0 pt-4 flex flex-col sm:flex-row gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
+            className="w-full sm:w-auto"
+          >
+            Cancelar
+          </Button>
+          <Button 
+            type="button" 
+            disabled={isSubmitting} 
+            className="w-full sm:w-auto"
+            onClick={form.handleSubmit(onSubmit)}
+          >
+            {isSubmitting ? (
+              <Loader2 className="h-4 w-4 animate-spin mr-2" />
+            ) : (
+              <Edit3 className="h-4 w-4 mr-2" />
+            )}
+            Salvar Alterações
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

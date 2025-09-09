@@ -52,17 +52,15 @@ export function InstallmentCard({ installment, showActions = true }: Installment
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isMarkAsPaidOpen, setIsMarkAsPaidOpen] = useState(false);
   const { deleteInstallment } = useInstallments();
+  const [editingInstallment, setEditingInstallment] = useState<Installment | null>(null);
 
   const progressPercentage = (installment.paidInstallments / installment.totalInstallments) * 100;
   
-  // Buscar próximo pagamento (incluindo em atraso)
   const nextPayment = installment.payments
     .filter(p => p.status === 'pending' || p.status === 'overdue')
     .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0];
 
-  // Contar parcelas em atraso
-  const overduePayments = installment.payments.filter(p => p.status === 'overdue');
-  const overdueCount = overduePayments.length;
+  const overdueCount = installment.payments.filter(p => p.status === 'overdue').length;
 
   const getStatusBadge = () => {
     if (installment.isCompleted) {
@@ -83,6 +81,11 @@ export function InstallmentCard({ installment, showActions = true }: Installment
   const handleDelete = async () => {
     await deleteInstallment(installment.id);
     setIsDeleteDialogOpen(false);
+  };
+  
+  const handleEditClick = () => {
+    setEditingInstallment(installment);
+    setIsEditDialogOpen(true);
   };
 
   return (
@@ -107,7 +110,7 @@ export function InstallmentCard({ installment, showActions = true }: Installment
                       Registrar Pagamento
                     </DropdownMenuItem>
                   )}
-                  <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
+                  <DropdownMenuItem onClick={handleEditClick}>
                     <Edit3 className="h-4 w-4 mr-2" />
                     Editar
                   </DropdownMenuItem>
@@ -131,7 +134,6 @@ export function InstallmentCard({ installment, showActions = true }: Installment
             </p>
           )}
           
-          {/* Progress */}
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span>Progresso</span>
@@ -140,7 +142,6 @@ export function InstallmentCard({ installment, showActions = true }: Installment
             <Progress value={progressPercentage} className="h-2" />
           </div>
           
-          {/* Financial Info */}
           <div className="grid grid-cols-2 gap-4">
             <div>
               <p className="text-xs text-muted-foreground">Valor Total</p>
@@ -160,10 +161,8 @@ export function InstallmentCard({ installment, showActions = true }: Installment
             </div>
           </div>
           
-          {/* Next Payment */}
           {nextPayment && !installment.isCompleted && (
             <div className={`border-t pt-4 ${nextPayment.status === 'overdue' ? 'bg-destructive/5 dark:bg-destructive/5 border-destructive/20 dark:border-destructive/20 -mx-6 -mb-6 px-6 pb-6 rounded-b-lg' : ''}`}>
-              {/* Alerta de atraso */}
               {nextPayment.status === 'overdue' && (
                 <div className="flex items-center gap-2 mb-3 text-destructive dark:text-destructive">
                   <AlertTriangle className="h-4 w-4" />
@@ -193,7 +192,6 @@ export function InstallmentCard({ installment, showActions = true }: Installment
                 </div>
               </div>
               
-              {/* Alertas adicionais para atraso */}
               {overdueCount > 1 && (
                 <div className="mt-3 p-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-md">
                   <p className="text-sm text-amber-800 dark:text-amber-300">
@@ -214,7 +212,6 @@ export function InstallmentCard({ installment, showActions = true }: Installment
                     {nextPayment.status === 'overdue' ? 'Pagar Atraso' : 'Registrar Pagamento'}
                   </Button>
                   
-                  {/* Mostrar botão "Marcar como Pago" apenas para parcelas em atraso */}
                   {nextPayment.status === 'overdue' && (
                     <Button 
                       onClick={() => setIsMarkAsPaidOpen(true)}
@@ -231,7 +228,6 @@ export function InstallmentCard({ installment, showActions = true }: Installment
             </div>
           )}
           
-          {/* Category and Establishment */}
           <div className="flex flex-wrap gap-2 text-xs">
             <Badge variant="outline">{installment.category}</Badge>
             {installment.subcategory && (
@@ -244,7 +240,6 @@ export function InstallmentCard({ installment, showActions = true }: Installment
         </CardContent>
       </Card>
 
-      {/* Pay Dialog */}
       <PayInstallmentDialog
         installment={installment}
         payment={nextPayment}
@@ -252,14 +247,12 @@ export function InstallmentCard({ installment, showActions = true }: Installment
         onOpenChange={setIsPayDialogOpen}
       />
 
-      {/* Edit Dialog */}
       <EditInstallmentDialog
-        installment={installment}
+        installment={editingInstallment}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
       />
 
-      {/* Mark as Paid Dialog */}
       <MarkAsPaidDialog
         installment={installment}
         payment={nextPayment}
@@ -267,7 +260,6 @@ export function InstallmentCard({ installment, showActions = true }: Installment
         onOpenChange={setIsMarkAsPaidOpen}
       />
 
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

@@ -1,7 +1,7 @@
 // src/hooks/use-wallets.tsx
 'use client';
 
-import { useState, useEffect, createContext, useContext, ReactNode } from "react";
+import { useState, useEffect, createContext, useContext, ReactNode, Dispatch, SetStateAction } from "react";
 import { Wallet } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
@@ -9,6 +9,7 @@ import { apiClient } from "@/lib/api-client";
 
 interface WalletsContextType {
   wallets: Wallet[];
+  setWallets: Dispatch<SetStateAction<Wallet[]>>;
   isLoading: boolean;
   addWallet: (wallet: Omit<Wallet, 'id' | 'createdAt' | 'balance' | 'userId'>) => Promise<void>;
   updateWallet: (walletId: string, updates: Partial<Wallet>) => Promise<void>;
@@ -92,6 +93,7 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
 
   const value: WalletsContextType = {
     wallets,
+    setWallets,
     isLoading: isLoading || authLoading,
     addWallet,
     updateWallet,

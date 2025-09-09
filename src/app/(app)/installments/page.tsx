@@ -346,7 +346,7 @@ export default function InstallmentsPage() {
                           key={badge.id}
                           initial={{ scale: 0, rotate: -180 }}
                           animate={{ scale: 1, rotate: 0 }}
-                          className="text-center p-4 border rounded-lg bg-gradient-to-b from-yellow-50 to-yellow-100 border-yellow-200"
+                          className="text-center p-4 border rounded-lg bg-card text-card-foreground"
                         >
                           <div className="text-3xl mb-2">{badge.icon}</div>
                           <h4 className="font-medium text-sm">{badge.name}</h4>

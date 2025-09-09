@@ -38,32 +38,9 @@
  * AÇÕES DE IMAGEM (10 créditos):
  * - Leitura de Nota Fiscal (OCR): 10 créditos
  * 
- * PLANOS E CRÉDITOS MENSAIS:
- * - Pro: 100 créditos/mês
- * - Plus: 300 créditos/mês  
- * - Infinity: 500 créditos/mês
  */
 
-// src/services/ai-actions.ts
 'use server';
-
-/**
- * SISTEMA DE CRÉDITOS GASTOMETRIA
- * 
- * Os créditos são consumidos APENAS quando o usuário utiliza o "Gastometria IA" (modelo padrão).
- * Se o usuário configura suas próprias credenciais (OpenAI, Google, Ollama), NÃO há consumo de créditos.
- * 
- * Custos por operação:
- * - Dica Rápida: 1 crédito
- * - Sugestão de Categoria: 1 crédito  
- * - Perfil Financeiro: 5 créditos
- * - Relatório Mensal: 5 créditos
- * - Relatório Anual: 10 créditos
- * - Leitura de Nota Fiscal (OCR): 10 créditos (mais custoso - envolve processamento de imagem)
- * - Previsão de Saldo: 3 créditos
- * 
- * Estes valores devem ser claramente explicados na página de assinatura.
- */
 
 import { z } from 'zod';
 import {
@@ -108,14 +85,11 @@ import { predictFutureBalance } from '@/ai/flows/predict-future-balance';
 import { createConfiguredAI, getModelReference } from '@/ai/genkit';
 import { AICredential } from '@/lib/types';
 
-async function getCredentialAndHandleCredits(userId: string, cost: number, action: AICreditLogAction, isFreeAction: boolean = false): Promise<any> {
+async function getCredentialAndHandleCredits(userId: string, cost: number, action: AICreditLogAction, isFreeAction: boolean = false): Promise<AICredential> {
   const credential = await getActiveAICredential(userId);
 
   // Consome créditos APENAS quando usar o Gastometria IA (modelo padrão definido no .env)
-  // Se o usuário usa suas próprias credenciais (OpenAI, Google, Ollama), não há consumo de créditos
-  if (credential.id === 'gastometria-ai-default' ||
-    credential.provider === 'gastometria' ||
-    (!credential.provider && process.env.DEFAULT_AI_PROVIDER)) {
+  if (credential.id === 'gastometria-ai-default') {
     await consumeAICredits(userId, cost, action, isFreeAction);
   }
 
@@ -126,7 +100,6 @@ async function getCredentialAndHandleCredits(userId: string, cost: number, actio
 // --- AI Actions ---
 
 export async function getSpendingTip(transactions: any, userId: string, forceRefresh: boolean = false): Promise<string> {
-  // Custo: 1 crédito (operação simples de análise de texto)
   const cost = forceRefresh ? 1 : 0;
   const credential = await getCredentialAndHandleCredits(userId, cost, 'Dica Rápida', !forceRefresh);
 
@@ -144,25 +117,22 @@ export async function getSpendingTip(transactions: any, userId: string, forceRef
 }
 
 export async function getFinancialProfile(input: FinancialProfileInput, userId: string, forceRefresh: boolean = false): Promise<FinancialProfileOutput> {
-  // Custo: 5 créditos (análise complexa de dados financeiros)
   const cost = forceRefresh ? 5 : 0;
   const credential = await getCredentialAndHandleCredits(userId, cost, 'Perfil Financeiro', !forceRefresh);
 
   try {
-    // Se temos dados de gamificação, usa o flow aprimorado
     if (input.gamificationData) {
       const { generateEnhancedFinancialProfile } = await import('@/ai/flows/enhanced-financial-profile');
       return await generateEnhancedFinancialProfile(input, credential);
     }
 
-    // Fallback para o flow original
     const configuredAI = createConfiguredAI(credential);
     const modelRef = getModelReference(credential);
 
     const prompt = configuredAI.definePrompt({
       name: 'financialProfilePrompt',
-      input: { schema: FinancialProfileInputSchema as any },
-      output: { schema: FinancialProfileOutputSchema as any },
+      input: { schema: FinancialProfileInputSchema as unknown as z.ZodTypeAny },
+      output: { schema: FinancialProfileOutputSchema as unknown as z.ZodTypeAny },
       model: modelRef,
       prompt: `Você é um analista financeiro sagaz e positivo. Sua tarefa é criar um perfil financeiro para o usuário, incluindo um **título criativo** e uma **descrição**.
 
@@ -209,8 +179,8 @@ export async function analyzeTransactionsAction(transactions: Transaction[], use
 
     const prompt = configuredAI.definePrompt({
       name: 'analyzeTransactionsPrompt',
-      input: { schema: AnalyzeTransactionsInputSchema as any },
-      output: { schema: AnalyzeTransactionsOutputSchema as any },
+      input: { schema: AnalyzeTransactionsInputSchema as unknown as z.ZodTypeAny },
+      output: { schema: AnalyzeTransactionsOutputSchema as unknown as z.ZodTypeAny },
       model: modelRef,
       prompt: `You are a meticulous financial auditor. Analyze this small batch of transactions and provide a brief analysis in markdown. Look for anomalies (e.g., unusually high amounts), patterns (e.g., frequent small purchases), or potential recategorization (e.g., a "Padaria" purchase in "Restaurante" could be "Supermercado"). Be concise. All output must be in Brazilian Portuguese.
 
@@ -228,58 +198,25 @@ Transactions:
   }
 }
 
-/**
- * Analisa a complexidade de uma pergunta para determinar o custo em créditos
- */
 function analyzeQueryComplexity(prompt: string): { cost: number; complexity: 'simple' | 'complex' } {
   const lowerQuery = prompt.toLowerCase();
-
-  // Palavras-chave que indicam operações complexas (5 créditos)
-  const complexKeywords = [
-    'relatório', 'análise', 'analisar', 'resumo', 'detalhado', 'comparar', 'comparação',
-    'tendência', 'padrão', 'evolução', 'projeção', 'previsão', 'planejamento',
-    'orçamento', 'meta', 'objetivo', 'estratégia', 'otimização', 'recomendação',
-    'calcular', 'calcule', 'soma', 'total', 'média', 'porcentagem', 'estatística',
-    'maior', 'menor', 'máximo', 'mínimo', 'ranking', 'categorizar'
-  ];
-
-  // Palavras-chave que indicam perguntas simples (1 crédito)
-  const simpleKeywords = [
-    'oi', 'olá', 'bom dia', 'boa tarde', 'boa noite', 'tudo bem', 'como vai',
-    'ajuda', 'como usar', 'o que é', 'para que serve', 'como funciona',
-    'dica', 'sugestão', 'conselho', 'explicar', 'explique', 'definir'
-  ];
-
-  // Verifica se há muitas palavras (pergunta longa = mais complexa)
+  const complexKeywords = ['relatório', 'análise', 'analisar', 'resumo', 'detalhado', 'comparar', 'comparação', 'tendência', 'padrão', 'evolução', 'projeção', 'previsão', 'planejamento', 'orçamento', 'meta', 'objetivo', 'estratégia', 'otimização', 'recomendação', 'calcular', 'calcule', 'soma', 'total', 'média', 'porcentagem', 'estatística', 'maior', 'menor', 'máximo', 'mínimo', 'ranking', 'categorizar'];
+  const simpleKeywords = ['oi', 'olá', 'bom dia', 'boa tarde', 'boa noite', 'tudo bem', 'como vai', 'ajuda', 'como usar', 'o que é', 'para que serve', 'como funciona', 'dica', 'sugestão', 'conselho', 'explicar', 'explique', 'definir'];
   const wordCount = prompt.split(' ').length;
-
-  // Verifica se contém números ou valores monetários
   const hasNumbers = /\d+|R\$|real|reais/.test(prompt);
 
-  // Lógica de decisão
-  if (complexKeywords.some(keyword => lowerQuery.includes(keyword))) {
+  if (complexKeywords.some(keyword => lowerQuery.includes(keyword)) || wordCount > 20 || hasNumbers) {
     return { cost: 5, complexity: 'complex' };
   }
-
   if (simpleKeywords.some(keyword => lowerQuery.includes(keyword))) {
     return { cost: 1, complexity: 'simple' };
   }
-
-  // Perguntas longas (>20 palavras) ou com números tendem a ser mais complexas
-  if (wordCount > 20 || hasNumbers) {
-    return { cost: 5, complexity: 'complex' };
-  }
-
-  // Por padrão, considera simples
   return { cost: 1, complexity: 'simple' };
 }
 
 export async function getChatbotResponse(input: ChatInput, userId: string): Promise<string> {
-  // Analisa a complexidade da pergunta para determinar o custo dinamicamente
-  const { cost, complexity } = analyzeQueryComplexity(input.prompt);
-
+  const { cost } = analyzeQueryComplexity(input.prompt);
   const credential = await getCredentialAndHandleCredits(userId, cost, 'Chat com Assistente');
-
   try {
     const result = await chatWithTransactions(input, credential);
     return result.response;
@@ -294,50 +231,42 @@ export async function getChatbotResponse(input: ChatInput, userId: string): Prom
   }
 }
 
-export async function extractReceiptInfoAction(input: ReceiptInfoInput, userId: string, chosenProviderId: string): Promise<ReceiptInfoOutput> {
-  // Custo: 10 créditos (processamento de imagem + OCR + análise - operação mais custosa)
+export async function extractReceiptInfoAction(input: ReceiptInfoInput, userId: string, chosenProviderId?: string): Promise<ReceiptInfoOutput> {
   const credential = await getCredentialAndHandleCredits(userId, 10, 'Leitura de Nota Fiscal (OCR)');
   return await extractReceiptInfo(input, credential);
 }
 
 export async function suggestCategoryForItemAction(input: SuggestCategoryInput, userId: string): Promise<SuggestCategoryOutput> {
-  // Custo: 1 crédito (sugestão simples baseada em texto)
   const credential = await getCredentialAndHandleCredits(userId, 1, 'Sugestão de Categoria');
   return suggestCategoryForItem(input, credential);
 }
 
 export async function generateMonthlyReportAction(input: GenerateReportInput, userId: string, isFreeAction: boolean = false): Promise<GenerateReportOutput> {
-  // Custo: 5 créditos (geração de relatório com análise de dados)
   const credential = await getCredentialAndHandleCredits(userId, 5, 'Relatório Mensal', isFreeAction);
   return generateMonthlyReport(input, credential);
 }
 
 export async function generateAnnualReportAction(input: GenerateAnnualReportInput, userId: string, isFreeAction: boolean = false): Promise<GenerateAnnualReportOutput> {
-  // Custo: 5 créditos (ação complexa conforme página de billing)
   const credential = await getCredentialAndHandleCredits(userId, 5, 'Relatório Anual', isFreeAction);
   return generateAnnualReport(input, credential);
 }
 
 export async function suggestBudgetAmountAction(input: SuggestBudgetInput, userId: string): Promise<SuggestBudgetOutput> {
-  // Custo: 2 créditos (ação simples conforme página de billing)
   const credential = await getCredentialAndHandleCredits(userId, 2, 'Sugestão de Orçamento');
   return suggestBudgetAmount(input, credential);
 }
 
 export async function projectGoalCompletionAction(input: ProjectGoalCompletionInput, userId: string): Promise<ProjectGoalCompletionOutput> {
-  // Custo: 2 créditos (ação simples conforme página de billing)
   const credential = await getCredentialAndHandleCredits(userId, 2, 'Projeção de Meta');
   return projectGoalCompletion(input, credential);
 }
 
 export async function generateAutomaticBudgetsAction(input: GenerateAutomaticBudgetsInput, userId: string): Promise<GenerateAutomaticBudgetsOutput> {
-  // Custo: 5 créditos (ação complexa conforme página de billing)
   const credential = await getCredentialAndHandleCredits(userId, 5, 'Criação de Orçamentos Automáticos');
   return generateAutomaticBudgets(input, credential);
 }
 
 export async function predictFutureBalanceAction(input: PredictFutureBalanceInput, userId: string, forceRefresh: boolean = false): Promise<PredictFutureBalanceOutput> {
-  // Custo: 5 créditos para refresh (ação complexa conforme página de billing)
   const cost = forceRefresh ? 5 : 0;
   const credential = await getCredentialAndHandleCredits(userId, cost, 'Previsão de Saldo', !forceRefresh);
   return predictFutureBalance(input, credential);

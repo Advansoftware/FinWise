@@ -9,11 +9,10 @@ import { AppNav } from "../app-nav";
 import { PWAUpdater } from "@/components/pwa-updater";
 import { ChatAssistant } from "@/components/chat/chat-assistant";
 import { TransactionsProvider } from "@/hooks/use-transactions";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { BudgetsProvider } from "@/hooks/use-budgets";
 import { GoalsProvider } from "@/hooks/use-goals";
-import { WalletsProvider, useWallets } from "@/hooks/use-wallets";
+import { WalletsProvider } from "@/hooks/use-wallets";
 import { ReportsProvider } from "@/hooks/use-reports";
 import { InstallmentsProvider } from "@/hooks/use-installments";
 import { PlanProvider } from "@/hooks/use-plan";
@@ -31,7 +30,6 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
     <SidebarProvider defaultOpen={!isMobile}>
        {completedGoal && <GoalCompletionCelebration goal={completedGoal} onComplete={clearCompletedGoal} />}
       <div className="flex min-h-screen">
-          {/* Sidebar - Hidden on mobile by default */}
           <Sidebar className="flex flex-col border-r fixed h-screen z-40 md:fixed md:inset-y-0 md:z-40">
               <SidebarHeader className="border-b p-4">
                   <div className="flex items-center gap-3 group-data-[state=collapsed]:justify-center">
@@ -51,9 +49,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
               </SidebarFooter>
           </Sidebar>
 
-          {/* Main Content */}
           <main className="flex-1 flex flex-col min-w-0 md:ml-[var(--sidebar-width)]">
-              {/* Mobile Header */}
               <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 lg:hidden">
                   <div className="flex items-center gap-3">
                       <SidebarTrigger className="shrink-0" />
@@ -66,17 +62,12 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
                   </div>
               </header>
 
-              {/* Page Content - Fixed height with own scroll */}
               <div className="flex-1 h-[calc(100vh-3.5rem)] lg:h-screen overflow-y-auto">
                 <div className="container mx-auto px-4 py-4 lg:px-6 lg:py-6 max-w-7xl pb-24 lg:pb-6">
                     {children}
                 </div>
               </div>
 
-              {/* Fixed Elements */}
-              <PWAUpdater />
-              
-              {/* Floating Action Buttons - Mobile Optimized */}
               <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-3">
                 <div className="flex items-center gap-2">
                   <AICreditIndicator />
@@ -94,7 +85,7 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
      <PlanProvider>
         <CreditsProvider>
           <WalletsProvider>
-            <TransactionsProviderWithWallets>
+            <TransactionsProvider>
               <ReportsProvider>
                 <InstallmentsProvider>
                   <BudgetsProvider>
@@ -104,21 +95,11 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
                   </BudgetsProvider>
                 </InstallmentsProvider>
               </ReportsProvider>
-            </TransactionsProviderWithWallets>
+            </TransactionsProvider>
           </WalletsProvider>
         </CreditsProvider>
       </PlanProvider>
   )
-}
-
-function TransactionsProviderWithWallets({ children }: { children: React.ReactNode }) {
-  const { refreshWallets } = useWallets();
-  
-  return (
-    <TransactionsProvider refreshWallets={refreshWallets}>
-      {children}
-    </TransactionsProvider>
-  );
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
