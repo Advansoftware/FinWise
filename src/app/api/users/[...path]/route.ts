@@ -1,3 +1,4 @@
+
 // src/app/api/users/[...path]/route.ts
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
@@ -5,6 +6,7 @@ import { getAdminApp } from '@/lib/firebase-admin';
 import { ObjectId } from 'mongodb';
 import bcrypt from 'bcrypt';
 import * as admin from 'firebase-admin';
+import { setupDefaultUserData } from '@/services/default-setup-service';
 
 const SALT_ROUNDS = 10;
 
@@ -69,9 +71,8 @@ async function handler(
             userToReturn.uid = userProfile._id.toHexString(); 
             delete userToReturn._id;
 
-            // Configurar dados padrão para o novo usuário (categorias, configurações, etc.)
+            // Configurar dados padrão para o novo usuário (categorias, etc.)
             try {
-                const { setupDefaultUserData } = await import('@/services/default-setup-service');
                 await setupDefaultUserData(userToReturn.uid);
                 console.log(`✅ Dados padrão configurados para novo usuário ${userToReturn.uid}`);
             } catch (setupError) {
@@ -117,7 +118,7 @@ async function handler(
 
             if (!user) {
                 // If user doesn't exist, create a new one.
-                const newUser = {
+                const newUserDoc = {
                     _id: new ObjectId(socialUser.uid), // Use the Firebase UID as the MongoDB ID
                     displayName: socialUser.name || 'New User',
                     email: socialUser.email,
@@ -126,17 +127,15 @@ async function handler(
                     aiCredits: 0,
                     createdAt: new Date(),
                 };
-                await usersCollection.insertOne(newUser);
-                user = newUser;
+                await usersCollection.insertOne(newUserDoc);
+                user = newUserDoc;
 
-                // Configurar dados padrão para o novo usuário social (categorias, configurações, etc.)
+                // Configurar dados padrão para o novo usuário social
                 try {
-                    const { setupDefaultUserData } = await import('@/services/default-setup-service');
                     await setupDefaultUserData(socialUser.uid);
                     console.log(`✅ Dados padrão configurados para novo usuário social ${socialUser.uid}`);
                 } catch (setupError) {
                     console.error('Erro ao configurar dados padrão para usuário social:', setupError);
-                    // Não falha o cadastro se houver erro na configuração padrão
                 }
             }
 
@@ -158,3 +157,5 @@ async function handler(
 
 // Only POST is needed for login/signup
 export { handler as POST };
+
+    

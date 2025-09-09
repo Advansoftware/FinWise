@@ -1,7 +1,8 @@
+
 'use server';
 
 import { TransactionCategory } from '@/lib/types';
-import { apiClient } from '@/lib/api-client';
+import { getDatabaseAdapter } from '@/core/services/service-factory';
 
 // Categorias e subcategorias padrão que serão criadas para novos usuários
 export const DEFAULT_CATEGORIES: Record<TransactionCategory, string[]> = {
@@ -142,7 +143,7 @@ export const DEFAULT_USER_SETTINGS = {
       goalReminders: true
     }
   },
-  aiSettings: {
+  ai_settings: { // Renomeado para seguir o padrão da API
     credentials: [],
     activeCredentialId: null
   }
@@ -156,16 +157,12 @@ export async function setupDefaultUserData(userId: string): Promise<void> {
   try {
     console.log(`🔧 Configurando dados padrão para usuário ${userId}...`);
 
+    const db = await getDatabaseAdapter();
     // Salvar configurações padrão (incluindo categorias)
-    await apiClient.update('settings', userId, DEFAULT_USER_SETTINGS);
+    await db.settings.updateByUserId(userId, DEFAULT_USER_SETTINGS);
 
     console.log(`✅ Dados padrão configurados com sucesso para usuário ${userId}`);
     console.log(`📂 ${Object.keys(DEFAULT_CATEGORIES).length} categorias criadas`);
-
-    // Log das categorias criadas para debug
-    Object.entries(DEFAULT_CATEGORIES).forEach(([category, subcategories]) => {
-      console.log(`   📁 ${category}: ${subcategories.length} subcategorias`);
-    });
 
   } catch (error) {
     console.error(`❌ Erro ao configurar dados padrão para usuário ${userId}:`, error);
@@ -180,7 +177,8 @@ export async function setupDefaultUserData(userId: string): Promise<void> {
  */
 export async function hasUserData(userId: string): Promise<boolean> {
   try {
-    const settings = await apiClient.get('settings', userId);
+    const db = await getDatabaseAdapter();
+    const settings = await db.settings.findByUserId(userId);
     return !!(settings && settings.categories && Object.keys(settings.categories).length > 0);
   } catch (error) {
     console.error('Erro ao verificar dados do usuário:', error);
@@ -218,7 +216,8 @@ export async function addNewDefaultCategories(
   newCategories: Record<TransactionCategory, string[]>
 ): Promise<void> {
   try {
-    const settings = await apiClient.get('settings', userId) || {};
+    const db = await getDatabaseAdapter();
+    const settings = await db.settings.findByUserId(userId) || {};
     const existingCategories = settings.categories || {};
 
     // Mescla categorias existentes com novas (sem sobrescrever)
@@ -232,22 +231,15 @@ export async function addNewDefaultCategories(
         mergedCategories[categoryKey] = subcategories;
       } else {
         // Categoria existe, adiciona apenas subcategorias novas
-        const existingSubcategories = mergedCategories[categoryKey] || [];
-        const newSubcategories = subcategories.filter(
-          sub => !existingSubcategories.includes(sub)
-        );
+        const existingSubcategories = new Set(mergedCategories[categoryKey] || []);
+        subcategories.forEach(sub => existingSubcategories.add(sub));
 
-        if (newSubcategories.length > 0) {
-          mergedCategories[categoryKey] = [
-            ...existingSubcategories,
-            ...newSubcategories
-          ].sort();
-        }
+        mergedCategories[categoryKey] = Array.from(existingSubcategories).sort();
       }
     });
 
     // Salva as configurações atualizadas
-    await apiClient.update('settings', userId, {
+    await db.settings.updateByUserId(userId, {
       ...settings,
       categories: mergedCategories
     });
@@ -258,3 +250,5 @@ export async function addNewDefaultCategories(
     throw error;
   }
 }
+
+    
