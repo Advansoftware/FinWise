@@ -64,6 +64,17 @@ export function EditInstallmentDialog({
   const { categories, subcategories } = useTransactions();
 
   const availableCategories = categories;
+
+  // Function to get a valid wallet ID, fallback to first available if original doesn't exist
+  const getValidWalletId = () => {
+    if (installment?.sourceWalletId) {
+      const walletExists = wallets.find(w => w.id === installment.sourceWalletId);
+      if (walletExists) {
+        return installment.sourceWalletId;
+      }
+    }
+    return wallets.length > 0 ? wallets[0].id : '';
+  };
   
   const form = useForm<EditInstallmentForm>({
     resolver: zodResolver(editInstallmentSchema),
@@ -92,10 +103,10 @@ export function EditInstallmentDialog({
         category: installment.category,
         subcategory: installment.subcategory || '',
         establishment: installment.establishment || '',
-        sourceWalletId: installment.sourceWalletId || '',
+        sourceWalletId: getValidWalletId(),
       });
     }
-  }, [installment, open, form]);
+  }, [installment, open, form, wallets]);
 
   // Reset subcategory when category changes
   useEffect(() => {

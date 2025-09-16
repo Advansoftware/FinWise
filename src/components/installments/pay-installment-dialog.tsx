@@ -64,23 +64,36 @@ export function PayInstallmentDialog({
   const { payInstallment } = useInstallments();
   const { wallets } = useWallets();
 
+  // Encontrar carteira válida: primeira tenta a do parcelamento, depois a primeira disponível
+  const getValidWalletId = () => {
+    if (installment.sourceWalletId) {
+      const walletExists = wallets.find(w => w.id === installment.sourceWalletId);
+      if (walletExists) {
+        return installment.sourceWalletId;
+      }
+    }
+    // Se a carteira do parcelamento não existe, usar a primeira disponível
+    return wallets.length > 0 ? wallets[0].id : '';
+  };
+
   const form = useForm<PaymentForm>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
-      walletId: installment.sourceWalletId || '',
+      walletId: getValidWalletId(),
       paidAmount: payment?.scheduledAmount.toString() || '0',
     },
   });
 
-  // Reset form when payment changes
+  // Reset form when payment changes or wallets change
   useEffect(() => {
     if (payment) {
       form.setValue('paidAmount', payment.scheduledAmount.toString());
-      if (installment.sourceWalletId) {
-        form.setValue('walletId', installment.sourceWalletId);
+      const validWalletId = getValidWalletId();
+      if (validWalletId) {
+        form.setValue('walletId', validWalletId);
       }
     }
-  }, [payment, installment.sourceWalletId, form]);
+  }, [payment, installment.sourceWalletId, wallets, form]);
 
   const selectedWalletId = form.watch('walletId');
   const selectedWallet = wallets.find(w => w.id === selectedWalletId);

@@ -160,4 +160,10 @@ export interface IInstallmentsRepository {
       amount: number;
     }>;
   }>>;
+
+  // Migração e manutenção
+  migrateOrphanedWalletReferences(userId: string): Promise<{
+    installmentsMigrated: number;
+    transactionsMigrated: number;
+  }>;
 }

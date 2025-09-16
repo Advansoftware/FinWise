@@ -1,7 +1,7 @@
 // Gastometria PWA Service Worker
-const CACHE_NAME = 'gastometria-cache-v2';
-const RUNTIME_CACHE = 'gastometria-runtime-v2';
-const DATA_CACHE = 'gastometria-data-v2';
+const CACHE_NAME = 'gastometria-cache-v3';
+const RUNTIME_CACHE = 'gastometria-runtime-v3';
+const DATA_CACHE = 'gastometria-data-v3';
 
 // Recursos essenciais para cache
 const urlsToCache = [

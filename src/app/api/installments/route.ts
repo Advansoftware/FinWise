@@ -70,6 +70,22 @@ export async function POST(request: NextRequest) {
     }
 
     const db = await getDatabaseAdapter();
+
+    // Validar se a carteira existe e pertence ao usuário
+    try {
+      const wallet = await db.wallets.findById(installmentData.sourceWalletId);
+      if (!wallet || wallet.userId !== userId) {
+        return NextResponse.json({
+          error: 'Carteira não encontrada ou não pertence ao usuário'
+        }, { status: 400 });
+      }
+    } catch (walletError) {
+      console.error('Error validating wallet:', walletError);
+      return NextResponse.json({
+        error: 'Erro ao validar carteira'
+      }, { status: 400 });
+    }
+
     const installment = await db.installments.create(userId, installmentData);
 
     return NextResponse.json(installment, { status: 201 });
@@ -86,13 +102,31 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, ...updateData } = body;
+    const { id, userId, ...updateData } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'Installment ID is required' }, { status: 400 });
     }
 
     const db = await getDatabaseAdapter();
+
+    // Se estamos atualizando sourceWalletId, validar se a carteira existe
+    if (updateData.sourceWalletId && userId) {
+      try {
+        const wallet = await db.wallets.findById(updateData.sourceWalletId);
+        if (!wallet || wallet.userId !== userId) {
+          return NextResponse.json({
+            error: 'Carteira não encontrada ou não pertence ao usuário'
+          }, { status: 400 });
+        }
+      } catch (walletError) {
+        console.error('Error validating wallet during update:', walletError);
+        return NextResponse.json({
+          error: 'Erro ao validar carteira'
+        }, { status: 400 });
+      }
+    }
+
     const installment = await db.installments.update(id, updateData);
 
     if (!installment) {

@@ -220,6 +220,8 @@ export function InstallmentsProvider({ children }: { children: React.ReactNode }
   }, [user?.uid, toast, fetchSummary]);
 
   const updateInstallment = useCallback(async (id: string, data: Partial<Installment>): Promise<boolean> => {
+    if (!user?.uid) return false;
+
     try {
       if (navigator.onLine) {
         // Online: update on server
@@ -228,7 +230,7 @@ export function InstallmentsProvider({ children }: { children: React.ReactNode }
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ id, ...data }),
+          body: JSON.stringify({ id, userId: user.uid, ...data }),
         });
 
         if (response.ok) {

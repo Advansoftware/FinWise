@@ -173,6 +173,13 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
         throw new Error('Parcelamento não encontrado');
       }
 
+      console.log('📦 Parcelamento encontrado:', {
+        id: installment._id.toString(),
+        sourceWalletId: installment.sourceWalletId,
+        userId: installment.userId,
+        name: installment.name
+      });
+
       // 2. Buscar o pagamento específico
       const paymentIndex = installment.payments.findIndex((p: InstallmentPayment) =>
         p.installmentNumber === data.installmentNumber && p.status === 'pending'
@@ -184,12 +191,65 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
 
       const payment = installment.payments[paymentIndex];
 
+      // Debug: Listar TODAS as carteiras do usuário, incluindo possíveis duplicatas
+      const allUserWallets = await walletsCollection.find({ userId: installment.userId }).toArray();
+      console.log('💳 TODAS as carteiras do usuário no MongoDB:');
+      allUserWallets.forEach((w, index) => {
+        console.log(`  ${index + 1}. ID: ${w._id.toString()} | Nome: "${w.name}" | Saldo: R$ ${w.balance}`);
+      });
+
+      // Verificar se há carteiras com nome similar
+      const nubankWallets = allUserWallets.filter(w =>
+        w.name.toLowerCase().includes('nubank') ||
+        w.name.toLowerCase().includes('nu bank')
+      );
+      console.log('🏦 Carteiras "Nubank" encontradas:', nubankWallets.length);
+      nubankWallets.forEach((w, index) => {
+        console.log(`  Nubank ${index + 1}: ID: ${w._id.toString()} | Nome exato: "${w.name}"`);
+      });
+
       // 3. Verificar se a carteira existe e tem saldo suficiente
-      const wallet = await walletsCollection.findOne({
+      console.log('🔍 Buscando carteira do parcelamento ID:', installment.sourceWalletId);
+      let wallet = await walletsCollection.findOne({
         _id: new ObjectId(installment.sourceWalletId)
       });
 
+      // Se a carteira original não existe, buscar uma carteira disponível do usuário
       if (!wallet) {
+        console.log('🔄 Carteira original não encontrada, buscando carteira disponível para o usuário');
+        wallet = await walletsCollection.findOne({ userId: installment.userId });
+
+        if (wallet) {
+          console.log('✅ Usando carteira disponível:', wallet.name, 'ID:', wallet._id.toString());
+          console.log('🔧 Atualizando parcelamento para corrigir referência órfã...');
+
+          // Atualizar o parcelamento para usar a carteira correta
+          await installmentsCollection.updateOne(
+            { _id: new ObjectId(data.installmentId) },
+            { $set: { sourceWalletId: wallet._id.toString() } }
+          );
+
+          console.log('✅ Parcelamento corrigido com sucesso!');
+
+          // IMPORTANTE: Também atualizar todas as outras transações que possam estar com a carteira órfã
+          const orphanedTransactions = await transactionsCollection.countDocuments({
+            userId: installment.userId,
+            walletId: installment.sourceWalletId
+          });
+
+          if (orphanedTransactions > 0) {
+            console.log(`🔧 Encontradas ${orphanedTransactions} transações órfãs, corrigindo...`);
+            await transactionsCollection.updateMany(
+              {
+                userId: installment.userId,
+                walletId: installment.sourceWalletId
+              },
+              { $set: { walletId: wallet._id.toString() } }
+            );
+            console.log('✅ Transações órfãs corrigidas!');
+          }
+        }
+      } if (!wallet) {
         throw new Error('Carteira não encontrada');
       }
 
@@ -600,5 +660,66 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
     }
 
     return projections;
+  }
+
+  /**
+   * Migra todos os parcelamentos e transações órfãos para usar carteiras válidas
+   */
+  async migrateOrphanedWalletReferences(userId: string): Promise<{
+    installmentsMigrated: number,
+    transactionsMigrated: number
+  }> {
+    const installmentsCollection = this.db.collection('installments');
+    const transactionsCollection = this.db.collection('transactions');
+    const walletsCollection = this.db.collection('wallets');
+
+    console.log('🔧 Iniciando migração de dados órfãos para usuário:', userId);
+
+    // Buscar carteira válida do usuário
+    const validWallet = await walletsCollection.findOne({ userId });
+    if (!validWallet) {
+      throw new Error('Nenhuma carteira válida encontrada para o usuário');
+    }
+
+    console.log('✅ Carteira válida encontrada:', validWallet.name, 'ID:', validWallet._id.toString());
+
+    // Buscar todos os IDs de carteiras válidas do usuário
+    const validWalletIds = await walletsCollection
+      .find({ userId })
+      .project({ _id: 1 })
+      .toArray()
+      .then(wallets => wallets.map(w => w._id.toString()));
+
+    console.log('📝 IDs de carteiras válidas:', validWalletIds);
+
+    // Migrar parcelamentos órfãos
+    const orphanedInstallments = await installmentsCollection.find({
+      userId,
+      sourceWalletId: { $nin: validWalletIds }
+    }).toArray();
+
+    let installmentsMigrated = 0;
+    for (const installment of orphanedInstallments) {
+      await installmentsCollection.updateOne(
+        { _id: installment._id },
+        { $set: { sourceWalletId: validWallet._id.toString() } }
+      );
+      installmentsMigrated++;
+    }
+
+    // Migrar transações órfãs
+    const orphanedTransactionsResult = await transactionsCollection.updateMany(
+      {
+        userId,
+        walletId: { $nin: validWalletIds }
+      },
+      { $set: { walletId: validWallet._id.toString() } }
+    );
+
+    const transactionsMigrated = orphanedTransactionsResult.modifiedCount;
+
+    console.log(`✅ Migração concluída: ${installmentsMigrated} parcelamentos e ${transactionsMigrated} transações migradas`);
+
+    return { installmentsMigrated, transactionsMigrated };
   }
 }
