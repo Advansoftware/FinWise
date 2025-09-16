@@ -53,7 +53,7 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [user]);
+  }, [user?.uid]);
 
   useEffect(() => {
     if (!authLoading && user?.uid) {

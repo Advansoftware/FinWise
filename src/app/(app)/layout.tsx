@@ -17,6 +17,7 @@ import { InstallmentsProvider } from "@/hooks/use-installments";
 import { PlanProvider } from "@/hooks/use-plan";
 import { CreditsProvider } from "@/hooks/use-credits";
 import { GoalCompletionCelebration } from "@/components/goals/goal-celebration";
+import { OnlineStatusIndicator } from "@/components/online-status-indicator";
 import { useGoals } from "@/hooks/use-goals";
 import { AICreditIndicator } from "@/components/credits/ai-credit-indicator";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -29,6 +30,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   return (
     <SidebarProvider defaultOpen={!isMobile}>
        {completedGoal && <GoalCompletionCelebration goal={completedGoal} onComplete={clearCompletedGoal} />}
+       <OnlineStatusIndicator />
       <div className="flex min-h-screen">
           <Sidebar className="flex flex-col border-r fixed h-screen z-40 md:fixed md:inset-y-0 md:z-40">
               <SidebarHeader className="border-b p-4">

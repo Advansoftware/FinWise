@@ -366,7 +366,7 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
         projectedDate: lastPayment?.dueDate || installment.startDate
       };
     });
-    
+
     const gamification = await this.calculateGamification(userId, installments);
 
     return {
@@ -383,7 +383,7 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
   private async calculateGamification(userId: string, allUserInstallments: Installment[]): Promise<GamificationData> {
     const goals = await this.db.collection('goals').find({ userId }).toArray();
     const budgets = await this.db.collection('budgets').find({ userId }).toArray();
-    
+
     // --- Pontos ---
     let points = 0;
     // Pontos de Parcelamentos
@@ -412,21 +412,61 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
     // --- Conquistas ---
     const achievements = await this.calculateAchievements(userId, allUserInstallments, goals, budgets);
 
+    // --- Taxa de conclusão ---
+    const totalPayments = allUserInstallments.reduce((sum, inst) => sum + inst.totalInstallments, 0);
+    const paidPayments = allUserInstallments.reduce((sum, inst) => sum + inst.paidInstallments, 0);
+    const completionRate = totalPayments > 0 ? Math.round((paidPayments / totalPayments) * 100) : 0;
+
     return {
       points: Math.max(0, points),
       streak,
       badges,
       level,
       achievements,
-      completionRate: 0, 
+      completionRate,
       financialHealthScore: 0,
       motivationalInsights: []
     };
   }
 
   private async calculatePaymentStreak(userId: string): Promise<number> {
-    // ... (lógica existente para streak de parcelamentos)
-    return 0; // Placeholder
+    const now = new Date();
+    let streak = 0;
+    let currentDate = new Date(now.getFullYear(), now.getMonth(), 1); // Início do mês atual
+
+    // Verifica os últimos 12 meses
+    for (let i = 0; i < 12; i++) {
+      const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+
+      const monthlyPayments = await this.db.collection('installments').aggregate([
+        { $match: { userId } },
+        { $unwind: '$payments' },
+        {
+          $match: {
+            'payments.status': 'paid',
+            'payments.paidDate': {
+              $gte: startOfMonth.toISOString(),
+              $lte: endOfMonth.toISOString()
+            }
+          }
+        },
+        { $count: 'totalPayments' }
+      ]).toArray();
+
+      const hasPaymentsThisMonth = monthlyPayments.length > 0 && monthlyPayments[0].totalPayments > 0;
+
+      if (hasPaymentsThisMonth) {
+        streak++;
+      } else {
+        break; // Quebra a sequência se não houve pagamentos no mês
+      }
+
+      // Volta um mês
+      currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    }
+
+    return streak;
   }
 
   private calculateLevel(points: number) {
@@ -479,42 +519,42 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
 
     // Badges de Orçamentos
     if (budgets.length >= 3) {
-        badges.push({ id: 'budget-master', name: 'Mestre dos Orçamentos', description: 'Criou 3 ou mais orçamentos', icon: '📊', earnedAt: now, rarity: 'rare' as const });
+      badges.push({ id: 'budget-master', name: 'Mestre dos Orçamentos', description: 'Criou 3 ou mais orçamentos', icon: '📊', earnedAt: now, rarity: 'rare' as const });
     }
 
     return badges;
   }
 
   private async calculateAchievements(userId: string, installments: Installment[], goals: any[], budgets: any[]) {
-     const achievements = [];
-     const now = new Date().toISOString();
+    const achievements = [];
+    const now = new Date().toISOString();
 
-     // Conquistas de Parcelamentos
-     const paidInstallments = installments.reduce((sum, inst) => sum + inst.paidInstallments, 0);
-     achievements.push({
-        id: 'punctuality-master', name: 'Mestre da Pontualidade', description: 'Pague 50 parcelas em dia',
-        icon: '⚡', progress: paidInstallments, target: 50, isCompleted: paidInstallments >= 50, points: 200, completedAt: paidInstallments >= 50 ? now : undefined
-     });
+    // Conquistas de Parcelamentos
+    const paidInstallments = installments.reduce((sum, inst) => sum + inst.paidInstallments, 0);
+    achievements.push({
+      id: 'punctuality-master', name: 'Mestre da Pontualidade', description: 'Pague 50 parcelas em dia',
+      icon: '⚡', progress: paidInstallments, target: 50, isCompleted: paidInstallments >= 50, points: 200, completedAt: paidInstallments >= 50 ? now : undefined
+    });
 
-     // Conquistas de Metas
-     const completedGoalsCount = goals.filter(g => g.currentAmount >= g.targetAmount).length;
-     achievements.push({
-        id: 'serial-achiever', name: 'Conquistador em Série', description: 'Complete 5 metas financeiras',
-        icon: '👑', progress: completedGoalsCount, target: 5, isCompleted: completedGoalsCount >= 5, points: 300, completedAt: completedGoalsCount >= 5 ? now : undefined
-     });
+    // Conquistas de Metas
+    const completedGoalsCount = goals.filter(g => g.currentAmount >= g.targetAmount).length;
+    achievements.push({
+      id: 'serial-achiever', name: 'Conquistador em Série', description: 'Complete 5 metas financeiras',
+      icon: '👑', progress: completedGoalsCount, target: 5, isCompleted: completedGoalsCount >= 5, points: 300, completedAt: completedGoalsCount >= 5 ? now : undefined
+    });
 
-     // Conquistas de Orçamentos
-     const totalBudgets = budgets.length;
-     achievements.push({
-        id: 'budget-expert', name: 'Expert em Orçamentos', description: 'Crie 10 orçamentos diferentes',
-        icon: '📈', progress: totalBudgets, target: 10, isCompleted: totalBudgets >= 10, points: 150, completedAt: totalBudgets >= 10 ? now : undefined
-     });
-     
-     // Placeholder para conquistas que precisam de mais lógica
-      achievements.push({
-        id: 'overspending-avoider', name: 'Mestre do Controle', description: 'Passe um mês inteiro sem estourar nenhum orçamento',
-        icon: '🛡️', progress: 0, target: 1, isCompleted: false, points: 100
-     });
+    // Conquistas de Orçamentos
+    const totalBudgets = budgets.length;
+    achievements.push({
+      id: 'budget-expert', name: 'Expert em Orçamentos', description: 'Crie 10 orçamentos diferentes',
+      icon: '📈', progress: totalBudgets, target: 10, isCompleted: totalBudgets >= 10, points: 150, completedAt: totalBudgets >= 10 ? now : undefined
+    });
+
+    // Placeholder para conquistas que precisam de mais lógica
+    achievements.push({
+      id: 'overspending-avoider', name: 'Mestre do Controle', description: 'Passe um mês inteiro sem estourar nenhum orçamento',
+      icon: '🛡️', progress: 0, target: 1, isCompleted: false, points: 100
+    });
 
 
     return achievements;

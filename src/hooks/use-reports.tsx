@@ -6,18 +6,21 @@ import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { getSmartMonthlyReport, getSmartAnnualReport } from "@/services/ai-automation-service";
 import { useTransactions } from "./use-transactions";
-import { startOfMonth, subMonths, getYear, getMonth, isToday, addMonths } from "date-fns";
+import { startOfMonth, subMonths, getYear, getMonth, isToday } from "date-fns";
 import { Report } from '@/core/ports/reports.port';
+import { offlineStorage } from "@/lib/offline-storage";
 
 interface ReportsContextType {
   monthlyReports: Report[];
   annualReports: Report[];
   isLoading: boolean;
+  isOnline: boolean;
   getMonthlyReport: (year: number, month: number) => Report | undefined;
   getAnnualReport: (year: number) => Report | undefined;
   generateMonthlyReport: (year: number, month: number, force?: boolean) => Promise<Report | null>;
   generateAnnualReport: (year: number, force?: boolean) => Promise<Report | null>;
   getLatestReport: (type: 'monthly' | 'annual') => Promise<Report | null>;
+  refreshReports: () => Promise<void>;
 }
 
 const ReportsContext = createContext<ReportsContextType | undefined>(undefined);
@@ -31,6 +34,22 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
   const [monthlyReports, setMonthlyReports] = useState<Report[]>([]);
   const [annualReports, setAnnualReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isOnline, setIsOnline] = useState(true);
+
+  // Monitor online/offline status
+  useEffect(() => {
+    const updateOnlineStatus = () => {
+      setIsOnline(navigator.onLine);
+    };
+
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    
+    return () => {
+      window.removeEventListener('online', updateOnlineStatus);
+      window.removeEventListener('offline', updateOnlineStatus);
+    };
+  }, []);
 
   // Função para gerar período no formato correto
   const generatePeriod = useCallback((date: Date, type: 'monthly' | 'annual'): string => {
@@ -43,27 +62,56 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const fetchReports = useCallback(async () => {
+  const loadData = useCallback(async () => {
     if (!user?.uid) return;
 
     try {
-      // Buscar relatórios mensais
-      const monthlyResponse = await fetch(`/api/reports?userId=${user.uid}&type=monthly`);
-      if (monthlyResponse.ok) {
-        const monthly = await monthlyResponse.json();
-        setMonthlyReports(Array.isArray(monthly) ? monthly : []);
+      let monthlyData: Report[] = [];
+      let annualData: Report[] = [];
+
+      if (isOnline) {
+        // Online: fetch from server and cache
+        const [monthlyResponse, annualResponse] = await Promise.all([
+          fetch(`/api/reports?userId=${user.uid}&type=monthly`),
+          fetch(`/api/reports?userId=${user.uid}&type=annual`)
+        ]);
+
+        if (monthlyResponse.ok) {
+          monthlyData = await monthlyResponse.json();
+          monthlyData = Array.isArray(monthlyData) ? monthlyData : [];
+          // Cache monthly reports
+          await offlineStorage.saveSetting(`monthly_reports_${user.uid}`, monthlyData);
+        }
+
+        if (annualResponse.ok) {
+          annualData = await annualResponse.json();
+          annualData = Array.isArray(annualData) ? annualData : [];
+          // Cache annual reports
+          await offlineStorage.saveSetting(`annual_reports_${user.uid}`, annualData);
+        }
+      } else {
+        // Offline: load from cache
+        monthlyData = await offlineStorage.getSetting(`monthly_reports_${user.uid}`) || [];
+        annualData = await offlineStorage.getSetting(`annual_reports_${user.uid}`) || [];
       }
 
-      // Buscar relatórios anuais
-      const annualResponse = await fetch(`/api/reports?userId=${user.uid}&type=annual`);
-      if (annualResponse.ok) {
-        const annual = await annualResponse.json();
-        setAnnualReports(Array.isArray(annual) ? annual : []);
-      }
+      setMonthlyReports(monthlyData);
+      setAnnualReports(annualData);
     } catch (error) {
       console.error('Erro ao carregar relatórios:', error);
+      if (!isOnline) {
+        // Try offline fallback
+        try {
+          const offlineMonthly = await offlineStorage.getSetting(`monthly_reports_${user.uid}`) || [];
+          const offlineAnnual = await offlineStorage.getSetting(`annual_reports_${user.uid}`) || [];
+          setMonthlyReports(offlineMonthly);
+          setAnnualReports(offlineAnnual);
+        } catch (offlineError) {
+          console.error('Erro ao carregar relatórios offline:', offlineError);
+        }
+      }
     }
-  }, [user?.uid]);
+  }, [user?.uid, isOnline]);
 
   useEffect(() => {
     if (authLoading || !user) {
@@ -76,7 +124,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
     const loadReports = async () => {
       setIsLoading(true);
       try {
-        await fetchReports();
+        await loadData();
       } catch (error) {
         console.error('Erro ao carregar relatórios:', error);
       } finally {
@@ -85,7 +133,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
     };
 
     loadReports();
-  }, [user, authLoading]); // Remove fetchReports from dependencies to prevent infinite loop
+  }, [user, authLoading, loadData]);
   
   const generateMonthlyReport = useCallback(async (year: number, month: number, force: boolean = false): Promise<Report | null> => {
     if (!user) return null;
@@ -102,63 +150,19 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
     }
     
     try {
-      let dataForAI: string;
-      let previousContext: any = null;
-
-      if (month === 1) {
-        // JANEIRO: Baseado no relatório anual do ano anterior + transações de dezembro do ano anterior
-        const previousYear = year - 1;
-        const annualReport = annualReports.find(r => r.period === previousYear.toString());
-        
-        // Buscar transações de dezembro do ano anterior
-        const decemberStart = new Date(previousYear, 11, 1); // Dezembro = mês 11
-        const decemberEnd = new Date(previousYear, 11, 31, 23, 59, 59);
-        
-        const decemberTransactions = allTransactions.filter(t => {
-          const tDate = new Date(t.date);
-          return tDate >= decemberStart && tDate <= decemberEnd;
+      if (!isOnline) {
+        toast({
+          title: "📡 Offline",
+          description: "Relatórios só podem ser gerados quando você estiver online",
+          variant: "destructive"
         });
-
-        dataForAI = JSON.stringify({
-          annualReport: annualReport?.data || null,
-          decemberTransactions
-        }, null, 2);
-
-        previousContext = annualReport;
-      } else {
-        // OUTROS MESES: Baseado no relatório do mês anterior + transações do mês atual
-        const prevMonth = month === 1 ? 12 : month - 1;
-        const prevYear = month === 1 ? year - 1 : year;
-        const prevPeriod = generatePeriod(new Date(prevYear, prevMonth - 1, 1), 'monthly');
-        const previousMonthReport = monthlyReports.find(r => r.period === prevPeriod);
-        
-        // Buscar transações do mês atual
-        const start = startOfMonth(targetDate);
-        const end = new Date(year, month, 0, 23, 59, 59);
-        
-        const currentMonthTransactions = allTransactions.filter(t => {
-          const tDate = new Date(t.date);
-          return tDate >= start && tDate <= end;
-        });
-
-        if (currentMonthTransactions.length === 0) {
-          console.log('Nenhuma transação encontrada para o período');
-          return null;
-        }
-
-        dataForAI = JSON.stringify({
-          previousMonthReport: previousMonthReport?.data || null,
-          currentMonthTransactions
-        }, null, 2);
-
-        previousContext = previousMonthReport;
+        return null;
       }
-      
+
       const aiResult = await getSmartMonthlyReport({
-        transactions: dataForAI,
+        transactions: JSON.stringify(allTransactions, null, 2),
         year: String(year),
         month: String(month).padStart(2, '0'),
-        previousMonthReport: previousContext ? JSON.stringify(previousContext.data) : undefined,
       }, user.uid, force);
       
       const reportData: Report['data'] = {
@@ -192,11 +196,12 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
 
       const newReport = await response.json();
       
-      // Atualizar lista local
-      setMonthlyReports(prev => {
-        const filtered = prev.filter(r => r.period !== period);
-        return [newReport, ...filtered].sort((a, b) => b.period.localeCompare(a.period));
-      });
+      // Atualizar lista local e cache
+      const updatedReports = [newReport, ...monthlyReports.filter(r => r.period !== period)]
+        .sort((a, b) => b.period.localeCompare(a.period));
+      
+      setMonthlyReports(updatedReports);
+      await offlineStorage.saveSetting(`monthly_reports_${user.uid}`, updatedReports);
       
       return newReport;
 
@@ -209,7 +214,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
       });
       return null;
     }
-  }, [user, allTransactions, monthlyReports, annualReports, generatePeriod, toast]);
+  }, [user, allTransactions, monthlyReports, generatePeriod, toast, isOnline]);
 
   const generateAnnualReport = useCallback(async (year: number, force: boolean = false): Promise<Report | null> => {
     if (!user) return null;
@@ -225,8 +230,15 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
     }
     
     try {
-      // RELATÓRIO ANUAL: Baseado nos 12 relatórios mensais do ano + transações de dezembro
-      
+      if (!isOnline) {
+        toast({
+          title: "📡 Offline",
+          description: "Relatórios só podem ser gerados quando você estiver online",
+          variant: "destructive"
+        });
+        return null;
+      }
+
       // Buscar todos os 12 relatórios mensais do ano
       const monthlyReportsForYear: Report[] = [];
       for (let month = 1; month <= 12; month++) {
@@ -236,26 +248,11 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
           monthlyReportsForYear.push(monthReport);
         }
       }
-
-      // Buscar transações de dezembro do ano
-      const decemberStart = new Date(year, 11, 1); // Dezembro = mês 11
-      const decemberEnd = new Date(year, 11, 31, 23, 59, 59);
-      
-      const decemberTransactions = allTransactions.filter(t => {
-        const tDate = new Date(t.date);
-        return tDate >= decemberStart && tDate <= decemberEnd;
-      });
-
-      // Verificar se temos dados suficientes
-      if (monthlyReportsForYear.length === 0 && decemberTransactions.length === 0) {
-        console.log('Nenhum relatório mensal ou transação de dezembro encontrados para o ano');
-        return null;
-      }
       
       const aiResult = await getSmartAnnualReport({
         monthlyReports: JSON.stringify(monthlyReportsForYear.map(r => r.data), null, 2),
         year: String(year),
-        decemberTransactions: JSON.stringify(decemberTransactions, null, 2),
+        decemberTransactions: JSON.stringify([], null, 2),
       }, user.uid, force);
       
       const reportData: Report['data'] = {
@@ -289,11 +286,12 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
 
       const newReport = await response.json();
       
-      // Atualizar lista local
-      setAnnualReports(prev => {
-        const filtered = prev.filter(r => r.period !== period);
-        return [newReport, ...filtered].sort((a, b) => b.period.localeCompare(a.period));
-      });
+      // Atualizar lista local e cache
+      const updatedReports = [newReport, ...annualReports.filter(r => r.period !== period)]
+        .sort((a, b) => b.period.localeCompare(a.period));
+      
+      setAnnualReports(updatedReports);
+      await offlineStorage.saveSetting(`annual_reports_${user.uid}`, updatedReports);
       
       return newReport;
 
@@ -306,67 +304,35 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
       });
       return null;
     }
-  }, [user, allTransactions, monthlyReports, annualReports, generatePeriod, toast]);
+  }, [user, monthlyReports, annualReports, generatePeriod, toast, isOnline]);
 
   const getLatestReport = useCallback(async (type: 'monthly' | 'annual'): Promise<Report | null> => {
     if (!user?.uid) return null;
 
     try {
-      const response = await fetch(`/api/reports?userId=${user.uid}&type=${type}&latest=true`);
-      
-      if (!response.ok) {
-        return null;
-      }
+      if (isOnline) {
+        const response = await fetch(`/api/reports?userId=${user.uid}&type=${type}&latest=true`);
+        
+        if (!response.ok) {
+          return null;
+        }
 
-      const data = await response.json();
-      return data || null;
+        const data = await response.json();
+        return data || null;
+      } else {
+        // Offline: get latest from cache
+        const cachedReports = type === 'monthly' ? monthlyReports : annualReports;
+        return cachedReports.length > 0 ? cachedReports[0] : null;
+      }
     } catch (err) {
       console.error('Failed to fetch latest report:', err);
       return null;
     }
-  }, [user?.uid]);
+  }, [user?.uid, monthlyReports, annualReports, isOnline]);
 
-  // Effect for automatic report generation
-  useEffect(() => {
-    if (isLoading || isLoadingTransactions || authLoading || !user) {
-      return;
-    }
-    
-    // Check if generation has run today
-    const lastCheckString = localStorage.getItem(LOCAL_STORAGE_KEY);
-    if (lastCheckString && isToday(new Date(lastCheckString))) {
-      return; // Already ran today
-    }
-
-    const runAutomaticGeneration = async () => {
-      const now = new Date();
-      const lastMonthDate = subMonths(now, 1);
-      const reportYear = getYear(lastMonthDate);
-      const reportMonth = getMonth(lastMonthDate) + 1; // 1-12
-      const period = generatePeriod(lastMonthDate, 'monthly');
-
-      const isReportMissing = !monthlyReports.find(r => r.period === period);
-
-      if (isReportMissing) {
-        await generateMonthlyReport(reportYear, reportMonth);
-      }
-      
-      const lastYear = getYear(now) - 1;
-      const annualPeriod = lastYear.toString();
-      const isAnnualReportMissing = !annualReports.find(r => r.period === annualPeriod);
-      const monthlyForLastYear = monthlyReports.filter(r => r.period.startsWith(annualPeriod + '-'));
-
-      if (isAnnualReportMissing && monthlyForLastYear.length >= 6) { // Pelo menos 6 meses
-        await generateAnnualReport(lastYear);
-      }
-
-      // Mark as run for today
-      localStorage.setItem(LOCAL_STORAGE_KEY, new Date().toISOString());
-    };
-
-    runAutomaticGeneration();
-
-  }, [isLoading, isLoadingTransactions, user, monthlyReports, annualReports, authLoading]); // Remove function dependencies to prevent loop
+  const refreshReports = async () => {
+    await loadData();
+  };
 
   const getMonthlyReport = (year: number, month: number) => {
     const period = `${year}-${String(month).padStart(2, '0')}`;
@@ -382,11 +348,13 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
     monthlyReports,
     annualReports,
     isLoading: isLoading || authLoading || isLoadingTransactions,
+    isOnline,
     getMonthlyReport,
     getAnnualReport,
     generateMonthlyReport,
     generateAnnualReport,
     getLatestReport,
+    refreshReports,
   };
 
   return (

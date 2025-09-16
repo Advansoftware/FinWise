@@ -17,6 +17,7 @@ services:
       - MONGODB_DB=gastometria
       - NEXT_PUBLIC_DATABASE_TYPE=mongodb
       - NEXT_PUBLIC_AUTH_PROVIDER=mongodb
+      - NEXT_PUBLIC_APP_URL=https://gastometria.com.br
 
   mongo:
     container_name: gastometria-mongo

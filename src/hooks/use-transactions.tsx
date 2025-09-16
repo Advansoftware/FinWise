@@ -10,6 +10,7 @@ import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { apiClient } from "@/lib/api-client";
 import { useWallets } from "./use-wallets";
+import { offlineStorage } from "@/lib/offline-storage";
 
 interface TransactionsProviderProps {
   children: ReactNode;
@@ -39,6 +40,7 @@ interface TransactionsContextType {
   addSubcategory: (categoryName: TransactionCategory, subcategoryName: string) => Promise<void>;
   deleteSubcategory: (categoryName: TransactionCategory, subcategoryName: string) => Promise<void>;
   refreshOnPageVisit: () => Promise<void>;
+  isOnline: boolean;
 }
 
 const TransactionsContext = createContext<TransactionsContextType | undefined>(undefined);
@@ -50,25 +52,71 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [categoryMap, setCategoryMap] = useState<CategoryMap>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [isOnline, setIsOnline] = useState(true);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: startOfMonth(new Date()),
     to: new Date(),
   });
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('all');
+
+  // Monitor online/offline status
+  useEffect(() => {
+    const updateOnlineStatus = () => {
+      setIsOnline(navigator.onLine);
+    };
+
+    window.addEventListener('online', updateOnlineStatus);
+    window.addEventListener('offline', updateOnlineStatus);
+    
+    return () => {
+      window.removeEventListener('online', updateOnlineStatus);
+      window.removeEventListener('offline', updateOnlineStatus);
+    };
+  }, []);
   
   const refreshData = useCallback(async () => {
     if (!user) return;
     setIsLoading(true);
     try {
-      const [fetchedTransactions, settings] = await Promise.all([
-        apiClient.get('transactions', user.uid),
-        apiClient.get('settings', user.uid)
-      ]);
+      let fetchedTransactions: Transaction[];
+      let settings: any;
+
+      if (navigator.onLine) {
+        // Online: fetch from server and sync to offline storage
+        [fetchedTransactions, settings] = await Promise.all([
+          apiClient.get('transactions', user.uid),
+          apiClient.get('settings', user.uid)
+        ]);
+
+        // Save to offline storage
+        for (const transaction of fetchedTransactions) {
+          await offlineStorage.saveTransaction(transaction, true);
+        }
+        
+        if (settings) {
+          await offlineStorage.saveSetting('categories', settings.categories || {});
+        }
+      } else {
+        // Offline: load from offline storage
+        fetchedTransactions = await offlineStorage.getTransactions(user.uid);
+        const categoriesFromStorage = await offlineStorage.getSetting('categories');
+        settings = { categories: categoriesFromStorage || {} };
+      }
+
       setAllTransactions(fetchedTransactions);
       setCategoryMap(settings?.categories || {});
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
+      // Try to load from offline storage as fallback
+      try {
+        const offlineTransactions = await offlineStorage.getTransactions(user.uid);
+        const offlineCategories = await offlineStorage.getSetting('categories');
+        setAllTransactions(offlineTransactions);
+        setCategoryMap(offlineCategories || {});
+      } catch (offlineError) {
+        console.error('Erro ao carregar dados offline:', offlineError);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -87,35 +135,117 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
   
   const addTransaction = async (transaction: Omit<Transaction, 'id' | 'userId'>) => {
     if (!user) throw new Error("User not authenticated");
-    const transactionWithUser = { ...transaction, userId: user.uid };
-    await apiClient.create('transactions', transactionWithUser);
-    await refreshData();
-    // Refresh wallets after transaction changes
-    refreshWallets();
+    
+    const transactionWithUser = { 
+      ...transaction, 
+      userId: user.uid,
+      id: `temp-${Date.now()}-${Math.random()}` // Temporary ID for offline
+    };
+
+    try {
+      if (navigator.onLine) {
+        // Online: create on server
+        const created = await apiClient.create('transactions', transactionWithUser);
+        await offlineStorage.saveTransaction(created, true);
+      } else {
+        // Offline: save locally and mark for sync
+        await offlineStorage.saveTransaction(transactionWithUser, false);
+        await offlineStorage.addPendingAction({
+          type: 'create',
+          collection: 'transactions',
+          data: transactionWithUser
+        });
+        
+        toast({
+          title: "💾 Transação salva offline",
+          description: "Será sincronizada quando você estiver online"
+        });
+      }
+      
+      await refreshData();
+      refreshWallets();
+    } catch (error) {
+      console.error('Erro ao adicionar transação:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao adicionar transação",
+        description: "Tente novamente"
+      });
+    }
   };
 
   const updateTransaction = async (transactionId: string, updates: Partial<Transaction>, originalTransaction: Transaction) => {
     if (!user) throw new Error("User not authenticated");
     
-    // We send the original transaction along with the updates
-    // so the backend can correctly revert the old balance and apply the new one.
-    const payload = {
-        updates,
-        originalTransaction
-    };
-    await apiClient.update('transactions', transactionId, payload);
-    await refreshData();
-    // Refresh wallets after transaction changes
-    refreshWallets();
+    try {
+      const payload = { updates, originalTransaction };
+      
+      if (navigator.onLine) {
+        // Online: update on server
+        await apiClient.update('transactions', transactionId, payload);
+        const updatedTransaction = { ...originalTransaction, ...updates };
+        await offlineStorage.saveTransaction(updatedTransaction, true);
+      } else {
+        // Offline: update locally and mark for sync
+        const updatedTransaction = { ...originalTransaction, ...updates };
+        await offlineStorage.saveTransaction(updatedTransaction, false);
+        await offlineStorage.addPendingAction({
+          type: 'update',
+          collection: 'transactions',
+          data: payload
+        });
+        
+        toast({
+          title: "💾 Transação atualizada offline",
+          description: "Será sincronizada quando você estiver online"
+        });
+      }
+      
+      await refreshData();
+      refreshWallets();
+    } catch (error) {
+      console.error('Erro ao atualizar transação:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao atualizar transação",
+        description: "Tente novamente"
+      });
+    }
   };
   
   const deleteTransaction = async (transaction: Transaction) => {
     if (!user) throw new Error("User not authenticated");
-    // We send the entire transaction object on delete so the backend knows how to adjust wallet balance.
-    await apiClient.delete('transactions', transaction.id, transaction);
-    await refreshData();
-    // Refresh wallets after transaction changes
-    refreshWallets();
+    
+    try {
+      if (navigator.onLine) {
+        // Online: delete on server
+        await apiClient.delete('transactions', transaction.id, transaction);
+        await offlineStorage.deleteItem('transactions', transaction.id);
+      } else {
+        // Offline: mark as deleted locally and queue for sync
+        await offlineStorage.deleteItem('transactions', transaction.id);
+        await offlineStorage.addPendingAction({
+          type: 'delete',
+          collection: 'transactions',
+          data: transaction
+        });
+        
+        toast({
+          title: "💾 Transação excluída offline",
+          description: "Será sincronizada quando você estiver online"
+        });
+      }
+      
+      await refreshData();
+      refreshWallets();
+    } catch (error) {
+      console.error('Erro ao excluir transação:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao excluir transação",
+        description: "Tente novamente"
+      });
+    }
   };
 
   const { categories, subcategories } = useMemo(() => {
@@ -128,9 +258,29 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
   
   const saveCategories = async (newCategories: CategoryMap) => {
     if (!user) throw new Error("User not authenticated");
-    const currentSettings = await apiClient.get('settings', user.uid) || {};
-    await apiClient.update('settings', user.uid, { ...currentSettings, categories: newCategories });
-    setCategoryMap(newCategories);
+    
+    try {
+      if (navigator.onLine) {
+        const currentSettings = await apiClient.get('settings', user.uid) || {};
+        await apiClient.update('settings', user.uid, { ...currentSettings, categories: newCategories });
+        await offlineStorage.saveSetting('categories', newCategories);
+      } else {
+        await offlineStorage.saveSetting('categories', newCategories);
+        toast({
+          title: "💾 Categorias salvas offline",
+          description: "Serão sincronizadas quando você estiver online"
+        });
+      }
+      
+      setCategoryMap(newCategories);
+    } catch (error) {
+      console.error('Erro ao salvar categorias:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro ao salvar categorias",
+        description: "Tente novamente"
+      });
+    }
   };
 
   const addCategory = async (categoryName: TransactionCategory) => {
@@ -228,6 +378,7 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
     addSubcategory,
     deleteSubcategory,
     refreshOnPageVisit,
+    isOnline,
   };
 
   return (

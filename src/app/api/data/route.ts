@@ -19,8 +19,6 @@ export async function GET(request: NextRequest) {
     console.log('🔧 Getting database adapter...');
     const db = await getDatabaseAdapter();
     console.log('✅ Database adapter obtained:', !!db);
-    console.log('🔧 Checking db.transactions:', !!db.transactions);
-    console.log('🔧 Checking db.transactions.findByUserId:', !!db.transactions?.findByUserId);
 
     if (!db) {
       return NextResponse.json(
@@ -39,13 +37,24 @@ export async function GET(request: NextRequest) {
 
     switch (collection) {
       case 'transactions':
+        // Redirect to specialized transactions API
+        const baseUrl = request.url.split('/api/data')[0];
+        const newSearchParams = new URLSearchParams(searchParams);
+        newSearchParams.set('userId', userId);
+
+        let targetUrl: string;
         if (id) {
-          const transaction = await db.transactions.findById(id);
-          return NextResponse.json(transaction);
+          targetUrl = `${baseUrl}/api/transactions/${id}?${newSearchParams.toString()}`;
         } else {
-          const transactions = await db.transactions.findByUserId(userId);
-          return NextResponse.json(transactions);
+          targetUrl = `${baseUrl}/api/transactions?${newSearchParams.toString()}`;
         }
+
+        const forwardedRequest = new Request(targetUrl, {
+          method: 'GET',
+          headers: request.headers,
+        });
+
+        return fetch(forwardedRequest);
 
       case 'wallets':
         if (id) {
