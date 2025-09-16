@@ -159,113 +159,104 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
   }
 
   async payInstallment(data: PayInstallmentInput): Promise<InstallmentPayment | null> {
-    // Obter o client MongoDB a partir da conexão atual
-    const client = (this.db as any).client;
-    if (!client) {
-      throw new Error('MongoDB client não disponível');
-    }
-
-    const session = client.startSession();
-
     try {
-      return await session.withTransaction(async () => {
-        const installmentsCollection = this.db.collection('installments');
-        const transactionsCollection = this.db.collection('transactions');
-        const walletsCollection = this.db.collection('wallets');
+      const installmentsCollection = this.db.collection('installments');
+      const transactionsCollection = this.db.collection('transactions');
+      const walletsCollection = this.db.collection('wallets');
 
-        // 1. Buscar o parcelamento
-        const installment = await installmentsCollection.findOne({
-          _id: new ObjectId(data.installmentId)
-        }, { session });
-
-        if (!installment) {
-          throw new Error('Parcelamento não encontrado');
-        }
-
-        // 2. Buscar o pagamento específico
-        const paymentIndex = installment.payments.findIndex((p: InstallmentPayment) =>
-          p.installmentNumber === data.installmentNumber && p.status === 'pending'
-        );
-
-        if (paymentIndex === -1) {
-          throw new Error('Parcela não encontrada ou já paga');
-        }
-
-        const payment = installment.payments[paymentIndex];
-
-        // 3. Verificar se a carteira existe e tem saldo suficiente
-        const wallet = await walletsCollection.findOne({
-          _id: new ObjectId(installment.sourceWalletId)
-        }, { session });
-
-        if (!wallet) {
-          throw new Error('Carteira não encontrada');
-        }
-
-        if (wallet.balance < data.paidAmount) {
-          throw new Error('Saldo insuficiente na carteira');
-        }
-
-        // 4. Criar a transação
-        let transactionId = data.transactionId;
-        if (!transactionId) {
-          const transactionData = {
-            userId: installment.userId,
-            date: data.paidDate,
-            item: `${installment.name} - Parcela ${data.installmentNumber}/${installment.totalInstallments}`,
-            category: installment.category as any,
-            subcategory: installment.subcategory,
-            amount: data.paidAmount,
-            quantity: 1,
-            establishment: installment.establishment,
-            type: 'expense' as const,
-            walletId: installment.sourceWalletId
-          };
-
-          const transactionResult = await transactionsCollection.insertOne(transactionData, { session });
-          transactionId = transactionResult.insertedId.toString();
-        }
-
-        // 5. Debitar da carteira
-        await walletsCollection.updateOne(
-          { _id: new ObjectId(installment.sourceWalletId) },
-          { $inc: { balance: -data.paidAmount } },
-          { session }
-        );
-
-        // 6. Atualizar o pagamento no parcelamento
-        const updateResult = await installmentsCollection.findOneAndUpdate(
-          {
-            _id: new ObjectId(data.installmentId),
-            'payments.installmentNumber': data.installmentNumber
-          },
-          {
-            $set: {
-              'payments.$.paidAmount': data.paidAmount,
-              'payments.$.paidDate': data.paidDate,
-              'payments.$.status': 'paid',
-              'payments.$.transactionId': transactionId,
-              updatedAt: new Date().toISOString()
-            }
-          },
-          { returnDocument: 'after', session }
-        );
-
-        if (!updateResult) {
-          throw new Error('Falha ao atualizar o pagamento');
-        }
-
-        const updatedPayment = updateResult.payments.find((p: InstallmentPayment) =>
-          p.installmentNumber === data.installmentNumber
-        );
-
-        return updatedPayment ? {
-          ...updatedPayment,
-          id: updatedPayment.id || updatedPayment._id?.toString()
-        } : null;
+      // 1. Buscar o parcelamento
+      const installment = await installmentsCollection.findOne({
+        _id: new ObjectId(data.installmentId)
       });
-    } finally {
-      await session.endSession();
+
+      if (!installment) {
+        throw new Error('Parcelamento não encontrado');
+      }
+
+      // 2. Buscar o pagamento específico
+      const paymentIndex = installment.payments.findIndex((p: InstallmentPayment) =>
+        p.installmentNumber === data.installmentNumber && p.status === 'pending'
+      );
+
+      if (paymentIndex === -1) {
+        throw new Error('Parcela não encontrada ou já paga');
+      }
+
+      const payment = installment.payments[paymentIndex];
+
+      // 3. Verificar se a carteira existe e tem saldo suficiente
+      const wallet = await walletsCollection.findOne({
+        _id: new ObjectId(installment.sourceWalletId)
+      });
+
+      if (!wallet) {
+        throw new Error('Carteira não encontrada');
+      }
+
+      if (wallet.balance < data.paidAmount) {
+        throw new Error('Saldo insuficiente na carteira');
+      }
+
+      // 4. Criar a transação se não foi fornecida
+      let transactionId = data.transactionId;
+      if (!transactionId) {
+        const transactionData = {
+          userId: installment.userId,
+          date: data.paidDate,
+          item: `${installment.name} - Parcela ${data.installmentNumber}/${installment.totalInstallments}`,
+          category: installment.category as any,
+          subcategory: installment.subcategory,
+          amount: data.paidAmount,
+          quantity: 1,
+          establishment: installment.establishment,
+          type: 'expense' as const,
+          walletId: installment.sourceWalletId
+        };
+
+        const transactionResult = await transactionsCollection.insertOne(transactionData);
+        transactionId = transactionResult.insertedId.toString();
+      }
+
+      // 5. Debitar da carteira
+      await walletsCollection.updateOne(
+        { _id: new ObjectId(installment.sourceWalletId) },
+        { $inc: { balance: -data.paidAmount } }
+      );
+
+      // 6. Atualizar o pagamento no parcelamento
+      const updateResult = await installmentsCollection.findOneAndUpdate(
+        {
+          _id: new ObjectId(data.installmentId),
+          'payments.installmentNumber': data.installmentNumber
+        },
+        {
+          $set: {
+            'payments.$.paidAmount': data.paidAmount,
+            'payments.$.paidDate': data.paidDate,
+            'payments.$.status': 'paid',
+            'payments.$.transactionId': transactionId,
+            updatedAt: new Date().toISOString()
+          }
+        },
+        { returnDocument: 'after' }
+      );
+
+      if (!updateResult) {
+        throw new Error('Falha ao atualizar o pagamento');
+      }
+
+      const updatedPayment = updateResult.payments.find((p: InstallmentPayment) =>
+        p.installmentNumber === data.installmentNumber
+      );
+
+      return updatedPayment ? {
+        ...updatedPayment,
+        id: updatedPayment.id || updatedPayment._id?.toString()
+      } : null;
+
+    } catch (error) {
+      console.error('Error in payInstallment:', error);
+      throw error;
     }
   }
 

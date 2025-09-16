@@ -159,8 +159,17 @@ export async function DELETE(
     }
 
     // Reverter o saldo da carteira antes de deletar
-    if (transactionToDelete) {
-      await WalletBalanceService.revertBalanceForTransaction(transactionToDelete, authenticatedUserId);
+    if (existingTransaction) {
+      // Extract only the fields needed for wallet balance operations
+      const transactionForBalance = {
+        walletId: existingTransaction.walletId,
+        toWalletId: existingTransaction.toWalletId,
+        type: existingTransaction.type,
+        amount: existingTransaction.amount,
+        userId: existingTransaction.userId
+      } as Pick<Transaction, 'walletId' | 'toWalletId' | 'type' | 'amount' | 'userId'>;
+
+      await WalletBalanceService.revertBalanceForTransaction(transactionForBalance as Transaction, authenticatedUserId);
     }
 
     // Deletar a transação
