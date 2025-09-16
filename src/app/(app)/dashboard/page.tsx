@@ -103,8 +103,10 @@ export default function DashboardPage() {
                     <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
                         {/* Left Side - Wallet Card and Gamification - 6 columns */}
                         <div className="lg:col-span-6 space-y-4 sm:space-y-6">
-                           <WalletCard transactions={filteredTransactions} />
-                           {isPro && <GamificationSummary />}
+                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                               <WalletCard transactions={filteredTransactions} />
+                               {isPro && <GamificationSummary />}
+                           </div>
                         </div>
                         
                         {/* Right Side - Goals, Installments, and Future Balance - 6 columns */}
@@ -166,8 +168,10 @@ function DashboardSkeleton() {
              <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
                 {/* Left Side - Wallet & Gamification Skeleton */}
                 <div className="lg:col-span-6 space-y-4 sm:space-y-6">
-                    <Skeleton className="h-40 sm:h-48" />
-                    <Skeleton className="h-32 sm:h-36" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+                        <Skeleton className="h-40 sm:h-48" />
+                        <Skeleton className="h-40 sm:h-48" />
+                    </div>
                 </div>
                 
                 {/* Right Side - Goals, Installments, Future Balance Skeleton */}

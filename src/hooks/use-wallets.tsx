@@ -219,8 +219,13 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
       let fetchedWallets: Wallet[];
 
       if (navigator.onLine) {
+        // Force fresh fetch from server, bypassing any caches
         fetchedWallets = await apiClient.get('wallets', user.uid);
-        // Update offline storage
+        
+        // Clear offline storage first to ensure fresh data
+        await offlineStorage.clearCollection('wallets');
+        
+        // Save fresh data to offline storage
         for (const wallet of fetchedWallets) {
           await offlineStorage.saveWallet(wallet, true);
         }
@@ -229,6 +234,7 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
       }
 
       setWallets(fetchedWallets);
+      console.log('🔄 Carteiras atualizadas:', fetchedWallets.map(w => `${w.name}: R$ ${w.balance.toFixed(2)}`));
     } catch (error) {
       console.error('Erro ao recarregar carteiras:', error);
       // Try offline fallback

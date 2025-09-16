@@ -363,6 +363,16 @@ class OfflineStorage {
     return result?.value;
   }
 
+  // Clear specific collection data (useful for force refresh)
+  async clearCollection(collection: string): Promise<void> {
+    if (typeof window === 'undefined') return; // Skip on server-side
+
+    await this.init();
+    if (!this.db) return;
+
+    await this.db.clear(collection);
+  }
+
   // Clear all data (useful for logout)
   async clearAll(): Promise<void> {
     await this.init();

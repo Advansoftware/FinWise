@@ -163,7 +163,10 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
       }
       
       await refreshData();
-      refreshWallets();
+      // Add a small delay to ensure balance update is processed on server
+      setTimeout(() => {
+        refreshWallets();
+      }, 500);
     } catch (error) {
       console.error('Erro ao adicionar transação:', error);
       toast({
@@ -202,7 +205,10 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
       }
       
       await refreshData();
-      refreshWallets();
+      // Add a small delay to ensure balance update is processed on server
+      setTimeout(() => {
+        refreshWallets();
+      }, 500);
     } catch (error) {
       console.error('Erro ao atualizar transação:', error);
       toast({
@@ -237,7 +243,10 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
       }
       
       await refreshData();
-      refreshWallets();
+      // Add a small delay to ensure balance update is processed on server
+      setTimeout(() => {
+        refreshWallets();
+      }, 500);
     } catch (error) {
       console.error('Erro ao excluir transação:', error);
       toast({
