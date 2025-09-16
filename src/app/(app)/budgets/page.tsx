@@ -1,9 +1,11 @@
 // src/app/(app)/budgets/page.tsx
 'use client';
 
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, MoreVertical, Trash2, Edit, PiggyBank, Sparkles, Trophy, CheckCircle, Flame, Award } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { PlusCircle, MoreVertical, Trash2, Edit, PiggyBank, Sparkles, Trophy, CheckCircle, Flame, Award, Calculator, BarChart3 } from "lucide-react";
 import { useBudgets } from "@/hooks/use-budgets";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Progress } from "@/components/ui/progress";
@@ -23,25 +25,81 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Budget } from "@/lib/types";
 import { AutomaticBudgetCard } from "@/components/budgets/automatic-budget-card";
+import { BudgetGuidance } from "@/components/budgets/budget-guidance";
+import { SpendingAnalysis } from "@/components/budgets/spending-analysis";
 import { usePlan } from "@/hooks/use-plan";
 import { useGamification } from "@/hooks/use-gamification";
 import { formatCurrency } from "@/lib/utils";
+import { useToast } from "@/hooks/use-toast";
 
 export default function BudgetsPage() {
-    const { budgets, isLoading, deleteBudget } = useBudgets();
+    const { budgets, isLoading, deleteBudget, addBudget } = useBudgets();
     const { isPlus } = usePlan();
     const { gamificationData } = useGamification();
+    const { toast } = useToast();
+    const [activeTab, setActiveTab] = useState("budgets");
     
     if (isLoading) {
         return <BudgetsSkeleton />
     }
+
+    const handleBudgetCreation = async (budgetData: any) => {
+        try {
+            await addBudget({
+                ...budgetData,
+                period: 'monthly' as const
+            });
+            toast({
+                title: "Orçamento criado",
+                description: `Orçamento para ${budgetData.category} foi criado com sucesso.`,
+            });
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "Erro ao criar orçamento",
+                description: "Não foi possível criar o orçamento. Tente novamente.",
+            });
+        }
+    };
+
+    const handleMultipleBudgetCreation = async (budgetPlans: any[]) => {
+        try {
+            for (const plan of budgetPlans) {
+                await addBudget({
+                    name: plan.name,
+                    category: plan.category,
+                    amount: plan.amount,
+                    period: 'monthly' as const
+                });
+            }
+            toast({
+                title: "Orçamentos criados",
+                description: `${budgetPlans.length} orçamentos foram criados com sucesso.`,
+            });
+            setActiveTab("budgets"); // Voltar para a aba de orçamentos
+        } catch (error) {
+            toast({
+                variant: "destructive",
+                title: "Erro ao criar orçamentos",
+                description: "Não foi possível criar alguns orçamentos. Tente novamente.",
+            });
+        }
+    };
+
+    const handleSuggestionAccepted = async (category: string, amount: number) => {
+        await handleBudgetCreation({
+            name: `Orçamento ${category}`,
+            category,
+            amount
+        });
+    };
     
     return (
         <div className="flex flex-col gap-6">
             <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight">Orçamentos</h1>
-                    <p className="text-muted-foreground">Defina limites de gastos mensais para suas categorias e evite surpresas no final do mês. Acompanhar um orçamento é o primeiro passo para assumir o controle total de suas finanças.</p>
+                    <p className="text-muted-foreground">Defina limites de gastos mensais para suas categorias e evite surpresas no final do mês.</p>
                 </div>
                  <CreateBudgetDialog>
                     <Button>
@@ -49,66 +107,102 @@ export default function BudgetsPage() {
                     </Button>
                 </CreateBudgetDialog>
             </div>
-            
-            {/* Gamification Summary for Budgets */}
-            {gamificationData && (
-                 <Card className="bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-950/20 dark:to-green-950/20">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-lg text-blue-800 dark:text-blue-300">
-                            <Trophy className="h-5 w-5"/>
-                            Desempenho dos Orçamentos
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                        <div className="p-3 bg-background/50 rounded-lg">
-                            <p className="text-2xl font-bold">{budgets.length}</p>
-                            <p className="text-xs text-muted-foreground">Orçamentos Ativos</p>
-                        </div>
-                        <div className="p-3 bg-background/50 rounded-lg">
-                            <p className="text-2xl font-bold text-green-600">
-                                {gamificationData.achievements.find(a => a.id === 'budget-master')?.progress || 0}
-                            </p>
-                            <p className="text-xs text-muted-foreground">Orçamentos Cumpridos</p>
-                        </div>
-                        <div className="p-3 bg-background/50 rounded-lg">
-                            <p className="text-2xl font-bold text-red-500">
-                                 {gamificationData.achievements.find(a => a.id === 'overspending-avoider')?.progress || 0}
-                            </p>
-                            <p className="text-xs text-muted-foreground">Orçamentos Estourados</p>
-                        </div>
-                        <div className="p-3 bg-background/50 rounded-lg">
-                            <p className="text-2xl font-bold text-orange-500 flex items-center justify-center gap-1">
-                                <Flame className="h-5 w-5"/> {gamificationData.streak || 0}
-                            </p>
-                            <p className="text-xs text-muted-foreground">Meses no Controle</p>
-                        </div>
-                    </CardContent>
-                </Card>
-            )}
 
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                <TabsList className="grid w-full grid-cols-3">
+                    <TabsTrigger value="budgets" className="flex items-center gap-2">
+                        <PiggyBank className="h-4 w-4" />
+                        Meus Orçamentos
+                    </TabsTrigger>
+                    <TabsTrigger value="guidance" className="flex items-center gap-2">
+                        <Calculator className="h-4 w-4" />
+                        Como Montar
+                    </TabsTrigger>
+                    <TabsTrigger value="analysis" className="flex items-center gap-2">
+                        <BarChart3 className="h-4 w-4" />
+                        Análise dos Gastos
+                    </TabsTrigger>
+                </TabsList>
 
-            {isPlus && <AutomaticBudgetCard />}
-            
-            {budgets.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {budgets.map(budget => (
-                       <BudgetCard key={budget.id} budget={budget} onDelete={() => deleteBudget(budget.id)} />
-                    ))}
-                </div>
-            ) : (
-                 <Card className="col-span-full border-dashed">
-                    <CardContent className="p-8 text-center text-muted-foreground flex flex-col items-center">
-                       <PiggyBank className="h-12 w-12 mb-4 text-primary/50" />
-                        <h3 className="text-lg font-semibold text-foreground">Nenhum orçamento encontrado.</h3>
-                       <p className="text-sm max-w-md mx-auto">Crie seu primeiro orçamento para começar a planejar. Que tal definir um limite para "Supermercado" ou "Restaurante"?</p>
-                        <CreateBudgetDialog>
-                            <Button className="mt-4">
-                                <PlusCircle className="mr-2 h-4 w-4" /> Criar Orçamento
-                            </Button>
-                        </CreateBudgetDialog>
-                    </CardContent>
-                </Card>
-            )}
+                <TabsContent value="budgets" className="space-y-6">
+                    {/* Gamification Summary for Budgets */}
+                    {gamificationData && (
+                         <Card className="bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-950/20 dark:to-green-950/20">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-lg text-blue-800 dark:text-blue-300">
+                                    <Trophy className="h-5 w-5"/>
+                                    Desempenho dos Orçamentos
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                                <div className="p-3 bg-background/50 rounded-lg">
+                                    <p className="text-2xl font-bold">{budgets.length}</p>
+                                    <p className="text-xs text-muted-foreground">Orçamentos Ativos</p>
+                                </div>
+                                <div className="p-3 bg-background/50 rounded-lg">
+                                    <p className="text-2xl font-bold text-green-600">
+                                        {gamificationData.achievements.find(a => a.id === 'budget-master')?.progress || 0}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">Orçamentos Cumpridos</p>
+                                </div>
+                                <div className="p-3 bg-background/50 rounded-lg">
+                                    <p className="text-2xl font-bold text-red-500">
+                                         {gamificationData.achievements.find(a => a.id === 'overspending-avoider')?.progress || 0}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">Orçamentos Estourados</p>
+                                </div>
+                                <div className="p-3 bg-background/50 rounded-lg">
+                                    <p className="text-2xl font-bold text-orange-500 flex items-center justify-center gap-1">
+                                        <Flame className="h-5 w-5"/> {gamificationData.streak || 0}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">Meses no Controle</p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    )}
+
+                    {isPlus && <AutomaticBudgetCard />}
+                    
+                    {budgets.length > 0 ? (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {budgets.map(budget => (
+                               <BudgetCard key={budget.id} budget={budget} onDelete={() => deleteBudget(budget.id)} />
+                            ))}
+                        </div>
+                    ) : (
+                         <Card className="col-span-full border-dashed">
+                            <CardContent className="p-8 text-center text-muted-foreground flex flex-col items-center">
+                               <PiggyBank className="h-12 w-12 mb-4 text-primary/50" />
+                                <h3 className="text-lg font-semibold text-foreground">Nenhum orçamento encontrado.</h3>
+                               <p className="text-sm max-w-md mx-auto mb-4">
+                                 Experimente usar nossas ferramentas inteligentes para criar orçamentos baseados na sua situação ou histórico de gastos.
+                               </p>
+                               <div className="flex gap-2">
+                                    <Button onClick={() => setActiveTab("guidance")} variant="outline">
+                                        <Calculator className="mr-2 h-4 w-4" /> Como Montar
+                                    </Button>
+                                    <Button onClick={() => setActiveTab("analysis")} variant="outline">
+                                        <BarChart3 className="mr-2 h-4 w-4" /> Analisar Gastos
+                                    </Button>
+                                    <CreateBudgetDialog>
+                                        <Button>
+                                            <PlusCircle className="mr-2 h-4 w-4" /> Criar Manual
+                                        </Button>
+                                    </CreateBudgetDialog>
+                               </div>
+                            </CardContent>
+                        </Card>
+                    )}
+                </TabsContent>
+
+                <TabsContent value="guidance" className="space-y-6">
+                    <BudgetGuidance onBudgetCreated={handleMultipleBudgetCreation} />
+                </TabsContent>
+
+                <TabsContent value="analysis" className="space-y-6">
+                    <SpendingAnalysis onBudgetSuggestionAccepted={handleSuggestionAccepted} />
+                </TabsContent>
+            </Tabs>
         </div>
     )
 }
