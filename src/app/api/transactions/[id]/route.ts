@@ -173,7 +173,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Transaction not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true }, { status: 204 });
+    return new NextResponse(null, { status: 204 });
 
   } catch (error) {
     console.error('Error deleting transaction:', error);

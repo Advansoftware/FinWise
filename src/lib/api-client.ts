@@ -57,13 +57,16 @@ export class ApiClient {
       return this.createTransaction(data);
     }
 
+    // Remove temporary ID before sending to server
+    const { id, ...dataWithoutTempId } = data;
+
     const params = new URLSearchParams({ collection });
     const response = await fetch(`${this.baseUrl}?${params}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(dataWithoutTempId),
     });
 
     if (!response.ok) {
@@ -73,13 +76,16 @@ export class ApiClient {
   }
 
   private async createTransaction(data: any) {
+    // Remove temporary ID before sending to server
+    const { id, ...dataWithoutTempId } = data;
+
     const params = new URLSearchParams({ userId: data.userId });
     const response = await fetch(`${this.transactionsUrl}?${params}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(data),
+      body: JSON.stringify(dataWithoutTempId),
     });
 
     if (!response.ok) {
