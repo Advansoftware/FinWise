@@ -80,3 +80,36 @@ export async function getActiveAICredential(userId: string): Promise<AICredentia
     return DEFAULT_AI_FALLBACK_CREDENTIAL;
   }
 }
+
+export async function getCredentialById(userId: string, credentialId: string): Promise<AICredential> {
+  if (!userId || !credentialId) {
+    return getDefaultAICredentialFromEnv();
+  }
+
+  // Se for a Gastometria IA, retornar a configuração padrão
+  if (credentialId === GASTOMETRIA_AI_CREDENTIAL_ID) {
+    return getDefaultAICredentialFromEnv();
+  }
+
+  try {
+    const db = await getDatabaseAdapter();
+    const settings = await db.settings.findByUserId(userId);
+    const aiSettings = settings?.ai_settings;
+
+    if (aiSettings && aiSettings.credentials) {
+      const credential = aiSettings.credentials.find(
+        (c: AICredential) => c.id === credentialId
+      );
+
+      if (credential) {
+        return { ...DEFAULT_AI_FALLBACK_CREDENTIAL, ...credential };
+      }
+    }
+
+    // Se não encontrou, retornar a credencial ativa
+    return await getActiveAICredential(userId);
+  } catch (error) {
+    console.error("Error getting credential by ID from database:", error);
+    return getDefaultAICredentialFromEnv();
+  }
+}

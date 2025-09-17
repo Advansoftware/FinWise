@@ -4,13 +4,14 @@
 import { useState, useEffect, useTransition, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, TrendingUp, AlertTriangle } from "lucide-react";
+import { RefreshCw, TrendingUp, AlertTriangle, Calculator } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { useWallets } from "@/hooks/use-wallets";
 import { useBudgets } from "@/hooks/use-budgets";
 import { useTransactions } from "@/hooks/use-transactions";
-import { getSmartFutureBalance } from "@/services/ai-automation-service";
+import { getSmartFutureBalance, calculateFutureBalancePreview } from "@/services/ai-automation-service";
+import { validateDataSufficiency } from "@/services/ai-cache-service";
 import { PredictFutureBalanceOutput } from "@/ai/ai-types";
 import { subMonths, startOfMonth } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,8 @@ import { usePlan } from "@/hooks/use-plan";
 export function FutureBalanceCard() {
   const [prediction, setPrediction] = useState<PredictFutureBalanceOutput | null>(null);
   const [isPending, startTransition] = useTransition();
+  const [validationResult, setValidationResult] = useState<any>(null);
+  const [useBasicCalculation, setUseBasicCalculation] = useState(false);
   const { user } = useAuth();
   const { wallets } = useWallets();
   const { budgets } = useBudgets();
@@ -27,8 +30,31 @@ export function FutureBalanceCard() {
 
   const currentBalance = useMemo(() => wallets.reduce((sum, w) => sum + w.balance, 0), [wallets]);
   
+  // Valida dados quando transações mudam
+  useEffect(() => {
+    if (user && allTransactions) {
+      validateDataSufficiency(user.uid, 'future_balance', allTransactions, { budgets }).then(result => {
+        setValidationResult(result);
+        // Se não tem dados suficientes para IA, usar cálculo básico
+        setUseBasicCalculation(!result.isValid || allTransactions.length < 15);
+      });
+    }
+  }, [user, allTransactions, budgets]);
+  
   const fetchPrediction = useCallback(async (forceRefresh = false) => {
     if (!user) return;
+    
+    // Se não tem dados suficientes e não está forçando
+    if (!forceRefresh && validationResult && !validationResult.isValid) {
+      setPrediction({
+        summary: validationResult.message,
+        projectedEndOfMonthBalance: currentBalance,
+        isRiskOfNegativeBalance: false,
+      });
+      return;
+    }
+
+    // Se não tem transações e não está forçando
     if (allTransactions.length === 0 && !forceRefresh) {
       setPrediction({
         summary: "Adicione transações para gerar sua primeira previsão.",
@@ -45,11 +71,23 @@ export function FutureBalanceCard() {
           const last3MonthsTransactions = allTransactions.filter(t => new Date(t.date) >= last3MonthsStart);
           const recurringBills = budgets.map(b => ({ category: b.category, amount: b.amount }));
 
+          // Se deve usar cálculo básico
+          if (useBasicCalculation && !forceRefresh) {
+            const basicCalc = await calculateFutureBalancePreview(last3MonthsTransactions, currentBalance, budgets);
+            setPrediction({
+              summary: `Com base nos seus gastos recentes (R$ ${basicCalc.averageDailySpending.toFixed(2)}/dia), você deve terminar o mês com aproximadamente R$ ${basicCalc.projectedBalance.toFixed(2)}.`,
+              projectedEndOfMonthBalance: basicCalc.projectedBalance,
+              isRiskOfNegativeBalance: basicCalc.isRiskOfNegativeBalance
+            });
+            return;
+          }
+
           const result = await getSmartFutureBalance({
             last3MonthsTransactions: JSON.stringify(last3MonthsTransactions),
             currentBalance: currentBalance,
             recurringBills: JSON.stringify(recurringBills),
           }, user.uid, forceRefresh);
+          
           setPrediction(result);
       } catch (error: any) {
         console.error("Error fetching future balance prediction:", error);
@@ -60,13 +98,13 @@ export function FutureBalanceCard() {
         });
       }
     });
-  }, [allTransactions, user, budgets, currentBalance]);
+  }, [allTransactions, user, budgets, currentBalance, validationResult, useBasicCalculation]);
 
   useEffect(() => {
-    if(user && isPlus && allTransactions.length > 0) {
+    if(user && isPlus && validationResult !== null) {
         fetchPrediction();
     }
-  }, [allTransactions.length, user, isPlus, fetchPrediction]);
+  }, [user, isPlus, validationResult, fetchPrediction]);
 
   const renderContent = () => {
     if (isPending || !prediction) {
@@ -92,22 +130,43 @@ export function FutureBalanceCard() {
   
   if (!isPlus) return null;
 
+  const showInsufficientData = validationResult && !validationResult.isValid;
+
   return (
-    <Card className="relative overflow-hidden bg-card/80 backdrop-blur-xl border-primary/20">
+    <Card className={`relative overflow-hidden bg-card/80 backdrop-blur-xl ${showInsufficientData ? 'border-amber-500/20' : 'border-primary/20'}`}>
        <CardHeader className="pb-3 p-4">
           <div className="flex items-start justify-between">
              <div className="flex-1">
                 <div className="flex items-center gap-2">
-                    <div className={cn("p-1.5 rounded-full", prediction?.isRiskOfNegativeBalance ? "bg-destructive/20 text-destructive" : "bg-primary/20 text-primary")}>
-                        {prediction?.isRiskOfNegativeBalance ? <AlertTriangle className="h-4 w-4"/> : <TrendingUp className="h-4 w-4"/>}
+                    <div className={cn("p-1.5 rounded-full", 
+                      showInsufficientData ? "bg-amber-500/20 text-amber-500" :
+                      prediction?.isRiskOfNegativeBalance ? "bg-destructive/20 text-destructive" : 
+                      useBasicCalculation ? "bg-blue-500/20 text-blue-500" : "bg-primary/20 text-primary"
+                    )}>
+                        {showInsufficientData ? (
+                          <AlertTriangle className="h-4 w-4"/>
+                        ) : useBasicCalculation ? (
+                          <Calculator className="h-4 w-4"/>
+                        ) : prediction?.isRiskOfNegativeBalance ? (
+                          <AlertTriangle className="h-4 w-4"/>
+                        ) : (
+                          <TrendingUp className="h-4 w-4"/>
+                        )}
                     </div>
                     <div>
                         <CardTitle className="text-sm">Previsão de Saldo</CardTitle>
-                        <CardDescription className="text-xs">Projeção para o fim deste mês</CardDescription>
+                        <CardDescription className="text-xs">
+                          {useBasicCalculation ? "Cálculo direto" : "Projeção IA para fim do mês"}
+                        </CardDescription>
                     </div>
                 </div>
-                 <CardDescription className="text-xs text-primary/70 mt-1 pl-8">
-                    Gerado 1x por mês. Atualizar custa 5 créditos da Gastometria AI.
+                 <CardDescription className={`text-xs mt-1 pl-8 ${showInsufficientData ? 'text-amber-500/70' : 'text-primary/70'}`}>
+                    {showInsufficientData 
+                      ? `Precisa de ${validationResult?.requiredMinimum || 0} transações (você tem ${validationResult?.currentCount || 0})`
+                      : useBasicCalculation 
+                        ? "Cache mensal. Usar IA custa 5 créditos."
+                        : "Cache mensal renovado. Atualizar IA custa 5 créditos."
+                    }
                 </CardDescription>
             </div>
             <Button
@@ -116,6 +175,7 @@ export function FutureBalanceCard() {
                 onClick={() => fetchPrediction(true)}
                 disabled={isPending || !user}
                 className="text-primary/70 hover:bg-primary/10 hover:text-primary rounded-full h-7 w-7 -mt-1"
+                title={showInsufficientData ? "Forçar geração (pode consumir crédito)" : "Atualizar com IA (5 créditos)"}
             >
                 <RefreshCw className={`h-3.5 w-3.5 ${isPending ? "animate-spin" : ""}`} />
             </Button>

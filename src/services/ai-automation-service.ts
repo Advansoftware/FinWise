@@ -1,7 +1,7 @@
 'use server';
 
 /**
- * SISTEMA DE AUTOMAÇÃO DE IA - ECONOMIA DE CRÉDITOS
+ * SISTEMA DE AUTOMAÇÃO DE IA - ECONOMIA DE CRÉDITOS V2
  * 
  * Este serviço implementa um sistema inteligente que gera automaticamente:
  * - Dicas de gastos mensais
@@ -9,78 +9,46 @@
  * - Relatórios mensais e anuais
  * - Previsões de saldo
  * 
- * REGRAS:
- * 1. Geração automática ocorre 1x por mês (dia 1) para cada usuário
- * 2. Dados são salvos no banco e consultados de lá
- * 3. NÃO CONSOME CRÉDITOS quando é automático
- * 4. Consome créditos apenas quando usuário força refresh
- * 5. Se não existir dados salvos, gera na primeira consulta sem consumir créditos
+ * REGRAS ATUALIZADAS:
+ * 1. Cache renovado automaticamente no dia 1 de cada mês na primeira consulta
+ * 2. Validação de dados suficientes antes de chamar IA
+ * 3. NÃO CONSOME CRÉDITOS para ações automáticas
+ * 4. Consome créditos apenas para atualizações manuais com Gastometria IA
+ * 5. Previsão de saldo usa cálculos diretos antes de enviar para IA
  */
 
 import { getDatabaseAdapter } from '@/core/services/service-factory';
-import { Transaction } from '@/lib/types';
+import { Transaction, Wallet, Budget } from '@/lib/types';
 import { getSpendingTip, getFinancialProfile, generateMonthlyReportAction, generateAnnualReportAction, predictFutureBalanceAction, projectGoalCompletionAction } from './ai-actions';
+import {
+  getCachedOrGenerate,
+  validateDataSufficiency,
+  shouldAutoGenerateCache,
+  DataValidationResult
+} from './ai-cache-service';
 
 /**
- * Salva dado gerado automaticamente
- */
-async function saveGeneratedData(userId: string, type: string, data: any, forceReplace: boolean = false): Promise<void> {
-  const db = await getDatabaseAdapter();
-  const now = new Date();
-  const currentMonth = now.getMonth() + 1;
-  const currentYear = now.getFullYear();
-
-  const dataToSave = {
-    userId,
-    type,
-    data,
-    generatedAt: now,
-    month: currentMonth,
-    year: currentYear
-  };
-
-  if (forceReplace) {
-    await db.aiGeneratedData.replaceByUserIdAndType(userId, type, dataToSave);
-  } else {
-    await db.aiGeneratedData.create(dataToSave);
-  }
-}
-
-/**
- * Busca dado gerado mais recente
- */
-async function getLatestGeneratedData(userId: string, type: string): Promise<any | null> {
-  const db = await getDatabaseAdapter();
-  return await db.aiGeneratedData.findLatestByUserIdAndType(userId, type);
-}
-
-/**
- * Gera dica de gastos inteligente (sem consumir créditos quando automático)
+ * Gera dica de gastos inteligente com validação de dados
  */
 export async function getSmartSpendingTip(transactions: Transaction[], userId: string, forceRefresh: boolean = false): Promise<string> {
-  // Se forçar refresh, usa a função normal que consome créditos
-  if (forceRefresh) {
-    const tip = await getSpendingTip(transactions, userId, true);
-
-    // Substitui dados antigos
-    await saveGeneratedData(userId, 'spending_tip', tip, true);
-    return tip;
+  // Valida se há dados suficientes
+  const validation = await validateDataSufficiency(userId, 'spending_tip', transactions);
+  if (!validation.isValid) {
+    return validation.message || "Dados insuficientes para gerar dica.";
   }
 
-  // Verifica se já tem dica gerada este mês
-  const cachedTip = await getLatestGeneratedData(userId, 'spending_tip');
-  if (cachedTip) {
-    return cachedTip;
-  }
-
-  // Se não tem, gera primeira vez sem consumir créditos
-  const tip = await getSpendingTip(transactions, userId, false);
-  await saveGeneratedData(userId, 'spending_tip', tip);
-  return tip;
+  return await getCachedOrGenerate(
+    userId,
+    'spending_tip',
+    async () => {
+      return await getSpendingTip(transactions, userId, forceRefresh);
+    },
+    forceRefresh
+  );
 }
 
 /**
- * Gera perfil financeiro inteligente (sem consumir créditos quando automático)
+ * Gera perfil financeiro inteligente com validação de dados
  */
 export async function getSmartFinancialProfile(
   input: any,
@@ -105,116 +73,216 @@ export async function getSmartFinancialProfile(
     gamificationData: gamificationData ? JSON.stringify(gamificationData, null, 2) : undefined
   };
 
-  // Se forçar refresh, usa a função normal que consome créditos
-  if (forceRefresh) {
-    const profile = await getFinancialProfile(enrichedInput, userId, true);
-
-    // Substitui dados antigos
-    await saveGeneratedData(userId, 'financial_profile', profile, true);
-    return profile;
+  // Parse das transações para validação
+  let transactions: Transaction[] = [];
+  try {
+    transactions = JSON.parse(enrichedInput.currentMonthTransactions || '[]');
+  } catch (error) {
+    console.log('Erro ao parsear transações para validação:', error);
   }
 
-  // Verifica se já tem perfil gerado este mês
-  const cachedProfile = await getLatestGeneratedData(userId, 'financial_profile');
-  if (cachedProfile) {
-    return cachedProfile;
+  // Valida se há dados suficientes
+  const validation = await validateDataSufficiency(userId, 'financial_profile', transactions);
+  if (!validation.isValid) {
+    return {
+      summary: validation.message || "Dados insuficientes para gerar perfil.",
+      insights: [],
+      recommendations: []
+    };
   }
 
-  // Se não tem, gera primeira vez sem consumir créditos
-  const profile = await getFinancialProfile(enrichedInput, userId, false);
-  await saveGeneratedData(userId, 'financial_profile', profile);
-  return profile;
+  return await getCachedOrGenerate(
+    userId,
+    'financial_profile',
+    async () => {
+      return await getFinancialProfile(enrichedInput, userId, forceRefresh);
+    },
+    forceRefresh
+  );
 }
 
 /**
- * Gera relatório mensal inteligente (sem consumir créditos quando automático)
+ * Gera relatório mensal inteligente com validação de dados
  */
 export async function getSmartMonthlyReport(
   input: any,
   userId: string,
   forceRefresh: boolean = false
 ): Promise<any> {
-  // Se forçar refresh, usa a função normal que consome créditos
-  if (forceRefresh) {
-    const report = await generateMonthlyReportAction(input, userId, false);
-
-    // Substitui dados antigos
-    await saveGeneratedData(userId, 'monthly_report', report, true);
-    return report;
+  // Parse das transações para validação
+  let transactions: Transaction[] = [];
+  try {
+    transactions = JSON.parse(input.transactions || '[]');
+  } catch (error) {
+    console.log('Erro ao parsear transações para validação:', error);
   }
 
-  // Verifica se já tem relatório gerado este mês
-  const cachedReport = await getLatestGeneratedData(userId, 'monthly_report');
-  if (cachedReport) {
-    return cachedReport;
+  // Valida se há dados suficientes
+  const validation = await validateDataSufficiency(userId, 'monthly_report', transactions);
+  if (!validation.isValid) {
+    return {
+      summary: validation.message || "Dados insuficientes para gerar relatório.",
+      insights: [],
+      recommendations: []
+    };
   }
 
-  // Se não tem, gera primeira vez sem consumir créditos (isFreeAction = true)
-  const report = await generateMonthlyReportAction(input, userId, true);
-  await saveGeneratedData(userId, 'monthly_report', report);
-  return report;
+  return await getCachedOrGenerate(
+    userId,
+    'monthly_report',
+    async () => {
+      return await generateMonthlyReportAction(input, userId, !forceRefresh);
+    },
+    forceRefresh
+  );
 }
 
 /**
- * Gera relatório anual inteligente (sem consumir créditos quando automático)
+ * Gera relatório anual inteligente com validação de dados
  */
 export async function getSmartAnnualReport(
   input: any,
   userId: string,
   forceRefresh: boolean = false
 ): Promise<any> {
-  // Se forçar refresh, usa a função normal que consome créditos
-  if (forceRefresh) {
-    const report = await generateAnnualReportAction(input, userId, false);
-
-    // Substitui dados antigos
-    await saveGeneratedData(userId, 'annual_report', report, true);
-    return report;
+  // Parse das transações para validação
+  let transactions: Transaction[] = [];
+  try {
+    transactions = JSON.parse(input.transactions || '[]');
+  } catch (error) {
+    console.log('Erro ao parsear transações para validação:', error);
   }
 
-  // Verifica se já tem relatório gerado este ano
-  const cachedReport = await getLatestGeneratedData(userId, 'annual_report');
-  if (cachedReport) {
-    return cachedReport;
+  // Valida se há dados suficientes
+  const validation = await validateDataSufficiency(userId, 'annual_report', transactions);
+  if (!validation.isValid) {
+    return {
+      summary: validation.message || "Dados insuficientes para gerar relatório anual.",
+      insights: [],
+      recommendations: []
+    };
   }
 
-  // Se não tem, gera primeira vez sem consumir créditos (isFreeAction = true)
-  const report = await generateAnnualReportAction(input, userId, true);
-  await saveGeneratedData(userId, 'annual_report', report);
-  return report;
+  return await getCachedOrGenerate(
+    userId,
+    'annual_report',
+    async () => {
+      return await generateAnnualReportAction(input, userId, !forceRefresh);
+    },
+    forceRefresh
+  );
 }
 
 /**
- * Gera previsão de saldo inteligente (sem consumir créditos quando automático)
+ * Calcula previsão de saldo com cálculos diretos antes de enviar para IA
+ */
+export async function calculateFutureBalancePreview(
+  transactions: Transaction[],
+  currentBalance: number,
+  budgets: Budget[]
+): Promise<{
+  projectedBalance: number;
+  averageDailySpending: number;
+  remainingDays: number;
+  totalBudgetPending: number;
+  isRiskOfNegativeBalance: boolean;
+}> {
+  const now = new Date();
+  const lastDayOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+  const remainingDays = lastDayOfMonth - now.getDate();
+
+  // Calcular média de gastos diários dos últimos 30 dias
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const recentExpenses = transactions.filter(t =>
+    t.type === 'expense' &&
+    new Date(t.date) >= thirtyDaysAgo
+  );
+
+  const totalRecentExpenses = recentExpenses.reduce((sum, t) => sum + Math.abs(t.amount), 0);
+  const averageDailySpending = totalRecentExpenses / 30;
+
+  // Calcular total de orçamentos pendentes (contas fixas)
+  const totalBudgetPending = budgets.reduce((sum, budget) => sum + budget.amount, 0);
+
+  // Projetar gastos futuros
+  const projectedVariableExpenses = averageDailySpending * remainingDays;
+  const totalProjectedExpenses = projectedVariableExpenses + totalBudgetPending;
+
+  // Calcular saldo projetado
+  const projectedBalance = currentBalance - totalProjectedExpenses;
+  const isRiskOfNegativeBalance = projectedBalance < 0 || projectedBalance < (currentBalance * 0.1);
+
+  return {
+    projectedBalance,
+    averageDailySpending,
+    remainingDays,
+    totalBudgetPending,
+    isRiskOfNegativeBalance
+  };
+}
+
+/**
+ * Gera previsão de saldo inteligente com cálculos diretos + IA
  */
 export async function getSmartFutureBalance(
   input: any,
   userId: string,
   forceRefresh: boolean = false
 ): Promise<any> {
-  // Se forçar refresh, usa a função normal que consome créditos
-  if (forceRefresh) {
-    const prediction = await predictFutureBalanceAction(input, userId, true);
+  // Parse dos dados para validação e cálculos
+  let transactions: Transaction[] = [];
+  let budgets: Budget[] = [];
+  const currentBalance = input.currentBalance || 0;
 
-    // Substitui dados antigos
-    await saveGeneratedData(userId, 'future_balance', prediction, true);
-    return prediction;
+  try {
+    transactions = JSON.parse(input.last3MonthsTransactions || '[]');
+    budgets = JSON.parse(input.recurringBills || '[]');
+  } catch (error) {
+    console.log('Erro ao parsear dados para previsão:', error);
   }
 
-  // Verifica se já tem previsão gerada este mês
-  const cachedPrediction = await getLatestGeneratedData(userId, 'future_balance');
-  if (cachedPrediction) {
-    return cachedPrediction;
+  // Valida se há dados suficientes
+  const validation = await validateDataSufficiency(userId, 'future_balance', transactions, { budgets });
+  if (!validation.isValid) {
+    return {
+      summary: validation.message || "Dados insuficientes para previsão.",
+      projectedEndOfMonthBalance: currentBalance,
+      isRiskOfNegativeBalance: false
+    };
   }
 
-  // Se não tem, gera primeira vez sem consumir créditos
-  const prediction = await predictFutureBalanceAction(input, userId, false);
-  await saveGeneratedData(userId, 'future_balance', prediction);
-  return prediction;
+  // Calcular dados básicos primeiro
+  const calculatedData = await calculateFutureBalancePreview(transactions, currentBalance, budgets);
+
+  // Se há risco alto ou dados simples, usar apenas cálculos diretos
+  if (transactions.length < 15 || budgets.length === 0) {
+    return {
+      summary: `Com base nos seus últimos gastos (R$ ${calculatedData.averageDailySpending.toFixed(2)}/dia), você deve terminar o mês com aproximadamente R$ ${calculatedData.projectedBalance.toFixed(2)}.`,
+      projectedEndOfMonthBalance: calculatedData.projectedBalance,
+      isRiskOfNegativeBalance: calculatedData.isRiskOfNegativeBalance
+    };
+  }
+
+  return await getCachedOrGenerate(
+    userId,
+    'future_balance',
+    async () => {
+      // Enriquecer input com dados calculados
+      const enrichedInput = {
+        ...input,
+        calculatedData: JSON.stringify(calculatedData, null, 2)
+      };
+
+      return await predictFutureBalanceAction(enrichedInput, userId, forceRefresh);
+    },
+    forceRefresh
+  );
 }
 
 /**
- * Gera previsão inteligente para meta (1x por dia quando há depósito)
+ * Gera previsão inteligente para meta com validação
  */
 export async function getSmartGoalPrediction(
   goalId: string,
@@ -225,67 +293,20 @@ export async function getSmartGoalPrediction(
   const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
   const type = `goal_prediction_${goalId}`;
 
-  // Se forçar refresh, usa a função normal que consome créditos
-  if (forceRefresh) {
-    const prediction = await projectGoalCompletionAction(goalData, userId);
-
-    // Salva nova previsão
-    await saveGeneratedDataWithRelatedId(userId, type, prediction, goalId, true);
-    return prediction;
-  }
-
-  // Verifica se já foi gerada hoje
-  const db = await getDatabaseAdapter();
-  const todayPrediction = await db.aiGeneratedData.findByUserIdTypeAndDate(userId, type, today);
-  if (todayPrediction) {
-    return todayPrediction;
-  }
-
-  // Se não tem, gera primeira vez sem consumir créditos
-  const prediction = await projectGoalCompletionAction(goalData, userId);
-  await saveGeneratedDataWithRelatedId(userId, type, prediction, goalId);
-  return prediction;
+  return await getCachedOrGenerate(
+    userId,
+    type,
+    async () => {
+      return await projectGoalCompletionAction(goalData, userId);
+    },
+    forceRefresh
+  );
 }
 
 /**
- * Salva dado gerado com relatedId (para metas específicas)
- */
-async function saveGeneratedDataWithRelatedId(
-  userId: string,
-  type: string,
-  data: any,
-  relatedId: string,
-  forceReplace: boolean = false
-): Promise<void> {
-  const db = await getDatabaseAdapter();
-  const now = new Date();
-  const currentMonth = now.getMonth() + 1;
-  const currentYear = now.getFullYear();
-
-  const dataToSave = {
-    userId,
-    type,
-    data,
-    generatedAt: now,
-    month: currentMonth,
-    year: currentYear,
-    relatedId
-  };
-
-  if (forceReplace) {
-    await db.aiGeneratedData.replaceByUserIdAndType(userId, type, dataToSave);
-  } else {
-    await db.aiGeneratedData.create(dataToSave);
-  }
-}/**
- * Limpa dados antigos (manter apenas últimos 6 meses)
+ * Limpa dados antigos (manter apenas últimos 3 meses)
  */
 export async function cleanupOldAIData(): Promise<void> {
-  const db = await getDatabaseAdapter();
-  const sixMonthsAgo = new Date();
-  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-
-  await db.aiGeneratedData.deleteOldData(sixMonthsAgo);
-
-  console.log('[AI Automation] Cleaned up old AI data');
+  const { cleanupOldCache } = await import('./ai-cache-service');
+  await cleanupOldCache();
 }

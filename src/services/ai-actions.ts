@@ -85,11 +85,24 @@ import { predictFutureBalance } from '@/ai/flows/predict-future-balance';
 import { createConfiguredAI, getModelReference } from '@/ai/genkit';
 import { AICredential } from '@/lib/types';
 
-async function getCredentialAndHandleCredits(userId: string, cost: number, action: AICreditLogAction, isFreeAction: boolean = false): Promise<AICredential> {
+async function getCredentialAndHandleCredits(
+  userId: string,
+  cost: number,
+  action: AICreditLogAction,
+  isFreeAction: boolean = false
+): Promise<AICredential> {
   const credential = await getActiveAICredential(userId);
 
-  // Consome créditos APENAS quando usar o Gastometria IA (modelo padrão definido no .env)
-  if (credential.id === 'gastometria-ai-default') {
+  // REGRAS PARA CONSUMO DE CRÉDITOS:
+  // 1. Só consome créditos se for Gastometria IA (modelo padrão)
+  // 2. Só consome se for ação manual (isFreeAction = false)
+  // 3. Só consome se cost > 0
+  const isUsingGastometriaAI = credential.id === 'gastometria-ai-default' ||
+    credential.provider === 'gastometria';
+
+  const shouldConsumeCredits = isUsingGastometriaAI && !isFreeAction && cost > 0;
+
+  if (shouldConsumeCredits) {
     await consumeAICredits(userId, cost, action, isFreeAction);
   }
 
@@ -100,6 +113,7 @@ async function getCredentialAndHandleCredits(userId: string, cost: number, actio
 // --- AI Actions ---
 
 export async function getSpendingTip(transactions: any, userId: string, forceRefresh: boolean = false): Promise<string> {
+  // Só cobra se for refresh manual
   const cost = forceRefresh ? 1 : 0;
   const credential = await getCredentialAndHandleCredits(userId, cost, 'Dica Rápida', !forceRefresh);
 
@@ -117,6 +131,7 @@ export async function getSpendingTip(transactions: any, userId: string, forceRef
 }
 
 export async function getFinancialProfile(input: FinancialProfileInput, userId: string, forceRefresh: boolean = false): Promise<FinancialProfileOutput> {
+  // Só cobra se for refresh manual
   const cost = forceRefresh ? 5 : 0;
   const credential = await getCredentialAndHandleCredits(userId, cost, 'Perfil Financeiro', !forceRefresh);
 
@@ -171,8 +186,8 @@ Transações do Mês Atual:
   }
 }
 
-export async function analyzeTransactionsAction(transactions: Transaction[], userId: string): Promise<string> {
-  const credential = await getCredentialAndHandleCredits(userId, 5, 'Análise de Transações');
+export async function analyzeTransactionsAction(transactions: Transaction[], userId: string, isFreeAction: boolean = false): Promise<string> {
+  const credential = await getCredentialAndHandleCredits(userId, 5, 'Análise de Transações', isFreeAction);
   try {
     const configuredAI = createConfiguredAI(credential);
     const modelRef = getModelReference(credential);
@@ -214,9 +229,9 @@ function analyzeQueryComplexity(prompt: string): { cost: number; complexity: 'si
   return { cost: 1, complexity: 'simple' };
 }
 
-export async function getChatbotResponse(input: ChatInput, userId: string): Promise<string> {
+export async function getChatbotResponse(input: ChatInput, userId: string, isFreeAction: boolean = false): Promise<string> {
   const { cost } = analyzeQueryComplexity(input.prompt);
-  const credential = await getCredentialAndHandleCredits(userId, cost, 'Chat com Assistente');
+  const credential = await getCredentialAndHandleCredits(userId, cost, 'Chat com Assistente', isFreeAction);
   try {
     const result = await chatWithTransactions(input, credential);
     return result.response;
@@ -231,13 +246,28 @@ export async function getChatbotResponse(input: ChatInput, userId: string): Prom
   }
 }
 
-export async function extractReceiptInfoAction(input: ReceiptInfoInput, userId: string, chosenProviderId?: string): Promise<ReceiptInfoOutput> {
-  const credential = await getCredentialAndHandleCredits(userId, 10, 'Leitura de Nota Fiscal (OCR)');
+export async function extractReceiptInfoAction(input: ReceiptInfoInput, userId: string, chosenProviderId?: string, isFreeAction: boolean = false): Promise<ReceiptInfoOutput> {
+  let credential: AICredential;
+
+  if (chosenProviderId) {
+    // Buscar a credencial específica escolhida pelo usuário
+    const { getCredentialById } = await import('./settings-service');
+    credential = await getCredentialById(userId, chosenProviderId);
+
+    // Só consumir créditos se for Gastometria IA
+    if (chosenProviderId === 'gastometria-ai-default') {
+      await consumeAICredits(userId, 10, 'Leitura de Nota Fiscal (OCR)', isFreeAction);
+    }
+  } else {
+    // Usar lógica padrão de créditos
+    credential = await getCredentialAndHandleCredits(userId, 10, 'Leitura de Nota Fiscal (OCR)', isFreeAction);
+  }
+
   return await extractReceiptInfo(input, credential);
 }
 
-export async function suggestCategoryForItemAction(input: SuggestCategoryInput, userId: string): Promise<SuggestCategoryOutput> {
-  const credential = await getCredentialAndHandleCredits(userId, 1, 'Sugestão de Categoria');
+export async function suggestCategoryForItemAction(input: SuggestCategoryInput, userId: string, isFreeAction: boolean = false): Promise<SuggestCategoryOutput> {
+  const credential = await getCredentialAndHandleCredits(userId, 1, 'Sugestão de Categoria', isFreeAction);
   return suggestCategoryForItem(input, credential);
 }
 
@@ -251,22 +281,23 @@ export async function generateAnnualReportAction(input: GenerateAnnualReportInpu
   return generateAnnualReport(input, credential);
 }
 
-export async function suggestBudgetAmountAction(input: SuggestBudgetInput, userId: string): Promise<SuggestBudgetOutput> {
-  const credential = await getCredentialAndHandleCredits(userId, 2, 'Sugestão de Orçamento');
+export async function suggestBudgetAmountAction(input: SuggestBudgetInput, userId: string, isFreeAction: boolean = false): Promise<SuggestBudgetOutput> {
+  const credential = await getCredentialAndHandleCredits(userId, 2, 'Sugestão de Orçamento', isFreeAction);
   return suggestBudgetAmount(input, credential);
 }
 
-export async function projectGoalCompletionAction(input: ProjectGoalCompletionInput, userId: string): Promise<ProjectGoalCompletionOutput> {
-  const credential = await getCredentialAndHandleCredits(userId, 2, 'Projeção de Meta');
+export async function projectGoalCompletionAction(input: ProjectGoalCompletionInput, userId: string, isFreeAction: boolean = false): Promise<ProjectGoalCompletionOutput> {
+  const credential = await getCredentialAndHandleCredits(userId, 2, 'Projeção de Meta', isFreeAction);
   return projectGoalCompletion(input, credential);
 }
 
-export async function generateAutomaticBudgetsAction(input: GenerateAutomaticBudgetsInput, userId: string): Promise<GenerateAutomaticBudgetsOutput> {
-  const credential = await getCredentialAndHandleCredits(userId, 5, 'Criação de Orçamentos Automáticos');
+export async function generateAutomaticBudgetsAction(input: GenerateAutomaticBudgetsInput, userId: string, isFreeAction: boolean = false): Promise<GenerateAutomaticBudgetsOutput> {
+  const credential = await getCredentialAndHandleCredits(userId, 5, 'Criação de Orçamentos Automáticos', isFreeAction);
   return generateAutomaticBudgets(input, credential);
 }
 
 export async function predictFutureBalanceAction(input: PredictFutureBalanceInput, userId: string, forceRefresh: boolean = false): Promise<PredictFutureBalanceOutput> {
+  // Só cobra se for refresh manual
   const cost = forceRefresh ? 5 : 0;
   const credential = await getCredentialAndHandleCredits(userId, cost, 'Previsão de Saldo', !forceRefresh);
   return predictFutureBalance(input, credential);
