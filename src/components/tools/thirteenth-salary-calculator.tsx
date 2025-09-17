@@ -105,12 +105,77 @@ export function ThirteenthSalaryCalculator({ payrollData }: ThirteenthSalaryCalc
 
         {/* Entrada de dados baseada no modo */}
         {mode === 'payroll' ? (
-          <div className="bg-muted/30 dark:bg-muted/10 p-3 rounded-md space-y-2">
-            <div className="text-sm font-medium">Dados do Holerite:</div>
-            <div className="text-xs text-muted-foreground space-y-1">
-              <div>Salário Bruto: <span className="font-medium">{formatCurrency(payrollData.grossSalary)}</span></div>
-              <div>Salário Líquido: <span className="font-medium">{formatCurrency(payrollData.netSalary)}</span></div>
+          <div className="bg-muted/30 dark:bg-muted/10 p-3 rounded-md space-y-3">
+            <div className="text-sm font-medium">Dados do Holerite Utilizados no Cálculo:</div>
+            
+            {/* Dados salariais */}
+            <div className="space-y-1">
+              <div className="text-xs font-medium text-muted-foreground">💰 Dados Salariais:</div>
+              <div className="text-xs text-muted-foreground pl-2">
+                Salário Bruto: <span className="font-medium">{formatCurrency(payrollData.grossSalary)}</span>
+              </div>
+              <div className="text-xs text-muted-foreground pl-2">
+                Salário Líquido: <span className="font-medium">{formatCurrency(payrollData.netSalary)}</span>
+              </div>
             </div>
+
+            {/* Descontos regulares */}
+            {payrollData.discounts.filter(d => 
+              d.type === 'discount' && 
+              !d.name.toLowerCase().includes('consignado') &&
+              !d.name.toLowerCase().includes('empréstimo') &&
+              !d.name.toLowerCase().includes('emprestimo')
+            ).length > 0 && (
+              <div className="space-y-1">
+                <div className="text-xs font-medium text-muted-foreground">📊 Descontos Regulares:</div>
+                <div className="pl-2 space-y-1">
+                  {payrollData.discounts.filter(d => 
+                    d.type === 'discount' && 
+                    !d.name.toLowerCase().includes('consignado') &&
+                    !d.name.toLowerCase().includes('empréstimo') &&
+                    !d.name.toLowerCase().includes('emprestimo')
+                  ).map((discount, index) => (
+                    <div key={index} className="text-xs text-muted-foreground flex justify-between">
+                      <span>{discount.name}:</span>
+                      <span className="font-medium">{formatCurrency(discount.amount)}</span>
+                    </div>
+                  ))}
+                  <div className="text-xs text-green-600 dark:text-green-400 mt-1">
+                    ✓ Serão aplicados no 13º salário
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Empréstimo consignado */}
+            {payrollData.discounts.filter(d => 
+              d.type === 'discount' && (
+                d.name.toLowerCase().includes('consignado') ||
+                d.name.toLowerCase().includes('empréstimo') ||
+                d.name.toLowerCase().includes('emprestimo')
+              )
+            ).length > 0 && (
+              <div className="space-y-1">
+                <div className="text-xs font-medium text-muted-foreground">🏦 Empréstimo Consignado:</div>
+                <div className="pl-2 space-y-1">
+                  {payrollData.discounts.filter(d => 
+                    d.type === 'discount' && (
+                      d.name.toLowerCase().includes('consignado') ||
+                      d.name.toLowerCase().includes('empréstimo') ||
+                      d.name.toLowerCase().includes('emprestimo')
+                    )
+                  ).map((discount, index) => (
+                    <div key={index} className="text-xs text-muted-foreground flex justify-between">
+                      <span>{discount.name}:</span>
+                      <span className="font-medium">{formatCurrency(discount.amount)}</span>
+                    </div>
+                  ))}
+                  <div className="text-xs text-red-600 dark:text-red-400 mt-1">
+                    ❌ NÃO será descontado do 13º salário
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         ) : (
           <ManualSalaryInput data={manualData} onChange={setManualData} />
@@ -182,6 +247,34 @@ export function ThirteenthSalaryCalculator({ payrollData }: ThirteenthSalaryCalc
                 <Badge className="bg-green-600 dark:bg-green-600 text-white font-bold">
                   {formatCurrency(result.netThirteenth)}
                 </Badge>
+              </div>
+              
+              {/* Divisão em parcelas para empresas que pagam em 2x */}
+              <div className="bg-blue-50 dark:bg-blue-500/10 p-3 rounded-lg border border-blue-200 dark:border-blue-500/20 mt-3">
+                <div className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-2">
+                  💡 Para empresas que pagam em 2 parcelas:
+                </div>
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-muted-foreground">1ª Parcela (até 30/nov) - Sem descontos:</span>
+                    <Badge variant="outline" className="text-green-600 dark:text-green-400">
+                      {formatCurrency(result.grossThirteenth / 2)}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span className="text-xs text-muted-foreground">2ª Parcela (até 20/dez) - Com descontos:</span>
+                    <Badge variant="outline" className="text-blue-600 dark:text-blue-400">
+                      {formatCurrency((result.grossThirteenth / 2) - result.estimatedDiscounts)}
+                    </Badge>
+                  </div>
+                  <div className="text-xs text-muted-foreground bg-white/50 dark:bg-gray-800/50 p-2 rounded mt-2">
+                    <div>• 1ª parcela: Metade do valor bruto, sem descontos</div>
+                    <div>• 2ª parcela: Metade do valor bruto menos todos os descontos</div>
+                  </div>
+                </div>
+                <div className="text-xs text-muted-foreground mt-2 text-center border-t pt-2">
+                  <strong>Total Líquido:</strong> {formatCurrency(result.netThirteenth)}
+                </div>
               </div>
             </div>
 
