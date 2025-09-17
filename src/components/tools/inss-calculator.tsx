@@ -150,7 +150,7 @@ export function INSSCalculator({ payrollData }: INSSCalculatorProps) {
               return (
                 <div className="space-y-4">
                   {registeredINSS > 0 && (
-                    <div className={`p-4 rounded-lg ${Math.abs(registeredINSS - calculatedINSS) <= 10 ? 'bg-green-50' : 'bg-yellow-50'}`}>
+                    <div className={`p-4 rounded-lg ${Math.abs(registeredINSS - calculatedINSS) <= 10 ? 'bg-green-50 dark:bg-green-500/10' : 'bg-yellow-50 dark:bg-yellow-500/10'}`}>
                       <div className="flex items-center gap-2 mb-2">
                         {Math.abs(registeredINSS - calculatedINSS) <= 10 ? (
                           <CheckCircle className="h-4 w-4 text-green-600" />
@@ -163,9 +163,9 @@ export function INSSCalculator({ payrollData }: INSSCalculatorProps) {
                         <div>INSS do seu holerite: <span className="font-medium">{formatCurrency(registeredINSS)}</span></div>
                         <div>INSS calculado pela tabela: <span className="font-medium">{formatCurrency(calculatedINSS)}</span></div>
                         {Math.abs(registeredINSS - calculatedINSS) <= 10 ? (
-                          <div className="text-green-700">✓ Valores estão consistentes</div>
+                          <div className="text-green-600 dark:text-green-400">✓ Valores estão consistentes</div>
                         ) : (
-                          <div className="text-yellow-700">⚠️ Diferença de {formatCurrency(Math.abs(registeredINSS - calculatedINSS))} - verifique seus dados</div>
+                          <div className="text-yellow-600 dark:text-yellow-400">⚠️ Diferença de {formatCurrency(Math.abs(registeredINSS - calculatedINSS))} - verifique seus dados</div>
                         )}
                       </div>
                     </div>
@@ -205,7 +205,7 @@ export function INSSCalculator({ payrollData }: INSSCalculatorProps) {
                   </p>
                 </div>
 
-                <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <Clock className="h-4 w-4 text-blue-600" />
                     <span className="font-medium">Anos para Aposentadoria</span>
@@ -218,7 +218,7 @@ export function INSSCalculator({ payrollData }: INSSCalculatorProps) {
                   </p>
                 </div>
 
-                <div className="bg-green-50 p-4 rounded-lg">
+                <div className="bg-green-50 dark:bg-green-500/10 p-4 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <Users className="h-4 w-4 text-green-600" />
                     <span className="font-medium">Benefício Estimado</span>

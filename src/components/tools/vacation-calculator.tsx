@@ -9,6 +9,7 @@ import { Calendar, Calculator } from "lucide-react";
 import { PayrollData } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { calculateConsignedImpactOnVacation, getConsignedLoanFromPayroll } from "@/lib/payroll-utils";
 
 interface VacationCalculatorProps {
   payrollData: PayrollData;
@@ -19,7 +20,15 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
   const [result, setResult] = useState<{
     vacationSalary: number;
     oneThirdBonus: number;
-    total: number;
+    grossTotal: number;
+    consignedImpact: {
+      maxAllowedOnVacation: number;
+      applicableAmount: number;
+      isWithinLimit: boolean;
+      explanation: string;
+    } | null;
+    estimatedDiscounts: number;
+    netTotal: number;
   } | null>(null);
 
   const calculateVacation = () => {
@@ -27,12 +36,39 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
     const dailySalary = payrollData.grossSalary / 30;
     const vacationSalary = dailySalary * vacationDays;
     const oneThirdBonus = vacationSalary / 3; // 1/3 constitucional
-    const total = vacationSalary + oneThirdBonus;
+    const grossTotal = vacationSalary + oneThirdBonus;
+
+    // Calcula o impacto correto do empréstimo consignado nas férias
+    const consignedAmount = getConsignedLoanFromPayroll(payrollData);
+    const consignedImpact = consignedAmount > 0 
+      ? calculateConsignedImpactOnVacation(payrollData.grossSalary, consignedAmount)
+      : null;
+    
+    // Calcula descontos regulares baseado na proporção do holerite
+    // mas exclui o empréstimo consignado pois ele tem regras específicas
+    const regularDiscounts = payrollData.discounts.filter(d => 
+      d.type === 'discount' && 
+      !d.name.toLowerCase().includes('consignado') &&
+      !d.name.toLowerCase().includes('empréstimo') &&
+      !d.name.toLowerCase().includes('emprestimo')
+    );
+    
+    const regularDiscountRate = payrollData.grossSalary > 0 
+      ? regularDiscounts.reduce((sum, d) => sum + d.amount, 0) / payrollData.grossSalary 
+      : 0;
+    
+    const estimatedRegularDiscounts = grossTotal * regularDiscountRate;
+    const consignedDiscount = consignedImpact?.applicableAmount || 0;
+    const totalDiscounts = estimatedRegularDiscounts + consignedDiscount;
+    const netTotal = grossTotal - totalDiscounts;
 
     setResult({
       vacationSalary,
       oneThirdBonus,
-      total,
+      grossTotal,
+      consignedImpact,
+      estimatedDiscounts: totalDiscounts,
+      netTotal,
     });
   };
 
@@ -94,16 +130,44 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
                 <Badge variant="outline">{formatCurrency(result.oneThirdBonus)}</Badge>
               </div>
               
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Total Bruto:</span>
+                <Badge variant="outline">{formatCurrency(result.grossTotal)}</Badge>
+              </div>
+              
+              <div className="flex justify-between items-center">
+                <span className="text-sm">Descontos Estimados:</span>
+                <Badge variant="outline" className="text-red-600">
+                  -{formatCurrency(result.estimatedDiscounts)}
+                </Badge>
+              </div>
+              
+              {/* Informação específica sobre empréstimo consignado */}
+              {result.consignedImpact && (
+                <div className="bg-blue-50 dark:bg-blue-500/10 p-3 rounded-lg border">
+                  <div className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-1">
+                    💡 Empréstimo Consignado nas Férias
+                  </div>
+                  <div className="text-xs text-muted-foreground space-y-1">
+                    <div>Limite máximo: {formatCurrency(result.consignedImpact.maxAllowedOnVacation)} (35% das férias + 1/3)</div>
+                    <div>Valor aplicado: {formatCurrency(result.consignedImpact.applicableAmount)}</div>
+                    <div className={result.consignedImpact.isWithinLimit ? "text-green-600 dark:text-green-400" : "text-yellow-600 dark:text-yellow-400"}>
+                      {result.consignedImpact.explanation}
+                    </div>
+                  </div>
+                </div>
+              )}
+              
               <div className="flex justify-between items-center pt-2 border-t">
-                <span className="font-medium">Total a Receber:</span>
+                <span className="font-medium">Total Líquido Estimado:</span>
                 <Badge className="bg-green-600 text-white font-bold">
-                  {formatCurrency(result.total)}
+                  {formatCurrency(result.netTotal)}
                 </Badge>
               </div>
             </div>
 
-            <div className="text-xs text-muted-foreground bg-blue-50 p-2 rounded">
-              <strong>Nota:</strong> Este cálculo é baseado no salário bruto e não inclui descontos como INSS e IR que podem incidir sobre as férias.
+            <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-500/10 p-2 rounded">
+              <strong>Nota:</strong> Cálculo inclui estimativa de descontos baseada no seu holerite. Empréstimo consignado nas férias segue regra específica de até 35% do valor bruto.
             </div>
           </div>
         )}

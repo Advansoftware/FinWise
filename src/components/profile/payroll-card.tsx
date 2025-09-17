@@ -123,6 +123,40 @@ export function PayrollCard() {
     });
   };
 
+  const clearPayrollData = () => {
+    if (confirm("Tem certeza que deseja limpar todos os dados do holerite? Esta ação não pode ser desfeita.")) {
+      const emptyPayrollData: PayrollData = {
+        id: user?.uid || "",
+        userId: user?.uid || "",
+        grossSalary: 0,
+        discounts: [],
+        netSalary: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      setPayrollData(emptyPayrollData);
+      setIsEditing(false);
+      
+      // Salvar os dados vazios no servidor
+      if (user) {
+        startTransition(async () => {
+          try {
+            await fetch(`/api/payroll/${user.uid}`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(emptyPayrollData),
+            });
+            console.log("✅ Dados do holerite limpos com sucesso!");
+          } catch (error) {
+            console.error("Error clearing payroll data:", error);
+          }
+        });
+      }
+    }
+  };
+
   const removeDiscount = (discountId: string) => {
     setPayrollData(prev => ({
       ...prev,
@@ -151,30 +185,42 @@ export function PayrollCard() {
             <Receipt className="h-5 w-5 text-primary" />
             <CardTitle className="text-lg">Dados do Holerite</CardTitle>
           </div>
-          <Button
-            variant={isEditing ? "default" : "outline"}
-            size="sm"
-            onClick={() => {
-              if (isEditing) {
-                savePayrollData();
-              } else {
-                setIsEditing(true);
-              }
-            }}
-            disabled={isPending}
-            className="h-8"
-          >
-            {isPending ? (
-              "Salvando..."
-            ) : isEditing ? (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                Salvar
-              </>
-            ) : (
-              "Editar"
+          <div className="flex items-center gap-2">
+            {payrollData.grossSalary > 0 && (
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={clearPayrollData}
+                className="h-8 text-xs"
+              >
+                🗑️ Limpar
+              </Button>
             )}
-          </Button>
+            <Button
+              variant={isEditing ? "default" : "outline"}
+              size="sm"
+              onClick={() => {
+                if (isEditing) {
+                  savePayrollData();
+                } else {
+                  setIsEditing(true);
+                }
+              }}
+              disabled={isPending}
+              className="h-8"
+            >
+              {isPending ? (
+                "Salvando..."
+              ) : isEditing ? (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Salvar
+                </>
+              ) : (
+                "Editar"
+              )}
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -229,7 +275,7 @@ export function PayrollCard() {
           {/* Descontos */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium text-red-700">
+              <Label className="text-sm font-medium text-red-600 dark:text-red-400">
                 💳 Descontos {payrollData.discounts.filter(d => d.type === 'discount').length > 0 && `(${payrollData.discounts.filter(d => d.type === 'discount').length})`}
               </Label>
               {isEditing && (
@@ -259,7 +305,7 @@ export function PayrollCard() {
             {payrollData.discounts.filter(d => d.type === 'discount').length > 0 ? (
               <div className="space-y-2 max-h-40 overflow-y-auto">
                 {payrollData.discounts.filter(d => d.type === 'discount').map((discount) => (
-                  <div key={discount.id} className="flex items-center gap-2 p-2 bg-red-50 rounded-md border border-red-100">
+                  <div key={discount.id} className="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-500/10 rounded-md border border-red-100 dark:border-red-800">
                     {isEditing ? (
                       <>
                         <Select
@@ -296,7 +342,7 @@ export function PayrollCard() {
                       </>
                     ) : (
                       <>
-                        <span className="flex-1 text-xs font-medium text-red-700">{discount.name}</span>
+                        <span className="flex-1 text-xs font-medium text-red-600 dark:text-red-400">{discount.name}</span>
                         <Badge variant="destructive" className="text-xs">
                           -{formatCurrency(discount.amount)}
                         </Badge>
@@ -325,7 +371,7 @@ export function PayrollCard() {
           {/* Ajudas de Custo / Adicionais */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium text-green-700">
+              <Label className="text-sm font-medium text-green-600 dark:text-green-400">
                 💰 Adicionais {payrollData.discounts.filter(d => d.type === 'allowance').length > 0 && `(${payrollData.discounts.filter(d => d.type === 'allowance').length})`}
               </Label>
               {isEditing && (
@@ -355,7 +401,7 @@ export function PayrollCard() {
             {payrollData.discounts.filter(d => d.type === 'allowance').length > 0 ? (
               <div className="space-y-2 max-h-40 overflow-y-auto">
                 {payrollData.discounts.filter(d => d.type === 'allowance').map((allowance) => (
-                  <div key={allowance.id} className="flex items-center gap-2 p-2 bg-green-50 rounded-md border border-green-100">
+                  <div key={allowance.id} className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-500/10 rounded-md border border-green-100 dark:border-green-800">
                     {isEditing ? (
                       <>
                         <Select
@@ -392,8 +438,8 @@ export function PayrollCard() {
                       </>
                     ) : (
                       <>
-                        <span className="flex-1 text-xs font-medium text-green-700">{allowance.name}</span>
-                        <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
+                        <span className="flex-1 text-xs font-medium text-green-600 dark:text-green-400">{allowance.name}</span>
+                        <Badge variant="secondary" className="text-xs bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400">
                           +{formatCurrency(allowance.amount)}
                         </Badge>
                       </>

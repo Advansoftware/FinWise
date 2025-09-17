@@ -140,7 +140,7 @@ export function ConsignedLoanCalculator({ payrollData }: ConsignedLoanProps) {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Informação automática */}
-        <div className="bg-blue-50 p-4 rounded-lg mb-4">
+        <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-lg mb-4">
           <h4 className="font-medium text-blue-800 mb-2">📊 Dados extraídos do seu holerite:</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
             <div>
@@ -237,7 +237,7 @@ export function ConsignedLoanCalculator({ payrollData }: ConsignedLoanProps) {
               <h3 className="font-semibold text-lg">Simulação - {getEmployeeTypeLabel(employeeType)}</h3>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <DollarSign className="h-4 w-4 text-blue-600" />
                     <span className="font-medium">Margem Disponível</span>
@@ -250,7 +250,7 @@ export function ConsignedLoanCalculator({ payrollData }: ConsignedLoanProps) {
                   </p>
                 </div>
 
-                <div className="bg-green-50 p-4 rounded-lg">
+                <div className="bg-green-50 dark:bg-green-500/10 p-4 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <CreditCard className="h-4 w-4 text-green-600" />
                     <span className="font-medium">Valor Máximo</span>
@@ -292,11 +292,10 @@ export function ConsignedLoanCalculator({ payrollData }: ConsignedLoanProps) {
 
               {/* Validação da margem */}
               {calculation.monthlyPayment > calculation.availableMargin && (
-                <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                  <h4 className="font-medium text-red-800 mb-2">⚠️ Margem Insuficiente</h4>
-                  <p className="text-sm text-red-700">
-                    A parcela desejada ({formatCurrency(calculation.monthlyPayment)}) excede sua margem disponível 
-                    ({formatCurrency(calculation.availableMargin)}). Reduza o valor ou aumente o prazo.
+                <div className="bg-red-50 dark:bg-red-500/10 p-4 rounded-lg border border-red-200 dark:border-red-800">
+                  <h4 className="font-medium text-red-600 dark:text-red-400 mb-2">⚠️ Atenção</h4>
+                  <p className="text-sm text-red-600 dark:text-red-400">
+                    Valor da parcela excede a margem disponível. Reduza o valor ou aumente o prazo.
                   </p>
                 </div>
               )}

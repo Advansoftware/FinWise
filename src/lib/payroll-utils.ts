@@ -123,7 +123,92 @@ export function calculateIRFromSalary(grossSalary: number, inssDiscount: number,
   return 0;
 }
 
-// Função para verificar consistência dos dados do holerite
+export function getConsignedLoanFromPayroll(payrollData: PayrollData): number {
+  const consignedDiscount = payrollData.discounts.find(discount =>
+    discount.name.toLowerCase().includes('consignado') ||
+    discount.name.toLowerCase().includes('empréstimo') ||
+    discount.name.toLowerCase().includes('emprestimo')
+  );
+  return consignedDiscount?.amount || 0;
+}
+
+// Função para calcular o impacto do empréstimo consignado nas férias
+export function calculateConsignedImpactOnVacation(grossSalary: number, consignedAmount: number): {
+  maxAllowedOnVacation: number;
+  applicableAmount: number;
+  isWithinLimit: boolean;
+  explanation: string;
+} {
+  // Nas férias, o empréstimo consignado pode descontar até 35% do valor bruto das férias
+  const vacationSalary = grossSalary + (grossSalary / 3); // Salário + 1/3 constitucional
+  const maxAllowedOnVacation = vacationSalary * 0.35;
+  const applicableAmount = Math.min(consignedAmount, maxAllowedOnVacation);
+
+  return {
+    maxAllowedOnVacation,
+    applicableAmount,
+    isWithinLimit: consignedAmount <= maxAllowedOnVacation,
+    explanation: consignedAmount > maxAllowedOnVacation
+      ? `Valor excede o limite de 35% das férias. Aplicando apenas ${applicableAmount.toFixed(2)}`
+      : "Valor dentro do limite permitido para férias"
+  };
+}
+
+// Função para calcular o impacto do empréstimo consignado no 13º salário
+export function calculateConsignedImpactOnThirteenth(grossSalary: number, consignedAmount: number): {
+  maxAllowedOnThirteenth: number;
+  applicableAmount: number;
+  isWithinLimit: boolean;
+  explanation: string;
+} {
+  // No 13º salário, o empréstimo consignado pode descontar até 35% do valor bruto
+  const maxAllowedOnThirteenth = grossSalary * 0.35;
+  const applicableAmount = Math.min(consignedAmount, maxAllowedOnThirteenth);
+
+  return {
+    maxAllowedOnThirteenth,
+    applicableAmount,
+    isWithinLimit: consignedAmount <= maxAllowedOnThirteenth,
+    explanation: consignedAmount > maxAllowedOnThirteenth
+      ? `Valor excede o limite de 35% do 13º salário. Aplicando apenas ${applicableAmount.toFixed(2)}`
+      : "Valor dentro do limite permitido para 13º salário"
+  };
+}
+
+// Função para verificar se o empréstimo consignado está dentro dos limites legais
+export function validateConsignedLoanLimits(payrollData: PayrollData, employeeType: 'CLT' | 'Servidor Público' | 'Aposentado INSS'): {
+  isValid: boolean;
+  maxAllowedMargin: number;
+  currentCommitment: number;
+  marginRate: number;
+  warnings: string[];
+} {
+  const consignedAmount = getConsignedLoanFromPayroll(payrollData);
+  const warnings: string[] = [];
+
+  // Margens permitidas por tipo de funcionário
+  const marginRates = {
+    'CLT': 0.30, // 30% para CLT
+    'Servidor Público': 0.35, // 35% para servidor público
+    'Aposentado INSS': 0.45 // 45% para aposentados do INSS
+  };
+
+  const marginRate = marginRates[employeeType];
+  const maxAllowedMargin = payrollData.netSalary * marginRate;
+  const currentCommitment = (consignedAmount / payrollData.netSalary) * 100;
+
+  if (consignedAmount > maxAllowedMargin) {
+    warnings.push(`Empréstimo consignado excede a margem permitida de ${(marginRate * 100).toFixed(0)}% para ${employeeType}`);
+  }
+
+  return {
+    isValid: consignedAmount <= maxAllowedMargin,
+    maxAllowedMargin,
+    currentCommitment,
+    marginRate,
+    warnings
+  };
+}
 export function validatePayrollData(payrollData: PayrollData): {
   isValid: boolean;
   warnings: string[];

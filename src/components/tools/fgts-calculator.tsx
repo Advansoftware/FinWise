@@ -176,7 +176,7 @@ export function FGTSCalculator({ payrollData }: FGTSCalculatorProps) {
                   </p>
                 </div>
 
-                <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <Building className="h-4 w-4 text-blue-600" />
                     <span className="font-medium">Saldo Atual Estimado</span>
@@ -189,7 +189,7 @@ export function FGTSCalculator({ payrollData }: FGTSCalculatorProps) {
                   </p>
                 </div>
 
-                <div className="bg-green-50 p-4 rounded-lg">
+                <div className="bg-green-50 dark:bg-green-500/10 p-4 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <TrendingUp className="h-4 w-4 text-green-600" />
                     <span className="font-medium">Projeção em {projectionYears} anos</span>

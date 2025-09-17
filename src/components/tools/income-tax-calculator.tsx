@@ -199,7 +199,7 @@ export function IncomeTaxCalculator({ payrollData }: IncomeTaxCalculatorProps) {
               return (
                 <div className="space-y-4">
                   {registeredIR > 0 && (
-                    <div className={`p-4 rounded-lg ${Math.abs(registeredIR - calculatedIR) <= 20 ? 'bg-green-50' : 'bg-yellow-50'}`}>
+                    <div className={`p-4 rounded-lg ${Math.abs(registeredIR - calculatedIR) <= 20 ? 'bg-green-50 dark:bg-green-500/10' : 'bg-yellow-50 dark:bg-yellow-500/10'}`}>
                       <div className="flex items-center gap-2 mb-2">
                         {Math.abs(registeredIR - calculatedIR) <= 20 ? (
                           <CheckCircle className="h-4 w-4 text-green-600" />
@@ -212,17 +212,17 @@ export function IncomeTaxCalculator({ payrollData }: IncomeTaxCalculatorProps) {
                         <div>IR do seu holerite: <span className="font-medium">{formatCurrency(registeredIR)}</span></div>
                         <div>IR calculado pela tabela: <span className="font-medium">{formatCurrency(calculatedIR)}</span></div>
                         {Math.abs(registeredIR - calculatedIR) <= 20 ? (
-                          <div className="text-green-700">✓ Valores estão consistentes</div>
+                          <div className="text-green-600 dark:text-green-400">✓ Valores estão consistentes</div>
                         ) : (
-                          <div className="text-yellow-700">⚠️ Diferença pode indicar dependentes ou outras deduções não consideradas</div>
+                          <div className="text-yellow-600 dark:text-yellow-400">⚠️ Diferença pode indicar dependentes ou outras deduções não consideradas</div>
                         )}
                       </div>
                     </div>
                   )}
                   
                   {registeredINSS > 0 && (
-                    <div className="bg-blue-50 p-3 rounded-lg">
-                      <div className="text-sm text-blue-700">
+                    <div className="bg-blue-50 dark:bg-blue-500/10 p-3 rounded-lg">
+                      <div className="text-sm text-blue-600 dark:text-blue-400">
                         💡 <strong>Usando dados do seu holerite:</strong> INSS de {formatCurrency(registeredINSS)} 
                         {registeredIR > 0 && ` e IR de ${formatCurrency(registeredIR)}`}
                       </div>
@@ -263,7 +263,7 @@ export function IncomeTaxCalculator({ payrollData }: IncomeTaxCalculatorProps) {
                   </p>
                 </div>
 
-                <div className="bg-blue-50 p-4 rounded-lg">
+                <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-lg">
                   <div className="flex items-center gap-2 mb-2">
                     <Calculator className="h-4 w-4 text-blue-600" />
                     <span className="font-medium">Base de Cálculo</span>
@@ -277,7 +277,7 @@ export function IncomeTaxCalculator({ payrollData }: IncomeTaxCalculatorProps) {
                 </div>
 
                 <div className={`p-4 rounded-lg ${
-                  calculation.estimatedRefund > 0 ? 'bg-green-50' : 'bg-red-50'
+                  calculation.estimatedRefund > 0 ? 'bg-green-50 dark:bg-green-500/10' : 'bg-red-50 dark:bg-red-500/10'
                 }`}>
                   <div className="flex items-center gap-2 mb-2">
                     {calculation.estimatedRefund > 0 ? (

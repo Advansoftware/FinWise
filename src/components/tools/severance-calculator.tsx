@@ -133,7 +133,7 @@ export function SeveranceCalculator({ payrollData }: SeveranceCalculatorProps) {
       </CardHeader>
       <CardContent className="space-y-6">
         {/* Informação automática */}
-        <div className="bg-blue-50 p-4 rounded-lg mb-4">
+        <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-lg mb-4">
           <h4 className="font-medium text-blue-800 mb-2">📊 Dados extraídos do seu holerite:</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
             <div>
@@ -221,7 +221,7 @@ export function SeveranceCalculator({ payrollData }: SeveranceCalculatorProps) {
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {calculation.salarioAviso > 0 && (
-                  <div className="bg-blue-50 p-4 rounded-lg">
+                  <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
                       <AlertTriangle className="h-4 w-4 text-blue-600" />
                       <span className="font-medium">Aviso Prévio</span>
@@ -236,7 +236,7 @@ export function SeveranceCalculator({ payrollData }: SeveranceCalculatorProps) {
                 )}
 
                 {calculation.feriasPendentes > 0 && (
-                  <div className="bg-green-50 p-4 rounded-lg">
+                  <div className="bg-green-50 dark:bg-green-500/10 p-4 rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
                       <DollarSign className="h-4 w-4 text-green-600" />
                       <span className="font-medium">Férias + 1/3</span>

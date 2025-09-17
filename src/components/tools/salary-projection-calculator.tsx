@@ -121,13 +121,13 @@ export function SalaryProjectionCalculator({ payrollData }: SalaryProjectionCalc
             
             {/* Novos salários */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-green-50 p-3 rounded-md">
-                <div className="text-xs text-green-600">Novo Salário Bruto</div>
-                <div className="font-bold text-green-700">{formatCurrency(result.newGrossSalary)}</div>
+              <div className="bg-green-50 dark:bg-green-500/10 p-3 rounded-md">
+                <div className="text-sm text-muted-foreground">Novo Salário Bruto</div>
+                <div className="font-bold text-green-600 dark:text-green-400">{formatCurrency(result.newGrossSalary)}</div>
               </div>
-              <div className="bg-blue-50 p-3 rounded-md">
-                <div className="text-xs text-blue-600">Novo Salário Líquido</div>
-                <div className="font-bold text-blue-700">{formatCurrency(result.newNetSalary)}</div>
+              <div className="bg-blue-50 dark:bg-blue-500/10 p-3 rounded-md">
+                <div className="text-sm text-muted-foreground">Novo Salário Líquido</div>
+                <div className="font-bold text-blue-600 dark:text-blue-400">{formatCurrency(result.newNetSalary)}</div>
               </div>
             </div>
 
@@ -155,7 +155,7 @@ export function SalaryProjectionCalculator({ payrollData }: SalaryProjectionCalc
               </div>
             </div>
 
-            <div className="text-xs text-muted-foreground bg-blue-50 p-2 rounded">
+            <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-500/10 p-2 rounded">
               <strong>Nota:</strong> Esta é uma projeção estimada. Os valores reais podem variar 
               conforme mudanças na legislação e faixas de desconto.
             </div>
