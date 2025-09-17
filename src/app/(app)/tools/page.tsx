@@ -14,6 +14,7 @@ import { INSSCalculator } from "@/components/tools/inss-calculator";
 import { SeveranceCalculator } from "@/components/tools/severance-calculator";
 import { IncomeTaxCalculator } from "@/components/tools/income-tax-calculator";
 import { ConsignedLoanCalculator } from "@/components/tools/consigned-loan-calculator";
+import { PostVacationCalculator } from "@/components/tools/post-vacation-calculator";
 
 export default function ToolsPage() {
   const { payrollData, loading, hasValidPayrollData } = usePayroll();
@@ -236,7 +237,8 @@ export default function ToolsPage() {
           <VacationCalculator payrollData={payrollData!} />
           <ThirteenthSalaryCalculator payrollData={payrollData!} />
         </div>
-        <div className="grid grid-cols-1 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <PostVacationCalculator payrollData={payrollData!} />
           <SalaryProjectionCalculator payrollData={payrollData!} />
         </div>
       </div>
