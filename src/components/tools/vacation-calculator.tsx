@@ -37,6 +37,7 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
     consignedImpact: {
       maxAllowedOnVacation: number;
       applicableAmount: number;
+      availableRemuneration?: number;
       isWithinLimit: boolean;
       explanation: string;
     } | null;
@@ -100,11 +101,14 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
       const otherDiscountsTotal = otherDiscountsFromPayroll.reduce((sum, d) => sum + d.amount, 0);
       detailedDiscounts.otherDiscounts = otherDiscountsTotal * vacationProportion;
       
-      // Empréstimo consignado (valor fixo do holerite, respeitando limite de 35% das férias)
+      // Empréstimo consignado (valor fixo do holerite, respeitando limite de 35% da remuneração disponível)
       const consignedAmount = getConsignedLoanFromPayroll(payrollData);
       if (consignedAmount > 0) {
-        // Calcula o limite de 35% sobre o valor real das férias (não do salário mensal)
-        const maxAllowedOnVacation = grossTotal * 0.35;
+        // Calcula a remuneração disponível = valor bruto - descontos obrigatórios (INSS + IR)
+        const availableRemuneration = grossTotal - detailedDiscounts.inss - detailedDiscounts.ir;
+        
+        // Limite de 35% sobre a remuneração disponível (após descontos obrigatórios)
+        const maxAllowedOnVacation = availableRemuneration * 0.35;
         const applicableAmount = Math.min(consignedAmount, maxAllowedOnVacation);
         
         detailedDiscounts.consigned = applicableAmount;
@@ -113,10 +117,11 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
         const consignedImpact = {
           maxAllowedOnVacation,
           applicableAmount,
+          availableRemuneration,
           isWithinLimit: consignedAmount <= maxAllowedOnVacation,
           explanation: consignedAmount > maxAllowedOnVacation
-            ? `Valor excede o limite de 35% das férias de ${vacationDays} dias. Aplicando apenas R$ ${applicableAmount.toFixed(2)}`
-            : `Valor dentro do limite de 35% das férias de ${vacationDays} dias`
+            ? `Valor excede o limite de 35% da remuneração disponível das férias de ${vacationDays} dias. Aplicando apenas R$ ${applicableAmount.toFixed(2)}`
+            : `Valor dentro do limite de 35% da remuneração disponível das férias de ${vacationDays} dias`
         };
       } else {
         detailedDiscounts.consigned = 0;
@@ -143,16 +148,21 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
     if (mode === 'payroll') {
       const consignedAmount = getConsignedLoanFromPayroll(payrollData);
       if (consignedAmount > 0) {
-        const maxAllowedOnVacation = grossTotal * 0.35;
+        // Calcula a remuneração disponível = valor bruto - descontos obrigatórios (INSS + IR)
+        const availableRemuneration = grossTotal - detailedDiscounts.inss - detailedDiscounts.ir;
+        
+        // Limite de 35% sobre a remuneração disponível (após descontos obrigatórios)
+        const maxAllowedOnVacation = availableRemuneration * 0.35;
         const applicableAmount = Math.min(consignedAmount, maxAllowedOnVacation);
         
         finalConsignedImpact = {
           maxAllowedOnVacation,
           applicableAmount,
+          availableRemuneration,
           isWithinLimit: consignedAmount <= maxAllowedOnVacation,
           explanation: consignedAmount > maxAllowedOnVacation
-            ? `Valor excede o limite de 35% das férias de ${vacationDays} dias. Aplicando apenas R$ ${applicableAmount.toFixed(2)}`
-            : `Valor dentro do limite de 35% das férias de ${vacationDays} dias`
+            ? `Valor excede o limite de 35% da remuneração disponível das férias de ${vacationDays} dias. Aplicando apenas R$ ${applicableAmount.toFixed(2)}`
+            : `Valor dentro do limite de 35% da remuneração disponível das férias de ${vacationDays} dias`
         };
       }
     }
@@ -367,7 +377,8 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
                     💡 Empréstimo Consignado nas Férias de {vacationDays} Dias
                   </div>
                   <div className="text-xs text-muted-foreground space-y-1">
-                    <div>Limite máximo: {formatCurrency(result.consignedImpact.maxAllowedOnVacation)} (35% do valor das férias)</div>
+                    <div>Remuneração disponível: {formatCurrency(result.consignedImpact.availableRemuneration || 0)} (após INSS e IR)</div>
+                    <div>Limite máximo: {formatCurrency(result.consignedImpact.maxAllowedOnVacation)} (35% da remuneração disponível)</div>
                     <div>Valor aplicado: {formatCurrency(result.consignedImpact.applicableAmount)}</div>
                     <div className={result.consignedImpact.isWithinLimit ? "text-green-600 dark:text-green-400" : "text-yellow-600 dark:text-yellow-400"}>
                       {result.consignedImpact.explanation}
@@ -386,7 +397,7 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
 
             <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-500/10 p-2 rounded border border-blue-200 dark:border-blue-500/20">
               <strong>Nota:</strong> {mode === 'payroll' 
-                ? `Cálculo baseado nos valores reais do seu holerite. INSS e IR são calculados proporcionalmente aos ${vacationDays} dias de férias. Exemplo: se INSS do holerite é R$ 556,20 para 30 dias, para 15 dias será R$ 278,10. Empréstimo consignado mantém valor fixo (limite 35%).`
+                ? `Cálculo baseado nos valores reais do seu holerite. INSS e IR são calculados proporcionalmente aos ${vacationDays} dias de férias. Empréstimo consignado limitado a 35% da remuneração disponível (após descontos obrigatórios), conforme Portaria MTE nº 435/2025.`
                 : 'Estimativa baseada na proporção de descontos informada. Para cálculos mais precisos com regras específicas de consignado, use os dados do holerite.'
               }
             </div>
