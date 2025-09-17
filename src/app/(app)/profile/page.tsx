@@ -4,6 +4,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { FinancialProfileCard } from "@/components/profile/financial-profile-card";
 import { GamificationSummary } from "@/components/profile/gamification-summary";
+import { PayrollCard } from "@/components/profile/payroll-card";
 import { UpdateNameForm } from "@/components/profile/update-name-form";
 import { UpdatePasswordForm } from "@/components/profile/update-password-form";
 import { usePlan } from "@/hooks/use-plan";
@@ -39,6 +40,9 @@ export default function ProfilePage() {
                            <UpdatePasswordForm />
                         </CardContent>
                     </Card>
+                    
+                    {/* Payroll Card - Always visible */}
+                    <PayrollCard />
                 </div>
                 <div className="lg:col-span-1 space-y-6">
                     {isPro ? (

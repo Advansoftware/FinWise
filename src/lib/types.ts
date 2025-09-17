@@ -139,3 +139,20 @@ export interface AICreditLog {
   timestamp: string; // ISO 8601 format string
   isFreeAction: boolean; // True when it's an automatic generation that doesn't consume credits
 }
+
+// Payroll/Salary slip types
+export interface PayrollDiscount {
+  id: string;
+  name: string;
+  amount: number;
+}
+
+export interface PayrollData {
+  id: string;
+  userId: string;
+  grossSalary: number; // Salário bruto
+  allowances: number; // Ajuda de custo
+  discounts: PayrollDiscount[]; // Descontos (INSS, IR, etc.)
+  netSalary: number; // Salário líquido (calculado)
+  updatedAt: string; // ISO 8601 format string
+}
