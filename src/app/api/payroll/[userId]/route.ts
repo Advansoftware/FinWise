@@ -9,9 +9,9 @@ export async function GET(
   try {
     const { db } = await connectToDatabase();
     const payrollCollection = db.collection('payroll');
-    
+
     const payrollData = await payrollCollection.findOne({ userId: params.userId });
-    
+
     if (!payrollData) {
       return NextResponse.json({ error: 'Payroll data not found' }, { status: 404 });
     }
@@ -33,7 +33,7 @@ export async function PUT(
 ) {
   try {
     const payrollData: PayrollData = await request.json();
-    
+
     // Validate required fields
     if (!payrollData.userId || payrollData.grossSalary === undefined || payrollData.allowances === undefined) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -47,22 +47,32 @@ export async function PUT(
     const { db } = await connectToDatabase();
     const payrollCollection = db.collection('payroll');
 
-    // Validate discounts array
+    // Validate and preserve all payroll information
     if (!Array.isArray(payrollData.discounts)) {
       payrollData.discounts = [];
     }
 
-    // Ensure each discount has required fields
+    // Ensure each discount has required fields and preserve all data
     payrollData.discounts = payrollData.discounts.map(discount => ({
       id: discount.id || Date.now().toString(),
       name: discount.name || '',
       amount: typeof discount.amount === 'number' ? discount.amount : 0,
     }));
 
-    // Calculate net salary
+    // Calculate and save net salary (preserve calculation for future use)
     const totalDiscounts = payrollData.discounts.reduce((sum, discount) => sum + discount.amount, 0);
     payrollData.netSalary = payrollData.grossSalary + payrollData.allowances - totalDiscounts;
     payrollData.updatedAt = new Date().toISOString();
+
+    // Log the complete data being saved for debugging
+    console.log('💾 Salvando dados completos do holerite:', {
+      userId: payrollData.userId,
+      grossSalary: payrollData.grossSalary,
+      allowances: payrollData.allowances,
+      discounts: payrollData.discounts,
+      netSalary: payrollData.netSalary,
+      updatedAt: payrollData.updatedAt
+    });
 
     // Remove the id field for MongoDB operations
     const { id, ...dataToSave } = payrollData;
@@ -76,7 +86,7 @@ export async function PUT(
 
     // Fetch the updated document
     const updatedPayroll = await payrollCollection.findOne({ userId: params.userId });
-    
+
     if (!updatedPayroll) {
       throw new Error('Failed to retrieve updated payroll data');
     }
@@ -99,9 +109,9 @@ export async function DELETE(
   try {
     const { db } = await connectToDatabase();
     const payrollCollection = db.collection('payroll');
-    
+
     const result = await payrollCollection.deleteOne({ userId: params.userId });
-    
+
     if (result.deletedCount === 0) {
       return NextResponse.json({ error: 'Payroll data not found' }, { status: 404 });
     }

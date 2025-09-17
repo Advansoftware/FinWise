@@ -32,6 +32,17 @@ export function PayrollCard() {
     return gross + allowances - totalDiscounts;
   };
 
+  // Update net salary whenever dependent values change
+  useEffect(() => {
+    const newNetSalary = calculateNetSalary(payrollData.grossSalary, payrollData.allowances, payrollData.discounts);
+    if (newNetSalary !== payrollData.netSalary) {
+      setPayrollData(prev => ({
+        ...prev,
+        netSalary: newNetSalary
+      }));
+    }
+  }, [payrollData.grossSalary, payrollData.allowances, payrollData.discounts]);
+
   // Load payroll data when component mounts
   useEffect(() => {
     if (user) {
@@ -63,12 +74,20 @@ export function PayrollCard() {
   const savePayrollData = async () => {
     if (!user) return;
 
-    const dataToSave = {
+    // Ensure all data is complete before saving
+    const dataToSave: PayrollData = {
       ...payrollData,
       userId: user.uid,
       id: user.uid,
+      // Ensure we're saving the calculated net salary
       netSalary: calculateNetSalary(payrollData.grossSalary, payrollData.allowances, payrollData.discounts),
       updatedAt: new Date().toISOString(),
+      // Ensure discounts are properly formatted
+      discounts: payrollData.discounts.map(discount => ({
+        id: discount.id || Date.now().toString(),
+        name: discount.name || '',
+        amount: typeof discount.amount === 'number' ? discount.amount : 0,
+      }))
     };
 
     startTransition(async () => {
@@ -85,11 +104,15 @@ export function PayrollCard() {
           const savedData = await response.json();
           setPayrollData(savedData);
           setIsEditing(false);
+          console.log("✅ Dados do holerite salvos com sucesso:", savedData);
         } else {
-          throw new Error("Failed to save payroll data");
+          const errorData = await response.json();
+          console.error("❌ Erro ao salvar dados do holerite:", errorData);
+          throw new Error(errorData.error || "Failed to save payroll data");
         }
       } catch (error) {
         console.error("Error saving payroll data:", error);
+        // You could add toast notification here
       }
     });
   };
@@ -278,16 +301,28 @@ export function PayrollCard() {
 
           <Separator />
 
-          {/* Net Salary */}
+          {/* Net Salary - Always show current calculated value */}
           <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
             <div className="flex items-center gap-2">
               <DollarSign className="h-5 w-5 text-primary" />
               <span className="font-semibold">Salário Líquido:</span>
             </div>
             <div className="text-lg font-bold text-primary">
-              {formatCurrency(netSalary)}
+              {formatCurrency(payrollData.netSalary)}
             </div>
           </div>
+
+          {/* Summary of all saved information */}
+          {!isEditing && payrollData.grossSalary > 0 && (
+            <div className="text-xs text-muted-foreground space-y-1">
+              <div className="text-center">
+                <strong>Resumo:</strong> Bruto: {formatCurrency(payrollData.grossSalary)} + 
+                Ajuda: {formatCurrency(payrollData.allowances)} - 
+                Descontos: {formatCurrency(totalDiscounts)} = 
+                <span className="text-primary font-semibold"> {formatCurrency(payrollData.netSalary)}</span>
+              </div>
+            </div>
+          )}
 
           {payrollData.updatedAt && !isEditing && (
             <div className="text-xs text-muted-foreground text-center">
