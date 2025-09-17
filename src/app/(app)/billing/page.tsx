@@ -26,6 +26,7 @@ const plans = [
             "Orçamentos manuais por categoria",
             "Metas de economia",
             "Gerenciamento de categorias",
+            "**Ferramentas financeiras** (Férias, 13º, Projeções)",
             "Acesso à Gastometria AI (limitado)",
         ],
         cta: "Plano Atual",

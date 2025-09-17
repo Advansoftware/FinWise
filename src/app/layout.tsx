@@ -7,16 +7,16 @@ import { PWAUpdater } from '@/components/pwa-updater';
 import { OfflineStorageInitializer } from '@/components/offline-storage-initializer';
 import { DataRefreshProvider } from '@/hooks/use-data-refresh';
 import { Metadata, Viewport } from 'next';
-import { structuredData, organizationData, websiteData } from '@/lib/structured-data';
+import { structuredData, organizationData, websiteData, financialToolsData } from '@/lib/structured-data';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
 export const metadata: Metadata = {
   title: {
-    default: 'Gastometria - Dashboard Financeiro Inteligente com IA',
+    default: 'Gastometria - Dashboard Financeiro com IA e Ferramentas de Cálculo',
     template: '%s | Gastometria'
   },
-  description: 'Controle suas finanças pessoais com inteligência artificial. Dashboard completo para gestão de gastos, orçamentos, metas e análises financeiras automáticas.',
+  description: 'Controle suas finanças pessoais com inteligência artificial. Dashboard completo com calculadora de férias, 13º salário, projeção salarial, gestão de gastos, orçamentos e análises automáticas.',
   keywords: [
     'finanças pessoais',
     'controle financeiro',
@@ -30,6 +30,16 @@ export const metadata: Metadata = {
     'controle de despesas',
     'metas financeiras',
     'educação financeira',
+    'calculadora de férias',
+    'calculadora 13º salário',
+    'calculadora décimo terceiro',
+    'calculadora trabalhista',
+    'projeção salarial',
+    'simulador salarial',
+    'ferramentas financeiras',
+    'calculadora financeira',
+    'simulador de férias',
+    'cálculo trabalhista online',
     'gastometria',
     'fintech',
     'pwa financeiro',
@@ -61,20 +71,20 @@ export const metadata: Metadata = {
     url: 'https://gastometria.com.br',
     siteName: 'Gastometria',
     title: 'Gastometria - Dashboard Financeiro Inteligente com IA',
-    description: 'Controle suas finanças pessoais com inteligência artificial. Dashboard completo para gestão de gastos, orçamentos e análises automáticas.',
+    description: 'Controle suas finanças pessoais com IA. Dashboard completo com calculadora de férias, 13º salário, projeção salarial, gestão de gastos e análises automáticas.',
     images: [
       {
         url: '/logo.svg',
         width: 1200,
         height: 630,
-        alt: 'Gastometria - Dashboard Financeiro Inteligente',
+        alt: 'Gastometria - Dashboard Financeiro com Calculadoras Trabalhistas',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Gastometria - Dashboard Financeiro Inteligente com IA',
-    description: 'Controle suas finanças pessoais com IA. Dashboard completo para gestão de gastos, orçamentos e análises automáticas.',
+    title: 'Gastometria - Dashboard Financeiro com IA e Calculadoras Trabalhistas',
+    description: 'Controle suas finanças com IA. Calculadora de férias, 13º salário, projeção salarial, dashboard completo para gestão de gastos e análises.',
     images: ['/logo.svg'],
     creator: '@gastometria',
   },
@@ -142,6 +152,14 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{
             __html: JSON.stringify(websiteData),
+          }}
+        />
+        
+        {/* Structured Data - Financial Tools */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(financialToolsData),
           }}
         />
         

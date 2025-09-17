@@ -57,19 +57,25 @@ export async function PUT(
       id: discount.id || Date.now().toString(),
       name: discount.name || '',
       amount: typeof discount.amount === 'number' ? discount.amount : 0,
+      type: discount.type || 'discount', // Default to 'discount' if not specified
     }));
 
     // Calculate and save net salary (preserve calculation for future use)
-    const totalDiscounts = payrollData.discounts.reduce((sum, discount) => sum + discount.amount, 0);
-    payrollData.netSalary = payrollData.grossSalary + payrollData.allowances - totalDiscounts;
+    const totalDiscounts = payrollData.discounts
+      .filter(item => item.type === 'discount')
+      .reduce((sum, discount) => sum + discount.amount, 0);
+    const totalAllowances = payrollData.discounts
+      .filter(item => item.type === 'allowance')
+      .reduce((sum, allowance) => sum + allowance.amount, 0);
+    payrollData.netSalary = payrollData.grossSalary + totalAllowances - totalDiscounts;
     payrollData.updatedAt = new Date().toISOString();
 
     // Log the complete data being saved for debugging
     console.log('💾 Salvando dados completos do holerite:', {
       userId: payrollData.userId,
       grossSalary: payrollData.grossSalary,
-      allowances: payrollData.allowances,
-      discounts: payrollData.discounts,
+      discounts: payrollData.discounts.filter(item => item.type === 'discount'),
+      allowances: payrollData.discounts.filter(item => item.type === 'allowance'),
       netSalary: payrollData.netSalary,
       updatedAt: payrollData.updatedAt
     });

@@ -39,6 +39,7 @@ const featureComparison = {
         { feature: "Múltiplas carteiras e contas", Básico: true, Pro: true, Plus: true, Infinity: true },
         { feature: "Orçamentos manuais", Básico: true, Pro: true, Plus: true, Infinity: true },
         { feature: "Metas de economia", Básico: true, Pro: true, Plus: true, Infinity: true },
+        { feature: "Ferramentas financeiras (Férias, 13º, Projeções)", Básico: true, Pro: true, Plus: true, Infinity: true },
     ],
     "Produtividade e IA": [
         { feature: "Gestão de Parcelamentos com gamificação", Básico: false, Pro: true, Plus: true, Infinity: true },
@@ -296,6 +297,7 @@ export default function Page() {
                                   "Transações e contas ilimitadas",
                                   "Orçamentos manuais",
                                   "Metas de economia",
+                                  "**Ferramentas financeiras** (Férias, 13º, Projeções)",
                                   "Uso limitado da Gastometria AI",
                               ],
                               cta: "Começar Agora",

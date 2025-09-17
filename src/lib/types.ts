@@ -145,14 +145,58 @@ export interface PayrollDiscount {
   id: string;
   name: string;
   amount: number;
+  type: 'discount' | 'allowance'; // Para distinguir descontos de ajudas de custo
 }
 
 export interface PayrollData {
   id: string;
   userId: string;
   grossSalary: number; // Salário bruto
-  allowances: number; // Ajuda de custo
+  allowances: number; // Ajuda de custo (calculado automaticamente)
   discounts: PayrollDiscount[]; // Descontos (INSS, IR, etc.)
   netSalary: number; // Salário líquido (calculado)
   updatedAt: string; // ISO 8601 format string
 }
+
+// Tipos padronizados de descontos
+export const STANDARD_DISCOUNT_TYPES = [
+  'INSS',
+  'Imposto de Renda',
+  'Vale Transporte',
+  'Vale Alimentação',
+  'Vale Refeição', 
+  'Plano de Saúde',
+  'Plano Odontológico',
+  'Seguro de Vida',
+  'Contribuição Sindical',
+  'Contribuição Confederativa',
+  'Empréstimo Consignado',
+  'Financiamento Consignado',
+  'Pensão Alimentícia',
+  'Adiantamento Salarial',
+  'Desconto Uniforme',
+  'Desconto Farmácia',
+  'Outros'
+] as const;
+
+// Tipos padronizados de ajudas de custo
+export const STANDARD_ALLOWANCE_TYPES = [
+  'Horas Extras',
+  'Adicional Noturno',
+  'Adicional de Periculosidade',
+  'Adicional de Insalubridade',
+  'Comissões',
+  'Gratificação',
+  'Ajuda de Custo',
+  'Auxílio Alimentação',
+  'Auxílio Transporte',
+  'Bonus',
+  'Participação nos Lucros',
+  'Abono',
+  'Quinquênio',
+  'Anuênio',
+  'Outros'
+] as const;
+
+export type StandardDiscountType = typeof STANDARD_DISCOUNT_TYPES[number];
+export type StandardAllowanceType = typeof STANDARD_ALLOWANCE_TYPES[number];

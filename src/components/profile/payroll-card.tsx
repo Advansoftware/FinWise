@@ -5,10 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Save, Plus, X, Receipt, DollarSign } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
-import { PayrollData, PayrollDiscount } from "@/lib/types";
+import { PayrollData, PayrollDiscount, STANDARD_DISCOUNT_TYPES, STANDARD_ALLOWANCE_TYPES } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
 
@@ -27,21 +28,25 @@ export function PayrollCard() {
   const { user } = useAuth();
 
   // Calculate net salary whenever gross salary, allowances, or discounts change
-  const calculateNetSalary = (gross: number, allowances: number, discounts: PayrollDiscount[]) => {
-    const totalDiscounts = discounts.reduce((sum, discount) => sum + discount.amount, 0);
-    return gross + allowances - totalDiscounts;
+  const calculateNetSalary = (gross: number, discounts: PayrollDiscount[]) => {
+    const totalDiscounts = discounts.filter(d => d.type === 'discount').reduce((sum, discount) => sum + discount.amount, 0);
+    const totalAllowances = discounts.filter(d => d.type === 'allowance').reduce((sum, allowance) => sum + allowance.amount, 0);
+    return gross + totalAllowances - totalDiscounts;
   };
 
   // Update net salary whenever dependent values change
   useEffect(() => {
-    const newNetSalary = calculateNetSalary(payrollData.grossSalary, payrollData.allowances, payrollData.discounts);
-    if (newNetSalary !== payrollData.netSalary) {
+    const newNetSalary = calculateNetSalary(payrollData.grossSalary, payrollData.discounts);
+    const totalAllowances = payrollData.discounts.filter(d => d.type === 'allowance').reduce((sum, allowance) => sum + allowance.amount, 0);
+    
+    if (newNetSalary !== payrollData.netSalary || totalAllowances !== payrollData.allowances) {
       setPayrollData(prev => ({
         ...prev,
+        allowances: totalAllowances,
         netSalary: newNetSalary
       }));
     }
-  }, [payrollData.grossSalary, payrollData.allowances, payrollData.discounts]);
+  }, [payrollData.grossSalary, payrollData.discounts]);
 
   // Load payroll data when component mounts
   useEffect(() => {
@@ -80,13 +85,14 @@ export function PayrollCard() {
       userId: user.uid,
       id: user.uid,
       // Ensure we're saving the calculated net salary
-      netSalary: calculateNetSalary(payrollData.grossSalary, payrollData.allowances, payrollData.discounts),
+      netSalary: calculateNetSalary(payrollData.grossSalary, payrollData.discounts),
       updatedAt: new Date().toISOString(),
       // Ensure discounts are properly formatted
       discounts: payrollData.discounts.map(discount => ({
         id: discount.id || Date.now().toString(),
         name: discount.name || '',
         amount: typeof discount.amount === 'number' ? discount.amount : 0,
+        type: discount.type || 'discount'
       }))
     };
 
@@ -117,18 +123,6 @@ export function PayrollCard() {
     });
   };
 
-  const addDiscount = () => {
-    const newDiscount: PayrollDiscount = {
-      id: Date.now().toString(),
-      name: "",
-      amount: 0,
-    };
-    setPayrollData(prev => ({
-      ...prev,
-      discounts: [...prev.discounts, newDiscount],
-    }));
-  };
-
   const removeDiscount = (discountId: string) => {
     setPayrollData(prev => ({
       ...prev,
@@ -145,8 +139,9 @@ export function PayrollCard() {
     }));
   };
 
-  const netSalary = calculateNetSalary(payrollData.grossSalary, payrollData.allowances, payrollData.discounts);
-  const totalDiscounts = payrollData.discounts.reduce((sum, discount) => sum + discount.amount, 0);
+  const netSalary = calculateNetSalary(payrollData.grossSalary, payrollData.discounts);
+  const totalDiscounts = payrollData.discounts.filter(d => d.type === 'discount').reduce((sum, discount) => sum + discount.amount, 0);
+  const totalAllowances = payrollData.discounts.filter(d => d.type === 'allowance').reduce((sum, allowance) => sum + allowance.amount, 0);
 
   return (
     <Card className="h-full">
@@ -208,25 +203,13 @@ export function PayrollCard() {
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="allowances" className="text-sm font-medium">Ajuda de Custo</Label>
-            {isEditing ? (
-              <Input
-                id="allowances"
-                type="number"
-                step="0.01"
-                value={payrollData.allowances}
-                onChange={(e) => setPayrollData(prev => ({
-                  ...prev,
-                  allowances: parseFloat(e.target.value) || 0
-                }))}
-                placeholder="0,00"
-                className="h-9"
-              />
-            ) : (
-              <div className="h-9 flex items-center px-3 bg-blue-50 text-blue-700 font-medium rounded-md border">
-                {formatCurrency(payrollData.allowances)}
-              </div>
-            )}
+            <Label className="text-sm font-medium flex items-center gap-1">
+              <DollarSign className="h-4 w-4 text-blue-600" />
+              Total de Ajudas de Custo
+            </Label>
+            <div className="h-9 flex items-center px-3 bg-blue-50 text-blue-700 font-medium rounded-md border">
+              {formatCurrency(totalAllowances)}
+            </div>
           </div>
 
           {/* Net Salary - Highlighted */}
@@ -241,81 +224,197 @@ export function PayrollCard() {
           </div>
         </div>
 
-        {/* Discounts Section - Collapsed/Expandable */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <Label className="text-sm font-medium">
-              Descontos {payrollData.discounts.length > 0 && `(${payrollData.discounts.length})`}
-            </Label>
-            {isEditing && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={addDiscount}
-                className="h-7 text-xs"
-              >
-                <Plus className="h-3 w-3 mr-1" />
-                Adicionar
-              </Button>
+        {/* Discounts and Allowances Section */}
+        <div className="space-y-4">
+          {/* Descontos */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium text-red-700">
+                💳 Descontos {payrollData.discounts.filter(d => d.type === 'discount').length > 0 && `(${payrollData.discounts.filter(d => d.type === 'discount').length})`}
+              </Label>
+              {isEditing && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const newDiscount: PayrollDiscount = {
+                      id: Date.now().toString(),
+                      name: "",
+                      amount: 0,
+                      type: 'discount'
+                    };
+                    setPayrollData(prev => ({
+                      ...prev,
+                      discounts: [...prev.discounts, newDiscount]
+                    }));
+                  }}
+                  className="h-7 text-xs"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Adicionar Desconto
+                </Button>
+              )}
+            </div>
+
+            {payrollData.discounts.filter(d => d.type === 'discount').length > 0 ? (
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {payrollData.discounts.filter(d => d.type === 'discount').map((discount) => (
+                  <div key={discount.id} className="flex items-center gap-2 p-2 bg-red-50 rounded-md border border-red-100">
+                    {isEditing ? (
+                      <>
+                        <Select
+                          value={discount.name}
+                          onValueChange={(value) => updateDiscount(discount.id, "name", value)}
+                        >
+                          <SelectTrigger className="flex-1 h-8 text-xs">
+                            <SelectValue placeholder="Selecione o desconto" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {STANDARD_DISCOUNT_TYPES.map((discountType) => (
+                              <SelectItem key={discountType} value={discountType} className="text-xs">
+                                {discountType}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={discount.amount}
+                          onChange={(e) => updateDiscount(discount.id, "amount", parseFloat(e.target.value) || 0)}
+                          placeholder="0,00"
+                          className="w-24 h-8 text-xs"
+                        />
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => removeDiscount(discount.id)}
+                          className="h-8 w-8"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="flex-1 text-xs font-medium text-red-700">{discount.name}</span>
+                        <Badge variant="destructive" className="text-xs">
+                          -{formatCurrency(discount.amount)}
+                        </Badge>
+                      </>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-xs text-muted-foreground text-center py-2">
+                Nenhum desconto cadastrado
+              </div>
+            )}
+
+            {payrollData.discounts.filter(d => d.type === 'discount').length > 0 && (
+              <div className="text-right">
+                <span className="text-xs text-red-600 font-medium">
+                  Total descontos: {formatCurrency(totalDiscounts)}
+                </span>
+              </div>
             )}
           </div>
 
-          {payrollData.discounts.length > 0 ? (
-            <div className="space-y-2 max-h-32 overflow-y-auto">
-              {payrollData.discounts.map((discount) => (
-                <div key={discount.id} className="flex items-center gap-2 p-2 bg-muted/30 rounded-md">
-                  {isEditing ? (
-                    <>
-                      <Input
-                        value={discount.name}
-                        onChange={(e) => updateDiscount(discount.id, "name", e.target.value)}
-                        placeholder="Ex: INSS, IR"
-                        className="flex-1 h-8 text-xs"
-                      />
-                      <Input
-                        type="number"
-                        step="0.01"
-                        value={discount.amount}
-                        onChange={(e) => updateDiscount(discount.id, "amount", parseFloat(e.target.value) || 0)}
-                        placeholder="0,00"
-                        className="w-24 h-8 text-xs"
-                      />
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => removeDiscount(discount.id)}
-                        className="h-8 w-8"
-                      >
-                        <X className="h-3 w-3" />
-                      </Button>
-                    </>
-                  ) : (
-                    <>
-                      <span className="flex-1 text-xs font-medium">{discount.name || "Desconto"}</span>
-                      <Badge variant="outline" className="text-red-600 text-xs">
-                        -{formatCurrency(discount.amount)}
-                      </Badge>
-                    </>
-                  )}
-                </div>
-              ))}
-              
-              {!isEditing && totalDiscounts > 0 && (
-                <div className="flex justify-between items-center pt-2 border-t border-muted">
-                  <span className="text-xs font-medium text-muted-foreground">Total:</span>
-                  <Badge variant="secondary" className="text-red-600 text-xs">
-                    -{formatCurrency(totalDiscounts)}
-                  </Badge>
-                </div>
+          <Separator />
+
+          {/* Ajudas de Custo / Adicionais */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-sm font-medium text-green-700">
+                💰 Adicionais {payrollData.discounts.filter(d => d.type === 'allowance').length > 0 && `(${payrollData.discounts.filter(d => d.type === 'allowance').length})`}
+              </Label>
+              {isEditing && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    const newAllowance: PayrollDiscount = {
+                      id: Date.now().toString(),
+                      name: "",
+                      amount: 0,
+                      type: 'allowance'
+                    };
+                    setPayrollData(prev => ({
+                      ...prev,
+                      discounts: [...prev.discounts, newAllowance]
+                    }));
+                  }}
+                  className="h-7 text-xs"
+                >
+                  <Plus className="h-3 w-3 mr-1" />
+                  Adicionar Adicional
+                </Button>
               )}
             </div>
-          ) : (
-            !isEditing && (
-              <div className="text-xs text-muted-foreground italic py-2">
-                Nenhum desconto registrado
+
+            {payrollData.discounts.filter(d => d.type === 'allowance').length > 0 ? (
+              <div className="space-y-2 max-h-40 overflow-y-auto">
+                {payrollData.discounts.filter(d => d.type === 'allowance').map((allowance) => (
+                  <div key={allowance.id} className="flex items-center gap-2 p-2 bg-green-50 rounded-md border border-green-100">
+                    {isEditing ? (
+                      <>
+                        <Select
+                          value={allowance.name}
+                          onValueChange={(value) => updateDiscount(allowance.id, "name", value)}
+                        >
+                          <SelectTrigger className="flex-1 h-8 text-xs">
+                            <SelectValue placeholder="Selecione o adicional" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {STANDARD_ALLOWANCE_TYPES.map((allowanceType) => (
+                              <SelectItem key={allowanceType} value={allowanceType} className="text-xs">
+                                {allowanceType}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={allowance.amount}
+                          onChange={(e) => updateDiscount(allowance.id, "amount", parseFloat(e.target.value) || 0)}
+                          placeholder="0,00"
+                          className="w-24 h-8 text-xs"
+                        />
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => removeDiscount(allowance.id)}
+                          className="h-8 w-8"
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <span className="flex-1 text-xs font-medium text-green-700">{allowance.name}</span>
+                        <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
+                          +{formatCurrency(allowance.amount)}
+                        </Badge>
+                      </>
+                    )}
+                  </div>
+                ))}
               </div>
-            )
-          )}
+            ) : (
+              <div className="text-xs text-muted-foreground text-center py-2">
+                Nenhum adicional cadastrado
+              </div>
+            )}
+
+            {payrollData.discounts.filter(d => d.type === 'allowance').length > 0 && (
+              <div className="text-right">
+                <span className="text-xs text-green-600 font-medium">
+                  Total adicionais: {formatCurrency(totalAllowances)}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Summary - Compact */}
