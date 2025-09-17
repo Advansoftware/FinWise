@@ -5,6 +5,7 @@ import { Installment, InstallmentPayment, InstallmentSummary, CreateInstallmentI
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { offlineStorage } from '@/lib/offline-storage';
+import { useDataRefresh } from './use-data-refresh';
 
 interface InstallmentsContextType {
   // State
@@ -46,6 +47,7 @@ export function InstallmentsProvider({ children }: { children: React.ReactNode }
   
   const { user } = useAuth();
   const { toast } = useToast();
+  const { registerRefreshHandler, unregisterRefreshHandler, triggerRefresh } = useDataRefresh();
 
   // Monitor online/offline status
   useEffect(() => {
@@ -139,6 +141,20 @@ export function InstallmentsProvider({ children }: { children: React.ReactNode }
   }, [fetchInstallments, fetchSummary]);
 
   useEffect(() => {
+    const refreshHandler = () => {
+      if (user?.uid) {
+        refreshData();
+      }
+    };
+
+    registerRefreshHandler('installments', refreshHandler);
+
+    return () => {
+      unregisterRefreshHandler('installments');
+    };
+  }, [user?.uid, registerRefreshHandler, unregisterRefreshHandler, refreshData]);
+
+  useEffect(() => {
     if (user?.uid) {
       refreshData();
     }
@@ -185,6 +201,8 @@ export function InstallmentsProvider({ children }: { children: React.ReactNode }
             description: `${data.name} foi adicionado com sucesso.`,
           });
           
+          triggerRefresh();
+          
           return newInstallment;
         } else {
           const error = await response.json();
@@ -205,6 +223,8 @@ export function InstallmentsProvider({ children }: { children: React.ReactNode }
           title: "💾 Parcelamento salvo offline",
           description: `${data.name} será sincronizado quando você estiver online.`,
         });
+        
+        triggerRefresh();
         
         return installmentData;
       }
@@ -248,6 +268,8 @@ export function InstallmentsProvider({ children }: { children: React.ReactNode }
             description: "As informações foram atualizadas com sucesso.",
           });
           
+          triggerRefresh();
+          
           return true;
         } else {
           throw new Error('Failed to update installment');
@@ -275,6 +297,8 @@ export function InstallmentsProvider({ children }: { children: React.ReactNode }
           title: "💾 Parcelamento atualizado offline",
           description: "As alterações serão sincronizadas quando você estiver online.",
         });
+        
+        triggerRefresh();
         
         return true;
       }
@@ -307,6 +331,8 @@ export function InstallmentsProvider({ children }: { children: React.ReactNode }
             description: "O parcelamento foi removido com sucesso.",
           });
           
+          triggerRefresh();
+          
           return true;
         } else {
           throw new Error('Failed to delete installment');
@@ -329,6 +355,8 @@ export function InstallmentsProvider({ children }: { children: React.ReactNode }
           title: "💾 Parcelamento excluído offline",
           description: "A exclusão será sincronizada quando você estiver online.",
         });
+        
+        triggerRefresh();
         
         return true;
       }

@@ -7,6 +7,7 @@ import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { apiClient } from "@/lib/api-client";
 import { offlineStorage } from "@/lib/offline-storage";
+import { useDataRefresh } from "./use-data-refresh";
 
 interface WalletsContextType {
   wallets: Wallet[];
@@ -24,6 +25,7 @@ const WalletsContext = createContext<WalletsContextType | undefined>(undefined);
 export function WalletsProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
+  const { registerRefreshHandler, unregisterRefreshHandler, triggerRefresh } = useDataRefresh();
   const [wallets, setWallets] = useState<Wallet[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isOnline, setIsOnline] = useState(true);
@@ -84,6 +86,13 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
     };
 
     loadWallets();
+    
+    // Register this hook's refresh function with the global system
+    registerRefreshHandler('wallets', loadWallets);
+    
+    return () => {
+      unregisterRefreshHandler('wallets');
+    };
   }, [user, authLoading]);
 
   const addWallet = async (wallet: Omit<Wallet, 'id' | 'createdAt' | 'balance' | 'userId'>) => {
@@ -104,6 +113,11 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
         await offlineStorage.saveWallet(newWallet, true);
         setWallets(prev => [...prev, newWallet]);
         toast({ title: "Carteira adicionada com sucesso!" });
+        
+        // Trigger global refresh to update other pages/components
+        setTimeout(() => {
+          triggerRefresh('all');
+        }, 500);
       } else {
         // Offline: save locally and mark for sync
         await offlineStorage.saveWallet(walletWithUser, false);
@@ -118,6 +132,11 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
           title: "💾 Carteira salva offline",
           description: "Será sincronizada quando você estiver online"
         });
+        
+        // Trigger global refresh to update other pages/components
+        setTimeout(() => {
+          triggerRefresh('all');
+        }, 500);
       }
     } catch (error) {
       console.error('Erro ao adicionar carteira:', error);
@@ -142,6 +161,11 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
           await offlineStorage.saveWallet(finalWallet, true);
         }
         toast({ title: "Carteira atualizada!" });
+        
+        // Trigger global refresh to update other pages/components
+        setTimeout(() => {
+          triggerRefresh('all');
+        }, 500);
       } else {
         // Offline: update locally and mark for sync
         const updatedWallet = wallets.find(w => w.id === walletId);
@@ -159,6 +183,11 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
           title: "💾 Carteira atualizada offline",
           description: "Será sincronizada quando você estiver online"
         });
+        
+        // Trigger global refresh to update other pages/components
+        setTimeout(() => {
+          triggerRefresh('all');
+        }, 500);
       }
       
       setWallets(prev => 
@@ -183,6 +212,11 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
         await apiClient.delete('wallets', walletId);
         await offlineStorage.deleteItem('wallets', walletId);
         toast({ title: "Carteira excluída." });
+        
+        // Trigger global refresh to update other pages/components
+        setTimeout(() => {
+          triggerRefresh('all');
+        }, 500);
       } else {
         // Offline: mark as deleted locally and queue for sync
         const walletToDelete = wallets.find(w => w.id === walletId);
@@ -199,6 +233,11 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
           title: "💾 Carteira excluída offline",
           description: "Será sincronizada quando você estiver online"
         });
+        
+        // Trigger global refresh to update other pages/components
+        setTimeout(() => {
+          triggerRefresh('all');
+        }, 500);
       }
       
       setWallets(prev => prev.filter(w => w.id !== walletId));

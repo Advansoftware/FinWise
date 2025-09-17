@@ -4,6 +4,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from "react";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
+import { useDataRefresh } from './use-data-refresh';
 import { getSmartMonthlyReport, getSmartAnnualReport } from "@/services/ai-automation-service";
 import { useTransactions } from "./use-transactions";
 import { startOfMonth, subMonths, getYear, getMonth, isToday } from "date-fns";
@@ -31,6 +32,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
   const { allTransactions, isLoading: isLoadingTransactions } = useTransactions();
+  const { registerRefreshHandler, unregisterRefreshHandler, triggerRefresh } = useDataRefresh();
   const [monthlyReports, setMonthlyReports] = useState<Report[]>([]);
   const [annualReports, setAnnualReports] = useState<Report[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -112,6 +114,20 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
       }
     }
   }, [user?.uid, isOnline]);
+
+  useEffect(() => {
+    const refreshHandler = () => {
+      if (user && !authLoading) {
+        loadData();
+      }
+    };
+
+    registerRefreshHandler('reports', refreshHandler);
+
+    return () => {
+      unregisterRefreshHandler('reports');
+    };
+  }, [user, authLoading, registerRefreshHandler, unregisterRefreshHandler, loadData]);
 
   useEffect(() => {
     if (authLoading || !user) {
@@ -203,6 +219,8 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
       setMonthlyReports(updatedReports);
       await offlineStorage.saveSetting(`monthly_reports_${user.uid}`, updatedReports);
       
+      triggerRefresh();
+      
       return newReport;
 
     } catch (error) {
@@ -292,6 +310,8 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
       
       setAnnualReports(updatedReports);
       await offlineStorage.saveSetting(`annual_reports_${user.uid}`, updatedReports);
+      
+      triggerRefresh();
       
       return newReport;
 

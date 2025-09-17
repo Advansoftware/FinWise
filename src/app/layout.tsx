@@ -5,6 +5,7 @@ import { Inter } from 'next/font/google';
 import { AuthProvider } from '@/hooks/use-auth';
 import { PWAUpdater } from '@/components/pwa-updater';
 import { OfflineStorageInitializer } from '@/components/offline-storage-initializer';
+import { DataRefreshProvider } from '@/hooks/use-data-refresh';
 import { Metadata, Viewport } from 'next';
 import { structuredData, organizationData, websiteData } from '@/lib/structured-data';
 
@@ -163,9 +164,11 @@ export default function RootLayout({
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
           <AuthProvider>
-            <OfflineStorageInitializer />
-            {children}
-            <PWAUpdater />
+            <DataRefreshProvider>
+              <OfflineStorageInitializer />
+              {children}
+              <PWAUpdater />
+            </DataRefreshProvider>
           </AuthProvider>
           <Toaster />
       </body>

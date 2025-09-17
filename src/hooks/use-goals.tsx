@@ -8,6 +8,7 @@ import { useAuth } from "./use-auth";
 import { apiClient } from "@/lib/api-client";
 import { offlineStorage } from "@/lib/offline-storage";
 import { getSmartGoalPrediction } from "@/services/ai-automation-service";
+import { useDataRefresh } from "./use-data-refresh";
 
 interface GoalsContextType {
   goals: Goal[];
@@ -27,6 +28,7 @@ const GoalsContext = createContext<GoalsContextType | undefined>(undefined);
 export function GoalsProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
+  const { registerRefreshHandler, unregisterRefreshHandler, triggerRefresh } = useDataRefresh();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isOnline, setIsOnline] = useState(true);
@@ -104,6 +106,13 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     }
 
     loadGoals();
+    
+    // Register this hook's refresh function with the global system
+    registerRefreshHandler('goals', loadGoals);
+    
+    return () => {
+      unregisterRefreshHandler('goals');
+    };
   }, [user, authLoading]);
 
   const addGoal = async (goal: Omit<Goal, 'id' | 'createdAt' | 'currentAmount' | 'userId'>) => {
@@ -124,6 +133,12 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
         await offlineStorage.saveGoal(newGoal, true);
         setGoals(prev => [...prev, newGoal]);
         toast({ title: "Meta criada com sucesso!" });
+        triggerRefresh();
+        
+        // Trigger global refresh to update other pages/components
+        setTimeout(() => {
+          triggerRefresh('all');
+        }, 500);
       } else {
         // Offline: save locally and mark for sync
         await offlineStorage.saveGoal(goalWithUser, false);
@@ -138,6 +153,13 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
           title: "💾 Meta salva offline",
           description: "Será sincronizada quando você estiver online"
         });
+        
+        triggerRefresh();
+        
+        // Trigger global refresh to update other pages/components
+        setTimeout(() => {
+          triggerRefresh('all');
+        }, 500);
       }
     } catch (error) {
       console.error('Erro ao adicionar meta:', error);
@@ -162,6 +184,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
           await offlineStorage.saveGoal(finalGoal, true);
         }
         toast({ title: "Meta atualizada!" });
+        triggerRefresh();
       } else {
         // Offline: update locally and mark for sync
         const updatedGoal = goals.find(g => g.id === goalId);
@@ -179,6 +202,8 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
           title: "💾 Meta atualizada offline",
           description: "Será sincronizada quando você estiver online"
         });
+        
+        triggerRefresh();
       }
       
       setGoals(prev => 
@@ -203,6 +228,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
         await apiClient.delete('goals', goalId);
         await offlineStorage.deleteItem('goals', goalId);
         toast({ title: "Meta excluída." });
+        triggerRefresh();
       } else {
         // Offline: mark as deleted locally and queue for sync
         const goalToDelete = goals.find(g => g.id === goalId);
@@ -219,6 +245,8 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
           title: "💾 Meta excluída offline",
           description: "Será sincronizada quando você estiver online"
         });
+        
+        triggerRefresh();
       }
       
       setGoals(prev => prev.filter(g => g.id !== goalId));
@@ -283,6 +311,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
         }
 
         toast({ title: `Depósito de R$ ${amount.toFixed(2)} adicionado!` });
+        triggerRefresh();
       } else {
         // Offline: queue all operations for sync
         await offlineStorage.addPendingAction({
@@ -307,6 +336,8 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
           title: "💾 Depósito salvo offline",
           description: `R$ ${amount.toFixed(2)} será processado quando você estiver online`
         });
+        
+        triggerRefresh();
       }
 
       // Update local state

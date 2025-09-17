@@ -1,7 +1,8 @@
 // src/hooks/use-gamification.tsx
 
-import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
-import { useAuth } from '@/hooks/use-auth';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { useAuth } from './use-auth';
+import { useDataRefresh } from './use-data-refresh';
 import { GamificationData, InstallmentBadge, InstallmentLevel, InstallmentAchievement } from '@/core/ports/installments.port';
 
 interface GamificationProfileInsights {
@@ -28,6 +29,7 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   
   const { user, loading: authLoading } = useAuth();
+  const { registerRefreshHandler, unregisterRefreshHandler, triggerRefresh } = useDataRefresh();
 
   const fetchGamificationData = useCallback(async () => {
     if (!user?.uid) {
@@ -56,16 +58,33 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
   }, [user?.uid]);
 
   useEffect(() => {
+    const refreshHandler = () => {
+      if (user?.uid && !authLoading) {
+        fetchGamificationData();
+      }
+    };
+
+    registerRefreshHandler('gamification', refreshHandler);
+
+    return () => {
+      unregisterRefreshHandler('gamification');
+    };
+  }, [user?.uid, authLoading, registerRefreshHandler, unregisterRefreshHandler, fetchGamificationData]);
+
+  useEffect(() => {
     if (!authLoading && user?.uid) {
         fetchGamificationData();
     }
-  }, [user?.uid, authLoading]);
+  }, [user?.uid, authLoading, fetchGamificationData]);
 
   const value: GamificationContextType = {
       gamificationData,
       profileInsights,
       isLoading,
-      refresh: fetchGamificationData
+      refresh: async () => {
+        await fetchGamificationData();
+        triggerRefresh();
+      }
   }
 
   return (

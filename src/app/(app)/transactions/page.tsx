@@ -25,16 +25,12 @@ export default function TransactionsPage() {
         selectedCategory,
         availableSubcategories,
         selectedSubcategory,
-        setSelectedSubcategory,
-        refreshOnPageVisit
+        setSelectedSubcategory
     } = useTransactions();
     
     const isMobile = useIsMobile();
 
-    // Refresh data when page loads to ensure it's up to date
-    useEffect(() => {
-        refreshOnPageVisit();
-    }, []); // Remove refreshOnPageVisit from dependencies to avoid infinite loop
+    // Data will automatically refresh on navigation via DataRefreshProvider
 
     return (
         <div className="flex flex-col gap-4 sm:gap-6">

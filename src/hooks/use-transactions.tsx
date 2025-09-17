@@ -11,6 +11,7 @@ import { useAuth } from "./use-auth";
 import { apiClient } from "@/lib/api-client";
 import { useWallets } from "./use-wallets";
 import { offlineStorage } from "@/lib/offline-storage";
+import { useDataRefresh } from "./use-data-refresh";
 
 interface TransactionsProviderProps {
   children: ReactNode;
@@ -39,7 +40,6 @@ interface TransactionsContextType {
   deleteCategory: (categoryName: TransactionCategory) => Promise<void>;
   addSubcategory: (categoryName: TransactionCategory, subcategoryName: string) => Promise<void>;
   deleteSubcategory: (categoryName: TransactionCategory, subcategoryName: string) => Promise<void>;
-  refreshOnPageVisit: () => Promise<void>;
   isOnline: boolean;
 }
 
@@ -49,6 +49,7 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
   const { refreshWallets } = useWallets(); 
+  const { registerRefreshHandler, unregisterRefreshHandler, triggerRefresh } = useDataRefresh();
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [categoryMap, setCategoryMap] = useState<CategoryMap>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -131,6 +132,13 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
     }
 
     refreshData();
+    
+    // Register this hook's refresh function with the global system
+    registerRefreshHandler('transactions', refreshData);
+    
+    return () => {
+      unregisterRefreshHandler('transactions');
+    };
   }, [user?.uid, authLoading]);
   
   const addTransaction = async (transaction: Omit<Transaction, 'id' | 'userId'>) => {
@@ -167,6 +175,11 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
       setTimeout(() => {
         refreshWallets();
       }, 500);
+      
+      // Trigger global refresh to update other pages/components
+      setTimeout(() => {
+        triggerRefresh('all');
+      }, 1000);
     } catch (error) {
       console.error('Erro ao adicionar transação:', error);
       toast({
@@ -209,6 +222,11 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
       setTimeout(() => {
         refreshWallets();
       }, 500);
+      
+      // Trigger global refresh to update other pages/components  
+      setTimeout(() => {
+        triggerRefresh('all');
+      }, 1000);
     } catch (error) {
       console.error('Erro ao atualizar transação:', error);
       toast({
@@ -247,6 +265,11 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
       setTimeout(() => {
         refreshWallets();
       }, 500);
+      
+      // Trigger global refresh to update other pages/components
+      setTimeout(() => {
+        triggerRefresh('all');
+      }, 1000);
     } catch (error) {
       console.error('Erro ao excluir transação:', error);
       toast({
@@ -359,10 +382,6 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
     }
   }, [filteredTransactions, selectedCategory]);
 
-  const refreshOnPageVisit = async () => {
-    await refreshData();
-  };
-
   const availableSubcategories = subcategories[selectedCategory as TransactionCategory] || [];
 
   const value: TransactionsContextType = {
@@ -386,7 +405,6 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
     deleteCategory,
     addSubcategory,
     deleteSubcategory,
-    refreshOnPageVisit,
     isOnline,
   };
 

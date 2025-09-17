@@ -9,6 +9,7 @@ import { apiClient } from "@/lib/api-client";
 import { v4 as uuidv4 } from 'uuid';
 import { usePlan } from "./use-plan";
 import { useMemo } from "react";
+import { useDataRefresh } from "./use-data-refresh";
 
 const GASTOMETRIA_AI_CREDENTIAL_ID = 'gastometria-ai-default';
 
@@ -23,6 +24,7 @@ export function useAISettings() {
     const { toast } = useToast();
     const { user, loading: authLoading } = useAuth();
     const { plan, isPro, isPlus, isInfinity } = usePlan();
+    const { registerRefreshHandler, unregisterRefreshHandler, triggerRefresh } = useDataRefresh();
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     
@@ -32,6 +34,27 @@ export function useAISettings() {
     const [editingCredential, setEditingCredential] = useState<AICredential | null>(null);
 
     // Function to load settings
+    const loadSettings = useCallback(async () => {
+        if (!user) return;
+        
+        setIsLoading(true);
+        try {
+            const aiSettings = await apiClient.get('settings', user.uid);
+            const aiData = aiSettings?.ai_settings;
+            
+            if (aiData) {
+                setSettings(aiData);
+            } else {
+                setSettings({ credentials: [], activeCredentialId: GASTOMETRIA_AI_CREDENTIAL_ID });
+            }
+        } catch (error) {
+            console.error('Erro ao carregar configurações de IA:', error);
+            setSettings({ credentials: [], activeCredentialId: GASTOMETRIA_AI_CREDENTIAL_ID });
+        } finally {
+            setIsLoading(false);
+        }
+    }, [user]);
+
     useEffect(() => {
         if (authLoading || !user) {
             setIsLoading(false);
@@ -39,27 +62,15 @@ export function useAISettings() {
             return;
         }
 
-        const loadSettings = async () => {
-            setIsLoading(true);
-            try {
-                const aiSettings = await apiClient.get('settings', user.uid);
-                const aiData = aiSettings?.ai_settings;
-                
-                if (aiData) {
-                    setSettings(aiData);
-                } else {
-                    setSettings({ credentials: [], activeCredentialId: GASTOMETRIA_AI_CREDENTIAL_ID });
-                }
-            } catch (error) {
-                console.error('Erro ao carregar configurações de IA:', error);
-                setSettings({ credentials: [], activeCredentialId: GASTOMETRIA_AI_CREDENTIAL_ID });
-            } finally {
-                setIsLoading(false);
-            }
-        };
-
         loadSettings();
-    }, [user, authLoading]);
+        
+        // Register this hook's refresh function with the global system
+        registerRefreshHandler('ai-settings', loadSettings);
+        
+        return () => {
+            unregisterRefreshHandler('ai-settings');
+        };
+    }, [user, authLoading, loadSettings, registerRefreshHandler, unregisterRefreshHandler]);
 
     const credentials = useMemo(() => settings?.credentials || [], [settings]);
     const activeCredentialId = useMemo(() => settings?.activeCredentialId || GASTOMETRIA_AI_CREDENTIAL_ID, [settings]);
@@ -159,8 +170,16 @@ export function useAISettings() {
         
         try {
             await saveSettings({ credentials: newCredentials, activeCredentialId: newActiveId });
+            
+            // Close modal and clear editing state
             setIsDialogOpen(false);
             setEditingCredential(null);
+            
+            // Trigger global refresh to update other components
+            setTimeout(() => {
+                triggerRefresh('all');
+            }, 500);
+            
         } catch (error) {
             console.error("Failed to save credential", error);
         }
@@ -175,6 +194,12 @@ export function useAISettings() {
         
         try {
             await saveSettings({ credentials: newCredentials, activeCredentialId: newActiveId });
+            
+            // Trigger global refresh to update other components
+            setTimeout(() => {
+                triggerRefresh('all');
+            }, 500);
+            
         } catch (error) {
             console.error("Failed to delete credential", error);
         }
@@ -188,6 +213,12 @@ export function useAISettings() {
             
             // Forçar atualização local para garantir que a mudança seja refletida imediatamente
             setSettings(newSettings);
+            
+            // Trigger global refresh to update other components
+            setTimeout(() => {
+                triggerRefresh('all');
+            }, 500);
+            
         } catch (error) {
             console.error("Failed to activate credential", error);
             toast({ variant: "destructive", title: "Erro ao ativar configuração de IA." });

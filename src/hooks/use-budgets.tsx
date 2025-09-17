@@ -9,6 +9,7 @@ import { useAuth } from "./use-auth";
 import { useTransactions } from "./use-transactions";
 import { apiClient } from "@/lib/api-client";
 import { offlineStorage } from "@/lib/offline-storage";
+import { useDataRefresh } from "./use-data-refresh";
 
 interface BudgetsContextType {
   budgets: Budget[];
@@ -26,6 +27,7 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
   const { allTransactions } = useTransactions();
+  const { registerRefreshHandler, unregisterRefreshHandler, triggerRefresh } = useDataRefresh();
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isOnline, setIsOnline] = useState(true);
@@ -87,6 +89,13 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
     }
 
     loadBudgets();
+    
+    // Register this hook's refresh function with the global system
+    registerRefreshHandler('budgets', loadBudgets);
+    
+    return () => {
+      unregisterRefreshHandler('budgets');
+    };
   }, [user, authLoading]);
 
   const addBudget = async (budget: Omit<Budget, 'id' | 'createdAt' | 'currentSpending' | 'userId'>) => {
@@ -107,6 +116,11 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
         await offlineStorage.saveBudget(newBudget, true);
         setBudgets(prev => [...prev, newBudget]);
         toast({ title: "Orçamento criado com sucesso!" });
+        
+        // Trigger global refresh to update other pages/components
+        setTimeout(() => {
+          triggerRefresh('all');
+        }, 500);
       } else {
         // Offline: save locally and mark for sync
         await offlineStorage.saveBudget(budgetWithUser, false);
@@ -121,6 +135,11 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
           title: "💾 Orçamento salvo offline",
           description: "Será sincronizado quando você estiver online"
         });
+        
+        // Trigger global refresh to update other pages/components
+        setTimeout(() => {
+          triggerRefresh('all');
+        }, 500);
       }
     } catch (error) {
       console.error('Erro ao adicionar orçamento:', error);

@@ -65,10 +65,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
     const { displayedCredentials, activeCredentialId } = useAISettings();
     
     // Filtrar apenas modelos com suporte a visão/imagem
-    const visionCapableCredentials = [
-        DEFAULT_AI_CREDENTIAL, // Sempre incluir o Gastometria IA padrão
-        ...getVisionCapableModels(displayedCredentials.filter(c => c.id !== 'gastometria-ai-default'))
-    ];
+    const visionCapableCredentials = getVisionCapableModels(displayedCredentials);
     
     const [selectedAI, setSelectedAI] = useState(activeCredentialId || DEFAULT_AI_CREDENTIAL.id);
 
