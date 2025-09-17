@@ -209,8 +209,8 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
 
             <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-500/10 p-2 rounded border border-blue-200 dark:border-blue-500/20">
               <strong>Nota:</strong> {mode === 'payroll' 
-                ? 'Cálculo inclui estimativa de descontos baseada no seu holerite. Empréstimo consignado nas férias segue regra específica de até 35% do valor bruto.'
-                : 'Estimativa baseada na proporção de descontos informada. Para cálculos mais precisos, use os dados do holerite.'
+                ? 'Cálculo inclui estimativa de descontos baseada no seu holerite. Nas férias, o empréstimo consignado é descontado normalmente (até 35% da remuneração + 1/3), conforme Portaria MTE nº 435/2025, junto com INSS e IR.'
+                : 'Estimativa baseada na proporção de descontos informada. Para cálculos mais precisos com regras específicas de consignado, use os dados do holerite.'
               }
             </div>
           </div>

@@ -43,17 +43,13 @@ export function ThirteenthSalaryCalculator({ payrollData }: ThirteenthSalaryCalc
     netSalary: manualData.netSalary,
   };
 
-  const calculateThirteenth = () => {
+    const calculateThirteenth = () => {
     // Cálculo proporcional baseado nos meses trabalhados
     const grossThirteenth = (currentData.grossSalary / 12) * monthsWorked;
     
-    // Calcula o impacto correto do empréstimo consignado no 13º salário (apenas para dados do holerite)
-    const consignedAmount = mode === 'payroll' ? getConsignedLoanFromPayroll(payrollData) : 0;
-    const consignedImpact = consignedAmount > 0 
-      ? calculateConsignedImpactOnThirteenth(grossThirteenth, consignedAmount)
-      : null;
+    // 13º salário NÃO sofre desconto de empréstimo consignado
+    // Apenas descontos regulares (INSS, IR, etc.)
     
-    // Calcula descontos estimados baseado na diferença entre bruto e líquido
     let estimatedDiscounts = 0;
     
     if (mode === 'payroll') {
@@ -69,9 +65,7 @@ export function ThirteenthSalaryCalculator({ payrollData }: ThirteenthSalaryCalc
         ? regularDiscounts.reduce((sum, d) => sum + d.amount, 0) / payrollData.grossSalary 
         : 0;
       
-      const estimatedRegularDiscounts = grossThirteenth * regularDiscountRate;
-      const consignedDiscount = consignedImpact?.applicableAmount || 0;
-      estimatedDiscounts = estimatedRegularDiscounts + consignedDiscount;
+      estimatedDiscounts = grossThirteenth * regularDiscountRate;
     } else {
       // Para entrada manual, usa a proporção de desconto baseada na diferença
       const discountRate = currentData.grossSalary > 0 
@@ -85,7 +79,7 @@ export function ThirteenthSalaryCalculator({ payrollData }: ThirteenthSalaryCalc
     setResult({
       grossThirteenth,
       estimatedDiscounts,
-      consignedImpact,
+      consignedImpact: null, // 13º não tem desconto de consignado
       netThirteenth,
     });
   };
