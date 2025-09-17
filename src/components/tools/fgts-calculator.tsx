@@ -94,6 +94,25 @@ export function FGTSCalculator({ payrollData }: FGTSCalculatorProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Toggle entre modos */}
+        <CalculatorModeToggle 
+          mode={mode} 
+          onModeChange={setMode} 
+          hasPayrollData={hasPayrollData}
+        />
+
+        {/* Entrada de dados baseada no modo */}
+        {mode === 'payroll' ? (
+          <div className="bg-muted/30 dark:bg-muted/10 p-3 rounded-md space-y-2">
+            <div className="text-sm font-medium">Dados do Holerite:</div>
+            <div className="text-xs text-muted-foreground">
+              Salário Bruto: <span className="font-medium">{formatCurrency(payrollData.grossSalary)}</span>
+            </div>
+          </div>
+        ) : (
+          <ManualSalaryInput data={manualData} onChange={setManualData} />
+        )}
+
         {/* Inputs simplificados */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="space-y-2">

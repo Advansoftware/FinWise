@@ -30,11 +30,25 @@ interface SeveranceCalculation {
 type RescissionType = 'demissao-sem-justa-causa' | 'demissao-com-justa-causa' | 'pedido-demissao' | 'comum-acordo';
 
 export function SeveranceCalculator({ payrollData }: SeveranceCalculatorProps) {
-  const [workMonths, setWorkMonths] = useState<number>(12);
-  const [vacationDays, setVacationDays] = useState<number>(30);
+  const [mode, setMode] = useState<'payroll' | 'manual'>('payroll');
+  const [manualData, setManualData] = useState<ManualSalaryData>({
+    grossSalary: 0,
+    netSalary: 0,
+  });
+  const [workYears, setWorkYears] = useState<number>(2);
+  const [workMonths, setWorkMonths] = useState<number>(0);
+  const [dismissalType, setDismissalType] = useState<string>('sem-justa-causa');
   const [rescissionType, setRescissionType] = useState<RescissionType>('demissao-sem-justa-causa');
-  const [fgtsBalance, setFgtsBalance] = useState<number>(5000);
+  const [vacationDays, setVacationDays] = useState<number>(0);
+  const [fgtsBalance, setFgtsBalance] = useState<number>(0);
   const [calculation, setCalculation] = useState<SeveranceCalculation | null>(null);
+
+  const hasPayrollData = payrollData.grossSalary > 0;
+  const currentData = mode === 'payroll' ? payrollData : {
+    ...payrollData,
+    grossSalary: manualData.grossSalary,
+    netSalary: manualData.netSalary,
+  };
 
   const calculateSeverance = () => {
     const dailySalary = payrollData.grossSalary / 30;
@@ -133,8 +147,27 @@ export function SeveranceCalculator({ payrollData }: SeveranceCalculatorProps) {
           Calcule os valores da rescisão trabalhista conforme a CLT
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Informação automática */}
+            <CardContent className="space-y-6">
+        {/* Toggle entre modos */}
+        <CalculatorModeToggle 
+          mode={mode} 
+          onModeChange={setMode} 
+          hasPayrollData={hasPayrollData}
+        />
+
+        {/* Entrada de dados baseada no modo */}
+        {mode === 'payroll' ? (
+          <div className="bg-muted/30 dark:bg-muted/10 p-3 rounded-md space-y-2">
+            <div className="text-sm font-medium">Dados do Holerite:</div>
+            <div className="text-xs text-muted-foreground">
+              Salário Bruto: <span className="font-medium">{formatCurrency(payrollData.grossSalary)}</span>
+            </div>
+          </div>
+        ) : (
+          <ManualSalaryInput data={manualData} onChange={setManualData} />
+        )}
+
+        {/* Inputs de rescisão */}
         <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-lg mb-4">
           <h4 className="font-medium text-blue-800 mb-2">📊 Dados extraídos do seu holerite:</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">

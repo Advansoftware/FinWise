@@ -39,6 +39,13 @@ export function IncomeTaxCalculator({ payrollData }: IncomeTaxCalculatorProps) {
   const [inssContribution, setInssContribution] = useState<number>(0);
   const [calculation, setCalculation] = useState<IncomeTaxCalculation | null>(null);
 
+  const hasPayrollData = payrollData.grossSalary > 0;
+  const currentData = mode === 'payroll' ? payrollData : {
+    ...payrollData,
+    grossSalary: manualData.grossSalary,
+    netSalary: manualData.netSalary,
+  };
+
   // Tabela IR 2024/2025
   const irTable = [
     { min: 0, max: 2259.20, rate: 0, deduction: 0 },
@@ -136,8 +143,27 @@ export function IncomeTaxCalculator({ payrollData }: IncomeTaxCalculatorProps) {
           Calcule seu IR mensal, anual e estimativa de restituição
         </CardDescription>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Inputs */}
+            <CardContent className="space-y-6">
+        {/* Toggle entre modos */}
+        <CalculatorModeToggle 
+          mode={mode} 
+          onModeChange={setMode} 
+          hasPayrollData={hasPayrollData}
+        />
+
+        {/* Entrada de dados baseada no modo */}
+        {mode === 'payroll' ? (
+          <div className="bg-muted/30 dark:bg-muted/10 p-3 rounded-md space-y-2">
+            <div className="text-sm font-medium">Dados do Holerite:</div>
+            <div className="text-xs text-muted-foreground">
+              Salário Bruto: <span className="font-medium">{formatCurrency(payrollData.grossSalary)}</span>
+            </div>
+          </div>
+        ) : (
+          <ManualSalaryInput data={manualData} onChange={setManualData} />
+        )}
+
+        {/* Inputs para cálculos */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="dependents">Número de dependentes</Label>

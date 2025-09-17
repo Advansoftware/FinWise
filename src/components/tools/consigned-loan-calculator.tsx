@@ -34,19 +34,31 @@ interface LoanInstallment {
 }
 
 export function ConsignedLoanCalculator({ payrollData }: ConsignedLoanProps) {
-  const [employeeType, setEmployeeType] = useState<'clt' | 'public' | 'retired'>('clt');
+  const [mode, setMode] = useState<'payroll' | 'manual'>('payroll');
+  const [manualData, setManualData] = useState<ManualSalaryData>({
+    grossSalary: 0,
+    netSalary: 0,
+  });
+  const [employeeType, setEmployeeType] = useState<'clt' | 'public' | 'inss'>('clt');
   const [loanAmount, setLoanAmount] = useState<number>(10000);
-  const [termMonths, setTermMonths] = useState<number>(24);
-  const [interestRate, setInterestRate] = useState<number>(1.8);
+  const [interestRate, setInterestRate] = useState<number>(1.5);
+  const [termMonths, setTermMonths] = useState<number>(60);
   const [currentLoans, setCurrentLoans] = useState<number>(0);
   const [calculation, setCalculation] = useState<LoanCalculation | null>(null);
+
+  const hasPayrollData = payrollData.grossSalary > 0;
+  const currentData = mode === 'payroll' ? payrollData : {
+    ...payrollData,
+    grossSalary: manualData.grossSalary,
+    netSalary: manualData.netSalary,
+  };
 
   // Margens consignáveis por tipo de trabalhador
   const getMarginRate = (type: string) => {
     switch (type) {
       case 'clt': return 0.30; // 30% para CLT
       case 'public': return 0.35; // 35% para servidor público
-      case 'retired': return 0.45; // 45% para aposentado/pensionista
+      case 'inss': return 0.45; // 45% para aposentado/pensionista
       default: return 0.30;
     }
   };
@@ -164,14 +176,14 @@ export function ConsignedLoanCalculator({ payrollData }: ConsignedLoanProps) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
             <Label htmlFor="employeeType">Tipo de trabalhador</Label>
-            <Select value={employeeType} onValueChange={(value: 'clt' | 'public' | 'retired') => setEmployeeType(value)}>
+            <Select value={employeeType} onValueChange={(value: 'clt' | 'public' | 'inss') => setEmployeeType(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Selecione o tipo" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="clt">CLT - 30% margem</SelectItem>
                 <SelectItem value="public">Servidor Público - 35% margem</SelectItem>
-                <SelectItem value="retired">Aposentado/Pensionista - 45% margem</SelectItem>
+                <SelectItem value="inss">Aposentado/Pensionista - 45% margem</SelectItem>
               </SelectContent>
             </Select>
           </div>
