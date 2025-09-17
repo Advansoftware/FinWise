@@ -9,6 +9,8 @@ import { Separator } from "@/components/ui/separator";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Briefcase, AlertTriangle, DollarSign, FileText } from "lucide-react";
 import { PayrollData } from "@/lib/types";
+import { CalculatorModeToggle } from "./calculator-mode-toggle";
+import { ManualSalaryInput, ManualSalaryData } from "./manual-salary-input";
 
 interface SeveranceCalculatorProps {
   payrollData: PayrollData;

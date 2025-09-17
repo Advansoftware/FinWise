@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Building, Calendar, DollarSign, TrendingUp } from "lucide-react";
 import { PayrollData } from "@/lib/types";
+import { CalculatorModeToggle } from "./calculator-mode-toggle";
+import { ManualSalaryInput, ManualSalaryData } from "./manual-salary-input";
 
 interface FGTSCalculatorProps {
   payrollData: PayrollData;
@@ -22,15 +24,27 @@ interface FGTSCalculation {
 }
 
 export function FGTSCalculator({ payrollData }: FGTSCalculatorProps) {
+  const [mode, setMode] = useState<'payroll' | 'manual'>('payroll');
+  const [manualData, setManualData] = useState<ManualSalaryData>({
+    grossSalary: 0,
+    netSalary: 0,
+  });
   const [workMonths, setWorkMonths] = useState<number>(12);
   const [currentFGTSBalance, setCurrentFGTSBalance] = useState<number>(0);
   const [projectionYears, setProjectionYears] = useState<number>(5);
   const [calculation, setCalculation] = useState<FGTSCalculation | null>(null);
 
+  const hasPayrollData = payrollData.grossSalary > 0;
+  const currentData = mode === 'payroll' ? payrollData : {
+    ...payrollData,
+    grossSalary: manualData.grossSalary,
+    netSalary: manualData.netSalary,
+  };
+
   const calculateFGTS = () => {
     // FGTS é 8% do salário bruto
     const fgtsRate = 0.08;
-    const monthlyDeposit = payrollData.grossSalary * fgtsRate;
+    const monthlyDeposit = currentData.grossSalary * fgtsRate;
     const yearlyDeposit = monthlyDeposit * 12;
     
     // Saldo atual projetado baseado nos meses trabalhados

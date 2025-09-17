@@ -10,12 +10,19 @@ import { PayrollData } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { calculateConsignedImpactOnThirteenth, getConsignedLoanFromPayroll } from "@/lib/payroll-utils";
+import { CalculatorModeToggle } from "./calculator-mode-toggle";
+import { ManualSalaryInput, ManualSalaryData } from "./manual-salary-input";
 
 interface ThirteenthSalaryCalculatorProps {
   payrollData: PayrollData;
 }
 
 export function ThirteenthSalaryCalculator({ payrollData }: ThirteenthSalaryCalculatorProps) {
+  const [mode, setMode] = useState<'payroll' | 'manual'>('payroll');
+  const [manualData, setManualData] = useState<ManualSalaryData>({
+    grossSalary: 0,
+    netSalary: 0,
+  });
   const [monthsWorked, setMonthsWorked] = useState(12);
   const [result, setResult] = useState<{
     grossThirteenth: number;
@@ -29,37 +36,55 @@ export function ThirteenthSalaryCalculator({ payrollData }: ThirteenthSalaryCalc
     netThirteenth: number;
   } | null>(null);
 
+  const hasPayrollData = payrollData.grossSalary > 0;
+  const currentData = mode === 'payroll' ? payrollData : {
+    ...payrollData,
+    grossSalary: manualData.grossSalary,
+    netSalary: manualData.netSalary,
+  };
+
   const calculateThirteenth = () => {
     // Cálculo proporcional baseado nos meses trabalhados
-    const grossThirteenth = (payrollData.grossSalary / 12) * monthsWorked;
+    const grossThirteenth = (currentData.grossSalary / 12) * monthsWorked;
     
-    // Calcula o impacto correto do empréstimo consignado no 13º salário
-    const consignedAmount = getConsignedLoanFromPayroll(payrollData);
+    // Calcula o impacto correto do empréstimo consignado no 13º salário (apenas para dados do holerite)
+    const consignedAmount = mode === 'payroll' ? getConsignedLoanFromPayroll(payrollData) : 0;
     const consignedImpact = consignedAmount > 0 
       ? calculateConsignedImpactOnThirteenth(grossThirteenth, consignedAmount)
       : null;
     
-    // Calcula descontos regulares (INSS, IR) baseado na proporção do holerite
-    // mas exclui o empréstimo consignado pois ele tem regras específicas
-    const regularDiscounts = payrollData.discounts.filter(d => 
-      d.type === 'discount' && 
-      !d.name.toLowerCase().includes('consignado') &&
-      !d.name.toLowerCase().includes('empréstimo') &&
-      !d.name.toLowerCase().includes('emprestimo')
-    );
+    // Calcula descontos estimados baseado na diferença entre bruto e líquido
+    let estimatedDiscounts = 0;
     
-    const regularDiscountRate = payrollData.grossSalary > 0 
-      ? regularDiscounts.reduce((sum, d) => sum + d.amount, 0) / payrollData.grossSalary 
-      : 0;
+    if (mode === 'payroll') {
+      // Para dados do holerite, calcula descontos regulares excluindo consignado
+      const regularDiscounts = payrollData.discounts.filter(d => 
+        d.type === 'discount' && 
+        !d.name.toLowerCase().includes('consignado') &&
+        !d.name.toLowerCase().includes('empréstimo') &&
+        !d.name.toLowerCase().includes('emprestimo')
+      );
+      
+      const regularDiscountRate = payrollData.grossSalary > 0 
+        ? regularDiscounts.reduce((sum, d) => sum + d.amount, 0) / payrollData.grossSalary 
+        : 0;
+      
+      const estimatedRegularDiscounts = grossThirteenth * regularDiscountRate;
+      const consignedDiscount = consignedImpact?.applicableAmount || 0;
+      estimatedDiscounts = estimatedRegularDiscounts + consignedDiscount;
+    } else {
+      // Para entrada manual, usa a proporção de desconto baseada na diferença
+      const discountRate = currentData.grossSalary > 0 
+        ? (currentData.grossSalary - currentData.netSalary) / currentData.grossSalary 
+        : 0;
+      estimatedDiscounts = grossThirteenth * discountRate;
+    }
     
-    const estimatedRegularDiscounts = grossThirteenth * regularDiscountRate;
-    const consignedDiscount = consignedImpact?.applicableAmount || 0;
-    const totalDiscounts = estimatedRegularDiscounts + consignedDiscount;
-    const netThirteenth = grossThirteenth - totalDiscounts;
+    const netThirteenth = grossThirteenth - estimatedDiscounts;
 
     setResult({
       grossThirteenth,
-      estimatedDiscounts: totalDiscounts,
+      estimatedDiscounts,
       consignedImpact,
       netThirteenth,
     });
@@ -77,14 +102,25 @@ export function ThirteenthSalaryCalculator({ payrollData }: ThirteenthSalaryCalc
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Informações base */}
-        <div className="bg-muted/30 p-3 rounded-md space-y-2">
-          <div className="text-sm font-medium">Dados do Holerite:</div>
-          <div className="text-xs text-muted-foreground space-y-1">
-            <div>Salário Bruto: <span className="font-medium">{formatCurrency(payrollData.grossSalary)}</span></div>
-            <div>Salário Líquido: <span className="font-medium">{formatCurrency(payrollData.netSalary)}</span></div>
+        {/* Toggle entre modos */}
+        <CalculatorModeToggle 
+          mode={mode} 
+          onModeChange={setMode} 
+          hasPayrollData={hasPayrollData}
+        />
+
+        {/* Entrada de dados baseada no modo */}
+        {mode === 'payroll' ? (
+          <div className="bg-muted/30 dark:bg-muted/10 p-3 rounded-md space-y-2">
+            <div className="text-sm font-medium">Dados do Holerite:</div>
+            <div className="text-xs text-muted-foreground space-y-1">
+              <div>Salário Bruto: <span className="font-medium">{formatCurrency(payrollData.grossSalary)}</span></div>
+              <div>Salário Líquido: <span className="font-medium">{formatCurrency(payrollData.netSalary)}</span></div>
+            </div>
           </div>
-        </div>
+        ) : (
+          <ManualSalaryInput data={manualData} onChange={setManualData} />
+        )}
 
         {/* Entrada de dados */}
         <div className="space-y-2">
@@ -103,7 +139,12 @@ export function ThirteenthSalaryCalculator({ payrollData }: ThirteenthSalaryCalc
           </div>
         </div>
 
-        <Button onClick={calculateThirteenth} className="w-full">
+        <Button 
+          onClick={calculateThirteenth} 
+          className="w-full"
+          disabled={(mode === 'manual' && (manualData.grossSalary <= 0 || manualData.netSalary <= 0)) || 
+                   (mode === 'payroll' && !hasPayrollData)}
+        >
           <Calculator className="h-4 w-4 mr-2" />
           Calcular 13º Salário
         </Button>
@@ -127,8 +168,8 @@ export function ThirteenthSalaryCalculator({ payrollData }: ThirteenthSalaryCalc
               </div>
               
               {/* Informação específica sobre empréstimo consignado */}
-              {result.consignedImpact && (
-                <div className="bg-blue-50 dark:bg-blue-500/10 p-3 rounded-lg border">
+              {result.consignedImpact && mode === 'payroll' && (
+                <div className="bg-blue-50 dark:bg-blue-500/10 p-3 rounded-lg border border-blue-200 dark:border-blue-500/20">
                   <div className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-1">
                     💡 Empréstimo Consignado no 13º Salário
                   </div>
@@ -144,15 +185,17 @@ export function ThirteenthSalaryCalculator({ payrollData }: ThirteenthSalaryCalc
               
               <div className="flex justify-between items-center pt-2 border-t">
                 <span className="font-medium">13º Líquido Estimado:</span>
-                <Badge className="bg-green-600 text-white font-bold">
+                <Badge className="bg-green-600 dark:bg-green-600 text-white font-bold">
                   {formatCurrency(result.netThirteenth)}
                 </Badge>
               </div>
             </div>
 
-            <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-500/10 p-2 rounded">
-              <strong>Nota:</strong> Os descontos são estimados baseados na proporção do seu holerite atual. 
-              Valores reais podem variar conforme faixas do INSS e IR.
+            <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-500/10 p-2 rounded border-blue-200 dark:border-blue-500/20">
+              <strong>Nota:</strong> {mode === 'payroll' 
+                ? 'Os descontos são estimados baseados na proporção do seu holerite atual. Valores reais podem variar conforme faixas do INSS e IR.'
+                : 'Estimativa baseada na proporção de descontos informada. Para cálculos mais precisos, use os dados do holerite.'
+              }
             </div>
           </div>
         )}

@@ -129,9 +129,9 @@ export function PayrollCard() {
         id: user?.uid || "",
         userId: user?.uid || "",
         grossSalary: 0,
+        allowances: 0,
         discounts: [],
         netSalary: 0,
-        createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
       setPayrollData(emptyPayrollData);

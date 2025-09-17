@@ -5,17 +5,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Calendar, Calculator } from "lucide-react";
+import { Plane, Calculator } from "lucide-react";
 import { PayrollData } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { calculateConsignedImpactOnVacation, getConsignedLoanFromPayroll } from "@/lib/payroll-utils";
+import { CalculatorModeToggle } from "./calculator-mode-toggle";
+import { ManualSalaryInput, ManualSalaryData } from "./manual-salary-input";
 
 interface VacationCalculatorProps {
   payrollData: PayrollData;
 }
 
 export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
+  const [mode, setMode] = useState<'payroll' | 'manual'>('payroll');
+  const [manualData, setManualData] = useState<ManualSalaryData>({
+    grossSalary: 0,
+    netSalary: 0,
+  });
   const [vacationDays, setVacationDays] = useState(30);
   const [result, setResult] = useState<{
     vacationSalary: number;
@@ -31,43 +38,61 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
     netTotal: number;
   } | null>(null);
 
+  const hasPayrollData = payrollData.grossSalary > 0;
+  const currentData = mode === 'payroll' ? payrollData : {
+    ...payrollData,
+    grossSalary: manualData.grossSalary,
+    netSalary: manualData.netSalary,
+  };
+
   const calculateVacation = () => {
     // Cálculo baseado no salário bruto
-    const dailySalary = payrollData.grossSalary / 30;
+    const dailySalary = currentData.grossSalary / 30;
     const vacationSalary = dailySalary * vacationDays;
     const oneThirdBonus = vacationSalary / 3; // 1/3 constitucional
     const grossTotal = vacationSalary + oneThirdBonus;
 
-    // Calcula o impacto correto do empréstimo consignado nas férias
-    const consignedAmount = getConsignedLoanFromPayroll(payrollData);
+    // Calcula o impacto correto do empréstimo consignado nas férias (apenas para dados do holerite)
+    const consignedAmount = mode === 'payroll' ? getConsignedLoanFromPayroll(payrollData) : 0;
     const consignedImpact = consignedAmount > 0 
       ? calculateConsignedImpactOnVacation(payrollData.grossSalary, consignedAmount)
       : null;
     
-    // Calcula descontos regulares baseado na proporção do holerite
-    // mas exclui o empréstimo consignado pois ele tem regras específicas
-    const regularDiscounts = payrollData.discounts.filter(d => 
-      d.type === 'discount' && 
-      !d.name.toLowerCase().includes('consignado') &&
-      !d.name.toLowerCase().includes('empréstimo') &&
-      !d.name.toLowerCase().includes('emprestimo')
-    );
+    // Calcula descontos estimados baseado no modo
+    let estimatedDiscounts = 0;
     
-    const regularDiscountRate = payrollData.grossSalary > 0 
-      ? regularDiscounts.reduce((sum, d) => sum + d.amount, 0) / payrollData.grossSalary 
-      : 0;
+    if (mode === 'payroll') {
+      // Para dados do holerite, calcula descontos regulares excluindo consignado
+      const regularDiscounts = payrollData.discounts.filter(d => 
+        d.type === 'discount' && 
+        !d.name.toLowerCase().includes('consignado') &&
+        !d.name.toLowerCase().includes('empréstimo') &&
+        !d.name.toLowerCase().includes('emprestimo')
+      );
+      
+      const regularDiscountRate = payrollData.grossSalary > 0 
+        ? regularDiscounts.reduce((sum, d) => sum + d.amount, 0) / payrollData.grossSalary 
+        : 0;
+      
+      const estimatedRegularDiscounts = grossTotal * regularDiscountRate;
+      const consignedDiscount = consignedImpact?.applicableAmount || 0;
+      estimatedDiscounts = estimatedRegularDiscounts + consignedDiscount;
+    } else {
+      // Para entrada manual, usa a proporção de desconto baseada na diferença
+      const discountRate = currentData.grossSalary > 0 
+        ? (currentData.grossSalary - currentData.netSalary) / currentData.grossSalary 
+        : 0;
+      estimatedDiscounts = grossTotal * discountRate;
+    }
     
-    const estimatedRegularDiscounts = grossTotal * regularDiscountRate;
-    const consignedDiscount = consignedImpact?.applicableAmount || 0;
-    const totalDiscounts = estimatedRegularDiscounts + consignedDiscount;
-    const netTotal = grossTotal - totalDiscounts;
+    const netTotal = grossTotal - estimatedDiscounts;
 
     setResult({
       vacationSalary,
       oneThirdBonus,
       grossTotal,
       consignedImpact,
-      estimatedDiscounts: totalDiscounts,
+      estimatedDiscounts,
       netTotal,
     });
   };
@@ -76,7 +101,7 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
     <Card className="h-full">
       <CardHeader>
         <div className="flex items-center gap-2">
-          <Calendar className="h-5 w-5 text-primary" />
+          <Plane className="h-5 w-5 text-primary" />
           <CardTitle className="text-lg">Calculadora de Férias</CardTitle>
         </div>
         <CardDescription>
@@ -84,13 +109,24 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Informações base */}
-        <div className="bg-muted/30 p-3 rounded-md space-y-2">
-          <div className="text-sm font-medium">Dados do Holerite:</div>
-          <div className="text-xs text-muted-foreground">
-            Salário Bruto: <span className="font-medium">{formatCurrency(payrollData.grossSalary)}</span>
+        {/* Toggle entre modos */}
+        <CalculatorModeToggle 
+          mode={mode} 
+          onModeChange={setMode} 
+          hasPayrollData={hasPayrollData}
+        />
+
+        {/* Entrada de dados baseada no modo */}
+        {mode === 'payroll' ? (
+          <div className="bg-muted/30 dark:bg-muted/10 p-3 rounded-md space-y-2">
+            <div className="text-sm font-medium">Dados do Holerite:</div>
+            <div className="text-xs text-muted-foreground">
+              Salário Bruto: <span className="font-medium">{formatCurrency(payrollData.grossSalary)}</span>
+            </div>
           </div>
-        </div>
+        ) : (
+          <ManualSalaryInput data={manualData} onChange={setManualData} />
+        )}
 
         {/* Entrada de dados */}
         <div className="space-y-2">
@@ -109,7 +145,12 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
           </div>
         </div>
 
-        <Button onClick={calculateVacation} className="w-full">
+        <Button 
+          onClick={calculateVacation} 
+          className="w-full"
+          disabled={(mode === 'manual' && (manualData.grossSalary <= 0 || manualData.netSalary <= 0)) || 
+                   (mode === 'payroll' && !hasPayrollData)}
+        >
           <Calculator className="h-4 w-4 mr-2" />
           Calcular Férias
         </Button>
@@ -143,8 +184,8 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
               </div>
               
               {/* Informação específica sobre empréstimo consignado */}
-              {result.consignedImpact && (
-                <div className="bg-blue-50 dark:bg-blue-500/10 p-3 rounded-lg border">
+              {result.consignedImpact && mode === 'payroll' && (
+                <div className="bg-blue-50 dark:bg-blue-500/10 p-3 rounded-lg border border-blue-200 dark:border-blue-500/20">
                   <div className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-1">
                     💡 Empréstimo Consignado nas Férias
                   </div>
@@ -160,14 +201,17 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
               
               <div className="flex justify-between items-center pt-2 border-t">
                 <span className="font-medium">Total Líquido Estimado:</span>
-                <Badge className="bg-green-600 text-white font-bold">
+                <Badge className="bg-green-600 dark:bg-green-600 text-white font-bold">
                   {formatCurrency(result.netTotal)}
                 </Badge>
               </div>
             </div>
 
-            <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-500/10 p-2 rounded">
-              <strong>Nota:</strong> Cálculo inclui estimativa de descontos baseada no seu holerite. Empréstimo consignado nas férias segue regra específica de até 35% do valor bruto.
+            <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-500/10 p-2 rounded border border-blue-200 dark:border-blue-500/20">
+              <strong>Nota:</strong> {mode === 'payroll' 
+                ? 'Cálculo inclui estimativa de descontos baseada no seu holerite. Empréstimo consignado nas férias segue regra específica de até 35% do valor bruto.'
+                : 'Estimativa baseada na proporção de descontos informada. Para cálculos mais precisos, use os dados do holerite.'
+              }
             </div>
           </div>
         )}

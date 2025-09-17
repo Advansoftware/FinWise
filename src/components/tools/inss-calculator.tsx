@@ -9,6 +9,8 @@ import { Separator } from "@/components/ui/separator";
 import { Shield, Clock, DollarSign, Users, AlertCircle, CheckCircle } from "lucide-react";
 import { PayrollData } from "@/lib/types";
 import { getINSSFromPayroll, calculateINSSFromSalary, validatePayrollData } from "@/lib/payroll-utils";
+import { CalculatorModeToggle } from "./calculator-mode-toggle";
+import { ManualSalaryInput, ManualSalaryData } from "./manual-salary-input";
 
 interface INSSCalculatorProps {
   payrollData: PayrollData;
@@ -24,9 +26,21 @@ interface INSSCalculation {
 }
 
 export function INSSCalculator({ payrollData }: INSSCalculatorProps) {
+  const [mode, setMode] = useState<'payroll' | 'manual'>('payroll');
+  const [manualData, setManualData] = useState<ManualSalaryData>({
+    grossSalary: 0,
+    netSalary: 0,
+  });
   const [currentAge, setCurrentAge] = useState<number>(30);
   const [contributionYears, setContributionYears] = useState<number>(5);
   const [calculation, setCalculation] = useState<INSSCalculation | null>(null);
+
+  const hasPayrollData = payrollData.grossSalary > 0;
+  const currentData = mode === 'payroll' ? payrollData : {
+    ...payrollData,
+    grossSalary: manualData.grossSalary,
+    netSalary: manualData.netSalary,
+  };
 
   // Tabela INSS 2024/2025
   const inssTable = [
@@ -37,16 +51,16 @@ export function INSSCalculator({ payrollData }: INSSCalculatorProps) {
   ];
 
   const calculateINSS = () => {
-    const grossSalary = payrollData.grossSalary;
+    const grossSalary = currentData.grossSalary;
     
-    // Usar INSS real do holerite
-    const registeredINSS = getINSSFromPayroll(payrollData);
+    // Usar INSS real do holerite apenas no modo payroll
+    const registeredINSS = mode === 'payroll' ? getINSSFromPayroll(payrollData) : 0;
     const calculatedINSS = calculateINSSFromSalary(grossSalary);
     
-    // Usar o INSS registrado se disponível, senão o calculado
+    // Usar o INSS registrado se disponível (modo payroll), senão o calculado
     const monthlyContribution = registeredINSS || calculatedINSS;
     
-    const effectiveRate = (monthlyContribution / grossSalary) * 100;
+    const effectiveRate = grossSalary > 0 ? (monthlyContribution / grossSalary) * 100 : 0;
     const yearlyContribution = monthlyContribution * 12;
 
     // Regras de aposentadoria (regra de pontos - 2024)
@@ -79,8 +93,10 @@ export function INSSCalculator({ payrollData }: INSSCalculatorProps) {
   };
 
   useEffect(() => {
-    calculateINSS();
-  }, [currentAge, contributionYears, payrollData.grossSalary]);
+    if ((mode === 'payroll' && hasPayrollData) || (mode === 'manual' && manualData.grossSalary > 0)) {
+      calculateINSS();
+    }
+  }, [currentAge, contributionYears, payrollData.grossSalary, mode, manualData]);
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', {
@@ -105,6 +121,25 @@ export function INSSCalculator({ payrollData }: INSSCalculatorProps) {
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
+        {/* Toggle entre modos */}
+        <CalculatorModeToggle 
+          mode={mode} 
+          onModeChange={setMode} 
+          hasPayrollData={hasPayrollData}
+        />
+
+        {/* Entrada de dados baseada no modo */}
+        {mode === 'payroll' ? (
+          <div className="bg-muted/30 dark:bg-muted/10 p-3 rounded-md space-y-2">
+            <div className="text-sm font-medium">Dados do Holerite:</div>
+            <div className="text-xs text-muted-foreground">
+              Salário Bruto: <span className="font-medium">{formatCurrency(payrollData.grossSalary)}</span>
+            </div>
+          </div>
+        ) : (
+          <ManualSalaryInput data={manualData} onChange={setManualData} />
+        )}
+
         {/* Inputs */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">

@@ -9,6 +9,8 @@ import { Separator } from "@/components/ui/separator";
 import { Receipt, TrendingDown, TrendingUp, Calculator, AlertCircle, CheckCircle } from "lucide-react";
 import { PayrollData } from "@/lib/types";
 import { getINSSFromPayroll, getIRFromPayroll, calculateIRFromSalary, validatePayrollData } from "@/lib/payroll-utils";
+import { CalculatorModeToggle } from "./calculator-mode-toggle";
+import { ManualSalaryInput, ManualSalaryData } from "./manual-salary-input";
 
 interface IncomeTaxCalculatorProps {
   payrollData: PayrollData;
@@ -26,6 +28,11 @@ interface IncomeTaxCalculation {
 }
 
 export function IncomeTaxCalculator({ payrollData }: IncomeTaxCalculatorProps) {
+  const [mode, setMode] = useState<'payroll' | 'manual'>('payroll');
+  const [manualData, setManualData] = useState<ManualSalaryData>({
+    grossSalary: 0,
+    netSalary: 0,
+  });
   const [dependents, setDependents] = useState<number>(0);
   const [medicalExpenses, setMedicalExpenses] = useState<number>(0);
   const [educationExpenses, setEducationExpenses] = useState<number>(0);
