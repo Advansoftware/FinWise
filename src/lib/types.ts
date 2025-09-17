@@ -164,7 +164,7 @@ export const STANDARD_DISCOUNT_TYPES = [
   'Imposto de Renda',
   'Vale Transporte',
   'Vale Alimentação',
-  'Vale Refeição', 
+  'Vale Refeição',
   'Plano de Saúde',
   'Plano Odontológico',
   'Seguro de Vida',

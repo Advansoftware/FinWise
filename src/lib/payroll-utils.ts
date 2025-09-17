@@ -3,8 +3,8 @@ import { PayrollData, PayrollDiscount } from '@/lib/types';
 // Utilitários para extrair informações dos dados do holerite
 
 export function getINSSFromPayroll(payrollData: PayrollData): number {
-  const inssDiscount = payrollData.discounts.find(discount => 
-    discount.name.toLowerCase().includes('inss') || 
+  const inssDiscount = payrollData.discounts.find(discount =>
+    discount.name.toLowerCase().includes('inss') ||
     discount.name.toLowerCase().includes('previdência') ||
     discount.name.toLowerCase().includes('previdencia')
   );
@@ -12,8 +12,8 @@ export function getINSSFromPayroll(payrollData: PayrollData): number {
 }
 
 export function getIRFromPayroll(payrollData: PayrollData): number {
-  const irDiscount = payrollData.discounts.find(discount => 
-    discount.name.toLowerCase().includes('ir') || 
+  const irDiscount = payrollData.discounts.find(discount =>
+    discount.name.toLowerCase().includes('ir') ||
     discount.name.toLowerCase().includes('imposto') ||
     discount.name.toLowerCase().includes('renda')
   );
@@ -21,8 +21,8 @@ export function getIRFromPayroll(payrollData: PayrollData): number {
 }
 
 export function getHealthInsuranceFromPayroll(payrollData: PayrollData): number {
-  const healthDiscount = payrollData.discounts.find(discount => 
-    discount.name.toLowerCase().includes('plano') || 
+  const healthDiscount = payrollData.discounts.find(discount =>
+    discount.name.toLowerCase().includes('plano') ||
     discount.name.toLowerCase().includes('saúde') ||
     discount.name.toLowerCase().includes('saude') ||
     discount.name.toLowerCase().includes('médico') ||
@@ -32,8 +32,8 @@ export function getHealthInsuranceFromPayroll(payrollData: PayrollData): number 
 }
 
 export function getUnionFeeFromPayroll(payrollData: PayrollData): number {
-  const unionDiscount = payrollData.discounts.find(discount => 
-    discount.name.toLowerCase().includes('sindicato') || 
+  const unionDiscount = payrollData.discounts.find(discount =>
+    discount.name.toLowerCase().includes('sindicato') ||
     discount.name.toLowerCase().includes('sindical') ||
     discount.name.toLowerCase().includes('confederativo')
   );
@@ -41,24 +41,24 @@ export function getUnionFeeFromPayroll(payrollData: PayrollData): number {
 }
 
 export function getDentalInsuranceFromPayroll(payrollData: PayrollData): number {
-  const dentalDiscount = payrollData.discounts.find(discount => 
-    discount.name.toLowerCase().includes('dental') || 
+  const dentalDiscount = payrollData.discounts.find(discount =>
+    discount.name.toLowerCase().includes('dental') ||
     discount.name.toLowerCase().includes('odonto')
   );
   return dentalDiscount?.amount || 0;
 }
 
 export function getLifeInsuranceFromPayroll(payrollData: PayrollData): number {
-  const lifeDiscount = payrollData.discounts.find(discount => 
-    discount.name.toLowerCase().includes('vida') || 
+  const lifeDiscount = payrollData.discounts.find(discount =>
+    discount.name.toLowerCase().includes('vida') ||
     discount.name.toLowerCase().includes('seguro')
   );
   return lifeDiscount?.amount || 0;
 }
 
 export function getTransportVoucherFromPayroll(payrollData: PayrollData): number {
-  const transportDiscount = payrollData.discounts.find(discount => 
-    discount.name.toLowerCase().includes('vale') || 
+  const transportDiscount = payrollData.discounts.find(discount =>
+    discount.name.toLowerCase().includes('vale') ||
     discount.name.toLowerCase().includes('transporte') ||
     discount.name.toLowerCase().includes('vt')
   );
@@ -66,8 +66,8 @@ export function getTransportVoucherFromPayroll(payrollData: PayrollData): number
 }
 
 export function getMealVoucherFromPayroll(payrollData: PayrollData): number {
-  const mealDiscount = payrollData.discounts.find(discount => 
-    discount.name.toLowerCase().includes('alimentação') || 
+  const mealDiscount = payrollData.discounts.find(discount =>
+    discount.name.toLowerCase().includes('alimentação') ||
     discount.name.toLowerCase().includes('alimentacao') ||
     discount.name.toLowerCase().includes('refeição') ||
     discount.name.toLowerCase().includes('refeicao') ||
@@ -134,7 +134,7 @@ export function validatePayrollData(payrollData: PayrollData): {
 
   const calculatedINSS = calculateINSSFromSalary(payrollData.grossSalary);
   const registeredINSS = getINSSFromPayroll(payrollData);
-  
+
   const calculatedIR = calculateIRFromSalary(payrollData.grossSalary, registeredINSS);
   const registeredIR = getIRFromPayroll(payrollData);
 
@@ -153,7 +153,7 @@ export function validatePayrollData(payrollData: PayrollData): {
   // Verificar salário líquido
   const totalDiscounts = payrollData.discounts.reduce((sum, discount) => sum + discount.amount, 0);
   const calculatedNetSalary = payrollData.grossSalary + payrollData.allowances - totalDiscounts;
-  
+
   if (Math.abs(calculatedNetSalary - payrollData.netSalary) > 5) {
     warnings.push(`Salário líquido pode estar incorreto. Calculado: ${calculatedNetSalary.toFixed(2)}, Registrado: ${payrollData.netSalary.toFixed(2)}`);
     suggestions.push('Confira se todos os descontos foram incluídos corretamente');

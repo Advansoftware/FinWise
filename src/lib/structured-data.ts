@@ -426,7 +426,7 @@ export const vacationCalculatorData = {
 
 export const thirteenthSalaryCalculatorData = {
   "@context": "https://schema.org",
-  "@type": "WebApplication", 
+  "@type": "WebApplication",
   "name": "Calculadora de 13º Salário (Décimo Terceiro)",
   "description": "Calcule o valor do seu 13º salário proporcional aos meses trabalhados",
   "url": "https://gastometria.com.br/tools",
@@ -442,7 +442,7 @@ export const salaryProjectionCalculatorData = {
   "@type": "WebApplication",
   "name": "Simulador de Projeção Salarial",
   "description": "Simule aumentos salariais e calcule o impacto no seu orçamento futuro",
-  "url": "https://gastometria.com.br/tools", 
+  "url": "https://gastometria.com.br/tools",
   "applicationSubCategory": "Calculator",
   "about": {
     "@type": "Thing",
