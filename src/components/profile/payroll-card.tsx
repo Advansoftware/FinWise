@@ -150,11 +150,11 @@ export function PayrollCard() {
 
   return (
     <Card className="h-full">
-      <CardHeader>
+      <CardHeader className="pb-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Receipt className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg">Holerite</CardTitle>
+            <CardTitle className="text-lg">Dados do Holerite</CardTitle>
           </div>
           <Button
             variant={isEditing ? "default" : "outline"}
@@ -167,8 +167,11 @@ export function PayrollCard() {
               }
             }}
             disabled={isPending}
+            className="h-8"
           >
-            {isEditing ? (
+            {isPending ? (
+              "Salvando..."
+            ) : isEditing ? (
               <>
                 <Save className="h-4 w-4 mr-2" />
                 Salvar
@@ -180,156 +183,155 @@ export function PayrollCard() {
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Salary Information */}
-        <div className="space-y-4">
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="grossSalary">Salário Bruto</Label>
-              {isEditing ? (
-                <Input
-                  id="grossSalary"
-                  type="number"
-                  step="0.01"
-                  value={payrollData.grossSalary}
-                  onChange={(e) => setPayrollData(prev => ({
-                    ...prev,
-                    grossSalary: parseFloat(e.target.value) || 0
-                  }))}
-                  placeholder="0,00"
-                />
-              ) : (
-                <div className="text-sm font-medium text-green-600">
-                  {formatCurrency(payrollData.grossSalary)}
-                </div>
-              )}
-            </div>
-            <div>
-              <Label htmlFor="allowances">Ajuda de Custo</Label>
-              {isEditing ? (
-                <Input
-                  id="allowances"
-                  type="number"
-                  step="0.01"
-                  value={payrollData.allowances}
-                  onChange={(e) => setPayrollData(prev => ({
-                    ...prev,
-                    allowances: parseFloat(e.target.value) || 0
-                  }))}
-                  placeholder="0,00"
-                />
-              ) : (
-                <div className="text-sm font-medium text-blue-600">
-                  {formatCurrency(payrollData.allowances)}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Discounts Section */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label>Descontos</Label>
-              {isEditing && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={addDiscount}
-                  className="h-8"
-                >
-                  <Plus className="h-4 w-4 mr-1" />
-                  Adicionar
-                </Button>
-              )}
-            </div>
-
-            {payrollData.discounts.length > 0 ? (
-              <div className="space-y-2">
-                {payrollData.discounts.map((discount) => (
-                  <div key={discount.id} className="flex items-center gap-2">
-                    {isEditing ? (
-                      <>
-                        <Input
-                          value={discount.name}
-                          onChange={(e) => updateDiscount(discount.id, "name", e.target.value)}
-                          placeholder="Nome do desconto"
-                          className="flex-1"
-                        />
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={discount.amount}
-                          onChange={(e) => updateDiscount(discount.id, "amount", parseFloat(e.target.value) || 0)}
-                          placeholder="0,00"
-                          className="w-32"
-                        />
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => removeDiscount(discount.id)}
-                          className="h-9 w-9"
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </>
-                    ) : (
-                      <>
-                        <span className="flex-1 text-sm">{discount.name || "Desconto"}</span>
-                        <Badge variant="outline" className="text-red-600">
-                          -{formatCurrency(discount.amount)}
-                        </Badge>
-                      </>
-                    )}
-                  </div>
-                ))}
-                {!isEditing && (
-                  <div className="flex justify-between items-center pt-2 border-t">
-                    <span className="text-sm font-medium">Total de Descontos:</span>
-                    <Badge variant="secondary" className="text-red-600">
-                      -{formatCurrency(totalDiscounts)}
-                    </Badge>
-                  </div>
-                )}
-              </div>
+        {/* Salary Information Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="grossSalary" className="text-sm font-medium">Salário Bruto</Label>
+            {isEditing ? (
+              <Input
+                id="grossSalary"
+                type="number"
+                step="0.01"
+                value={payrollData.grossSalary}
+                onChange={(e) => setPayrollData(prev => ({
+                  ...prev,
+                  grossSalary: parseFloat(e.target.value) || 0
+                }))}
+                placeholder="0,00"
+                className="h-9"
+              />
             ) : (
-              !isEditing && (
-                <div className="text-sm text-muted-foreground">
-                  Nenhum desconto registrado
-                </div>
-              )
+              <div className="h-9 flex items-center px-3 bg-green-50 text-green-700 font-medium rounded-md border">
+                {formatCurrency(payrollData.grossSalary)}
+              </div>
+            )}
+          </div>
+          
+          <div className="space-y-2">
+            <Label htmlFor="allowances" className="text-sm font-medium">Ajuda de Custo</Label>
+            {isEditing ? (
+              <Input
+                id="allowances"
+                type="number"
+                step="0.01"
+                value={payrollData.allowances}
+                onChange={(e) => setPayrollData(prev => ({
+                  ...prev,
+                  allowances: parseFloat(e.target.value) || 0
+                }))}
+                placeholder="0,00"
+                className="h-9"
+              />
+            ) : (
+              <div className="h-9 flex items-center px-3 bg-blue-50 text-blue-700 font-medium rounded-md border">
+                {formatCurrency(payrollData.allowances)}
+              </div>
             )}
           </div>
 
-          <Separator />
-
-          {/* Net Salary - Always show current calculated value */}
-          <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-            <div className="flex items-center gap-2">
-              <DollarSign className="h-5 w-5 text-primary" />
-              <span className="font-semibold">Salário Líquido:</span>
-            </div>
-            <div className="text-lg font-bold text-primary">
+          {/* Net Salary - Highlighted */}
+          <div className="space-y-2">
+            <Label className="text-sm font-medium flex items-center gap-1">
+              <DollarSign className="h-4 w-4 text-primary" />
+              Salário Líquido
+            </Label>
+            <div className="h-9 flex items-center px-3 bg-primary/10 text-primary font-bold rounded-md border border-primary/20">
               {formatCurrency(payrollData.netSalary)}
             </div>
           </div>
+        </div>
 
-          {/* Summary of all saved information */}
-          {!isEditing && payrollData.grossSalary > 0 && (
-            <div className="text-xs text-muted-foreground space-y-1">
-              <div className="text-center">
-                <strong>Resumo:</strong> Bruto: {formatCurrency(payrollData.grossSalary)} + 
-                Ajuda: {formatCurrency(payrollData.allowances)} - 
-                Descontos: {formatCurrency(totalDiscounts)} = 
-                <span className="text-primary font-semibold"> {formatCurrency(payrollData.netSalary)}</span>
+        {/* Discounts Section - Collapsed/Expandable */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <Label className="text-sm font-medium">
+              Descontos {payrollData.discounts.length > 0 && `(${payrollData.discounts.length})`}
+            </Label>
+            {isEditing && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={addDiscount}
+                className="h-7 text-xs"
+              >
+                <Plus className="h-3 w-3 mr-1" />
+                Adicionar
+              </Button>
+            )}
+          </div>
+
+          {payrollData.discounts.length > 0 ? (
+            <div className="space-y-2 max-h-32 overflow-y-auto">
+              {payrollData.discounts.map((discount) => (
+                <div key={discount.id} className="flex items-center gap-2 p-2 bg-muted/30 rounded-md">
+                  {isEditing ? (
+                    <>
+                      <Input
+                        value={discount.name}
+                        onChange={(e) => updateDiscount(discount.id, "name", e.target.value)}
+                        placeholder="Ex: INSS, IR"
+                        className="flex-1 h-8 text-xs"
+                      />
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={discount.amount}
+                        onChange={(e) => updateDiscount(discount.id, "amount", parseFloat(e.target.value) || 0)}
+                        placeholder="0,00"
+                        className="w-24 h-8 text-xs"
+                      />
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => removeDiscount(discount.id)}
+                        className="h-8 w-8"
+                      >
+                        <X className="h-3 w-3" />
+                      </Button>
+                    </>
+                  ) : (
+                    <>
+                      <span className="flex-1 text-xs font-medium">{discount.name || "Desconto"}</span>
+                      <Badge variant="outline" className="text-red-600 text-xs">
+                        -{formatCurrency(discount.amount)}
+                      </Badge>
+                    </>
+                  )}
+                </div>
+              ))}
+              
+              {!isEditing && totalDiscounts > 0 && (
+                <div className="flex justify-between items-center pt-2 border-t border-muted">
+                  <span className="text-xs font-medium text-muted-foreground">Total:</span>
+                  <Badge variant="secondary" className="text-red-600 text-xs">
+                    -{formatCurrency(totalDiscounts)}
+                  </Badge>
+                </div>
+              )}
+            </div>
+          ) : (
+            !isEditing && (
+              <div className="text-xs text-muted-foreground italic py-2">
+                Nenhum desconto registrado
               </div>
-            </div>
-          )}
-
-          {payrollData.updatedAt && !isEditing && (
-            <div className="text-xs text-muted-foreground text-center">
-              Última atualização: {new Date(payrollData.updatedAt).toLocaleDateString('pt-BR')}
-            </div>
+            )
           )}
         </div>
+
+        {/* Summary - Compact */}
+        {!isEditing && payrollData.grossSalary > 0 && (
+          <div className="text-xs text-muted-foreground bg-muted/30 p-3 rounded-md">
+            <div className="text-center">
+              <strong>Cálculo:</strong> {formatCurrency(payrollData.grossSalary)} + {formatCurrency(payrollData.allowances)} - {formatCurrency(totalDiscounts)} = <span className="text-primary font-semibold">{formatCurrency(payrollData.netSalary)}</span>
+            </div>
+          </div>
+        )}
+
+        {payrollData.updatedAt && !isEditing && (
+          <div className="text-xs text-muted-foreground text-center">
+            Atualizado em: {new Date(payrollData.updatedAt).toLocaleDateString('pt-BR')}
+          </div>
+        )}
       </CardContent>
     </Card>
   );

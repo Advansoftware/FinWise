@@ -20,9 +20,10 @@ export default function ProfilePage() {
                 <p className="text-muted-foreground">Gerencie suas informações pessoais, segurança e veja a análise do seu perfil financeiro.</p>
             </div>
             
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2 space-y-6">
-                    <Card>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                {/* Primeira linha - Cards de configuração da conta */}
+                <div className="lg:col-span-6">
+                    <Card className="h-full">
                         <CardHeader>
                             <CardTitle>Informações da Conta</CardTitle>
                             <CardDescription>Atualize seu nome de exibição.</CardDescription>
@@ -31,7 +32,9 @@ export default function ProfilePage() {
                            <UpdateNameForm />
                         </CardContent>
                     </Card>
-                     <Card>
+                </div>
+                <div className="lg:col-span-6">
+                    <Card className="h-full">
                         <CardHeader>
                             <CardTitle>Segurança</CardTitle>
                             <CardDescription>Altere sua senha.</CardDescription>
@@ -40,23 +43,33 @@ export default function ProfilePage() {
                            <UpdatePasswordForm />
                         </CardContent>
                     </Card>
-                    
-                    {/* Payroll Card - Always visible */}
+                </div>
+
+                {/* Segunda linha - Holerite e Perfil Financeiro */}
+                <div className="lg:col-span-7">
                     <PayrollCard />
                 </div>
-                <div className="lg:col-span-1 space-y-6">
+                <div className="lg:col-span-5">
                     {isPro ? (
-                        <>
-                            <FinancialProfileCard />
-                            <GamificationSummary />
-                        </>
+                        <FinancialProfileCard />
                     ) : (
-                        <div className="space-y-6">
-                           <ProUpgradeCard featureName="Análise de Perfil com IA" />
-                           <ProUpgradeCard featureName="Progresso Gamificado" />
-                        </div>
+                        <ProUpgradeCard featureName="Análise de Perfil com IA" />
                     )}
                 </div>
+
+                {/* Terceira linha - Gamificação (se Pro) */}
+                {isPro && (
+                    <div className="lg:col-span-12">
+                        <GamificationSummary />
+                    </div>
+                )}
+                
+                {/* Gamificação como upgrade para não-Pro */}
+                {!isPro && (
+                    <div className="lg:col-span-12">
+                        <ProUpgradeCard featureName="Progresso Gamificado" />
+                    </div>
+                )}
             </div>
         </div>
     )
