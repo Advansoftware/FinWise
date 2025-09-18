@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bot, Send, Sparkles, X, Loader2, Gem } from 'lucide-react';
+import { Bot, Send, Sparkles, X, Loader2 } from 'lucide-react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTransactions } from "@/hooks/use-transactions";
 import { useReports } from '@/hooks/use-reports';
@@ -17,8 +17,8 @@ import { useAuth } from '@/hooks/use-auth';
 import { Badge } from '../ui/badge';
 import { getYear, startOfMonth } from 'date-fns';
 import { usePlan } from '@/hooks/use-plan';
-import Link from 'next/link';
 import { ProUpgradeCard } from '../pro-upgrade-card';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 const suggestionPrompts = [
     "Quanto gastei com Supermercado este mês?",
@@ -38,6 +38,7 @@ export function ChatAssistant() {
     const { toast } = useToast();
     const { user, loading } = useAuth();
     const { isPro } = usePlan();
+    const { isMobile } = { isMobile: useIsMobile() };
 
     useEffect(() => {
         // Scroll to bottom when new messages are added
@@ -51,7 +52,6 @@ export function ChatAssistant() {
 
     const handleSubmit = (prompt: string = input) => {
         if (!prompt.trim() || !isPro) return;
-
 
         const newUserMessage: Message = { role: 'user', content: prompt };
         setMessages(prev => [...prev, newUserMessage]);
@@ -80,11 +80,21 @@ export function ChatAssistant() {
             } catch (error) {
                 console.error('Error getting chatbot response:', error);
                 const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro ao processar sua pergunta.";
-                toast({
-                    title: "Erro no Chat",
-                    description: errorMessage,
-                    variant: "destructive"
-                });
+                
+                // Se for erro de créditos, mostrar mensagem amigável
+                if (errorMessage.includes("créditos") || errorMessage.includes("Você precisa de")) {
+                    toast({
+                        title: "Créditos Insuficientes",
+                        description: errorMessage,
+                        variant: "destructive"
+                    });
+                } else {
+                    toast({
+                        title: "Erro no Chat",
+                        description: errorMessage,
+                        variant: "destructive"
+                    });
+                }
                 
                 // Remover a mensagem do usuário se houve erro
                 setMessages(prev => prev.filter(msg => msg !== newUserMessage));
@@ -148,12 +158,70 @@ export function ChatAssistant() {
                 )}
             </div>
         )
+    };
+
+    // Mobile full-screen experience
+    if (isMobile && isOpen) {
+        return (
+            <motion.div
+                initial={{ opacity: 0, y: "100%" }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: "100%" }}
+                transition={{ duration: 0.3, ease: "easeOut" }}
+                className="fixed inset-0 z-50 bg-background"
+            >
+                {/* Mobile Header */}
+                <div className="flex items-center justify-between p-4 border-b bg-gradient-to-r from-primary/10 to-purple-500/10">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-full bg-primary/20">
+                            <Bot className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                            <h1 className="font-semibold text-lg">Assistente Gastometria</h1>
+                            <p className="text-xs text-muted-foreground">Pergunte sobre suas finanças</p>
+                        </div>
+                    </div>
+                    <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
+                        <X className="h-6 w-6" />
+                    </Button>
+                </div>
+
+                {/* Chat Content */}
+                <div className="flex-1 overflow-hidden">
+                    <ScrollArea className="h-[calc(100vh-140px)]" ref={scrollAreaRef}>
+                        {renderChatContent()}
+                    </ScrollArea>
+                </div>
+
+                {/* Mobile Input */}
+                <div className="p-4 border-t bg-card/50 backdrop-blur-xl">
+                    <div className="flex gap-2 items-center">
+                        <Input
+                            placeholder={isPro ? "Digite sua pergunta..." : "Faça upgrade para usar o chat"}
+                            value={input}
+                            onChange={(e) => setInput(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+                            disabled={isPending || !isPro}
+                            className="flex-1"
+                        />
+                        <Button
+                            size="icon"
+                            className="h-10 w-10 flex-shrink-0"
+                            onClick={() => handleSubmit()}
+                            disabled={!input.trim() || isPending || !isPro}
+                        >
+                            <Send className="h-4 w-4" />
+                        </Button>
+                    </div>
+                </div>
+            </motion.div>
+        );
     }
 
     return (
         <div className="relative">
             <AnimatePresence>
-                {isOpen && (
+                {isOpen && !isMobile && (
                     <motion.div
                         initial={{ opacity: 0, y: 50, scale: 0.9 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -178,17 +246,18 @@ export function ChatAssistant() {
                                 </ScrollArea>
                             </CardContent>
                             <CardFooter className="p-4 border-t">
-                                <div className="relative w-full">
+                                <div className="flex gap-2 items-center w-full">
                                     <Input
                                         placeholder={isPro ? "Pergunte algo sobre seus gastos..." : "Faça upgrade para usar o chat"}
                                         value={input}
                                         onChange={(e) => setInput(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
                                         disabled={isPending || !isPro}
+                                        className="flex-1"
                                     />
                                     <Button
                                         size="icon"
-                                        className="absolute right-1 top-1/2 -translate-y-1/2 h-8 w-8"
+                                        className="h-10 w-10 flex-shrink-0"
                                         onClick={() => handleSubmit()}
                                         disabled={!input.trim() || isPending || !isPro}
                                     >

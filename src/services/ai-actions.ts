@@ -71,7 +71,7 @@ import {
 } from '@/ai/ai-types';
 import { Transaction } from '@/lib/types';
 import { getActiveAICredential } from './settings-service';
-import { consumeAICredits } from './credits-service';
+import { consumeAICredits, checkAICredits, CreditCheckResult } from './credits-service';
 import { generateSpendingTip } from '@/ai/flows/ai-powered-spending-tips';
 import { chatWithTransactions } from '@/ai/flows/chat-with-transactions';
 import { extractReceiptInfo } from '@/ai/flows/extract-receipt-info';
@@ -90,7 +90,7 @@ async function getCredentialAndHandleCredits(
   cost: number,
   action: AICreditLogAction,
   isFreeAction: boolean = false
-): Promise<AICredential> {
+): Promise<{ credential: AICredential; creditCheck: CreditCheckResult }> {
   const credential = await getActiveAICredential(userId);
 
   // REGRAS PARA CONSUMO DE CRÉDITOS:
@@ -102,11 +102,16 @@ async function getCredentialAndHandleCredits(
 
   const shouldConsumeCredits = isUsingGastometriaAI && !isFreeAction && cost > 0;
 
+  let creditCheck: CreditCheckResult = { success: true };
+
   if (shouldConsumeCredits) {
-    await consumeAICredits(userId, cost, action, isFreeAction);
+    creditCheck = await checkAICredits(userId, cost, action, isFreeAction);
+    if (creditCheck.success) {
+      await consumeAICredits(userId, cost, action, isFreeAction);
+    }
   }
 
-  return credential;
+  return { credential, creditCheck };
 }
 
 
@@ -115,7 +120,12 @@ async function getCredentialAndHandleCredits(
 export async function getSpendingTip(transactions: any, userId: string, forceRefresh: boolean = false): Promise<string> {
   // Só cobra se for refresh manual
   const cost = forceRefresh ? 1 : 0;
-  const credential = await getCredentialAndHandleCredits(userId, cost, 'Dica Rápida', !forceRefresh);
+  const { credential, creditCheck } = await getCredentialAndHandleCredits(userId, cost, 'Dica Rápida', !forceRefresh);
+
+  // Se não tem créditos suficientes, retorna mensagem amigável
+  if (!creditCheck.success) {
+    return creditCheck.message || "Não foi possível gerar a dica no momento.";
+  }
 
   try {
     const result = await generateSpendingTip({
@@ -133,7 +143,12 @@ export async function getSpendingTip(transactions: any, userId: string, forceRef
 export async function getFinancialProfile(input: FinancialProfileInput, userId: string, forceRefresh: boolean = false): Promise<FinancialProfileOutput> {
   // Só cobra se for refresh manual
   const cost = forceRefresh ? 5 : 0;
-  const credential = await getCredentialAndHandleCredits(userId, cost, 'Perfil Financeiro', !forceRefresh);
+  const { credential, creditCheck } = await getCredentialAndHandleCredits(userId, cost, 'Perfil Financeiro', !forceRefresh);
+
+  // Se não tem créditos suficientes, retorna erro
+  if (!creditCheck.success) {
+    throw new Error(creditCheck.message || "Não foi possível gerar o perfil no momento.");
+  }
 
   try {
     if (input.gamificationData) {
@@ -187,7 +202,13 @@ Transações do Mês Atual:
 }
 
 export async function analyzeTransactionsAction(transactions: Transaction[], userId: string, isFreeAction: boolean = false): Promise<string> {
-  const credential = await getCredentialAndHandleCredits(userId, 5, 'Análise de Transações', isFreeAction);
+  const { credential, creditCheck } = await getCredentialAndHandleCredits(userId, 5, 'Análise de Transações', isFreeAction);
+
+  // Se não tem créditos suficientes, retorna mensagem amigável
+  if (!creditCheck.success) {
+    return creditCheck.message || "Não foi possível analisar as transações no momento.";
+  }
+
   try {
     const configuredAI = createConfiguredAI(credential);
     const modelRef = getModelReference(credential);
@@ -231,7 +252,13 @@ function analyzeQueryComplexity(prompt: string): { cost: number; complexity: 'si
 
 export async function getChatbotResponse(input: ChatInput, userId: string, isFreeAction: boolean = false): Promise<string> {
   const { cost } = analyzeQueryComplexity(input.prompt);
-  const credential = await getCredentialAndHandleCredits(userId, cost, 'Chat com Assistente', isFreeAction);
+  const { credential, creditCheck } = await getCredentialAndHandleCredits(userId, cost, 'Chat com Assistente', isFreeAction);
+
+  // Se não tem créditos suficientes, retorna mensagem amigável
+  if (!creditCheck.success) {
+    return creditCheck.message || "Não foi possível processar sua pergunta no momento.";
+  }
+
   try {
     const result = await chatWithTransactions(input, credential);
     return result.response;
@@ -260,45 +287,84 @@ export async function extractReceiptInfoAction(input: ReceiptInfoInput, userId: 
     }
   } else {
     // Usar lógica padrão de créditos
-    credential = await getCredentialAndHandleCredits(userId, 10, 'Leitura de Nota Fiscal (OCR)', isFreeAction);
+    const { credential: cred, creditCheck } = await getCredentialAndHandleCredits(userId, 10, 'Leitura de Nota Fiscal (OCR)', isFreeAction);
+    if (!creditCheck.success) {
+      throw new Error(creditCheck.message || "Não foi possível processar a nota fiscal no momento.");
+    }
+    credential = cred;
   }
 
   return await extractReceiptInfo(input, credential);
 }
 
 export async function suggestCategoryForItemAction(input: SuggestCategoryInput, userId: string, isFreeAction: boolean = false): Promise<SuggestCategoryOutput> {
-  const credential = await getCredentialAndHandleCredits(userId, 1, 'Sugestão de Categoria', isFreeAction);
+  const { credential, creditCheck } = await getCredentialAndHandleCredits(userId, 1, 'Sugestão de Categoria', isFreeAction);
+
+  if (!creditCheck.success) {
+    throw new Error(creditCheck.message || "Não foi possível sugerir categoria no momento.");
+  }
+
   return suggestCategoryForItem(input, credential);
 }
 
 export async function generateMonthlyReportAction(input: GenerateReportInput, userId: string, isFreeAction: boolean = false): Promise<GenerateReportOutput> {
-  const credential = await getCredentialAndHandleCredits(userId, 5, 'Relatório Mensal', isFreeAction);
+  const { credential, creditCheck } = await getCredentialAndHandleCredits(userId, 5, 'Relatório Mensal', isFreeAction);
+
+  if (!creditCheck.success) {
+    throw new Error(creditCheck.message || "Não foi possível gerar o relatório no momento.");
+  }
+
   return generateMonthlyReport(input, credential);
 }
 
 export async function generateAnnualReportAction(input: GenerateAnnualReportInput, userId: string, isFreeAction: boolean = false): Promise<GenerateAnnualReportOutput> {
-  const credential = await getCredentialAndHandleCredits(userId, 5, 'Relatório Anual', isFreeAction);
+  const { credential, creditCheck } = await getCredentialAndHandleCredits(userId, 5, 'Relatório Anual', isFreeAction);
+
+  if (!creditCheck.success) {
+    throw new Error(creditCheck.message || "Não foi possível gerar o relatório no momento.");
+  }
+
   return generateAnnualReport(input, credential);
 }
 
 export async function suggestBudgetAmountAction(input: SuggestBudgetInput, userId: string, isFreeAction: boolean = false): Promise<SuggestBudgetOutput> {
-  const credential = await getCredentialAndHandleCredits(userId, 2, 'Sugestão de Orçamento', isFreeAction);
+  const { credential, creditCheck } = await getCredentialAndHandleCredits(userId, 2, 'Sugestão de Orçamento', isFreeAction);
+
+  if (!creditCheck.success) {
+    throw new Error(creditCheck.message || "Não foi possível sugerir orçamento no momento.");
+  }
+
   return suggestBudgetAmount(input, credential);
 }
 
 export async function projectGoalCompletionAction(input: ProjectGoalCompletionInput, userId: string, isFreeAction: boolean = false): Promise<ProjectGoalCompletionOutput> {
-  const credential = await getCredentialAndHandleCredits(userId, 2, 'Projeção de Meta', isFreeAction);
+  const { credential, creditCheck } = await getCredentialAndHandleCredits(userId, 2, 'Projeção de Meta', isFreeAction);
+
+  if (!creditCheck.success) {
+    throw new Error(creditCheck.message || "Não foi possível projetar a meta no momento.");
+  }
+
   return projectGoalCompletion(input, credential);
 }
 
 export async function generateAutomaticBudgetsAction(input: GenerateAutomaticBudgetsInput, userId: string, isFreeAction: boolean = false): Promise<GenerateAutomaticBudgetsOutput> {
-  const credential = await getCredentialAndHandleCredits(userId, 5, 'Criação de Orçamentos Automáticos', isFreeAction);
+  const { credential, creditCheck } = await getCredentialAndHandleCredits(userId, 5, 'Criação de Orçamentos Automáticos', isFreeAction);
+
+  if (!creditCheck.success) {
+    throw new Error(creditCheck.message || "Não foi possível criar orçamentos no momento.");
+  }
+
   return generateAutomaticBudgets(input, credential);
 }
 
 export async function predictFutureBalanceAction(input: PredictFutureBalanceInput, userId: string, forceRefresh: boolean = false): Promise<PredictFutureBalanceOutput> {
   // Só cobra se for refresh manual
   const cost = forceRefresh ? 5 : 0;
-  const credential = await getCredentialAndHandleCredits(userId, cost, 'Previsão de Saldo', !forceRefresh);
+  const { credential, creditCheck } = await getCredentialAndHandleCredits(userId, cost, 'Previsão de Saldo', !forceRefresh);
+
+  if (!creditCheck.success) {
+    throw new Error(creditCheck.message || "Não foi possível prever o saldo no momento.");
+  }
+
   return predictFutureBalance(input, credential);
 }
