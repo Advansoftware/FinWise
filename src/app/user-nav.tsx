@@ -13,17 +13,20 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Settings, Gem, UserCircle, LogOut, Trophy, Sparkles } from 'lucide-react';
+import { Settings, Gem, UserCircle, LogOut, Trophy, Sparkles, ExternalLink } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/use-auth';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useGamification } from '@/hooks/use-gamification';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { BillingPortalButton } from '@/components/billing/billing-portal-button';
+import { usePlan } from '@/hooks/use-plan';
 
 export function UserNav() {
   const { user, logout, loading } = useAuth();
   const { gamificationData, isLoading: isGamificationLoading } = useGamification();
+  const { plan } = usePlan();
 
   if (loading) {
     return <Skeleton className="h-9 w-9 rounded-full" />;
@@ -105,6 +108,12 @@ export function UserNav() {
                 <span>Configurações</span>
             </Link>
           </DropdownMenuItem>
+          {plan && plan !== 'Básico' && (
+            <BillingPortalButton variant="ghost" size="sm" className="w-full justify-start h-8 px-2">
+              <ExternalLink className="mr-2 h-4 w-4" />
+              <span>Portal de Faturamento</span>
+            </BillingPortalButton>
+          )}
         </DropdownMenuGroup>
          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={logout}>

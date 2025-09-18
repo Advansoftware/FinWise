@@ -13,6 +13,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { UpgradeCelebration } from '@/components/billing/upgrade-celebration';
 import { CancelFeedback } from '@/components/billing/cancel-feedback';
+import { BillingPortalButton } from '@/components/billing/billing-portal-button';
 
 const plans = [
     {
@@ -144,10 +145,10 @@ function BillingPageContent() {
                     <p className="text-muted-foreground">Gerencie seu plano e seu uso de créditos de IA.</p>
                 </div>
                  {isPaidPlan && (
-                    <Button onClick={handleManageSubscription} disabled={isProcessing}>
-                        {isProcessing ? <Loader2 className="animate-spin mr-2"/> : <Gem className="mr-2 h-4 w-4" />}
+                    <BillingPortalButton size="default">
+                        <Gem className="mr-2 h-4 w-4" />
                         Gerenciar Assinatura
-                    </Button>
+                    </BillingPortalButton>
                 )}
             </div>
             
@@ -162,12 +163,13 @@ function BillingPageContent() {
                     let buttonDisabled = isProcessing || isPlanLoading;
 
                     if (isCurrent) {
-                        buttonAction = isPaidPlan ? handleManageSubscription : () => {};
-                        buttonText = "Seu Plano Atual";
-                        buttonDisabled = isPaidPlan ? buttonDisabled : true;
+                        buttonAction = () => {};
+                        buttonText = isPaidPlan ? "Seu Plano Atual" : "Seu Plano Atual";
+                        buttonDisabled = true;
                     } else if (isDowngrade) {
-                        buttonAction = handleManageSubscription;
-                        buttonText = "Gerenciar Assinatura";
+                        buttonAction = () => {};
+                        buttonText = "Contate o Suporte";
+                        buttonDisabled = true;
                     } else { // isUpgrade
                         buttonAction = () => handleUpgrade(plan.planId as Exclude<UserPlan, 'Básico'>);
                         buttonText = "Fazer Upgrade";
