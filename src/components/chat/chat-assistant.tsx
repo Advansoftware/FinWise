@@ -19,6 +19,8 @@ import { getYear, startOfMonth } from 'date-fns';
 import { usePlan } from '@/hooks/use-plan';
 import { ProUpgradeCard } from '../pro-upgrade-card';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useReasoningChat } from '@/hooks/use-reasoning-chat';
+import { useAISettings } from '@/hooks/use-ai-settings';
 
 const suggestionPrompts = [
     "Quanto gastei com Supermercado este mês?",
@@ -39,16 +41,28 @@ export function ChatAssistant() {
     const { user, loading } = useAuth();
     const { isPro } = usePlan();
     const { isMobile } = { isMobile: useIsMobile() };
+    const { displayedCredentials, activeCredentialId } = useAISettings();
+    const { 
+        reasoning, 
+        isReasoningModel, 
+        streamReasoningResponse, 
+        clearReasoning 
+    } = useReasoningChat();
+
+    // Determinar se deve usar raciocínio
+    const activeCredential = displayedCredentials.find(c => c.id === activeCredentialId);
+    const shouldUseReasoning = activeCredential?.provider === 'ollama' && 
+                               isReasoningModel(activeCredential?.ollamaModel);
 
     useEffect(() => {
-        // Scroll to bottom when new messages are added
+        // Scroll to bottom when new messages are added or reasoning updates
         if (scrollAreaRef.current) {
             scrollAreaRef.current.scrollTo({
                 top: scrollAreaRef.current.scrollHeight,
                 behavior: 'smooth'
             });
         }
-    }, [messages]);
+    }, [messages, reasoning]);
 
     const handleSubmit = (prompt: string = input) => {
         if (!prompt.trim() || !isPro) return;
@@ -56,6 +70,7 @@ export function ChatAssistant() {
         const newUserMessage: Message = { role: 'user', content: prompt };
         setMessages(prev => [...prev, newUserMessage]);
         setInput('');
+        clearReasoning(); // Limpar raciocínio anterior
 
         startTransition(async () => {
             try {
@@ -67,13 +82,28 @@ export function ChatAssistant() {
                 const currentYearMonthlyReports = monthlyReports.filter(r => r.period.startsWith(currentYear.toString()));
                 const pastAnnualReports = annualReports.filter(r => parseInt(r.period) < currentYear);
 
-                const response = await getChatbotResponse({
-                    history: messages,
-                    prompt: prompt,
-                    transactions: currentMonthTransactions,
-                    monthlyReports: currentYearMonthlyReports,
-                    annualReports: pastAnnualReports
-                }, user!.uid);
+                let response: string;
+
+                // Usar raciocínio se disponível
+                if (shouldUseReasoning) {
+                    response = await streamReasoningResponse(
+                        messages,
+                        prompt,
+                        user!.uid,
+                        currentMonthTransactions,
+                        currentYearMonthlyReports,
+                        pastAnnualReports
+                    );
+                } else {
+                    // Método tradicional
+                    response = await getChatbotResponse({
+                        history: messages,
+                        prompt: prompt,
+                        transactions: currentMonthTransactions,
+                        monthlyReports: currentYearMonthlyReports,
+                        annualReports: pastAnnualReports
+                    }, user!.uid);
+                }
                 
                 const newModelMessage: Message = { role: 'model', content: response };
                 setMessages(prev => [...prev, newModelMessage]);
@@ -98,6 +128,7 @@ export function ChatAssistant() {
                 
                 // Remover a mensagem do usuário se houve erro
                 setMessages(prev => prev.filter(msg => msg !== newUserMessage));
+                clearReasoning();
             }
         });
     };
@@ -148,7 +179,26 @@ export function ChatAssistant() {
                         </div>
                     </div>
                 ))}
-                {isPending && (
+                
+                {/* Linha de raciocínio */}
+                {reasoning.isReasoning && reasoning.reasoningText && (
+                    <div className="flex gap-2 justify-start">
+                        <Bot className="h-6 w-6 text-primary flex-shrink-0" />
+                        <div className="rounded-lg px-3 py-2 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 max-w-[85%]">
+                            <div className="flex items-center gap-2 mb-2">
+                                <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                                <span className="text-xs text-blue-700 dark:text-blue-300 font-medium">Pensando...</span>
+                            </div>
+                            <p className="text-sm text-blue-800 dark:text-blue-200 whitespace-pre-wrap font-mono">
+                                {reasoning.reasoningText}
+                                <span className="animate-pulse">|</span>
+                            </p>
+                        </div>
+                    </div>
+                )}
+                
+                {/* Loading tradicional */}
+                {isPending && !reasoning.isReasoning && (
                     <div className="flex gap-2 justify-start">
                         <Bot className="h-6 w-6 text-primary flex-shrink-0" />
                         <div className="rounded-lg px-3 py-2 bg-muted flex items-center">
