@@ -16,17 +16,6 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Verificar créditos (custo baseado na complexidade)
-    const cost = analyzeQueryComplexity(prompt).cost;
-    const creditCheck = await checkAICredits(userId, cost, 'Chat com Assistente');
-
-    if (!creditCheck.success) {
-      return new Response(
-        JSON.stringify({ error: creditCheck.message }),
-        { status: 402, headers: { 'Content-Type': 'application/json' } }
-      );
-    }
-
     // Obter credencial ativa
     const credential = await getActiveAICredential(userId);
 
@@ -38,7 +27,9 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Preparar prompt para o modelo
+    // IMPORTANTE: Não verificar créditos para Ollama do usuário
+    // Créditos só são consumidos na Gastometria AI padrão
+    // Quando o usuário usa seu próprio Ollama, é ilimitado    // Preparar prompt para o modelo
     const chatInput: ChatInput = {
       history,
       prompt,
@@ -142,22 +133,6 @@ export async function POST(req: NextRequest) {
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     );
   }
-}
-
-function analyzeQueryComplexity(prompt: string): { cost: number } {
-  const simplePatterns = [
-    /^(oi|olá|hello|hi)\b/i,
-    /^(como\s+(você\s+)?está|how\s+are\s+you)/i,
-    /^(obrigad[oa]|thank\s+you|thanks)/i,
-    /^(tchau|bye|goodbye)\b/i,
-    /^(ajuda|help)\b/i,
-  ];
-
-  if (simplePatterns.some(pattern => pattern.test(prompt.trim()))) {
-    return { cost: 1 };
-  }
-
-  return { cost: 5 };
 }
 
 function buildSystemPrompt(input: ChatInput): string {
