@@ -30,6 +30,17 @@ export interface Installment {
   createdAt: string; // ISO 8601
   updatedAt: string; // ISO 8601
 
+  // Campos para parcelamentos recorrentes
+  isRecurring?: boolean; // Se é um parcelamento recorrente (como aluguel)
+  recurringType?: 'monthly' | 'yearly'; // Tipo de recorrência
+  endDate?: string; // Data de fim opcional (ISO 8601)
+  adjustmentHistory?: Array<{
+    date: string; // ISO 8601
+    previousAmount: number;
+    newAmount: number;
+    reason?: string;
+  }>; // Histórico de alterações de valor
+
   // Campos calculados
   paidInstallments: number;
   remainingInstallments: number;
@@ -53,6 +64,11 @@ export interface CreateInstallmentInput {
   startDate: string;
   sourceWalletId: string;
   destinationWalletId?: string;
+
+  // Campos para parcelamentos recorrentes
+  isRecurring?: boolean;
+  recurringType?: 'monthly' | 'yearly';
+  endDate?: string;
 }
 
 export interface UpdateInstallmentInput {
@@ -64,6 +80,12 @@ export interface UpdateInstallmentInput {
   sourceWalletId?: string;
   destinationWalletId?: string;
   isActive?: boolean;
+
+  // Campos para parcelamentos recorrentes
+  isRecurring?: boolean;
+  recurringType?: 'monthly' | 'yearly';
+  endDate?: string;
+  installmentAmount?: number; // Para permitir ajuste de valor em recorrentes
 }
 
 export interface PayInstallmentInput {
@@ -72,6 +94,13 @@ export interface PayInstallmentInput {
   paidAmount: number;
   paidDate: string;
   transactionId?: string;
+}
+
+export interface AdjustRecurringInstallmentInput {
+  installmentId: string;
+  newAmount: number;
+  reason?: string;
+  effectiveDate: string; // ISO 8601 - Data a partir da qual o novo valor é aplicado
 }
 
 export interface InstallmentSummary {
@@ -144,6 +173,11 @@ export interface IInstallmentsRepository {
   payInstallment(data: PayInstallmentInput): Promise<InstallmentPayment | null>;
   getInstallmentPayments(installmentId: string): Promise<InstallmentPayment[]>;
 
+  // Operações para parcelamentos recorrentes
+  adjustRecurringInstallment(data: AdjustRecurringInstallmentInput): Promise<boolean>;
+  findRecurringInstallments(userId: string): Promise<Installment[]>;
+  findFixedInstallments(userId: string): Promise<Installment[]>; // Parcelamentos com prazo definido
+
   // Consultas específicas
   findActiveInstallments(userId: string): Promise<Installment[]>;
   findUpcomingPayments(userId: string, days: number): Promise<InstallmentPayment[]>;
@@ -158,6 +192,7 @@ export interface IInstallmentsRepository {
       installmentId: string;
       name: string;
       amount: number;
+      isRecurring?: boolean;
     }>;
   }>>;
 

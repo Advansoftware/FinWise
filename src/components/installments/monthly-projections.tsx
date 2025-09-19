@@ -3,13 +3,21 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   TrendingUp, 
   Calendar, 
   DollarSign,
-  BarChart3
+  BarChart3,
+  Percent,
+  Home,
+  CreditCard,
+  Repeat,
+  Clock
 } from 'lucide-react';
 import { useInstallments } from '@/hooks/use-installments';
+import { usePayroll } from '@/hooks/use-payroll';
 import { formatCurrency } from '@/lib/utils';
 import { format, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -23,6 +31,7 @@ interface MonthlyProjection {
     installmentId: string;
     name: string;
     amount: number;
+    isRecurring?: boolean; // Adicionar campo para identificar recorrentes
   }>;
 }
 
@@ -36,8 +45,28 @@ export function MonthlyProjections() {
     monthName: string;
     totalAmount: number;
   } | null>(null);
+  const [activeTab, setActiveTab] = useState('fixed');
   
   const { getMonthlyProjections } = useInstallments();
+  const { payrollData } = usePayroll();
+
+  // Separar projeções por tipo
+  const getProjectionsByType = (type: 'fixed' | 'variable') => {
+    return projections.map(projection => ({
+      ...projection,
+      installments: projection.installments.filter(installment => 
+        type === 'fixed' ? installment.isRecurring : !installment.isRecurring
+      ),
+      totalCommitment: projection.installments
+        .filter(installment => 
+          type === 'fixed' ? installment.isRecurring : !installment.isRecurring
+        )
+        .reduce((sum, installment) => sum + installment.amount, 0)
+    }));
+  };
+
+  const fixedProjections = getProjectionsByType('fixed');
+  const variableProjections = getProjectionsByType('variable');
 
   useEffect(() => {
     const loadProjections = async () => {
@@ -56,6 +85,24 @@ export function MonthlyProjections() {
     return format(date, 'MMMM yyyy', { locale: ptBR });
   };
 
+  const calculateSalaryPercentage = (amount: number) => {
+    if (!payrollData?.netSalary || payrollData.netSalary <= 0) return null;
+    return (amount / payrollData.netSalary) * 100;
+  };
+
+  const formatPercentage = (percentage: number | null) => {
+    if (percentage === null) return '';
+    return `${percentage.toFixed(1)}%`;
+  };
+
+  const getPercentageColor = (percentage: number | null) => {
+    if (percentage === null) return '';
+    if (percentage >= 80) return 'text-red-600 bg-red-50 border-red-200';
+    if (percentage >= 50) return 'text-orange-600 bg-orange-50 border-orange-200';
+    if (percentage >= 30) return 'text-yellow-600 bg-yellow-50 border-yellow-200';
+    return 'text-green-600 bg-green-50 border-green-200';
+  };
+
   const totalCommitment = projections.reduce((sum, p) => sum + p.totalCommitment, 0);
   const averageCommitment = projections.length > 0 ? totalCommitment / projections.length : 0;
   const maxCommitment = Math.max(...projections.map(p => p.totalCommitment), 0);
@@ -68,6 +115,123 @@ export function MonthlyProjections() {
         totalAmount: projection.totalCommitment
       });
     }
+  };
+
+  const renderProjectionCards = (projectionsData: MonthlyProjection[], type: 'fixed' | 'variable') => {
+    const maxCommitment = Math.max(...projectionsData.map(p => p.totalCommitment), 0);
+    
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {projectionsData.map((projection) => {
+          const salaryPercentage = calculateSalaryPercentage(projection.totalCommitment);
+          const percentageColor = getPercentageColor(salaryPercentage);
+          
+          return (
+            <Card 
+              key={projection.month} 
+              className={`relative transition-all duration-200 ${
+                projection.installments.length > 0 
+                  ? 'cursor-pointer hover:shadow-md hover:scale-105' 
+                  : 'opacity-60'
+              }`}
+              onClick={() => handleCardClick(projection)}
+            >
+              {/* Indicador de porcentagem do salário */}
+              {salaryPercentage !== null && projection.totalCommitment > 0 && (
+                <Badge 
+                  variant="outline" 
+                  className={`absolute top-2 right-2 px-2 py-1 text-xs font-medium ${percentageColor}`}
+                >
+                  <Percent className="h-3 w-3 mr-1" />
+                  {formatPercentage(salaryPercentage)}
+                </Badge>
+              )}
+
+              {/* Indicador de tipo */}
+              <Badge 
+                variant="secondary" 
+                className={`absolute top-2 left-2 px-2 py-1 text-xs font-medium ${
+                  type === 'fixed' 
+                    ? 'bg-blue-50 text-blue-700 border-blue-200' 
+                    : 'bg-green-50 text-green-700 border-green-200'
+                }`}
+              >
+                {type === 'fixed' ? (
+                  <>
+                    <Home className="h-3 w-3 mr-1" />
+                    Fixo
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="h-3 w-3 mr-1" />
+                    Variável
+                  </>
+                )}
+              </Badge>
+              
+              <CardHeader className="pb-3 pt-8">
+                <CardTitle className="text-lg capitalize">
+                  {formatMonthYear(projection.month)}
+                </CardTitle>
+              </CardHeader>
+              
+              <CardContent className="space-y-4">
+                <div className="text-center">
+                  <p className="text-2xl font-bold text-primary">
+                    {formatCurrency(projection.totalCommitment)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Total do mês
+                  </p>
+                </div>
+
+                {projection.installments.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-sm font-medium">
+                      {type === 'fixed' ? 'Compromissos Fixos:' : 'Parcelamentos:'}
+                    </p>
+                    <div className="space-y-1">
+                      {projection.installments.slice(0, 3).map((installment, index) => (
+                        <div key={index} className="flex justify-between text-xs">
+                          <span className="truncate flex-1 mr-2 flex items-center gap-1">
+                            {installment.isRecurring && <Repeat className="h-3 w-3" />}
+                            {installment.name}
+                          </span>
+                          <span className="font-medium">{formatCurrency(installment.amount)}</span>
+                        </div>
+                      ))}
+                      {projection.installments.length > 3 && (
+                        <p className="text-xs text-muted-foreground">
+                          +{projection.installments.length - 3} mais
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {projection.installments.length > 0 && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    Clique para ver detalhes
+                  </p>
+                )}
+
+                {/* Visual indicator */}
+                <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
+                  <div 
+                    className={`h-full transition-all ${
+                      type === 'fixed' ? 'bg-blue-500' : 'bg-green-500'
+                    }`}
+                    style={{ 
+                      width: `${maxCommitment > 0 ? (projection.totalCommitment / maxCommitment) * 100 : 0}%` 
+                    }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    );
   };
 
   if (isLoading) {
@@ -191,84 +355,71 @@ export function MonthlyProjections() {
         </div>
       </div>
 
-      {/* Projections */}
-      {projections.length === 0 ? (
-        <Card>
-          <CardContent className="flex flex-col items-center justify-center py-16">
-            <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-semibold mb-2">Nenhuma projeção disponível</h3>
-            <p className="text-muted-foreground text-center">
-              Não há parcelas previstas para o período selecionado.
-            </p>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {projections.map((projection) => (
-            <Card 
-              key={projection.month} 
-              className={`relative transition-all duration-200 ${
-                projection.installments.length > 0 
-                  ? 'cursor-pointer hover:shadow-md hover:scale-105' 
-                  : 'opacity-60'
-              }`}
-              onClick={() => handleCardClick(projection)}
-            >
-              <CardHeader className="pb-3">
-                <CardTitle className="text-lg capitalize">
-                  {formatMonthYear(projection.month)}
-                </CardTitle>
-              </CardHeader>
-              
-              <CardContent className="space-y-4">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-primary">
-                    {formatCurrency(projection.totalCommitment)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    Total do mês
-                  </p>
-                </div>
+      {/* Tabs para separar por tipo */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="fixed" className="flex items-center gap-2">
+            <Home className="h-4 w-4" />
+            Comprometimento Fixo
+          </TabsTrigger>
+          <TabsTrigger value="variable" className="flex items-center gap-2">
+            <CreditCard className="h-4 w-4" />
+            Comprometimento Variável
+          </TabsTrigger>
+        </TabsList>
 
-                {projection.installments.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">Parcelamentos:</p>
-                    <div className="space-y-1">
-                      {projection.installments.slice(0, 3).map((installment, index) => (
-                        <div key={index} className="flex justify-between text-xs">
-                          <span className="truncate flex-1 mr-2">{installment.name}</span>
-                          <span className="font-medium">{formatCurrency(installment.amount)}</span>
-                        </div>
-                      ))}
-                      {projection.installments.length > 3 && (
-                        <p className="text-xs text-muted-foreground">
-                          +{projection.installments.length - 3} mais
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {projection.installments.length > 0 && (
-                  <p className="text-xs text-muted-foreground text-center">
-                    Clique para ver detalhes
-                  </p>
-                )}
-
-                {/* Visual indicator */}
-                <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-primary transition-all"
-                    style={{ 
-                      width: `${maxCommitment > 0 ? (projection.totalCommitment / maxCommitment) * 100 : 0}%` 
-                    }}
-                  />
-                </div>
+        <TabsContent value="fixed" className="space-y-4">
+          <div className="flex items-center gap-2 mb-4">
+            <Home className="h-5 w-5 text-blue-600" />
+            <div>
+              <h3 className="font-medium text-blue-900">Compromissos Fixos</h3>
+              <p className="text-sm text-muted-foreground">
+                Aluguel, contas essenciais e outros gastos recorrentes que se mantêm estáveis
+              </p>
+            </div>
+          </div>
+          
+          {fixedProjections.length === 0 || fixedProjections.every(p => p.totalCommitment === 0) ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <Home className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Nenhum compromisso fixo</h3>
+                <p className="text-muted-foreground text-center">
+                  Não há parcelamentos recorrentes previstos para o período selecionado.
+                </p>
               </CardContent>
             </Card>
-          ))}
-        </div>
-      )}
+          ) : (
+            renderProjectionCards(fixedProjections, 'fixed')
+          )}
+        </TabsContent>
+
+        <TabsContent value="variable" className="space-y-4">
+          <div className="flex items-center gap-2 mb-4">
+            <CreditCard className="h-5 w-5 text-green-600" />
+            <div>
+              <h3 className="font-medium text-green-900">Compromissos Variáveis</h3>
+              <p className="text-sm text-muted-foreground">
+                Empréstimos, financiamentos e parcelamentos com prazo definido
+              </p>
+            </div>
+          </div>
+          
+          {variableProjections.length === 0 || variableProjections.every(p => p.totalCommitment === 0) ? (
+            <Card>
+              <CardContent className="flex flex-col items-center justify-center py-16">
+                <CreditCard className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold mb-2">Nenhum compromisso variável</h3>
+                <p className="text-muted-foreground text-center">
+                  Não há parcelamentos com prazo definido previstos para o período selecionado.
+                </p>
+              </CardContent>
+            </Card>
+          ) : (
+            renderProjectionCards(variableProjections, 'variable')
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Modal */}
       {selectedMonth && (

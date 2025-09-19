@@ -30,7 +30,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Button } from '@/components/ui/button';
-import { Loader2, Plus } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Loader2, Plus, Repeat, Clock } from 'lucide-react';
 import { useInstallments } from '@/hooks/use-installments';
 import { useWallets } from '@/hooks/use-wallets';
 import { useTransactions } from '@/hooks/use-transactions';
@@ -52,6 +53,19 @@ const installmentSchema = z.object({
   establishment: z.string().optional(),
   startDate: z.date({ required_error: 'Data de início é obrigatória' }),
   sourceWalletId: z.string().min(1, 'Carteira de origem é obrigatória'),
+  isRecurring: z.boolean().default(false),
+  recurringType: z.enum(['monthly', 'yearly']).optional(),
+  endDate: z.date().optional(),
+}).refine((data) => {
+  // Se é recorrente, não precisa validar totalInstallments como obrigatório
+  if (data.isRecurring) {
+    return true;
+  }
+  // Se não é recorrente, totalInstallments deve ser válido
+  return !isNaN(Number(data.totalInstallments)) && Number(data.totalInstallments) > 0;
+}, {
+  message: "Para parcelamentos não recorrentes, o número de parcelas é obrigatório",
+  path: ["totalInstallments"]
 });
 
 type InstallmentForm = z.infer<typeof installmentSchema>;
@@ -78,9 +92,12 @@ export function CreateInstallmentDialog({ open, onOpenChange }: CreateInstallmen
       subcategory: '',
       establishment: '',
       sourceWalletId: '',
+      isRecurring: false,
+      recurringType: 'monthly',
     },
   });
 
+  const isRecurring = form.watch('isRecurring');
   const selectedCategory = form.watch('category');
   const totalAmount = Number(form.watch('totalAmount') || 0);
   const totalInstallments = Number(form.watch('totalInstallments') || 0);
@@ -89,17 +106,22 @@ export function CreateInstallmentDialog({ open, onOpenChange }: CreateInstallmen
   const onSubmit = async (data: InstallmentForm) => {
     setIsSubmitting(true);
     try {
-      const installment = await createInstallment({
+      const installmentData = {
         name: data.name,
         description: data.description || undefined,
         totalAmount: Number(data.totalAmount),
-        totalInstallments: Number(data.totalInstallments),
+        totalInstallments: data.isRecurring ? 999999 : Number(data.totalInstallments), // Valor alto para recorrentes
         category: data.category,
         subcategory: data.subcategory || undefined,
         establishment: data.establishment || undefined,
         startDate: data.startDate.toISOString(),
         sourceWalletId: data.sourceWalletId,
-      });
+        isRecurring: data.isRecurring,
+        recurringType: data.isRecurring ? data.recurringType : undefined,
+        endDate: data.endDate?.toISOString(),
+      };
+
+      const installment = await createInstallment(installmentData);
       
       if (installment) {
         onOpenChange(false);
@@ -189,21 +211,117 @@ export function CreateInstallmentDialog({ open, onOpenChange }: CreateInstallmen
                         min="1"
                         max="120"
                         placeholder="12"
+                        disabled={isRecurring}
                         {...field} 
                       />
                     </FormControl>
+                    {isRecurring && (
+                      <p className="text-xs text-muted-foreground">
+                        Desabilitado para parcelamentos recorrentes
+                      </p>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
+              {/* Campos para parcelamentos recorrentes */}
+              <div className="md:col-span-2 space-y-4">
+                <FormField
+                  control={form.control}
+                  name="isRecurring"
+                  render={({ field }) => (
+                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                      <FormControl>
+                        <Checkbox
+                          checked={field.value}
+                          onCheckedChange={field.onChange}
+                        />
+                      </FormControl>
+                      <div className="space-y-1 leading-none">
+                        <FormLabel className="flex items-center gap-2">
+                          <Repeat className="h-4 w-4" />
+                          Parcelamento Recorrente
+                        </FormLabel>
+                        <p className="text-xs text-muted-foreground">
+                          Para pagamentos como aluguel, contas fixas, etc. que não têm fim definido.
+                        </p>
+                      </div>
+                    </FormItem>
+                  )}
+                />
+
+                {isRecurring && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="recurringType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Tipo de Recorrência</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Selecione o tipo" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="monthly">Mensal</SelectItem>
+                              <SelectItem value="yearly">Anual</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="endDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="flex items-center gap-2">
+                            <Clock className="h-4 w-4" />
+                            Data de Fim (Opcional)
+                          </FormLabel>
+                          <FormControl>
+                            <SingleDatePicker
+                              date={field.value}
+                              setDate={field.onChange}
+                            />
+                          </FormControl>
+                          <p className="text-xs text-muted-foreground">
+                            Deixe vazio se não há data de fim prevista
+                          </p>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                )}
+              </div>
+
               {/* Calculated installment amount */}
-              {installmentAmount > 0 && (
+              {totalAmount > 0 && (
                 <div className="md:col-span-2 p-3 bg-muted rounded-md">
-                  <p className="text-sm text-muted-foreground">Valor de cada parcela:</p>
-                  <p className="text-lg font-semibold">
-                    R$ {installmentAmount.toFixed(2)}
-                  </p>
+                  {isRecurring ? (
+                    <>
+                      <p className="text-sm text-muted-foreground">Valor de cada parcela recorrente:</p>
+                      <p className="text-lg font-semibold">
+                        R$ {totalAmount.toFixed(2)}
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Este valor será cobrado de forma recorrente
+                      </p>
+                    </>
+                  ) : installmentAmount > 0 ? (
+                    <>
+                      <p className="text-sm text-muted-foreground">Valor de cada parcela:</p>
+                      <p className="text-lg font-semibold">
+                        R$ {installmentAmount.toFixed(2)}
+                      </p>
+                    </>
+                  ) : null}
                 </div>
               )}
 

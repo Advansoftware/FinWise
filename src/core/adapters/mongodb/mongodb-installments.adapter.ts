@@ -8,10 +8,11 @@ import {
   CreateInstallmentInput,
   UpdateInstallmentInput,
   PayInstallmentInput,
+  AdjustRecurringInstallmentInput,
   InstallmentSummary,
   GamificationData
 } from '@/core/ports/installments.port';
-import { addMonths, isAfter, isBefore, parseISO, format } from 'date-fns';
+import { addMonths, addYears, isAfter, isBefore, parseISO, format } from 'date-fns';
 
 export class MongoInstallmentsRepository implements IInstallmentsRepository {
   constructor(private db: Db) { }
@@ -77,10 +78,30 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
   private generateInstallmentPayments(installment: CreateInstallmentInput & { _id: ObjectId }): InstallmentPayment[] {
     const payments: InstallmentPayment[] = [];
     const startDate = parseISO(installment.startDate);
-    const installmentAmount = installment.totalAmount / installment.totalInstallments;
 
-    for (let i = 0; i < installment.totalInstallments; i++) {
-      const dueDate = addMonths(startDate, i);
+    // Para parcelamentos recorrentes, usar o valor total como valor de cada parcela
+    // Para normais, dividir pelo número de parcelas
+    const installmentAmount = installment.isRecurring
+      ? installment.totalAmount
+      : installment.totalAmount / installment.totalInstallments;
+
+    // Se é recorrente, gerar apenas alguns pagamentos futuros (próximos 24 meses para mensal, 5 anos para anual)
+    const totalToGenerate = installment.isRecurring
+      ? (installment.recurringType === 'yearly' ? 5 : 24)
+      : installment.totalInstallments;
+
+    const intervalUnit = installment.isRecurring && installment.recurringType === 'yearly' ? 'year' : 'month';
+
+    for (let i = 0; i < totalToGenerate; i++) {
+      const dueDate = intervalUnit === 'year'
+        ? addYears(startDate, i)
+        : addMonths(startDate, i);
+
+      // Se há data de fim definida para recorrente, não gerar após essa data
+      if (installment.isRecurring && installment.endDate) {
+        const endDate = parseISO(installment.endDate);
+        if (dueDate > endDate) break;
+      }
 
       payments.push({
         id: new ObjectId().toString(),
@@ -98,7 +119,12 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
   async create(userId: string, data: CreateInstallmentInput): Promise<Installment> {
     const collection = this.db.collection('installments');
 
-    const installmentAmount = data.totalAmount / data.totalInstallments;
+    // Para parcelamentos recorrentes, o installmentAmount é o valor total
+    // Para normais, é o valor total dividido pelo número de parcelas
+    const installmentAmount = data.isRecurring
+      ? data.totalAmount
+      : data.totalAmount / data.totalInstallments;
+
     const now = new Date().toISOString();
 
     const installmentDoc: any = {
@@ -108,7 +134,9 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
       installmentAmount,
       isActive: true,
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      // Inicializar histórico de ajustes para recorrentes
+      adjustmentHistory: data.isRecurring ? [] : undefined
     };
 
     // Gerar pagamentos automaticamente
@@ -618,6 +646,7 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
       installmentId: string;
       name: string;
       amount: number;
+      isRecurring?: boolean;
     }>;
   }>> {
     const activeInstallments = await this.findActiveInstallments(userId);
@@ -634,6 +663,7 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
         installmentId: string;
         name: string;
         amount: number;
+        isRecurring?: boolean;
       }> = [];
 
       activeInstallments.forEach(installment => {
@@ -645,7 +675,8 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
               installmentsInMonth.push({
                 installmentId: installment.id,
                 name: installment.name,
-                amount: payment.scheduledAmount
+                amount: payment.scheduledAmount,
+                isRecurring: installment.isRecurring || false
               });
             }
           }
@@ -721,5 +752,93 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
     console.log(`✅ Migração concluída: ${installmentsMigrated} parcelamentos e ${transactionsMigrated} transações migradas`);
 
     return { installmentsMigrated, transactionsMigrated };
+  }
+
+  // Métodos para parcelamentos recorrentes
+  async adjustRecurringInstallment(data: AdjustRecurringInstallmentInput): Promise<boolean> {
+    const collection = this.db.collection('installments');
+
+    try {
+      const installment = await collection.findOne({ _id: new ObjectId(data.installmentId) });
+      if (!installment || !installment.isRecurring) {
+        return false;
+      }
+
+      const now = new Date().toISOString();
+
+      // Adicionar à história de ajustes
+      const adjustmentRecord = {
+        date: now,
+        previousAmount: installment.installmentAmount,
+        newAmount: data.newAmount,
+        reason: data.reason || 'Ajuste de valor'
+      };
+
+      const currentHistory = installment.adjustmentHistory || [];
+
+      // Atualizar o parcelamento
+      await collection.updateOne(
+        { _id: new ObjectId(data.installmentId) },
+        {
+          $set: {
+            installmentAmount: data.newAmount,
+            totalAmount: data.newAmount, // Para recorrentes, totalAmount = installmentAmount
+            updatedAt: now,
+            adjustmentHistory: [...currentHistory, adjustmentRecord]
+          }
+        }
+      );
+
+      // Atualizar pagamentos futuros com o novo valor
+      const effectiveDate = parseISO(data.effectiveDate);
+      await collection.updateMany(
+        {
+          'payments.installmentId': data.installmentId,
+          'payments.dueDate': { $gte: effectiveDate.toISOString() },
+          'payments.status': 'pending'
+        },
+        {
+          $set: {
+            'payments.$.scheduledAmount': data.newAmount
+          }
+        }
+      );
+
+      return true;
+    } catch (error) {
+      console.error('Error adjusting recurring installment:', error);
+      return false;
+    }
+  }
+
+  async findRecurringInstallments(userId: string): Promise<Installment[]> {
+    const collection = this.db.collection('installments');
+    const installments = await collection
+      .find({
+        userId,
+        isRecurring: true,
+        isActive: true
+      })
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    return installments.map(installment => this.calculateInstallmentFields(installment));
+  }
+
+  async findFixedInstallments(userId: string): Promise<Installment[]> {
+    const collection = this.db.collection('installments');
+    const installments = await collection
+      .find({
+        userId,
+        $or: [
+          { isRecurring: { $ne: true } },
+          { isRecurring: { $exists: false } }
+        ],
+        isActive: true
+      })
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    return installments.map(installment => this.calculateInstallmentFields(installment));
   }
 }

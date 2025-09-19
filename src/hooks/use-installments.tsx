@@ -163,20 +163,28 @@ export function InstallmentsProvider({ children }: { children: React.ReactNode }
   const createInstallment = useCallback(async (data: CreateInstallmentInput): Promise<Installment | null> => {
     if (!user?.uid) return null;
 
+    // Para parcelamentos recorrentes, o installmentAmount é o valor total (valor mensal/anual)
+    // Para parcelamentos normais, é o valor total dividido pelo número de parcelas
+    const installmentAmount = data.isRecurring 
+      ? data.totalAmount 
+      : data.totalAmount / data.totalInstallments;
+
     const installmentData: Installment = {
       userId: user.uid,
       ...data,
       id: `temp-${Date.now()}-${Math.random()}`, // Temporary ID for offline
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      installmentAmount: data.totalAmount / data.totalInstallments,
+      installmentAmount,
       isActive: true,
       paidInstallments: 0,
-      remainingInstallments: data.totalInstallments,
+      remainingInstallments: data.isRecurring ? 999999 : data.totalInstallments, // Valor alto para recorrentes
       totalPaid: 0,
-      remainingAmount: data.totalAmount,
+      remainingAmount: data.isRecurring ? data.totalAmount : data.totalAmount, // Para recorrentes, sempre renovável
       isCompleted: false,
-      payments: []
+      payments: [],
+      // Campos específicos para recorrentes
+      adjustmentHistory: data.isRecurring ? [] : undefined,
     };
 
     try {
