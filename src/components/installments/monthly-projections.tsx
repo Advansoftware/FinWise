@@ -44,6 +44,7 @@ export function MonthlyProjections() {
     month: string;
     monthName: string;
     totalAmount: number;
+    commitmentType?: 'fixed' | 'variable';
   } | null>(null);
   const [activeTab, setActiveTab] = useState('fixed');
   
@@ -103,16 +104,26 @@ export function MonthlyProjections() {
     return 'text-green-600 bg-green-50 border-green-200';
   };
 
-  const totalCommitment = projections.reduce((sum, p) => sum + p.totalCommitment, 0);
-  const averageCommitment = projections.length > 0 ? totalCommitment / projections.length : 0;
-  const maxCommitment = Math.max(...projections.map(p => p.totalCommitment), 0);
+  // Calcular valores baseados APENAS nos gastos variáveis (excluindo fixos)
+  const variableOnlyProjections = projections.map(projection => ({
+    ...projection,
+    installments: projection.installments.filter(installment => installment.isRecurring !== true),
+    totalCommitment: projection.installments
+      .filter(installment => installment.isRecurring !== true)
+      .reduce((sum, installment) => sum + installment.amount, 0)
+  }));
+
+  const totalCommitment = variableOnlyProjections.reduce((sum, p) => sum + p.totalCommitment, 0);
+  const averageCommitment = variableOnlyProjections.length > 0 ? totalCommitment / variableOnlyProjections.length : 0;
+  const maxCommitment = Math.max(...variableOnlyProjections.map(p => p.totalCommitment), 0);
 
   const handleCardClick = (projection: MonthlyProjection) => {
     if (projection.installments.length > 0) {
       setSelectedMonth({
         month: projection.month,
         monthName: formatMonthYear(projection.month),
-        totalAmount: projection.totalCommitment
+        totalAmount: projection.totalCommitment,
+        commitmentType: activeTab as 'fixed' | 'variable'
       });
     }
   };
@@ -253,39 +264,39 @@ export function MonthlyProjections() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Compromisso Total</CardTitle>
+            <CardTitle className="text-sm font-medium">Compromisso Variável Total</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(totalCommitment)}</div>
             <p className="text-xs text-muted-foreground">
-              Próximos {selectedMonths} + últimos {includePastMonths} meses
+              Gastos variáveis - Próximos {selectedMonths} + últimos {includePastMonths} meses
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Média Mensal</CardTitle>
+            <CardTitle className="text-sm font-medium">Média Mensal Variável</CardTitle>
             <BarChart3 className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(averageCommitment)}</div>
             <p className="text-xs text-muted-foreground">
-              Valor médio por mês
+              Valor médio de gastos variáveis por mês
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Maior Compromisso</CardTitle>
+            <CardTitle className="text-sm font-medium">Maior Compromisso Variável</CardTitle>
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{formatCurrency(maxCommitment)}</div>
             <p className="text-xs text-muted-foreground">
-              Mês com maior valor
+              Mês com maior gasto variável
             </p>
           </CardContent>
         </Card>
@@ -531,6 +542,7 @@ export function MonthlyProjections() {
           month={selectedMonth.month}
           monthName={selectedMonth.monthName}
           totalAmount={selectedMonth.totalAmount}
+          commitmentType={selectedMonth.commitmentType}
         />
       )}
     </div>
