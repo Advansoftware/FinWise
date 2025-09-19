@@ -3,7 +3,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { PlusCircle, MoreVertical, Trash2, Edit, Banknote, CreditCard, PiggyBank, Landmark, CircleDollarSign } from "lucide-react";
+import { PlusCircle, MoreVertical, Trash2, Edit, Banknote, CreditCard, PiggyBank, Landmark, CircleDollarSign, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import { useWallets } from "@/hooks/use-wallets";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -37,6 +37,11 @@ const WalletIcon = ({ type, className }: { type: WalletType, className?: string 
 export default function WalletsPage() {
     const { wallets, isLoading, deleteWallet } = useWallets();
     
+    // Calcular totais
+    const totalPositive = wallets.filter(w => (w.balance || 0) > 0).reduce((sum, w) => sum + (w.balance || 0), 0);
+    const totalNegative = wallets.filter(w => (w.balance || 0) < 0).reduce((sum, w) => sum + Math.abs(w.balance || 0), 0);
+    const netBalance = totalPositive - totalNegative;
+    
     if (isLoading) {
         return <WalletsSkeleton />
     }
@@ -54,6 +59,107 @@ export default function WalletsPage() {
                     </Button>
                 </CreateWalletDialog>
             </div>
+            
+            {/* Cards de Totais - Separados visualmente das carteiras individuais */}
+            {wallets.length > 0 && (
+                <div className="space-y-4">
+                    <div className="border-b border-border pb-2">
+                        <h2 className="text-xl font-semibold">Resumo Financeiro</h2>
+                        <p className="text-sm text-muted-foreground">Visão geral dos saldos das suas carteiras</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        {/* Total Positivo */}
+                        <Card className="bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium text-green-900 dark:text-green-100">
+                                    Total Positivo
+                                </CardTitle>
+                                <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold text-green-700 dark:text-green-300">
+                                    R$ {totalPositive.toFixed(2)}
+                                </div>
+                                <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                                    Saldo acumulado das carteiras com valores positivos
+                                </p>
+                            </CardContent>
+                        </Card>
+
+                        {/* Total Negativo */}
+                        <Card className="bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800">
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className="text-sm font-medium text-red-900 dark:text-red-100">
+                                    Total Negativo
+                                </CardTitle>
+                                <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" />
+                            </CardHeader>
+                            <CardContent>
+                                <div className="text-2xl font-bold text-red-700 dark:text-red-300">
+                                    R$ {totalNegative.toFixed(2)}
+                                </div>
+                                <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                                    Soma das dívidas (valores negativos)
+                                </p>
+                            </CardContent>
+                        </Card>
+
+                        {/* Saldo Líquido */}
+                        <Card className={cn(
+                            "border-2",
+                            netBalance >= 0 
+                                ? "bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800"
+                                : "bg-orange-50 dark:bg-orange-950 border-orange-200 dark:border-orange-800"
+                        )}>
+                            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                                <CardTitle className={cn(
+                                    "text-sm font-medium",
+                                    netBalance >= 0
+                                        ? "text-blue-900 dark:text-blue-100"
+                                        : "text-orange-900 dark:text-orange-100"
+                                )}>
+                                    Saldo Líquido
+                                </CardTitle>
+                                <DollarSign className={cn(
+                                    "h-4 w-4",
+                                    netBalance >= 0
+                                        ? "text-blue-600 dark:text-blue-400"
+                                        : "text-orange-600 dark:text-orange-400"
+                                )} />
+                            </CardHeader>
+                            <CardContent>
+                                <div className={cn(
+                                    "text-2xl font-bold",
+                                    netBalance >= 0
+                                        ? "text-blue-700 dark:text-blue-300"
+                                        : "text-orange-700 dark:text-orange-300"
+                                )}>
+                                    R$ {netBalance.toFixed(2)}
+                                </div>
+                                <p className={cn(
+                                    "text-xs mt-1",
+                                    netBalance >= 0
+                                        ? "text-blue-600 dark:text-blue-400"
+                                        : "text-orange-600 dark:text-orange-400"
+                                )}>
+                                    {netBalance >= 0 ? "Patrimônio líquido positivo" : "Patrimônio líquido negativo"}
+                                </p>
+                            </CardContent>
+                        </Card>
+                    </div>
+                </div>
+            )}
+            
+            {/* Separador visual entre totais e carteiras individuais */}
+            {wallets.length > 0 && (
+                <div className="space-y-4">
+                    <div className="border-b border-border pb-2">
+                        <h2 className="text-xl font-semibold">Carteiras Individuais</h2>
+                        <p className="text-sm text-muted-foreground">Gerencie cada uma das suas carteiras</p>
+                    </div>
+                </div>
+            )}
             
             {wallets.length > 0 ? (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -149,10 +255,31 @@ function WalletsSkeleton() {
                 </div>
                 <Skeleton className="h-10 w-36" />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <Skeleton className="h-44" />
-                <Skeleton className="h-44" />
-                <Skeleton className="h-44" />
+            
+            {/* Skeleton para cards de totais */}
+            <div className="space-y-4">
+                <div className="border-b border-border pb-2">
+                    <Skeleton className="h-6 w-40 mb-1" />
+                    <Skeleton className="h-4 w-64" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <Skeleton className="h-32" />
+                    <Skeleton className="h-32" />
+                    <Skeleton className="h-32" />
+                </div>
+            </div>
+            
+            {/* Skeleton para carteiras individuais */}
+            <div className="space-y-4">
+                <div className="border-b border-border pb-2">
+                    <Skeleton className="h-6 w-44 mb-1" />
+                    <Skeleton className="h-4 w-56" />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <Skeleton className="h-44" />
+                    <Skeleton className="h-44" />
+                    <Skeleton className="h-44" />
+                </div>
             </div>
         </div>
     )
