@@ -14,6 +14,7 @@ import { formatCurrency } from '@/lib/utils';
 import { format, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Skeleton } from '@/components/ui/skeleton';
+import { MonthlyInstallmentsModal } from './monthly-installments-modal';
 
 interface MonthlyProjection {
   month: string;
@@ -30,6 +31,11 @@ export function MonthlyProjections() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedMonths, setSelectedMonths] = useState(12);
   const [includePastMonths, setIncludePastMonths] = useState(0);
+  const [selectedMonth, setSelectedMonth] = useState<{
+    month: string;
+    monthName: string;
+    totalAmount: number;
+  } | null>(null);
   
   const { getMonthlyProjections } = useInstallments();
 
@@ -53,6 +59,16 @@ export function MonthlyProjections() {
   const totalCommitment = projections.reduce((sum, p) => sum + p.totalCommitment, 0);
   const averageCommitment = projections.length > 0 ? totalCommitment / projections.length : 0;
   const maxCommitment = Math.max(...projections.map(p => p.totalCommitment), 0);
+
+  const handleCardClick = (projection: MonthlyProjection) => {
+    if (projection.installments.length > 0) {
+      setSelectedMonth({
+        month: projection.month,
+        monthName: formatMonthYear(projection.month),
+        totalAmount: projection.totalCommitment
+      });
+    }
+  };
 
   if (isLoading) {
     return (
@@ -189,7 +205,15 @@ export function MonthlyProjections() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {projections.map((projection) => (
-            <Card key={projection.month} className="relative">
+            <Card 
+              key={projection.month} 
+              className={`relative transition-all duration-200 ${
+                projection.installments.length > 0 
+                  ? 'cursor-pointer hover:shadow-md hover:scale-105' 
+                  : 'opacity-60'
+              }`}
+              onClick={() => handleCardClick(projection)}
+            >
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg capitalize">
                   {formatMonthYear(projection.month)}
@@ -225,6 +249,12 @@ export function MonthlyProjections() {
                   </div>
                 )}
 
+                {projection.installments.length > 0 && (
+                  <p className="text-xs text-muted-foreground text-center">
+                    Clique para ver detalhes
+                  </p>
+                )}
+
                 {/* Visual indicator */}
                 <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
                   <div 
@@ -238,6 +268,17 @@ export function MonthlyProjections() {
             </Card>
           ))}
         </div>
+      )}
+
+      {/* Modal */}
+      {selectedMonth && (
+        <MonthlyInstallmentsModal
+          isOpen={!!selectedMonth}
+          onOpenChange={(open) => !open && setSelectedMonth(null)}
+          month={selectedMonth.month}
+          monthName={selectedMonth.monthName}
+          totalAmount={selectedMonth.totalAmount}
+        />
       )}
     </div>
   );

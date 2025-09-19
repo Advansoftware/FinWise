@@ -3,6 +3,55 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabaseAdapter } from '@/core/services/service-factory';
 
+async function getMonthlyInstallmentDetails(userId: string, month: string, db: any) {
+  const [year, monthNumber] = month.split('-');
+  const startDate = new Date(parseInt(year), parseInt(monthNumber) - 1, 1);
+  const endDate = new Date(parseInt(year), parseInt(monthNumber), 0, 23, 59, 59, 999);
+
+  const allInstallments = await db.installments.findByUserId(userId);
+  const monthlyDetails: any[] = [];
+
+  for (const installment of allInstallments) {
+    // Calcular as parcelas do mês específico
+    const startInstallmentDate = new Date(installment.startDate);
+
+    for (let i = 0; i < installment.totalInstallments; i++) {
+      const dueDate = new Date(startInstallmentDate);
+      dueDate.setMonth(startInstallmentDate.getMonth() + i);
+
+      // Verificar se a parcela vence no mês solicitado
+      if (dueDate >= startDate && dueDate <= endDate) {
+        const installmentNumber = i + 1;
+
+        // Encontrar o pagamento correspondente se existir
+        const payment = installment.payments?.find((p: any) =>
+          p.installmentNumber === installmentNumber
+        );
+
+        const status = payment?.status || (dueDate < new Date() ? 'overdue' : 'pending');
+
+        monthlyDetails.push({
+          id: installment.id,
+          name: installment.name,
+          description: installment.description,
+          category: installment.category,
+          subcategory: installment.subcategory,
+          establishment: installment.establishment,
+          amount: installment.installmentAmount,
+          installmentNumber,
+          totalInstallments: installment.totalInstallments,
+          dueDate: dueDate.toISOString(),
+          status,
+          paidDate: payment?.paidDate,
+          paidAmount: payment?.paidAmount
+        });
+      }
+    }
+  }
+
+  return monthlyDetails.sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
+}
+
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
@@ -33,6 +82,14 @@ export async function GET(request: NextRequest) {
         const months = parseInt(searchParams.get('months') || '12');
         const projections = await db.installments.projectMonthlyCommitments(userId, months);
         return NextResponse.json(projections);
+
+      case 'monthly-details':
+        const month = searchParams.get('month');
+        if (!month) {
+          return NextResponse.json({ error: 'Month parameter is required' }, { status: 400 });
+        }
+        const monthlyDetails = await getMonthlyInstallmentDetails(userId, month, db);
+        return NextResponse.json(monthlyDetails);
 
       case 'active':
         const activeInstallments = await db.installments.findActiveInstallments(userId);
