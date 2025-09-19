@@ -49,6 +49,7 @@ interface MonthlyInstallmentsModalProps {
   month: string; // formato "YYYY-MM"
   monthName: string; // nome formatado do mês
   totalAmount: number;
+  commitmentType?: 'fixed' | 'variable'; // tipo de compromisso para filtrar
 }
 
 export function MonthlyInstallmentsModal({
@@ -56,7 +57,8 @@ export function MonthlyInstallmentsModal({
   onOpenChange,
   month,
   monthName,
-  totalAmount
+  totalAmount,
+  commitmentType
 }: MonthlyInstallmentsModalProps) {
   const [installments, setInstallments] = useState<InstallmentDetail[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -66,16 +68,16 @@ export function MonthlyInstallmentsModal({
     if (isOpen && month && user?.uid) {
       loadMonthlyInstallments();
     }
-  }, [isOpen, month, user?.uid]);
+  }, [isOpen, month, user?.uid, commitmentType]);
 
   const loadMonthlyInstallments = async () => {
     if (!user?.uid) return;
     
     setIsLoading(true);
     try {
-      const response = await fetch(
-        `/api/installments?userId=${user.uid}&action=monthly-details&month=${month}`
-      );
+      const url = `/api/installments?userId=${user.uid}&action=monthly-details&month=${month}`;
+      const urlWithType = commitmentType ? `${url}&type=${commitmentType}` : url;
+      const response = await fetch(urlWithType);
       
       if (response.ok) {
         const data = await response.json();
@@ -131,7 +133,12 @@ export function MonthlyInstallmentsModal({
         {/* Header fixo */}
         <DialogHeader className="flex-shrink-0 p-6 pb-4 md:p-0 md:pb-4 border-b md:border-b-0">
           <DialogTitle className="text-xl md:text-2xl">
-            Parcelamentos de {monthName}
+            {commitmentType === 'fixed' 
+              ? `Compromissos Fixos de ${monthName}`
+              : commitmentType === 'variable'
+              ? `Compromissos Variáveis de ${monthName}`
+              : `Parcelamentos de ${monthName}`
+            }
           </DialogTitle>
         </DialogHeader>
 

@@ -55,11 +55,11 @@ export function MonthlyProjections() {
     return projections.map(projection => ({
       ...projection,
       installments: projection.installments.filter(installment => 
-        type === 'fixed' ? installment.isRecurring : !installment.isRecurring
+        type === 'fixed' ? (installment.isRecurring === true) : (installment.isRecurring !== true)
       ),
       totalCommitment: projection.installments
         .filter(installment => 
-          type === 'fixed' ? installment.isRecurring : !installment.isRecurring
+          type === 'fixed' ? (installment.isRecurring === true) : (installment.isRecurring !== true)
         )
         .reduce((sum, installment) => sum + installment.amount, 0)
     }));
@@ -374,7 +374,7 @@ export function MonthlyProjections() {
             <div>
               <h3 className="font-medium text-blue-900">Compromissos Fixos</h3>
               <p className="text-sm text-muted-foreground">
-                Aluguel, contas essenciais e outros gastos recorrentes que se mantêm estáveis
+                Gastos recorrentes mensais - o que importa é o impacto mensal no orçamento
               </p>
             </div>
           </div>
@@ -390,7 +390,109 @@ export function MonthlyProjections() {
               </CardContent>
             </Card>
           ) : (
-            renderProjectionCards(fixedProjections, 'fixed')
+            <div className="space-y-6">
+              {/* Card de resumo mensal dos gastos fixos */}
+              <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+                <CardHeader>
+                  <CardTitle className="text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                    <Home className="h-5 w-5" />
+                    Impacto Mensal dos Gastos Fixos
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {(() => {
+                    // Calcular total mensal dos gastos fixos
+                    const uniqueFixedCommitments = new Map();
+                    fixedProjections.forEach(projection => {
+                      projection.installments.forEach(installment => {
+                        if (installment.isRecurring === true) {
+                          uniqueFixedCommitments.set(installment.name, installment.amount);
+                        }
+                      });
+                    });
+                    
+                    const totalMonthlyFixed = Array.from(uniqueFixedCommitments.values())
+                      .reduce((sum: number, amount: number) => sum + amount, 0);
+                    const salaryPercentage = calculateSalaryPercentage(totalMonthlyFixed);
+                    
+                    return (
+                      <div className="text-center">
+                        <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                          {formatCurrency(totalMonthlyFixed)}
+                        </p>
+                        <p className="text-sm text-blue-700 dark:text-blue-300 mb-2">
+                          Compromisso fixo mensal
+                        </p>
+                        {salaryPercentage !== null && (
+                          <Badge variant="outline" className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700">
+                            <Percent className="h-3 w-3 mr-1" />
+                            {formatPercentage(salaryPercentage)} do salário
+                          </Badge>
+                        )}
+                      </div>
+                    );
+                  })()}
+                </CardContent>
+              </Card>
+
+              {/* Lista dos gastos fixos individuais */}
+              <div className="space-y-3">
+                <h4 className="font-medium text-blue-900 dark:text-blue-100">Detalhamento dos Gastos Fixos:</h4>
+                <div className="grid gap-3">
+                  {(() => {
+                    const uniqueFixedCommitments = new Map();
+                    fixedProjections.forEach(projection => {
+                      projection.installments.forEach(installment => {
+                        if (installment.isRecurring === true) {
+                          uniqueFixedCommitments.set(installment.name, {
+                            name: installment.name,
+                            amount: installment.amount,
+                            category: 'Gasto Fixo'
+                          });
+                        }
+                      });
+                    });
+                    
+                    return Array.from(uniqueFixedCommitments.values()).map((commitment: any) => {
+                      const salaryPercentage = calculateSalaryPercentage(commitment.amount);
+                      const percentageColor = getPercentageColor(salaryPercentage);
+                      
+                      return (
+                        <Card key={commitment.name} className="hover:shadow-md transition-shadow bg-white dark:bg-gray-800 border-blue-100 dark:border-blue-800">
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3 flex-1">
+                                <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
+                                  <Repeat className="h-4 w-4 text-blue-600" />
+                                </div>
+                                <div className="flex-1">
+                                  <h5 className="font-medium text-gray-900 dark:text-gray-100">{commitment.name}</h5>
+                                  <p className="text-xs text-muted-foreground">{commitment.category}</p>
+                                </div>
+                              </div>
+                              <div className="text-right">
+                                <p className="font-bold text-lg text-blue-600 dark:text-blue-400">
+                                  {formatCurrency(commitment.amount)}
+                                </p>
+                                <p className="text-xs text-muted-foreground">por mês</p>
+                                {salaryPercentage !== null && (
+                                  <Badge 
+                                    variant="outline" 
+                                    className={`mt-1 text-xs ${percentageColor}`}
+                                  >
+                                    {formatPercentage(salaryPercentage)}
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    });
+                  })()}
+                </div>
+              </div>
+            </div>
           )}
         </TabsContent>
 

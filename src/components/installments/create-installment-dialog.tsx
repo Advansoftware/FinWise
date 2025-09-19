@@ -1,6 +1,6 @@
 // src/components/installments/create-installment-dialog.tsx
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -44,10 +44,7 @@ const installmentSchema = z.object({
     (val) => !isNaN(Number(val)) && Number(val) > 0,
     'Valor deve ser maior que zero'
   ),
-  totalInstallments: z.string().min(1, 'Número de parcelas é obrigatório').refine(
-    (val) => !isNaN(Number(val)) && Number(val) > 0 && Number(val) <= 120,
-    'Número de parcelas deve ser entre 1 e 120'
-  ),
+  totalInstallments: z.string().optional(),
   category: z.string().min(1, 'Categoria é obrigatória'),
   subcategory: z.string().optional(),
   establishment: z.string().optional(),
@@ -56,16 +53,36 @@ const installmentSchema = z.object({
   isRecurring: z.boolean().default(false),
   recurringType: z.enum(['monthly', 'yearly']).optional(),
   endDate: z.date().optional(),
-}).refine((data) => {
-  // Se é recorrente, não precisa validar totalInstallments como obrigatório
+}).superRefine((data, ctx) => {
+  // Validações específicas para parcelamentos recorrentes
   if (data.isRecurring) {
-    return true;
+    // Para recorrentes, recurringType é obrigatório
+    if (!data.recurringType) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Tipo de recorrência é obrigatório para parcelamentos recorrentes",
+        path: ["recurringType"]
+      });
+    }
+  } else {
+    // Para parcelamentos normais, totalInstallments é obrigatório e deve ser válido
+    if (!data.totalInstallments || data.totalInstallments.trim() === '') {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Número de parcelas é obrigatório",
+        path: ["totalInstallments"]
+      });
+    } else {
+      const installments = Number(data.totalInstallments);
+      if (isNaN(installments) || installments <= 0 || installments > 120) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "Número de parcelas deve ser entre 1 e 120",
+          path: ["totalInstallments"]
+        });
+      }
+    }
   }
-  // Se não é recorrente, totalInstallments deve ser válido
-  return !isNaN(Number(data.totalInstallments)) && Number(data.totalInstallments) > 0;
-}, {
-  message: "Para parcelamentos não recorrentes, o número de parcelas é obrigatório",
-  path: ["totalInstallments"]
 });
 
 type InstallmentForm = z.infer<typeof installmentSchema>;
@@ -102,6 +119,22 @@ export function CreateInstallmentDialog({ open, onOpenChange }: CreateInstallmen
   const totalAmount = Number(form.watch('totalAmount') || 0);
   const totalInstallments = Number(form.watch('totalInstallments') || 0);
   const installmentAmount = totalInstallments > 0 ? totalAmount / totalInstallments : 0;
+
+  // Limpar campos específicos quando alternar entre recorrente e não recorrente
+  useEffect(() => {
+    if (isRecurring) {
+      // Quando ativar recorrente, limpar o número de parcelas
+      form.setValue('totalInstallments', '');
+      // Garantir que o tipo de recorrência tenha um valor padrão
+      if (!form.getValues('recurringType')) {
+        form.setValue('recurringType', 'monthly');
+      }
+    } else {
+      // Quando desativar recorrente, limpar data de fim e tipo de recorrência
+      form.setValue('endDate', undefined);
+      form.setValue('recurringType', undefined);
+    }
+  }, [isRecurring, form]);
 
   const onSubmit = async (data: InstallmentForm) => {
     setIsSubmitting(true);
@@ -184,7 +217,10 @@ export function CreateInstallmentDialog({ open, onOpenChange }: CreateInstallmen
                 name="totalAmount"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Valor Total (R$)</FormLabel>
+                    <FormLabel>
+                      {isRecurring ? 'Valor da Parcela Recorrente (R$)' : 'Valor Total (R$)'}
+                      <span className="text-red-500 ml-1">*</span>
+                    </FormLabel>
                     <FormControl>
                       <Input 
                         type="number"
@@ -194,6 +230,11 @@ export function CreateInstallmentDialog({ open, onOpenChange }: CreateInstallmen
                         {...field} 
                       />
                     </FormControl>
+                    {isRecurring && (
+                      <p className="text-xs text-muted-foreground">
+                        Este valor será cobrado a cada período de recorrência
+                      </p>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}
@@ -204,20 +245,24 @@ export function CreateInstallmentDialog({ open, onOpenChange }: CreateInstallmen
                 name="totalInstallments"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Número de Parcelas</FormLabel>
+                    <FormLabel>
+                      Número de Parcelas
+                      {!isRecurring && <span className="text-red-500 ml-1">*</span>}
+                      {isRecurring && <span className="text-muted-foreground ml-1">(opcional)</span>}
+                    </FormLabel>
                     <FormControl>
                       <Input 
                         type="number"
                         min="1"
                         max="120"
-                        placeholder="12"
+                        placeholder={isRecurring ? "Não aplicável para recorrentes" : "12"}
                         disabled={isRecurring}
                         {...field} 
                       />
                     </FormControl>
                     {isRecurring && (
                       <p className="text-xs text-muted-foreground">
-                        Desabilitado para parcelamentos recorrentes
+                        Para parcelamentos recorrentes, não há limite de parcelas
                       </p>
                     )}
                     <FormMessage />
@@ -258,7 +303,10 @@ export function CreateInstallmentDialog({ open, onOpenChange }: CreateInstallmen
                       name="recurringType"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel>Tipo de Recorrência</FormLabel>
+                          <FormLabel>
+                            Tipo de Recorrência
+                            <span className="text-red-500 ml-1">*</span>
+                          </FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>

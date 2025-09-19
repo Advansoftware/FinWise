@@ -3,7 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getDatabaseAdapter } from '@/core/services/service-factory';
 
-async function getMonthlyInstallmentDetails(userId: string, month: string, db: any) {
+async function getMonthlyInstallmentDetails(userId: string, month: string, db: any, type?: string) {
   const [year, monthNumber] = month.split('-');
   const startDate = new Date(parseInt(year), parseInt(monthNumber) - 1, 1);
   const endDate = new Date(parseInt(year), parseInt(monthNumber), 0, 23, 59, 59, 999);
@@ -12,6 +12,13 @@ async function getMonthlyInstallmentDetails(userId: string, month: string, db: a
   const monthlyDetails: any[] = [];
 
   for (const installment of allInstallments) {
+    // Filtrar por tipo se especificado
+    if (type) {
+      const isRecurring = installment.isRecurring === true;
+      if (type === 'fixed' && !isRecurring) continue;
+      if (type === 'variable' && isRecurring) continue;
+    }
+
     // Calcular as parcelas do mês específico
     const startInstallmentDate = new Date(installment.startDate);
 
@@ -43,7 +50,8 @@ async function getMonthlyInstallmentDetails(userId: string, month: string, db: a
           dueDate: dueDate.toISOString(),
           status,
           paidDate: payment?.paidDate,
-          paidAmount: payment?.paidAmount
+          paidAmount: payment?.paidAmount,
+          isRecurring: installment.isRecurring || false
         });
       }
     }
@@ -85,10 +93,11 @@ export async function GET(request: NextRequest) {
 
       case 'monthly-details':
         const month = searchParams.get('month');
+        const type = searchParams.get('type'); // 'fixed' ou 'variable'
         if (!month) {
           return NextResponse.json({ error: 'Month parameter is required' }, { status: 400 });
         }
-        const monthlyDetails = await getMonthlyInstallmentDetails(userId, month, db);
+        const monthlyDetails = await getMonthlyInstallmentDetails(userId, month, db, type || undefined);
         return NextResponse.json(monthlyDetails);
 
       case 'active':
