@@ -360,6 +360,9 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
       const categoryCondition = selectedCategory === 'all' || t.category === selectedCategory;
       const subcategoryCondition = selectedCategory === 'all' || selectedSubcategory === 'all' || t.subcategory === selectedSubcategory;
       return dateCondition && categoryCondition && subcategoryCondition;
+    }).sort((a, b) => {
+      // Ordenar por data decrescente (mais recente primeiro)
+      return new Date(b.date).getTime() - new Date(a.date).getTime();
     });
   }, [allTransactions, dateRange, selectedCategory, selectedSubcategory]);
 
