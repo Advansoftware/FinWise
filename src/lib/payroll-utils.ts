@@ -21,14 +21,14 @@ export function getIRFromPayroll(payrollData: PayrollData): number {
 }
 
 export function getHealthInsuranceFromPayroll(payrollData: PayrollData): number {
-  const healthDiscount = payrollData.discounts.find(discount =>
+  const healthDiscounts = payrollData.discounts.filter(discount =>
     discount.name.toLowerCase().includes('plano') ||
     discount.name.toLowerCase().includes('saúde') ||
     discount.name.toLowerCase().includes('saude') ||
     discount.name.toLowerCase().includes('médico') ||
     discount.name.toLowerCase().includes('medico')
   );
-  return healthDiscount?.amount || 0;
+  return healthDiscounts.reduce((sum, discount) => sum + discount.amount, 0);
 }
 
 export function getUnionFeeFromPayroll(payrollData: PayrollData): number {
@@ -41,19 +41,19 @@ export function getUnionFeeFromPayroll(payrollData: PayrollData): number {
 }
 
 export function getDentalInsuranceFromPayroll(payrollData: PayrollData): number {
-  const dentalDiscount = payrollData.discounts.find(discount =>
+  const dentalDiscounts = payrollData.discounts.filter(discount =>
     discount.name.toLowerCase().includes('dental') ||
     discount.name.toLowerCase().includes('odonto')
   );
-  return dentalDiscount?.amount || 0;
+  return dentalDiscounts.reduce((sum, discount) => sum + discount.amount, 0);
 }
 
 export function getLifeInsuranceFromPayroll(payrollData: PayrollData): number {
-  const lifeDiscount = payrollData.discounts.find(discount =>
+  const lifeDiscounts = payrollData.discounts.filter(discount =>
     discount.name.toLowerCase().includes('vida') ||
     discount.name.toLowerCase().includes('seguro')
   );
-  return lifeDiscount?.amount || 0;
+  return lifeDiscounts.reduce((sum, discount) => sum + discount.amount, 0);
 }
 
 export function getTransportVoucherFromPayroll(payrollData: PayrollData): number {
@@ -124,12 +124,12 @@ export function calculateIRFromSalary(grossSalary: number, inssDiscount: number,
 }
 
 export function getConsignedLoanFromPayroll(payrollData: PayrollData): number {
-  const consignedDiscount = payrollData.discounts.find(discount =>
+  const consignedDiscounts = payrollData.discounts.filter(discount =>
     discount.name.toLowerCase().includes('consignado') ||
     discount.name.toLowerCase().includes('empréstimo') ||
     discount.name.toLowerCase().includes('emprestimo')
   );
-  return consignedDiscount?.amount || 0;
+  return consignedDiscounts.reduce((sum, discount) => sum + discount.amount, 0);
 }
 
 // Função para calcular o impacto do empréstimo consignado nas férias
