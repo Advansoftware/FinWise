@@ -3,6 +3,7 @@ import './globals.css';
 import { Toaster } from '@/components/ui/toaster';
 import { Inter } from 'next/font/google';
 import { AuthProvider } from '@/hooks/use-auth';
+import { SessionProvider } from 'next-auth/react';
 import { PWAUpdater } from '@/components/pwa-updater';
 import { OfflineStorageInitializer } from '@/components/offline-storage-initializer';
 import { DataRefreshProvider } from '@/hooks/use-data-refresh';
@@ -181,13 +182,15 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
-          <AuthProvider>
-            <DataRefreshProvider>
-              <OfflineStorageInitializer />
-              {children}
-              <PWAUpdater />
-            </DataRefreshProvider>
-          </AuthProvider>
+          <SessionProvider>
+            <AuthProvider>
+              <DataRefreshProvider>
+                <OfflineStorageInitializer />
+                {children}
+                <PWAUpdater />
+              </DataRefreshProvider>
+            </AuthProvider>
+          </SessionProvider>
           <Toaster />
       </body>
     </html>

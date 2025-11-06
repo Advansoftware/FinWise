@@ -5,12 +5,10 @@
 import {
   createContext,
   useContext,
-  useState,
-  useEffect,
   ReactNode,
   useCallback,
 } from 'react';
-import { authClient } from '@/lib/auth-client';
+import { useSession, signIn as nextAuthSignIn, signOut as nextAuthSignOut } from 'next-auth/react';
 import { UserProfile } from '@/lib/types';
 
 interface AuthContextType {
@@ -26,103 +24,91 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Usar o hook do NextAuth para gerenciar a sessão
+  const { data: session, status, update } = useSession();
+  
+  const loading = status === 'loading';
+  
+  // Converter sessão do NextAuth para UserProfile
+  const user: UserProfile | null = session?.user ? {
+    uid: session.user.id,
+    email: session.user.email!,
+    displayName: session.user.name || '',
+    plan: (session.user as any).plan || 'Básico',
+    aiCredits: (session.user as any).aiCredits || 0,
+    stripeCustomerId: (session.user as any).stripeCustomerId,
+    createdAt: new Date().toISOString(), // Será carregado do banco posteriormente se necessário
+  } : null;
 
-  // Refresh user data from server
   const refreshUser = useCallback(async () => {
     try {
-      const currentUser = await authClient.getCurrentUser();
-      setUser(currentUser);
-      return currentUser;
+      await update(); // Atualiza a sessão do NextAuth
+      return user;
     } catch (error) {
       console.error('Error refreshing user:', error);
       return null;
     }
-  }, []);
-
-  // Check for existing user on mount
-  useEffect(() => {
-    const checkUser = async () => {
-      try {
-        const currentUser = await authClient.getCurrentUser();
-        setUser(currentUser);
-      } catch (error) {
-        console.error('Error checking current user:', error);
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkUser();
-  }, []);
-
-  // Periodic refresh to catch plan changes - REMOVED AUTOMATIC REFRESH
-  useEffect(() => {
-    if (!user) return;
-
-    // Listen for manual refresh events (e.g., after payment completion)
-    const handlePlanUpdate = () => {
-      console.log('[Auth] Manual plan update triggered');
-      refreshUser();
-    };
-
-    window.addEventListener('planUpdated', handlePlanUpdate);
-
-    return () => {
-      window.removeEventListener('planUpdated', handlePlanUpdate);
-    };
-  }, [user, refreshUser]);
+  }, [update, user]);
 
   const login = useCallback(async (email: string, password: string): Promise<UserProfile> => {
-    setLoading(true);
     try {
-      const result = await authClient.login(email, password);
-      
-      if (result.success && result.user) {
-        setUser(result.user);
-        return result.user;
-      } else {
-        throw new Error(result.error || 'Login failed');
+      const result = await nextAuthSignIn('credentials', {
+        email,
+        password,
+        redirect: false,
+      });
+
+      if (result?.error) {
+        throw new Error('Email ou senha incorretos');
       }
+
+      if (!result?.ok) {
+        throw new Error('Erro ao fazer login');
+      }
+
+      // Aguardar a sessão ser carregada
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await update();
+
+      if (!user) {
+        throw new Error('Erro ao carregar dados do usuário');
+      }
+
+      return user;
     } catch (error: any) {
       console.error('Login error:', error);
       throw error;
-    } finally {
-      setLoading(false);
     }
-  }, []);
+  }, [update, user]);
 
   const signup = useCallback(async (email: string, password: string, name: string): Promise<UserProfile> => {
-    setLoading(true);
     try {
-      const result = await authClient.signup(email, password, name);
-      
-      if (result.success && result.user) {
-        setUser(result.user);
-        return result.user;
-      } else {
-        throw new Error(result.error || 'Signup failed');
+      // Criar usuário no MongoDB
+      const response = await fetch('/api/users/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, name }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Erro ao criar usuário');
       }
+
+      // Fazer login automaticamente após signup
+      return await login(email, password);
     } catch (error: any) {
       console.error('Signup error:', error);
       throw error;
-    } finally {
-      setLoading(false);
     }
-  }, []);
+  }, [login]);
 
   const logout = useCallback(async (): Promise<void> => {
-    setLoading(true);
     try {
-      await authClient.logout();
-      setUser(null);
+      await nextAuthSignOut({ redirect: false });
     } catch (error) {
       console.error('Logout error:', error);
       throw error;
-    } finally {
-      setLoading(false);
     }
   }, []);
 
@@ -130,13 +116,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!user) throw new Error('No user logged in');
     
     try {
-      await authClient.updateUser(user.uid, updates);
-      setUser(prev => prev ? { ...prev, ...updates } : null);
+      // Atualizar no banco de dados
+      const response = await fetch('/api/users/update', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.uid, updates }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Erro ao atualizar usuário');
+      }
+
+      // Atualizar sessão
+      await update(updates);
     } catch (error) {
       console.error('Update user error:', error);
       throw error;
     }
-  }, [user]);
+  }, [user, update]);
 
   const value: AuthContextType = {
     user,

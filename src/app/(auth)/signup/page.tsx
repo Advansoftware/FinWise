@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Logo } from '@/components/logo';
 
 const formSchema = z.object({
@@ -29,6 +30,7 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { signup } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -44,10 +46,14 @@ export default function SignupPage() {
     setIsLoading(true);
     try {
       await signup(values.email, values.password, values.name);
-      // O redirecionamento é tratado pelo AuthProvider
+      toast({
+        title: 'Conta criada com sucesso!',
+        description: 'Bem-vindo ao Gastometria!',
+      });
+      router.push('/dashboard');
     } catch (error: any) {
-      let description = 'Ocorreu um erro. Tente novamente.';
-      if (error.code === 'auth/email-already-in-use') {
+      let description = error.message || 'Ocorreu um erro. Tente novamente.';
+      if (error.message?.includes('já está em uso')) {
         description = 'Este endereço de e-mail já está em uso.';
       }
       toast({

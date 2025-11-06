@@ -12,6 +12,7 @@ import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Logo } from '@/components/logo';
 import { ResetPasswordDialog } from '../reset-password-dialog';
 
@@ -24,6 +25,7 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { login } = useAuth();
   const { toast } = useToast();
+  const router = useRouter();
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -37,12 +39,16 @@ export default function LoginPage() {
     setIsLoading(true);
     try {
       await login(values.email, values.password);
-      // O redirecionamento agora é tratado pelo AuthGuard.
+      toast({
+        title: 'Login realizado com sucesso!',
+        description: 'Redirecionando para o dashboard...',
+      });
+      router.push('/dashboard');
     } catch (error: any) {
       toast({
         variant: 'destructive',
         title: 'Erro de Login',
-        description: 'Email ou senha inválidos.',
+        description: error.message || 'Email ou senha inválidos.',
       });
     } finally {
       setIsLoading(false);

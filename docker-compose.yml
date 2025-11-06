@@ -18,6 +18,9 @@ services:
       - NEXT_PUBLIC_DATABASE_TYPE=mongodb
       - NEXT_PUBLIC_AUTH_PROVIDER=mongodb
       - NEXT_PUBLIC_APP_URL=https://gastometria.com.br
+      - NEXTAUTH_SECRET=C6CsLT3XoqMGNi4TP88Kv5Dfdi404QUdGMCqHnPd1Kc=
+      - NEXTAUTH_URL=https://gastometria.com.br
+      - AUTH_TRUST_HOST=true
 
   mongo:
     container_name: gastometria-mongo
