@@ -113,6 +113,8 @@ export interface UserProfile {
   plan: UserPlan;
   aiCredits: number;
   stripeCustomerId?: string;
+  stripeCurrentPeriodEnd?: string; // Data de término do período atual da assinatura
+  subscriptionStatus?: string; // Status da assinatura (active, canceled, past_due, etc)
   createdAt: string;
 }
 

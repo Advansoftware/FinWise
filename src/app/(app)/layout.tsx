@@ -22,6 +22,7 @@ import { useGoals } from "@/hooks/use-goals";
 import { AICreditIndicator } from "@/components/credits/ai-credit-indicator";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { GamificationProvider } from "@/hooks/use-gamification";
+import { PlanExpirationAlert } from "@/components/billing/plan-expiration-alert";
 
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const { completedGoal, clearCompletedGoal } = useGoals();
@@ -66,6 +67,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
 
               <div className="flex-1 h-[calc(100vh-3.5rem)] lg:h-screen overflow-y-auto">
                 <div className="container mx-auto px-4 py-4 lg:px-6 lg:py-6 max-w-7xl pb-24 lg:pb-6">
+                    <PlanExpirationAlert />
                     {children}
                 </div>
               </div>

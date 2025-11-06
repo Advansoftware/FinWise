@@ -28,13 +28,37 @@ class MongoUserRepository implements IUserRepository {
     const user = await this.db.collection('users').findOne({ _id: new ObjectId(id) });
     if (!user) return null;
 
+    // Verificar se o plano está vencido
+    let effectivePlan = user.plan || 'Básico';
+    const now = new Date();
+    const periodEnd = user.stripeCurrentPeriodEnd ? new Date(user.stripeCurrentPeriodEnd) : null;
+
+    // Se não for plano Básico e a assinatura estiver vencida, downgrade para Básico
+    if (effectivePlan !== 'Básico' && periodEnd && periodEnd < now) {
+      console.log(`[MongoDB] Plano vencido para usuário ${id}. Data fim: ${periodEnd.toISOString()}, Agora: ${now.toISOString()}`);
+      effectivePlan = 'Básico';
+
+      // Atualizar no banco de dados
+      await this.db.collection('users').updateOne(
+        { _id: new ObjectId(id) },
+        {
+          $set: {
+            plan: 'Básico',
+            subscriptionStatus: 'expired'
+          }
+        }
+      );
+    }
+
     return {
       uid: user._id.toString(),
       email: user.email,
       displayName: user.displayName,
-      plan: user.plan || 'Básico',
+      plan: effectivePlan,
       aiCredits: user.aiCredits || 0,
       stripeCustomerId: user.stripeCustomerId,
+      stripeCurrentPeriodEnd: user.stripeCurrentPeriodEnd ? new Date(user.stripeCurrentPeriodEnd).toISOString() : undefined,
+      subscriptionStatus: user.subscriptionStatus,
       createdAt: user.createdAt || new Date().toISOString()
     };
   }
