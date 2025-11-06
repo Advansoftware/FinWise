@@ -83,7 +83,7 @@ const plans = [
 
 function BillingPageContent() {
     const { plan: currentUserPlan, isLoading: isPlanLoading } = usePlan();
-    const { user } = useAuth();
+    const { user, refreshUser } = useAuth();
     const { toast } = useToast();
     const { isProcessing, createCheckoutSession, openCustomerPortal } = usePayment();
     const [showCelebration, setShowCelebration] = useState(false);
@@ -137,7 +137,7 @@ function BillingPageContent() {
 
     return (
         <div className="flex flex-col gap-6">
-            {showCelebration && <UpgradeCelebration onComplete={() => { setShowCelebration(false); cleanUpUrl(); }} />}
+            {showCelebration && <UpgradeCelebration onComplete={async () => { setShowCelebration(false); cleanUpUrl(); await refreshUser(); }} />}
             {showCancelFeedback && <CancelFeedback onComplete={() => { setShowCancelFeedback(false); cleanUpUrl(); }} />}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                  <div>

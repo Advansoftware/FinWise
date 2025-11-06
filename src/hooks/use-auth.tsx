@@ -58,28 +58,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         redirect: false,
       });
 
-      if (result?.error) {
+      if (result?.error || !result?.ok) {
         throw new Error('Email ou senha incorretos');
       }
 
-      if (!result?.ok) {
-        throw new Error('Erro ao fazer login');
+      // Aguarda a sessão ser atualizada corretamente
+      let tentativas = 0;
+      let usuarioAtualizado: UserProfile | null = null;
+      while (tentativas < 10) {
+        await update();
+        usuarioAtualizado = typeof window !== 'undefined' && window.document ? JSON.parse(JSON.stringify(session?.user ? {
+          uid: session.user.id,
+          email: session.user.email!,
+          displayName: session.user.name || '',
+          plan: (session.user as any).plan || 'Básico',
+          aiCredits: (session.user as any).aiCredits || 0,
+          stripeCustomerId: (session.user as any).stripeCustomerId,
+          createdAt: new Date().toISOString(),
+        } : null)) : null;
+        if (usuarioAtualizado && usuarioAtualizado.email === email) {
+          break;
+        }
+        await new Promise(resolve => setTimeout(resolve, 150));
+        tentativas++;
       }
 
-      // Aguardar a sessão ser carregada
-      await new Promise(resolve => setTimeout(resolve, 500));
-      await update();
-
-      if (!user) {
+      if (!usuarioAtualizado) {
         throw new Error('Erro ao carregar dados do usuário');
       }
 
-      return user;
+      return usuarioAtualizado;
     } catch (error: any) {
       console.error('Login error:', error);
       throw error;
     }
-  }, [update, user]);
+  }, [update, session]);
 
   const signup = useCallback(async (email: string, password: string, name: string): Promise<UserProfile> => {
     try {
