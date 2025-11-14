@@ -2,8 +2,7 @@
 
 import * as React from "react"
 import * as TooltipPrimitive from "@radix-ui/react-tooltip"
-
-import { cn } from "@/lib/utils"
+import { styled, type Theme, type SxProps } from '@mui/material/styles'
 
 const TooltipProvider = TooltipPrimitive.Provider
 
@@ -11,18 +10,61 @@ const Tooltip = TooltipPrimitive.Root
 
 const TooltipTrigger = TooltipPrimitive.Trigger
 
+const StyledTooltipContent = styled(TooltipPrimitive.Content)(({ theme }) => ({
+  zIndex: theme.zIndex.tooltip,
+  overflow: 'hidden',
+  borderRadius: theme.shape.borderRadius,
+  border: `1px solid ${theme.palette.mode === 'dark' ? (theme.palette as any).custom?.border : (theme.palette as any).custom?.border}`,
+  backgroundColor: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.popover : (theme.palette as any).custom?.popover,
+  padding: theme.spacing(1.5, 3),
+  fontSize: theme.typography.pxToRem(14),
+  color: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.popoverForeground : (theme.palette as any).custom?.popoverForeground,
+  boxShadow: theme.shadows[4],
+  
+  '&[data-state=delayed-open]': {
+    animation: 'fadeIn 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+  },
+  
+  '&[data-state=closed]': {
+    animation: 'fadeOut 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+  },
+  
+  '@keyframes fadeIn': {
+    from: {
+      opacity: 0,
+      transform: 'scale(0.95)',
+    },
+    to: {
+      opacity: 1,
+      transform: 'scale(1)',
+    },
+  },
+  
+  '@keyframes fadeOut': {
+    from: {
+      opacity: 1,
+      transform: 'scale(1)',
+    },
+    to: {
+      opacity: 0,
+      transform: 'scale(0.95)',
+    },
+  },
+}))
+
+interface TooltipContentProps extends React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content> {
+  sx?: SxProps<Theme>;
+}
+
 const TooltipContent = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
+  TooltipContentProps
+>(({ sx, sideOffset = 4, ...props }, ref) => (
   <TooltipPrimitive.Portal>
-    <TooltipPrimitive.Content
+    <StyledTooltipContent
       ref={ref}
       sideOffset={sideOffset}
-      className={cn(
-        "z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-        className
-      )}
+      sx={sx}
       {...props}
     />
   </TooltipPrimitive.Portal>

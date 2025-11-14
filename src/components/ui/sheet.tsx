@@ -1,12 +1,10 @@
-
 "use client"
 
 import * as React from "react"
 import * as SheetPrimitive from "@radix-ui/react-dialog"
-import { cva, type VariantProps } from "class-variance-authority"
 import { X } from "lucide-react"
-
-import { cn } from "@/lib/utils"
+import { styled, useTheme, type Theme, type SxProps } from '@mui/material/styles'
+import { Box, Typography } from '@mui/material'
 
 const Sheet = SheetPrimitive.Root
 
@@ -16,115 +14,304 @@ const SheetClose = SheetPrimitive.Close
 
 const SheetPortal = SheetPrimitive.Portal
 
+const StyledSheetOverlay = styled(SheetPrimitive.Overlay)(({ theme }) => ({
+  position: 'fixed',
+  inset: 0,
+  zIndex: theme.zIndex.drawer,
+  backgroundColor: 'rgba(0, 0, 0, 0.8)',
+  
+  '&[data-state=open]': {
+    animation: 'fadeIn 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+  },
+  
+  '&[data-state=closed]': {
+    animation: 'fadeOut 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+  },
+  
+  '@keyframes fadeIn': {
+    from: { opacity: 0 },
+    to: { opacity: 1 },
+  },
+  
+  '@keyframes fadeOut': {
+    from: { opacity: 1 },
+    to: { opacity: 0 },
+  },
+}))
+
+interface SheetOverlayProps extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay> {
+  sx?: SxProps<Theme>;
+}
+
 const SheetOverlay = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Overlay>,
-  React.ComponentPropsWithoutRef<typeof SheetPrimitive.Overlay>
->(({ className, ...props }, ref) => (
-  <SheetPrimitive.Overlay
-    className={cn(
-      "fixed inset-0 z-50 bg-black/80  data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-      className
-    )}
+  SheetOverlayProps
+>(({ sx, ...props }, ref) => (
+  <StyledSheetOverlay
+    sx={sx}
     {...props}
     ref={ref}
   />
 ))
 SheetOverlay.displayName = SheetPrimitive.Overlay.displayName
 
-const sheetVariants = cva(
-  "fixed z-50 gap-4 bg-background p-6 shadow-lg transition ease-in-out data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:duration-300 data-[state=open]:duration-500",
-  {
-    variants: {
-      side: {
-        top: "inset-x-0 top-0 border-b data-[state=closed]:slide-out-to-top data-[state=open]:slide-in-from-top",
-        bottom:
-          "inset-x-0 bottom-0 border-t data-[state=closed]:slide-out-to-bottom data-[state=open]:slide-in-from-bottom",
-        left: "inset-y-0 left-0 h-full w-3/4 border-r data-[state=closed]:slide-out-to-left data-[state=open]:slide-in-from-left sm:max-w-sm",
-        right:
-          "inset-y-0 right-0 h-full w-full border-l data-[state=closed]:slide-out-to-right data-[state=open]:slide-in-from-right md:w-3/4 md:max-w-sm",
+type SheetSide = 'top' | 'bottom' | 'left' | 'right'
+
+const StyledSheetContent = styled(SheetPrimitive.Content, {
+  shouldForwardProp: (prop) => prop !== 'side',
+})<{ side?: SheetSide }>(({ theme, side = 'right' }) => {
+  const sideStyles = {
+    top: {
+      inset: '0 0 auto 0',
+      borderBottom: `1px solid ${theme.palette.divider}`,
+      '&[data-state=closed]': {
+        animation: 'slideOutToTop 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+      },
+      '&[data-state=open]': {
+        animation: 'slideInFromTop 500ms cubic-bezier(0.4, 0, 0.2, 1)',
       },
     },
-    defaultVariants: {
-      side: "right",
+    bottom: {
+      inset: 'auto 0 0 0',
+      borderTop: `1px solid ${theme.palette.divider}`,
+      '&[data-state=closed]': {
+        animation: 'slideOutToBottom 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+      },
+      '&[data-state=open]': {
+        animation: 'slideInFromBottom 500ms cubic-bezier(0.4, 0, 0.2, 1)',
+      },
+    },
+    left: {
+      inset: '0 auto 0 0',
+      height: '100%',
+      width: '75%',
+      maxWidth: '20rem',
+      borderRight: `1px solid ${theme.palette.divider}`,
+      [theme.breakpoints.up('sm')]: {
+        maxWidth: '20rem',
+      },
+      '&[data-state=closed]': {
+        animation: 'slideOutToLeft 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+      },
+      '&[data-state=open]': {
+        animation: 'slideInFromLeft 500ms cubic-bezier(0.4, 0, 0.2, 1)',
+      },
+    },
+    right: {
+      inset: '0 0 0 auto',
+      height: '100%',
+      width: '100%',
+      maxWidth: '20rem',
+      borderLeft: `1px solid ${theme.palette.divider}`,
+      [theme.breakpoints.up('md')]: {
+        width: '75%',
+        maxWidth: '20rem',
+      },
+      '&[data-state=closed]': {
+        animation: 'slideOutToRight 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+      },
+      '&[data-state=open]': {
+        animation: 'slideInFromRight 500ms cubic-bezier(0.4, 0, 0.2, 1)',
+      },
     },
   }
-)
+  
+  return {
+    position: 'fixed',
+    zIndex: theme.zIndex.drawer,
+    gap: theme.spacing(4),
+    backgroundColor: theme.palette.background.paper,
+    padding: theme.spacing(6),
+    boxShadow: theme.shadows[8],
+    transition: theme.transitions.create(['transform'], {
+      duration: 300,
+      easing: theme.transitions.easing.easeInOut,
+    }),
+    
+    ...sideStyles[side],
+    
+    '@keyframes slideOutToTop': {
+      from: { transform: 'translateY(0)' },
+      to: { transform: 'translateY(-100%)' },
+    },
+    '@keyframes slideInFromTop': {
+      from: { transform: 'translateY(-100%)' },
+      to: { transform: 'translateY(0)' },
+    },
+    '@keyframes slideOutToBottom': {
+      from: { transform: 'translateY(0)' },
+      to: { transform: 'translateY(100%)' },
+    },
+    '@keyframes slideInFromBottom': {
+      from: { transform: 'translateY(100%)' },
+      to: { transform: 'translateY(0)' },
+    },
+    '@keyframes slideOutToLeft': {
+      from: { transform: 'translateX(0)' },
+      to: { transform: 'translateX(-100%)' },
+    },
+    '@keyframes slideInFromLeft': {
+      from: { transform: 'translateX(-100%)' },
+      to: { transform: 'translateX(0)' },
+    },
+    '@keyframes slideOutToRight': {
+      from: { transform: 'translateX(0)' },
+      to: { transform: 'translateX(100%)' },
+    },
+    '@keyframes slideInFromRight': {
+      from: { transform: 'translateX(100%)' },
+      to: { transform: 'translateX(0)' },
+    },
+  }
+})
 
-interface SheetContentProps
-  extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content>,
-    VariantProps<typeof sheetVariants> {}
+interface SheetContentProps extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Content> {
+  side?: SheetSide;
+  sx?: SxProps<Theme>;
+}
 
 const SheetContent = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Content>,
   SheetContentProps
->(({ side = "right", className, children, ...props }, ref) => (
-  <SheetPortal>
-    <SheetOverlay />
-    <SheetPrimitive.Content
-      ref={ref}
-      className={cn(sheetVariants({ side }), className)}
-      {...props}
-    >
-      {children}
-      <SheetPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-secondary">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </SheetPrimitive.Close>
-    </SheetPrimitive.Content>
-  </SheetPortal>
-))
+>(({ side = "right", sx, children, ...props }, ref) => {
+  const theme = useTheme()
+  
+  return (
+    <SheetPortal>
+      <SheetOverlay />
+      <StyledSheetContent
+        ref={ref}
+        side={side}
+        sx={sx}
+        {...props}
+      >
+        {children}
+        <SheetPrimitive.Close
+          style={{
+            position: 'absolute',
+            right: theme.spacing(4),
+            top: theme.spacing(4),
+            borderRadius: typeof theme.shape.borderRadius === 'number' ? theme.shape.borderRadius / 2 : 4,
+            opacity: 0.7,
+            transition: theme.transitions.create(['opacity', 'box-shadow']),
+          }}
+        >
+          <X style={{ width: '1rem', height: '1rem' }} />
+          <span style={{ position: 'absolute', width: 1, height: 1, padding: 0, margin: -1, overflow: 'hidden', clip: 'rect(0,0,0,0)', whiteSpace: 'nowrap', borderWidth: 0 }}>Close</span>
+        </SheetPrimitive.Close>
+      </StyledSheetContent>
+    </SheetPortal>
+  )
+})
 SheetContent.displayName = SheetPrimitive.Content.displayName
 
-const SheetHeader = ({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn(
-      "flex flex-col space-y-2 text-center sm:text-left",
-      className
-    )}
-    {...props}
-  />
-)
+interface SheetHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
+  sx?: SxProps<Theme>;
+}
+
+const SheetHeader = ({ sx, ...props }: SheetHeaderProps) => {
+  const theme = useTheme()
+  
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: theme.spacing(2),
+        textAlign: 'center',
+        [theme.breakpoints.up('sm')]: {
+          textAlign: 'left',
+        },
+        ...sx,
+      }}
+      {...props}
+    />
+  )
+}
 SheetHeader.displayName = "SheetHeader"
 
-const SheetFooter = ({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
-      className
-    )}
-    {...props}
-  />
-)
+interface SheetFooterProps extends React.HTMLAttributes<HTMLDivElement> {
+  sx?: SxProps<Theme>;
+}
+
+const SheetFooter = ({ sx, ...props }: SheetFooterProps) => {
+  const theme = useTheme()
+  
+  return (
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column-reverse',
+        [theme.breakpoints.up('sm')]: {
+          flexDirection: 'row',
+          justifyContent: 'flex-end',
+          gap: theme.spacing(2),
+        },
+        ...sx,
+      }}
+      {...props}
+    />
+  )
+}
 SheetFooter.displayName = "SheetFooter"
+
+interface SheetTitleProps extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Title> {
+  sx?: SxProps<Theme>;
+}
 
 const SheetTitle = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Title>,
-  React.ComponentPropsWithoutRef<typeof SheetPrimitive.Title>
->(({ className, ...props }, ref) => (
-  <SheetPrimitive.Title
-    ref={ref}
-    className={cn("text-lg font-semibold text-foreground", className)}
-    {...props}
-  />
-))
+  SheetTitleProps
+>(({ sx, ...props }, ref) => {
+  const theme = useTheme()
+  
+  return (
+    <SheetPrimitive.Title
+      ref={ref}
+      asChild
+    >
+      <Typography
+        variant="h6"
+        sx={{
+          fontSize: theme.typography.pxToRem(18),
+          fontWeight: theme.typography.fontWeightMedium,
+          color: theme.palette.text.primary,
+          ...sx,
+        }}
+        {...props}
+      />
+    </SheetPrimitive.Title>
+  )
+})
 SheetTitle.displayName = SheetPrimitive.Title.displayName
+
+interface SheetDescriptionProps extends React.ComponentPropsWithoutRef<typeof SheetPrimitive.Description> {
+  sx?: SxProps<Theme>;
+}
 
 const SheetDescription = React.forwardRef<
   React.ElementRef<typeof SheetPrimitive.Description>,
-  React.ComponentPropsWithoutRef<typeof SheetPrimitive.Description>
->(({ className, ...props }, ref) => (
-  <SheetPrimitive.Description
-    ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
-    {...props}
-  />
-))
+  SheetDescriptionProps
+>(({ sx, ...props }, ref) => {
+  const theme = useTheme()
+  
+  return (
+    <SheetPrimitive.Description
+      ref={ref}
+      asChild
+    >
+      <Typography
+        variant="body2"
+        sx={{
+          fontSize: theme.typography.pxToRem(14),
+          color: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.mutedForeground : (theme.palette as any).custom?.mutedForeground,
+          ...sx,
+        }}
+        {...props}
+      />
+    </SheetPrimitive.Description>
+  )
+})
 SheetDescription.displayName = SheetPrimitive.Description.displayName
 
 export {

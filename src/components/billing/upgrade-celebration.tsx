@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { Star, Sparkles } from 'lucide-react';
+import { Box, Typography } from '@mui/material';
 
 const ConfettiPiece = ({ x, y, rotate, color } : { x: number, y: number, rotate: number, color: string }) => (
     <motion.div
@@ -47,30 +48,48 @@ export const UpgradeCelebration = ({ onComplete }: { onComplete: () => void }) =
 
     return (
         <AnimatePresence>
-            <motion.div
+            <Box
+                component={motion.div}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm"
+                sx={{
+                    position: 'fixed',
+                    inset: 0,
+                    zIndex: 50,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    bgcolor: 'rgba(0, 0, 0, 0.5)',
+                    backdropFilter: 'blur(4px)'
+                }}
             >
-                <div className="absolute inset-0 overflow-hidden">
+                <Box sx={{ position: 'absolute', inset: 0, overflow: 'hidden' }}>
                     {confetti.map(c => <ConfettiPiece key={c.id} {...c} />)}
-                </div>
-                 <motion.div
+                </Box>
+                 <Box
+                    component={motion.div}
                     initial={{ scale: 0.5, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
                     transition={{ delay: 0.2, type: 'spring', stiffness: 260, damping: 20 }}
-                    className="text-center p-8 bg-card rounded-xl shadow-2xl border border-primary/50"
+                    sx={{
+                        textAlign: 'center',
+                        p: 4,
+                        bgcolor: 'background.paper',
+                        borderRadius: '0.75rem',
+                        boxShadow: 24,
+                        border: theme => `1px solid ${theme.palette.primary.main}80`
+                    }}
                  >
-                    <div className="relative inline-block">
-                        <Sparkles className="absolute -top-4 -left-4 h-8 w-8 text-yellow-400 animate-pulse" />
-                         <Sparkles className="absolute -bottom-4 -right-4 h-8 w-8 text-pink-500 animate-pulse" style={{ animationDelay: '0.2s' }}/>
-                        <Star className="h-24 w-24 text-primary" fill="currentColor" />
-                    </div>
-                    <h2 className="mt-6 text-3xl font-bold tracking-tight">Upgrade Realizado!</h2>
-                    <p className="mt-2 text-muted-foreground">Bem-vindo ao próximo nível!</p>
-                </motion.div>
-            </motion.div>
+                    <Box sx={{ position: 'relative', display: 'inline-block' }}>
+                        <Sparkles style={{ position: 'absolute', top: '-1rem', left: '-1rem', width: '2rem', height: '2rem', color: '#facc15', animation: 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
+                         <Sparkles style={{ position: 'absolute', bottom: '-1rem', right: '-1rem', width: '2rem', height: '2rem', color: '#ec4899', animation: 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite', animationDelay: '0.2s' }}/>
+                        <Star style={{ width: '6rem', height: '6rem' }} color="currentColor" fill="currentColor" />
+                    </Box>
+                    <Typography variant="h4" sx={{ mt: 3, fontWeight: 'bold', letterSpacing: '-0.025em' }}>Upgrade Realizado!</Typography>
+                    <Typography sx={{ mt: 1, color: theme => (theme.palette as any).custom?.mutedForeground }}>Bem-vindo ao próximo nível!</Typography>
+                </Box>
+            </Box>
         </AnimatePresence>
     );
 };

@@ -1,36 +1,86 @@
+'use client';
+
 import * as React from "react"
-import { cva, type VariantProps } from "class-variance-authority"
+import { Box, type SxProps, type Theme, useTheme } from '@mui/material';
 
-import { cn } from "@/lib/utils"
+type BadgeVariant = 'default' | 'secondary' | 'destructive' | 'outline';
 
-const badgeVariants = cva(
-  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2",
-  {
-    variants: {
-      variant: {
-        default:
-          "border-transparent bg-primary text-primary-foreground hover:bg-primary/80",
-        secondary:
-          "border-transparent bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        destructive:
-          "border-transparent bg-destructive text-destructive-foreground hover:bg-destructive/80",
-        outline: "text-foreground",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-    },
-  }
-)
-
-export interface BadgeProps
-  extends React.HTMLAttributes<HTMLDivElement>,
-    VariantProps<typeof badgeVariants> {}
-
-function Badge({ className, variant, ...props }: BadgeProps) {
-  return (
-    <div className={cn(badgeVariants({ variant }), className)} {...props} />
-  )
+interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
+  variant?: BadgeVariant;
+  sx?: SxProps<Theme>;
 }
 
-export { Badge, badgeVariants }
+const getVariantStyles = (variant: BadgeVariant = 'default', theme: Theme): SxProps<Theme> => {
+  const styles: Record<BadgeVariant, SxProps<Theme>> = {
+    default: {
+      border: 'none',
+      backgroundColor: theme.palette.primary.main,
+      color: theme.palette.primary.contrastText,
+      '&:hover': {
+        backgroundColor: theme.palette.primary.dark,
+      },
+    },
+    secondary: {
+      border: 'none',
+      backgroundColor: theme.palette.custom.secondary,
+      color: theme.palette.custom.secondaryForeground,
+      '&:hover': {
+        backgroundColor: `${theme.palette.custom.secondary}cc`,
+      },
+    },
+    destructive: {
+      border: 'none',
+      backgroundColor: theme.palette.custom.destructive,
+      color: theme.palette.custom.destructiveForeground,
+      '&:hover': {
+        backgroundColor: `${theme.palette.custom.destructive}cc`,
+      },
+    },
+    outline: {
+      border: `1px solid ${theme.palette.custom.border}`,
+      backgroundColor: 'transparent',
+      color: theme.palette.custom.foreground,
+    },
+  };
+  
+  return styles[variant];
+};
+
+const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
+  ({ variant = 'default', children, sx, ...props }, ref) => {
+    const theme = useTheme();
+    
+    return (
+      <Box
+        ref={ref}
+        component="span"
+        sx={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          height: 'auto',
+          padding: '2px 10px',
+          fontSize: theme.typography.pxToRem(12),
+          fontWeight: 600,
+          borderRadius: '9999px',
+          transition: theme.transitions.create(['background-color', 'box-shadow'], {
+            duration: theme.transitions.duration.short,
+          }),
+          '&:focus-visible': {
+            outline: `2px solid ${theme.palette.custom.ring}`,
+            outlineOffset: '2px',
+          },
+          ...getVariantStyles(variant, theme) as object,
+          ...(typeof sx === 'function' ? sx(theme) : sx),
+        }}
+        {...props}
+      >
+        {children}
+      </Box>
+    );
+  }
+);
+
+Badge.displayName = "Badge";
+
+export { Badge }
+export type { BadgeProps }

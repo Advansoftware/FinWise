@@ -2,44 +2,96 @@
 
 import * as React from "react"
 import * as TogglePrimitive from "@radix-ui/react-toggle"
-import { cva, type VariantProps } from "class-variance-authority"
+import { styled, type Theme, type SxProps } from '@mui/material/styles'
 
-import { cn } from "@/lib/utils"
+type ToggleVariant = 'default' | 'outline'
+type ToggleSize = 'default' | 'sm' | 'lg'
 
-const toggleVariants = cva(
-  "inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors hover:bg-muted hover:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=on]:bg-accent data-[state=on]:text-accent-foreground",
-  {
-    variants: {
-      variant: {
-        default: "bg-transparent",
-        outline:
-          "border border-input bg-transparent hover:bg-accent hover:text-accent-foreground",
-      },
-      size: {
-        default: "h-10 px-3",
-        sm: "h-9 px-2.5",
-        lg: "h-11 px-5",
-      },
+const StyledToggle = styled(TogglePrimitive.Root, {
+  shouldForwardProp: (prop) => prop !== 'toggleVariant' && prop !== 'toggleSize',
+})<{ toggleVariant?: ToggleVariant; toggleSize?: ToggleSize }>(({ theme, toggleVariant = 'default', toggleSize = 'default' }) => {
+  const sizeStyles = {
+    default: {
+      height: '2.5rem',
+      padding: theme.spacing(0, 3),
     },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
+    sm: {
+      height: '2.25rem',
+      padding: theme.spacing(0, 2.5),
+    },
+    lg: {
+      height: '2.75rem',
+      padding: theme.spacing(0, 5),
     },
   }
-)
+  
+  const variantStyles = {
+    default: {
+      backgroundColor: 'transparent',
+    },
+    outline: {
+      border: `1px solid ${theme.palette.mode === 'dark' ? (theme.palette as any).custom?.input : (theme.palette as any).custom?.input}`,
+      backgroundColor: 'transparent',
+      '&:hover': {
+        backgroundColor: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.accent : (theme.palette as any).custom?.accent,
+        color: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.accentForeground : (theme.palette as any).custom?.accentForeground,
+      },
+    },
+  }
+  
+  return {
+    display: 'inline-flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: theme.shape.borderRadius,
+    fontSize: theme.typography.pxToRem(14),
+    fontWeight: theme.typography.fontWeightMedium,
+    transition: theme.transitions.create(['background-color', 'color', 'box-shadow']),
+    
+    '&:hover': {
+      backgroundColor: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.muted : (theme.palette as any).custom?.muted,
+      color: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.mutedForeground : (theme.palette as any).custom?.mutedForeground,
+    },
+    
+    '&:focus-visible': {
+      outline: 'none',
+      boxShadow: `0 0 0 2px ${theme.palette.mode === 'dark' ? (theme.palette as any).custom?.ring + '33' : (theme.palette as any).custom?.ring + '33'}`,
+    },
+    
+    '&:disabled': {
+      pointerEvents: 'none',
+      opacity: 0.5,
+    },
+    
+    '&[data-state=on]': {
+      backgroundColor: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.accent : (theme.palette as any).custom?.accent,
+      color: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.accentForeground : (theme.palette as any).custom?.accentForeground,
+    },
+    
+    ...sizeStyles[toggleSize],
+    ...variantStyles[toggleVariant],
+  }
+})
+
+interface ToggleProps extends React.ComponentPropsWithoutRef<typeof TogglePrimitive.Root> {
+  variant?: ToggleVariant;
+  size?: ToggleSize;
+  sx?: SxProps<Theme>;
+}
 
 const Toggle = React.forwardRef<
   React.ElementRef<typeof TogglePrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof TogglePrimitive.Root> &
-    VariantProps<typeof toggleVariants>
->(({ className, variant, size, ...props }, ref) => (
-  <TogglePrimitive.Root
+  ToggleProps
+>(({ sx, variant = 'default', size = 'default', ...props }, ref) => (
+  <StyledToggle
     ref={ref}
-    className={cn(toggleVariants({ variant, size, className }))}
+    toggleVariant={variant}
+    toggleSize={size}
+    sx={sx}
     {...props}
   />
 ))
 
 Toggle.displayName = TogglePrimitive.Root.displayName
 
-export { Toggle, toggleVariants }
+export { Toggle }

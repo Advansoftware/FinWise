@@ -112,7 +112,7 @@ export default function Page() {
               transition={{ duration: 0.5 }}
             >
               <Link href="/" className="flex items-center gap-2">
-                  <Logo className="w-6 h-6 sm:w-8 sm:h-8"/>
+                  <Logo sx={{ width: { xs: '1.5rem', sm: '2rem' }, height: { xs: '1.5rem', sm: '2rem' } }} />
                   <span className="text-lg sm:text-xl font-bold">Gastometria</span>
               </Link>
             </motion.div>

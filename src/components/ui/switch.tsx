@@ -1,29 +1,73 @@
-
 "use client"
 
 import * as React from "react"
 import * as SwitchPrimitives from "@radix-ui/react-switch"
+import { styled, type Theme, type SxProps } from '@mui/material/styles'
 
-import { cn } from "@/lib/utils"
+const StyledSwitchRoot = styled(SwitchPrimitives.Root)(({ theme }) => ({
+  display: 'inline-flex',
+  height: '1.5rem',
+  width: '2.75rem',
+  flexShrink: 0,
+  cursor: 'pointer',
+  alignItems: 'center',
+  borderRadius: '9999px',
+  border: '2px solid transparent',
+  transition: theme.transitions.create(['background-color', 'box-shadow']),
+  
+  '&:focus-visible': {
+    outline: 'none',
+    boxShadow: `0 0 0 2px ${theme.palette.mode === 'dark' ? (theme.palette as any).custom?.ring + '33' : (theme.palette as any).custom?.ring + '33'}`,
+  },
+  
+  '&:disabled': {
+    cursor: 'not-allowed',
+    opacity: 0.5,
+  },
+  
+  '&[data-state=checked]': {
+    backgroundColor: theme.palette.primary.main,
+  },
+  
+  '&[data-state=unchecked]': {
+    backgroundColor: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.input : (theme.palette as any).custom?.input,
+  },
+}))
+
+const StyledSwitchThumb = styled(SwitchPrimitives.Thumb)(({ theme }) => ({
+  pointerEvents: 'none',
+  display: 'block',
+  height: '1.25rem',
+  width: '1.25rem',
+  borderRadius: '9999px',
+  backgroundColor: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.background : (theme.palette as any).custom?.background,
+  boxShadow: theme.shadows[2],
+  transition: theme.transitions.create(['transform']),
+  
+  '&[data-state=checked]': {
+    transform: 'translateX(1.25rem)',
+  },
+  
+  '&[data-state=unchecked]': {
+    transform: 'translateX(0)',
+  },
+}))
+
+interface SwitchProps extends React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root> {
+  sx?: SxProps<Theme>;
+}
 
 const Switch = React.forwardRef<
   React.ElementRef<typeof SwitchPrimitives.Root>,
-  React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root>
->(({ className, ...props }, ref) => (
-  <SwitchPrimitives.Root
-    className={cn(
-      "peer inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-50 data-[state=checked]:bg-primary data-[state=unchecked]:bg-input",
-      className
-    )}
+  SwitchProps
+>(({ sx, ...props }, ref) => (
+  <StyledSwitchRoot
+    sx={sx}
     {...props}
     ref={ref}
   >
-    <SwitchPrimitives.Thumb
-      className={cn(
-        "pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform data-[state=checked]:translate-x-5 data-[state=unchecked]:translate-x-0"
-      )}
-    />
-  </SwitchPrimitives.Root>
+    <StyledSwitchThumb />
+  </StyledSwitchRoot>
 ))
 Switch.displayName = SwitchPrimitives.Root.displayName
 

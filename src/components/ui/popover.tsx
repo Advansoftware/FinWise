@@ -1,10 +1,8 @@
-
 "use client"
 
 import * as React from "react"
 import * as PopoverPrimitive from "@radix-ui/react-popover"
-
-import { cn } from "@/lib/utils"
+import { styled, type Theme, type SxProps } from '@mui/material/styles'
 
 const Popover = PopoverPrimitive.Root
 
@@ -12,19 +10,62 @@ const PopoverTrigger = PopoverPrimitive.Trigger
 
 const PopoverAnchor = PopoverPrimitive.Anchor
 
+const StyledPopoverContent = styled(PopoverPrimitive.Content)(({ theme }) => ({
+  zIndex: theme.zIndex.modal,
+  width: '18rem',
+  borderRadius: theme.shape.borderRadius,
+  border: `1px solid ${theme.palette.mode === 'dark' ? (theme.palette as any).custom?.border : (theme.palette as any).custom?.border}`,
+  backgroundColor: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.popover : (theme.palette as any).custom?.popover,
+  padding: theme.spacing(4),
+  color: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.popoverForeground : (theme.palette as any).custom?.popoverForeground,
+  boxShadow: theme.shadows[4],
+  outline: 'none',
+  
+  '&[data-state=open]': {
+    animation: 'fadeIn 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+  },
+  
+  '&[data-state=closed]': {
+    animation: 'fadeOut 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+  },
+  
+  '@keyframes fadeIn': {
+    from: {
+      opacity: 0,
+      transform: 'scale(0.95)',
+    },
+    to: {
+      opacity: 1,
+      transform: 'scale(1)',
+    },
+  },
+  
+  '@keyframes fadeOut': {
+    from: {
+      opacity: 1,
+      transform: 'scale(1)',
+    },
+    to: {
+      opacity: 0,
+      transform: 'scale(0.95)',
+    },
+  },
+}))
+
+interface PopoverContentProps extends React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content> {
+  sx?: SxProps<Theme>;
+}
+
 const PopoverContent = React.forwardRef<
   React.ElementRef<typeof PopoverPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof PopoverPrimitive.Content>
->(({ className, align = "center", sideOffset = 4, ...props }, ref) => (
+  PopoverContentProps
+>(({ sx, align = "center", sideOffset = 4, ...props }, ref) => (
   <PopoverPrimitive.Portal>
-    <PopoverPrimitive.Content
+    <StyledPopoverContent
       ref={ref}
       align={align}
       sideOffset={sideOffset}
-      className={cn(
-        "z-50 w-72 rounded-md border bg-popover p-4 text-popover-foreground shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-        className
-      )}
+      sx={sx}
       {...props}
     />
   </PopoverPrimitive.Portal>

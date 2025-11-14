@@ -2,46 +2,87 @@
 
 import * as React from "react"
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area"
+import { styled, type Theme, type SxProps } from '@mui/material/styles'
 
-import { cn } from "@/lib/utils"
+const StyledScrollAreaRoot = styled(ScrollAreaPrimitive.Root)(({ theme }) => ({
+  position: 'relative',
+  overflow: 'hidden',
+}))
+
+const StyledScrollAreaViewport = styled(ScrollAreaPrimitive.Viewport)({
+  height: '100%',
+  width: '100%',
+  borderRadius: 'inherit',
+})
+
+interface ScrollAreaProps extends React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root> {
+  sx?: SxProps<Theme>;
+}
 
 const ScrollArea = React.forwardRef<
   React.ElementRef<typeof ScrollAreaPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root>
->(({ className, children, ...props }, ref) => (
-  <ScrollAreaPrimitive.Root
+  ScrollAreaProps
+>(({ sx, children, ...props }, ref) => (
+  <StyledScrollAreaRoot
     ref={ref}
-    className={cn("relative overflow-hidden", className)}
+    sx={sx}
     {...props}
   >
-    <ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit]">
+    <StyledScrollAreaViewport>
       {children}
-    </ScrollAreaPrimitive.Viewport>
+    </StyledScrollAreaViewport>
     <ScrollBar />
     <ScrollAreaPrimitive.Corner />
-  </ScrollAreaPrimitive.Root>
+  </StyledScrollAreaRoot>
 ))
 ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName
 
+const StyledScrollBar = styled(ScrollAreaPrimitive.ScrollAreaScrollbar, {
+  shouldForwardProp: (prop) => prop !== 'orientation',
+})<{ orientation?: 'vertical' | 'horizontal' }>(({ theme, orientation = 'vertical' }) => ({
+  display: 'flex',
+  touchAction: 'none',
+  userSelect: 'none',
+  transition: theme.transitions.create('background-color'),
+  
+  ...(orientation === 'vertical' && {
+    height: '100%',
+    width: '0.625rem',
+    borderLeft: `1px solid transparent`,
+    padding: '1px',
+  }),
+  
+  ...(orientation === 'horizontal' && {
+    height: '0.625rem',
+    flexDirection: 'column',
+    borderTop: `1px solid transparent`,
+    padding: '1px',
+  }),
+}))
+
+const StyledScrollBarThumb = styled(ScrollAreaPrimitive.ScrollAreaThumb)(({ theme }) => ({
+  position: 'relative',
+  flex: 1,
+  borderRadius: '9999px',
+  backgroundColor: theme.palette.divider,
+}))
+
+interface ScrollBarProps extends React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar> {
+  sx?: SxProps<Theme>;
+}
+
 const ScrollBar = React.forwardRef<
   React.ElementRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>,
-  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>
->(({ className, orientation = "vertical", ...props }, ref) => (
-  <ScrollAreaPrimitive.ScrollAreaScrollbar
+  ScrollBarProps
+>(({ sx, orientation = "vertical", ...props }, ref) => (
+  <StyledScrollBar
     ref={ref}
     orientation={orientation}
-    className={cn(
-      "flex touch-none select-none transition-colors",
-      orientation === "vertical" &&
-        "h-full w-2.5 border-l border-l-transparent p-[1px]",
-      orientation === "horizontal" &&
-        "h-2.5 flex-col border-t border-t-transparent p-[1px]",
-      className
-    )}
+    sx={sx}
     {...props}
   >
-    <ScrollAreaPrimitive.ScrollAreaThumb className="relative flex-1 rounded-full bg-border" />
-  </ScrollAreaPrimitive.ScrollAreaScrollbar>
+    <StyledScrollBarThumb />
+  </StyledScrollBar>
 ))
 ScrollBar.displayName = ScrollAreaPrimitive.ScrollAreaScrollbar.displayName
 

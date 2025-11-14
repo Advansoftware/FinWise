@@ -3,8 +3,8 @@
 import * as React from "react"
 import * as SelectPrimitive from "@radix-ui/react-select"
 import { Check, ChevronDown, ChevronUp } from "lucide-react"
-
-import { cn } from "@/lib/utils"
+import { styled, useTheme, type Theme, type SxProps } from '@mui/material/styles'
+import { Box } from '@mui/material'
 
 const Select = SelectPrimitive.Root
 
@@ -12,39 +12,84 @@ const SelectGroup = SelectPrimitive.Group
 
 const SelectValue = SelectPrimitive.Value
 
+// Styled SelectTrigger
+const StyledSelectTrigger = styled(SelectPrimitive.Trigger)(({ theme }) => ({
+  display: 'flex',
+  height: '2.5rem', // 40px
+  width: '100%',
+  alignItems: 'center',
+  justifyContent: 'space-between',
+  borderRadius: theme.shape.borderRadius,
+  border: `1px solid ${theme.palette.mode === 'dark' ? (theme.palette as any).custom?.input : (theme.palette as any).custom?.input}`,
+  backgroundColor: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.background : (theme.palette as any).custom?.background,
+  padding: '0.5rem 0.75rem',
+  fontSize: theme.typography.pxToRem(14),
+  color: theme.palette.text.primary,
+  transition: theme.transitions.create(['border-color', 'box-shadow']),
+  
+  '&::placeholder': {
+    color: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.mutedForeground : (theme.palette as any).custom?.mutedForeground,
+  },
+  
+  '&:focus': {
+    outline: 'none',
+    borderColor: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.ring : (theme.palette as any).custom?.ring,
+    boxShadow: `0 0 0 2px ${theme.palette.mode === 'dark' ? (theme.palette as any).custom?.ring + '33' : (theme.palette as any).custom?.ring + '33'}`,
+  },
+  
+  '&:disabled': {
+    cursor: 'not-allowed',
+    opacity: 0.5,
+  },
+  
+  '& > span': {
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    whiteSpace: 'nowrap',
+  },
+}))
+
+interface SelectTriggerProps extends React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger> {
+  sx?: SxProps<Theme>;
+}
+
 const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
->(({ className, children, ...props }, ref) => (
-  <SelectPrimitive.Trigger
-    ref={ref}
-    className={cn(
-      "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
-      className
-    )}
-    {...props}
-  >
-    {children}
-    <SelectPrimitive.Icon asChild>
-      <ChevronDown className="h-4 w-4 opacity-50" />
-    </SelectPrimitive.Icon>
-  </SelectPrimitive.Trigger>
-))
+  SelectTriggerProps
+>(({ sx, children, ...props }, ref) => {
+  const theme = useTheme()
+  
+  return (
+    <StyledSelectTrigger
+      ref={ref}
+      sx={sx}
+      {...props}
+    >
+      {children}
+      <SelectPrimitive.Icon asChild>
+        <ChevronDown style={{ width: '1rem', height: '1rem', opacity: 0.5 }} />
+      </SelectPrimitive.Icon>
+    </StyledSelectTrigger>
+  )
+})
 SelectTrigger.displayName = SelectPrimitive.Trigger.displayName
 
 const SelectScrollUpButton = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.ScrollUpButton>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollUpButton>
->(({ className, ...props }, ref) => (
+>(({ ...props }, ref) => (
   <SelectPrimitive.ScrollUpButton
     ref={ref}
-    className={cn(
-      "flex cursor-default items-center justify-center py-1",
-      className
-    )}
+    style={{
+      display: 'flex',
+      cursor: 'default',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '0.25rem 0',
+    }}
     {...props}
   >
-    <ChevronUp className="h-4 w-4" />
+    <ChevronUp style={{ width: '1rem', height: '1rem' }} />
   </SelectPrimitive.ScrollUpButton>
 ))
 SelectScrollUpButton.displayName = SelectPrimitive.ScrollUpButton.displayName
@@ -52,95 +97,208 @@ SelectScrollUpButton.displayName = SelectPrimitive.ScrollUpButton.displayName
 const SelectScrollDownButton = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.ScrollDownButton>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollDownButton>
->(({ className, ...props }, ref) => (
+>(({ ...props }, ref) => (
   <SelectPrimitive.ScrollDownButton
     ref={ref}
-    className={cn(
-      "flex cursor-default items-center justify-center py-1",
-      className
-    )}
+    style={{
+      display: 'flex',
+      cursor: 'default',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '0.25rem 0',
+    }}
     {...props}
   >
-    <ChevronDown className="h-4 w-4" />
+    <ChevronDown style={{ width: '1rem', height: '1rem' }} />
   </SelectPrimitive.ScrollDownButton>
 ))
 SelectScrollDownButton.displayName =
   SelectPrimitive.ScrollDownButton.displayName
 
+// Styled SelectContent
+const StyledSelectContent = styled(SelectPrimitive.Content)(({ theme }) => ({
+  position: 'relative',
+  zIndex: theme.zIndex.modal,
+  maxHeight: '24rem',
+  minWidth: '8rem',
+  overflow: 'hidden',
+  borderRadius: theme.shape.borderRadius,
+  border: `1px solid ${theme.palette.mode === 'dark' ? (theme.palette as any).custom?.border : (theme.palette as any).custom?.border}`,
+  backgroundColor: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.popover : (theme.palette as any).custom?.popover,
+  color: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.popoverForeground : (theme.palette as any).custom?.popoverForeground,
+  boxShadow: theme.shadows[4],
+  
+  '&[data-state=open]': {
+    animation: 'fadeIn 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+  },
+  
+  '&[data-state=closed]': {
+    animation: 'fadeOut 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+  },
+  
+  '@keyframes fadeIn': {
+    from: {
+      opacity: 0,
+      transform: 'scale(0.95)',
+    },
+    to: {
+      opacity: 1,
+      transform: 'scale(1)',
+    },
+  },
+  
+  '@keyframes fadeOut': {
+    from: {
+      opacity: 1,
+      transform: 'scale(1)',
+    },
+    to: {
+      opacity: 0,
+      transform: 'scale(0.95)',
+    },
+  },
+}))
+
+const StyledSelectViewport = styled(SelectPrimitive.Viewport)<{ position?: 'item-aligned' | 'popper' }>(({ theme, position }) => ({
+  padding: '0.25rem',
+  ...(position === 'popper' && {
+    height: 'var(--radix-select-trigger-height)',
+    width: '100%',
+    minWidth: 'var(--radix-select-trigger-width)',
+  }),
+}))
+
+interface SelectContentProps extends React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content> {
+  sx?: SxProps<Theme>;
+}
+
 const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
->(({ className, children, position = "popper", ...props }, ref) => (
-  <SelectPrimitive.Portal>
-    <SelectPrimitive.Content
-      ref={ref}
-      className={cn(
-        "relative z-50 max-h-96 min-w-[8rem] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-        position === "popper" &&
-          "data-[side=bottom]:translate-y-1 data-[side=left]:-translate-x-1 data-[side=right]:translate-x-1 data-[side=top]:-translate-y-1",
-        className
-      )}
-      position={position}
-      {...props}
-    >
-      <SelectScrollUpButton />
-      <SelectPrimitive.Viewport
-        className={cn(
-          "p-1",
-          position === "popper" &&
-            "h-[var(--radix-select-trigger-height)] w-full min-w-[var(--radix-select-trigger-width)]"
-        )}
+  SelectContentProps
+>(({ sx, children, position = "popper", ...props }, ref) => {
+  const theme = useTheme()
+  
+  return (
+    <SelectPrimitive.Portal>
+      <StyledSelectContent
+        ref={ref}
+        sx={sx}
+        position={position}
+        {...props}
       >
-        {children}
-      </SelectPrimitive.Viewport>
-      <SelectScrollDownButton />
-    </SelectPrimitive.Content>
-  </SelectPrimitive.Portal>
-))
+        <SelectScrollUpButton />
+        <StyledSelectViewport position={position}>
+          {children}
+        </StyledSelectViewport>
+        <SelectScrollDownButton />
+      </StyledSelectContent>
+    </SelectPrimitive.Portal>
+  )
+})
 SelectContent.displayName = SelectPrimitive.Content.displayName
+
+// Styled SelectLabel
+const StyledSelectLabel = styled(SelectPrimitive.Label)(({ theme }) => ({
+  padding: '0.375rem 2rem 0.375rem 0.5rem',
+  fontSize: theme.typography.pxToRem(14),
+  fontWeight: theme.typography.fontWeightMedium,
+  color: theme.palette.text.primary,
+}))
+
+interface SelectLabelProps extends React.ComponentPropsWithoutRef<typeof SelectPrimitive.Label> {
+  sx?: SxProps<Theme>;
+}
 
 const SelectLabel = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Label>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Label>
->(({ className, ...props }, ref) => (
-  <SelectPrimitive.Label
+  SelectLabelProps
+>(({ sx, ...props }, ref) => (
+  <StyledSelectLabel
     ref={ref}
-    className={cn("py-1.5 pl-8 pr-2 text-sm font-semibold", className)}
+    sx={sx}
     {...props}
   />
 ))
 SelectLabel.displayName = SelectPrimitive.Label.displayName
 
+// Styled SelectItem
+const StyledSelectItem = styled(SelectPrimitive.Item)(({ theme }) => ({
+  position: 'relative',
+  display: 'flex',
+  width: '100%',
+  cursor: 'default',
+  userSelect: 'none',
+  alignItems: 'center',
+  borderRadius: theme.shape.borderRadius,
+  padding: '0.375rem 2rem 0.375rem 0.5rem',
+  fontSize: theme.typography.pxToRem(14),
+  outline: 'none',
+  transition: theme.transitions.create(['background-color', 'color']),
+  
+  '&:focus': {
+    backgroundColor: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.accent : (theme.palette as any).custom?.accent,
+    color: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.accentForeground : (theme.palette as any).custom?.accentForeground,
+  },
+  
+  '&[data-disabled]': {
+    pointerEvents: 'none',
+    opacity: 0.5,
+  },
+}))
+
+interface SelectItemProps extends React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item> {
+  sx?: SxProps<Theme>;
+}
+
 const SelectItem = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Item>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
->(({ className, children, ...props }, ref) => (
-  <SelectPrimitive.Item
+  SelectItemProps
+>(({ sx, children, ...props }, ref) => (
+  <StyledSelectItem
     ref={ref}
-    className={cn(
-      "relative flex w-full cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-      className
-    )}
+    sx={sx}
     {...props}
   >
-    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+    <Box
+      component="span"
+      sx={{
+        position: 'absolute',
+        left: '0.5rem',
+        display: 'flex',
+        height: '0.875rem',
+        width: '0.875rem',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
       <SelectPrimitive.ItemIndicator>
-        <Check className="h-4 w-4" />
+        <Check style={{ width: '1rem', height: '1rem' }} />
       </SelectPrimitive.ItemIndicator>
-    </span>
+    </Box>
 
     <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
-  </SelectPrimitive.Item>
+  </StyledSelectItem>
 ))
 SelectItem.displayName = SelectPrimitive.Item.displayName
 
+// Styled SelectSeparator
+const StyledSelectSeparator = styled(SelectPrimitive.Separator)(({ theme }) => ({
+  margin: '0.25rem -0.25rem',
+  height: '1px',
+  backgroundColor: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.muted : (theme.palette as any).custom?.muted,
+}))
+
+interface SelectSeparatorProps extends React.ComponentPropsWithoutRef<typeof SelectPrimitive.Separator> {
+  sx?: SxProps<Theme>;
+}
+
 const SelectSeparator = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Separator>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Separator>
->(({ className, ...props }, ref) => (
-  <SelectPrimitive.Separator
+  SelectSeparatorProps
+>(({ sx, ...props }, ref) => (
+  <StyledSelectSeparator
     ref={ref}
-    className={cn("-mx-1 my-1 h-px bg-muted", className)}
+    sx={sx}
     {...props}
   />
 ))

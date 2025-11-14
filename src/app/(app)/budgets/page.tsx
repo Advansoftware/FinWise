@@ -210,6 +210,11 @@ export default function BudgetsPage() {
 function BudgetCard({ budget, onDelete }: { budget: Budget, onDelete: () => void }) {
     const percentage = Math.round((budget.currentSpending / budget.amount) * 100);
     const progressColor = percentage > 100 ? "bg-red-600" : percentage > 80 ? "bg-yellow-500" : "bg-primary";
+    const progressSxColor = percentage > 100 
+        ? { backgroundColor: 'rgb(220, 38, 38)' } 
+        : percentage > 80 
+        ? { backgroundColor: 'rgb(234, 179, 8)' } 
+        : {};
     const remainingAmount = budget.amount - budget.currentSpending;
 
     return (
@@ -261,7 +266,7 @@ function BudgetCard({ budget, onDelete }: { budget: Budget, onDelete: () => void
             </CardHeader>
             <CardContent className="space-y-4">
                 <div>
-                     <Progress value={Math.min(percentage, 100)} indicatorClassName={cn(progressColor)} />
+                     <Progress value={Math.min(percentage, 100)} indicatorSx={progressSxColor} />
                 </div>
                 <div className="flex justify-between items-baseline">
                     <p className="text-lg font-bold text-foreground">{formatCurrency(budget.currentSpending)}</p>

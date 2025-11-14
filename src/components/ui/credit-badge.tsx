@@ -1,6 +1,7 @@
 // src/components/ui/credit-badge.tsx
 'use client';
 
+import { Box } from '@mui/material';
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Gem, Zap, Brain, Search } from "lucide-react";
@@ -21,17 +22,29 @@ export function CreditBadge({ actionKey, showWhenFree = false, variant = 'defaul
   const categoryConfig = {
     simple: { 
       icon: Zap, 
-      color: 'bg-green-500/10 text-green-600 border-green-500/20',
+      sx: { 
+        bgcolor: 'rgb(34 197 94 / 0.1)', 
+        color: 'rgb(22 163 74)', 
+        borderColor: 'rgb(34 197 94 / 0.2)' 
+      },
       label: 'Simples'
     },
     complex: { 
       icon: Brain, 
-      color: 'bg-blue-500/10 text-blue-600 border-blue-500/20',
+      sx: { 
+        bgcolor: 'rgb(59 130 246 / 0.1)', 
+        color: 'rgb(37 99 235)', 
+        borderColor: 'rgb(59 130 246 / 0.2)' 
+      },
       label: 'Complexa'
     },
     image: { 
       icon: Search, 
-      color: 'bg-purple-500/10 text-purple-600 border-purple-500/20',
+      sx: { 
+        bgcolor: 'rgb(168 85 247 / 0.1)', 
+        color: 'rgb(147 51 234)', 
+        borderColor: 'rgb(168 85 247 / 0.2)' 
+      },
       label: 'Imagem'
     }
   };
@@ -44,13 +57,30 @@ export function CreditBadge({ actionKey, showWhenFree = false, variant = 'defaul
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">
-              <Gem className="h-3 w-3 mr-1" />
+            <Badge 
+              variant="outline" 
+              sx={{ 
+                bgcolor: 'rgb(16 185 129 / 0.1)', 
+                color: 'rgb(5 150 105)', 
+                borderColor: 'rgb(16 185 129 / 0.2)',
+                display: 'inline-flex',
+                alignItems: 'center',
+              }}
+            >
+              <Gem style={{ width: '0.75rem', height: '0.75rem', marginRight: '0.25rem' }} />
               Grátis
             </Badge>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Usando suas próprias credenciais de IA - sem custo de créditos</p>
+            <Box
+              component="p"
+              sx={{
+                fontSize: theme => theme.typography.pxToRem(14),
+                color: theme => (theme.palette as any).custom?.mutedForeground,
+              }}
+            >
+              Usando suas próprias credenciais de IA - sem custo de créditos
+            </Box>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
@@ -58,8 +88,15 @@ export function CreditBadge({ actionKey, showWhenFree = false, variant = 'defaul
   }
 
   const content = (
-    <Badge variant="outline" className={config.color}>
-      <Icon className="h-3 w-3 mr-1" />
+    <Badge 
+      variant="outline" 
+      sx={{
+        ...config.sx,
+        display: 'inline-flex',
+        alignItems: 'center',
+      }}
+    >
+      <Icon style={{ width: '0.75rem', height: '0.75rem', marginRight: '0.25rem' }} />
       {variant === 'icon-only' ? null : (
         variant === 'compact' ? `${badgeInfo.cost}c` : `${badgeInfo.cost} créditos`
       )}
@@ -73,12 +110,20 @@ export function CreditBadge({ actionKey, showWhenFree = false, variant = 'defaul
           {content}
         </TooltipTrigger>
         <TooltipContent>
-          <div className="space-y-1">
-            <p className="font-medium">{config.label} - {badgeInfo.cost} créditos</p>
-            <p className="text-xs text-muted-foreground">
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            <Box component="p" sx={{ fontWeight: theme => theme.typography.fontWeightMedium }}>
+              {config.label} - {badgeInfo.cost} créditos
+            </Box>
+            <Box 
+              component="p" 
+              sx={{ 
+                fontSize: theme => theme.typography.pxToRem(12), 
+                color: theme => (theme.palette as any).custom?.mutedForeground 
+              }}
+            >
               Usando Gastometria IA - configurar IA própria nas credenciais para uso gratuito
-            </p>
-          </div>
+            </Box>
+          </Box>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>

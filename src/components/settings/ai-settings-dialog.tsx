@@ -150,7 +150,7 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', paddingTop: '1rem', paddingBottom: '1rem' }}>
              <FormField
                 control={form.control}
                 name="name"
@@ -208,7 +208,7 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Modelo Ollama</FormLabel>
-                                <div className="flex gap-2">
+                                <div style={{ display: 'flex', gap: '0.5rem' }}>
                                     <Select onValueChange={field.onChange} value={field.value || ''} disabled={isFetchingOllama || ollamaModels.length === 0}>
                                         <FormControl>
                                             <SelectTrigger>
@@ -222,7 +222,7 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
                                         </SelectContent>
                                     </Select>
                                     <Button type="button" variant="ghost" size="icon" onClick={fetchOllamaModels} disabled={isFetchingOllama || !form.getValues("ollamaServerAddress")}>
-                                        <RefreshCw className={`h-4 w-4 ${isFetchingOllama ? 'animate-spin': ''}`} />
+                                        <RefreshCw style={{ width: '1rem', height: '1rem' }} className={isFetchingOllama ? 'animate-spin': ''} />
                                     </Button>
                                 </div>
                                 <FormMessage />
@@ -290,7 +290,7 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
             )}
              <DialogFooter>
                 <Button type="submit" disabled={isSaving}>
-                    {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isSaving && <Loader2 style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} className="animate-spin" />}
                     Salvar
                 </Button>
             </DialogFooter>

@@ -77,10 +77,15 @@ export function GamificationSummary() {
             <span>Próximo nível</span>
             <span>{gamificationData.level.pointsToNext} pontos</span>
           </div>
-          <Progress 
-            value={(gamificationData.points / (gamificationData.level.pointsRequired + gamificationData.level.pointsToNext)) * 100} 
-            className="h-2 bg-purple-200"
-            indicatorClassName="bg-gradient-to-r from-purple-500 to-blue-500"
+          <Progress
+            value={(gamificationData.points / (gamificationData.level.pointsRequired + gamificationData.level.pointsToNext)) * 100}
+            sx={{
+              height: '0.5rem',
+              bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(55, 48, 163, 0.15)' : 'rgba(243, 232, 255, 0.8)'
+            }}
+            indicatorSx={{
+              background: 'linear-gradient(90deg, #8b5cf6 0%, #3b82f6 100%)'
+            }}
           />
         </div>
 

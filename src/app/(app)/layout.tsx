@@ -36,7 +36,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
           <Sidebar className="flex flex-col border-r fixed h-screen z-40 md:fixed md:inset-y-0 md:z-40">
               <SidebarHeader className="border-b p-4">
                   <div className="flex items-center gap-3 group-data-[state=collapsed]:justify-center">
-                      <Logo className="w-8 h-8 shrink-0"/>
+                      <Logo sx={{ width: '2rem', height: '2rem', flexShrink: 0 }} />
                       <span className="text-lg font-semibold group-data-[state=collapsed]:hidden">
                         Gastometria
                       </span>
@@ -56,7 +56,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
               <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 lg:hidden">
                   <div className="flex items-center gap-3">
                       <SidebarTrigger className="shrink-0" />
-                      <Logo className="w-8 h-8 shrink-0"/>
+                      <Logo sx={{ width: '2rem', height: '2rem', flexShrink: 0 }} />
                       <span className="text-lg font-semibold">Gastometria</span>
                   </div>
                   <div className="flex-1" />

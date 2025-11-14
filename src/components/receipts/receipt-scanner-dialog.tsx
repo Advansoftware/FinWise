@@ -41,15 +41,15 @@ export function ReceiptScannerDialog({ children }: ReceiptScannerDialogProps) {
     return (
       <Sheet open={isOpen} onOpenChange={setIsOpen}>
         <SheetTrigger asChild>{children}</SheetTrigger>
-        <SheetContent side="bottom" className="h-[95vh] flex flex-col">
-          <SheetHeader className="text-left">
+        <SheetContent side="bottom" sx={{ height: '95vh', display: 'flex', flexDirection: 'column' }}>
+          <SheetHeader sx={{ textAlign: 'left' }}>
             <SheetTitle>Escanear Nota Fiscal</SheetTitle>
             <SheetDescription>
               Aponte a câmera para a nota fiscal ou envie uma imagem da galeria.
             </SheetDescription>
           </SheetHeader>
 
-          <div className="flex-1 overflow-y-auto">
+          <div style={{ flex: 1, overflowY: 'auto' }}>
             {renderContent()}
           </div>
         </SheetContent>
@@ -60,7 +60,7 @@ export function ReceiptScannerDialog({ children }: ReceiptScannerDialogProps) {
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent sx={{ maxWidth: { sm: '42rem' }, maxHeight: '90vh', overflowY: 'auto' }}>
         <DialogHeader>
           <DialogTitle>Escanear Nota Fiscal</DialogTitle>
           <DialogDescription>

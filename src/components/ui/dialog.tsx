@@ -1,122 +1,235 @@
 "use client"
 
 import * as React from "react"
-import * as DialogPrimitive from "@radix-ui/react-dialog"
+import {
+  Dialog as MuiDialog,
+  DialogTitle as MuiDialogTitle,
+  DialogContent as MuiDialogContent,
+  DialogActions as MuiDialogActions,
+  DialogProps as MuiDialogProps,
+  IconButton,
+  Typography,
+  type SxProps,
+  type Theme,
+  useTheme,
+} from '@mui/material';
 import { X } from "lucide-react"
 
-import { cn } from "@/lib/utils"
+// Dialog principal - usa o MUI Dialog diretamente
+interface DialogProps extends Omit<MuiDialogProps, 'open'> {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
 
-const Dialog = DialogPrimitive.Root
+const Dialog = ({ open, onOpenChange, onClose, ...props }: DialogProps) => {
+  const handleClose = (event: {}, reason: "backdropClick" | "escapeKeyDown") => {
+    if (onOpenChange) {
+      onOpenChange(false);
+    }
+    if (onClose) {
+      onClose(event, reason);
+    }
+  };
 
-const DialogTrigger = DialogPrimitive.Trigger
+  return (
+    <MuiDialog
+      open={open || false}
+      onClose={handleClose}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: (theme) => ({
+          borderRadius: theme.shape.borderRadius,
+          border: `1px solid ${theme.palette.custom.border}`,
+          backgroundColor: theme.palette.background.default,
+          boxShadow: theme.shadows[8],
+        }),
+      }}
+      {...props}
+    />
+  );
+};
 
-const DialogPortal = DialogPrimitive.Portal
+// DialogTrigger - wrapper para botão que abre o dialog
+interface DialogTriggerProps extends React.HTMLAttributes<HTMLElement> {
+  children: React.ReactNode;
+  asChild?: boolean;
+}
 
-const DialogClose = DialogPrimitive.Close
+const DialogTrigger = ({ children, asChild, ...props }: DialogTriggerProps) => {
+  // Se asChild, retorna o children diretamente (precisa ter onClick configurado externamente)
+  if (asChild && React.isValidElement(children)) {
+    return React.cloneElement(children, props as any);
+  }
+  
+  return <div {...props}>{children}</div>;
+};
 
-const DialogOverlay = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Overlay>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Overlay>
->(({ className, ...props }, ref) => (
-  <DialogPrimitive.Overlay
-    ref={ref}
-    className={cn(
-      "fixed inset-0 z-50 bg-black/80 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
-      className
-    )}
-    {...props}
-  />
-))
-DialogOverlay.displayName = DialogPrimitive.Overlay.displayName
+// DialogClose - componente para fechar o dialog (compatibilidade)
+interface DialogCloseProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  asChild?: boolean;
+}
 
-const DialogContent = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <DialogPortal>
-    <DialogOverlay />
-    <DialogPrimitive.Content
+const DialogClose = ({ children, asChild, onClick, ...props }: DialogCloseProps) => {
+  if (asChild && React.isValidElement(children)) {
+    return React.cloneElement(children, { onClick } as any);
+  }
+  
+  return (
+    <button onClick={onClick} {...props}>
+      {children}
+    </button>
+  );
+};
+
+// DialogContent - wrapper do conteúdo com botão de fechar
+interface DialogContentProps extends React.HTMLAttributes<HTMLDivElement> {
+  sx?: SxProps<Theme>;
+  onClose?: () => void;
+}
+
+const DialogContent = React.forwardRef<HTMLDivElement, DialogContentProps>(
+  ({ children, sx, onClose, ...props }, ref) => (
+    <MuiDialogContent
       ref={ref}
-      className={cn(
-        "fixed left-[50%] top-[50%] z-50 grid w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2 data-[state=closed]:slide-out-to-top-[48%] data-[state=open]:slide-in-from-left-1/2 data-[state=open]:slide-in-from-top-[48%] sm:rounded-lg",
-        className
+      sx={{
+        p: 6,
+        position: 'relative',
+        ...sx,
+      }}
+      {...props}
+    >
+      {onClose && (
+        <IconButton
+          onClick={onClose}
+          sx={(theme) => ({
+            position: 'absolute',
+            right: 16,
+            top: 16,
+            borderRadius: '4px',
+            opacity: 0.7,
+            transition: theme.transitions.create('opacity'),
+            '&:hover': {
+              opacity: 1,
+            },
+            '&:focus-visible': {
+              outline: `2px solid ${theme.palette.custom.ring}`,
+              outlineOffset: 2,
+            },
+          })}
+          aria-label="Close"
+        >
+          <X style={{ width: '1rem', height: '1rem' }} />
+        </IconButton>
       )}
+      {children}
+    </MuiDialogContent>
+  )
+);
+DialogContent.displayName = "DialogContent";
+
+// DialogHeader - container para título e descrição
+interface DialogHeaderProps extends React.HTMLAttributes<HTMLDivElement> {
+  sx?: SxProps<Theme>;
+}
+
+const DialogHeader = React.forwardRef<HTMLDivElement, DialogHeaderProps>(
+  ({ children, sx, ...props }, ref) => (
+    <div
+      ref={ref}
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '6px',
+        textAlign: 'center',
+      }}
       {...props}
     >
       {children}
-      <DialogPrimitive.Close className="absolute right-4 top-4 rounded-sm opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
-        <X className="h-4 w-4" />
-        <span className="sr-only">Close</span>
-      </DialogPrimitive.Close>
-    </DialogPrimitive.Content>
-  </DialogPortal>
-))
-DialogContent.displayName = DialogPrimitive.Content.displayName
+    </div>
+  )
+);
+DialogHeader.displayName = "DialogHeader";
 
-const DialogHeader = ({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn(
-      "flex flex-col space-y-1.5 text-center sm:text-left",
-      className
-    )}
+// DialogFooter - container para ações
+const DialogFooter = ({ children, sx, ...props }: DialogHeaderProps) => (
+  <MuiDialogActions
+    sx={{
+      display: 'flex',
+      flexDirection: { xs: 'column-reverse', sm: 'row' },
+      justifyContent: { sm: 'flex-end' },
+      gap: { sm: 2 },
+      p: 6,
+      pt: 0,
+      ...sx,
+    }}
     {...props}
-  />
-)
-DialogHeader.displayName = "DialogHeader"
+  >
+    {children}
+  </MuiDialogActions>
+);
+DialogFooter.displayName = "DialogFooter";
 
-const DialogFooter = ({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLDivElement>) => (
-  <div
-    className={cn(
-      "flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2",
-      className
-    )}
-    {...props}
-  />
-)
-DialogFooter.displayName = "DialogFooter"
+// DialogTitle - título do dialog
+interface DialogTitleProps extends React.HTMLAttributes<HTMLHeadingElement> {
+  sx?: SxProps<Theme>;
+}
 
-const DialogTitle = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Title>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Title>
->(({ className, ...props }, ref) => (
-  <DialogPrimitive.Title
-    ref={ref}
-    className={cn(
-      "text-lg font-semibold leading-none tracking-tight",
-      className
-    )}
-    {...props}
-  />
-))
-DialogTitle.displayName = DialogPrimitive.Title.displayName
+const DialogTitle = React.forwardRef<HTMLHeadingElement, DialogTitleProps>(
+  ({ children, sx, ...props }, ref) => (
+    <MuiDialogTitle
+      ref={ref}
+      sx={{
+        fontSize: '1.125rem',
+        fontWeight: 600,
+        lineHeight: 1,
+        letterSpacing: '-0.025em',
+        p: 6,
+        pb: 0,
+        ...sx,
+      }}
+      {...props}
+    >
+      {children}
+    </MuiDialogTitle>
+  )
+);
+DialogTitle.displayName = "DialogTitle";
 
-const DialogDescription = React.forwardRef<
-  React.ElementRef<typeof DialogPrimitive.Description>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Description>
->(({ className, ...props }, ref) => (
-  <DialogPrimitive.Description
-    ref={ref}
-    className={cn("text-sm text-muted-foreground", className)}
-    {...props}
-  />
-))
-DialogDescription.displayName = DialogPrimitive.Description.displayName
+// DialogDescription - descrição do dialog
+interface DialogDescriptionProps extends React.HTMLAttributes<HTMLParagraphElement> {
+  sx?: SxProps<Theme>;
+}
+
+const DialogDescription = React.forwardRef<HTMLParagraphElement, DialogDescriptionProps>(
+  ({ children, sx, ...props }, ref) => {
+    const theme = useTheme();
+    
+    return (
+      <Typography
+        ref={ref}
+        variant="body2"
+        sx={{
+          color: theme.palette.custom.mutedForeground,
+          ...(typeof sx === 'function' ? sx(theme) : sx),
+        }}
+        {...props}
+      >
+        {children}
+      </Typography>
+    );
+  }
+);
+DialogDescription.displayName = "DialogDescription";
 
 export {
   Dialog,
-  DialogPortal,
-  DialogOverlay,
-  DialogClose,
   DialogTrigger,
+  DialogClose,
   DialogContent,
   DialogHeader,
   DialogFooter,
   DialogTitle,
   DialogDescription,
 }
+export type { DialogProps, DialogContentProps, DialogTitleProps, DialogDescriptionProps }

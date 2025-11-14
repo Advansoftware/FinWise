@@ -2,51 +2,101 @@
 
 import * as React from "react"
 import * as TabsPrimitive from "@radix-ui/react-tabs"
-
-import { cn } from "@/lib/utils"
+import { styled, type Theme, type SxProps } from '@mui/material/styles'
 
 const Tabs = TabsPrimitive.Root
 
+const StyledTabsList = styled(TabsPrimitive.List)(({ theme }) => ({
+  display: 'inline-flex',
+  height: '2.5rem',
+  alignItems: 'center',
+  justifyContent: 'center',
+  borderRadius: theme.shape.borderRadius,
+  backgroundColor: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.muted : (theme.palette as any).custom?.muted,
+  padding: theme.spacing(1),
+  color: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.mutedForeground : (theme.palette as any).custom?.mutedForeground,
+}))
+
+interface TabsListProps extends React.ComponentPropsWithoutRef<typeof TabsPrimitive.List> {
+  sx?: SxProps<Theme>;
+}
+
 const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>
->(({ className, ...props }, ref) => (
-  <TabsPrimitive.List
+  TabsListProps
+>(({ sx, ...props }, ref) => (
+  <StyledTabsList
     ref={ref}
-    className={cn(
-      "inline-flex h-10 items-center justify-center rounded-md bg-muted p-1 text-muted-foreground",
-      className
-    )}
+    sx={sx}
     {...props}
   />
 ))
 TabsList.displayName = TabsPrimitive.List.displayName
 
+const StyledTabsTrigger = styled(TabsPrimitive.Trigger)(({ theme }) => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  whiteSpace: 'nowrap',
+  borderRadius: typeof theme.shape.borderRadius === 'number' ? theme.shape.borderRadius / 2 : 4,
+  padding: theme.spacing(1.5, 3),
+  fontSize: theme.typography.pxToRem(14),
+  fontWeight: theme.typography.fontWeightMedium,
+  transition: theme.transitions.create(['background-color', 'color', 'box-shadow']),
+  
+  '&:focus-visible': {
+    outline: 'none',
+    boxShadow: `0 0 0 2px ${theme.palette.mode === 'dark' ? (theme.palette as any).custom?.ring + '33' : (theme.palette as any).custom?.ring + '33'}`,
+  },
+  
+  '&:disabled': {
+    pointerEvents: 'none',
+    opacity: 0.5,
+  },
+  
+  '&[data-state=active]': {
+    backgroundColor: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.background : (theme.palette as any).custom?.background,
+    color: theme.palette.text.primary,
+    boxShadow: theme.shadows[1],
+  },
+}))
+
+interface TabsTriggerProps extends React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger> {
+  sx?: SxProps<Theme>;
+}
+
 const TabsTrigger = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>
->(({ className, ...props }, ref) => (
-  <TabsPrimitive.Trigger
+  TabsTriggerProps
+>(({ sx, ...props }, ref) => (
+  <StyledTabsTrigger
     ref={ref}
-    className={cn(
-      "inline-flex items-center justify-center whitespace-nowrap rounded-sm px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm",
-      className
-    )}
+    sx={sx}
     {...props}
   />
 ))
 TabsTrigger.displayName = TabsPrimitive.Trigger.displayName
 
+const StyledTabsContent = styled(TabsPrimitive.Content)(({ theme }) => ({
+  marginTop: theme.spacing(2),
+  
+  '&:focus-visible': {
+    outline: 'none',
+    boxShadow: `0 0 0 2px ${theme.palette.mode === 'dark' ? (theme.palette as any).custom?.ring + '33' : (theme.palette as any).custom?.ring + '33'}`,
+  },
+}))
+
+interface TabsContentProps extends React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content> {
+  sx?: SxProps<Theme>;
+}
+
 const TabsContent = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>
->(({ className, ...props }, ref) => (
-  <TabsPrimitive.Content
+  TabsContentProps
+>(({ sx, ...props }, ref) => (
+  <StyledTabsContent
     ref={ref}
-    className={cn(
-      "mt-2 ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-      className
-    )}
+    sx={sx}
     {...props}
   />
 ))

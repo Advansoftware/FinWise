@@ -1,17 +1,36 @@
+'use client';
 
 import * as React from 'react';
+import { TextField, type TextFieldProps, styled } from '@mui/material';
+import { type Theme, type SxProps } from '@mui/material/styles';
 
-import {cn} from '@/lib/utils';
+const StyledTextField = styled(TextField)(({ theme }) => ({
+  '& .MuiInputBase-root': {
+    minHeight: '80px',
+    alignItems: 'flex-start',
+    fontSize: theme.typography.pxToRem(16),
+    [theme.breakpoints.up('sm')]: {
+      fontSize: theme.typography.pxToRem(14),
+    },
+  },
+  '& .MuiInputBase-input': {
+    padding: theme.spacing(2, 3),
+  },
+}));
 
-const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<'textarea'>>(
-  ({className, ...props}, ref) => {
+interface TextareaProps extends Omit<TextFieldProps, 'multiline' | 'variant'> {
+  sx?: SxProps<Theme>;
+}
+
+const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
+  ({ sx, ...props }, ref) => {
     return (
-      <textarea
-        className={cn(
-          'flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:text-sm',
-          className
-        )}
-        ref={ref}
+      <StyledTextField
+        multiline
+        minRows={3}
+        variant="outlined"
+        inputRef={ref}
+        sx={sx}
         {...props}
       />
     );
@@ -19,4 +38,4 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, React.ComponentProps<'tex
 );
 Textarea.displayName = 'Textarea';
 
-export {Textarea};
+export { Textarea };

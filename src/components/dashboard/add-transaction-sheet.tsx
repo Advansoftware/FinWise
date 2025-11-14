@@ -11,6 +11,7 @@ import {
   SheetFooter,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { Box } from '@mui/material'
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -200,16 +201,16 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
 
   return (
     <Sheet open={isOpen} onOpenChange={(open) => { setIsOpen(open); if(!open) resetForm(); }}>
-      <SheetTrigger asChild>{children}</SheetTrigger>
-      <SheetContent className="w-full sm:max-w-md flex flex-col h-full sm:h-auto">
-        <SheetHeader className="space-y-2 pb-4">
+            <SheetTrigger asChild>{children}</SheetTrigger>
+            <SheetContent sx={{ width: '100%', maxWidth: { sm: '28rem' }, display: 'flex', flexDirection: 'column', height: { xs: '100%', sm: 'auto' } }}>
+                <SheetHeader sx={{ gap: 2, pb: 2 }}>
           <SheetTitle>Adicionar Nova Transação</SheetTitle>
           <SheetDescription>
             Insira os detalhes da sua movimentação.
           </SheetDescription>
         </SheetHeader>
         
-        <div className="flex-1 overflow-y-auto space-y-6 pr-2">
+                <Box sx={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 3, pr: 2 }}>
             {/* Tipo de Transação */}
             <div className="space-y-3">
                 <Label className="text-sm font-medium">Tipo</Label>
@@ -381,13 +382,13 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                     </div>
                 </>
             )}
-        </div>
+        </Box>
         
-        <SheetFooter className="pt-6">
+        <SheetFooter sx={{ pt: 6 }}>
             <Button 
                 onClick={handleSubmit} 
                 disabled={isSubmitting || wallets.length === 0}
-                className="w-full"
+                sx={{ width: '100%' }}
             >
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {wallets.length === 0 ? "Crie uma carteira primeiro" : "Salvar Transação"}

@@ -2,26 +2,47 @@
 
 import * as React from "react"
 import * as ProgressPrimitive from "@radix-ui/react-progress"
+import { styled, type Theme, type SxProps } from '@mui/material/styles'
 
-import { cn } from "@/lib/utils"
+const StyledProgressRoot = styled(ProgressPrimitive.Root)(({ theme }) => ({
+  position: 'relative',
+  height: '1rem',
+  width: '100%',
+  overflow: 'hidden',
+  borderRadius: '9999px',
+  backgroundColor: theme.palette.secondary.main,
+}))
+
+const StyledProgressIndicator = styled(ProgressPrimitive.Indicator)(({ theme }) => ({
+  height: '100%',
+  width: '100%',
+  flex: 1,
+  backgroundColor: theme.palette.primary.main,
+  transition: theme.transitions.create(['transform'], {
+    duration: 500,
+    easing: theme.transitions.easing.easeInOut,
+  }),
+}))
+
+interface ProgressProps extends React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root> {
+  sx?: SxProps<Theme>;
+  indicatorSx?: SxProps<Theme>;
+}
 
 const Progress = React.forwardRef<
   React.ElementRef<typeof ProgressPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof ProgressPrimitive.Root> & { indicatorClassName?: string }
->(({ className, value, indicatorClassName, ...props }, ref) => (
-  <ProgressPrimitive.Root
+  ProgressProps
+>(({ sx, value, indicatorSx, ...props }, ref) => (
+  <StyledProgressRoot
     ref={ref}
-    className={cn(
-      "relative h-4 w-full overflow-hidden rounded-full bg-secondary",
-      className
-    )}
+    sx={sx}
     {...props}
   >
-    <ProgressPrimitive.Indicator
-      className={cn("h-full w-full flex-1 bg-primary transition-all duration-500 ease-in-out", indicatorClassName)}
+    <StyledProgressIndicator
+      sx={indicatorSx}
       style={{ transform: `translateX(-${100 - (value || 0)}%)` }}
     />
-  </ProgressPrimitive.Root>
+  </StyledProgressRoot>
 ))
 Progress.displayName = ProgressPrimitive.Root.displayName
 

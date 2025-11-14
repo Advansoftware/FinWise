@@ -1,11 +1,11 @@
 "use client"
 
 import * as React from "react"
+import { SxProps, Theme } from '@mui/material/styles'
 import { format } from "date-fns"
 import { Calendar as CalendarIcon } from "lucide-react"
 import { ptBR } from "date-fns/locale"
 
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import {
@@ -17,26 +17,29 @@ import {
 interface SingleDatePickerProps {
     date: Date | undefined;
     setDate: (date: Date | undefined) => void;
-    className?: string;
+    sx?: SxProps<Theme>;
 }
 
-export function SingleDatePicker({ date, setDate, className }: SingleDatePickerProps) {
+export function SingleDatePicker({ date, setDate, sx }: SingleDatePickerProps) {
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button
           variant={"outline"}
-          className={cn(
-            "w-full justify-start text-left font-normal",
-            !date && "text-muted-foreground",
-            className
-          )}
+          sx={{
+            width: '100%',
+            justifyContent: 'flex-start',
+            textAlign: 'left',
+            fontWeight: 'normal',
+            ...((!date) && { color: theme => (theme.palette as any).custom?.mutedForeground }),
+            ...sx
+          }}
         >
-          <CalendarIcon className="mr-2 h-4 w-4" />
+          <CalendarIcon style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} />
           {date ? format(date, "PPP", { locale: ptBR }) : <span>Selecione uma data</span>}
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0">
+      <PopoverContent sx={{ width: 'auto', p: 0 }}>
         <Calendar
           mode="single"
           selected={date}

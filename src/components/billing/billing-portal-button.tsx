@@ -8,11 +8,12 @@ import { usePayment } from '@/hooks/use-payment';
 import { useAuth } from '@/hooks/use-auth';
 import { usePlan } from '@/hooks/use-plan';
 import { useToast } from '@/hooks/use-toast';
+import { type SxProps, type Theme } from '@mui/material';
 
 interface BillingPortalButtonProps {
   variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'link' | 'destructive';
   size?: 'default' | 'sm' | 'lg' | 'icon';
-  className?: string;
+  sx?: SxProps<Theme>;
   children?: React.ReactNode;
   showIcon?: boolean;
   disabled?: boolean;
@@ -21,7 +22,7 @@ interface BillingPortalButtonProps {
 export function BillingPortalButton({ 
   variant = 'outline', 
   size = 'default', 
-  className,
+  sx,
   children,
   showIcon = true,
   disabled = false
@@ -88,7 +89,7 @@ export function BillingPortalButton({
       disabled={isLoading || disabled}
       variant={variant}
       size={size}
-      className={className}
+      sx={sx}
     >
       {children || defaultChildren}
     </Button>

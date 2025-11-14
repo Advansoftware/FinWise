@@ -1,57 +1,177 @@
+'use client';
 
 import * as React from "react"
+import { Button as MuiButton, ButtonProps as MuiButtonProps } from '@mui/material';
+import { styled, type Theme, type SxProps } from '@mui/material/styles';
 import { Slot } from "@radix-ui/react-slot"
-import { cva, type VariantProps } from "class-variance-authority"
 
-import { cn } from "@/lib/utils"
+// Mapeamento de variantes para o MUI
+type ButtonVariant = 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
+type ButtonSize = 'default' | 'sm' | 'lg' | 'icon';
 
-const buttonVariants = cva(
-  "inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
-  {
-    variants: {
-      variant: {
-        default: "bg-primary text-primary-foreground hover:bg-primary/90",
-        destructive:
-          "bg-destructive text-destructive-foreground hover:bg-destructive/90",
-        outline:
-          "border border-input bg-background hover:bg-accent hover:text-accent-foreground",
-        secondary:
-          "bg-secondary text-secondary-foreground hover:bg-secondary/80",
-        ghost: "hover:bg-accent hover:text-accent-foreground",
-        link: "text-primary underline-offset-4 hover:underline",
-      },
-      size: {
-        default: "h-10 px-4 py-2",
-        sm: "h-9 rounded-md px-3",
-        lg: "h-11 rounded-md px-8",
-        icon: "h-10 w-10",
-      },
-    },
-    defaultVariants: {
-      variant: "default",
-      size: "default",
-    },
-  }
-)
-
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
-    VariantProps<typeof buttonVariants> {
-  asChild?: boolean
+export interface ButtonProps extends Omit<MuiButtonProps, 'variant' | 'size' | 'color'> {
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  asChild?: boolean;
 }
 
+// Helper para mapear variante para estilos
+const getVariantStyles = (variant: ButtonVariant, theme: Theme): Record<string, any> => {
+  const styles: Record<ButtonVariant, Record<string, any>> = {
+    default: {
+      backgroundColor: theme.palette.primary.main,
+      color: theme.palette.primary.contrastText,
+      '&:hover': {
+        backgroundColor: `rgba(${theme.palette.primary.main}, 0.9)`,
+      },
+    },
+    destructive: {
+      backgroundColor: theme.palette.error.main,
+      color: theme.palette.error.contrastText,
+      '&:hover': {
+        backgroundColor: `rgba(${theme.palette.error.main}, 0.9)`,
+      },
+    },
+    outline: {
+      border: `1px solid ${theme.palette.custom.input}`,
+      backgroundColor: theme.palette.background.default,
+      color: theme.palette.text.primary,
+      '&:hover': {
+        backgroundColor: theme.palette.custom.accent,
+        color: theme.palette.custom.accentForeground,
+      },
+    },
+    secondary: {
+      backgroundColor: theme.palette.secondary.main,
+      color: theme.palette.secondary.contrastText,
+      '&:hover': {
+        backgroundColor: `rgba(${theme.palette.secondary.main}, 0.8)`,
+      },
+    },
+    ghost: {
+      backgroundColor: 'transparent',
+      color: theme.palette.text.primary,
+      '&:hover': {
+        backgroundColor: theme.palette.custom.accent,
+        color: theme.palette.custom.accentForeground,
+      },
+    },
+    link: {
+      backgroundColor: 'transparent',
+      color: theme.palette.primary.main,
+      textDecoration: 'underline',
+      textUnderlineOffset: '4px',
+      padding: 0,
+      height: 'auto',
+      minWidth: 'auto',
+      '&:hover': {
+        textDecoration: 'underline',
+        backgroundColor: 'transparent',
+      },
+    },
+  };
+
+  return styles[variant];
+};
+
+const getSizeStyles = (size: ButtonSize, theme: Theme): Record<string, any> => {
+  const styles: Record<ButtonSize, Record<string, any>> = {
+    default: {
+      height: '2.5rem',
+      padding: `${theme.spacing(2)} ${theme.spacing(4)}`,
+    },
+    sm: {
+      height: '2.25rem',
+      padding: `0 ${theme.spacing(3)}`,
+    },
+    lg: {
+      height: '2.75rem',
+      padding: `0 ${theme.spacing(8)}`,
+    },
+    icon: {
+      height: '2.5rem',
+      width: '2.5rem',
+      padding: 0,
+      minWidth: '2.5rem',
+    },
+  };
+
+  return styles[size];
+};
+
+// Styled Button base
+const StyledButton = styled(MuiButton)(({ theme }) => ({
+  textTransform: 'none' as const,
+  fontWeight: 500,
+  fontSize: '0.875rem',
+  borderRadius: theme.shape.borderRadius,
+  gap: theme.spacing(2),
+  transition: theme.transitions.create(['background-color', 'box-shadow', 'border-color', 'color'], {
+    duration: theme.transitions.duration.short,
+  }),
+  '&:focus-visible': {
+    outline: 'none',
+    boxShadow: `0 0 0 2px ${theme.palette.background.default}, 0 0 0 4px ${theme.palette.custom.ring}`,
+  },
+  '&.Mui-disabled': {
+    pointerEvents: 'none',
+    opacity: 0.5,
+  },
+  '& svg': {
+    pointerEvents: 'none',
+    width: '1rem',
+    height: '1rem',
+    flexShrink: 0,
+  },
+}));
+
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, asChild = false, ...props }, ref) => {
-    const Comp = asChild ? Slot : "button"
+  ({ variant = 'default', size = 'default', asChild = false, children, sx, ...props }, ref) => {
+    if (asChild) {
+      // Se asChild, usar Slot do Radix
+      return (
+        <Slot ref={ref} {...props}>
+          {children}
+        </Slot>
+      );
+    }
+
+    const combinedSx: SxProps<Theme> = (theme) => {
+      const variantStyles = getVariantStyles(variant, theme);
+      const sizeStyles = getSizeStyles(size, theme);
+      const customSx = typeof sx === 'function' ? sx(theme) : sx || {};
+      
+      return {
+        ...variantStyles,
+        ...sizeStyles,
+        ...(customSx as Record<string, any>),
+      };
+    };
+
     return (
-      <Comp
-        className={cn(buttonVariants({ variant, size, className }))}
+      <StyledButton
         ref={ref}
+        disableRipple={variant === 'link' || variant === 'ghost'}
+        sx={combinedSx}
         {...props}
-      />
-    )
+      >
+        {children}
+      </StyledButton>
+    );
   }
-)
+);
+
 Button.displayName = "Button"
 
-export { Button, buttonVariants }
+// Função helper para compatibilidade com componentes que usam buttonVariants
+export const buttonVariants = ({ variant = 'default', size = 'default' }: { variant?: ButtonVariant; size?: ButtonSize } = {}) => {
+  // Esta é uma função helper para manter compatibilidade
+  // Retorna um objeto que pode ser usado com className (embora não seja ideal no MUI)
+  return {
+    variant,
+    size,
+  };
+};
+
+export { Button }
+export type { ButtonVariant, ButtonSize }

@@ -12,7 +12,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
           <header className="sticky top-0 z-40 w-full border-b bg-background">
               <div className="container mx-auto flex h-14 items-center justify-between">
                   <Link href="/" className="flex items-center gap-2">
-                    <Logo className="w-8 h-8"/>
+                    <Logo sx={{ width: '2rem', height: '2rem' }} />
                     <span className="text-xl font-bold">Gastometria</span>
                   </Link>
                   <Button asChild>

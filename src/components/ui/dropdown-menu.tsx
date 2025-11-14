@@ -3,8 +3,8 @@
 import * as React from "react"
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
 import { Check, ChevronRight, Circle } from "lucide-react"
-
-import { cn } from "@/lib/utils"
+import { styled, type Theme, type SxProps, useTheme } from '@mui/material/styles'
+import { Box } from '@mui/material'
 
 const DropdownMenu = DropdownMenuPrimitive.Root
 
@@ -18,163 +18,382 @@ const DropdownMenuSub = DropdownMenuPrimitive.Sub
 
 const DropdownMenuRadioGroup = DropdownMenuPrimitive.RadioGroup
 
+const StyledDropdownMenuSubTrigger = styled(DropdownMenuPrimitive.SubTrigger, {
+  shouldForwardProp: (prop) => prop !== 'inset',
+})<{ inset?: boolean }>(({ theme, inset }) => ({
+  display: 'flex',
+  cursor: 'default',
+  gap: theme.spacing(2),
+  userSelect: 'none',
+  alignItems: 'center',
+  borderRadius: typeof theme.shape.borderRadius === 'number' ? theme.shape.borderRadius / 2 : 4,
+  padding: theme.spacing(1.5, 2),
+  paddingLeft: inset ? theme.spacing(8) : theme.spacing(2),
+  fontSize: theme.typography.pxToRem(14),
+  outline: 'none',
+  transition: theme.transitions.create(['background-color', 'color']),
+  
+  '&:focus, &[data-state=open]': {
+    backgroundColor: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.accent : (theme.palette as any).custom?.accent,
+  },
+  
+  '& svg': {
+    pointerEvents: 'none',
+    width: '1rem',
+    height: '1rem',
+    flexShrink: 0,
+  },
+}))
+
+interface DropdownMenuSubTriggerProps extends React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubTrigger> {
+  inset?: boolean;
+  sx?: SxProps<Theme>;
+}
+
 const DropdownMenuSubTrigger = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.SubTrigger>,
-  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubTrigger> & {
-    inset?: boolean
-  }
->(({ className, inset, children, ...props }, ref) => (
-  <DropdownMenuPrimitive.SubTrigger
+  DropdownMenuSubTriggerProps
+>(({ sx, inset, children, ...props }, ref) => (
+  <StyledDropdownMenuSubTrigger
     ref={ref}
-    className={cn(
-      "flex cursor-default gap-2 select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none focus:bg-accent data-[state=open]:bg-accent [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
-      inset && "pl-8",
-      className
-    )}
+    inset={inset}
+    sx={sx}
     {...props}
   >
     {children}
-    <ChevronRight className="ml-auto" />
-  </DropdownMenuPrimitive.SubTrigger>
+    <ChevronRight style={{ marginLeft: 'auto', width: '1rem', height: '1rem' }} />
+  </StyledDropdownMenuSubTrigger>
 ))
-DropdownMenuSubTrigger.displayName =
-  DropdownMenuPrimitive.SubTrigger.displayName
+DropdownMenuSubTrigger.displayName = DropdownMenuPrimitive.SubTrigger.displayName
+
+const StyledDropdownMenuSubContent = styled(DropdownMenuPrimitive.SubContent)(({ theme }) => ({
+  zIndex: theme.zIndex.modal,
+  minWidth: '8rem',
+  overflow: 'hidden',
+  borderRadius: theme.shape.borderRadius,
+  border: `1px solid ${theme.palette.mode === 'dark' ? (theme.palette as any).custom?.border : (theme.palette as any).custom?.border}`,
+  backgroundColor: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.popover : (theme.palette as any).custom?.popover,
+  padding: theme.spacing(1),
+  color: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.popoverForeground : (theme.palette as any).custom?.popoverForeground,
+  boxShadow: theme.shadows[6],
+  
+  '&[data-state=open]': {
+    animation: 'fadeIn 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+  },
+  
+  '&[data-state=closed]': {
+    animation: 'fadeOut 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+  },
+  
+  '@keyframes fadeIn': {
+    from: { opacity: 0, transform: 'scale(0.95)' },
+    to: { opacity: 1, transform: 'scale(1)' },
+  },
+  
+  '@keyframes fadeOut': {
+    from: { opacity: 1, transform: 'scale(1)' },
+    to: { opacity: 0, transform: 'scale(0.95)' },
+  },
+}))
+
+interface DropdownMenuSubContentProps extends React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubContent> {
+  sx?: SxProps<Theme>;
+}
 
 const DropdownMenuSubContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.SubContent>,
-  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.SubContent>
->(({ className, ...props }, ref) => (
-  <DropdownMenuPrimitive.SubContent
+  DropdownMenuSubContentProps
+>(({ sx, ...props }, ref) => (
+  <StyledDropdownMenuSubContent
     ref={ref}
-    className={cn(
-      "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-lg data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-      className
-    )}
+    sx={sx}
     {...props}
   />
 ))
-DropdownMenuSubContent.displayName =
-  DropdownMenuPrimitive.SubContent.displayName
+DropdownMenuSubContent.displayName = DropdownMenuPrimitive.SubContent.displayName
+
+const StyledDropdownMenuContent = styled(DropdownMenuPrimitive.Content)(({ theme }) => ({
+  zIndex: theme.zIndex.modal,
+  minWidth: '8rem',
+  overflow: 'hidden',
+  borderRadius: theme.shape.borderRadius,
+  border: `1px solid ${theme.palette.mode === 'dark' ? (theme.palette as any).custom?.border : (theme.palette as any).custom?.border}`,
+  backgroundColor: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.popover : (theme.palette as any).custom?.popover,
+  padding: theme.spacing(1),
+  color: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.popoverForeground : (theme.palette as any).custom?.popoverForeground,
+  boxShadow: theme.shadows[4],
+  
+  '&[data-state=open]': {
+    animation: 'fadeIn 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+  },
+  
+  '&[data-state=closed]': {
+    animation: 'fadeOut 150ms cubic-bezier(0.4, 0, 0.2, 1)',
+  },
+  
+  '@keyframes fadeIn': {
+    from: { opacity: 0, transform: 'scale(0.95)' },
+    to: { opacity: 1, transform: 'scale(1)' },
+  },
+  
+  '@keyframes fadeOut': {
+    from: { opacity: 1, transform: 'scale(1)' },
+    to: { opacity: 0, transform: 'scale(0.95)' },
+  },
+}))
+
+interface DropdownMenuContentProps extends React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content> {
+  sx?: SxProps<Theme>;
+}
 
 const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Content>
->(({ className, sideOffset = 4, ...props }, ref) => (
+  DropdownMenuContentProps
+>(({ sx, sideOffset = 4, ...props }, ref) => (
   <DropdownMenuPrimitive.Portal>
-    <DropdownMenuPrimitive.Content
+    <StyledDropdownMenuContent
       ref={ref}
       sideOffset={sideOffset}
-      className={cn(
-        "z-50 min-w-[8rem] overflow-hidden rounded-md border bg-popover p-1 text-popover-foreground shadow-md data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2",
-        className
-      )}
+      sx={sx}
       {...props}
     />
   </DropdownMenuPrimitive.Portal>
 ))
 DropdownMenuContent.displayName = DropdownMenuPrimitive.Content.displayName
 
+const StyledDropdownMenuItem = styled(DropdownMenuPrimitive.Item, {
+  shouldForwardProp: (prop) => prop !== 'inset',
+})<{ inset?: boolean }>(({ theme, inset }) => ({
+  position: 'relative',
+  display: 'flex',
+  cursor: 'default',
+  userSelect: 'none',
+  alignItems: 'center',
+  gap: theme.spacing(2),
+  borderRadius: typeof theme.shape.borderRadius === 'number' ? theme.shape.borderRadius / 2 : 4,
+  padding: theme.spacing(1.5, 2),
+  paddingLeft: inset ? theme.spacing(8) : theme.spacing(2),
+  fontSize: theme.typography.pxToRem(14),
+  outline: 'none',
+  transition: theme.transitions.create(['background-color', 'color']),
+  
+  '&:focus': {
+    backgroundColor: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.accent : (theme.palette as any).custom?.accent,
+    color: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.accentForeground : (theme.palette as any).custom?.accentForeground,
+  },
+  
+  '&[data-disabled]': {
+    pointerEvents: 'none',
+    opacity: 0.5,
+  },
+  
+  '& svg': {
+    pointerEvents: 'none',
+    width: '1rem',
+    height: '1rem',
+    flexShrink: 0,
+  },
+}))
+
+interface DropdownMenuItemProps extends React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> {
+  inset?: boolean;
+  sx?: SxProps<Theme>;
+}
+
 const DropdownMenuItem = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Item>,
-  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
-    inset?: boolean
-  }
->(({ className, inset, ...props }, ref) => (
-  <DropdownMenuPrimitive.Item
+  DropdownMenuItemProps
+>(({ sx, inset, ...props }, ref) => (
+  <StyledDropdownMenuItem
     ref={ref}
-    className={cn(
-      "relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0",
-      inset && "pl-8",
-      className
-    )}
+    inset={inset}
+    sx={sx}
     {...props}
   />
 ))
 DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName
 
+const StyledDropdownMenuCheckboxItem = styled(DropdownMenuPrimitive.CheckboxItem)(({ theme }) => ({
+  position: 'relative',
+  display: 'flex',
+  cursor: 'default',
+  userSelect: 'none',
+  alignItems: 'center',
+  borderRadius: typeof theme.shape.borderRadius === 'number' ? theme.shape.borderRadius / 2 : 4,
+  padding: theme.spacing(1.5, 2, 1.5, 8),
+  fontSize: theme.typography.pxToRem(14),
+  outline: 'none',
+  transition: theme.transitions.create(['background-color', 'color']),
+  
+  '&:focus': {
+    backgroundColor: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.accent : (theme.palette as any).custom?.accent,
+    color: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.accentForeground : (theme.palette as any).custom?.accentForeground,
+  },
+  
+  '&[data-disabled]': {
+    pointerEvents: 'none',
+    opacity: 0.5,
+  },
+}))
+
+interface DropdownMenuCheckboxItemProps extends React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.CheckboxItem> {
+  sx?: SxProps<Theme>;
+}
+
 const DropdownMenuCheckboxItem = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.CheckboxItem>,
-  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.CheckboxItem>
->(({ className, children, checked, ...props }, ref) => (
-  <DropdownMenuPrimitive.CheckboxItem
+  DropdownMenuCheckboxItemProps
+>(({ sx, children, checked, ...props }, ref) => (
+  <StyledDropdownMenuCheckboxItem
     ref={ref}
-    className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-      className
-    )}
+    sx={sx}
     checked={checked}
     {...props}
   >
-    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+    <Box
+      component="span"
+      sx={{
+        position: 'absolute',
+        left: '0.5rem',
+        display: 'flex',
+        height: '0.875rem',
+        width: '0.875rem',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
       <DropdownMenuPrimitive.ItemIndicator>
-        <Check className="h-4 w-4" />
+        <Check style={{ width: '1rem', height: '1rem' }} />
       </DropdownMenuPrimitive.ItemIndicator>
-    </span>
+    </Box>
     {children}
-  </DropdownMenuPrimitive.CheckboxItem>
+  </StyledDropdownMenuCheckboxItem>
 ))
-DropdownMenuCheckboxItem.displayName =
-  DropdownMenuPrimitive.CheckboxItem.displayName
+DropdownMenuCheckboxItem.displayName = DropdownMenuPrimitive.CheckboxItem.displayName
+
+const StyledDropdownMenuRadioItem = styled(DropdownMenuPrimitive.RadioItem)(({ theme }) => ({
+  position: 'relative',
+  display: 'flex',
+  cursor: 'default',
+  userSelect: 'none',
+  alignItems: 'center',
+  borderRadius: typeof theme.shape.borderRadius === 'number' ? theme.shape.borderRadius / 2 : 4,
+  padding: theme.spacing(1.5, 2, 1.5, 8),
+  fontSize: theme.typography.pxToRem(14),
+  outline: 'none',
+  transition: theme.transitions.create(['background-color', 'color']),
+  
+  '&:focus': {
+    backgroundColor: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.accent : (theme.palette as any).custom?.accent,
+    color: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.accentForeground : (theme.palette as any).custom?.accentForeground,
+  },
+  
+  '&[data-disabled]': {
+    pointerEvents: 'none',
+    opacity: 0.5,
+  },
+}))
+
+interface DropdownMenuRadioItemProps extends React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.RadioItem> {
+  sx?: SxProps<Theme>;
+}
 
 const DropdownMenuRadioItem = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.RadioItem>,
-  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.RadioItem>
->(({ className, children, ...props }, ref) => (
-  <DropdownMenuPrimitive.RadioItem
+  DropdownMenuRadioItemProps
+>(({ sx, children, ...props }, ref) => (
+  <StyledDropdownMenuRadioItem
     ref={ref}
-    className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
-      className
-    )}
+    sx={sx}
     {...props}
   >
-    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+    <Box
+      component="span"
+      sx={{
+        position: 'absolute',
+        left: '0.5rem',
+        display: 'flex',
+        height: '0.875rem',
+        width: '0.875rem',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
       <DropdownMenuPrimitive.ItemIndicator>
-        <Circle className="h-2 w-2 fill-current" />
+        <Circle style={{ width: '0.5rem', height: '0.5rem', fill: 'currentColor' }} />
       </DropdownMenuPrimitive.ItemIndicator>
-    </span>
+    </Box>
     {children}
-  </DropdownMenuPrimitive.RadioItem>
+  </StyledDropdownMenuRadioItem>
 ))
 DropdownMenuRadioItem.displayName = DropdownMenuPrimitive.RadioItem.displayName
 
+const StyledDropdownMenuLabel = styled(DropdownMenuPrimitive.Label, {
+  shouldForwardProp: (prop) => prop !== 'inset',
+})<{ inset?: boolean }>(({ theme, inset }) => ({
+  padding: theme.spacing(1.5, 2),
+  paddingLeft: inset ? theme.spacing(8) : theme.spacing(2),
+  fontSize: theme.typography.pxToRem(14),
+  fontWeight: theme.typography.fontWeightMedium,
+}))
+
+interface DropdownMenuLabelProps extends React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Label> {
+  inset?: boolean;
+  sx?: SxProps<Theme>;
+}
+
 const DropdownMenuLabel = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Label>,
-  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Label> & {
-    inset?: boolean
-  }
->(({ className, inset, ...props }, ref) => (
-  <DropdownMenuPrimitive.Label
+  DropdownMenuLabelProps
+>(({ sx, inset, ...props }, ref) => (
+  <StyledDropdownMenuLabel
     ref={ref}
-    className={cn(
-      "px-2 py-1.5 text-sm font-semibold",
-      inset && "pl-8",
-      className
-    )}
+    inset={inset}
+    sx={sx}
     {...props}
   />
 ))
 DropdownMenuLabel.displayName = DropdownMenuPrimitive.Label.displayName
 
+const StyledDropdownMenuSeparator = styled(DropdownMenuPrimitive.Separator)(({ theme }) => ({
+  margin: theme.spacing(1, -1),
+  height: '1px',
+  backgroundColor: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.muted : (theme.palette as any).custom?.muted,
+}))
+
+interface DropdownMenuSeparatorProps extends React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Separator> {
+  sx?: SxProps<Theme>;
+}
+
 const DropdownMenuSeparator = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Separator>,
-  React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Separator>
->(({ className, ...props }, ref) => (
-  <DropdownMenuPrimitive.Separator
+  DropdownMenuSeparatorProps
+>(({ sx, ...props }, ref) => (
+  <StyledDropdownMenuSeparator
     ref={ref}
-    className={cn("-mx-1 my-1 h-px bg-muted", className)}
+    sx={sx}
     {...props}
   />
 ))
 DropdownMenuSeparator.displayName = DropdownMenuPrimitive.Separator.displayName
 
-const DropdownMenuShortcut = ({
-  className,
-  ...props
-}: React.HTMLAttributes<HTMLSpanElement>) => {
+interface DropdownMenuShortcutProps extends React.HTMLAttributes<HTMLSpanElement> {
+  sx?: SxProps<Theme>;
+}
+
+const DropdownMenuShortcut = ({ sx, ...props }: DropdownMenuShortcutProps) => {
+  const theme = useTheme()
+  
   return (
-    <span
-      className={cn("ml-auto text-xs tracking-widest opacity-60", className)}
+    <Box
+      component="span"
+      sx={{
+        marginLeft: 'auto',
+        fontSize: theme.typography.pxToRem(12),
+        letterSpacing: '0.1em',
+        opacity: 0.6,
+        ...(typeof sx === 'function' ? sx(theme) : sx),
+      }}
       {...props}
     />
   )

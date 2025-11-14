@@ -4,19 +4,19 @@
 import { useRef, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Upload, Paperclip, FileImage } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Box, Typography, type SxProps, type Theme } from '@mui/material';
 
 interface FileUploadProps {
   onFileSelect: (imageData: string) => void;
   accept?: string;
-  className?: string;
+  sx?: SxProps<Theme>;
   variant?: 'dropzone' | 'button';
 }
 
 export function FileUpload({ 
   onFileSelect, 
   accept = "image/*", 
-  className,
+  sx,
   variant = 'dropzone'
 }: FileUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -79,7 +79,7 @@ export function FileUpload({
       <>
         <Button 
           variant="outline" 
-          className={cn("w-full", className)}
+          sx={{ width: '100%', ...sx }}
           onClick={() => fileInputRef.current?.click()}
         >
           <Paperclip className="mr-2 h-4 w-4" /> 
@@ -89,7 +89,7 @@ export function FileUpload({
           ref={fileInputRef} 
           type="file" 
           accept={accept} 
-          className="hidden" 
+          style={{ display: 'none' }}
           onChange={handleFileChange} 
         />
       </>
@@ -97,43 +97,54 @@ export function FileUpload({
   }
 
   return (
-    <div className={cn("relative", className)}>
-      <div
-        className={cn(
-          "flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer transition-colors",
-          isDragOver 
-            ? "border-primary bg-primary/10" 
-            : "border-primary/30 bg-muted hover:bg-muted/80"
-        )}
+    <Box sx={{ position: 'relative', ...sx }}>
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
+          height: '16rem',
+          border: '2px dashed',
+          borderRadius: 2,
+          cursor: 'pointer',
+          transition: 'all 0.2s',
+          borderColor: isDragOver ? 'primary.main' : theme => `${theme.palette.primary.main}4D`,
+          bgcolor: isDragOver ? theme => `${theme.palette.primary.main}1A` : theme => (theme.palette as any).custom?.muted,
+          '&:hover': {
+            bgcolor: isDragOver ? undefined : theme => `${(theme.palette as any).custom?.muted}CC`
+          }
+        }}
         onDrop={handleDrop}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onClick={() => fileInputRef.current?.click()}
       >
-        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pt: 2.5, pb: 3 }}>
           {isDragOver ? (
-            <FileImage className="w-8 h-8 mb-4 text-primary animate-bounce" />
+            <FileImage style={{ width: '2rem', height: '2rem', marginBottom: '1rem', color: 'currentColor', animation: 'bounce 1s infinite' }} />
           ) : (
-            <Upload className="w-8 h-8 mb-4 text-primary" />
+            <Upload style={{ width: '2rem', height: '2rem', marginBottom: '1rem', color: 'currentColor' }} />
           )}
-          <p className="mb-2 text-sm text-foreground">
-            <span className="font-semibold text-primary">
+          <Typography sx={{ mb: 1, fontSize: '0.875rem', color: 'text.primary' }}>
+            <Box component="span" sx={{ fontWeight: 600, color: 'primary.main' }}>
               {isDragOver ? 'Solte o arquivo aqui' : 'Clique para enviar'}
-            </span>
+            </Box>
             {!isDragOver && ' ou arraste e solte'}
-          </p>
-          <p className="text-xs text-muted-foreground">
+          </Typography>
+          <Typography sx={{ fontSize: '0.75rem', color: theme => (theme.palette as any).custom?.mutedForeground }}>
             PNG, JPG ou PDF (máx. 10MB)
-          </p>
-        </div>
+          </Typography>
+        </Box>
         <input 
           ref={fileInputRef} 
           type="file" 
           accept={accept} 
-          className="hidden" 
+          style={{ display: 'none' }}
           onChange={handleFileChange} 
         />
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 }

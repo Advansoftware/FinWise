@@ -15,10 +15,10 @@ export function PlanExpirationAlert() {
 
   if (isExpired) {
     return (
-      <Alert variant="destructive" className="mb-4">
+      <Alert variant="destructive" sx={{ mb: 2 }}>
         <AlertTriangle className="h-4 w-4" />
         <AlertTitle>Assinatura Expirada</AlertTitle>
-        <AlertDescription className="flex items-center justify-between">
+        <AlertDescription sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span>
             Seu plano {plan} expirou. Renove agora para continuar aproveitando todos os recursos.
           </span>
@@ -34,10 +34,10 @@ export function PlanExpirationAlert() {
 
   if (isExpiringSoon && daysUntilExpiration !== null) {
     return (
-      <Alert variant="default" className="mb-4 border-yellow-500/50 text-yellow-200">
-        <Clock className="h-4 w-4 !text-yellow-400" />
+      <Alert variant="default" sx={{ mb: 2, borderColor: 'rgba(234, 179, 8, 0.5)', color: '#fef08a' }}>
+        <Clock style={{ width: '1rem', height: '1rem', color: '#facc15' }} />
         <AlertTitle>Renovação Próxima</AlertTitle>
-        <AlertDescription className="flex items-center justify-between">
+        <AlertDescription sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span>
             Seu plano {plan} vence em {daysUntilExpiration} {daysUntilExpiration === 1 ? 'dia' : 'dias'}. 
             Certifique-se de que seu método de pagamento está atualizado.

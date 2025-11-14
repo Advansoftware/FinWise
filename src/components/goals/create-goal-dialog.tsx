@@ -22,6 +22,7 @@ import { useGoals } from "@/hooks/use-goals";
 import { Goal } from "@/lib/types";
 import { Calendar, Loader2 } from "lucide-react";
 import { SingleDatePicker } from "../single-date-picker";
+import { Box, Typography } from '@mui/material';
 
 const goalSchema = z.object({
   name: z.string().min(1, "O nome da meta é obrigatório."),
@@ -103,7 +104,7 @@ export function CreateGoalDialog({ children, initialData }: CreateGoalDialogProp
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+          <Box component="form" onSubmit={form.handleSubmit(onSubmit)} sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 2 }}>
             <FormField
               control={form.control}
               name="name"
@@ -130,7 +131,17 @@ export function CreateGoalDialog({ children, initialData }: CreateGoalDialogProp
                 </FormItem>
               )}
             />
-            <div className="text-sm font-medium text-muted-foreground my-4 text-center">Opcional</div>
+            <Typography
+              sx={{
+                fontSize: theme => theme.typography.pxToRem(14),
+                fontWeight: theme => theme.typography.fontWeightMedium,
+                color: theme => (theme.palette as any).custom?.mutedForeground,
+                my: 2,
+                textAlign: 'center'
+              }}
+            >
+              Opcional
+            </Typography>
              <FormField
               control={form.control}
               name="monthlyDeposit"
@@ -163,7 +174,7 @@ export function CreateGoalDialog({ children, initialData }: CreateGoalDialogProp
                 {initialData ? "Salvar Alterações" : "Criar Meta"}
               </Button>
             </DialogFooter>
-          </form>
+          </Box>
         </Form>
       </DialogContent>
     </Dialog>

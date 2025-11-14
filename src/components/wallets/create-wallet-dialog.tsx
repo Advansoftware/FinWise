@@ -94,7 +94,7 @@ export function CreateWalletDialog({ children, initialData }: CreateWalletDialog
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', paddingTop: '1rem', paddingBottom: '1rem' }}>
             <FormField
               control={form.control}
               name="name"
@@ -132,7 +132,7 @@ export function CreateWalletDialog({ children, initialData }: CreateWalletDialog
             />
             <DialogFooter>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isSubmitting && <Loader2 style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} className="animate-spin" />}
                 {initialData ? "Salvar Alterações" : "Criar Carteira"}
               </Button>
             </DialogFooter>

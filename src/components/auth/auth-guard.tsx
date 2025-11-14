@@ -1,6 +1,7 @@
 // src/components/auth/auth-guard.tsx
 'use client';
 
+import { Box } from '@mui/material';
 import { useAuth } from '@/hooks/use-auth';
 import { useRouter, usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -50,10 +51,10 @@ export function AuthGuard({ children, isProtected = false }: { children: React.R
 
   if (isChecking) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-4">
-        <Logo className="h-12 w-12 animate-pulse" />
-        <Loader2 className="h-6 w-6 animate-spin" />
-      </div>
+      <Box sx={{ display: 'flex', height: '100vh', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 4 }}>
+        <Logo sx={{ height: '3rem', width: '3rem', animation: 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
+        <Loader2 style={{ width: '1.5rem', height: '1.5rem' }} className="animate-spin" />
+      </Box>
     );
   }
 

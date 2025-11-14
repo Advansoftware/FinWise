@@ -11,8 +11,8 @@ import {
   type FieldPath,
   type FieldValues,
 } from "react-hook-form"
+import { Box, Typography, type SxProps, type Theme } from '@mui/material'
 
-import { cn } from "@/lib/utils"
 import { Label } from "@/components/ui/label"
 
 const Form = FormProvider
@@ -72,30 +72,50 @@ const FormItemContext = React.createContext<FormItemContextValue>(
   {} as FormItemContextValue
 )
 
+interface FormItemProps extends React.HTMLAttributes<HTMLDivElement> {
+  sx?: SxProps<Theme>;
+}
+
 const FormItem = React.forwardRef<
   HTMLDivElement,
-  React.HTMLAttributes<HTMLDivElement>
->(({ className, ...props }, ref) => {
+  FormItemProps
+>(({ sx, ...props }, ref) => {
   const id = React.useId()
 
   return (
     <FormItemContext.Provider value={{ id }}>
-      <div ref={ref} className={cn("space-y-2", className)} {...props} />
+      <Box 
+        ref={ref} 
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+          ...sx,
+        }}
+        {...props} 
+      />
     </FormItemContext.Provider>
   )
 })
 FormItem.displayName = "FormItem"
 
+interface FormLabelProps extends React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root> {
+  sx?: SxProps<Theme>;
+}
+
 const FormLabel = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
-  React.ComponentPropsWithoutRef<typeof LabelPrimitive.Root>
->(({ className, ...props }, ref) => {
+  FormLabelProps
+>(({ sx, ...props }, ref) => {
   const { error, formItemId } = useFormField()
 
   return (
     <Label
       ref={ref}
-      className={cn(error && "text-destructive", className)}
+      sx={{
+        ...(error && { color: 'error.main' }),
+        ...sx,
+      }}
       htmlFor={formItemId}
       {...props}
     />
@@ -125,27 +145,40 @@ const FormControl = React.forwardRef<
 })
 FormControl.displayName = "FormControl"
 
+interface FormDescriptionProps extends React.HTMLAttributes<HTMLParagraphElement> {
+  sx?: SxProps<Theme>;
+}
+
 const FormDescription = React.forwardRef<
   HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
->(({ className, ...props }, ref) => {
+  FormDescriptionProps
+>(({ sx, ...props }, ref) => {
   const { formDescriptionId } = useFormField()
 
   return (
-    <p
+    <Typography
       ref={ref}
+      component="p"
       id={formDescriptionId}
-      className={cn("text-sm text-muted-foreground", className)}
+      sx={{
+        fontSize: theme => theme.typography.pxToRem(14),
+        color: theme => (theme.palette as any).custom?.mutedForeground,
+        ...sx,
+      }}
       {...props}
     />
   )
 })
 FormDescription.displayName = "FormDescription"
 
+interface FormMessageProps extends React.HTMLAttributes<HTMLParagraphElement> {
+  sx?: SxProps<Theme>;
+}
+
 const FormMessage = React.forwardRef<
   HTMLParagraphElement,
-  React.HTMLAttributes<HTMLParagraphElement>
->(({ className, children, ...props }, ref) => {
+  FormMessageProps
+>(({ sx, children, ...props }, ref) => {
   const { error, formMessageId } = useFormField()
   const body = error ? String(error?.message ?? "") : children
 
@@ -154,14 +187,20 @@ const FormMessage = React.forwardRef<
   }
 
   return (
-    <p
+    <Typography
       ref={ref}
+      component="p"
       id={formMessageId}
-      className={cn("text-sm font-medium text-destructive", className)}
+      sx={{
+        fontSize: theme => theme.typography.pxToRem(14),
+        fontWeight: theme => theme.typography.fontWeightMedium,
+        color: 'error.main',
+        ...sx,
+      }}
       {...props}
     >
       {body}
-    </p>
+    </Typography>
   )
 })
 FormMessage.displayName = "FormMessage"

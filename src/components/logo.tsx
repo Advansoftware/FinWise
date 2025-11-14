@@ -1,11 +1,11 @@
-import { cn } from "@/lib/utils";
+import { SxProps, Theme } from '@mui/material/styles';
 
-export function Logo({ className }: { className?: string }) {
+export function Logo({ sx }: { sx?: SxProps<Theme> }) {
   return (
     <svg
       viewBox="0 0 100 100"
       xmlns="http://www.w3.org/2000/svg"
-      className={cn("w-full h-full", className)}
+      style={{ width: '100%', height: '100%', ...(sx as any) }}
     >
       <defs>
         <linearGradient id="logoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
