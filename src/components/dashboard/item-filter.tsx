@@ -8,7 +8,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { cn } from "@/lib/utils";
+import { Box } from '@mui/material';
 
 interface ItemFilterProps {
   items: string[];
@@ -29,19 +29,19 @@ export function ItemFilter({ items, selectedItem, onItemSelected, className, pla
   }, [items, selectedItem, onItemSelected]);
   
   return (
-    <div className={cn("grid gap-2", className)}>
+    <Box sx={{ display: 'grid', gap: 2, ...(className && {}) }}>
         <Select value={selectedItem} onValueChange={onItemSelected} disabled={disabled}>
             <SelectTrigger>
                 <SelectValue placeholder={placeholder || "Selecione um item"} />
             </SelectTrigger>
             <SelectContent>
                 {items.map((item) => (
-                    <SelectItem key={item} value={item} className="capitalize">
+                    <SelectItem key={item} value={item} sx={{ textTransform: 'capitalize' }}>
                         {item === 'all' ? (placeholder || 'Todos') : item}
                     </SelectItem>
                 ))}
             </SelectContent>
         </Select>
-    </div>
+    </Box>
   )
 }

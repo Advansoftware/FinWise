@@ -11,6 +11,7 @@ import { Skeleton } from "../ui/skeleton";
 import { Transaction } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import { usePlan } from "@/hooks/use-plan";
+import { Box, Stack, Typography } from '@mui/material';
 
 interface AITipCardProps {
     transactions: Transaction[];
@@ -77,47 +78,61 @@ export function AITipCard({ transactions }: AITipCardProps) {
   const showInsufficientData = validationResult && !validationResult.isValid;
 
   return (
-    <Card className={`bg-card/50 backdrop-blur-sm ${showInsufficientData ? 'border-amber-500/20' : 'border-primary/20'}`}>
-      <CardHeader className="flex flex-row items-start justify-between pb-2 p-4">
-        <div className="flex-1">
-            <div className="flex items-center gap-2">
+    <Card sx={{ 
+      bgcolor: 'rgba(var(--card-rgb), 0.5)', 
+      backdropFilter: 'blur(4px)',
+      borderColor: showInsufficientData ? 'rgba(245, 158, 11, 0.2)' : 'rgba(var(--primary-rgb), 0.2)'
+    }}>
+      <CardHeader sx={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', pb: 2, p: 4 }}>
+        <Box sx={{ flex: 1 }}>
+            <Stack direction="row" alignItems="center" spacing={2}>
                 {showInsufficientData ? (
-                  <AlertCircle className="h-4 w-4 text-amber-500" />
+                  <AlertCircle style={{ width: '1rem', height: '1rem', color: '#f59e0b' }} />
                 ) : (
-                  <Sparkles className="h-4 w-4 text-primary animate-pulse" />
+                  <Sparkles style={{ width: '1rem', height: '1rem', color: 'var(--primary)' }} className="animate-pulse" />
                 )}
-                <CardTitle className={`text-sm ${showInsufficientData ? 'text-amber-500' : 'text-primary/90'}`}>
-                  Dica Financeira com IA
+                <CardTitle>
+                  <Typography component="span" sx={{ fontSize: '0.875rem', color: showInsufficientData ? '#f59e0b' : 'rgba(var(--primary-rgb), 0.9)' }}>
+                    Dica Financeira com IA
+                  </Typography>
                 </CardTitle>
-            </div>
-            <CardDescription className={`text-xs mt-1 ${showInsufficientData ? 'text-amber-500/70' : 'text-primary/70'}`}>
+            </Stack>
+            <CardDescription>
+              <Typography component="span" sx={{ fontSize: '0.75rem', mt: 1, color: showInsufficientData ? 'rgba(245, 158, 11, 0.7)' : 'rgba(var(--primary-rgb), 0.7)' }}>
                 {showInsufficientData 
                   ? `Precisa de ${validationResult?.requiredMinimum || 0} transações (você tem ${validationResult?.currentCount || 0})`
                   : "Cache mensal renovado automaticamente. Atualizar custa 1 crédito."
                 }
+              </Typography>
             </CardDescription>
-        </div>
+        </Box>
         <Button
             variant="ghost"
             size="icon"
             onClick={() => fetchTip(true)}
             disabled={isPending || !user}
-            className="text-primary/70 hover:bg-primary/10 hover:text-primary rounded-full h-7 w-7"
+            sx={{ 
+              color: 'rgba(var(--primary-rgb), 0.7)', 
+              '&:hover': { bgcolor: 'rgba(var(--primary-rgb), 0.1)', color: 'var(--primary)' },
+              borderRadius: '50%',
+              height: '1.75rem',
+              width: '1.75rem'
+            }}
             title={showInsufficientData ? "Forçar geração (pode consumir crédito)" : "Atualizar dica (1 crédito)"}
         >
-            <RefreshCw className={`h-3.5 w-3.5 ${isPending ? "animate-spin" : ""}`} />
+            <RefreshCw style={{ width: '0.875rem', height: '0.875rem' }} className={isPending ? "animate-spin" : ""} />
         </Button>
       </CardHeader>
-      <CardContent className="p-4 pt-0">
+      <CardContent sx={{ p: 4, pt: 0 }}>
         {isPending ? (
-           <div className="space-y-2">
-            <Skeleton className="h-3 w-full bg-primary/10" />
-            <Skeleton className="h-3 w-4/5 bg-primary/10" />
-          </div>
+           <Stack spacing={2}>
+            <Skeleton sx={{ height: '0.75rem', width: '100%', bgcolor: 'rgba(var(--primary-rgb), 0.1)' }} />
+            <Skeleton sx={{ height: '0.75rem', width: '80%', bgcolor: 'rgba(var(--primary-rgb), 0.1)' }} />
+          </Stack>
         ) : (
-          <p className={`text-sm ${showInsufficientData ? 'text-amber-600 dark:text-amber-400' : 'text-foreground/90'}`}>
+          <Typography variant="body2" sx={{ fontSize: '0.875rem', color: showInsufficientData ? (theme => theme.palette.mode === 'dark' ? '#fbbf24' : '#d97706') : 'rgba(var(--foreground-rgb), 0.9)' }}>
             {tip}
-          </p>
+          </Typography>
         )}
       </CardContent>
     </Card>

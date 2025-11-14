@@ -109,8 +109,17 @@ export function UserNav() {
             </Link>
           </DropdownMenuItem>
           {plan && plan !== 'Básico' && (
-            <BillingPortalButton variant="ghost" size="sm" className="w-full justify-start h-8 px-2">
-              <ExternalLink className="mr-2 h-4 w-4" />
+            <BillingPortalButton 
+              variant="ghost" 
+              size="sm" 
+              sx={{ 
+                width: '100%', 
+                justifyContent: 'flex-start', 
+                height: '2rem', 
+                px: 2 
+              }}
+            >
+              <ExternalLink style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} />
               <span>Portal de Faturamento</span>
             </BillingPortalButton>
           )}

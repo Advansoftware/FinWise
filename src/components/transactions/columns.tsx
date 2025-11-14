@@ -25,8 +25,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { cn } from '@/lib/utils';
 import { useWallets } from '@/hooks/use-wallets';
+import { Box, Stack, Typography } from '@mui/material';
 
 const ActionsCell = ({ row }: { row: any }) => {
     const transaction = row.original as Transaction;
@@ -62,27 +62,27 @@ const ActionsCell = ({ row }: { row: any }) => {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                    <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Excluir</AlertDialogAction>
+                    <AlertDialogAction onClick={handleDelete} sx={{ bgcolor: 'error.main', '&:hover': { bgcolor: 'error.dark' } }}>Excluir</AlertDialogAction>
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
 
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="h-8 w-8 p-0">
+                <Button variant="ghost" sx={{ height: '2rem', width: '2rem', p: 0 }}>
                     <span className="sr-only">Abrir menu</span>
-                    <MoreHorizontal className="h-4 w-4" />
+                    <MoreHorizontal style={{ width: '1rem', height: '1rem' }} />
                 </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
                 <DropdownMenuLabel>Ações</DropdownMenuLabel>
                 <DropdownMenuItem onClick={() => setIsEditSheetOpen(true)}>
-                    <Pen className="mr-2 h-4 w-4" />
+                    <Pen style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} />
                     Editar
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="text-red-500 focus:text-red-400 focus:bg-destructive/10">
-                    <Trash2 className="mr-2 h-4 w-4" />
+                <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} sx={{ color: 'error.main', '&:focus': { color: 'error.light', bgcolor: 'error.main', opacity: 0.1 } }}>
+                    <Trash2 style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} />
                     Excluir
                 </DropdownMenuItem>
             </DropdownMenuContent>
@@ -94,7 +94,7 @@ const ActionsCell = ({ row }: { row: any }) => {
 const WalletCell = ({ row }: { row: any}) => {
     const { wallets } = useWallets();
     const wallet = wallets.find(w => w.id === row.original.walletId);
-    return wallet ? <div className="text-xs text-muted-foreground whitespace-nowrap">{wallet.name}</div> : null;
+    return wallet ? <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary', whiteSpace: 'nowrap' }}>{wallet.name}</Typography> : null;
 }
 
 
@@ -109,7 +109,7 @@ export const columns: ColumnDef<Transaction>[] = [
         }
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Selecionar todas"
-        className="translate-y-[2px]"
+        sx={{ transform: 'translateY(2px)' }}
       />
     ),
     cell: ({ row }) => (
@@ -117,7 +117,7 @@ export const columns: ColumnDef<Transaction>[] = [
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
         aria-label="Selecionar linha"
-        className="translate-y-[2px]"
+        sx={{ transform: 'translateY(2px)' }}
       />
     ),
     enableSorting: false,
@@ -132,16 +132,16 @@ export const columns: ColumnDef<Transaction>[] = [
           variant="ghost"
           size="sm"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          className="-ml-3 h-8"
+          sx={{ ml: -3, height: '2rem' }}
         >
           <span>Data</span>
-          <ArrowUpDown className="ml-2 h-3 w-3" />
+          <ArrowUpDown style={{ marginLeft: '0.5rem', width: '0.75rem', height: '0.75rem' }} />
         </Button>
       );
     },
     cell: ({ row }) => {
       const date = new Date(row.getValue('date'));
-      return <div className="text-left text-xs whitespace-nowrap">{format(date, 'dd/MM/yy', { locale: ptBR })}</div>;
+      return <Typography variant="body2" sx={{ textAlign: 'left', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{format(date, 'dd/MM/yy', { locale: ptBR })}</Typography>;
     },
     size: 50,
   },
@@ -152,13 +152,13 @@ export const columns: ColumnDef<Transaction>[] = [
       const establishment = row.original.establishment;
       const type = row.original.type;
       return (
-        <div className="flex items-center gap-2">
-           {type === 'income' ? <ArrowDown className="text-emerald-500 h-4 w-4"/> : <ArrowUp className="text-red-500 h-4 w-4"/>}
-          <div>
-            <div className="font-medium">{row.getValue('item')}</div>
-            {establishment && <div className="text-xs text-muted-foreground">{establishment}</div>}
-          </div>
-        </div>
+        <Stack direction="row" alignItems="center" spacing={2}>
+           {type === 'income' ? <ArrowDown style={{ color: '#10b981', width: '1rem', height: '1rem' }} /> : <ArrowUp style={{ color: '#ef4444', width: '1rem', height: '1rem' }} />}
+          <Box>
+            <Typography variant="body2" sx={{ fontWeight: 500 }}>{row.getValue('item')}</Typography>
+            {establishment && <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>{establishment}</Typography>}
+          </Box>
+        </Stack>
       )
     },
   },
@@ -174,9 +174,9 @@ export const columns: ColumnDef<Transaction>[] = [
     cell: ({ row }) => {
       const category = row.original.category;
       return (
-         <Badge variant="outline" className="flex items-center justify-center gap-1.5 w-fit font-normal">
+         <Badge variant="outline" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, width: 'fit-content', fontWeight: 400 }}>
             <CategoryIcon category={category as any} className="h-3 w-3" />
-            <span className="capitalize">{category}</span>
+            <span style={{ textTransform: 'capitalize' }}>{category}</span>
         </Badge>
       );
     },
@@ -187,16 +187,16 @@ export const columns: ColumnDef<Transaction>[] = [
     header: 'Subcategoria',
     cell: ({ row }) => {
       const subcategory = row.original.subcategory;
-      return subcategory ? <Badge variant="secondary" className="w-fit font-normal">{subcategory}</Badge> : <span className="text-muted-foreground">-</span>
+      return subcategory ? <Badge variant="secondary" sx={{ width: 'fit-content', fontWeight: 400 }}>{subcategory}</Badge> : <Typography component="span" sx={{ color: 'text.secondary' }}>-</Typography>
     },
     size: 100,
   },
   {
     accessorKey: 'quantity',
-    header: () => <div className="text-center">Qtd.</div>,
+    header: () => <Typography sx={{ textAlign: 'center' }}>Qtd.</Typography>,
     cell: ({ row }) => {
         const quantity = row.getValue('quantity');
-        return <div className="text-center">{quantity ? String(quantity) : '1'}</div>
+        return <Typography sx={{ textAlign: 'center' }}>{quantity ? String(quantity) : '1'}</Typography>
     },
     size: 20,
   },
@@ -204,17 +204,17 @@ export const columns: ColumnDef<Transaction>[] = [
     accessorKey: 'amount',
     header: ({ column }) => {
       return (
-        <div className="text-right">
+        <Box sx={{ textAlign: 'right' }}>
             <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-                className="h-8 -mr-4"
+                sx={{ height: '2rem', mr: -4 }}
                 >
                 <span>Valor</span>
-                <ArrowUpDown className="ml-2 h-3 w-3" />
+                <ArrowUpDown style={{ marginLeft: '0.5rem', width: '0.75rem', height: '0.75rem' }} />
             </Button>
-        </div>
+        </Box>
       );
     },
     cell: ({ row }) => {
@@ -227,11 +227,14 @@ export const columns: ColumnDef<Transaction>[] = [
       }).format(amount);
 
       return (
-        <div className={cn("text-right font-medium whitespace-nowrap",
-          type === 'income' ? 'text-emerald-500' : 'text-red-500/90'
-        )}>
+        <Typography sx={{ 
+          textAlign: 'right', 
+          fontWeight: 500, 
+          whiteSpace: 'nowrap',
+          color: type === 'income' ? '#10b981' : 'rgba(239, 68, 68, 0.9)'
+        }}>
           {type === 'income' ? '+' : '-'} {formatted}
-        </div>
+        </Typography>
       );
     },
     size: 50,

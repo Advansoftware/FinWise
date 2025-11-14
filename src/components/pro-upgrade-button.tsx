@@ -6,7 +6,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { Lock, Gem } from "lucide-react";
 import Link from "next/link";
 import { Button } from "./ui/button";
-import { cn } from "@/lib/utils";
+import { Box, Stack } from '@mui/material';
 
 interface ProUpgradeButtonProps {
     children: React.ReactNode;
@@ -31,14 +31,25 @@ export function ProUpgradeButton({ children, requiredPlan, tooltipContent, class
     return (
         <Tooltip>
             <TooltipTrigger asChild>
-                <div className={cn("relative w-full", className)}>
+                <Box sx={{ position: 'relative', width: '100%' }}>
                     {children}
-                    <div className="absolute inset-0 bg-background/60 backdrop-blur-sm flex items-center justify-center rounded-md cursor-pointer group">
-                        <Link href="/billing" className="w-full h-full flex items-center justify-center">
-                           <Gem className="h-5 w-5 text-primary opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all"/>
+                    <Box sx={{ 
+                        position: 'absolute', 
+                        inset: 0, 
+                        bgcolor: 'rgba(var(--background-rgb), 0.6)', 
+                        backdropFilter: 'blur(4px)', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        borderRadius: 1, 
+                        cursor: 'pointer',
+                        '&:hover .gem-icon': { opacity: 1, transform: 'scale(1.1)' }
+                    }}>
+                        <Link href="/billing" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                           <Gem className="gem-icon" style={{ width: '1.25rem', height: '1.25rem', color: 'var(--primary)', opacity: 0.8, transition: 'all 0.2s' }} />
                         </Link>
-                    </div>
-                </div>
+                    </Box>
+                </Box>
             </TooltipTrigger>
             <TooltipContent>
                 <p>{tooltipContent || defaultTooltip}</p>

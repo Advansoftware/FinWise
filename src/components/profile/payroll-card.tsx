@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { PayrollData, PayrollDiscount, STANDARD_DISCOUNT_TYPES, STANDARD_ALLOWANCE_TYPES } from "@/lib/types";
 import { Badge } from "@/components/ui/badge";
 import { formatCurrency } from "@/lib/utils";
+import { Box, Stack, Typography } from '@mui/material';
 
 export function PayrollCard() {
   const [payrollData, setPayrollData] = useState<PayrollData>({
@@ -178,20 +179,22 @@ export function PayrollCard() {
   const totalAllowances = payrollData.discounts.filter(d => d.type === 'allowance').reduce((sum, allowance) => sum + allowance.amount, 0);
 
   return (
-    <Card className="h-full">
-      <CardHeader className="pb-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Receipt className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg">Dados do Holerite</CardTitle>
-          </div>
-          <div className="flex items-center gap-2">
+    <Card sx={{ height: '100%' }}>
+      <CardHeader sx={{ pb: 2 }}>
+        <Stack direction="row" alignItems="center" justifyContent="space-between">
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Receipt style={{ width: '1.25rem', height: '1.25rem', color: 'var(--primary)' }} />
+            <CardTitle>
+              <Typography component="span" sx={{ fontSize: '1.125rem' }}>Dados do Holerite</Typography>
+            </CardTitle>
+          </Stack>
+          <Stack direction="row" alignItems="center" spacing={1}>
             {payrollData.grossSalary > 0 && (
               <Button
                 variant="destructive"
                 size="sm"
                 onClick={clearPayrollData}
-                className="h-8 text-xs"
+                sx={{ height: 32, fontSize: '0.75rem' }}
               >
                 🗑️ Limpar
               </Button>
@@ -207,27 +210,27 @@ export function PayrollCard() {
                 }
               }}
               disabled={isPending}
-              className="h-8"
+              sx={{ height: 32 }}
             >
               {isPending ? (
                 "Salvando..."
               ) : isEditing ? (
                 <>
-                  <Save className="h-4 w-4 mr-2" />
+                  <Save style={{ width: '1rem', height: '1rem', marginRight: '0.5rem' }} />
                   Salvar
                 </>
               ) : (
                 "Editar"
               )}
             </Button>
-          </div>
-        </div>
+          </Stack>
+        </Stack>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {/* Salary Information Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="grossSalary" className="text-sm font-medium">Salário Bruto</Label>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 2 }}>
+          <Stack spacing={1}>
+            <Label htmlFor="grossSalary" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Salário Bruto</Label>
             {isEditing ? (
               <Input
                 id="grossSalary"
@@ -239,43 +242,43 @@ export function PayrollCard() {
                   grossSalary: parseFloat(e.target.value) || 0
                 }))}
                 placeholder="0,00"
-                className="h-9"
+                sx={{ height: 36 }}
               />
             ) : (
-              <div className="h-9 flex items-center px-3 bg-green-50 text-green-700 font-medium rounded-md border">
+              <Box sx={{ height: 36, display: 'flex', alignItems: 'center', px: 1.5, bgcolor: 'rgba(34, 197, 94, 0.1)', color: '#16a34a', fontWeight: 500, borderRadius: '0.375rem', border: '1px solid rgba(34, 197, 94, 0.2)' }}>
                 {formatCurrency(payrollData.grossSalary)}
-              </div>
+              </Box>
             )}
-          </div>
+          </Stack>
           
-          <div className="space-y-2">
-            <Label className="text-sm font-medium flex items-center gap-1">
-              <DollarSign className="h-4 w-4 text-blue-600" />
-              Total de Ajudas de Custo
+          <Stack spacing={1}>
+            <Label sx={{ fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <DollarSign style={{ width: '1rem', height: '1rem', color: '#2563eb' }} />
+              <span>Total de Ajudas de Custo</span>
             </Label>
-            <div className="h-9 flex items-center px-3 bg-blue-50 text-blue-700 font-medium rounded-md border">
+            <Box sx={{ height: 36, display: 'flex', alignItems: 'center', px: 1.5, bgcolor: 'rgba(59, 130, 246, 0.1)', color: '#2563eb', fontWeight: 500, borderRadius: '0.375rem', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
               {formatCurrency(totalAllowances)}
-            </div>
-          </div>
+            </Box>
+          </Stack>
 
           {/* Net Salary - Highlighted */}
-          <div className="space-y-2">
-            <Label className="text-sm font-medium flex items-center gap-1">
-              <DollarSign className="h-4 w-4 text-primary" />
-              Salário Líquido
+          <Stack spacing={1}>
+            <Label sx={{ fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              <DollarSign style={{ width: '1rem', height: '1rem', color: 'var(--primary)' }} />
+              <span>Salário Líquido</span>
             </Label>
-            <div className="h-9 flex items-center px-3 bg-primary/10 text-primary font-bold rounded-md border border-primary/20">
+            <Box sx={{ height: 36, display: 'flex', alignItems: 'center', px: 1.5, bgcolor: 'rgba(var(--primary-rgb), 0.1)', color: 'var(--primary)', fontWeight: 700, borderRadius: '0.375rem', border: '1px solid rgba(var(--primary-rgb), 0.2)' }}>
               {formatCurrency(payrollData.netSalary)}
-            </div>
-          </div>
-        </div>
+            </Box>
+          </Stack>
+        </Box>
 
         {/* Discounts and Allowances Section */}
-        <div className="space-y-4">
+        <Stack spacing={2}>
           {/* Descontos */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium text-red-600 dark:text-red-400">
+          <Stack spacing={1.5}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <Label sx={{ fontSize: '0.875rem', fontWeight: 500, color: '#dc2626' }}>
                 💳 Descontos {payrollData.discounts.filter(d => d.type === 'discount').length > 0 && `(${payrollData.discounts.filter(d => d.type === 'discount').length})`}
               </Label>
               {isEditing && (
@@ -294,30 +297,36 @@ export function PayrollCard() {
                       discounts: [...prev.discounts, newDiscount]
                     }));
                   }}
-                  className="h-7 text-xs"
+                  sx={{ height: 28, fontSize: '0.75rem' }}
                 >
-                  <Plus className="h-3 w-3 mr-1" />
+                  <Plus style={{ width: '0.75rem', height: '0.75rem', marginRight: '0.25rem' }} />
                   Adicionar Desconto
                 </Button>
               )}
-            </div>
+            </Stack>
 
             {payrollData.discounts.filter(d => d.type === 'discount').length > 0 ? (
-              <div className="space-y-2 max-h-40 overflow-y-auto">
+              <Stack spacing={1} sx={{ maxHeight: 160, overflowY: 'auto' }}>
                 {payrollData.discounts.filter(d => d.type === 'discount').map((discount) => (
-                  <div key={discount.id} className="flex items-center gap-2 p-2 bg-red-50 dark:bg-red-500/10 rounded-md border border-red-100 dark:border-red-800">
+                  <Stack 
+                    key={discount.id} 
+                    direction="row" 
+                    alignItems="center" 
+                    spacing={1} 
+                    sx={{ p: 1, bgcolor: 'rgba(239, 68, 68, 0.1)', borderRadius: '0.375rem', border: '1px solid rgba(239, 68, 68, 0.2)' }}
+                  >
                     {isEditing ? (
                       <>
                         <Select
                           value={discount.name}
                           onValueChange={(value) => updateDiscount(discount.id, "name", value)}
                         >
-                          <SelectTrigger className="flex-1 h-8 text-xs">
+                          <SelectTrigger sx={{ flex: 1, height: 32, fontSize: '0.75rem' }}>
                             <SelectValue placeholder="Selecione o desconto" />
                           </SelectTrigger>
                           <SelectContent>
                             {STANDARD_DISCOUNT_TYPES.map((discountType) => (
-                              <SelectItem key={discountType} value={discountType} className="text-xs">
+                              <SelectItem key={discountType} value={discountType} sx={{ fontSize: '0.75rem' }}>
                                 {discountType}
                               </SelectItem>
                             ))}
@@ -329,49 +338,51 @@ export function PayrollCard() {
                           value={discount.amount}
                           onChange={(e) => updateDiscount(discount.id, "amount", parseFloat(e.target.value) || 0)}
                           placeholder="0,00"
-                          className="w-24 h-8 text-xs"
+                          sx={{ width: 96, height: 32, fontSize: '0.75rem' }}
                         />
                         <Button
                           variant="outline"
                           size="icon"
                           onClick={() => removeDiscount(discount.id)}
-                          className="h-8 w-8"
+                          sx={{ height: 32, width: 32 }}
                         >
-                          <X className="h-3 w-3" />
+                          <X style={{ width: '0.75rem', height: '0.75rem' }} />
                         </Button>
                       </>
                     ) : (
                       <>
-                        <span className="flex-1 text-xs font-medium text-red-600 dark:text-red-400">{discount.name}</span>
-                        <Badge variant="destructive" className="text-xs">
+                        <Typography sx={{ flex: 1, fontSize: '0.75rem', fontWeight: 500, color: '#dc2626' }}>
+                          {discount.name}
+                        </Typography>
+                        <Badge variant="destructive" sx={{ fontSize: '0.75rem' }}>
                           -{formatCurrency(discount.amount)}
                         </Badge>
                       </>
                     )}
-                  </div>
+                  </Stack>
                 ))}
-              </div>
+              </Stack>
             ) : (
-              <div className="text-xs text-muted-foreground text-center py-2">
+              <Typography sx={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', textAlign: 'center', py: 1 }}>
                 Nenhum desconto cadastrado
-              </div>
+              </Typography>
             )}
 
             {payrollData.discounts.filter(d => d.type === 'discount').length > 0 && (
-              <div className="text-right">
-                <span className="text-xs text-red-600 font-medium">
+              <Box sx={{ textAlign: 'right' }}>
+                <Typography component="span" sx={{ fontSize: '0.75rem', color: '#dc2626', fontWeight: 500 }}>
                   Total descontos: {formatCurrency(totalDiscounts)}
-                </span>
-              </div>
+                </Typography>
+              </Box>
             )}
-          </div>
+          </Stack>
 
           <Separator />
 
           {/* Ajudas de Custo / Adicionais */}
-          <div className="space-y-3">
-            <div className="flex items-center justify-between">
-              <Label className="text-sm font-medium text-green-600 dark:text-green-400">
+          <Stack spacing={1.5}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <Label sx={{ fontSize: '0.875rem', fontWeight: 500, color: '#16a34a' }}>
                 💰 Adicionais {payrollData.discounts.filter(d => d.type === 'allowance').length > 0 && `(${payrollData.discounts.filter(d => d.type === 'allowance').length})`}
               </Label>
               {isEditing && (
@@ -390,30 +401,36 @@ export function PayrollCard() {
                       discounts: [...prev.discounts, newAllowance]
                     }));
                   }}
-                  className="h-7 text-xs"
+                  sx={{ height: 28, fontSize: '0.75rem' }}
                 >
-                  <Plus className="h-3 w-3 mr-1" />
+                  <Plus style={{ width: '0.75rem', height: '0.75rem', marginRight: '0.25rem' }} />
                   Adicionar Adicional
                 </Button>
               )}
-            </div>
+            </Stack>
 
             {payrollData.discounts.filter(d => d.type === 'allowance').length > 0 ? (
-              <div className="space-y-2 max-h-40 overflow-y-auto">
+              <Stack spacing={1} sx={{ maxHeight: 160, overflowY: 'auto' }}>
                 {payrollData.discounts.filter(d => d.type === 'allowance').map((allowance) => (
-                  <div key={allowance.id} className="flex items-center gap-2 p-2 bg-green-50 dark:bg-green-500/10 rounded-md border border-green-100 dark:border-green-800">
+                  <Stack 
+                    key={allowance.id} 
+                    direction="row" 
+                    alignItems="center" 
+                    spacing={1} 
+                    sx={{ p: 1, bgcolor: 'rgba(34, 197, 94, 0.1)', borderRadius: '0.375rem', border: '1px solid rgba(34, 197, 94, 0.2)' }}
+                  >
                     {isEditing ? (
                       <>
                         <Select
                           value={allowance.name}
                           onValueChange={(value) => updateDiscount(allowance.id, "name", value)}
                         >
-                          <SelectTrigger className="flex-1 h-8 text-xs">
+                          <SelectTrigger sx={{ flex: 1, height: 32, fontSize: '0.75rem' }}>
                             <SelectValue placeholder="Selecione o adicional" />
                           </SelectTrigger>
                           <SelectContent>
                             {STANDARD_ALLOWANCE_TYPES.map((allowanceType) => (
-                              <SelectItem key={allowanceType} value={allowanceType} className="text-xs">
+                              <SelectItem key={allowanceType} value={allowanceType} sx={{ fontSize: '0.75rem' }}>
                                 {allowanceType}
                               </SelectItem>
                             ))}
@@ -425,43 +442,45 @@ export function PayrollCard() {
                           value={allowance.amount}
                           onChange={(e) => updateDiscount(allowance.id, "amount", parseFloat(e.target.value) || 0)}
                           placeholder="0,00"
-                          className="w-24 h-8 text-xs"
+                          sx={{ width: 96, height: 32, fontSize: '0.75rem' }}
                         />
                         <Button
                           variant="outline"
                           size="icon"
                           onClick={() => removeDiscount(allowance.id)}
-                          className="h-8 w-8"
+                          sx={{ height: 32, width: 32 }}
                         >
-                          <X className="h-3 w-3" />
+                          <X style={{ width: '0.75rem', height: '0.75rem' }} />
                         </Button>
                       </>
                     ) : (
                       <>
-                        <span className="flex-1 text-xs font-medium text-green-600 dark:text-green-400">{allowance.name}</span>
-                        <Badge variant="secondary" className="text-xs bg-green-100 dark:bg-green-500/20 text-green-600 dark:text-green-400">
+                        <Typography sx={{ flex: 1, fontSize: '0.75rem', fontWeight: 500, color: '#16a34a' }}>
+                          {allowance.name}
+                        </Typography>
+                        <Badge variant="secondary" sx={{ fontSize: '0.75rem', bgcolor: 'rgba(34, 197, 94, 0.2)', color: '#16a34a' }}>
                           +{formatCurrency(allowance.amount)}
                         </Badge>
                       </>
                     )}
-                  </div>
+                  </Stack>
                 ))}
-              </div>
+              </Stack>
             ) : (
-              <div className="text-xs text-muted-foreground text-center py-2">
+              <Typography sx={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', textAlign: 'center', py: 1 }}>
                 Nenhum adicional cadastrado
-              </div>
+              </Typography>
             )}
 
             {payrollData.discounts.filter(d => d.type === 'allowance').length > 0 && (
-              <div className="text-right">
-                <span className="text-xs text-green-600 font-medium">
+              <Box sx={{ textAlign: 'right' }}>
+                <Typography component="span" sx={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: 500 }}>
                   Total adicionais: {formatCurrency(totalAllowances)}
-                </span>
-              </div>
+                </Typography>
+              </Box>
             )}
-          </div>
-        </div>
+          </Stack>
+        </Stack>
 
         {/* Summary - Compact */}
         {!isEditing && payrollData.grossSalary > 0 && (

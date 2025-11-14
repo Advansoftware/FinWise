@@ -29,6 +29,7 @@ import { formatCurrency } from '@/lib/utils';
 import { format, parseISO } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { SingleDatePicker } from '@/components/single-date-picker';
+import { Box, Stack, Typography } from '@mui/material';
 
 const markAsPaidSchema = z.object({
   paidDate: z.date({
@@ -101,51 +102,53 @@ export function MarkAsPaidDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent sx={{ maxWidth: { sm: '28rem' } }}>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <CheckCircle2 className="h-5 w-5 text-green-500" />
-            Marcar como Pago
+          <DialogTitle>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <CheckCircle2 style={{ width: '1.25rem', height: '1.25rem', color: '#22c55e' }} />
+              <span>Marcar como Pago</span>
+            </Stack>
           </DialogTitle>
           <DialogDescription>
             Marque a parcela {payment.installmentNumber} de {installment.name} como paga sem processar transação financeira
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        <Stack spacing={2}>
           {/* Payment Info */}
-          <div className="rounded-lg border p-4 space-y-2 bg-muted/50">
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Parcela</span>
-              <span className="font-medium">{payment.installmentNumber}/{installment.totalInstallments}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Vencimento Original</span>
-              <span className="font-medium">
+          <Box sx={{ borderRadius: '0.5rem', border: '1px solid var(--border)', p: 2, display: 'flex', flexDirection: 'column', gap: 1, bgcolor: 'rgba(var(--muted-rgb), 0.5)' }}>
+            <Stack direction="row" justifyContent="space-between">
+              <Typography sx={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>Parcela</Typography>
+              <Typography sx={{ fontWeight: 500 }}>{payment.installmentNumber}/{installment.totalInstallments}</Typography>
+            </Stack>
+            <Stack direction="row" justifyContent="space-between">
+              <Typography sx={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>Vencimento Original</Typography>
+              <Typography sx={{ fontWeight: 500 }}>
                 {format(parseISO(payment.dueDate), 'dd/MM/yyyy', { locale: ptBR })}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Valor</span>
-              <span className="font-medium">{formatCurrency(payment.scheduledAmount)}</span>
-            </div>
-          </div>
+              </Typography>
+            </Stack>
+            <Stack direction="row" justifyContent="space-between">
+              <Typography sx={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>Valor</Typography>
+              <Typography sx={{ fontWeight: 500 }}>{formatCurrency(payment.scheduledAmount)}</Typography>
+            </Stack>
+          </Box>
 
           {/* Alert about functionality */}
-          <div className="rounded-lg bg-amber-50 dark:bg-amber-950/50 border border-amber-200 dark:border-amber-900/50 p-3">
-            <div className="flex items-start gap-2">
-              <CheckCircle2 className="h-4 w-4 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-              <div className="text-sm">
-                <p className="font-medium text-amber-800 dark:text-amber-400">Apenas marcação</p>
-                <p className="text-amber-700 dark:text-amber-400 mt-1">
+          <Box sx={{ borderRadius: '0.5rem', bgcolor: 'rgba(251, 191, 36, 0.1)', border: '1px solid rgba(251, 191, 36, 0.3)', p: 1.5 }}>
+            <Stack direction="row" alignItems="flex-start" spacing={1}>
+              <CheckCircle2 style={{ width: '1rem', height: '1rem', color: '#d97706', marginTop: '0.125rem', flexShrink: 0 }} />
+              <Box sx={{ fontSize: '0.875rem' }}>
+                <Typography sx={{ fontWeight: 500, color: '#d97706' }}>Apenas marcação</Typography>
+                <Typography sx={{ color: '#d97706', mt: 0.5 }}>
                   Esta ação apenas registra que o pagamento foi feito, sem debitar de nenhuma carteira.
-                </p>
-              </div>
-            </div>
-          </div>
+                </Typography>
+              </Box>
+            </Stack>
+          </Box>
 
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <FormField
                 control={form.control}
                 name="paidDate"
@@ -178,16 +181,16 @@ export function MarkAsPaidDialog({
                 </Button>
                 <Button type="submit" disabled={isSubmitting}>
                   {isSubmitting ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    <Loader2 style={{ width: '1rem', height: '1rem', marginRight: '0.5rem' }} className="animate-spin" />
                   ) : (
-                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                    <CheckCircle2 style={{ width: '1rem', height: '1rem', marginRight: '0.5rem' }} />
                   )}
                   Marcar como Pago
                 </Button>
               </DialogFooter>
             </form>
           </Form>
-        </div>
+        </Stack>
       </DialogContent>
     </Dialog>
   );

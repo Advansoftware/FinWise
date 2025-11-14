@@ -20,8 +20,8 @@ import { Loader2 } from "lucide-react";
 import { SingleDatePicker } from "../single-date-picker";
 import { useTransactions } from "@/hooks/use-transactions";
 import { Switch } from "../ui/switch";
-import { cn } from "@/lib/utils";
 import { useWallets } from "@/hooks/use-wallets";
+import { Box, Stack } from '@mui/material';
 
 interface EditTransactionSheetProps {
     transaction: Transaction;
@@ -113,18 +113,18 @@ export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTra
 
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetContent className="flex flex-col">
+      <SheetContent sx={{ display: 'flex', flexDirection: 'column' }}>
         <SheetHeader>
           <SheetTitle>Editar Transação</SheetTitle>
           <SheetDescription>
             Modifique os detalhes da sua movimentação.
           </SheetDescription>
         </SheetHeader>
-        <div className="flex-1 overflow-y-auto pr-6 -mr-6">
-            <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label className="text-right">Tipo</Label>
-                    <div className="col-span-3 grid grid-cols-2 gap-2">
+        <Box sx={{ flex: 1, overflowY: 'auto', pr: 6, mr: -6 }}>
+            <Box sx={{ display: 'grid', gap: 4, py: 4 }}>
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', alignItems: 'center', gap: 4 }}>
+                    <Label sx={{ textAlign: 'right' }}>Tipo</Label>
+                    <Box sx={{ gridColumn: 'span 3', display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
                          <Button
                             variant={formState.type === 'expense' ? 'destructive' : 'outline'}
                             onClick={() => handleInputChange('type', 'expense')}
@@ -133,39 +133,44 @@ export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTra
                         </Button>
                          <Button
                              variant={formState.type === 'income' ? 'default' : 'outline'}
-                              className={cn("bg-transparent border-emerald-600 text-emerald-600 hover:bg-emerald-600 hover:text-white", formState.type === 'income' && "bg-emerald-600 text-white")}
+                              sx={{ 
+                                bgcolor: formState.type === 'income' ? '#10b981' : 'transparent',
+                                borderColor: '#10b981',
+                                color: formState.type === 'income' ? '#fff' : '#10b981',
+                                '&:hover': { bgcolor: '#10b981', color: '#fff' }
+                              }}
                              onClick={() => handleInputChange('type', 'income')}
                          >
                             Receita
                         </Button>
-                    </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="item" className="text-right">Item</Label>
-                    <Input id="item" className="col-span-3" value={formState.item || ''} onChange={(e) => handleInputChange('item', e.target.value)} />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="establishment" className="text-right">Estabelecimento</Label>
-                    <Input id="establishment" className="col-span-3" value={formState.establishment || ''} onChange={(e) => handleInputChange('establishment', e.target.value)} />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="quantity" className="text-right">Qtd.</Label>
-                    <Input id="quantity" type="number" className="col-span-3" value={formState.quantity || 1} onChange={(e) => handleInputChange('quantity', e.target.value)} />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="amount" className="text-right">Valor</Label>
-                    <Input id="amount" type="number" className="col-span-3" value={formState.amount || ''} onChange={(e) => handleInputChange('amount', e.target.value)} />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="date" className="text-right">Data</Label>
-                    <div className="col-span-3">
+                    </Box>
+                </Box>
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', alignItems: 'center', gap: 4 }}>
+                    <Label htmlFor="item" sx={{ textAlign: 'right' }}>Item</Label>
+                    <Input id="item" sx={{ gridColumn: 'span 3' }} value={formState.item || ''} onChange={(e) => handleInputChange('item', e.target.value)} />
+                </Box>
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', alignItems: 'center', gap: 4 }}>
+                    <Label htmlFor="establishment" sx={{ textAlign: 'right' }}>Estabelecimento</Label>
+                    <Input id="establishment" sx={{ gridColumn: 'span 3' }} value={formState.establishment || ''} onChange={(e) => handleInputChange('establishment', e.target.value)} />
+                </Box>
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', alignItems: 'center', gap: 4 }}>
+                    <Label htmlFor="quantity" sx={{ textAlign: 'right' }}>Qtd.</Label>
+                    <Input id="quantity" type="number" sx={{ gridColumn: 'span 3' }} value={formState.quantity || 1} onChange={(e) => handleInputChange('quantity', e.target.value)} />
+                </Box>
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', alignItems: 'center', gap: 4 }}>
+                    <Label htmlFor="amount" sx={{ textAlign: 'right' }}>Valor</Label>
+                    <Input id="amount" type="number" sx={{ gridColumn: 'span 3' }} value={formState.amount || ''} onChange={(e) => handleInputChange('amount', e.target.value)} />
+                </Box>
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', alignItems: 'center', gap: 4 }}>
+                    <Label htmlFor="date" sx={{ textAlign: 'right' }}>Data</Label>
+                    <Box sx={{ gridColumn: 'span 3' }}>
                         <SingleDatePicker date={new Date(formState.date || new Date())} setDate={(d) => handleInputChange('date', d?.toISOString() || new Date().toISOString())} />
-                    </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="wallet" className="text-right">Carteira</Label>
+                    </Box>
+                </Box>
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', alignItems: 'center', gap: 4 }}>
+                    <Label htmlFor="wallet" sx={{ textAlign: 'right' }}>Carteira</Label>
                     <Select value={formState.walletId || ''} onValueChange={(value) => handleInputChange('walletId', value)}>
-                    <SelectTrigger className="col-span-3">
+                    <SelectTrigger sx={{ gridColumn: 'span 3' }}>
                         <SelectValue placeholder="Selecione uma carteira" />
                     </SelectTrigger>
                     <SelectContent>
@@ -174,11 +179,11 @@ export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTra
                         ))}
                     </SelectContent>
                     </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="category" className="text-right">Categoria</Label>
+                </Box>
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', alignItems: 'center', gap: 4 }}>
+                    <Label htmlFor="category" sx={{ textAlign: 'right' }}>Categoria</Label>
                     <Select value={formState.category || ''} onValueChange={(value) => handleInputChange('category', value as TransactionCategory)}>
-                        <SelectTrigger className="col-span-3">
+                        <SelectTrigger sx={{ gridColumn: 'span 3' }}>
                             <SelectValue placeholder="Selecione uma categoria" />
                         </SelectTrigger>
                         <SelectContent>
@@ -187,11 +192,11 @@ export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTra
                             ))}
                         </SelectContent>
                     </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="subcategory" className="text-right">Subcategoria</Label>
+                </Box>
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', alignItems: 'center', gap: 4 }}>
+                    <Label htmlFor="subcategory" sx={{ textAlign: 'right' }}>Subcategoria</Label>
                     <Select value={formState.subcategory || 'none'} onValueChange={(v) => handleInputChange('subcategory', v)} disabled={!formState.category || availableSubcategories.length === 0}>
-                        <SelectTrigger className="col-span-3">
+                        <SelectTrigger sx={{ gridColumn: 'span 3' }}>
                             <SelectValue placeholder={!formState.category ? "Selecione uma categoria primeiro" : availableSubcategories.length > 0 ? "Selecione uma subcategoria" : "Nenhuma subcategoria disponível"} />
                         </SelectTrigger>
                         <SelectContent>
@@ -201,25 +206,25 @@ export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTra
                             ))}
                         </SelectContent>
                     </Select>
-                </div>
-                 <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="update-all" className="text-right">Aplicar a todos</Label>
-                    <div className="col-span-3 flex items-center space-x-2">
+                </Box>
+                 <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', alignItems: 'center', gap: 4 }}>
+                    <Label htmlFor="update-all" sx={{ textAlign: 'right' }}>Aplicar a todos</Label>
+                    <Stack direction="row" alignItems="center" spacing={2} sx={{ gridColumn: 'span 3' }}>
                          <Switch
                             id="update-all"
                             checked={updateAll}
                             onCheckedChange={setUpdateAll}
                         />
-                         <Label htmlFor="update-all" className="text-xs text-muted-foreground font-normal">
+                         <Label htmlFor="update-all" sx={{ fontSize: '0.75rem', color: 'text.secondary', fontWeight: 400 }}>
                            Atualizar para todos os itens "{transaction.item}"
                         </Label>
-                    </div>
-                </div>
-            </div>
-        </div>
+                    </Stack>
+                </Box>
+            </Box>
+        </Box>
         <SheetFooter>
             <Button onClick={handleSubmit} disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isSubmitting && <Loader2 style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} className="animate-spin" />}
                 Salvar Alterações
             </Button>
         </SheetFooter>

@@ -74,9 +74,9 @@ export function BillingPortalButton({
     <>
       {showIcon && (
         isLoading ? (
-          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+          <Loader2 style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} />
         ) : (
-          <ExternalLink className="mr-2 h-4 w-4" />
+          <ExternalLink style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} />
         )
       )}
       Gerenciar Assinatura

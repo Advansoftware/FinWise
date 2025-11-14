@@ -28,6 +28,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { usePlan } from "@/hooks/use-plan";
 import { ProUpgradeButton } from "../pro-upgrade-button";
+import { Box, Stack } from '@mui/material';
 
 const budgetSchema = z.object({
   name: z.string().min(1, "O nome do orçamento é obrigatório."),
@@ -163,7 +164,7 @@ export function CreateBudgetDialog({ children, initialData }: CreateBudgetDialog
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', paddingTop: '1rem', paddingBottom: '1rem' }}>
             <FormField
               control={form.control}
               name="name"
@@ -205,19 +206,21 @@ export function CreateBudgetDialog({ children, initialData }: CreateBudgetDialog
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Valor Orçado (R$)</FormLabel>
-                   <div className="flex items-center gap-2">
+                   <Stack direction="row" alignItems="center" spacing={2}>
                       <FormControl>
                         <Input type="number" step="0.01" placeholder="Ex: 500.00" {...field} />
                       </FormControl>
                        <ProUpgradeButton requiredPlan="Plus" tooltipContent="Desbloqueie sugestões de orçamento com IA com o plano Plus.">
                           <Button type="button" variant="outline" size="icon" onClick={handleSuggestion} disabled={isSuggesting || !selectedCategory || !isPlus}>
-                              {isSuggesting ? <Loader2 className="h-4 w-4 animate-spin"/> : <Sparkles className="h-4 w-4 text-primary" />}
+                              {isSuggesting ? <Loader2 style={{ width: '1rem', height: '1rem' }} className="animate-spin"/> : <Sparkles style={{ width: '1rem', height: '1rem', color: 'var(--primary)' }} />}
                           </Button>
                       </ProUpgradeButton>
-                   </div>
+                   </Stack>
                    {suggestionJustification && isPlus && (
-                      <FormDescription className="text-primary/90 flex items-center gap-1.5">
-                        <Sparkles className="h-3 w-3"/>{suggestionJustification}
+                      <FormDescription>
+                        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ color: 'rgba(var(--primary-rgb), 0.9)' }}>
+                          <Sparkles style={{ width: '0.75rem', height: '0.75rem' }}/>{suggestionJustification}
+                        </Stack>
                       </FormDescription>
                    )}
                   <FormMessage />
@@ -226,7 +229,7 @@ export function CreateBudgetDialog({ children, initialData }: CreateBudgetDialog
             />
             <DialogFooter>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isSubmitting && <Loader2 style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} className="animate-spin" />}
                 {initialData ? "Salvar Alterações" : "Criar Orçamento"}
               </Button>
             </DialogFooter>

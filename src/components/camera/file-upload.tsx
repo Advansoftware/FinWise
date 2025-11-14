@@ -82,7 +82,7 @@ export function FileUpload({
           sx={{ width: '100%', ...sx }}
           onClick={() => fileInputRef.current?.click()}
         >
-          <Paperclip className="mr-2 h-4 w-4" /> 
+          <Paperclip style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} /> 
           Enviar da Galeria
         </Button>
         <input 

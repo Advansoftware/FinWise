@@ -22,6 +22,7 @@ import { Transaction, TransactionCategory } from "@/lib/types";
 import { MobileCamera } from "@/components/camera/mobile-camera";
 import { FileUpload } from "@/components/camera/file-upload";
 import { Loader2, RotateCcw, Sparkles, BrainCircuit, Info } from "lucide-react";
+import { Box, Stack, Typography } from '@mui/material';
 
 interface ReceiptScannerProps {
   onComplete?: () => void;
@@ -146,53 +147,52 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
   };
 
   const renderProcessingSkeleton = () => (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <Skeleton className="h-6 w-32" />
-        <Skeleton className="h-6 w-20" />
-      </div>
-      <div className="space-y-3">
+    <Stack spacing={4}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Skeleton sx={{ height: '1.5rem', width: '8rem' }} />
+        <Skeleton sx={{ height: '1.5rem', width: '5rem' }} />
+      </Stack>
+      <Stack spacing={3}>
         {[1, 2, 3].map((i) => (
-          <div key={i} className="grid grid-cols-3 gap-2">
-            <Skeleton className="h-10 col-span-2" />
-            <Skeleton className="h-10" />
-          </div>
+          <Box key={i} sx={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 2 }}>
+            <Skeleton sx={{ height: '2.5rem' }} />
+            <Skeleton sx={{ height: '2.5rem' }} />
+          </Box>
         ))}
-      </div>
-      <div className="grid grid-cols-2 gap-4">
-        <Skeleton className="h-10" />
-        <Skeleton className="h-10" />
-      </div>
-      <div className="text-center py-4">
-        <div className="inline-flex items-center gap-2 text-muted-foreground">
-          <Loader2 className="h-4 w-4 animate-spin" />
-          <span className="text-sm">Analisando nota fiscal...</span>
-        </div>
-      </div>
-    </div>
+      </Stack>
+      <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4 }}>
+        <Skeleton sx={{ height: '2.5rem' }} />
+        <Skeleton sx={{ height: '2.5rem' }} />
+      </Box>
+      <Box sx={{ textAlign: 'center', py: 4 }}>
+        <Stack direction="row" spacing={2} sx={{ display: 'inline-flex', alignItems: 'center', color: 'text.secondary' }}>
+          <Loader2 style={{ width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />
+          <Typography variant="body2">Analisando nota fiscal...</Typography>
+        </Stack>
+      </Box>
+    </Stack>
   );
 
   const renderExtractedData = () => {
     if (!extractedData) return null;
     
     return (
-      <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h3 className="font-semibold text-lg">Itens Extraídos</h3>
+      <Stack spacing={4}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center">
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>Itens Extraídos</Typography>
           <Badge 
             variant={extractedData.isValid ? 'default' : 'destructive'} 
-            className={extractedData.isValid ? "bg-green-500/20 text-green-300 border-green-500/30" : ""}
+            sx={extractedData.isValid ? { bgcolor: 'rgba(34, 197, 94, 0.2)', color: '#86efac', borderColor: 'rgba(34, 197, 94, 0.3)' } : {}}
           >
             {extractedData.isValid ? 'Nota Válida' : 'Nota Inválida'}
           </Badge>
-        </div>
+        </Stack>
         
         {extractedData.items?.length > 0 ? (
-          <div className="space-y-3">
+          <Stack spacing={3}>
             {extractedData.items?.map((item: any, index: number) => (
-              <div key={index} className="grid grid-cols-3 gap-2 items-center p-3 rounded-lg bg-muted/50 border">
+              <Box key={index} sx={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 2, alignItems: 'center', p: 3, borderRadius: 2, bgcolor: theme => `${(theme.palette as any).custom?.muted}80`, border: 1, borderColor: 'divider' }}>
                 <Input 
-                  className="col-span-2" 
                   defaultValue={item.item} 
                   placeholder="Item"
                   readOnly={!extractedData.isValid}
@@ -204,19 +204,19 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
                   placeholder="Valor"
                   readOnly={!extractedData.isValid}
                 />
-              </div>
+              </Box>
             ))}
-          </div>
+          </Stack>
         ) : (
-          <div className="text-center py-8 text-muted-foreground">
-            <p>Nenhum item foi encontrado na nota.</p>
-            <p className="text-sm">Tente uma imagem com melhor qualidade.</p>
-          </div>
+          <Box sx={{ textAlign: 'center', py: 8, color: 'text.secondary' }}>
+            <Typography>Nenhum item foi encontrado na nota.</Typography>
+            <Typography variant="body2">Tente uma imagem com melhor qualidade.</Typography>
+          </Box>
         )}
         
-        <div className="grid grid-cols-2 gap-4 p-3 rounded-lg bg-muted/30 border">
-          <div className="space-y-1">
-            <Label className="text-sm font-medium">Total</Label>
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4, p: 3, borderRadius: 2, bgcolor: theme => `${(theme.palette as any).custom?.muted}4D`, border: 1, borderColor: 'divider' }}>
+          <Stack spacing={1}>
+            <Label sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Total</Label>
             <Input 
               type="number" 
               step="0.01" 
@@ -224,17 +224,17 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
               placeholder="Total" 
               readOnly={!extractedData.isValid}
             />
-          </div>
-          <div className="space-y-1">
-            <Label className="text-sm font-medium">Data</Label>
+          </Stack>
+          <Stack spacing={1}>
+            <Label sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Data</Label>
             <Input 
               type="date" 
               defaultValue={extractedData.date} 
               placeholder="Data" 
               readOnly={!extractedData.isValid}
             />
-          </div>
-        </div>
+          </Stack>
+        </Box>
         
         {!extractedData.isValid && (
           <Alert variant="destructive">
@@ -246,27 +246,27 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
           </Alert>
         )}
 
-        <div className="flex gap-2 pt-4">
+        <Stack direction="row" spacing={2} sx={{ pt: 4 }}>
           <Button variant="ghost" onClick={resetState} disabled={isProcessing || isSaving}>
-            <RotateCcw className="mr-2 h-4 w-4" />
+            <RotateCcw style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} />
             Nova Foto
           </Button>
           {extractedData.isValid && (
-            <Button onClick={handleSaveTransactions} disabled={isSaving || isProcessing} className="flex-1">
-              {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button onClick={handleSaveTransactions} disabled={isSaving || isProcessing} sx={{ flex: 1 }}>
+              {isSaving && <Loader2 style={{ marginRight: '0.5rem', width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />}
               Salvar {extractedData.items?.length || 0} Itens
             </Button>
           )}
-        </div>
-      </div>
+        </Stack>
+      </Stack>
     );
   };
 
   return (
-    <div className="space-y-6">
+    <Stack spacing={6}>
       {/* AI Provider Selection */}
       {!receiptImage && (
-        <div className="space-y-2">
+        <Stack spacing={2}>
           <Label htmlFor="ai-provider">Provedor de IA</Label>
           <Select 
             value={selectedAI} 
@@ -281,7 +281,7 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
                 <SelectItem key={c.id} value={c.id}>
                   {c.name}
                   {c.id === DEFAULT_AI_CREDENTIAL.id && (
-                    <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-1 rounded">Padrão</span>
+                    <Box component="span" sx={{ ml: 2, fontSize: '0.75rem', bgcolor: '#dbeafe', color: '#1e40af', px: 1, borderRadius: 1 }}>Padrão</Box>
                   )}
                 </SelectItem>
               ))}
@@ -289,8 +289,8 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
           </Select>
           
           {!canSelectProvider && (
-            <Alert variant="default" className="border-blue-500/50 text-blue-200">
-              <Sparkles className="h-4 w-4 !text-blue-400" />
+            <Alert variant="default" sx={{ borderColor: 'rgba(59, 130, 246, 0.5)', color: '#bfdbfe' }}>
+              <Sparkles style={{ width: '1rem', height: '1rem', color: '#60a5fa' }} />
               <AlertTitle>Gastometria IA</AlertTitle>
               <AlertDescription>
                 Usando modelo padrão otimizado para análise de recibos. Faça upgrade para Plus ou Infinity para escolher outros modelos.
@@ -299,8 +299,8 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
           )}
           
           {isOllamaSelected && (
-            <Alert variant="default" className="border-amber-500/50 text-amber-200">
-              <Info className="h-4 w-4 !text-amber-400" />
+            <Alert variant="default" sx={{ borderColor: 'rgba(245, 158, 11, 0.5)', color: '#fcd34d' }}>
+              <Info style={{ width: '1rem', height: '1rem', color: '#fbbf24' }} />
               <AlertTitle>Aviso: Modelo Local com Visão</AlertTitle>
               <AlertDescription>
                 Modelos locais (Ollama) com visão podem ter menor precisão e segurança na leitura de recibos. 
@@ -308,7 +308,7 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
               </AlertDescription>
             </Alert>
           )}
-        </div>
+        </Stack>
       )}
 
       {/* Camera/Upload Interface */}
@@ -331,11 +331,11 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
           
           {isMobile && (
             <>
-              <div className="flex items-center gap-2">
-                <div className="h-px flex-1 bg-border"/>
-                <span className="text-xs text-muted-foreground">OU</span>
-                <div className="h-px flex-1 bg-border"/>
-              </div>
+              <Stack direction="row" alignItems="center" spacing={2}>
+                <Box sx={{ height: '1px', flex: 1, bgcolor: 'divider' }} />
+                <Typography variant="caption" sx={{ color: 'text.secondary' }}>OU</Typography>
+                <Box sx={{ height: '1px', flex: 1, bgcolor: 'divider' }} />
+              </Stack>
               
               <FileUpload 
                 onFileSelect={processImage} 
@@ -346,18 +346,19 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
         </>
       ) : (
         /* Preview and Results */
-        <div className="space-y-4">
-          <div className="relative">
-            <img 
+        <Stack spacing={4}>
+          <Box sx={{ position: 'relative' }}>
+            <Box 
+              component="img" 
               src={receiptImage} 
               alt="Pré-visualização da nota" 
-              className="rounded-lg max-h-60 w-full object-cover" 
+              sx={{ borderRadius: 2, maxHeight: '15rem', width: '100%', objectFit: 'cover' }}
             />
-          </div>
+          </Box>
           
           {isProcessing ? renderProcessingSkeleton() : renderExtractedData()}
-        </div>
+        </Stack>
       )}
-    </div>
+    </Stack>
   );
 }

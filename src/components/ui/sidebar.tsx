@@ -20,6 +20,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { Box } from '@mui/material';
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -182,7 +183,13 @@ const Sidebar = React.forwardRef<
           <SheetContent
             data-sidebar="sidebar"
             data-mobile="true"
-            className="w-full max-w-[var(--sidebar-width)] bg-sidebar p-0 text-sidebar-foreground"
+            sx={{ 
+              width: '100%', 
+              maxWidth: 'var(--sidebar-width)', 
+              bgcolor: 'var(--sidebar)', 
+              p: 0, 
+              color: 'var(--sidebar-foreground)' 
+            }}
             style={
               {
                 "--sidebar-width": SIDEBAR_WIDTH_MOBILE,
@@ -190,7 +197,7 @@ const Sidebar = React.forwardRef<
             }
             side={side}
           >
-            <div className="flex h-full w-full flex-col">{children}</div>
+            <Box sx={{ display: 'flex', height: '100%', width: '100%', flexDirection: 'column' }}>{children}</Box>
           </SheetContent>
         </Sheet>
       )
@@ -199,10 +206,16 @@ const Sidebar = React.forwardRef<
     return (
       <aside
         ref={ref}
-        className={cn("group hidden h-screen md:flex flex-col text-sidebar-foreground transition-all duration-300 ease-in-out border-r", 
-        "bg-sidebar",
-        state === 'expanded' ? 'w-[var(--sidebar-width)]' : 'w-[var(--sidebar-width-icon)]',
-        className)}
+        className={cn("group hidden md:flex", className)}
+        style={{
+          height: '100vh',
+          flexDirection: 'column',
+          color: 'var(--sidebar-foreground)',
+          transition: 'all 300ms ease-in-out',
+          borderRight: '1px solid var(--border)',
+          background: 'var(--sidebar)',
+          width: state === 'expanded' ? 'var(--sidebar-width)' : 'var(--sidebar-width-icon)'
+        }}
         data-state={state}
         data-side={side}
         {...props}
@@ -226,7 +239,8 @@ const SidebarTrigger = React.forwardRef<
       data-sidebar="trigger"
       variant="ghost"
       size="icon"
-      className={cn("h-8 w-8", className)}
+      sx={{ height: 32, width: 32 }}
+      className={className}
       onClick={(event) => {
         onClick?.(event)
         toggleSidebar()
@@ -234,7 +248,9 @@ const SidebarTrigger = React.forwardRef<
       {...props}
     >
       <PanelLeft />
-      <span className="sr-only">Toggle Sidebar</span>
+      <Box component="span" sx={{ position: 'absolute', width: 1, height: 1, p: 0, m: -1, overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', borderWidth: 0 }}>
+        Toggle Sidebar
+      </Box>
     </Button>
   )
 })
@@ -248,10 +264,15 @@ const SidebarInset = React.forwardRef<
   return (
     <main
       ref={ref}
-      className={cn(
-        "relative flex min-h-svh flex-1 flex-col bg-transparent",
-        className
-      )}
+      className={className}
+      style={{
+        position: 'relative',
+        display: 'flex',
+        minHeight: '100svh',
+        flex: 1,
+        flexDirection: 'column',
+        background: 'transparent'
+      }}
       {...props}
     />
   )
@@ -266,10 +287,17 @@ const SidebarInput = React.forwardRef<
     <Input
       ref={ref}
       data-sidebar="input"
-      className={cn(
-        "h-8 w-full bg-background shadow-none focus-visible:ring-2 focus-visible:ring-sidebar-ring",
-        className
-      )}
+      sx={{
+        height: 32,
+        width: '100%',
+        bgcolor: 'var(--background)',
+        boxShadow: 'none',
+        '&:focus-visible': {
+          outline: '2px solid var(--sidebar-ring)',
+          outlineOffset: 2
+        }
+      }}
+      className={className}
       {...props}
     />
   )
@@ -284,7 +312,8 @@ const SidebarHeader = React.forwardRef<
     <div
       ref={ref}
       data-sidebar="header"
-      className={cn("flex flex-col gap-2 p-3", className)}
+      className={className}
+      style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '0.75rem' }}
       {...props}
     />
   )
@@ -299,7 +328,8 @@ const SidebarFooter = React.forwardRef<
     <div
       ref={ref}
       data-sidebar="footer"
-      className={cn("flex flex-col gap-2 p-3", className)}
+      className={className}
+      style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', padding: '0.75rem' }}
       {...props}
     />
   )
@@ -314,7 +344,8 @@ const SidebarSeparator = React.forwardRef<
     <Separator
       ref={ref}
       data-sidebar="separator"
-      className={cn("mx-2 w-auto bg-sidebar-border", className)}
+      sx={{ mx: 1, width: 'auto', bgcolor: 'var(--sidebar-border)' }}
+      className={className}
       {...props}
     />
   )
@@ -329,11 +360,8 @@ const SidebarContent = React.forwardRef<
     <div
       ref={ref}
       data-sidebar="content"
-      className={cn(
-        "flex min-h-0 flex-1 flex-col gap-2",
-        "group-data-[state=collapsed]:overflow-hidden",
-        className
-      )}
+      className={cn("group-data-[state=collapsed]:overflow-hidden", className)}
+      style={{ display: 'flex', minHeight: 0, flex: 1, flexDirection: 'column', gap: '0.5rem' }}
       {...props}
     />
   )
@@ -347,7 +375,8 @@ const SidebarMenu = React.forwardRef<
   <ul
     ref={ref}
     data-sidebar="menu"
-    className={cn("flex w-full min-w-0 flex-col gap-1", className)}
+    className={className}
+    style={{ display: 'flex', width: '100%', minWidth: 0, flexDirection: 'column', gap: '0.25rem' }}
     {...props}
   />
 ))
@@ -360,7 +389,8 @@ const SidebarMenuItem = React.forwardRef<
   <li
     ref={ref}
     data-sidebar="menu-item"
-    className={cn("group/menu-item relative", className)}
+    className={cn("group/menu-item", className)}
+    style={{ position: 'relative' }}
     {...props}
   />
 ))
@@ -468,17 +498,30 @@ const SidebarMenuAction = React.forwardRef<
       ref={ref}
       data-sidebar="menu-action"
       className={cn(
-        "absolute right-1 top-1.5 flex aspect-square w-5 items-center justify-center rounded-md p-0 text-sidebar-foreground outline-none ring-sidebar-ring transition-transform hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 peer-hover/menu-button:text-sidebar-accent-foreground [&>svg]:size-4 [&>svg]:shrink-0",
-        // Increases the hit area of the button on mobile.
-        "after:absolute after:-inset-2 after:md:hidden",
         "peer-data-[size=sm]/menu-button:top-1",
         "peer-data-[size=default]/menu-button:top-1.5",
         "peer-data-[size=lg]/menu-button:top-2.5",
         "group-data-[state=collapsed]:hidden",
+        "after:absolute after:-inset-2 after:md:hidden",
         showOnHover &&
           "group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 data-[state=open]:opacity-100 peer-data-[active=true]/menu-button:text-sidebar-accent-foreground md:opacity-0",
         className
       )}
+      style={{
+        position: 'absolute',
+        right: '0.25rem',
+        top: '0.375rem',
+        display: 'flex',
+        aspectRatio: '1',
+        width: '1.25rem',
+        alignItems: 'center',
+        justifyContent: 'center',
+        borderRadius: '0.375rem',
+        padding: 0,
+        color: 'var(--sidebar-foreground)',
+        outline: 'none',
+        transition: 'transform 200ms',
+      }}
       {...props}
     />
   )

@@ -16,6 +16,7 @@ import { startOfMonth, getYear } from "date-fns";
 import { FinancialProfileOutput } from "@/ai/ai-types";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Box, Stack, Typography } from '@mui/material';
 
 export function FinancialProfileCard() {
   const [profile, setProfile] = useState<FinancialProfileOutput | null>(null);
@@ -69,46 +70,55 @@ export function FinancialProfileCard() {
   }, [allTransactions.length, user]);
 
   return (
-    <Card className="h-full bg-card/50 backdrop-blur-sm border-primary/20">
+    <Card sx={{ height: '100%', bgcolor: theme => `${theme.palette.custom.card}80`, backdropFilter: 'blur(4px)', borderColor: theme => `${theme.palette.primary.main}33` }}>
       <CardHeader>
-        <div className="flex items-start justify-between">
-             <div className="flex-1">
-                <div className="flex items-center gap-2">
-                    <Sparkles className="h-5 w-5 text-primary" />
-                    <CardTitle className="text-lg text-primary/90">Seu Perfil Financeiro</CardTitle>
-                </div>
-                 <CardDescription className="text-xs text-primary/70 mt-1">
+        <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
+             <Box sx={{ flex: 1 }}>
+                <Stack direction="row" alignItems="center" spacing={2}>
+                    <Sparkles style={{ width: '1.25rem', height: '1.25rem', color: 'var(--primary)' }} />
+                    <Typography variant="h6" sx={{ color: theme => `${theme.palette.primary.main}e6` }}>Seu Perfil Financeiro</Typography>
+                </Stack>
+                 <Typography variant="caption" sx={{ color: theme => `${theme.palette.primary.main}b3`, mt: 1, display: 'block' }}>
                     Gerado 1x por mês. Atualizar custa 5 créditos.
-                </CardDescription>
-            </div>
+                </Typography>
+            </Box>
             <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => fetchProfile(true)}
                 disabled={isPending || allTransactions.length === 0 || !user}
-                className="text-primary/70 hover:bg-primary/10 hover:text-primary rounded-full h-8 w-8"
+                sx={{
+                  color: theme => `${theme.palette.primary.main}b3`,
+                  '&:hover': {
+                    bgcolor: theme => `${theme.palette.primary.main}1a`,
+                    color: 'primary.main'
+                  },
+                  borderRadius: '9999px',
+                  height: '2rem',
+                  width: '2rem'
+                }}
             >
-                <RefreshCw className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`} />
+                <RefreshCw style={{ width: '1rem', height: '1rem' }} className={isPending ? "animate-spin" : ""} />
             </Button>
-        </div>
+        </Stack>
       </CardHeader>
       <CardContent>
-        <Separator className="mb-4" />
+        <Separator sx={{ mb: 4 }} />
         {isPending || !profile ? (
-           <div className="space-y-3 pt-2">
-            <Skeleton className="h-5 w-3/5 bg-primary/10" />
-            <Skeleton className="h-4 w-full bg-primary/10" />
-            <Skeleton className="h-4 w-full bg-primary/10" />
-            <Skeleton className="h-4 w-4/5 bg-primary/10" />
-          </div>
+           <Stack spacing={3} sx={{ pt: 2 }}>
+            <Skeleton sx={{ height: '1.25rem', width: '60%', bgcolor: theme => `${theme.palette.primary.main}1a` }} />
+            <Skeleton sx={{ height: '1rem', width: '100%', bgcolor: theme => `${theme.palette.primary.main}1a` }} />
+            <Skeleton sx={{ height: '1rem', width: '100%', bgcolor: theme => `${theme.palette.primary.main}1a` }} />
+            <Skeleton sx={{ height: '1rem', width: '80%', bgcolor: theme => `${theme.palette.primary.main}1a` }} />
+          </Stack>
         ) : (
-          <div className="pt-2 space-y-4">
-            <div>
-              <h4 className="font-bold text-xl text-foreground">{profile.profileName}</h4>
-              <p className="text-foreground/90 mt-2 text-sm whitespace-pre-line">
+          <Stack spacing={4} sx={{ pt: 2 }}>
+            <Box>
+              <Typography variant="h5" sx={{ fontWeight: 'bold', color: 'text.primary' }}>{profile.profileName}</Typography>
+              <Typography variant="body2" sx={{ color: 'text.secondary', mt: 2, whiteSpace: 'pre-line' }}>
                 {profile.profileDescription}
-              </p>
-            </div>
+              </Typography>
+            </Box>
 
             {/* Seção de Gamificação */}
             {profile.gamificationInfluence && profileInsights && (
@@ -173,7 +183,7 @@ export function FinancialProfileCard() {
                 </div>
               </div>
             )}
-          </div>
+          </Stack>
         )}
       </CardContent>
     </Card>

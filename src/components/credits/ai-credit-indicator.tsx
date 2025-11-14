@@ -12,6 +12,7 @@ import { CreditStatementDialog } from './ai-credit-statement-dialog';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { Badge } from '../ui/badge';
+import { Box, Stack } from '@mui/material';
 
 export function AICreditIndicator() {
   const { credits, isLoading: isLoadingCredits, logs } = useCredits();
@@ -29,9 +30,9 @@ export function AICreditIndicator() {
 
   // Define a cor do indicador baseado no saldo
   const getCreditColor = (credits: number) => {
-    if (credits >= 50) return 'text-green-600';
-    if (credits >= 20) return 'text-yellow-600';
-    return 'text-red-600';
+    if (credits >= 50) return '#16a34a';
+    if (credits >= 20) return '#ca8a04';
+    return '#dc2626';
   };
 
   // Mensagem sobre alternativas gratuitas
@@ -56,47 +57,58 @@ export function AICreditIndicator() {
     <>
       <CreditStatementDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
        <AnimatePresence>
-         <motion.div
+         <Box
+            component={motion.div}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
             transition={{ duration: 0.3 }}
-            className="flex items-center gap-2"
+            sx={{ display: 'flex', alignItems: 'center', gap: 2 }}
          >
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                       variant="outline"
-                      className="rounded-full shadow-lg backdrop-blur-sm bg-background/70 hover:bg-background h-11 px-3 md:px-4"
                       onClick={() => setIsDialogOpen(true)}
+                      sx={{
+                        borderRadius: '9999px',
+                        boxShadow: 3,
+                        backdropFilter: 'blur(4px)',
+                        bgcolor: theme => `${theme.palette.background.default}b3`,
+                        '&:hover': {
+                          bgcolor: 'background.default'
+                        },
+                        height: '2.75rem',
+                        px: { xs: 3, md: 4 }
+                      }}
                   >
                       {isLoading ? (
-                          <Skeleton className="h-5 w-16" />
+                          <Skeleton sx={{ height: '1.25rem', width: '4rem' }} />
                       ) : (
-                          <div className="flex items-center gap-2">
-                              <Sparkles className="h-5 w-5 text-primary" />
-                              <span className={`font-bold text-base ${getCreditColor(credits)}`}>{credits}</span>
-                              <span className="hidden md:inline text-muted-foreground text-sm ml-1">créditos</span>
-                          </div>
+                          <Stack direction="row" spacing={2} alignItems="center">
+                              <Sparkles style={{ width: '1.25rem', height: '1.25rem', color: 'var(--primary)' }} />
+                              <Box component="span" sx={{ fontWeight: 'bold', fontSize: '1rem', color: getCreditColor(credits) }}>{credits}</Box>
+                              <Box component="span" sx={{ display: { xs: 'none', md: 'inline' }, color: 'text.secondary', fontSize: '0.875rem', ml: 1 }}>créditos</Box>
+                          </Stack>
                       )}
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent side="top" align="end" className="max-w-xs md:hidden">
+                <TooltipContent side="top" align="end" sx={{ maxWidth: '20rem', display: { xs: 'block', md: 'none' } }}>
                    <p>{credits} créditos restantes</p>
                 </TooltipContent>
-                 <TooltipContent side="top" align="end" className="hidden md:block max-w-xs">
-                  <div className="space-y-2">
-                    <p className="font-medium">Plano {plan} - {credits} créditos disponíveis</p>
-                    <p className="text-xs text-muted-foreground">
+                 <TooltipContent side="top" align="end" sx={{ display: { xs: 'none', md: 'block' }, maxWidth: '20rem' }}>
+                  <Stack spacing={2}>
+                    <Box component="p" sx={{ fontWeight: 500 }}>Plano {plan} - {credits} créditos disponíveis</Box>
+                    <Box component="p" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
                       Clique para ver extrato detalhado de uso
-                    </p>
+                    </Box>
                     {isUsingGastometriaAI && (
-                      <p className="text-xs text-yellow-600">
+                      <Box component="p" sx={{ fontSize: '0.75rem', color: '#ca8a04' }}>
                         💡 {getAlternativeMessage()}
-                      </p>
+                      </Box>
                     )}
-                  </div>
+                  </Stack>
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -106,46 +118,46 @@ export function AICreditIndicator() {
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <div className="hidden md:block">
+                    <Box sx={{ display: { xs: 'none', md: 'block' } }}>
                         <Badge 
                         variant="outline" 
-                        className={isUsingGastometriaAI 
-                            ? "bg-blue-500/10 text-blue-600 border-blue-500/20" 
-                            : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                        sx={isUsingGastometriaAI 
+                            ? { bgcolor: 'rgba(59, 130, 246, 0.1)', color: '#2563eb', borderColor: 'rgba(59, 130, 246, 0.2)' }
+                            : { bgcolor: 'rgba(16, 185, 129, 0.1)', color: '#059669', borderColor: 'rgba(16, 185, 129, 0.2)' }
                         }
                         >
                         {isUsingGastometriaAI ? (
                             <>
-                            <Sparkles className="h-3 w-3 mr-1" />
+                            <Sparkles style={{ width: '0.75rem', height: '0.75rem', marginRight: '0.25rem' }} />
                             Gastometria IA
                             </>
                         ) : (
                             <>
-                            <Zap className="h-3 w-3 mr-1" />
+                            <Zap style={{ width: '0.75rem', height: '0.75rem', marginRight: '0.25rem' }} />
                             IA Própria
                             </>
                         )}
                         </Badge>
-                    </div>
+                    </Box>
                   </TooltipTrigger>
-                  <TooltipContent side="top" align="end" className="max-w-xs">
+                  <TooltipContent side="top" align="end" sx={{ maxWidth: '20rem' }}>
                     {isUsingGastometriaAI ? (
-                      <div className="space-y-1">
-                        <p className="font-medium">Usando Gastometria IA</p>
-                        <p className="text-xs">Ações consomem créditos do seu plano</p>
-                        <p className="text-xs text-yellow-600">{getAlternativeMessage()}</p>
-                      </div>
+                      <Stack spacing={1}>
+                        <Box component="p" sx={{ fontWeight: 500 }}>Usando Gastometria IA</Box>
+                        <Box component="p" sx={{ fontSize: '0.75rem' }}>Ações consomem créditos do seu plano</Box>
+                        <Box component="p" sx={{ fontSize: '0.75rem', color: '#ca8a04' }}>{getAlternativeMessage()}</Box>
+                      </Stack>
                     ) : (
-                      <div className="space-y-1">
-                        <p className="font-medium">Usando suas credenciais</p>
-                        <p className="text-xs text-emerald-600">Uso ilimitado e gratuito! 🎉</p>
-                      </div>
+                      <Stack spacing={1}>
+                        <Box component="p" sx={{ fontWeight: 500 }}>Usando suas credenciais</Box>
+                        <Box component="p" sx={{ fontSize: '0.75rem', color: '#059669' }}>Uso ilimitado e gratuito! 🎉</Box>
+                      </Stack>
                     )}
                   </TooltipContent>
                 </Tooltip>
               </TooltipProvider>
             )}
-         </motion.div>
+         </Box>
       </AnimatePresence>
     </>
   );

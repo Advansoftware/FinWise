@@ -16,7 +16,7 @@ export function PlanExpirationAlert() {
   if (isExpired) {
     return (
       <Alert variant="destructive" sx={{ mb: 2 }}>
-        <AlertTriangle className="h-4 w-4" />
+        <AlertTriangle style={{ width: '1rem', height: '1rem' }} />
         <AlertTitle>Assinatura Expirada</AlertTitle>
         <AlertDescription sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span>

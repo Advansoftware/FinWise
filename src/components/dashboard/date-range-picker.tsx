@@ -6,7 +6,6 @@ import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { DateRange } from "react-day-picker"
 
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import {
@@ -14,6 +13,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
+import { Box } from '@mui/material';
 
 interface DateRangePickerProps extends React.HTMLAttributes<HTMLDivElement> {
   initialDate?: DateRange;
@@ -28,18 +28,21 @@ export function DateRangePicker({ className, initialDate, onUpdate }: DateRangeP
   }, [date, onUpdate])
 
   return (
-    <div className={cn("grid gap-2", className)}>
+    <Box sx={{ display: 'grid', gap: 2 }}>
       <Popover>
         <PopoverTrigger asChild>
           <Button
             id="date"
             variant={"outline"}
-            className={cn(
-              "w-full justify-start text-left font-normal",
-              !date && "text-muted-foreground"
-            )}
+            sx={{
+              width: '100%',
+              justifyContent: 'flex-start',
+              textAlign: 'left',
+              fontWeight: 400,
+              ...(!date && { color: 'text.secondary' })
+            }}
           >
-            <CalendarIcon className="mr-2 h-4 w-4" />
+            <CalendarIcon style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} />
             {date?.from ? (
               date.to ? (
                 <>
@@ -54,7 +57,7 @@ export function DateRangePicker({ className, initialDate, onUpdate }: DateRangeP
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
+        <PopoverContent sx={{ width: 'auto', p: 0 }} align="start">
           <Calendar
             initialFocus
             mode="range"
@@ -66,6 +69,6 @@ export function DateRangePicker({ className, initialDate, onUpdate }: DateRangeP
           />
         </PopoverContent>
       </Popover>
-    </div>
+    </Box>
   )
 }

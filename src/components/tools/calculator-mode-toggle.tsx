@@ -3,6 +3,7 @@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { FileText, Edit3 } from "lucide-react";
+import { Box, Stack, Typography } from '@mui/material';
 
 interface CalculatorModeToggleProps {
   mode: 'payroll' | 'manual';
@@ -12,30 +13,30 @@ interface CalculatorModeToggleProps {
 
 export function CalculatorModeToggle({ mode, onModeChange, hasPayrollData = true }: CalculatorModeToggleProps) {
   return (
-    <div className="flex items-center gap-2 p-3 bg-muted/30 dark:bg-muted/10 rounded-lg border">
-      <div className="text-sm font-medium text-muted-foreground">Modo de Cálculo:</div>
-      <div className="flex gap-1">
+    <Stack direction="row" alignItems="center" spacing={2} sx={{ p: 3, bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(var(--muted-rgb), 0.1)' : 'rgba(var(--muted-rgb), 0.3)', borderRadius: 2, border: 1, borderColor: 'divider' }}>
+      <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'text.secondary' }}>Modo de Cálculo:</Typography>
+      <Stack direction="row" spacing={1}>
         <Button
           variant={mode === 'payroll' ? 'default' : 'outline'}
           size="sm"
           onClick={() => onModeChange('payroll')}
           disabled={!hasPayrollData}
-          className="text-xs"
+          sx={{ fontSize: '0.75rem' }}
         >
-          <FileText className="h-3 w-3 mr-1" />
+          <FileText style={{ width: '0.75rem', height: '0.75rem', marginRight: '0.25rem' }} />
           Holerite
-          {!hasPayrollData && <Badge variant="destructive" className="ml-1 text-xs">Sem dados</Badge>}
+          {!hasPayrollData && <Badge variant="destructive" sx={{ ml: 1, fontSize: '0.75rem' }}>Sem dados</Badge>}
         </Button>
         <Button
           variant={mode === 'manual' ? 'default' : 'outline'}
           size="sm"
           onClick={() => onModeChange('manual')}
-          className="text-xs"
+          sx={{ fontSize: '0.75rem' }}
         >
-          <Edit3 className="h-3 w-3 mr-1" />
+          <Edit3 style={{ width: '0.75rem', height: '0.75rem', marginRight: '0.25rem' }} />
           Manual
         </Button>
-      </div>
-    </div>
+      </Stack>
+    </Stack>
   );
 }

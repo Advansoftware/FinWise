@@ -26,6 +26,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useState } from 'react';
 import { AnalyzeTransactionsDialog } from './analyze-transactions-dialog';
+import { Box, Stack } from '@mui/material';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -67,28 +68,28 @@ export function DataTable<TData, TValue>({
   const selectedRows = table.getFilteredSelectedRowModel().rows.map(row => row.original);
 
   return (
-    <div className="border rounded-lg">
-      <div className="flex items-center justify-between p-4">
+    <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 2 }}>
+      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ p: 4 }}>
         <Input
           placeholder="Filtrar por item..."
           value={(table.getColumn("item")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("item")?.setFilterValue(event.target.value)
           }
-          className="max-w-sm"
+          sx={{ maxWidth: '24rem' }}
         />
         {selectedRows.length > 0 && (
           <AnalyzeTransactionsDialog transactions={selectedRows as any} />
         )}
-      </div>
-      <div className="overflow-x-auto">
+      </Stack>
+      <Box sx={{ overflowX: 'auto' }}>
         <Table>
             <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                     return (
-                    <TableHead key={header.id} className="p-2" style={{width: header.getSize() !== 150 ? `${header.getSize()}px` : undefined}}>
+                    <TableHead key={header.id} sx={{ p: 2 }} style={{width: header.getSize() !== 150 ? `${header.getSize()}px` : undefined}}>
                         {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -107,10 +108,10 @@ export function DataTable<TData, TValue>({
                 <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && 'selected'}
-                    className="h-12"
+                    sx={{ height: '3rem' }}
                 >
                     {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="p-2">
+                    <TableCell key={cell.id} sx={{ p: 2 }}>
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                     ))}
@@ -118,19 +119,19 @@ export function DataTable<TData, TValue>({
                 ))
             ) : (
                 <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell colSpan={columns.length} sx={{ height: '6rem', textAlign: 'center' }}>
                     Nenhum resultado encontrado.
                 </TableCell>
                 </TableRow>
             )}
             </TableBody>
         </Table>
-      </div>
-       <div className="flex items-center justify-end space-x-2 p-2 border-t">
-        <div className="flex-1 text-sm text-muted-foreground px-2">
+      </Box>
+       <Stack direction="row" alignItems="center" justifyContent="flex-end" spacing={2} sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
+        <Box sx={{ flex: 1, fontSize: '0.875rem', color: 'text.secondary', px: 2 }}>
           {table.getFilteredSelectedRowModel().rows.length} de{" "}
           {table.getFilteredRowModel().rows.length} linha(s) selecionadas.
-        </div>
+        </Box>
         <Button
           variant="outline"
           size="sm"
@@ -147,7 +148,7 @@ export function DataTable<TData, TValue>({
         >
           Próximo
         </Button>
-      </div>
-    </div>
+      </Stack>
+    </Box>
   );
 }

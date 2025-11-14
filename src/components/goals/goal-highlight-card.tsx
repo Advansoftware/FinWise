@@ -17,6 +17,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { ProjectGoalCompletionOutput } from "@/ai/ai-types";
+import { Box, Stack, Typography } from '@mui/material';
 
 
 export function GoalHighlightCard() {
@@ -93,18 +94,20 @@ export function GoalHighlightCard() {
     if (isLoading) {
         return (
             <Card>
-                <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                        <PiggyBank className="h-4 w-4" />
-                        Metas
+                <CardHeader sx={{ pb: 1 }}>
+                    <CardTitle>
+                      <Typography component="span" sx={{ fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <PiggyBank style={{ width: '1rem', height: '1rem' }} />
+                        <span>Metas</span>
+                      </Typography>
                     </CardTitle>
                 </CardHeader>
-                <CardContent className="pb-3">
-                    <div className="space-y-2">
-                        <Skeleton className="h-4 w-3/4" />
-                        <Skeleton className="h-3 w-full" />
-                        <Skeleton className="h-2 w-full" />
-                    </div>
+                <CardContent sx={{ pb: 1.5 }}>
+                    <Stack spacing={1}>
+                        <Skeleton sx={{ height: 16, width: '75%' }} />
+                        <Skeleton sx={{ height: 12, width: '100%' }} />
+                        <Skeleton sx={{ height: 8, width: '100%' }} />
+                    </Stack>
                 </CardContent>
             </Card>
         );
@@ -112,11 +115,15 @@ export function GoalHighlightCard() {
 
     if (!firstGoal) {
         return (
-             <Card className="flex flex-col items-center justify-center text-center p-4">
-                <Target className="h-8 w-8 text-primary/70 mb-2"/>
-                <CardTitle className="text-base">Crie sua Primeira Meta</CardTitle>
-                <CardContent className="p-0 mt-1 mb-3">
-                    <p className="text-xs text-muted-foreground">Comece a economizar para seus sonhos.</p>
+             <Card sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', p: 2 }}>
+                <Target style={{ width: '2rem', height: '2rem', color: 'rgba(var(--primary-rgb), 0.7)', marginBottom: '0.5rem' }}/>
+                <CardTitle>
+                  <Typography component="span" sx={{ fontSize: '1rem' }}>Crie sua Primeira Meta</Typography>
+                </CardTitle>
+                <CardContent sx={{ p: 0, mt: 0.5, mb: 1.5 }}>
+                    <Typography sx={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
+                      Comece a economizar para seus sonhos.
+                    </Typography>
                 </CardContent>
                 <Button asChild size="sm">
                     <Link href="/goals">Criar Meta</Link>
@@ -130,66 +137,91 @@ export function GoalHighlightCard() {
     const getProjectionText = () => {
         if (!projectionResult) return null;
         if (projectionResult.projection === "Meta concluída!") {
-            return <span className="text-emerald-500 font-semibold">{projectionResult.projection}</span>
+            return <Typography component="span" sx={{ color: '#10b981', fontWeight: 600 }}>{projectionResult.projection}</Typography>
         }
         if (projectionResult.completionDate) {
             const date = new Date(projectionResult.completionDate);
             date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
-            return <span>Estimativa: <span className="font-semibold text-foreground/80 capitalize">{format(date, "MMMM 'de' yyyy", { locale: ptBR })}</span></span>
+            return (
+              <Typography component="span">
+                Estimativa: <Typography component="span" sx={{ fontWeight: 600, color: 'rgba(var(--foreground-rgb), 0.8)', textTransform: 'capitalize' }}>
+                  {format(date, "MMMM 'de' yyyy", { locale: ptBR })}
+                </Typography>
+              </Typography>
+            )
         }
-        return <span className="capitalize">{projectionResult.projection}</span>
+        return <Typography component="span" sx={{ textTransform: 'capitalize' }}>{projectionResult.projection}</Typography>
     }
 
     return (
-        <Card className="flex flex-col h-full">
-            <CardHeader className="pb-2 flex-shrink-0">
-                <div className="flex items-center gap-2">
-                    <div className="p-1 rounded-full bg-primary/20">
-                        <Target className="h-3 w-3 text-primary"/>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                         <CardTitle className="text-sm truncate">{firstGoal.name}</CardTitle>
-                         <CardDescription className="text-xs">Sua meta em destaque</CardDescription>
-                    </div>
-                </div>
+        <Card sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <CardHeader sx={{ pb: 1, flexShrink: 0 }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                    <Box sx={{ p: 0.5, borderRadius: '50%', bgcolor: 'rgba(var(--primary-rgb), 0.2)' }}>
+                        <Target style={{ width: '0.75rem', height: '0.75rem', color: 'var(--primary)' }}/>
+                    </Box>
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                         <CardTitle>
+                           <Typography component="span" sx={{ fontSize: '0.875rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+                             {firstGoal.name}
+                           </Typography>
+                         </CardTitle>
+                         <CardDescription>
+                           <Typography component="span" sx={{ fontSize: '0.75rem' }}>Sua meta em destaque</Typography>
+                         </CardDescription>
+                    </Box>
+                </Stack>
             </CardHeader>
-            <CardContent className="space-y-2 pb-3 flex-1">
-                <Progress value={Math.min(percentage, 100)} className="h-1.5" />
-                 <div className="flex justify-between items-baseline">
-                    <p className="text-base font-bold text-foreground">R$ {firstGoal.currentAmount.toFixed(2)}</p>
-                    <p className="text-xs text-muted-foreground">de R$ {firstGoal.targetAmount.toFixed(2)}</p>
-                </div>
-                 <div className="text-xs text-muted-foreground flex items-center gap-1 justify-between">
-                    <div className="flex items-center gap-1 min-w-0">
-                        <Sparkles className={cn("h-3 w-3 text-primary/80 flex-shrink-0", isProjecting && "animate-pulse")} />
-                         <span className="truncate">
+            <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1, pb: 1.5, flex: 1 }}>
+                <Progress value={Math.min(percentage, 100)} sx={{ height: 6 }} />
+                 <Stack direction="row" justifyContent="space-between" alignItems="baseline">
+                    <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: 'var(--foreground)' }}>
+                      R$ {firstGoal.currentAmount.toFixed(2)}
+                    </Typography>
+                    <Typography sx={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
+                      de R$ {firstGoal.targetAmount.toFixed(2)}
+                    </Typography>
+                </Stack>
+                 <Stack 
+                   direction="row" 
+                   alignItems="center" 
+                   spacing={0.5} 
+                   justifyContent="space-between"
+                   sx={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}
+                 >
+                    <Stack direction="row" alignItems="center" spacing={0.5} sx={{ minWidth: 0 }}>
+                        <Sparkles 
+                          style={{ width: '0.75rem', height: '0.75rem', color: 'rgba(var(--primary-rgb), 0.8)' }}
+                          className={cn("flex-shrink-0", isProjecting && "animate-pulse")} 
+                        />
+                         <Box sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                          {isProjecting ? (
                             "Calculando..."
                         ) : (
                            getProjectionText()
                         )}
-                         </span>
-                    </div>
+                         </Box>
+                    </Stack>
                     {projectionResult && !isProjecting && (
                         <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="h-4 w-4 p-0 text-muted-foreground hover:text-primary flex-shrink-0"
+                            sx={{ height: 16, width: 16, p: 0, minWidth: 16, color: 'var(--muted-foreground)', '&:hover': { color: 'var(--primary)' }, flexShrink: 0 }}
                             onClick={refreshProjection}
                             title="Atualizar previsão"
                         >
-                            <RefreshCw className="h-3 w-3" />
+                            <RefreshCw style={{ width: '0.75rem', height: '0.75rem' }} />
                         </Button>
                     )}
-                </div>
+                </Stack>
             </CardContent>
-             <CardFooter className="flex gap-2 p-4 pt-0 flex-shrink-0">
-                 <Button asChild variant="outline" className="flex-1" size="sm">
+             <CardFooter sx={{ display: 'flex', gap: 1, p: 2, pt: 0, flexShrink: 0 }}>
+                 <Button asChild variant="outline" sx={{ flex: 1 }} size="sm">
                     <Link href="/goals">Ver Todas</Link>
                  </Button>
                   <AddDepositDialog goal={firstGoal}>
-                    <Button className="flex-1" size="sm" disabled={firstGoal.currentAmount >= firstGoal.targetAmount}>
-                        <PiggyBank className="mr-1 h-3 w-3"/>Depositar
+                    <Button sx={{ flex: 1 }} size="sm" disabled={firstGoal.currentAmount >= firstGoal.targetAmount}>
+                        <PiggyBank style={{ marginRight: '0.25rem', width: '0.75rem', height: '0.75rem' }}/>Depositar
                     </Button>
                 </AddDepositDialog>
              </CardFooter>

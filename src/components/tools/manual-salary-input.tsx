@@ -3,6 +3,7 @@
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatCurrency } from "@/lib/utils";
+import { Box, Stack, Typography } from '@mui/material';
 
 export interface ManualSalaryData {
   grossSalary: number;
@@ -32,12 +33,12 @@ export function ManualSalaryInput({ data, onChange }: ManualSalaryInputProps) {
   };
 
   return (
-    <div className="space-y-4 p-4 bg-muted/30 dark:bg-muted/10 rounded-lg border">
-      <div className="text-sm font-medium text-muted-foreground">Entrada Manual de Dados:</div>
+    <Stack spacing={4} sx={{ p: 4, bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(var(--muted-rgb), 0.1)' : 'rgba(var(--muted-rgb), 0.3)', borderRadius: 2, border: 1, borderColor: 'divider' }}>
+      <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'text.secondary' }}>Entrada Manual de Dados:</Typography>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label htmlFor="grossSalary" className="text-sm">
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 4 }}>
+        <Stack spacing={2}>
+          <Label htmlFor="grossSalary" sx={{ fontSize: '0.875rem' }}>
             Salário Bruto (R$)
           </Label>
           <Input
@@ -48,12 +49,12 @@ export function ManualSalaryInput({ data, onChange }: ManualSalaryInputProps) {
             value={data.grossSalary || ''}
             onChange={(e) => handleGrossChange(e.target.value)}
             placeholder="Ex: 5000.00"
-            className="text-sm"
+            sx={{ fontSize: '0.875rem' }}
           />
-        </div>
+        </Stack>
         
-        <div className="space-y-2">
-          <Label htmlFor="netSalary" className="text-sm">
+        <Stack spacing={2}>
+          <Label htmlFor="netSalary" sx={{ fontSize: '0.875rem' }}>
             Salário Líquido (R$)
           </Label>
           <Input
@@ -64,18 +65,18 @@ export function ManualSalaryInput({ data, onChange }: ManualSalaryInputProps) {
             value={data.netSalary || ''}
             onChange={(e) => handleNetChange(e.target.value)}
             placeholder="Ex: 4200.00"
-            className="text-sm"
+            sx={{ fontSize: '0.875rem' }}
           />
-        </div>
-      </div>
+        </Stack>
+      </Box>
       
       {data.grossSalary > 0 && data.netSalary > 0 && (
-        <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-500/10 p-2 rounded border">
-          <strong>Resumo:</strong> Bruto: {formatCurrency(data.grossSalary)} | 
+        <Box sx={{ fontSize: '0.75rem', color: 'text.secondary', bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(59, 130, 246, 0.1)' : '#eff6ff', p: 2, borderRadius: 1, border: 1, borderColor: 'divider' }}>
+          <Typography component="strong">Resumo:</Typography> Bruto: {formatCurrency(data.grossSalary)} | 
           Líquido: {formatCurrency(data.netSalary)} | 
           Desconto: {formatCurrency(data.grossSalary - data.netSalary)} ({((data.grossSalary - data.netSalary) / data.grossSalary * 100).toFixed(1)}%)
-        </div>
+        </Box>
       )}
-    </div>
+    </Stack>
   );
 }

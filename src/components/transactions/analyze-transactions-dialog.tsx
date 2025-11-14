@@ -54,7 +54,7 @@ export function AnalyzeTransactionsDialog({ transactions }: AnalyzeTransactionsD
             <ProUpgradeButton requiredPlan="Pro" tooltipContent="Analise transações com IA no plano Pro.">
               <DialogTrigger asChild>
                   <Button variant="outline" size="sm" onClick={() => handleAnalysis()} disabled={!user || !isPro || transactions.length === 0}>
-                      <Wand2 className="mr-2 h-4 w-4" />
+                      <Wand2 style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} />
                       Analisar com IA ({transactions.length})
                   </Button>
               </DialogTrigger>
@@ -66,10 +66,10 @@ export function AnalyzeTransactionsDialog({ transactions }: AnalyzeTransactionsD
                         A IA analisou as transações selecionadas e encontrou os seguintes pontos:
                     </DialogDescription>
                 </DialogHeader>
-                <ScrollArea className="max-h-80 my-4 pr-6 prose prose-sm dark:prose-invert prose-p:my-2 prose-headings:my-2">
+                <ScrollArea sx={{ maxHeight: '20rem', my: 4, pr: 6, '& .prose': { fontSize: '0.875rem' } }}>
                     {isAnalyzing ? (
-                        <div className="flex items-center justify-center h-40">
-                             <Loader2 className="h-8 w-8 animate-spin text-primary"/>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '10rem' }}>
+                             <Loader2 style={{ width: '2rem', height: '2rem', animation: 'spin 1s linear infinite', color: 'var(--primary)' }} />
                         </div>
                     ) : (
                         <ReactMarkdown>{analysis}</ReactMarkdown>

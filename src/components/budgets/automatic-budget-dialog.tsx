@@ -18,8 +18,8 @@ import { useBudgets } from "@/hooks/use-budgets";
 import { Loader2, Sparkles, CheckCircle, Circle } from "lucide-react";
 import { BudgetItemSchema } from "@/ai/ai-types";
 import { ScrollArea } from "../ui/scroll-area";
-import { cn } from "@/lib/utils";
 import { Input } from "../ui/input";
+import { Box, Stack, Typography } from '@mui/material';
 
 type SuggestedBudget = z.infer<typeof BudgetItemSchema>;
 
@@ -75,43 +75,56 @@ export function AutomaticBudgetDialog({ isOpen, setIsOpen, suggestedBudgets }: A
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="max-w-md">
+      <DialogContent sx={{ maxWidth: '28rem' }}>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="text-primary"/> Orçamentos Sugeridos
+          <DialogTitle>
+            <Stack direction="row" alignItems="center" spacing={2}>
+              <Sparkles style={{ color: 'var(--primary)' }}/> Orçamentos Sugeridos
+            </Stack>
           </DialogTitle>
           <DialogDescription>
             A IA analisou seus gastos e sugere os seguintes orçamentos. Selecione quais você quer criar.
           </DialogDescription>
         </DialogHeader>
         
-        <ScrollArea className="max-h-80 my-4">
-          <div className="space-y-3 pr-4">
+        <ScrollArea sx={{ maxHeight: '20rem', my: 4 }}>
+          <Stack spacing={3} sx={{ pr: 4 }}>
              {suggestedBudgets.map((budget, index) => {
                 const isSelected = selectedBudgets.some(b => b.category === budget.category);
                 return (
-                    <div key={index} onClick={() => handleToggleSelection(budget)}
-                      className={cn(
-                        "flex items-center gap-4 p-3 rounded-lg border cursor-pointer transition-colors",
-                        isSelected ? "bg-primary/10 border-primary/50" : "bg-muted/50 hover:bg-muted"
-                      )}
+                    <Stack key={index} onClick={() => handleToggleSelection(budget)}
+                      direction="row" alignItems="center" spacing={4}
+                      sx={{
+                        p: 3,
+                        borderRadius: 2,
+                        border: 1,
+                        cursor: 'pointer',
+                        transition: 'colors 0.2s',
+                        ...(isSelected ? {
+                          bgcolor: 'rgba(var(--primary-rgb), 0.1)',
+                          borderColor: 'rgba(var(--primary-rgb), 0.5)'
+                        } : {
+                          bgcolor: 'rgba(var(--muted-rgb), 0.5)',
+                          '&:hover': { bgcolor: 'action.hover' }
+                        })
+                      }}
                     >
-                      {isSelected ? <CheckCircle className="h-5 w-5 text-primary"/> : <Circle className="h-5 w-5 text-muted-foreground"/>}
-                      <div className="flex-1">
-                        <p className="font-semibold">{budget.name}</p>
-                        <p className="text-sm text-muted-foreground">{budget.category}</p>
-                      </div>
-                      <p className="font-bold text-lg">R$ {budget.amount.toFixed(2)}</p>
-                    </div>
+                      {isSelected ? <CheckCircle style={{ width: '1.25rem', height: '1.25rem', color: 'var(--primary)' }}/> : <Circle style={{ width: '1.25rem', height: '1.25rem', color: 'var(--muted-foreground)' }}/>}
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body1" sx={{ fontWeight: 600 }}>{budget.name}</Typography>
+                        <Typography variant="body2" sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>{budget.category}</Typography>
+                      </Box>
+                      <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.125rem' }}>R$ {budget.amount.toFixed(2)}</Typography>
+                    </Stack>
                 )
              })}
-          </div>
+          </Stack>
         </ScrollArea>
        
         <DialogFooter>
             <Button variant="ghost" onClick={() => setIsOpen(false)} disabled={isSaving}>Cancelar</Button>
             <Button onClick={handleCreateBudgets} disabled={isSaving || selectedBudgets.length === 0}>
-                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                {isSaving && <Loader2 style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} className="animate-spin" />}
                 Criar {selectedBudgets.length} Orçamentos
             </Button>
         </DialogFooter>

@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { Button } from "../ui/button";
+import { Box, Stack, Typography } from '@mui/material';
 
 export function GamificationSummary() {
   const { gamificationData, isLoading } = useGamification();
@@ -19,15 +20,19 @@ export function GamificationSummary() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5" />
-            Progresso Gamificado
+          <CardTitle>
+            <Stack direction="row" alignItems="center" spacing={2}>
+              <Trophy style={{ width: '1.25rem', height: '1.25rem' }} />
+              Progresso Gamificado
+            </Stack>
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <Skeleton className="h-4 w-full" />
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="h-4 w-1/2" />
+        <CardContent>
+          <Stack spacing={4}>
+            <Skeleton sx={{ height: '1rem', width: '100%' }} />
+            <Skeleton sx={{ height: '1rem', width: '75%' }} />
+            <Skeleton sx={{ height: '1rem', width: '50%' }} />
+          </Stack>
         </CardContent>
       </Card>
     );
@@ -36,47 +41,55 @@ export function GamificationSummary() {
   if (!gamificationData) {
     return (
       <Card>
-        <CardContent className="p-6 text-center text-muted-foreground">
-          <Trophy className="mx-auto h-8 w-8 mb-2 opacity-50" />
-          <p className="text-sm">Comece a usar o app para ganhar pontos e subir de nível!</p>
+        <CardContent sx={{ p: 6, textAlign: 'center', color: 'text.secondary' }}>
+          <Trophy style={{ margin: '0 auto', width: '2rem', height: '2rem', marginBottom: '0.5rem', opacity: 0.5 }} />
+          <Typography variant="body2" sx={{ fontSize: '0.875rem' }}>Comece a usar o app para ganhar pontos e subir de nível!</Typography>
         </CardContent>
       </Card>
     );
   }
 
   return (
-    <Card className="bg-gradient-to-br from-purple-50 via-blue-50 to-green-50 dark:from-purple-950/20 dark:via-blue-950/20 dark:to-green-950/20 border-purple-200 dark:border-purple-800/50">
+    <Card sx={{ 
+      background: theme => theme.palette.mode === 'dark' 
+        ? 'linear-gradient(135deg, rgba(88, 28, 135, 0.2) 0%, rgba(30, 58, 138, 0.2) 50%, rgba(6, 78, 59, 0.2) 100%)'
+        : 'linear-gradient(135deg, #faf5ff 0%, #eff6ff 50%, #f0fdf4 100%)',
+      borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(147, 51, 234, 0.5)' : '#e9d5ff'
+    }}>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2 text-purple-800 dark:text-purple-300">
-          <Trophy className="h-5 w-5" />
-          Seu Progresso
+        <CardTitle>
+          <Stack direction="row" alignItems="center" spacing={2} sx={{ color: theme => theme.palette.mode === 'dark' ? '#d8b4fe' : '#6b21a8' }}>
+            <Trophy style={{ width: '1.25rem', height: '1.25rem' }} />
+            Seu Progresso
+          </Stack>
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-4">
+      <CardContent>
+        <Stack spacing={4}>
         {/* Nível e Pontos */}
-        <div className="flex items-center justify-between">
-          <div>
-            <div className="text-lg font-bold text-purple-900 dark:text-purple-200">
+        <Stack direction="row" alignItems="center" justifyContent="space-between">
+          <Box>
+            <Typography variant="h6" sx={{ fontSize: '1.125rem', fontWeight: 700, color: theme => theme.palette.mode === 'dark' ? '#e9d5ff' : '#581c87' }}>
               Nível {gamificationData.level.level}
-            </div>
-            <div className="text-sm text-purple-700 dark:text-purple-400">
+            </Typography>
+            <Typography variant="body2" sx={{ fontSize: '0.875rem', color: theme => theme.palette.mode === 'dark' ? '#c084fc' : '#7e22ce' }}>
               {gamificationData.level.name}
-            </div>
-          </div>
-          <div className="text-right">
-            <div className="text-lg font-bold text-purple-900 dark:text-purple-200">
+            </Typography>
+          </Box>
+          <Box sx={{ textAlign: 'right' }}>
+            <Typography variant="h6" sx={{ fontSize: '1.125rem', fontWeight: 700, color: theme => theme.palette.mode === 'dark' ? '#e9d5ff' : '#581c87' }}>
               {gamificationData.points}
-            </div>
-            <div className="text-xs text-purple-600 dark:text-purple-400">pontos</div>
-          </div>
-        </div>
+            </Typography>
+            <Typography variant="body2" sx={{ fontSize: '0.75rem', color: theme => theme.palette.mode === 'dark' ? '#c084fc' : '#9333ea' }}>pontos</Typography>
+          </Box>
+        </Stack>
 
         {/* Barra de Progresso */}
-        <div className="space-y-2">
-          <div className="flex justify-between text-xs text-purple-700 dark:text-purple-400">
-            <span>Próximo nível</span>
-            <span>{gamificationData.level.pointsToNext} pontos</span>
-          </div>
+        <Stack spacing={2}>
+          <Stack direction="row" justifyContent="space-between" sx={{ fontSize: '0.75rem', color: theme => theme.palette.mode === 'dark' ? '#c084fc' : '#7e22ce' }}>
+            <Typography component="span" variant="body2" sx={{ fontSize: '0.75rem' }}>Próximo nível</Typography>
+            <Typography component="span" variant="body2" sx={{ fontSize: '0.75rem' }}>{gamificationData.level.pointsToNext} pontos</Typography>
+          </Stack>
           <Progress
             value={(gamificationData.points / (gamificationData.level.pointsRequired + gamificationData.level.pointsToNext)) * 100}
             sx={{
@@ -87,54 +100,78 @@ export function GamificationSummary() {
               background: 'linear-gradient(90deg, #8b5cf6 0%, #3b82f6 100%)'
             }}
           />
-        </div>
+        </Stack>
 
         {/* Streak */}
         {gamificationData.streak > 0 && (
-          <div className="flex items-center gap-2 p-2 bg-orange-100 dark:bg-orange-900/50 border border-orange-200 dark:border-orange-800/50 rounded-lg">
-            <Flame className="h-4 w-4 text-orange-500" />
-            <span className="text-sm font-medium text-orange-700 dark:text-orange-300">
+          <Stack direction="row" alignItems="center" spacing={2} sx={{ 
+            p: 2, 
+            bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(124, 45, 18, 0.5)' : '#ffedd5',
+            border: 1,
+            borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(154, 52, 18, 0.5)' : '#fed7aa',
+            borderRadius: 2
+          }}>
+            <Flame style={{ width: '1rem', height: '1rem', color: '#f97316' }} />
+            <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 500, color: theme => theme.palette.mode === 'dark' ? '#fdba74' : '#c2410c' }}>
               {gamificationData.streak} meses de pagamentos em dia
-            </span>
-          </div>
+            </Typography>
+          </Stack>
         )}
 
         {/* Badges Recentes */}
         {gamificationData.badges.length > 0 && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-1 text-xs font-medium text-purple-700 dark:text-purple-400">
-              <Award className="h-3 w-3" />
+          <Stack spacing={2}>
+            <Stack direction="row" alignItems="center" spacing={1} sx={{ fontSize: '0.75rem', fontWeight: 500, color: theme => theme.palette.mode === 'dark' ? '#c084fc' : '#7e22ce' }}>
+              <Award style={{ width: '0.75rem', height: '0.75rem' }} />
               Badges Recentes
-            </div>
-            <div className="flex gap-1">
+            </Stack>
+            <Stack direction="row" spacing={1}>
               {gamificationData.badges.slice(0, 4).map((badge, index) => (
                 <motion.div
                   key={badge.id}
                   initial={{ scale: 0, rotate: -180 }}
                   animate={{ scale: 1, rotate: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center text-white"
+                  style={{
+                    width: '2rem',
+                    height: '2rem',
+                    borderRadius: '50%',
+                    background: 'linear-gradient(135deg, #facc15 0%, #ca8a04 100%)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    color: '#fff'
+                  }}
                   title={badge.name}
                 >
-                  <span className="text-xs">{badge.icon}</span>
+                  <span style={{ fontSize: '0.75rem' }}>{badge.icon}</span>
                 </motion.div>
               ))}
               {gamificationData.badges.length > 4 && (
-                <div className="w-8 h-8 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
-                  <span className="text-xs text-gray-600 dark:text-gray-300">
+                <Box sx={{ 
+                  width: '2rem', 
+                  height: '2rem', 
+                  borderRadius: '50%', 
+                  bgcolor: theme => theme.palette.mode === 'dark' ? '#374151' : '#e5e7eb',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <Typography component="span" sx={{ fontSize: '0.75rem', color: theme => theme.palette.mode === 'dark' ? '#d1d5db' : '#4b5563' }}>
                     +{gamificationData.badges.length - 4}
-                  </span>
-                </div>
+                  </Typography>
+                </Box>
               )}
-            </div>
-          </div>
+            </Stack>
+          </Stack>
         )}
         
-        <Button asChild variant="outline" className="w-full mt-4">
+        <Button asChild variant="outline" sx={{ width: '100%', mt: 4 }}>
             <Link href="/installments?tab=gamification">
                 Ver todos os detalhes
             </Link>
         </Button>
+        </Stack>
       </CardContent>
     </Card>
   );

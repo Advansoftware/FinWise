@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { ArrowDownToLine, Wifi, WifiOff } from 'lucide-react';
+import { Box, Stack, Typography } from '@mui/material';
 
 export function PWAUpdater() {
   const { toast } = useToast();
@@ -72,8 +73,8 @@ export function PWAUpdater() {
         description: 'Adicione o Gastometria à sua tela inicial para acesso mais rápido.',
         duration: 10000,
         action: (
-          <Button onClick={handleInstallClick} size="sm" className="h-8 px-3 py-1">
-            <ArrowDownToLine className="mr-2 h-3 w-3" />
+          <Button onClick={handleInstallClick} size="sm" sx={{ height: '2rem', px: 3, py: 1 }}>
+            <ArrowDownToLine style={{ marginRight: '0.5rem', width: '0.75rem', height: '0.75rem' }} />
             Instalar
           </Button>
         ),
@@ -172,8 +173,8 @@ export function PWAUpdater() {
         description: 'Uma nova versão do Gastometria está pronta para usar.',
         duration: Infinity,
         action: (
-          <Button onClick={handleUpdate} size="sm" className="h-8 px-3 py-1">
-            <ArrowDownToLine className="mr-2 h-3 w-3" />
+          <Button onClick={handleUpdate} size="sm" sx={{ height: '2rem', px: 3, py: 1 }}>
+            <ArrowDownToLine style={{ marginRight: '0.5rem', width: '0.75rem', height: '0.75rem' }} />
             Atualizar
           </Button>
         ),
@@ -184,12 +185,12 @@ export function PWAUpdater() {
   // Indicador de status de conexão (opcional)
   if (!isOnline) {
     return (
-      <div className="fixed bottom-4 left-4 z-50">
-        <div className="flex items-center gap-2 bg-muted/80 backdrop-blur-sm px-3 py-2 rounded-lg text-sm">
-          <WifiOff className="h-4 w-4 text-muted-foreground" />
-          <span className="text-muted-foreground">Offline</span>
-        </div>
-      </div>
+      <Box sx={{ position: 'fixed', bottom: 16, left: 16, zIndex: 50 }}>
+        <Stack direction="row" alignItems="center" spacing={2} sx={{ bgcolor: 'rgba(var(--muted-rgb), 0.8)', backdropFilter: 'blur(4px)', px: 3, py: 2, borderRadius: 2, fontSize: '0.875rem' }}>
+          <WifiOff style={{ width: '1rem', height: '1rem', color: 'var(--muted-foreground)' }} />
+          <Typography component="span" sx={{ color: 'text.secondary' }}>Offline</Typography>
+        </Stack>
+      </Box>
     );
   }
 

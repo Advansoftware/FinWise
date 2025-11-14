@@ -9,12 +9,12 @@ interface SpendingChartProps {
 
 export function SpendingChart({ data }: SpendingChartProps) {
   return (
-    <Card className="h-full bg-card/50 backdrop-blur-sm">
+    <Card sx={{ height: '100%', bgcolor: 'rgba(var(--card-rgb), 0.5)', backdropFilter: 'blur(4px)' }}>
       <CardHeader>
         <CardTitle>Visão Geral dos Gastos</CardTitle>
         <CardDescription>Sua atividade de gastos para o período selecionado.</CardDescription>
       </CardHeader>
-      <CardContent className="pl-2">
+      <CardContent sx={{ pl: 2 }}>
         <ResponsiveContainer width="100%" height={350}>
           <AreaChart data={data} margin={{ top: 5, right: 20, left: -10, bottom: 5 }}>
              <defs>

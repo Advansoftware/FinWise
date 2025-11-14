@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AutomaticBudgetDialog } from "./automatic-budget-dialog";
 import { BudgetItemSchema } from "@/ai/ai-types";
 import { z } from "zod";
+import { Box, Stack } from '@mui/material';
 
 type SuggestedBudget = z.infer<typeof BudgetItemSchema>;
 
@@ -80,19 +81,25 @@ export function AutomaticBudgetCard() {
             setIsOpen={setIsDialogOpen}
             suggestedBudgets={suggestedBudgets}
         />
-        <Card className="bg-primary/10 border-primary/20">
+        <Card sx={{ bgcolor: 'rgba(var(--primary-rgb), 0.1)', borderColor: 'rgba(var(--primary-rgb), 0.2)' }}>
         <CardHeader>
-            <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary"/>
-                <CardTitle className="text-primary">Orçamentos Automáticos</CardTitle>
-            </div>
-            <CardDescription className="text-primary/80">
-            Deixe a IA analisar seus gastos do mês passado e criar um plano de orçamento para você em segundos.
+            <Box>
+                <Stack direction="row" alignItems="center" spacing={2}>
+                    <Sparkles style={{ width: '1.25rem', height: '1.25rem', color: 'var(--primary)' }} />
+                    <CardTitle>
+                        <Box component="span" sx={{ color: 'primary.main' }}>Orçamentos Automáticos</Box>
+                    </CardTitle>
+                </Stack>
+            </Box>
+            <CardDescription>
+                <Box component="span" sx={{ color: 'rgba(var(--primary-rgb), 0.8)' }}>
+                    Deixe a IA analisar seus gastos do mês passado e criar um plano de orçamento para você em segundos.
+                </Box>
             </CardDescription>
         </CardHeader>
         <CardContent>
             <Button onClick={handleGenerate} disabled={isGenerating}>
-            {isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
+            {isGenerating && <Loader2 style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} className="animate-spin"/>}
             Gerar Orçamentos com IA
             </Button>
         </CardContent>

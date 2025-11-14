@@ -212,9 +212,14 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
         
                 <Box sx={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 3, pr: 2 }}>
             {/* Tipo de Transação */}
-            <div className="space-y-3">
-                <Label className="text-sm font-medium">Tipo</Label>
-                <ToggleGroup type="single" value={formState.type} onValueChange={(value) => handleInputChange('type', value || 'expense')} className="grid grid-cols-3 gap-2">
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+                <Label sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Tipo</Label>
+                <ToggleGroup 
+                  type="single" 
+                  value={formState.type} 
+                  onValueChange={(value) => handleInputChange('type', value || 'expense')} 
+                  style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}
+                >
                     <ToggleGroupItem value="expense" aria-label="Despesa" className="data-[state=on]:bg-destructive/80 data-[state=on]:text-white">
                         Despesa
                     </ToggleGroupItem>
@@ -225,14 +230,14 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                         Transfer
                     </ToggleGroupItem>
                 </ToggleGroup>
-                <p className="text-xs text-muted-foreground">
+                <Box component="p" sx={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
                     {typeDescriptions[formState.type]}
-                </p>
-            </div>
+                </Box>
+            </Box>
 
             {/* Valor */}
-            <div className="space-y-2">
-                <Label htmlFor="amount" className="text-sm font-medium">Valor</Label>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Label htmlFor="amount" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Valor</Label>
                 <Input 
                     id="amount" 
                     type="number" 
@@ -240,19 +245,19 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                     value={formState.amount} 
                     onChange={(e) => handleInputChange('amount', e.target.value)} 
                 />
-            </div>
+            </Box>
 
             {/* Data */}
-            <div className="space-y-2">
-                <Label htmlFor="date" className="text-sm font-medium">Data</Label>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Label htmlFor="date" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Data</Label>
                 <SingleDatePicker date={formState.date} setDate={(d) => handleInputChange('date', d)} />
-            </div>
+            </Box>
 
             {formState.type === 'transfer' ? (
                 <>
                     {/* Carteira de Origem */}
-                    <div className="space-y-2">
-                        <Label htmlFor="wallet" className="text-sm font-medium">De</Label>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <Label htmlFor="wallet" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>De</Label>
                         <Select value={formState.walletId} onValueChange={(value) => handleInputChange('walletId', value)}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Carteira de Origem" />
@@ -263,11 +268,11 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                                 ))}
                             </SelectContent>
                         </Select>
-                    </div>
+                    </Box>
 
                     {/* Carteira de Destino */}
-                    <div className="space-y-2">
-                        <Label htmlFor="toWallet" className="text-sm font-medium">Para</Label>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <Label htmlFor="toWallet" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Para</Label>
                         <Select value={formState.toWalletId} onValueChange={(value) => handleInputChange('toWalletId', value)}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Carteira de Destino" />
@@ -278,13 +283,13 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                                 ))}
                             </SelectContent>
                         </Select>
-                    </div>
+                    </Box>
                 </>
             ) : (
                 <>
                     {/* Item */}
-                    <div className="space-y-2">
-                        <Label htmlFor="item" className="text-sm font-medium">Item</Label>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <Label htmlFor="item" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Item</Label>
                         <Popover open={isItemPopoverOpen} onOpenChange={setIsItemPopoverOpen}>
                             <PopoverAnchor>
                                 <Input 
@@ -296,7 +301,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                                     disabled={(formState.type as any) === 'transfer'}
                                 />
                             </PopoverAnchor>
-                            <PopoverContent className="p-0 w-[--radix-popover-trigger-width]" onOpenAutoFocus={(e) => e.preventDefault()}>
+                            <PopoverContent sx={{ p: 0, width: 'var(--radix-popover-trigger-width)' }} onOpenAutoFocus={(e) => e.preventDefault()}>
                                 <Command>
                                     <CommandList>
                                         <CommandEmpty>Nenhuma sugestão encontrada.</CommandEmpty>
@@ -311,22 +316,22 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                                 </Command>
                             </PopoverContent>
                         </Popover>
-                    </div>
+                    </Box>
 
                     {/* Estabelecimento */}
-                    <div className="space-y-2">
-                        <Label htmlFor="establishment" className="text-sm font-medium">Estabelecimento</Label>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <Label htmlFor="establishment" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Estabelecimento</Label>
                         <Input 
                             id="establishment" 
                             placeholder="ex: Padaria do Zé" 
                             value={formState.establishment} 
                             onChange={(e) => handleInputChange('establishment', e.target.value)} 
                         />
-                    </div>
+                    </Box>
 
                     {/* Quantidade */}
-                    <div className="space-y-2">
-                        <Label htmlFor="quantity" className="text-sm font-medium">Quantidade</Label>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <Label htmlFor="quantity" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Quantidade</Label>
                         <Input 
                             id="quantity" 
                             type="number" 
@@ -334,11 +339,11 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                             value={formState.quantity} 
                             onChange={(e) => handleInputChange('quantity', e.target.value)} 
                         />
-                    </div>
+                    </Box>
 
                     {/* Carteira */}
-                    <div className="space-y-2">
-                        <Label htmlFor="wallet" className="text-sm font-medium">Carteira</Label>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <Label htmlFor="wallet" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Carteira</Label>
                         <Select value={formState.walletId} onValueChange={(value) => handleInputChange('walletId', value)}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Selecione uma carteira" />
@@ -349,11 +354,11 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                                 ))}
                             </SelectContent>
                         </Select>
-                    </div>
+                    </Box>
 
                     {/* Categoria */}
-                    <div className="space-y-2">
-                        <Label htmlFor="category" className="text-sm font-medium">Categoria</Label>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <Label htmlFor="category" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Categoria</Label>
                         <Select value={formState.category} onValueChange={(value) => handleInputChange('category', value as TransactionCategory)}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Selecione uma categoria" />
@@ -364,11 +369,11 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                                 ))}
                             </SelectContent>
                         </Select>
-                    </div>
+                    </Box>
 
                     {/* Subcategoria */}
-                    <div className="space-y-2">
-                        <Label htmlFor="subcategory" className="text-sm font-medium">Subcategoria</Label>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <Label htmlFor="subcategory" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Subcategoria</Label>
                         <Select value={formState.subcategory} onValueChange={(v) => handleInputChange('subcategory', v)} disabled={!formState.category || availableSubcategories.length === 0}>
                             <SelectTrigger>
                                 <SelectValue placeholder={availableSubcategories.length > 0 ? "Selecione" : "Nenhuma"} />
@@ -379,7 +384,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                                 ))}
                             </SelectContent>
                         </Select>
-                    </div>
+                    </Box>
                 </>
             )}
         </Box>

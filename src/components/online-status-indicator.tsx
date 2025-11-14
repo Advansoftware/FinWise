@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Wifi, WifiOff } from 'lucide-react';
+import { Box, Stack, Typography } from '@mui/material';
 
 export function OnlineStatusIndicator() {
   const [isOnline, setIsOnline] = useState(true);
@@ -38,29 +39,29 @@ export function OnlineStatusIndicator() {
   }
 
   return (
-    <div className="fixed top-4 right-4 z-50">
+    <Box sx={{ position: 'fixed', top: 16, right: 16, zIndex: 50 }}>
       <Badge 
         variant={isOnline ? "default" : "destructive"}
-        className="flex items-center gap-2 px-3 py-1"
+        sx={{ display: 'flex', alignItems: 'center', gap: 2, px: 3, py: 1 }}
       >
         {isOnline ? (
           <>
-            <Wifi className="h-3 w-3" />
+            <Wifi style={{ width: '0.75rem', height: '0.75rem' }} />
             Online
           </>
         ) : (
           <>
-            <WifiOff className="h-3 w-3" />
+            <WifiOff style={{ width: '0.75rem', height: '0.75rem' }} />
             Offline
           </>
         )}
       </Badge>
       
       {!isOnline && (
-        <div className="mt-2 text-sm text-muted-foreground">
+        <Typography variant="body2" sx={{ mt: 2, fontSize: '0.875rem', color: 'text.secondary' }}>
           Dados salvos localmente serão sincronizados quando voltar online
-        </div>
+        </Typography>
       )}
-    </div>
+    </Box>
   );
 }

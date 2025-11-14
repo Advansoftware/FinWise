@@ -10,6 +10,7 @@ import { useCreditTransparency } from "@/hooks/use-credit-transparency"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Box, Stack, Typography } from '@mui/material'
 
 interface CreditStatementDialogProps {
   open: boolean
@@ -62,15 +63,16 @@ export function CreditStatementDialog({ open, onOpenChange }: CreditStatementDia
   const averagePerAction = totalActionsUsed > 0 ? totalSpent / totalActionsUsed : 0
 
   const getCategoryIcon = (category: 'simple' | 'complex' | 'image') => {
+    const iconStyle = { width: '1rem', height: '1rem' };
     switch (category) {
       case 'simple':
-        return <MessageCircle className="h-4 w-4" />
+        return <MessageCircle style={iconStyle} />
       case 'complex':
-        return <BarChart3 className="h-4 w-4" />
+        return <BarChart3 style={iconStyle} />
       case 'image':
-        return <Image className="h-4 w-4" />
+        return <Image style={iconStyle} />
       default:
-        return <Bot className="h-4 w-4" />
+        return <Bot style={iconStyle} />
     }
   }
 
@@ -102,28 +104,28 @@ export function CreditStatementDialog({ open, onOpenChange }: CreditStatementDia
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+      <DialogContent sx={{ maxWidth: '42rem', maxHeight: '90vh', overflowY: 'auto' }}>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" />
+          <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <BarChart3 style={{ width: '1.25rem', height: '1.25rem' }} />
             Extrato de Créditos IA
           </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-6">
+        <Stack spacing={6}>
           {/* Resumo Geral */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 4 }}>
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Saldo Atual</CardTitle>
+              <CardHeader sx={{ pb: 2 }}>
+                <Box component="h3" sx={{ fontSize: '0.875rem', fontWeight: 500, m: 0 }}>Saldo Atual</Box>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-600">
+                <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#2563eb' }}>
                   {formatBalance(currentCredits)}
-                </div>
+                </Typography>
                 <Badge 
                   variant={currentCredits > 10 ? "secondary" : "destructive"}
-                  className="mt-1"
+                  sx={{ mt: 1 }}
                 >
                   {plan}
                 </Badge>
@@ -131,37 +133,37 @@ export function CreditStatementDialog({ open, onOpenChange }: CreditStatementDia
             </Card>
 
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Total Gasto</CardTitle>
+              <CardHeader sx={{ pb: 2 }}>
+                <Box component="h3" sx={{ fontSize: '0.875rem', fontWeight: 500, m: 0 }}>Total Gasto</Box>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-600">
+                <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#64748b' }}>
                   {formatCreditCost(totalSpent)}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary', mt: 1, display: 'block' }}>
                   Este mês
-                </p>
+                </Typography>
               </CardContent>
             </Card>
 
             <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Média por Ação</CardTitle>
+              <CardHeader sx={{ pb: 2 }}>
+                <Box component="h3" sx={{ fontSize: '0.875rem', fontWeight: 500, m: 0 }}>Média por Ação</Box>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-slate-600">
+                <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#64748b' }}>
                   {formatCreditCost(Math.round(averagePerAction))}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
+                </Typography>
+                <Typography variant="caption" sx={{ color: 'text.secondary', mt: 1, display: 'block' }}>
                   {totalActionsUsed} ações realizadas
-                </p>
+                </Typography>
               </CardContent>
             </Card>
-          </div>
+          </Box>
 
           {/* Aviso sobre Transparência */}
           <Alert>
-            <AlertTriangle className="h-4 w-4" />
+            <AlertTriangle style={{ width: '1rem', height: '1rem' }} />
             <AlertDescription>
               <strong>Transparência Total:</strong> Mostramos exatamente quantos créditos cada ação consome. 
               Conversas simples custam 1 crédito, análises complexas custam 5 créditos.
@@ -169,86 +171,88 @@ export function CreditStatementDialog({ open, onOpenChange }: CreditStatementDia
           </Alert>
 
           {/* Detalhamento por Categoria */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Uso por Categoria</h3>
+          <Stack spacing={4}>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>Uso por Categoria</Typography>
             
             {Object.entries(categoryStats).map(([category, data]) => {
               const usage = mockUsageStats[category as keyof typeof mockUsageStats]
               const typedCategory = category as 'simple' | 'complex' | 'image'
               
               return (
-                <Card key={category} className="border-l-4 border-l-blue-500">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      {getCategoryIcon(typedCategory)}
-                      {getCategoryLabel(typedCategory)}
-                    </CardTitle>
+                <Card key={category} sx={{ borderLeft: '4px solid #3b82f6' }}>
+                  <CardHeader sx={{ pb: 3 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Typography variant="h6" component="h3" sx={{ fontSize: '1rem', fontWeight: 600, m: 0 }}>
+                        {getCategoryIcon(typedCategory)}
+                        {getCategoryLabel(typedCategory)}
+                      </Typography>
+                    </Box>
                     <CardDescription>
                       {getCategoryDescription(typedCategory)}
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex justify-between items-center">
-                      <div className="space-y-1">
-                        <p className="text-sm">
-                          <span className="font-medium">{usage.used}</span> ações realizadas
-                        </p>
-                        <p className="text-sm text-muted-foreground">
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                      <Stack spacing={1}>
+                        <Typography variant="body2">
+                          <Box component="span" sx={{ fontWeight: 500 }}>{usage.used}</Box> ações realizadas
+                        </Typography>
+                        <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                           Consumiu {formatCreditCost(usage.spent)}
-                        </p>
-                      </div>
-                      <div className="text-right">
+                        </Typography>
+                      </Stack>
+                      <Box sx={{ textAlign: 'right' }}>
                         <Badge variant="outline">
                           {usage.used > 0 ? Math.round(usage.spent / usage.used) : 0} créditos/ação
                         </Badge>
-                      </div>
-                    </div>
+                      </Box>
+                    </Stack>
                   </CardContent>
                 </Card>
               )
             })}
-          </div>
+          </Stack>
 
           {/* Alternativas Gratuitas */}
           {alternativeSuggestion && (
-            <div className="space-y-3">
+            <Stack spacing={3}>
               <Separator />
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Settings className="h-5 w-5" />
+              <Typography variant="h6" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Settings style={{ width: '1.25rem', height: '1.25rem' }} />
                 Opções Gratuitas Disponíveis
-              </h3>
+              </Typography>
               
               <Alert>
-                <Bot className="h-4 w-4" />
+                <Bot style={{ width: '1rem', height: '1rem' }} />
                 <AlertDescription>
                   <strong>Economia de Créditos:</strong> {alternativeSuggestion}
                 </AlertDescription>
               </Alert>
-            </div>
+            </Stack>
           )}
 
           {/* Ações */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-4">
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} sx={{ pt: 4 }}>
             <Button 
               variant="outline" 
               onClick={() => onOpenChange(false)}
-              className="flex-1"
+              sx={{ flex: 1 }}
             >
               Fechar
             </Button>
             <Button 
-              className="flex-1"
+              sx={{ flex: 1 }}
               onClick={() => {
                 // Navegar para configurações de IA
                 onOpenChange(false)
                 router.push('/settings')
               }}
             >
-              <Settings className="h-4 w-4 mr-2" />
+              <Settings style={{ width: '1rem', height: '1rem', marginRight: '0.5rem' }} />
               Configurar IA
             </Button>
-          </div>
-        </div>
+          </Stack>
+        </Stack>
       </DialogContent>
     </Dialog>
   )

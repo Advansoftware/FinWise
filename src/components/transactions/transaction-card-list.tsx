@@ -14,7 +14,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { EditTransactionSheet } from './edit-transaction-sheet';
 import { useTransactions } from '@/hooks/use-transactions';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
+import { Box, Stack, Typography } from '@mui/material';
 
 interface TransactionCardListProps {
   transactions: Transaction[];
@@ -23,19 +23,19 @@ interface TransactionCardListProps {
 export function TransactionCardList({ transactions }: TransactionCardListProps) {
   if (transactions.length === 0) {
     return (
-      <div className="text-center py-12 px-4 text-muted-foreground">
-        <p className="text-base sm:text-lg">Nenhuma transação encontrada.</p>
-        <p className="text-sm sm:text-base mt-2">Tente selecionar outro período ou filtro.</p>
-      </div>
+      <Box sx={{ textAlign: 'center', py: 12, px: 4, color: 'text.secondary' }}>
+        <Typography variant="body1" sx={{ fontSize: { xs: '1rem', sm: '1.125rem' } }}>Nenhuma transação encontrada.</Typography>
+        <Typography variant="body2" sx={{ fontSize: { xs: '0.875rem', sm: '1rem' }, mt: 2 }}>Tente selecionar outro período ou filtro.</Typography>
+      </Box>
     );
   }
 
   return (
-    <div className="space-y-3 sm:space-y-4">
+    <Stack spacing={{ xs: 3, sm: 4 }}>
       {transactions.map(transaction => (
         <TransactionCard key={transaction.id} transaction={transaction} />
       ))}
-    </div>
+    </Stack>
   );
 }
 
@@ -72,74 +72,79 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
               </AlertDialogHeader>
               <AlertDialogFooter>
                   <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleDelete} className="bg-destructive hover:bg-destructive/90">Excluir</AlertDialogAction>
+                  <AlertDialogAction onClick={handleDelete} sx={{ bgcolor: 'error.main', '&:hover': { bgcolor: 'error.dark' } }}>Excluir</AlertDialogAction>
               </AlertDialogFooter>
           </AlertDialogContent>
       </AlertDialog>
 
-      <Card className="transition-colors hover:bg-muted/50">
-        <CardHeader className="p-3 sm:p-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-              <div className={cn("p-1.5 sm:p-2 rounded-full shrink-0",
-                transaction.type === 'income' ? 'bg-emerald-500/20' : 'bg-secondary'
-              )}>
+      <Card sx={{ transition: 'colors', '&:hover': { bgcolor: 'action.hover' } }}>
+        <CardHeader sx={{ p: { xs: 3, sm: 4 } }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Stack direction="row" alignItems="center" spacing={{ xs: 2, sm: 3 }} sx={{ flex: 1, minWidth: 0 }}>
+              <Box sx={{ 
+                p: { xs: 1.5, sm: 2 }, 
+                borderRadius: '50%', 
+                flexShrink: 0,
+                bgcolor: transaction.type === 'income' ? 'rgba(16, 185, 129, 0.2)' : 'action.selected'
+              }}>
                 {transaction.type === 'income' ? 
-                  <ArrowDown className="h-4 w-4 sm:h-5 sm:w-5 text-emerald-400"/> : 
+                  <ArrowDown style={{ width: '1rem', height: '1rem', color: '#10b981' }} className="sm:h-5 sm:w-5" /> : 
                   <CategoryIcon category={transaction.category} className="h-4 w-4 sm:h-5 sm:w-5" />
                 }
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm sm:text-base truncate">{transaction.item}</p>
+              </Box>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography variant="body1" sx={{ fontWeight: 600, fontSize: { xs: '0.875rem', sm: '1rem' }, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{transaction.item}</Typography>
                 {transaction.establishment && (
-                  <p className="text-xs text-muted-foreground truncate">{transaction.establishment}</p>
+                  <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{transaction.establishment}</Typography>
                 )}
-              </div>
-            </div>
+              </Box>
+            </Stack>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
-                  <MoreVertical className="h-4 w-4" />
+                <Button variant="ghost" size="icon" sx={{ height: '2rem', width: '2rem', flexShrink: 0 }}>
+                  <MoreVertical style={{ width: '1rem', height: '1rem' }} />
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={() => setIsEditSheetOpen(true)}>
-                  <Pen className="mr-2 h-4 w-4" /> Editar
+                  <Pen style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} /> Editar
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} className="text-red-500">
-                  <Trash2 className="mr-2 h-4 w-4" /> Excluir
+                <DropdownMenuItem onClick={() => setIsDeleteDialogOpen(true)} sx={{ color: 'error.main' }}>
+                  <Trash2 style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} /> Excluir
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          </div>
+          </Stack>
         </CardHeader>
         
-        <CardContent className="p-3 sm:p-4 pt-0">
-          <div className="flex items-center justify-between flex-wrap gap-2">
-            <div className="min-w-0">
-              <p className="text-xs text-muted-foreground">Valor</p>
-              <p className={cn("text-lg sm:text-xl font-bold", 
-                transaction.type === 'income' ? 'text-emerald-400' : 'text-red-400'
-              )}>
+        <CardContent sx={{ p: { xs: 3, sm: 4 }, pt: 0 }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" flexWrap="wrap" spacing={2}>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="body2" sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>Valor</Typography>
+              <Typography variant="h6" sx={{ 
+                fontSize: { xs: '1.125rem', sm: '1.25rem' }, 
+                fontWeight: 700,
+                color: transaction.type === 'income' ? '#10b981' : '#f87171'
+              }}>
                 {transaction.type === 'income' ? '+' : '-'}R$ {transaction.amount.toFixed(2)}
-              </p>
-            </div>
-            <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-2">
-                <Badge variant="outline" className="text-xs">{transaction.category}</Badge>
+              </Typography>
+            </Box>
+            <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-end', sm: 'center' }} spacing={{ xs: 1, sm: 2 }}>
+                <Badge variant="outline" sx={{ fontSize: '0.75rem' }}>{transaction.category}</Badge>
                 {transaction.subcategory && (
-                  <Badge variant="secondary" className="text-xs">{transaction.subcategory}</Badge>
+                  <Badge variant="secondary" sx={{ fontSize: '0.75rem' }}>{transaction.subcategory}</Badge>
                 )}
-            </div>
-          </div>
+            </Stack>
+          </Stack>
         </CardContent>
         
-        <CardFooter className="p-3 sm:p-4 text-xs text-muted-foreground bg-muted/30 rounded-b-lg">
-            <div className="flex items-center justify-between w-full">
-              <span>{format(new Date(transaction.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</span>
+        <CardFooter sx={{ p: { xs: 3, sm: 4 }, fontSize: '0.75rem', color: 'text.secondary', bgcolor: 'action.hover', borderBottomLeftRadius: 8, borderBottomRightRadius: 8 }}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ width: '100%' }}>
+              <Typography component="span" variant="body2" sx={{ fontSize: '0.75rem' }}>{format(new Date(transaction.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</Typography>
               {(transaction.quantity && transaction.quantity > 1) && (
-                <span className="text-xs">Qtd: {transaction.quantity}</span>
+                <Typography component="span" variant="body2" sx={{ fontSize: '0.75rem' }}>Qtd: {transaction.quantity}</Typography>
               )}
-            </div>
+            </Stack>
         </CardFooter>
       </Card>
     </>

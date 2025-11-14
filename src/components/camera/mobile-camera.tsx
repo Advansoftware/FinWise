@@ -5,17 +5,17 @@ import { useRef, useState, useCallback, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Camera, SwitchCamera, FlashlightIcon as Flashlight, RefreshCw } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { Box, type SxProps, type Theme } from '@mui/material';
 
 type CameraFacing = 'user' | 'environment';
 
 interface MobileCameraProps {
   onCapture: (imageData: string) => void;
   onPermissionDenied?: () => void;
-  className?: string;
+  sx?: SxProps<Theme>;
 }
 
-export function MobileCamera({ onCapture, onPermissionDenied, className }: MobileCameraProps) {
+export function MobileCamera({ onCapture, onPermissionDenied, sx }: MobileCameraProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [currentStream, setCurrentStream] = useState<MediaStream | null>(null);
@@ -183,39 +183,39 @@ export function MobileCamera({ onCapture, onPermissionDenied, className }: Mobil
   // Render loading state
   if (isLoading) {
     return (
-      <div className={cn("relative w-full h-[60vh] bg-black rounded-lg flex items-center justify-center", className)}>
-        <div className="text-center text-white">
-          <RefreshCw className="h-8 w-8 animate-spin mx-auto mb-2" />
+      <Box sx={{ position: 'relative', width: '100%', height: '60vh', bgcolor: 'black', borderRadius: 2, display: 'flex', alignItems: 'center', justifyContent: 'center', ...sx }}>
+        <Box sx={{ textAlign: 'center', color: 'white' }}>
+          <RefreshCw style={{ width: '2rem', height: '2rem', margin: '0 auto 0.5rem', animation: 'spin 1s linear infinite' }} />
           <p>Iniciando câmera...</p>
-        </div>
-      </div>
+        </Box>
+      </Box>
     );
   }
 
   // Render error state
   if (error || hasCameraPermission === false) {
     return (
-      <div className={cn("relative w-full h-[60vh] rounded-lg", className)}>
-        <Alert variant="destructive" className="h-full flex flex-col justify-center">
+      <Box sx={{ position: 'relative', width: '100%', height: '60vh', borderRadius: 2, ...sx }}>
+        <Alert variant="destructive" sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <AlertTitle>Erro na Câmera</AlertTitle>
-          <AlertDescription className="mb-4">
+          <AlertDescription sx={{ mb: 4 }}>
             {error || 'Não foi possível acessar a câmera.'}
           </AlertDescription>
           <Button onClick={retryCamera} variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-2" />
+            <RefreshCw style={{ width: '1rem', height: '1rem', marginRight: '0.5rem' }} />
             Tentar Novamente
           </Button>
         </Alert>
-      </div>
+      </Box>
     );
   }
 
   return (
-    <div className={cn("relative w-full", className)}>
-      <div className="relative">
+    <Box sx={{ position: 'relative', width: '100%', ...sx }}>
+      <Box sx={{ position: 'relative' }}>
         <video 
           ref={videoRef} 
-          className="w-full h-[60vh] object-cover rounded-lg bg-black" 
+          style={{ width: '100%', height: '60vh', objectFit: 'cover', borderRadius: '0.5rem', backgroundColor: 'black' }}
           autoPlay 
           muted 
           playsInline
@@ -223,50 +223,69 @@ export function MobileCamera({ onCapture, onPermissionDenied, className }: Mobil
         />
         
         {/* Guide overlay */}
-        <div className="absolute inset-4 border-2 border-dashed border-white/60 rounded-lg pointer-events-none">
-          <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-black/60 px-2 py-1 rounded text-white text-xs whitespace-nowrap">
+        <Box sx={{ position: 'absolute', inset: '1rem', border: '2px dashed rgba(255, 255, 255, 0.6)', borderRadius: 2, pointerEvents: 'none' }}>
+          <Box sx={{ position: 'absolute', top: '-0.75rem', left: '50%', transform: 'translateX(-50%)', bgcolor: 'rgba(0, 0, 0, 0.6)', px: 2, py: 1, borderRadius: 1, color: 'white', fontSize: '0.75rem', whiteSpace: 'nowrap' }}>
             Posicione a nota fiscal aqui
-          </div>
-        </div>
+          </Box>
+        </Box>
         
         {/* Camera controls */}
-        <div className="absolute top-4 right-4 flex flex-col gap-2">
+        <Box sx={{ position: 'absolute', top: '1rem', right: '1rem', display: 'flex', flexDirection: 'column', gap: 2 }}>
           {hasFlash && (
             <Button
               size="icon"
               variant="secondary"
-              className={cn(
-                "bg-black/60 hover:bg-black/80 border-0",
-                flashEnabled && "bg-yellow-500/80 hover:bg-yellow-500"
-              )}
+              sx={{
+                bgcolor: flashEnabled ? 'rgba(234, 179, 8, 0.8)' : 'rgba(0, 0, 0, 0.6)',
+                '&:hover': {
+                  bgcolor: flashEnabled ? 'rgba(234, 179, 8, 1)' : 'rgba(0, 0, 0, 0.8)'
+                },
+                border: 0
+              }}
               onClick={toggleFlash}
             >
-              <Flashlight className="h-4 w-4 text-white" />
+              <Flashlight style={{ width: '1rem', height: '1rem', color: 'white' }} />
             </Button>
           )}
           <Button
             size="icon"
             variant="secondary"
-            className="bg-black/60 hover:bg-black/80 border-0"
+            sx={{
+              bgcolor: 'rgba(0, 0, 0, 0.6)',
+              '&:hover': {
+                bgcolor: 'rgba(0, 0, 0, 0.8)'
+              },
+              border: 0
+            }}
             onClick={switchCamera}
           >
-            <SwitchCamera className="h-4 w-4 text-white" />
+            <SwitchCamera style={{ width: '1rem', height: '1rem', color: 'white' }} />
           </Button>
-        </div>
-      </div>
+        </Box>
+      </Box>
       
       {/* Capture button */}
-      <div className="flex justify-center mt-6">
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
         <Button 
           onClick={capturePhoto}
           size="lg"
-          className="h-16 w-16 rounded-full p-0 bg-white text-black hover:bg-gray-100"
+          sx={{
+            height: '4rem',
+            width: '4rem',
+            borderRadius: '9999px',
+            p: 0,
+            bgcolor: 'white',
+            color: 'black',
+            '&:hover': {
+              bgcolor: '#f3f4f6'
+            }
+          }}
         >
-          <Camera className="h-8 w-8" />
+          <Camera style={{ width: '2rem', height: '2rem' }} />
         </Button>
-      </div>
+      </Box>
       
-      <canvas ref={canvasRef} className="hidden" />
-    </div>
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
+    </Box>
   );
 }
