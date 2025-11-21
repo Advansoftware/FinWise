@@ -35,6 +35,7 @@ import { Installment } from '@/core/ports/installments.port';
 import { useInstallments } from '@/hooks/use-installments';
 import { useWallets } from '@/hooks/use-wallets';
 import { useTransactions } from '@/hooks/use-transactions';
+import { Box, Stack, Typography } from '@mui/material';
 
 const editInstallmentSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
@@ -148,26 +149,28 @@ export function EditInstallmentDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl w-[95vw] h-[95vh] sm:h-auto max-h-[95vh] flex flex-col">
-        <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="flex items-center gap-2">
-            <Edit3 className="h-5 w-5" />
-            Editar Parcelamento
+      <DialogContent sx={{ maxWidth: { sm: '42rem' }, width: { xs: '95vw' }, height: { xs: '95vh', sm: 'auto' }, maxHeight: '95vh', display: 'flex', flexDirection: 'column' }}>
+        <DialogHeader sx={{ flexShrink: 0 }}>
+          <DialogTitle>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Edit3 style={{ width: '1.25rem', height: '1.25rem' }} />
+              <span>Editar Parcelamento</span>
+            </Stack>
           </DialogTitle>
           <DialogDescription>
             Atualize as informações do parcelamento "{installment.name}"
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-y-auto pr-2">
+        <Box sx={{ flex: 1, overflowY: 'auto', pr: 1 }}>
           <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={form.handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2 }}>
                 <FormField
                   control={form.control}
                   name="name"
                   render={({ field }) => (
-                    <FormItem className="md:col-span-2">
+                    <FormItem sx={{ gridColumn: { md: 'span 2' } }}>
                       <FormLabel>Nome do Parcelamento</FormLabel>
                       <FormControl>
                         <Input placeholder="Ex: Compra no Magazine Luiza" {...field} />
@@ -181,12 +184,12 @@ export function EditInstallmentDialog({
                   control={form.control}
                   name="description"
                   render={({ field }) => (
-                    <FormItem className="md:col-span-2">
+                    <FormItem sx={{ gridColumn: { md: 'span 2' } }}>
                       <FormLabel>Descrição (Opcional)</FormLabel>
                       <FormControl>
                         <Textarea 
                           placeholder="Detalhes sobre o parcelamento..."
-                          className="resize-none"
+                          sx={{ resize: 'none' }}
                           rows={2}
                           {...field}
                         />
@@ -196,20 +199,20 @@ export function EditInstallmentDialog({
                   )}
                 />
                 
-                <div className="md:col-span-2 grid grid-cols-2 gap-4">
-                   <div className="p-3 bg-muted rounded-md">
-                    <p className="text-sm text-muted-foreground">Valor Total</p>
-                    <p className="text-lg font-semibold">
+                <Box sx={{ gridColumn: { md: 'span 2' }, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
+                   <Box sx={{ p: 1.5, bgcolor: 'var(--muted)', borderRadius: '0.375rem' }}>
+                    <Typography sx={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>Valor Total</Typography>
+                    <Typography sx={{ fontSize: '1.125rem', fontWeight: 600 }}>
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(installment.totalAmount)}
-                    </p>
-                  </div>
-                  <div className="p-3 bg-muted rounded-md">
-                    <p className="text-sm text-muted-foreground">Nº de Parcelas</p>
-                    <p className="text-lg font-semibold">
+                    </Typography>
+                  </Box>
+                  <Box sx={{ p: 1.5, bgcolor: 'var(--muted)', borderRadius: '0.375rem' }}>
+                    <Typography sx={{ fontSize: '0.875rem', color: 'var(--muted-foreground)' }}>Nº de Parcelas</Typography>
+                    <Typography sx={{ fontSize: '1.125rem', fontWeight: 600 }}>
                       {installment.paidInstallments}/{installment.totalInstallments}
-                    </p>
-                  </div>
-                </div>
+                    </Typography>
+                  </Box>
+                </Box>
 
                 <FormField
                   control={form.control}
@@ -265,11 +268,11 @@ export function EditInstallmentDialog({
                   )}
                 />
 
-                <FormField
+                                <FormField
                   control={form.control}
                   name="establishment"
                   render={({ field }) => (
-                    <FormItem className="md:col-span-2">
+                    <FormItem sx={{ gridColumn: { md: 'span 2' } }}>
                       <FormLabel>Estabelecimento (Opcional)</FormLabel>
                       <FormControl>
                         <Input placeholder="Ex: Loja ABC, Magazine Luiza..." {...field} />
@@ -283,8 +286,8 @@ export function EditInstallmentDialog({
                   control={form.control}
                   name="sourceWalletId"
                   render={({ field }) => (
-                    <FormItem className="md:col-span-2">
-                      <FormLabel>Carteira de Pagamento</FormLabel>
+                    <FormItem sx={{ gridColumn: { md: 'span 2' } }}>
+                      <FormLabel>Carteira de Origem</FormLabel>
                       <Select onValueChange={field.onChange} value={field.value}>
                         <FormControl>
                           <SelectTrigger>
@@ -294,7 +297,7 @@ export function EditInstallmentDialog({
                         <SelectContent>
                           {wallets.map((wallet) => (
                             <SelectItem key={wallet.id} value={wallet.id}>
-                              {wallet.name} ({wallet.type})
+                              {wallet.name}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -303,32 +306,27 @@ export function EditInstallmentDialog({
                     </FormItem>
                   )}
                 />
-              </div>
+              </Box>
             </form>
           </Form>
-        </div>
+        </Box>
 
-        <DialogFooter className="flex-shrink-0 pt-4 flex flex-col sm:flex-row gap-2">
+        <DialogFooter sx={{ flexShrink: 0, pt: 2, display: 'flex', flexDirection: { xs: 'column', sm: 'row' }, gap: 1 }}>
           <Button
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
-            className="w-full sm:w-auto"
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
           >
             Cancelar
           </Button>
           <Button 
-            type="button" 
-            disabled={isSubmitting} 
-            className="w-full sm:w-auto"
-            onClick={form.handleSubmit(onSubmit)}
+            onClick={form.handleSubmit(onSubmit)} 
+            disabled={isSubmitting}
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
           >
-            {isSubmitting ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <Edit3 className="h-4 w-4 mr-2" />
-            )}
+            {isSubmitting && <Loader2 style={{ width: '1rem', height: '1rem', marginRight: '0.5rem' }} className="animate-spin" />}
             Salvar Alterações
           </Button>
         </DialogFooter>

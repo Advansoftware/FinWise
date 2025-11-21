@@ -4,11 +4,11 @@
 
 **Data**: 14 de Novembro de 2025  
 **Objetivo**: Migrar completamente de Tailwind CSS para Material-UI v7  
-**Progresso Atual**: ~55% concluído (Infraestrutura + UI Base + Módulos Pequenos completos)  
+**Progresso Atual**: ~60% concluído (Infraestrutura + UI Base + 4 Módulos Completos)  
 
 ## 🚀 Sessão Atual (14/11/2025)
 
-**Arquivos Migrados Nesta Sessão (10 arquivos):**
+**Arquivos Migrados Nesta Sessão (13 arquivos):**
 1. ✅ dashboard/ai-tip-card.tsx (15 classNames) - CardTitle/CardDescription fix com Typography wrapper
 2. ✅ dashboard/recent-transactions.tsx (16) - Stack/ScrollArea com Avatar conditional styling
 3. ✅ ui/sidebar.tsx (16) - Componente complexo com state management
@@ -19,12 +19,17 @@
 8. ✅ budgets/create-budget-dialog.tsx - Form com AI suggestions
 9. ✅ budgets/automatic-budget-dialog.tsx - ScrollArea com budget cards
 10. ✅ tools/calculator-mode-toggle.tsx (8) + manual-salary-input.tsx (10)
+11. ✅ installments/mark-as-paid-dialog.tsx (23) - Stack/Box com alert styling
+12. ✅ installments/edit-installment-dialog.tsx (24) - Grid form complexo, responsive
+13. ✅ Root components: pro-upgrade-button, pro-upgrade-card, online-status-indicator, pwa-updater
 
 **Padrões Descobertos:**
 - CardTitle/CardDescription não aceitam sx diretamente - requer Typography wrapper
 - Sidebar state management preservado com MUI sx inline
 - Conditional styling com sx object spread pattern
 - Box component="span" para inline styling em custom components
+- Grid responsivo: gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }
+- Form dialogs: Stack spacing + Box grid para campos
 
 ## ✅ Conquistas
 
@@ -252,8 +257,13 @@ Alguns componentes ainda usam className misturado com sx, precisando padronizaç
 
 **Componentes Parcialmente Migrados:**
 - ⏳ Dashboard (91% - 10/11 arquivos) - Apenas scan-qr-code-dialog e installments-summary-card pendentes
+- ⏳ Installments (22% - 2/9 arquivos) - 7 arquivos restantes (pay, create, card, schedule, modal, projections, gamification)
 - ⏳ Tools (18% - 2/11 arquivos) - 9 calculadoras restantes
 - ⏳ Budgets (60% - 3/5 arquivos) - spending-analysis e budget-guidance pendentes
+
+**Componentes Pendentes (Alto Impacto):**
+- ⏳ Chat (1 arquivo) - chat-assistant.tsx (59 classNames)
+- ⏳ Transactions (5 arquivos) - edit-sheet, card-list, columns, data-table, analyze-dialog
 
 **Componentes Pendentes (prioridade por tamanho):**
 - monthly-projections.tsx (100 classNames) ⚠️ MAIOR ARQUIVO

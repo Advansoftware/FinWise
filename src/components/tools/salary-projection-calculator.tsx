@@ -12,6 +12,7 @@ import { formatCurrency } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import { CalculatorModeToggle } from "./calculator-mode-toggle";
 import { ManualSalaryInput, ManualSalaryData } from "./manual-salary-input";
+import { Box, Stack, Typography } from "@mui/material";
 
 interface SalaryProjectionCalculatorProps {
   payrollData: PayrollData;
@@ -64,135 +65,195 @@ export function SalaryProjectionCalculator({ payrollData }: SalaryProjectionCalc
   };
 
   return (
-    <Card className="h-full">
+    <Card sx={{ height: '100%' }}>
       <CardHeader>
-        <div className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-primary" />
-          <CardTitle className="text-lg">Projeção Salarial</CardTitle>
-        </div>
-        <CardDescription>
-          Projete seus ganhos futuros com base em aumentos salariais.
-        </CardDescription>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <TrendingUp style={{ width: 20, height: 20, color: 'var(--primary)' }} />
+          <Typography component="span" sx={{ fontSize: '1.125rem' }}>
+            <CardTitle>Projeção Salarial</CardTitle>
+          </Typography>
+        </Stack>
+        <Typography component="span">
+          <CardDescription>
+            Projete seus ganhos futuros com base em aumentos salariais.
+          </CardDescription>
+        </Typography>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Toggle entre modos */}
-        <CalculatorModeToggle 
-          mode={mode} 
-          onModeChange={setMode} 
-          hasPayrollData={hasPayrollData}
-        />
+      <CardContent>
+        <Stack spacing={2}>
+          {/* Toggle entre modos */}
+          <CalculatorModeToggle 
+            mode={mode} 
+            onModeChange={setMode} 
+            hasPayrollData={hasPayrollData}
+          />
 
-        {/* Entrada de dados baseada no modo */}
-        {mode === 'payroll' ? (
-          <div className="bg-muted/30 dark:bg-muted/10 p-3 rounded-md space-y-2">
-            <div className="text-sm font-medium">Situação Atual:</div>
-            <div className="grid grid-cols-2 gap-4 text-xs">
-              <div>
-                <span className="text-muted-foreground">Bruto:</span>
-                <div className="font-medium">{formatCurrency(payrollData.grossSalary)}</div>
-              </div>
-              <div>
-                <span className="text-muted-foreground">Líquido:</span>
-                <div className="font-medium">{formatCurrency(payrollData.netSalary)}</div>
-              </div>
-            </div>
-          </div>
-        ) : (
-          <ManualSalaryInput data={manualData} onChange={setManualData} />
-        )}
+          {/* Entrada de dados baseada no modo */}
+          {mode === 'payroll' ? (
+            <Box sx={{ 
+              bgcolor: 'action.hover', 
+              p: 1.5, 
+              borderRadius: 1 
+            }}>
+              <Stack spacing={1}>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  Situação Atual:
+                </Typography>
+                <Box sx={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(2, 1fr)', 
+                  gap: 2,
+                  fontSize: '0.75rem'
+                }}>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Bruto:</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      {formatCurrency(payrollData.grossSalary)}
+                    </Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="caption" color="text.secondary">Líquido:</Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                      {formatCurrency(payrollData.netSalary)}
+                    </Typography>
+                  </Box>
+                </Box>
+              </Stack>
+            </Box>
+          ) : (
+            <ManualSalaryInput data={manualData} onChange={setManualData} />
+          )}
 
-        {/* Configurações da projeção */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="increasePercentage">Aumento (%)</Label>
-            <Select value={increasePercentage.toString()} onValueChange={(value) => setIncreasePercentage(parseFloat(value))}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="3">3% - Ajuste Inflação</SelectItem>
-                <SelectItem value="5">5% - Aumento Padrão</SelectItem>
-                <SelectItem value="10">10% - Promoção</SelectItem>
-                <SelectItem value="15">15% - Mudança de Cargo</SelectItem>
-                <SelectItem value="20">20% - Nova Empresa</SelectItem>
-                <SelectItem value="25">25% - Especialização</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Configurações da projeção */}
+          <Box sx={{ 
+            display: 'grid', 
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, 
+            gap: 2 
+          }}>
+            <Stack spacing={1}>
+              <Label htmlFor="increasePercentage">Aumento (%)</Label>
+              <Select value={increasePercentage.toString()} onValueChange={(value) => setIncreasePercentage(parseFloat(value))}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="3">3% - Ajuste Inflação</SelectItem>
+                  <SelectItem value="5">5% - Aumento Padrão</SelectItem>
+                  <SelectItem value="10">10% - Promoção</SelectItem>
+                  <SelectItem value="15">15% - Mudança de Cargo</SelectItem>
+                  <SelectItem value="20">20% - Nova Empresa</SelectItem>
+                  <SelectItem value="25">25% - Especialização</SelectItem>
+                </SelectContent>
+              </Select>
+            </Stack>
 
-          <div className="space-y-2">
-            <Label htmlFor="projectionMonths">Período (meses)</Label>
-            <Input
-              id="projectionMonths"
-              type="number"
-              min="1"
-              max="60"
-              value={projectionMonths}
-              onChange={(e) => setProjectionMonths(parseInt(e.target.value) || 12)}
-              placeholder="12"
-            />
-          </div>
-        </div>
+            <Stack spacing={1}>
+              <Label htmlFor="projectionMonths">Período (meses)</Label>
+              <Input
+                id="projectionMonths"
+                type="number"
+                min="1"
+                max="60"
+                value={projectionMonths}
+                onChange={(e) => setProjectionMonths(parseInt(e.target.value) || 12)}
+                placeholder="12"
+              />
+            </Stack>
+          </Box>
 
-        <Button 
-          onClick={calculateProjection} 
-          className="w-full"
-          disabled={(mode === 'manual' && (manualData.grossSalary <= 0 || manualData.netSalary <= 0)) || 
-                   (mode === 'payroll' && !hasPayrollData)}
-        >
-          <Calculator className="h-4 w-4 mr-2" />
-          Calcular Projeção
-        </Button>
+          <Button 
+            onClick={calculateProjection} 
+            sx={{ width: '100%' }}
+            disabled={(mode === 'manual' && (manualData.grossSalary <= 0 || manualData.netSalary <= 0)) || 
+                     (mode === 'payroll' && !hasPayrollData)}
+          >
+            <Calculator style={{ width: 16, height: 16, marginRight: 8 }} />
+            Calcular Projeção
+          </Button>
 
-        {/* Resultados */}
-        {result && (
-          <div className="space-y-4 pt-4 border-t">
-            <div className="text-sm font-medium">Projeção com {increasePercentage}% de aumento:</div>
-            
-            {/* Novos salários */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-green-50 dark:bg-green-500/10 p-3 rounded-md border border-green-200 dark:border-green-500/20">
-                <div className="text-sm text-muted-foreground">Novo Salário Bruto</div>
-                <div className="font-bold text-green-600 dark:text-green-400">{formatCurrency(result.newGrossSalary)}</div>
-              </div>
-              <div className="bg-blue-50 dark:bg-blue-500/10 p-3 rounded-md border border-blue-200 dark:border-blue-500/20">
-                <div className="text-sm text-muted-foreground">Novo Salário Líquido</div>
-                <div className="font-bold text-blue-600 dark:text-blue-400">{formatCurrency(result.newNetSalary)}</div>
-              </div>
-            </div>
-
-            {/* Aumentos */}
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Aumento Mensal:</span>
-                <Badge className="bg-green-600 dark:bg-green-600 text-white">
-                  +{formatCurrency(result.monthlyIncrease)}
-                </Badge>
-              </div>
+          {/* Resultados */}
+          {result && (
+            <Stack spacing={2} sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                Projeção com {increasePercentage}% de aumento:
+              </Typography>
               
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Aumento Anual:</span>
-                <Badge className="bg-green-600 dark:bg-green-600 text-white">
-                  +{formatCurrency(result.yearlyIncrease)}
-                </Badge>
-              </div>
-              
-              <div className="flex justify-between items-center pt-2 border-t">
-                <span className="font-medium">Total em {projectionMonths} meses:</span>
-                <Badge className="bg-primary dark:bg-primary text-white font-bold">
-                  {formatCurrency(result.totalEarnings)}
-                </Badge>
-              </div>
-            </div>
+              {/* Novos salários */}
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
+                <Box sx={{ 
+                  bgcolor: 'success.light', 
+                  p: 1.5, 
+                  borderRadius: 1, 
+                  border: 1, 
+                  borderColor: 'success.main' 
+                }}>
+                  <Typography variant="body2" color="text.secondary">Novo Salário Bruto</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 700, color: 'success.dark' }}>
+                    {formatCurrency(result.newGrossSalary)}
+                  </Typography>
+                </Box>
+                <Box sx={{ 
+                  bgcolor: 'info.light', 
+                  p: 1.5, 
+                  borderRadius: 1, 
+                  border: 1, 
+                  borderColor: 'info.main' 
+                }}>
+                  <Typography variant="body2" color="text.secondary">Novo Salário Líquido</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 700, color: 'info.dark' }}>
+                    {formatCurrency(result.newNetSalary)}
+                  </Typography>
+                </Box>
+              </Box>
 
-            <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-500/10 p-2 rounded border border-blue-200 dark:border-blue-500/20">
-              <strong>Nota:</strong> {mode === 'payroll' 
-                ? 'Esta é uma projeção estimada baseada nos dados do seu holerite. Os valores reais podem variar conforme mudanças na legislação e faixas de desconto.'
-                : 'Projeção baseada nos dados informados manualmente. Para estimativas mais precisas, use os dados do holerite.'
-              }
-            </div>
-          </div>
-        )}
+              {/* Aumentos */}
+              <Stack spacing={1}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Typography variant="body2">Aumento Mensal:</Typography>
+                  <Badge sx={{ bgcolor: 'success.main', color: 'success.contrastText' }}>
+                    +{formatCurrency(result.monthlyIncrease)}
+                  </Badge>
+                </Stack>
+                
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Typography variant="body2">Aumento Anual:</Typography>
+                  <Badge sx={{ bgcolor: 'success.main', color: 'success.contrastText' }}>
+                    +{formatCurrency(result.yearlyIncrease)}
+                  </Badge>
+                </Stack>
+                
+                <Stack 
+                  direction="row" 
+                  justifyContent="space-between" 
+                  alignItems="center" 
+                  sx={{ pt: 1, borderTop: 1, borderColor: 'divider' }}
+                >
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    Total em {projectionMonths} meses:
+                  </Typography>
+                  <Badge sx={{ bgcolor: 'primary.main', color: 'primary.contrastText', fontWeight: 700 }}>
+                    {formatCurrency(result.totalEarnings)}
+                  </Badge>
+                </Stack>
+              </Stack>
+
+              <Box sx={{ 
+                fontSize: '0.75rem', 
+                color: 'text.secondary', 
+                bgcolor: 'info.light', 
+                p: 1, 
+                borderRadius: 1, 
+                border: 1, 
+                borderColor: 'info.main' 
+              }}>
+                <strong>Nota:</strong> {mode === 'payroll' 
+                  ? 'Esta é uma projeção estimada baseada nos dados do seu holerite. Os valores reais podem variar conforme mudanças na legislação e faixas de desconto.'
+                  : 'Projeção baseada nos dados informados manualmente. Para estimativas mais precisas, use os dados do holerite.'
+                }
+              </Box>
+            </Stack>
+          )}
+        </Stack>
       </CardContent>
     </Card>
   );

@@ -10,6 +10,7 @@ import { Building, Calendar, DollarSign, TrendingUp } from "lucide-react";
 import { PayrollData } from "@/lib/types";
 import { CalculatorModeToggle } from "./calculator-mode-toggle";
 import { ManualSalaryInput, ManualSalaryData } from "./manual-salary-input";
+import { Box, Stack, Typography, Divider } from "@mui/material";
 
 interface FGTSCalculatorProps {
   payrollData: PayrollData;
@@ -85,170 +86,223 @@ export function FGTSCalculator({ payrollData }: FGTSCalculatorProps) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-2">
-          <Building className="h-5 w-5 text-primary" />
-          <CardTitle className="text-lg">Calculadora de FGTS</CardTitle>
-        </div>
-        <CardDescription>
-          Calcule os depósitos e o saldo projetado do seu FGTS
-        </CardDescription>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Building style={{ width: 20, height: 20, color: 'var(--primary)' }} />
+          <Typography component="span" sx={{ fontSize: '1.125rem' }}>
+            <CardTitle>Calculadora de FGTS</CardTitle>
+          </Typography>
+        </Stack>
+        <Typography component="span">
+          <CardDescription>
+            Calcule os depósitos e o saldo projetado do seu FGTS
+          </CardDescription>
+        </Typography>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Toggle entre modos */}
-        <CalculatorModeToggle 
-          mode={mode} 
-          onModeChange={setMode} 
-          hasPayrollData={hasPayrollData}
-        />
+      <CardContent>
+        <Stack spacing={3}>
+          {/* Toggle entre modos */}
+          <CalculatorModeToggle 
+            mode={mode} 
+            onModeChange={setMode} 
+            hasPayrollData={hasPayrollData}
+          />
 
-        {/* Entrada de dados baseada no modo */}
-        {mode === 'payroll' ? (
-          <div className="bg-muted/30 dark:bg-muted/10 p-3 rounded-md space-y-2">
-            <div className="text-sm font-medium">Dados do Holerite:</div>
-            <div className="text-xs text-muted-foreground">
-              Salário Bruto: <span className="font-medium">{formatCurrency(payrollData.grossSalary)}</span>
-            </div>
-          </div>
-        ) : (
-          <ManualSalaryInput data={manualData} onChange={setManualData} />
-        )}
+          {/* Entrada de dados baseada no modo */}
+          {mode === 'payroll' ? (
+            <Box sx={{ bgcolor: 'action.hover', p: 1.5, borderRadius: 1 }}>
+              <Stack spacing={1}>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  Dados do Holerite:
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Salário Bruto: <Typography component="span" sx={{ fontWeight: 500 }}>
+                    {formatCurrency(payrollData.grossSalary)}
+                  </Typography>
+                </Typography>
+              </Stack>
+            </Box>
+          ) : (
+            <ManualSalaryInput data={manualData} onChange={setManualData} />
+          )}
 
-        {/* Inputs simplificados */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="workMonths">Meses trabalhados na empresa atual</Label>
-            <Input
-              id="workMonths"
-              type="number"
-              value={workMonths}
-              onChange={(e) => setWorkMonths(Number(e.target.value))}
-              min="0"
-              max="120"
-            />
-            <p className="text-xs text-muted-foreground">Tempo na empresa atual para calcular saldo</p>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="currentBalance">Saldo FGTS atual (R$)</Label>
-            <Input
-              id="currentBalance"
-              type="number"
-              value={currentFGTSBalance}
-              onChange={(e) => setCurrentFGTSBalance(Number(e.target.value))}
-              min="0"
-            />
-            <p className="text-xs text-muted-foreground">Consulte no app FGTS ou extrato</p>
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="projectionYears">Projetar para (anos)</Label>
-            <Input
-              id="projectionYears"
-              type="number"
-              value={projectionYears}
-              onChange={(e) => setProjectionYears(Number(e.target.value))}
-              min="1"
-              max="40"
-            />
-            <p className="text-xs text-muted-foreground">Tempo futuro para projeção</p>
-          </div>
-        </div>
-
-        {/* Informação automática */}
-        <div className="bg-blue-50 p-4 rounded-lg">
-          <h4 className="font-medium text-blue-800 mb-2">📊 Dados extraídos do seu holerite:</h4>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-            <div>
-              <span className="text-blue-600">Salário Bruto:</span>
-              <span className="float-right font-medium">{formatCurrency(payrollData.grossSalary)}</span>
-            </div>
-            <div>
-              <span className="text-blue-600">Depósito FGTS Mensal (8%):</span>
-              <span className="float-right font-medium">{formatCurrency(payrollData.grossSalary * 0.08)}</span>
-            </div>
-          </div>
-        </div>
-
-        <Button onClick={calculateFGTS} className="w-full">
-          <DollarSign className="h-4 w-4 mr-2" />
-          Calcular FGTS
-        </Button>
-
-        {calculation && (
-          <>
-            <Separator />
+          {/* Inputs simplificados */}
+          <Box sx={{ 
+            display: 'grid', 
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, 
+            gap: 2 
+          }}>
+            <Stack spacing={1}>
+              <Label htmlFor="workMonths">Meses trabalhados na empresa atual</Label>
+              <Input
+                id="workMonths"
+                type="number"
+                value={workMonths}
+                onChange={(e) => setWorkMonths(Number(e.target.value))}
+                min="0"
+                max="120"
+              />
+              <Typography variant="caption" color="text.secondary">
+                Tempo na empresa atual para calcular saldo
+              </Typography>
+            </Stack>
             
-            {/* Resultados */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Resultados do FGTS</h3>
+            <Stack spacing={1}>
+              <Label htmlFor="currentBalance">Saldo FGTS atual (R$)</Label>
+              <Input
+                id="currentBalance"
+                type="number"
+                value={currentFGTSBalance}
+                onChange={(e) => setCurrentFGTSBalance(Number(e.target.value))}
+                min="0"
+              />
+              <Typography variant="caption" color="text.secondary">
+                Consulte no app FGTS ou extrato
+              </Typography>
+            </Stack>
+            
+            <Stack spacing={1}>
+              <Label htmlFor="projectionYears">Projetar para (anos)</Label>
+              <Input
+                id="projectionYears"
+                type="number"
+                value={projectionYears}
+                onChange={(e) => setProjectionYears(Number(e.target.value))}
+                min="1"
+                max="40"
+              />
+              <Typography variant="caption" color="text.secondary">
+                Tempo futuro para projeção
+              </Typography>
+            </Stack>
+          </Box>
+
+          {/* Informação automática */}
+          <Box sx={{ bgcolor: 'info.light', p: 2, borderRadius: 1 }}>
+            <Typography variant="body2" sx={{ fontWeight: 500, mb: 1, color: 'info.dark' }}>
+              📊 Dados extraídos do seu holerite:
+            </Typography>
+            <Box sx={{ 
+              display: 'grid', 
+              gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, 
+              gap: 1.5, 
+              fontSize: '0.875rem' 
+            }}>
+              <Stack direction="row" justifyContent="space-between">
+                <Typography variant="body2" color="info.dark">Salário Bruto:</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {formatCurrency(payrollData.grossSalary)}
+                </Typography>
+              </Stack>
+              <Stack direction="row" justifyContent="space-between">
+                <Typography variant="body2" color="info.dark">Depósito FGTS Mensal (8%):</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  {formatCurrency(payrollData.grossSalary * 0.08)}
+                </Typography>
+              </Stack>
+            </Box>
+          </Box>
+
+          <Button onClick={calculateFGTS} sx={{ width: '100%' }}>
+            <DollarSign style={{ width: 16, height: 16, marginRight: 8 }} />
+            Calcular FGTS
+          </Button>
+
+          {calculation && (
+            <>
+              <Divider />
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-muted/50 p-4 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Calendar className="h-4 w-4 text-primary" />
-                    <span className="font-medium">Depósito Mensal</span>
-                  </div>
-                  <p className="text-2xl font-bold text-primary">
-                    {formatCurrency(calculation.monthlyDeposit)}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    8% do salário bruto
-                  </p>
-                </div>
+              {/* Resultados */}
+              <Stack spacing={2}>
+                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                  Resultados do FGTS
+                </Typography>
+                
+                <Box sx={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, 
+                  gap: 2 
+                }}>
+                  <Box sx={{ bgcolor: 'action.hover', p: 2, borderRadius: 1 }}>
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                      <Calendar style={{ width: 16, height: 16, color: 'var(--primary)' }} />
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        Depósito Mensal
+                      </Typography>
+                    </Stack>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                      {formatCurrency(calculation.monthlyDeposit)}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      8% do salário bruto
+                    </Typography>
+                  </Box>
 
-                <div className="bg-muted/50 p-4 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp className="h-4 w-4 text-primary" />
-                    <span className="font-medium">Depósito Anual</span>
-                  </div>
-                  <p className="text-2xl font-bold text-primary">
-                    {formatCurrency(calculation.yearlyDeposit)}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Valor total no ano
-                  </p>
-                </div>
+                  <Box sx={{ bgcolor: 'action.hover', p: 2, borderRadius: 1 }}>
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                      <TrendingUp style={{ width: 16, height: 16, color: 'var(--primary)' }} />
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        Depósito Anual
+                      </Typography>
+                    </Stack>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                      {formatCurrency(calculation.yearlyDeposit)}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Valor total no ano
+                    </Typography>
+                  </Box>
 
-                <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Building className="h-4 w-4 text-blue-600" />
-                    <span className="font-medium">Saldo Atual Estimado</span>
-                  </div>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {formatCurrency(calculation.currentBalance)}
-                  </p>
-                  <p className="text-sm text-blue-600/70">
-                    Incluindo {workMonths} meses trabalhados
-                  </p>
-                </div>
+                  <Box sx={{ bgcolor: 'info.light', p: 2, borderRadius: 1 }}>
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                      <Building style={{ width: 16, height: 16, color: 'var(--info-dark)' }} />
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        Saldo Atual Estimado
+                      </Typography>
+                    </Stack>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: 'info.dark' }}>
+                      {formatCurrency(calculation.currentBalance)}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'info.dark', opacity: 0.7 }}>
+                      Incluindo {workMonths} meses trabalhados
+                    </Typography>
+                  </Box>
 
-                <div className="bg-green-50 dark:bg-green-500/10 p-4 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp className="h-4 w-4 text-green-600" />
-                    <span className="font-medium">Projeção em {projectionYears} anos</span>
-                  </div>
-                  <p className="text-2xl font-bold text-green-600">
-                    {formatCurrency(calculation.totalWithInterest)}
-                  </p>
-                  <p className="text-sm text-green-600/70">
-                    Com juros e correção monetária
-                  </p>
-                </div>
-              </div>
+                  <Box sx={{ bgcolor: 'success.light', p: 2, borderRadius: 1 }}>
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                      <TrendingUp style={{ width: 16, height: 16, color: 'var(--success-dark)' }} />
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                        Projeção em {projectionYears} anos
+                      </Typography>
+                    </Stack>
+                    <Typography variant="h5" sx={{ fontWeight: 700, color: 'success.dark' }}>
+                      {formatCurrency(calculation.totalWithInterest)}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'success.dark', opacity: 0.7 }}>
+                      Com juros e correção monetária
+                    </Typography>
+                  </Box>
+                </Box>
 
-              {/* Informações adicionais */}
-              <div className="bg-amber-50 p-4 rounded-lg">
-                <h4 className="font-medium text-amber-800 mb-2">ℹ️ Informações importantes:</h4>
-                <ul className="text-sm text-amber-700 space-y-1">
-                  <li>• O FGTS é depositado mensalmente pelo empregador (8% do salário bruto)</li>
-                  <li>• Rendimento atual: 3% ao ano + TR (Taxa Referencial)</li>
-                  <li>• Pode ser sacado em situações específicas (demissão, compra da casa própria, etc.)</li>
-                  <li>• Cálculos são estimativas baseadas nas regras atuais</li>
-                </ul>
-              </div>
-            </div>
-          </>
-        )}
+                {/* Informações adicionais */}
+                <Box sx={{ bgcolor: 'warning.light', p: 2, borderRadius: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, mb: 1, color: 'warning.dark' }}>
+                    ℹ️ Informações importantes:
+                  </Typography>
+                  <Stack component="ul" spacing={0.5} sx={{ 
+                    fontSize: '0.875rem', 
+                    color: 'warning.dark',
+                    pl: 2 
+                  }}>
+                    <li>• O FGTS é depositado mensalmente pelo empregador (8% do salário bruto)</li>
+                    <li>• Rendimento atual: 3% ao ano + TR (Taxa Referencial)</li>
+                    <li>• Pode ser sacado em situações específicas (demissão, compra da casa própria, etc.)</li>
+                    <li>• Cálculos são estimativas baseadas nas regras atuais</li>
+                  </Stack>
+                </Box>
+              </Stack>
+            </>
+          )}
+        </Stack>
       </CardContent>
     </Card>
   );

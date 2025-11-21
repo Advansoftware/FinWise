@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { calculateConsignedImpactOnThirteenth, getConsignedLoanFromPayroll } from "@/lib/payroll-utils";
 import { CalculatorModeToggle } from "./calculator-mode-toggle";
 import { ManualSalaryInput, ManualSalaryData } from "./manual-salary-input";
+import { Box, Stack, Typography } from "@mui/material";
 
 interface ThirteenthSalaryCalculatorProps {
   payrollData: PayrollData;
@@ -85,207 +86,237 @@ export function ThirteenthSalaryCalculator({ payrollData }: ThirteenthSalaryCalc
   };
 
   return (
-    <Card className="h-full">
+    <Card sx={{ height: '100%' }}>
       <CardHeader>
-        <div className="flex items-center gap-2">
-          <TrendingUp className="h-5 w-5 text-primary" />
-          <CardTitle className="text-lg">Calculadora do 13º Salário</CardTitle>
-        </div>
-        <CardDescription>
-          Estime o valor do seu 13º salário baseado no período trabalhado.
-        </CardDescription>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <TrendingUp style={{ width: 20, height: 20, color: 'var(--primary)' }} />
+          <Typography component="span" sx={{ fontSize: '1.125rem' }}>
+            <CardTitle>Calculadora do 13º Salário</CardTitle>
+          </Typography>
+        </Stack>
+        <Typography component="span">
+          <CardDescription>
+            Estime o valor do seu 13º salário baseado no período trabalhado.
+          </CardDescription>
+        </Typography>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Toggle entre modos */}
-        <CalculatorModeToggle 
-          mode={mode} 
-          onModeChange={setMode} 
-          hasPayrollData={hasPayrollData}
-        />
-
-        {/* Entrada de dados baseada no modo */}
-        {mode === 'payroll' ? (
-          <div className="bg-muted/30 dark:bg-muted/10 p-3 rounded-md space-y-3">
-            <div className="text-sm font-medium">Dados do Holerite Utilizados no Cálculo:</div>
-            
-            {/* Dados salariais */}
-            <div className="space-y-1">
-              <div className="text-xs font-medium text-muted-foreground">💰 Dados Salariais:</div>
-              <div className="text-xs text-muted-foreground pl-2">
-                Salário Bruto: <span className="font-medium">{formatCurrency(payrollData.grossSalary)}</span>
-              </div>
-              <div className="text-xs text-muted-foreground pl-2">
-                Salário Líquido: <span className="font-medium">{formatCurrency(payrollData.netSalary)}</span>
-              </div>
-            </div>
-
-            {/* Descontos regulares */}
-            {payrollData.discounts.filter(d => 
-              d.type === 'discount' && 
-              !d.name.toLowerCase().includes('consignado') &&
-              !d.name.toLowerCase().includes('empréstimo') &&
-              !d.name.toLowerCase().includes('emprestimo')
-            ).length > 0 && (
-              <div className="space-y-1">
-                <div className="text-xs font-medium text-muted-foreground">📊 Descontos Regulares:</div>
-                <div className="pl-2 space-y-1">
-                  {payrollData.discounts.filter(d => 
-                    d.type === 'discount' && 
-                    !d.name.toLowerCase().includes('consignado') &&
-                    !d.name.toLowerCase().includes('empréstimo') &&
-                    !d.name.toLowerCase().includes('emprestimo')
-                  ).map((discount, index) => (
-                    <div key={index} className="text-xs text-muted-foreground flex justify-between">
-                      <span>{discount.name}:</span>
-                      <span className="font-medium">{formatCurrency(discount.amount)}</span>
-                    </div>
-                  ))}
-                  <div className="text-xs text-green-600 dark:text-green-400 mt-1">
-                    ✓ Serão aplicados no 13º salário
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Empréstimo consignado */}
-            {payrollData.discounts.filter(d => 
-              d.type === 'discount' && (
-                d.name.toLowerCase().includes('consignado') ||
-                d.name.toLowerCase().includes('empréstimo') ||
-                d.name.toLowerCase().includes('emprestimo')
-              )
-            ).length > 0 && (
-              <div className="space-y-1">
-                <div className="text-xs font-medium text-muted-foreground">🏦 Empréstimo Consignado:</div>
-                <div className="pl-2 space-y-1">
-                  {payrollData.discounts.filter(d => 
-                    d.type === 'discount' && (
-                      d.name.toLowerCase().includes('consignado') ||
-                      d.name.toLowerCase().includes('empréstimo') ||
-                      d.name.toLowerCase().includes('emprestimo')
-                    )
-                  ).map((discount, index) => (
-                    <div key={index} className="text-xs text-muted-foreground flex justify-between">
-                      <span>{discount.name}:</span>
-                      <span className="font-medium">{formatCurrency(discount.amount)}</span>
-                    </div>
-                  ))}
-                  <div className="text-xs text-red-600 dark:text-red-400 mt-1">
-                    ❌ NÃO será descontado do 13º salário
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <ManualSalaryInput data={manualData} onChange={setManualData} />
-        )}
-
-        {/* Entrada de dados */}
-        <div className="space-y-2">
-          <Label htmlFor="monthsWorked">Meses Trabalhados no Ano</Label>
-          <Input
-            id="monthsWorked"
-            type="number"
-            min="1"
-            max="12"
-            value={monthsWorked}
-            onChange={(e) => setMonthsWorked(parseInt(e.target.value) || 12)}
-            placeholder="12"
+      <CardContent>
+        <Stack spacing={2}>
+          {/* Toggle entre modos */}
+          <CalculatorModeToggle 
+            mode={mode} 
+            onModeChange={setMode} 
+            hasPayrollData={hasPayrollData}
           />
-          <div className="text-xs text-muted-foreground">
-            Máximo: 12 meses (ano completo)
-          </div>
-        </div>
 
-        <Button 
-          onClick={calculateThirteenth} 
-          className="w-full"
-          disabled={(mode === 'manual' && (manualData.grossSalary <= 0 || manualData.netSalary <= 0)) || 
-                   (mode === 'payroll' && !hasPayrollData)}
-        >
-          <Calculator className="h-4 w-4 mr-2" />
-          Calcular 13º Salário
-        </Button>
+          {/* Entrada de dados baseada no modo */}
+          {mode === 'payroll' ? (
+            <Box sx={{ bgcolor: 'action.hover', p: 1.5, borderRadius: 1 }}>
+              <Stack spacing={1.5}>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  Dados do Holerite Utilizados no Cálculo:
+                </Typography>
+                
+                {/* Dados salariais */}
+                <Stack spacing={0.5}>
+                  <Typography variant="caption" sx={{ fontWeight: 500 }} color="text.secondary">
+                    💰 Dados Salariais:
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ pl: 1 }}>
+                    Salário Bruto: <Typography component="span" sx={{ fontWeight: 500 }}>
+                      {formatCurrency(payrollData.grossSalary)}
+                    </Typography>
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ pl: 1 }}>
+                    Salário Líquido: <Typography component="span" sx={{ fontWeight: 500 }}>
+                      {formatCurrency(payrollData.netSalary)}
+                    </Typography>
+                  </Typography>
+                </Stack>
 
-        {/* Resultado */}
-        {result && (
-          <div className="space-y-3 pt-4 border-t">
-            <div className="text-sm font-medium">Resultado do Cálculo:</div>
-            
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm">13º Salário Bruto ({monthsWorked}/12):</span>
-                <Badge variant="outline">{formatCurrency(result.grossThirteenth)}</Badge>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Descontos Estimados:</span>
-                <Badge variant="outline" className="text-red-600">
-                  -{formatCurrency(result.estimatedDiscounts)}
-                </Badge>
-              </div>
-              
-              {/* Informação específica sobre empréstimo consignado */}
-              {result.consignedImpact && mode === 'payroll' && (
-                <div className="bg-blue-50 dark:bg-blue-500/10 p-3 rounded-lg border border-blue-200 dark:border-blue-500/20">
-                  <div className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-1">
-                    💡 Empréstimo Consignado no 13º Salário
-                  </div>
-                  <div className="text-xs text-muted-foreground space-y-1">
-                    <div>Limite máximo: {formatCurrency(result.consignedImpact.maxAllowedOnThirteenth)} (35% do 13º)</div>
-                    <div>Valor aplicado: {formatCurrency(result.consignedImpact.applicableAmount)}</div>
-                    <div className={result.consignedImpact.isWithinLimit ? "text-green-600 dark:text-green-400" : "text-yellow-600 dark:text-yellow-400"}>
-                      {result.consignedImpact.explanation}
-                    </div>
-                  </div>
-                </div>
-              )}
-              
-              <div className="flex justify-between items-center pt-2 border-t">
-                <span className="font-medium">13º Líquido Estimado:</span>
-                <Badge className="bg-green-600 dark:bg-green-600 text-white font-bold">
-                  {formatCurrency(result.netThirteenth)}
-                </Badge>
-              </div>
-              
-              {/* Divisão em parcelas para empresas que pagam em 2x */}
-              <div className="bg-blue-50 dark:bg-blue-500/10 p-3 rounded-lg border border-blue-200 dark:border-blue-500/20 mt-3">
-                <div className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-2">
-                  💡 Para empresas que pagam em 2 parcelas:
-                </div>
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-muted-foreground">1ª Parcela (até 30/nov) - Sem descontos:</span>
-                    <Badge variant="outline" className="text-green-600 dark:text-green-400">
-                      {formatCurrency(result.grossThirteenth / 2)}
-                    </Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-muted-foreground">2ª Parcela (até 20/dez) - Com descontos:</span>
-                    <Badge variant="outline" className="text-blue-600 dark:text-blue-400">
-                      {formatCurrency((result.grossThirteenth / 2) - result.estimatedDiscounts)}
-                    </Badge>
-                  </div>
-                  <div className="text-xs text-muted-foreground bg-white/50 dark:bg-gray-800/50 p-2 rounded mt-2">
-                    <div>• 1ª parcela: Metade do valor bruto, sem descontos</div>
-                    <div>• 2ª parcela: Metade do valor bruto menos todos os descontos</div>
-                  </div>
-                </div>
-                <div className="text-xs text-muted-foreground mt-2 text-center border-t pt-2">
-                  <strong>Total Líquido:</strong> {formatCurrency(result.netThirteenth)}
-                </div>
-              </div>
-            </div>
+                {/* Descontos regulares */}
+                {payrollData.discounts.filter(d => 
+                  d.type === 'discount' && 
+                  !d.name.toLowerCase().includes('consignado') &&
+                  !d.name.toLowerCase().includes('empréstimo') &&
+                  !d.name.toLowerCase().includes('emprestimo')
+                ).length > 0 && (
+                  <Stack spacing={0.5}>
+                    <Typography variant="caption" sx={{ fontWeight: 500 }} color="text.secondary">
+                      📊 Descontos Regulares:
+                    </Typography>
+                    <Stack spacing={0.5} sx={{ pl: 1 }}>
+                      {payrollData.discounts.filter(d => 
+                        d.type === 'discount' && 
+                        !d.name.toLowerCase().includes('consignado') &&
+                        !d.name.toLowerCase().includes('empréstimo') &&
+                        !d.name.toLowerCase().includes('emprestimo')
+                      ).map((discount, index) => (
+                        <Stack key={index} direction="row" justifyContent="space-between">
+                          <Typography variant="caption" color="text.secondary">{discount.name}:</Typography>
+                          <Typography variant="caption" sx={{ fontWeight: 500 }}>
+                            {formatCurrency(discount.amount)}
+                          </Typography>
+                        </Stack>
+                      ))}
+                      <Typography variant="caption" sx={{ color: 'success.main', mt: 0.5 }}>
+                        ✓ Serão aplicados no 13º salário
+                      </Typography>
+                    </Stack>
+                  </Stack>
+                )}
 
-            <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-500/10 p-2 rounded border-blue-200 dark:border-blue-500/20">
-              <strong>Nota:</strong> {mode === 'payroll' 
-                ? 'Os descontos são estimados baseados na proporção do seu holerite atual. Valores reais podem variar conforme faixas do INSS e IR.'
-                : 'Estimativa baseada na proporção de descontos informada. Para cálculos mais precisos, use os dados do holerite.'
-              }
-            </div>
-          </div>
-        )}
+                {/* Empréstimo consignado */}
+                {payrollData.discounts.filter(d => 
+                  d.type === 'discount' && (
+                    d.name.toLowerCase().includes('consignado') ||
+                    d.name.toLowerCase().includes('empréstimo') ||
+                    d.name.toLowerCase().includes('emprestimo')
+                  )
+                ).length > 0 && (
+                  <Stack spacing={0.5}>
+                    <Typography variant="caption" sx={{ fontWeight: 500 }} color="text.secondary">
+                      🏦 Empréstimo Consignado:
+                    </Typography>
+                    <Stack spacing={0.5} sx={{ pl: 1 }}>
+                      {payrollData.discounts.filter(d => 
+                        d.type === 'discount' && (
+                          d.name.toLowerCase().includes('consignado') ||
+                          d.name.toLowerCase().includes('empréstimo') ||
+                          d.name.toLowerCase().includes('emprestimo')
+                        )
+                      ).map((discount, index) => (
+                        <Stack key={index} direction="row" justifyContent="space-between">
+                          <Typography variant="caption" color="text.secondary">{discount.name}:</Typography>
+                          <Typography variant="caption" sx={{ fontWeight: 500 }}>
+                            {formatCurrency(discount.amount)}
+                          </Typography>
+                        </Stack>
+                      ))}
+                      <Typography variant="caption" sx={{ color: 'error.main', mt: 0.5 }}>
+                        ❌ NÃO será descontado do 13º salário
+                      </Typography>
+                    </Stack>
+                  </Stack>
+                )}
+              </Stack>
+            </Box>
+          ) : (
+            <ManualSalaryInput data={manualData} onChange={setManualData} />
+          )}
+
+          {/* Entrada de dados */}
+          <Stack spacing={1}>
+            <Label htmlFor="monthsWorked">Meses Trabalhados no Ano</Label>
+            <Input
+              id="monthsWorked"
+              type="number"
+              min="1"
+              max="12"
+              value={monthsWorked}
+              onChange={(e) => setMonthsWorked(parseInt(e.target.value) || 12)}
+              placeholder="12"
+            />
+            <Typography variant="caption" color="text.secondary">
+              Máximo: 12 meses (ano completo)
+            </Typography>
+          </Stack>
+
+          <Button 
+            onClick={calculateThirteenth} 
+            sx={{ width: '100%' }}
+            disabled={(mode === 'manual' && (manualData.grossSalary <= 0 || manualData.netSalary <= 0)) || 
+                     (mode === 'payroll' && !hasPayrollData)}
+          >
+            <Calculator style={{ width: 16, height: 16, marginRight: 8 }} />
+            Calcular 13º Salário
+          </Button>
+
+          {/* Resultado */}
+          {result && (
+            <Stack spacing={1.5} sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                Resultado do Cálculo:
+              </Typography>
+              
+              <Stack spacing={1}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Typography variant="body2">13º Salário Bruto ({monthsWorked}/12):</Typography>
+                  <Badge variant="outline">{formatCurrency(result.grossThirteenth)}</Badge>
+                </Stack>
+                
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Typography variant="body2">Descontos Estimados:</Typography>
+                  <Badge variant="outline" sx={{ color: 'error.main' }}>
+                    -{formatCurrency(result.estimatedDiscounts)}
+                  </Badge>
+                </Stack>
+                
+                {/* Informação específica sobre empréstimo consignado */}
+                {result.consignedImpact && mode === 'payroll' && (
+                  <Box sx={{ bgcolor: 'info.light', p: 1.5, borderRadius: 1, border: 1, borderColor: 'info.main' }}>
+                    <Typography variant="caption" sx={{ fontWeight: 500, color: 'info.dark', display: 'block', mb: 0.5 }}>
+                      💡 Empréstimo Consignado no 13º Salário
+                    </Typography>
+                    <Stack spacing={0.5} sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                      <Typography variant="caption">
+                        Limite máximo: {formatCurrency(result.consignedImpact.maxAllowedOnThirteenth)} (35% do 13º)
+                      </Typography>
+                      <Typography variant="caption">
+                        Valor aplicado: {formatCurrency(result.consignedImpact.applicableAmount)}
+                      </Typography>
+                      <Typography variant="caption" sx={{ color: result.consignedImpact.isWithinLimit ? 'success.main' : 'warning.main' }}>
+                        {result.consignedImpact.explanation}
+                      </Typography>
+                    </Stack>
+                  </Box>
+                )}
+                
+                <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ pt: 1, borderTop: 1, borderColor: 'divider' }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>13º Líquido Estimado:</Typography>
+                  <Badge sx={{ bgcolor: 'success.main', color: 'success.contrastText', fontWeight: 700 }}>
+                    {formatCurrency(result.netThirteenth)}
+                  </Badge>
+                </Stack>
+                
+                {/* Divisão em parcelas para empresas que pagam em 2x */}
+                <Box sx={{ bgcolor: 'info.light', p: 1.5, borderRadius: 1, border: 1, borderColor: 'info.main', mt: 1.5 }}>
+                  <Typography variant="caption" sx={{ fontWeight: 500, color: 'info.dark', display: 'block', mb: 1 }}>
+                    💡 Para empresas que pagam em 2 parcelas:
+                  </Typography>
+                  <Stack spacing={1}>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                      <Typography variant="caption" color="text.secondary">1ª Parcela (até 30/nov) - Sem descontos:</Typography>
+                      <Badge variant="outline" sx={{ color: 'success.main' }}>
+                        {formatCurrency(result.grossThirteenth / 2)}
+                      </Badge>
+                    </Stack>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                      <Typography variant="caption" color="text.secondary">2ª Parcela (até 20/dez) - Com descontos:</Typography>
+                      <Badge variant="outline" sx={{ color: 'info.dark' }}>
+                        {formatCurrency((result.grossThirteenth / 2) - result.estimatedDiscounts)}
+                      </Badge>
+                    </Stack>
+                    <Box sx={{ fontSize: '0.75rem', color: 'text.secondary', bgcolor: 'background.paper', p: 1, borderRadius: 1, mt: 1 }}>
+                      <Typography variant="caption" component="div">• 1ª parcela: Metade do valor bruto, sem descontos</Typography>
+                      <Typography variant="caption" component="div">• 2ª parcela: Metade do valor bruto menos todos os descontos</Typography>
+                    </Box>
+                  </Stack>
+                  <Typography variant="caption" sx={{ display: 'block', mt: 1, textAlign: 'center', pt: 1, borderTop: 1, borderColor: 'divider' }}>
+                    <strong>Total Líquido:</strong> {formatCurrency(result.netThirteenth)}
+                  </Typography>
+                </Box>
+              </Stack>
+
+              <Box sx={{ fontSize: '0.75rem', color: 'text.secondary', bgcolor: 'info.light', p: 1, borderRadius: 1, border: 1, borderColor: 'info.main' }}>
+                <strong>Nota:</strong> {mode === 'payroll' 
+                  ? 'Os descontos são estimados baseados na proporção do seu holerite atual. Valores reais podem variar conforme faixas do INSS e IR.'
+                  : 'Estimativa baseada na proporção de descontos informada. Para cálculos mais precisos, use os dados do holerite.'
+                }
+              </Box>
+            </Stack>
+          )}
+        </Stack>
       </CardContent>
     </Card>
   );

@@ -11,6 +11,7 @@ import { Briefcase, AlertTriangle, DollarSign, FileText } from "lucide-react";
 import { PayrollData } from "@/lib/types";
 import { CalculatorModeToggle } from "./calculator-mode-toggle";
 import { ManualSalaryInput, ManualSalaryData } from "./manual-salary-input";
+import { Box, Stack, Typography, Divider } from "@mui/material";
 
 interface SeveranceCalculatorProps {
   payrollData: PayrollData;
@@ -139,237 +140,253 @@ export function SeveranceCalculator({ payrollData }: SeveranceCalculatorProps) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-2">
-          <Briefcase className="h-5 w-5 text-primary" />
-          <CardTitle className="text-lg">Calculadora de Rescisão</CardTitle>
-        </div>
-        <CardDescription>
-          Calcule os valores da rescisão trabalhista conforme a CLT
-        </CardDescription>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Briefcase style={{ width: 20, height: 20, color: 'var(--primary)' }} />
+          <Typography component="span" sx={{ fontSize: '1.125rem' }}>
+            <CardTitle>Calculadora de Rescisão</CardTitle>
+          </Typography>
+        </Stack>
+        <Typography component="span">
+          <CardDescription>
+            Calcule os valores da rescisão trabalhista conforme a CLT
+          </CardDescription>
+        </Typography>
       </CardHeader>
-            <CardContent className="space-y-6">
-        {/* Toggle entre modos */}
-        <CalculatorModeToggle 
-          mode={mode} 
-          onModeChange={setMode} 
-          hasPayrollData={hasPayrollData}
-        />
+      <CardContent>
+        <Stack spacing={3}>
+          {/* Toggle entre modos */}
+          <CalculatorModeToggle 
+            mode={mode} 
+            onModeChange={setMode} 
+            hasPayrollData={hasPayrollData}
+          />
 
-        {/* Entrada de dados baseada no modo */}
-        {mode === 'payroll' ? (
-          <div className="bg-muted/30 dark:bg-muted/10 p-3 rounded-md space-y-2">
-            <div className="text-sm font-medium">Dados do Holerite:</div>
-            <div className="text-xs text-muted-foreground">
-              Salário Bruto: <span className="font-medium">{formatCurrency(payrollData.grossSalary)}</span>
-            </div>
-          </div>
-        ) : (
-          <ManualSalaryInput data={manualData} onChange={setManualData} />
-        )}
+          {/* Entrada de dados baseada no modo */}
+          {mode === 'payroll' ? (
+            <Box sx={{ bgcolor: 'action.hover', p: 1.5, borderRadius: 1 }}>
+              <Stack spacing={1}>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>Dados do Holerite:</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Salário Bruto: <Typography component="span" sx={{ fontWeight: 500 }}>
+                    {formatCurrency(payrollData.grossSalary)}
+                  </Typography>
+                </Typography>
+              </Stack>
+            </Box>
+          ) : (
+            <ManualSalaryInput data={manualData} onChange={setManualData} />
+          )}
 
-        {/* Inputs de rescisão */}
-        <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-lg mb-4">
-          <h4 className="font-medium text-blue-800 mb-2">📊 Dados extraídos do seu holerite:</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
-            <div>
-              <span className="text-blue-600">Salário Bruto:</span>
-              <span className="float-right font-medium">{formatCurrency(payrollData.grossSalary)}</span>
-            </div>
-            <div>
-              <span className="text-blue-600">Salário Líquido:</span>
-              <span className="float-right font-medium">{formatCurrency(payrollData.netSalary)}</span>
-            </div>
-            <div>
-              <span className="text-blue-600">Salário Diário:</span>
-              <span className="float-right font-medium">{formatCurrency(payrollData.grossSalary / 30)}</span>
-            </div>
-          </div>
-        </div>
+          {/* Inputs de rescisão */}
+          <Box sx={{ bgcolor: 'info.light', p: 2, borderRadius: 1 }}>
+            <Typography variant="body2" sx={{ fontWeight: 500, mb: 1, color: 'info.dark' }}>
+              📊 Dados extraídos do seu holerite:
+            </Typography>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 1.5, fontSize: '0.875rem' }}>
+              <Stack direction="row" justifyContent="space-between">
+                <Typography variant="body2" color="info.dark">Salário Bruto:</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>{formatCurrency(payrollData.grossSalary)}</Typography>
+              </Stack>
+              <Stack direction="row" justifyContent="space-between">
+                <Typography variant="body2" color="info.dark">Salário Líquido:</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>{formatCurrency(payrollData.netSalary)}</Typography>
+              </Stack>
+              <Stack direction="row" justifyContent="space-between">
+                <Typography variant="body2" color="info.dark">Salário Diário:</Typography>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>{formatCurrency(payrollData.grossSalary / 30)}</Typography>
+              </Stack>
+            </Box>
+          </Box>
 
-        {/* Inputs */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="rescissionType">Tipo de rescisão</Label>
-            <Select value={rescissionType} onValueChange={(value: RescissionType) => setRescissionType(value)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione o tipo" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="demissao-sem-justa-causa">Demissão sem Justa Causa</SelectItem>
-                <SelectItem value="demissao-com-justa-causa">Demissão com Justa Causa</SelectItem>
-                <SelectItem value="pedido-demissao">Pedido de Demissão</SelectItem>
-                <SelectItem value="comum-acordo">Comum Acordo (Art. 484-A)</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {/* Inputs */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2 }}>
+            <Stack spacing={1}>
+              <Label htmlFor="rescissionType">Tipo de rescisão</Label>
+              <Select value={rescissionType} onValueChange={(value: RescissionType) => setRescissionType(value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o tipo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="demissao-sem-justa-causa">Demissão sem Justa Causa</SelectItem>
+                  <SelectItem value="demissao-com-justa-causa">Demissão com Justa Causa</SelectItem>
+                  <SelectItem value="pedido-demissao">Pedido de Demissão</SelectItem>
+                  <SelectItem value="comum-acordo">Comum Acordo (Art. 484-A)</SelectItem>
+                </SelectContent>
+              </Select>
+            </Stack>
 
-          <div className="space-y-2">
-            <Label htmlFor="workMonths">Meses trabalhados</Label>
-            <Input
-              id="workMonths"
-              type="number"
-              value={workMonths}
-              onChange={(e) => setWorkMonths(Number(e.target.value))}
-              min="1"
-              max="600"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="vacationDays">Dias de férias pendentes</Label>
-            <Input
-              id="vacationDays"
-              type="number"
-              value={vacationDays}
-              onChange={(e) => setVacationDays(Number(e.target.value))}
-              min="0"
-              max="60"
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="fgtsBalance">Saldo FGTS (R$)</Label>
-            <Input
-              id="fgtsBalance"
-              type="number"
-              value={fgtsBalance}
-              onChange={(e) => setFgtsBalance(Number(e.target.value))}
-              min="0"
-            />
-          </div>
-        </div>
-
-        <Button onClick={calculateSeverance} className="w-full">
-          <FileText className="h-4 w-4 mr-2" />
-          Calcular Rescisão
-        </Button>
-
-        {calculation && (
-          <>
-            <Separator />
+            <Stack spacing={1}>
+              <Label htmlFor="workMonths">Meses trabalhados</Label>
+              <Input
+                id="workMonths"
+                type="number"
+                value={workMonths}
+                onChange={(e) => setWorkMonths(Number(e.target.value))}
+                min="1"
+                max="600"
+              />
+            </Stack>
             
-            {/* Resultados */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-lg">Rescisão: {getRescissionTitle(rescissionType)}</h3>
-              </div>
+            <Stack spacing={1}>
+              <Label htmlFor="vacationDays">Dias de férias pendentes</Label>
+              <Input
+                id="vacationDays"
+                type="number"
+                value={vacationDays}
+                onChange={(e) => setVacationDays(Number(e.target.value))}
+                min="0"
+                max="60"
+              />
+            </Stack>
+            
+            <Stack spacing={1}>
+              <Label htmlFor="fgtsBalance">Saldo FGTS (R$)</Label>
+              <Input
+                id="fgtsBalance"
+                type="number"
+                value={fgtsBalance}
+                onChange={(e) => setFgtsBalance(Number(e.target.value))}
+                min="0"
+              />
+            </Stack>
+          </Box>
+
+          <Button onClick={calculateSeverance} sx={{ width: '100%' }}>
+            <FileText style={{ width: 16, height: 16, marginRight: 8 }} />
+            Calcular Rescisão
+          </Button>
+
+          {calculation && (
+            <>
+              <Divider />
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {calculation.salarioAviso > 0 && (
-                  <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <AlertTriangle className="h-4 w-4 text-blue-600" />
-                      <span className="font-medium">Aviso Prévio</span>
-                    </div>
-                    <p className="text-2xl font-bold text-blue-600">
-                      {formatCurrency(calculation.salarioAviso)}
-                    </p>
-                    <p className="text-sm text-blue-600/70">
-                      {calculation.avisoPrevia} dias
-                    </p>
-                  </div>
-                )}
-
-                {calculation.feriasPendentes > 0 && (
-                  <div className="bg-green-50 dark:bg-green-500/10 p-4 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <DollarSign className="h-4 w-4 text-green-600" />
-                      <span className="font-medium">Férias + 1/3</span>
-                    </div>
-                    <p className="text-2xl font-bold text-green-600">
-                      {formatCurrency(calculation.feriasPendentes)}
-                    </p>
-                    <p className="text-sm text-green-600/70">
-                      {vacationDays} dias pendentes
-                    </p>
-                  </div>
-                )}
-
-                {calculation.decimoTerceiro > 0 && (
-                  <div className="bg-purple-50 p-4 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <DollarSign className="h-4 w-4 text-purple-600" />
-                      <span className="font-medium">13º Proporcional</span>
-                    </div>
-                    <p className="text-2xl font-bold text-purple-600">
-                      {formatCurrency(calculation.decimoTerceiro)}
-                    </p>
-                    <p className="text-sm text-purple-600/70">
-                      {workMonths % 12} meses
-                    </p>
-                  </div>
-                )}
-
-                {calculation.fgtsFine > 0 && (
-                  <div className="bg-orange-50 p-4 rounded-lg">
-                    <div className="flex items-center gap-2 mb-2">
-                      <Briefcase className="h-4 w-4 text-orange-600" />
-                      <span className="font-medium">Multa FGTS</span>
-                    </div>
-                    <p className="text-2xl font-bold text-orange-600">
-                      {formatCurrency(calculation.fgtsFine)}
-                    </p>
-                    <p className="text-sm text-orange-600/70">
-                      {rescissionType === 'comum-acordo' ? '20%' : '40%'} do saldo
-                    </p>
-                  </div>
-                )}
-
-                <div className="bg-primary/10 p-4 rounded-lg md:col-span-2">
-                  <div className="flex items-center gap-2 mb-2">
-                    <DollarSign className="h-4 w-4 text-primary" />
-                    <span className="font-medium">Total a Receber</span>
-                  </div>
-                  <p className="text-3xl font-bold text-primary">
-                    {formatCurrency(calculation.totalReceive)}
-                  </p>
-                  <p className="text-sm text-primary/70">
-                    Valor bruto (antes dos descontos)
-                  </p>
-                </div>
-              </div>
-
-              {/* Informações específicas por tipo */}
-              <div className="bg-amber-50 p-4 rounded-lg">
-                <h4 className="font-medium text-amber-800 mb-2">ℹ️ Informações sobre {getRescissionTitle(rescissionType)}:</h4>
-                <ul className="text-sm text-amber-700 space-y-1">
-                  {rescissionType === 'demissao-sem-justa-causa' && (
-                    <>
-                      <li>• Direito a seguro-desemprego (se elegível)</li>
-                      <li>• Saque total do FGTS + multa de 40%</li>
-                      <li>• Aviso prévio: 30 dias + 3 dias por ano trabalhado</li>
-                      <li>• Desconto de INSS e IR sobre verbas rescisórias</li>
-                    </>
+              {/* Resultados */}
+              <Stack spacing={2}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                    Rescisão: {getRescissionTitle(rescissionType)}
+                  </Typography>
+                </Stack>
+                
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2 }}>
+                  {calculation.salarioAviso > 0 && (
+                    <Box sx={{ bgcolor: 'info.light', p: 2, borderRadius: 1 }}>
+                      <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                        <AlertTriangle style={{ width: 16, height: 16, color: 'var(--info-dark)' }} />
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>Aviso Prévio</Typography>
+                      </Stack>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: 'info.dark' }}>
+                        {formatCurrency(calculation.salarioAviso)}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'info.dark', opacity: 0.7 }}>
+                        {calculation.avisoPrevia} dias
+                      </Typography>
+                    </Box>
                   )}
-                  {rescissionType === 'demissao-com-justa-causa' && (
-                    <>
-                      <li>• Sem direito a seguro-desemprego</li>
-                      <li>• Sem direito ao FGTS e multa</li>
-                      <li>• Apenas saldo de salário e férias vencidas</li>
-                      <li>• Justa causa deve ser comprovada pelo empregador</li>
-                    </>
+
+                  {calculation.feriasPendentes > 0 && (
+                    <Box sx={{ bgcolor: 'success.light', p: 2, borderRadius: 1 }}>
+                      <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                        <DollarSign style={{ width: 16, height: 16, color: 'var(--success-dark)' }} />
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>Férias + 1/3</Typography>
+                      </Stack>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: 'success.dark' }}>
+                        {formatCurrency(calculation.feriasPendentes)}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'success.dark', opacity: 0.7 }}>
+                        {vacationDays} dias pendentes
+                      </Typography>
+                    </Box>
                   )}
-                  {rescissionType === 'pedido-demissao' && (
-                    <>
-                      <li>• Sem direito a seguro-desemprego</li>
-                      <li>• Sem direito à multa do FGTS</li>
-                      <li>• FGTS pode ser sacado apenas em casos específicos</li>
-                      <li>• Aviso prévio pode ser dispensado pelo empregador</li>
-                    </>
+
+                  {calculation.decimoTerceiro > 0 && (
+                    <Box sx={{ bgcolor: '#f3e5f5', p: 2, borderRadius: 1 }}>
+                      <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                        <DollarSign style={{ width: 16, height: 16, color: '#7b1fa2' }} />
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>13º Proporcional</Typography>
+                      </Stack>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: '#7b1fa2' }}>
+                        {formatCurrency(calculation.decimoTerceiro)}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#7b1fa2', opacity: 0.7 }}>
+                        {workMonths % 12} meses
+                      </Typography>
+                    </Box>
                   )}
-                  {rescissionType === 'comum-acordo' && (
-                    <>
-                      <li>• 50% do aviso prévio e multa FGTS (20%)</li>
-                      <li>• Pode sacar até 80% do FGTS</li>
-                      <li>• Sem direito a seguro-desemprego</li>
-                      <li>• Modalidade criada pela Lei 13.467/2017</li>
-                    </>
+
+                  {calculation.fgtsFine > 0 && (
+                    <Box sx={{ bgcolor: '#fff3e0', p: 2, borderRadius: 1 }}>
+                      <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                        <Briefcase style={{ width: 16, height: 16, color: '#e65100' }} />
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>Multa FGTS</Typography>
+                      </Stack>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: '#e65100' }}>
+                        {formatCurrency(calculation.fgtsFine)}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: '#e65100', opacity: 0.7 }}>
+                        {rescissionType === 'comum-acordo' ? '20%' : '40%'} do saldo
+                      </Typography>
+                    </Box>
                   )}
-                </ul>
-              </div>
-            </div>
-          </>
-        )}
+
+                  <Box sx={{ bgcolor: 'primary.light', p: 2, borderRadius: 1, gridColumn: { md: 'span 2' } }}>
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+                      <DollarSign style={{ width: 16, height: 16, color: 'var(--primary)' }} />
+                      <Typography variant="body2" sx={{ fontWeight: 500 }}>Total a Receber</Typography>
+                    </Stack>
+                    <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                      {formatCurrency(calculation.totalReceive)}
+                    </Typography>
+                    <Typography variant="body2" sx={{ color: 'primary.main', opacity: 0.7 }}>
+                      Valor bruto (antes dos descontos)
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {/* Informações específicas por tipo */}
+                <Box sx={{ bgcolor: 'warning.light', p: 2, borderRadius: 1 }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500, mb: 1, color: 'warning.dark' }}>
+                    ℹ️ Informações sobre {getRescissionTitle(rescissionType)}:
+                  </Typography>
+                  <Stack component="ul" spacing={0.5} sx={{ fontSize: '0.875rem', color: 'warning.dark', pl: 2 }}>
+                    {rescissionType === 'demissao-sem-justa-causa' && (
+                      <>
+                        <li>• Direito a seguro-desemprego (se elegível)</li>
+                        <li>• Saque total do FGTS + multa de 40%</li>
+                        <li>• Aviso prévio: 30 dias + 3 dias por ano trabalhado</li>
+                        <li>• Desconto de INSS e IR sobre verbas rescisórias</li>
+                      </>
+                    )}
+                    {rescissionType === 'demissao-com-justa-causa' && (
+                      <>
+                        <li>• Sem direito a seguro-desemprego</li>
+                        <li>• Sem direito ao FGTS e multa</li>
+                        <li>• Apenas saldo de salário e férias vencidas</li>
+                        <li>• Justa causa deve ser comprovada pelo empregador</li>
+                      </>
+                    )}
+                    {rescissionType === 'pedido-demissao' && (
+                      <>
+                        <li>• Sem direito a seguro-desemprego</li>
+                        <li>• Sem direito à multa do FGTS</li>
+                        <li>• FGTS pode ser sacado apenas em casos específicos</li>
+                        <li>• Aviso prévio pode ser dispensado pelo empregador</li>
+                      </>
+                    )}
+                    {rescissionType === 'comum-acordo' && (
+                      <>
+                        <li>• 50% do aviso prévio e multa FGTS (20%)</li>
+                        <li>• Pode sacar até 80% do FGTS</li>
+                        <li>• Sem direito a seguro-desemprego</li>
+                        <li>• Modalidade criada pela Lei 13.467/2017</li>
+                      </>
+                    )}
+                  </Stack>
+                </Box>
+              </Stack>
+            </>
+          )}
+        </Stack>
       </CardContent>
     </Card>
   );

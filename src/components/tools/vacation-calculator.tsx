@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { calculateConsignedImpactOnVacation, getConsignedLoanFromPayroll, calculateINSSFromSalary, calculateIRFromSalary } from "@/lib/payroll-utils";
 import { CalculatorModeToggle } from "./calculator-mode-toggle";
 import { ManualSalaryInput, ManualSalaryData } from "./manual-salary-input";
+import { Box, Stack, Typography } from "@mui/material";
 
 interface VacationCalculatorProps {
   payrollData: PayrollData;
@@ -179,230 +180,258 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
   };
 
   return (
-    <Card className="h-full">
+    <Card sx={{ height: '100%' }}>
       <CardHeader>
-        <div className="flex items-center gap-2">
-          <Plane className="h-5 w-5 text-primary" />
-          <CardTitle className="text-lg">Calculadora de Férias</CardTitle>
-        </div>
-        <CardDescription>
-          Calcule o valor das suas férias baseado no seu salário atual.
-        </CardDescription>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Plane style={{ width: 20, height: 20, color: 'var(--primary)' }} />
+          <Typography component="span" sx={{ fontSize: '1.125rem' }}>
+            <CardTitle>Calculadora de Férias</CardTitle>
+          </Typography>
+        </Stack>
+        <Typography component="span">
+          <CardDescription>
+            Calcule o valor das suas férias baseado no seu salário atual.
+          </CardDescription>
+        </Typography>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Toggle entre modos */}
-        <CalculatorModeToggle 
-          mode={mode} 
-          onModeChange={setMode} 
-          hasPayrollData={hasPayrollData}
-        />
-
-        {/* Entrada de dados baseada no modo */}
-        {mode === 'payroll' ? (
-          <div className="bg-muted/30 dark:bg-muted/10 p-3 rounded-md space-y-3">
-            <div className="text-sm font-medium">Dados do Holerite Utilizados no Cálculo:</div>
-            
-            {/* Dados salariais */}
-            <div className="space-y-1">
-              <div className="text-xs font-medium text-muted-foreground">💰 Dados Salariais:</div>
-              <div className="text-xs text-muted-foreground pl-2">
-                Salário Bruto: <span className="font-medium">{formatCurrency(payrollData.grossSalary)}</span>
-              </div>
-              <div className="text-xs text-muted-foreground pl-2">
-                Salário Líquido: <span className="font-medium">{formatCurrency(payrollData.netSalary)}</span>
-              </div>
-            </div>
-
-            {/* Descontos regulares */}
-            {payrollData.discounts.filter(d => 
-              d.type === 'discount' && 
-              !d.name.toLowerCase().includes('consignado') &&
-              !d.name.toLowerCase().includes('empréstimo') &&
-              !d.name.toLowerCase().includes('emprestimo')
-            ).length > 0 && (
-              <div className="space-y-1">
-                <div className="text-xs font-medium text-muted-foreground">📊 Descontos Regulares:</div>
-                <div className="pl-2 space-y-1">
-                  {payrollData.discounts.filter(d => 
-                    d.type === 'discount' && 
-                    !d.name.toLowerCase().includes('consignado') &&
-                    !d.name.toLowerCase().includes('empréstimo') &&
-                    !d.name.toLowerCase().includes('emprestimo')
-                  ).map((discount, index) => (
-                    <div key={index} className="text-xs text-muted-foreground flex justify-between">
-                      <span>{discount.name}:</span>
-                      <span className="font-medium">{formatCurrency(discount.amount)}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Empréstimo consignado */}
-            {payrollData.discounts.filter(d => 
-              d.type === 'discount' && (
-                d.name.toLowerCase().includes('consignado') ||
-                d.name.toLowerCase().includes('empréstimo') ||
-                d.name.toLowerCase().includes('emprestimo')
-              )
-            ).length > 0 && (
-              <div className="space-y-1">
-                <div className="text-xs font-medium text-muted-foreground">🏦 Empréstimo Consignado:</div>
-                <div className="pl-2 space-y-1">
-                  {payrollData.discounts.filter(d => 
-                    d.type === 'discount' && (
-                      d.name.toLowerCase().includes('consignado') ||
-                      d.name.toLowerCase().includes('empréstimo') ||
-                      d.name.toLowerCase().includes('emprestimo')
-                    )
-                  ).map((discount, index) => (
-                    <div key={index} className="text-xs text-muted-foreground flex justify-between">
-                      <span>{discount.name}:</span>
-                      <span className="font-medium">{formatCurrency(discount.amount)}</span>
-                    </div>
-                  ))}
-                  <div className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                    ✓ Será aplicado nas férias (limite 35%)
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <ManualSalaryInput data={manualData} onChange={setManualData} />
-        )}
-
-        {/* Entrada de dados */}
-        <div className="space-y-2">
-          <Label htmlFor="vacationDays">Dias de Férias</Label>
-          <Input
-            id="vacationDays"
-            type="number"
-            min="1"
-            max="30"
-            value={vacationDays}
-            onChange={(e) => setVacationDays(parseInt(e.target.value) || 30)}
-            placeholder="30"
+      <CardContent>
+        <Stack spacing={2}>
+          {/* Toggle entre modos */}
+          <CalculatorModeToggle 
+            mode={mode} 
+            onModeChange={setMode} 
+            hasPayrollData={hasPayrollData}
           />
-          <div className="text-xs text-muted-foreground">
-            Máximo: 30 dias (férias completas)
-          </div>
-        </div>
 
-        <Button 
-          onClick={calculateVacation} 
-          className="w-full"
-          disabled={(mode === 'manual' && (manualData.grossSalary <= 0 || manualData.netSalary <= 0)) || 
-                   (mode === 'payroll' && !hasPayrollData)}
-        >
-          <Calculator className="h-4 w-4 mr-2" />
-          Calcular Férias
-        </Button>
+          {/* Entrada de dados baseada no modo */}
+          {mode === 'payroll' ? (
+            <Box sx={{ bgcolor: 'action.hover', p: 1.5, borderRadius: 1 }}>
+              <Stack spacing={1.5}>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  Dados do Holerite Utilizados no Cálculo:
+                </Typography>
+                
+                {/* Dados salariais */}
+                <Stack spacing={0.5}>
+                  <Typography variant="caption" sx={{ fontWeight: 500 }} color="text.secondary">
+                    💰 Dados Salariais:
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ pl: 1 }}>
+                    Salário Bruto: <Typography component="span" sx={{ fontWeight: 500 }}>
+                      {formatCurrency(payrollData.grossSalary)}
+                    </Typography>
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ pl: 1 }}>
+                    Salário Líquido: <Typography component="span" sx={{ fontWeight: 500 }}>
+                      {formatCurrency(payrollData.netSalary)}
+                    </Typography>
+                  </Typography>
+                </Stack>
 
-        {/* Resultado */}
-        {result && (
-          <div className="space-y-3 pt-4 border-t">
-            <div className="text-sm font-medium">Resultado do Cálculo:</div>
-            
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Valor das férias ({vacationDays} dias):</span>
-                <Badge variant="outline">{formatCurrency(result.vacationSalary)}</Badge>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-sm">1/3 Constitucional:</span>
-                <Badge variant="outline">{formatCurrency(result.oneThirdBonus)}</Badge>
-              </div>
-              
-              <div className="flex justify-between items-center">
-                <span className="text-sm">Total Bruto:</span>
-                <Badge variant="outline">{formatCurrency(result.grossTotal)}</Badge>
-              </div>
-              
-              {/* Detalhamento dos descontos */}
-              <div className="bg-gray-50 dark:bg-gray-800/50 p-3 rounded-lg space-y-2">
-                <div className="text-xs font-medium text-muted-foreground mb-2">💼 Detalhamento dos Descontos:</div>
-                
-                {result.detailedDiscounts.inss > 0 && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-muted-foreground">INSS (proporcional ao holerite):</span>
-                    <Badge variant="outline" className="text-red-600 text-xs">
-                      -{formatCurrency(result.detailedDiscounts.inss)}
-                    </Badge>
-                  </div>
+                {/* Descontos regulares */}
+                {payrollData.discounts.filter(d => 
+                  d.type === 'discount' && 
+                  !d.name.toLowerCase().includes('consignado') &&
+                  !d.name.toLowerCase().includes('empréstimo') &&
+                  !d.name.toLowerCase().includes('emprestimo')
+                ).length > 0 && (
+                  <Stack spacing={0.5}>
+                    <Typography variant="caption" sx={{ fontWeight: 500 }} color="text.secondary">
+                      📊 Descontos Regulares:
+                    </Typography>
+                    <Stack spacing={0.5} sx={{ pl: 1 }}>
+                      {payrollData.discounts.filter(d => 
+                        d.type === 'discount' && 
+                        !d.name.toLowerCase().includes('consignado') &&
+                        !d.name.toLowerCase().includes('empréstimo') &&
+                        !d.name.toLowerCase().includes('emprestimo')
+                      ).map((discount, index) => (
+                        <Stack key={index} direction="row" justifyContent="space-between">
+                          <Typography variant="caption" color="text.secondary">{discount.name}:</Typography>
+                          <Typography variant="caption" sx={{ fontWeight: 500 }}>
+                            {formatCurrency(discount.amount)}
+                          </Typography>
+                        </Stack>
+                      ))}
+                    </Stack>
+                  </Stack>
                 )}
-                
-                {result.detailedDiscounts.ir > 0 && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-muted-foreground">IR (proporcional ao holerite):</span>
-                    <Badge variant="outline" className="text-red-600 text-xs">
-                      -{formatCurrency(result.detailedDiscounts.ir)}
-                    </Badge>
-                  </div>
+
+                {/* Empréstimo consignado */}
+                {payrollData.discounts.filter(d => 
+                  d.type === 'discount' && (
+                    d.name.toLowerCase().includes('consignado') ||
+                    d.name.toLowerCase().includes('empréstimo') ||
+                    d.name.toLowerCase().includes('emprestimo')
+                  )
+                ).length > 0 && (
+                  <Stack spacing={0.5}>
+                    <Typography variant="caption" sx={{ fontWeight: 500 }} color="text.secondary">
+                      🏦 Empréstimo Consignado:
+                    </Typography>
+                    <Stack spacing={0.5} sx={{ pl: 1 }}>
+                      {payrollData.discounts.filter(d => 
+                        d.type === 'discount' && (
+                          d.name.toLowerCase().includes('consignado') ||
+                          d.name.toLowerCase().includes('empréstimo') ||
+                          d.name.toLowerCase().includes('emprestimo')
+                        )
+                      ).map((discount, index) => (
+                        <Stack key={index} direction="row" justifyContent="space-between">
+                          <Typography variant="caption" color="text.secondary">{discount.name}:</Typography>
+                          <Typography variant="caption" sx={{ fontWeight: 500 }}>
+                            {formatCurrency(discount.amount)}
+                          </Typography>
+                        </Stack>
+                      ))}
+                      <Typography variant="caption" sx={{ color: 'info.main', mt: 0.5 }}>
+                        ✓ Será aplicado nas férias (limite 35%)
+                      </Typography>
+                    </Stack>
+                  </Stack>
                 )}
-                
-                {result.detailedDiscounts.otherDiscounts > 0 && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-muted-foreground">Outros descontos (proporcionais):</span>
-                    <Badge variant="outline" className="text-red-600 text-xs">
-                      -{formatCurrency(result.detailedDiscounts.otherDiscounts)}
-                    </Badge>
-                  </div>
-                )}
-                
-                {result.detailedDiscounts.consigned > 0 && (
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs text-muted-foreground">Empréstimo consignado (valor fixo):</span>
-                    <Badge variant="outline" className="text-red-600 text-xs">
-                      -{formatCurrency(result.detailedDiscounts.consigned)}
-                    </Badge>
-                  </div>
-                )}
-                
-                <div className="border-t pt-2">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-medium">Total dos Descontos:</span>
-                    <Badge variant="outline" className="text-red-600 font-bold text-xs">
-                      -{formatCurrency(result.estimatedDiscounts)}
-                    </Badge>
-                  </div>
-                </div>
-              </div>
+              </Stack>
+            </Box>
+          ) : (
+            <ManualSalaryInput data={manualData} onChange={setManualData} />
+          )}
+
+          {/* Entrada de dados */}
+          <Stack spacing={1}>
+            <Label htmlFor="vacationDays">Dias de Férias</Label>
+            <Input
+              id="vacationDays"
+              type="number"
+              min="1"
+              max="30"
+              value={vacationDays}
+              onChange={(e) => setVacationDays(parseInt(e.target.value) || 30)}
+              placeholder="30"
+            />
+            <Typography variant="caption" color="text.secondary">
+              Máximo: 30 dias (férias completas)
+            </Typography>
+          </Stack>
+
+          <Button 
+            onClick={calculateVacation} 
+            sx={{ width: '100%' }}
+            disabled={(mode === 'manual' && (manualData.grossSalary <= 0 || manualData.netSalary <= 0)) || 
+                     (mode === 'payroll' && !hasPayrollData)}
+          >
+            <Calculator style={{ width: 16, height: 16, marginRight: 8 }} />
+            Calcular Férias
+          </Button>
+
+          {/* Resultado */}
+          {result && (
+            <Stack spacing={1.5} sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
+              <Typography variant="body2" sx={{ fontWeight: 500 }}>Resultado do Cálculo:</Typography>
               
-              {/* Informação específica sobre empréstimo consignado */}
-              {result.consignedImpact && mode === 'payroll' && (
-                <div className="bg-blue-50 dark:bg-blue-500/10 p-3 rounded-lg border border-blue-200 dark:border-blue-500/20">
-                  <div className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-1">
-                    💡 Empréstimo Consignado nas Férias de {vacationDays} Dias
-                  </div>
-                  <div className="text-xs text-muted-foreground space-y-1">
-                    <div>Remuneração disponível: {formatCurrency(result.consignedImpact.availableRemuneration || 0)} (após INSS e IR)</div>
-                    <div>Limite máximo: {formatCurrency(result.consignedImpact.maxAllowedOnVacation)} (35% da remuneração disponível)</div>
-                    <div>Valor aplicado: {formatCurrency(result.consignedImpact.applicableAmount)}</div>
-                    <div className={result.consignedImpact.isWithinLimit ? "text-green-600 dark:text-green-400" : "text-yellow-600 dark:text-yellow-400"}>
-                      {result.consignedImpact.explanation}
-                    </div>
-                  </div>
-                </div>
-              )}
+              <Stack spacing={1}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Typography variant="body2">Valor das férias ({vacationDays} dias):</Typography>
+                  <Badge variant="outline">{formatCurrency(result.vacationSalary)}</Badge>
+                </Stack>
+                
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Typography variant="body2">1/3 Constitucional:</Typography>
+                  <Badge variant="outline">{formatCurrency(result.oneThirdBonus)}</Badge>
+                </Stack>
+                
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                  <Typography variant="body2">Total Bruto:</Typography>
+                  <Badge variant="outline">{formatCurrency(result.grossTotal)}</Badge>
+                </Stack>
+                
+                {/* Detalhamento dos descontos */}
+                <Box sx={{ bgcolor: 'action.hover', p: 1.5, borderRadius: 1 }}>
+                  <Stack spacing={1}>
+                    <Typography variant="caption" sx={{ fontWeight: 500, mb: 1 }} color="text.secondary">
+                      💼 Detalhamento dos Descontos:
+                    </Typography>
+                    
+                    {result.detailedDiscounts.inss > 0 && (
+                      <Stack direction="row" justifyContent="space-between" alignItems="center">
+                        <Typography variant="caption" color="text.secondary">INSS (proporcional ao holerite):</Typography>
+                        <Badge variant="outline" sx={{ color: 'error.main', fontSize: '0.75rem' }}>
+                          -{formatCurrency(result.detailedDiscounts.inss)}
+                        </Badge>
+                      </Stack>
+                    )}
+                    
+                    {result.detailedDiscounts.ir > 0 && (
+                      <Stack direction="row" justifyContent="space-between" alignItems="center">
+                        <Typography variant="caption" color="text.secondary">IR (proporcional ao holerite):</Typography>
+                        <Badge variant="outline" sx={{ color: 'error.main', fontSize: '0.75rem' }}>
+                          -{formatCurrency(result.detailedDiscounts.ir)}
+                        </Badge>
+                      </Stack>
+                    )}
+                    
+                    {result.detailedDiscounts.otherDiscounts > 0 && (
+                      <Stack direction="row" justifyContent="space-between" alignItems="center">
+                        <Typography variant="caption" color="text.secondary">Outros descontos (proporcionais):</Typography>
+                        <Badge variant="outline" sx={{ color: 'error.main', fontSize: '0.75rem' }}>
+                          -{formatCurrency(result.detailedDiscounts.otherDiscounts)}
+                        </Badge>
+                      </Stack>
+                    )}
+                    
+                    {result.detailedDiscounts.consigned > 0 && (
+                      <Stack direction="row" justifyContent="space-between" alignItems="center">
+                        <Typography variant="caption" color="text.secondary">Empréstimo consignado (valor fixo):</Typography>
+                        <Badge variant="outline" sx={{ color: 'error.main', fontSize: '0.75rem' }}>
+                          -{formatCurrency(result.detailedDiscounts.consigned)}
+                        </Badge>
+                      </Stack>
+                    )}
+                    
+                    <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 1 }}>
+                      <Stack direction="row" justifyContent="space-between" alignItems="center">
+                        <Typography variant="caption" sx={{ fontWeight: 500 }}>Total dos Descontos:</Typography>
+                        <Badge variant="outline" sx={{ color: 'error.main', fontWeight: 700, fontSize: '0.75rem' }}>
+                          -{formatCurrency(result.estimatedDiscounts)}
+                        </Badge>
+                      </Stack>
+                    </Box>
+                  </Stack>
+                </Box>
+                
+                {/* Informação específica sobre empréstimo consignado */}
+                {result.consignedImpact && mode === 'payroll' && (
+                  <Box sx={{ bgcolor: 'info.light', p: 1.5, borderRadius: 1, border: 1, borderColor: 'info.main' }}>
+                    <Typography variant="caption" sx={{ fontWeight: 500, color: 'info.dark', display: 'block', mb: 0.5 }}>
+                      💡 Empréstimo Consignado nas Férias de {vacationDays} Dias
+                    </Typography>
+                    <Stack spacing={0.5} sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                      <Typography variant="caption">Remuneração disponível: {formatCurrency(result.consignedImpact.availableRemuneration || 0)} (após INSS e IR)</Typography>
+                      <Typography variant="caption">Limite máximo: {formatCurrency(result.consignedImpact.maxAllowedOnVacation)} (35% da remuneração disponível)</Typography>
+                      <Typography variant="caption">Valor aplicado: {formatCurrency(result.consignedImpact.applicableAmount)}</Typography>
+                      <Typography variant="caption" sx={{ color: result.consignedImpact.isWithinLimit ? 'success.main' : 'warning.main' }}>
+                        {result.consignedImpact.explanation}
+                      </Typography>
+                    </Stack>
+                  </Box>
+                )}
               
-              <div className="flex justify-between items-center pt-2 border-t">
-                <span className="font-medium">Total Líquido Estimado:</span>
-                <Badge className="bg-green-600 dark:bg-green-600 text-white font-bold">
+              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ pt: 1, borderTop: 1, borderColor: 'divider' }}>
+                <Typography variant="body2" sx={{ fontWeight: 500 }}>Total Líquido Estimado:</Typography>
+                <Badge sx={{ bgcolor: 'success.main', color: 'success.contrastText', fontWeight: 700 }}>
                   {formatCurrency(result.netTotal)}
                 </Badge>
-              </div>
-            </div>
+              </Stack>
 
-            <div className="text-xs text-muted-foreground bg-blue-50 dark:bg-blue-500/10 p-2 rounded border border-blue-200 dark:border-blue-500/20">
-              <strong>Nota:</strong> {mode === 'payroll' 
-                ? `Cálculo baseado nos valores reais do seu holerite. INSS e IR são calculados proporcionalmente aos ${vacationDays} dias de férias. Empréstimo consignado limitado a 35% da remuneração disponível (após descontos obrigatórios), conforme Portaria MTE nº 435/2025.`
-                : 'Estimativa baseada na proporção de descontos informada. Para cálculos mais precisos com regras específicas de consignado, use os dados do holerite.'
-              }
-            </div>
-          </div>
-        )}
+                <Box sx={{ fontSize: '0.75rem', color: 'text.secondary', bgcolor: 'info.light', p: 1, borderRadius: 1, border: 1, borderColor: 'info.main' }}>
+                  <strong>Nota:</strong> {mode === 'payroll' 
+                    ? `Cálculo baseado nos valores reais do seu holerite. INSS e IR são calculados proporcionalmente aos ${vacationDays} dias de férias. Empréstimo consignado limitado a 35% da remuneração disponível (após descontos obrigatórios), conforme Portaria MTE nº 435/2025.`
+                    : 'Estimativa baseada na proporção de descontos informada. Para cálculos mais precisos com regras específicas de consignado, use os dados do holerite.'
+                  }
+                </Box>
+              </Stack>
+            </Stack>
+          )}
+        </Stack>
       </CardContent>
     </Card>
   );
