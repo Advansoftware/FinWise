@@ -1,18 +1,27 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calculator, TrendingUp } from "lucide-react";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  Typography, 
+  TextField, 
+  Button, 
+  Box, 
+  Stack, 
+  Paper,
+  useTheme,
+  alpha,
+  MenuItem,
+  Chip,
+  InputAdornment
+} from '@mui/material';
+import { Calculator, TrendingUp, Info } from "lucide-react";
 import { PayrollData } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { CalculatorModeToggle } from "./calculator-mode-toggle";
 import { ManualSalaryInput, ManualSalaryData } from "./manual-salary-input";
-import { Box, Stack, Typography } from "@mui/material";
 
 interface SalaryProjectionCalculatorProps {
   payrollData: PayrollData;
@@ -64,21 +73,20 @@ export function SalaryProjectionCalculator({ payrollData }: SalaryProjectionCalc
     });
   };
 
+  const theme = useTheme();
+
   return (
     <Card sx={{ height: '100%' }}>
-      <CardHeader>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <TrendingUp style={{ width: 20, height: 20, color: 'var(--primary)' }} />
-          <Typography component="span" sx={{ fontSize: '1.125rem' }}>
-            <CardTitle>Projeção Salarial</CardTitle>
-          </Typography>
-        </Stack>
-        <Typography component="span">
-          <CardDescription>
-            Projete seus ganhos futuros com base em aumentos salariais.
-          </CardDescription>
-        </Typography>
-      </CardHeader>
+      <CardHeader
+        title={
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <TrendingUp style={{ width: '1.25rem', height: '1.25rem', color: theme.palette.primary.main }} />
+            Projeção Salarial
+          </Box>
+        }
+        subheader="Projete seus ganhos futuros com base em aumentos salariais."
+        titleTypographyProps={{ variant: 'h6' }}
+      />
       <CardContent>
         <Stack spacing={2}>
           {/* Toggle entre modos */}
@@ -90,14 +98,10 @@ export function SalaryProjectionCalculator({ payrollData }: SalaryProjectionCalc
 
           {/* Entrada de dados baseada no modo */}
           {mode === 'payroll' ? (
-            <Box sx={{ 
-              bgcolor: 'action.hover', 
-              p: 1.5, 
-              borderRadius: 1 
-            }}>
+            <Paper variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.info.main, 0.1), borderColor: alpha(theme.palette.info.main, 0.2) }}>
               <Stack spacing={1}>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  Situação Atual:
+                <Typography variant="subtitle2" color="info.main" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Info size={16} /> Situação Atual:
                 </Typography>
                 <Box sx={{ 
                   display: 'grid', 
@@ -107,19 +111,19 @@ export function SalaryProjectionCalculator({ payrollData }: SalaryProjectionCalc
                 }}>
                   <Box>
                     <Typography variant="caption" color="text.secondary">Bruto:</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    <Typography variant="body2" fontWeight="medium">
                       {formatCurrency(payrollData.grossSalary)}
                     </Typography>
                   </Box>
                   <Box>
                     <Typography variant="caption" color="text.secondary">Líquido:</Typography>
-                    <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    <Typography variant="body2" fontWeight="medium">
                       {formatCurrency(payrollData.netSalary)}
                     </Typography>
                   </Box>
                 </Box>
               </Stack>
-            </Box>
+            </Paper>
           ) : (
             <ManualSalaryInput data={manualData} onChange={setManualData} />
           )}
@@ -130,96 +134,87 @@ export function SalaryProjectionCalculator({ payrollData }: SalaryProjectionCalc
             gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, 
             gap: 2 
           }}>
-            <Stack spacing={1}>
-              <Label htmlFor="increasePercentage">Aumento (%)</Label>
-              <Select value={increasePercentage.toString()} onValueChange={(value) => setIncreasePercentage(parseFloat(value))}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="3">3% - Ajuste Inflação</SelectItem>
-                  <SelectItem value="5">5% - Aumento Padrão</SelectItem>
-                  <SelectItem value="10">10% - Promoção</SelectItem>
-                  <SelectItem value="15">15% - Mudança de Cargo</SelectItem>
-                  <SelectItem value="20">20% - Nova Empresa</SelectItem>
-                  <SelectItem value="25">25% - Especialização</SelectItem>
-                </SelectContent>
-              </Select>
-            </Stack>
+            <TextField
+              select
+              label="Aumento (%)"
+              value={increasePercentage.toString()}
+              onChange={(e) => setIncreasePercentage(parseFloat(e.target.value))}
+              fullWidth
+              size="small"
+            >
+              <MenuItem value="3">3% - Ajuste Inflação</MenuItem>
+              <MenuItem value="5">5% - Aumento Padrão</MenuItem>
+              <MenuItem value="10">10% - Promoção</MenuItem>
+              <MenuItem value="15">15% - Mudança de Cargo</MenuItem>
+              <MenuItem value="20">20% - Nova Empresa</MenuItem>
+              <MenuItem value="25">25% - Especialização</MenuItem>
+            </TextField>
 
-            <Stack spacing={1}>
-              <Label htmlFor="projectionMonths">Período (meses)</Label>
-              <Input
-                id="projectionMonths"
-                type="number"
-                min="1"
-                max="60"
-                value={projectionMonths}
-                onChange={(e) => setProjectionMonths(parseInt(e.target.value) || 12)}
-                placeholder="12"
-              />
-            </Stack>
+            <TextField
+              label="Período (meses)"
+              type="number"
+              value={projectionMonths}
+              onChange={(e) => setProjectionMonths(parseInt(e.target.value) || 12)}
+              placeholder="12"
+              inputProps={{ min: 1, max: 60 }}
+              fullWidth
+              size="small"
+            />
           </Box>
 
           <Button 
+            variant="contained" 
+            size="large"
             onClick={calculateProjection} 
-            sx={{ width: '100%' }}
+            startIcon={<Calculator />}
+            fullWidth
             disabled={(mode === 'manual' && (manualData.grossSalary <= 0 || manualData.netSalary <= 0)) || 
                      (mode === 'payroll' && !hasPayrollData)}
           >
-            <Calculator style={{ width: 16, height: 16, marginRight: 8 }} />
             Calcular Projeção
           </Button>
 
           {/* Resultados */}
           {result && (
             <Stack spacing={2} sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              <Typography variant="subtitle2">
                 Projeção com {increasePercentage}% de aumento:
               </Typography>
               
               {/* Novos salários */}
               <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
-                <Box sx={{ 
-                  bgcolor: 'success.light', 
+                <Paper variant="outlined" sx={{ 
+                  bgcolor: alpha(theme.palette.success.main, 0.1), 
                   p: 1.5, 
-                  borderRadius: 1, 
-                  border: 1, 
-                  borderColor: 'success.main' 
+                  borderColor: alpha(theme.palette.success.main, 0.2)
                 }}>
-                  <Typography variant="body2" color="text.secondary">Novo Salário Bruto</Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 700, color: 'success.dark' }}>
+                  <Typography variant="caption" color="text.secondary">Novo Salário Bruto</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 700, color: 'success.main' }}>
                     {formatCurrency(result.newGrossSalary)}
                   </Typography>
-                </Box>
-                <Box sx={{ 
-                  bgcolor: 'info.light', 
+                </Paper>
+                <Paper variant="outlined" sx={{ 
+                  bgcolor: alpha(theme.palette.info.main, 0.1), 
                   p: 1.5, 
-                  borderRadius: 1, 
-                  border: 1, 
-                  borderColor: 'info.main' 
+                  borderColor: alpha(theme.palette.info.main, 0.2)
                 }}>
-                  <Typography variant="body2" color="text.secondary">Novo Salário Líquido</Typography>
-                  <Typography variant="body1" sx={{ fontWeight: 700, color: 'info.dark' }}>
+                  <Typography variant="caption" color="text.secondary">Novo Salário Líquido</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 700, color: 'info.main' }}>
                     {formatCurrency(result.newNetSalary)}
                   </Typography>
-                </Box>
+                </Paper>
               </Box>
 
               {/* Aumentos */}
               <Stack spacing={1}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                   <Typography variant="body2">Aumento Mensal:</Typography>
-                  <Badge sx={{ bgcolor: 'success.main', color: 'success.contrastText' }}>
-                    +{formatCurrency(result.monthlyIncrease)}
-                  </Badge>
+                  <Chip label={`+${formatCurrency(result.monthlyIncrease)}`} size="small" color="success" variant="outlined" />
                 </Stack>
                 
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                   <Typography variant="body2">Aumento Anual:</Typography>
-                  <Badge sx={{ bgcolor: 'success.main', color: 'success.contrastText' }}>
-                    +{formatCurrency(result.yearlyIncrease)}
-                  </Badge>
+                  <Chip label={`+${formatCurrency(result.yearlyIncrease)}`} size="small" color="success" variant="outlined" />
                 </Stack>
                 
                 <Stack 
@@ -228,29 +223,25 @@ export function SalaryProjectionCalculator({ payrollData }: SalaryProjectionCalc
                   alignItems="center" 
                   sx={{ pt: 1, borderTop: 1, borderColor: 'divider' }}
                 >
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                  <Typography variant="body2" fontWeight="medium">
                     Total em {projectionMonths} meses:
                   </Typography>
-                  <Badge sx={{ bgcolor: 'primary.main', color: 'primary.contrastText', fontWeight: 700 }}>
-                    {formatCurrency(result.totalEarnings)}
-                  </Badge>
+                  <Chip label={formatCurrency(result.totalEarnings)} color="primary" sx={{ fontWeight: 'bold' }} />
                 </Stack>
               </Stack>
 
-              <Box sx={{ 
-                fontSize: '0.75rem', 
-                color: 'text.secondary', 
-                bgcolor: 'info.light', 
+              <Paper variant="outlined" sx={{ 
                 p: 1, 
-                borderRadius: 1, 
-                border: 1, 
-                borderColor: 'info.main' 
+                bgcolor: alpha(theme.palette.info.main, 0.1), 
+                borderColor: alpha(theme.palette.info.main, 0.2)
               }}>
-                <strong>Nota:</strong> {mode === 'payroll' 
-                  ? 'Esta é uma projeção estimada baseada nos dados do seu holerite. Os valores reais podem variar conforme mudanças na legislação e faixas de desconto.'
-                  : 'Projeção baseada nos dados informados manualmente. Para estimativas mais precisas, use os dados do holerite.'
-                }
-              </Box>
+                <Typography variant="caption" color="text.secondary">
+                  <Box component="span" fontWeight="bold">Nota:</Box> {mode === 'payroll' 
+                    ? 'Esta é uma projeção estimada baseada nos dados do seu holerite. Os valores reais podem variar conforme mudanças na legislação e faixas de desconto.'
+                    : 'Projeção baseada nos dados informados manualmente. Para estimativas mais precisas, use os dados do holerite.'
+                  }
+                </Typography>
+              </Paper>
             </Stack>
           )}
         </Stack>

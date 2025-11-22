@@ -1,17 +1,26 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Briefcase, AlertTriangle, DollarSign, FileText } from "lucide-react";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  Typography, 
+  TextField, 
+  Button, 
+  Box, 
+  Stack, 
+  Paper,
+  useTheme,
+  alpha,
+  MenuItem,
+  Divider,
+  Chip
+} from '@mui/material';
+import { Briefcase, AlertTriangle, DollarSign, FileText, Info } from "lucide-react";
 import { PayrollData } from "@/lib/types";
 import { CalculatorModeToggle } from "./calculator-mode-toggle";
 import { ManualSalaryInput, ManualSalaryData } from "./manual-salary-input";
-import { Box, Stack, Typography, Divider } from "@mui/material";
 
 interface SeveranceCalculatorProps {
   payrollData: PayrollData;
@@ -137,21 +146,20 @@ export function SeveranceCalculator({ payrollData }: SeveranceCalculatorProps) {
     return titles[type];
   };
 
+  const theme = useTheme();
+
   return (
-    <Card>
-      <CardHeader>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Briefcase style={{ width: 20, height: 20, color: 'var(--primary)' }} />
-          <Typography component="span" sx={{ fontSize: '1.125rem' }}>
-            <CardTitle>Calculadora de Rescisão</CardTitle>
-          </Typography>
-        </Stack>
-        <Typography component="span">
-          <CardDescription>
-            Calcule os valores da rescisão trabalhista conforme a CLT
-          </CardDescription>
-        </Typography>
-      </CardHeader>
+    <Card sx={{ height: '100%' }}>
+      <CardHeader
+        title={
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Briefcase style={{ width: '1.25rem', height: '1.25rem', color: theme.palette.primary.main }} />
+            Calculadora de Rescisão
+          </Box>
+        }
+        subheader="Calcule os valores da rescisão trabalhista conforme a CLT"
+        titleTypographyProps={{ variant: 'h6' }}
+      />
       <CardContent>
         <Stack spacing={3}>
           {/* Toggle entre modos */}
@@ -163,96 +171,95 @@ export function SeveranceCalculator({ payrollData }: SeveranceCalculatorProps) {
 
           {/* Entrada de dados baseada no modo */}
           {mode === 'payroll' ? (
-            <Box sx={{ bgcolor: 'action.hover', p: 1.5, borderRadius: 1 }}>
+            <Paper variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.info.main, 0.1), borderColor: alpha(theme.palette.info.main, 0.2) }}>
               <Stack spacing={1}>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>Dados do Holerite:</Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Salário Bruto: <Typography component="span" sx={{ fontWeight: 500 }}>
-                    {formatCurrency(payrollData.grossSalary)}
-                  </Typography>
+                <Typography variant="subtitle2" color="info.main" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Info size={16} /> Dados do Holerite:
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ pl: 3 }}>
+                  Salário Bruto: <Box component="span" fontWeight="medium">{formatCurrency(payrollData.grossSalary)}</Box>
                 </Typography>
               </Stack>
-            </Box>
+            </Paper>
           ) : (
             <ManualSalaryInput data={manualData} onChange={setManualData} />
           )}
 
           {/* Inputs de rescisão */}
-          <Box sx={{ bgcolor: 'info.light', p: 2, borderRadius: 1 }}>
-            <Typography variant="body2" sx={{ fontWeight: 500, mb: 1, color: 'info.dark' }}>
+          <Paper variant="outlined" sx={{ bgcolor: alpha(theme.palette.info.main, 0.1), p: 2, borderColor: alpha(theme.palette.info.main, 0.2) }}>
+            <Typography variant="subtitle2" sx={{ mb: 1, color: 'info.main' }}>
               📊 Dados extraídos do seu holerite:
             </Typography>
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 1.5, fontSize: '0.875rem' }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 1.5 }}>
               <Stack direction="row" justifyContent="space-between">
-                <Typography variant="body2" color="info.dark">Salário Bruto:</Typography>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>{formatCurrency(payrollData.grossSalary)}</Typography>
+                <Typography variant="caption" color="text.secondary">Salário Bruto:</Typography>
+                <Typography variant="caption" fontWeight="medium">{formatCurrency(payrollData.grossSalary)}</Typography>
               </Stack>
               <Stack direction="row" justifyContent="space-between">
-                <Typography variant="body2" color="info.dark">Salário Líquido:</Typography>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>{formatCurrency(payrollData.netSalary)}</Typography>
+                <Typography variant="caption" color="text.secondary">Salário Líquido:</Typography>
+                <Typography variant="caption" fontWeight="medium">{formatCurrency(payrollData.netSalary)}</Typography>
               </Stack>
               <Stack direction="row" justifyContent="space-between">
-                <Typography variant="body2" color="info.dark">Salário Diário:</Typography>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>{formatCurrency(payrollData.grossSalary / 30)}</Typography>
+                <Typography variant="caption" color="text.secondary">Salário Diário:</Typography>
+                <Typography variant="caption" fontWeight="medium">{formatCurrency(payrollData.grossSalary / 30)}</Typography>
               </Stack>
             </Box>
-          </Box>
+          </Paper>
 
           {/* Inputs */}
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2 }}>
-            <Stack spacing={1}>
-              <Label htmlFor="rescissionType">Tipo de rescisão</Label>
-              <Select value={rescissionType} onValueChange={(value: RescissionType) => setRescissionType(value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o tipo" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="demissao-sem-justa-causa">Demissão sem Justa Causa</SelectItem>
-                  <SelectItem value="demissao-com-justa-causa">Demissão com Justa Causa</SelectItem>
-                  <SelectItem value="pedido-demissao">Pedido de Demissão</SelectItem>
-                  <SelectItem value="comum-acordo">Comum Acordo (Art. 484-A)</SelectItem>
-                </SelectContent>
-              </Select>
-            </Stack>
+            <TextField
+              select
+              label="Tipo de rescisão"
+              value={rescissionType}
+              onChange={(e) => setRescissionType(e.target.value as RescissionType)}
+              fullWidth
+              size="small"
+            >
+              <MenuItem value="demissao-sem-justa-causa">Demissão sem Justa Causa</MenuItem>
+              <MenuItem value="demissao-com-justa-causa">Demissão com Justa Causa</MenuItem>
+              <MenuItem value="pedido-demissao">Pedido de Demissão</MenuItem>
+              <MenuItem value="comum-acordo">Comum Acordo (Art. 484-A)</MenuItem>
+            </TextField>
 
-            <Stack spacing={1}>
-              <Label htmlFor="workMonths">Meses trabalhados</Label>
-              <Input
-                id="workMonths"
-                type="number"
-                value={workMonths}
-                onChange={(e) => setWorkMonths(Number(e.target.value))}
-                min="1"
-                max="600"
-              />
-            </Stack>
+            <TextField
+              label="Meses trabalhados"
+              type="number"
+              value={workMonths}
+              onChange={(e) => setWorkMonths(Number(e.target.value))}
+              inputProps={{ min: 1, max: 600 }}
+              fullWidth
+              size="small"
+            />
             
-            <Stack spacing={1}>
-              <Label htmlFor="vacationDays">Dias de férias pendentes</Label>
-              <Input
-                id="vacationDays"
-                type="number"
-                value={vacationDays}
-                onChange={(e) => setVacationDays(Number(e.target.value))}
-                min="0"
-                max="60"
-              />
-            </Stack>
+            <TextField
+              label="Dias de férias pendentes"
+              type="number"
+              value={vacationDays}
+              onChange={(e) => setVacationDays(Number(e.target.value))}
+              inputProps={{ min: 0, max: 60 }}
+              fullWidth
+              size="small"
+            />
             
-            <Stack spacing={1}>
-              <Label htmlFor="fgtsBalance">Saldo FGTS (R$)</Label>
-              <Input
-                id="fgtsBalance"
-                type="number"
-                value={fgtsBalance}
-                onChange={(e) => setFgtsBalance(Number(e.target.value))}
-                min="0"
-              />
-            </Stack>
+            <TextField
+              label="Saldo FGTS (R$)"
+              type="number"
+              value={fgtsBalance}
+              onChange={(e) => setFgtsBalance(Number(e.target.value))}
+              inputProps={{ min: 0 }}
+              fullWidth
+              size="small"
+            />
           </Box>
 
-          <Button onClick={calculateSeverance} sx={{ width: '100%' }}>
-            <FileText style={{ width: 16, height: 16, marginRight: 8 }} />
+          <Button 
+            variant="contained" 
+            size="large"
+            onClick={calculateSeverance} 
+            startIcon={<FileText />}
+            fullWidth
+          >
             Calcular Rescisão
           </Button>
 
@@ -270,85 +277,85 @@ export function SeveranceCalculator({ payrollData }: SeveranceCalculatorProps) {
                 
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2 }}>
                   {calculation.salarioAviso > 0 && (
-                    <Box sx={{ bgcolor: 'info.light', p: 2, borderRadius: 1 }}>
+                    <Paper variant="outlined" sx={{ bgcolor: alpha(theme.palette.info.main, 0.1), p: 2, borderColor: alpha(theme.palette.info.main, 0.2) }}>
                       <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                        <AlertTriangle style={{ width: 16, height: 16, color: 'var(--info-dark)' }} />
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>Aviso Prévio</Typography>
+                        <AlertTriangle style={{ width: 16, height: 16, color: theme.palette.info.main }} />
+                        <Typography variant="body2" fontWeight="medium">Aviso Prévio</Typography>
                       </Stack>
-                      <Typography variant="h5" sx={{ fontWeight: 700, color: 'info.dark' }}>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: 'info.main' }}>
                         {formatCurrency(calculation.salarioAviso)}
                       </Typography>
-                      <Typography variant="body2" sx={{ color: 'info.dark', opacity: 0.7 }}>
+                      <Typography variant="caption" color="text.secondary">
                         {calculation.avisoPrevia} dias
                       </Typography>
-                    </Box>
+                    </Paper>
                   )}
 
                   {calculation.feriasPendentes > 0 && (
-                    <Box sx={{ bgcolor: 'success.light', p: 2, borderRadius: 1 }}>
+                    <Paper variant="outlined" sx={{ bgcolor: alpha(theme.palette.success.main, 0.1), p: 2, borderColor: alpha(theme.palette.success.main, 0.2) }}>
                       <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                        <DollarSign style={{ width: 16, height: 16, color: 'var(--success-dark)' }} />
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>Férias + 1/3</Typography>
+                        <DollarSign style={{ width: 16, height: 16, color: theme.palette.success.main }} />
+                        <Typography variant="body2" fontWeight="medium">Férias + 1/3</Typography>
                       </Stack>
-                      <Typography variant="h5" sx={{ fontWeight: 700, color: 'success.dark' }}>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: 'success.main' }}>
                         {formatCurrency(calculation.feriasPendentes)}
                       </Typography>
-                      <Typography variant="body2" sx={{ color: 'success.dark', opacity: 0.7 }}>
+                      <Typography variant="caption" color="text.secondary">
                         {vacationDays} dias pendentes
                       </Typography>
-                    </Box>
+                    </Paper>
                   )}
 
                   {calculation.decimoTerceiro > 0 && (
-                    <Box sx={{ bgcolor: '#f3e5f5', p: 2, borderRadius: 1 }}>
+                    <Paper variant="outlined" sx={{ bgcolor: alpha(theme.palette.secondary.main, 0.1), p: 2, borderColor: alpha(theme.palette.secondary.main, 0.2) }}>
                       <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                        <DollarSign style={{ width: 16, height: 16, color: '#7b1fa2' }} />
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>13º Proporcional</Typography>
+                        <DollarSign style={{ width: 16, height: 16, color: theme.palette.secondary.main }} />
+                        <Typography variant="body2" fontWeight="medium">13º Proporcional</Typography>
                       </Stack>
-                      <Typography variant="h5" sx={{ fontWeight: 700, color: '#7b1fa2' }}>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: 'secondary.main' }}>
                         {formatCurrency(calculation.decimoTerceiro)}
                       </Typography>
-                      <Typography variant="body2" sx={{ color: '#7b1fa2', opacity: 0.7 }}>
+                      <Typography variant="caption" color="text.secondary">
                         {workMonths % 12} meses
                       </Typography>
-                    </Box>
+                    </Paper>
                   )}
 
                   {calculation.fgtsFine > 0 && (
-                    <Box sx={{ bgcolor: '#fff3e0', p: 2, borderRadius: 1 }}>
+                    <Paper variant="outlined" sx={{ bgcolor: alpha(theme.palette.warning.main, 0.1), p: 2, borderColor: alpha(theme.palette.warning.main, 0.2) }}>
                       <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                        <Briefcase style={{ width: 16, height: 16, color: '#e65100' }} />
-                        <Typography variant="body2" sx={{ fontWeight: 500 }}>Multa FGTS</Typography>
+                        <Briefcase style={{ width: 16, height: 16, color: theme.palette.warning.main }} />
+                        <Typography variant="body2" fontWeight="medium">Multa FGTS</Typography>
                       </Stack>
-                      <Typography variant="h5" sx={{ fontWeight: 700, color: '#e65100' }}>
+                      <Typography variant="h5" sx={{ fontWeight: 700, color: 'warning.main' }}>
                         {formatCurrency(calculation.fgtsFine)}
                       </Typography>
-                      <Typography variant="body2" sx={{ color: '#e65100', opacity: 0.7 }}>
+                      <Typography variant="caption" color="text.secondary">
                         {rescissionType === 'comum-acordo' ? '20%' : '40%'} do saldo
                       </Typography>
-                    </Box>
+                    </Paper>
                   )}
 
-                  <Box sx={{ bgcolor: 'primary.light', p: 2, borderRadius: 1, gridColumn: { md: 'span 2' } }}>
+                  <Paper variant="outlined" sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1), p: 2, gridColumn: { md: 'span 2' }, borderColor: alpha(theme.palette.primary.main, 0.2) }}>
                     <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                      <DollarSign style={{ width: 16, height: 16, color: 'var(--primary)' }} />
-                      <Typography variant="body2" sx={{ fontWeight: 500 }}>Total a Receber</Typography>
+                      <DollarSign style={{ width: 16, height: 16, color: theme.palette.primary.main }} />
+                      <Typography variant="body2" fontWeight="medium">Total a Receber</Typography>
                     </Stack>
                     <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main' }}>
                       {formatCurrency(calculation.totalReceive)}
                     </Typography>
-                    <Typography variant="body2" sx={{ color: 'primary.main', opacity: 0.7 }}>
+                    <Typography variant="caption" color="text.secondary">
                       Valor bruto (antes dos descontos)
                     </Typography>
-                  </Box>
+                  </Paper>
                 </Box>
 
                 {/* Informações específicas por tipo */}
-                <Box sx={{ bgcolor: 'warning.light', p: 2, borderRadius: 1 }}>
-                  <Typography variant="body2" sx={{ fontWeight: 500, mb: 1, color: 'warning.dark' }}>
-                    ℹ️ Informações sobre {getRescissionTitle(rescissionType)}:
+                <Paper variant="outlined" sx={{ bgcolor: alpha(theme.palette.warning.main, 0.1), p: 2, borderColor: alpha(theme.palette.warning.main, 0.2) }}>
+                  <Typography variant="subtitle2" color="warning.main" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Info size={16} /> Informações sobre {getRescissionTitle(rescissionType)}:
                   </Typography>
-                  <Stack component="ul" spacing={0.5} sx={{ fontSize: '0.875rem', color: 'warning.dark', pl: 2 }}>
+                  <Stack component="ul" spacing={0.5} sx={{ fontSize: '0.875rem', color: 'text.secondary', pl: 2, m: 0 }}>
                     {rescissionType === 'demissao-sem-justa-causa' && (
                       <>
                         <li>• Direito a seguro-desemprego (se elegível)</li>
@@ -382,7 +389,7 @@ export function SeveranceCalculator({ payrollData }: SeveranceCalculatorProps) {
                       </>
                     )}
                   </Stack>
-                </Box>
+                </Paper>
               </Stack>
             </>
           )}

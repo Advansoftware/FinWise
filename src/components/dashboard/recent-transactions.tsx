@@ -1,13 +1,19 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  Typography, 
+  Avatar, 
+  Button, 
+  Box, 
+  Stack, 
+  useTheme,
+  alpha
+} from '@mui/material';
 import { CategoryIcon } from "../icons";
 import { Transaction } from "@/lib/types";
-import { ScrollArea } from "../ui/scroll-area";
 import Link from "next/link";
-import { Button } from "../ui/button";
 import { ArrowRight, ArrowDown, ArrowUp } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { Box, Stack, Typography } from '@mui/material';
 
 interface RecentTransactionsProps {
   transactions: Transaction[];
@@ -15,83 +21,77 @@ interface RecentTransactionsProps {
 
 export function RecentTransactions({ transactions }: RecentTransactionsProps) {
   const recentTransactions = transactions.slice(0, 7);
+  const theme = useTheme();
 
   return (
     <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <CardHeader>
-        <CardTitle>Transações Recentes</CardTitle>
-        <CardDescription>Você tem {transactions.length} movimentações neste período.</CardDescription>
-      </CardHeader>
-      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <CardHeader
+        title={<Typography variant="h6">Transações Recentes</Typography>}
+        subheader={<Typography variant="body2" color="text.secondary">Você tem {transactions.length} movimentações neste período.</Typography>}
+      />
+      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, overflow: 'hidden' }}>
         {transactions.length > 0 ? (
-            <ScrollArea sx={{ flex: 1 }}>
-                <Stack spacing={2} sx={{ pr: 2 }}>
+            <Box sx={{ flex: 1, overflowY: 'auto', pr: 1 }}>
+                <Stack spacing={2}>
                 {recentTransactions.map((transaction) => (
-                    <Stack key={transaction.id} direction="row" alignItems="flex-start" spacing={1.5}>
-                        <Avatar sx={{ width: 32, height: 32, flexShrink: 0 }}>
-                            <AvatarFallback 
-                              sx={{
-                                bgcolor: 'var(--secondary)',
-                                border: '1px solid var(--border)',
-                                color: 'var(--foreground)',
-                                ...(transaction.type === 'income' && {
-                                  bgcolor: 'rgba(16, 185, 129, 0.2)',
-                                  color: '#10b981',
-                                  borderColor: 'rgba(16, 185, 129, 0.3)',
-                                }),
-                                ...(transaction.type === 'expense' && {
-                                  bgcolor: 'rgba(239, 68, 68, 0.2)',
-                                  color: '#ef4444',
-                                  borderColor: 'rgba(239, 68, 68, 0.3)',
-                                })
-                              }}
-                            >
-                                {transaction.type === 'income' ? <ArrowDown style={{ width: '0.75rem', height: '0.75rem' }}/> : <ArrowUp style={{ width: '0.75rem', height: '0.75rem' }}/>}
-                            </AvatarFallback>
+                    <Stack key={transaction.id} direction="row" alignItems="center" spacing={2}>
+                        <Avatar 
+                          sx={{ 
+                            width: 40, 
+                            height: 40, 
+                            bgcolor: transaction.type === 'income' ? alpha(theme.palette.success.main, 0.1) : alpha(theme.palette.error.main, 0.1),
+                            color: transaction.type === 'income' ? 'success.main' : 'error.main',
+                            border: 1,
+                            borderColor: transaction.type === 'income' ? alpha(theme.palette.success.main, 0.2) : alpha(theme.palette.error.main, 0.2)
+                          }}
+                        >
+                            {transaction.type === 'income' ? <ArrowDown size={16} /> : <ArrowUp size={16} />}
                         </Avatar>
                     <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography sx={{ fontSize: '0.875rem', fontWeight: 500, lineHeight: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <Typography variant="body2" fontWeight="medium" noWrap>
                           {transaction.item}
                         </Typography>
-                        <Typography sx={{ fontSize: '0.75rem', color: 'var(--muted-foreground)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <Typography variant="caption" color="text.secondary" noWrap>
                             {transaction.category}
                             {transaction.subcategory && ` / ${transaction.subcategory}`}
                         </Typography>
                     </Stack>
                     <Typography 
-                      sx={{ 
-                        flexShrink: 0, 
-                        fontWeight: 500, 
-                        textAlign: 'right', 
-                        fontSize: '0.875rem',
-                        color: transaction.type === 'income' ? '#10b981' : '#ef4444'
-                      }}
+                      variant="body2"
+                      fontWeight="bold"
+                      color={transaction.type === 'income' ? 'success.main' : 'error.main'}
+                      sx={{ flexShrink: 0 }}
                     >
                         {transaction.type === 'income' ? '+' : '-'}R$ {transaction.amount.toFixed(2)}
                     </Typography>
                     </Stack>
                 ))}
                 </Stack>
-            </ScrollArea>
+            </Box>
         ) : (
             <Stack 
-              spacing={0.5}
+              spacing={1}
               sx={{ 
                 flex: 1, 
                 alignItems: 'center', 
                 justifyContent: 'center', 
                 textAlign: 'center', 
-                color: 'var(--muted-foreground)' 
+                color: 'text.secondary' 
               }}
             >
-                <Typography>Nenhuma transação encontrada.</Typography>
-                <Typography sx={{ fontSize: '0.75rem' }}>Tente selecionar outra categoria ou período.</Typography>
+                <Typography variant="body1">Nenhuma transação encontrada.</Typography>
+                <Typography variant="caption">Tente selecionar outra categoria ou período.</Typography>
             </Stack>
         )}
-        <Button asChild variant="outline" sx={{ mt: 'auto', width: '100%' }}>
-            <Link href="/transactions">
-                Ver Todas as Transações <ArrowRight style={{ marginLeft: '0.5rem', width: '1rem', height: '1rem' }}/>
-            </Link>
+        <Button 
+          component={Link} 
+          href="/transactions" 
+          variant="outlined" 
+          fullWidth 
+          endIcon={<ArrowRight size={16} />}
+          sx={{ mt: 'auto' }}
+        >
+            Ver Todas as Transações
         </Button>
       </CardContent>
     </Card>

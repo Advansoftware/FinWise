@@ -1,18 +1,27 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { TrendingUp, Calculator } from "lucide-react";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  Typography, 
+  TextField, 
+  Button, 
+  Box, 
+  Stack, 
+  Paper,
+  useTheme,
+  alpha,
+  Chip,
+  Divider
+} from '@mui/material';
+import { TrendingUp, Calculator, Info } from "lucide-react";
 import { PayrollData } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { calculateConsignedImpactOnThirteenth, getConsignedLoanFromPayroll } from "@/lib/payroll-utils";
 import { CalculatorModeToggle } from "./calculator-mode-toggle";
 import { ManualSalaryInput, ManualSalaryData } from "./manual-salary-input";
-import { Box, Stack, Typography } from "@mui/material";
 
 interface ThirteenthSalaryCalculatorProps {
   payrollData: PayrollData;
@@ -85,21 +94,20 @@ export function ThirteenthSalaryCalculator({ payrollData }: ThirteenthSalaryCalc
     });
   };
 
+  const theme = useTheme();
+
   return (
     <Card sx={{ height: '100%' }}>
-      <CardHeader>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <TrendingUp style={{ width: 20, height: 20, color: 'var(--primary)' }} />
-          <Typography component="span" sx={{ fontSize: '1.125rem' }}>
-            <CardTitle>Calculadora do 13º Salário</CardTitle>
-          </Typography>
-        </Stack>
-        <Typography component="span">
-          <CardDescription>
-            Estime o valor do seu 13º salário baseado no período trabalhado.
-          </CardDescription>
-        </Typography>
-      </CardHeader>
+      <CardHeader
+        title={
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <TrendingUp style={{ width: '1.25rem', height: '1.25rem', color: theme.palette.primary.main }} />
+            Calculadora do 13º Salário
+          </Box>
+        }
+        subheader="Estime o valor do seu 13º salário baseado no período trabalhado."
+        titleTypographyProps={{ variant: 'h6' }}
+      />
       <CardContent>
         <Stack spacing={2}>
           {/* Toggle entre modos */}
@@ -111,10 +119,10 @@ export function ThirteenthSalaryCalculator({ payrollData }: ThirteenthSalaryCalc
 
           {/* Entrada de dados baseada no modo */}
           {mode === 'payroll' ? (
-            <Box sx={{ bgcolor: 'action.hover', p: 1.5, borderRadius: 1 }}>
+            <Paper variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.info.main, 0.1), borderColor: alpha(theme.palette.info.main, 0.2) }}>
               <Stack spacing={1.5}>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  Dados do Holerite Utilizados no Cálculo:
+                <Typography variant="subtitle2" color="info.main" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Info size={16} /> Dados do Holerite Utilizados no Cálculo:
                 </Typography>
                 
                 {/* Dados salariais */}
@@ -123,14 +131,10 @@ export function ThirteenthSalaryCalculator({ payrollData }: ThirteenthSalaryCalc
                     💰 Dados Salariais:
                   </Typography>
                   <Typography variant="caption" color="text.secondary" sx={{ pl: 1 }}>
-                    Salário Bruto: <Typography component="span" sx={{ fontWeight: 500 }}>
-                      {formatCurrency(payrollData.grossSalary)}
-                    </Typography>
+                    Salário Bruto: <Box component="span" fontWeight="medium">{formatCurrency(payrollData.grossSalary)}</Box>
                   </Typography>
                   <Typography variant="caption" color="text.secondary" sx={{ pl: 1 }}>
-                    Salário Líquido: <Typography component="span" sx={{ fontWeight: 500 }}>
-                      {formatCurrency(payrollData.netSalary)}
-                    </Typography>
+                    Salário Líquido: <Box component="span" fontWeight="medium">{formatCurrency(payrollData.netSalary)}</Box>
                   </Typography>
                 </Stack>
 
@@ -154,7 +158,7 @@ export function ThirteenthSalaryCalculator({ payrollData }: ThirteenthSalaryCalc
                       ).map((discount, index) => (
                         <Stack key={index} direction="row" justifyContent="space-between">
                           <Typography variant="caption" color="text.secondary">{discount.name}:</Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 500 }}>
+                          <Typography variant="caption" fontWeight="medium">
                             {formatCurrency(discount.amount)}
                           </Typography>
                         </Stack>
@@ -188,7 +192,7 @@ export function ThirteenthSalaryCalculator({ payrollData }: ThirteenthSalaryCalc
                       ).map((discount, index) => (
                         <Stack key={index} direction="row" justifyContent="space-between">
                           <Typography variant="caption" color="text.secondary">{discount.name}:</Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 500 }}>
+                          <Typography variant="caption" fontWeight="medium">
                             {formatCurrency(discount.amount)}
                           </Typography>
                         </Stack>
@@ -200,62 +204,60 @@ export function ThirteenthSalaryCalculator({ payrollData }: ThirteenthSalaryCalc
                   </Stack>
                 )}
               </Stack>
-            </Box>
+            </Paper>
           ) : (
             <ManualSalaryInput data={manualData} onChange={setManualData} />
           )}
 
           {/* Entrada de dados */}
           <Stack spacing={1}>
-            <Label htmlFor="monthsWorked">Meses Trabalhados no Ano</Label>
-            <Input
-              id="monthsWorked"
+            <TextField
+              label="Meses Trabalhados no Ano"
               type="number"
-              min="1"
-              max="12"
               value={monthsWorked}
               onChange={(e) => setMonthsWorked(parseInt(e.target.value) || 12)}
               placeholder="12"
+              inputProps={{ min: 1, max: 12 }}
+              helperText="Máximo: 12 meses (ano completo)"
+              fullWidth
+              size="small"
             />
-            <Typography variant="caption" color="text.secondary">
-              Máximo: 12 meses (ano completo)
-            </Typography>
           </Stack>
 
           <Button 
+            variant="contained" 
+            size="large"
             onClick={calculateThirteenth} 
-            sx={{ width: '100%' }}
+            startIcon={<Calculator />}
+            fullWidth
             disabled={(mode === 'manual' && (manualData.grossSalary <= 0 || manualData.netSalary <= 0)) || 
                      (mode === 'payroll' && !hasPayrollData)}
           >
-            <Calculator style={{ width: 16, height: 16, marginRight: 8 }} />
             Calcular 13º Salário
           </Button>
 
           {/* Resultado */}
           {result && (
             <Stack spacing={1.5} sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>
+              <Typography variant="subtitle2">
                 Resultado do Cálculo:
               </Typography>
               
               <Stack spacing={1}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                   <Typography variant="body2">13º Salário Bruto ({monthsWorked}/12):</Typography>
-                  <Badge variant="outline">{formatCurrency(result.grossThirteenth)}</Badge>
+                  <Chip label={formatCurrency(result.grossThirteenth)} size="small" variant="outlined" />
                 </Stack>
                 
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                   <Typography variant="body2">Descontos Estimados:</Typography>
-                  <Badge variant="outline" sx={{ color: 'error.main' }}>
-                    -{formatCurrency(result.estimatedDiscounts)}
-                  </Badge>
+                  <Chip label={`-${formatCurrency(result.estimatedDiscounts)}`} size="small" color="error" variant="outlined" />
                 </Stack>
                 
                 {/* Informação específica sobre empréstimo consignado */}
                 {result.consignedImpact && mode === 'payroll' && (
-                  <Box sx={{ bgcolor: 'info.light', p: 1.5, borderRadius: 1, border: 1, borderColor: 'info.main' }}>
-                    <Typography variant="caption" sx={{ fontWeight: 500, color: 'info.dark', display: 'block', mb: 0.5 }}>
+                  <Paper variant="outlined" sx={{ bgcolor: alpha(theme.palette.info.main, 0.1), p: 1.5, borderColor: alpha(theme.palette.info.main, 0.2) }}>
+                    <Typography variant="caption" sx={{ fontWeight: 600, color: 'info.main', display: 'block', mb: 0.5 }}>
                       💡 Empréstimo Consignado no 13º Salário
                     </Typography>
                     <Stack spacing={0.5} sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
@@ -269,51 +271,48 @@ export function ThirteenthSalaryCalculator({ payrollData }: ThirteenthSalaryCalc
                         {result.consignedImpact.explanation}
                       </Typography>
                     </Stack>
-                  </Box>
+                  </Paper>
                 )}
                 
                 <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ pt: 1, borderTop: 1, borderColor: 'divider' }}>
-                  <Typography variant="body2" sx={{ fontWeight: 500 }}>13º Líquido Estimado:</Typography>
-                  <Badge sx={{ bgcolor: 'success.main', color: 'success.contrastText', fontWeight: 700 }}>
-                    {formatCurrency(result.netThirteenth)}
-                  </Badge>
+                  <Typography variant="body2" fontWeight="medium">13º Líquido Estimado:</Typography>
+                  <Chip label={formatCurrency(result.netThirteenth)} color="success" sx={{ fontWeight: 'bold' }} />
                 </Stack>
                 
                 {/* Divisão em parcelas para empresas que pagam em 2x */}
-                <Box sx={{ bgcolor: 'info.light', p: 1.5, borderRadius: 1, border: 1, borderColor: 'info.main', mt: 1.5 }}>
-                  <Typography variant="caption" sx={{ fontWeight: 500, color: 'info.dark', display: 'block', mb: 1 }}>
+                <Paper variant="outlined" sx={{ bgcolor: alpha(theme.palette.info.main, 0.1), p: 1.5, borderColor: alpha(theme.palette.info.main, 0.2), mt: 1.5 }}>
+                  <Typography variant="caption" sx={{ fontWeight: 600, color: 'info.main', display: 'block', mb: 1 }}>
                     💡 Para empresas que pagam em 2 parcelas:
                   </Typography>
                   <Stack spacing={1}>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
                       <Typography variant="caption" color="text.secondary">1ª Parcela (até 30/nov) - Sem descontos:</Typography>
-                      <Badge variant="outline" sx={{ color: 'success.main' }}>
-                        {formatCurrency(result.grossThirteenth / 2)}
-                      </Badge>
+                      <Chip label={formatCurrency(result.grossThirteenth / 2)} size="small" color="success" variant="outlined" />
                     </Stack>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
                       <Typography variant="caption" color="text.secondary">2ª Parcela (até 20/dez) - Com descontos:</Typography>
-                      <Badge variant="outline" sx={{ color: 'info.dark' }}>
-                        {formatCurrency((result.grossThirteenth / 2) - result.estimatedDiscounts)}
-                      </Badge>
+                      <Chip label={formatCurrency((result.grossThirteenth / 2) - result.estimatedDiscounts)} size="small" color="info" variant="outlined" />
                     </Stack>
-                    <Box sx={{ fontSize: '0.75rem', color: 'text.secondary', bgcolor: 'background.paper', p: 1, borderRadius: 1, mt: 1 }}>
+                    <Paper variant="outlined" sx={{ fontSize: '0.75rem', color: 'text.secondary', bgcolor: 'background.paper', p: 1, mt: 1 }}>
                       <Typography variant="caption" component="div">• 1ª parcela: Metade do valor bruto, sem descontos</Typography>
                       <Typography variant="caption" component="div">• 2ª parcela: Metade do valor bruto menos todos os descontos</Typography>
-                    </Box>
+                    </Paper>
                   </Stack>
-                  <Typography variant="caption" sx={{ display: 'block', mt: 1, textAlign: 'center', pt: 1, borderTop: 1, borderColor: 'divider' }}>
-                    <strong>Total Líquido:</strong> {formatCurrency(result.netThirteenth)}
+                  <Divider sx={{ my: 1 }} />
+                  <Typography variant="caption" sx={{ display: 'block', textAlign: 'center' }}>
+                    <Box component="span" fontWeight="bold">Total Líquido:</Box> {formatCurrency(result.netThirteenth)}
                   </Typography>
-                </Box>
+                </Paper>
               </Stack>
 
-              <Box sx={{ fontSize: '0.75rem', color: 'text.secondary', bgcolor: 'info.light', p: 1, borderRadius: 1, border: 1, borderColor: 'info.main' }}>
-                <strong>Nota:</strong> {mode === 'payroll' 
-                  ? 'Os descontos são estimados baseados na proporção do seu holerite atual. Valores reais podem variar conforme faixas do INSS e IR.'
-                  : 'Estimativa baseada na proporção de descontos informada. Para cálculos mais precisos, use os dados do holerite.'
-                }
-              </Box>
+              <Paper variant="outlined" sx={{ fontSize: '0.75rem', color: 'text.secondary', bgcolor: alpha(theme.palette.info.main, 0.1), p: 1, borderColor: alpha(theme.palette.info.main, 0.2) }}>
+                <Typography variant="caption">
+                  <Box component="span" fontWeight="bold">Nota:</Box> {mode === 'payroll' 
+                    ? 'Os descontos são estimados baseados na proporção do seu holerite atual. Valores reais podem variar conforme faixas do INSS e IR.'
+                    : 'Estimativa baseada na proporção de descontos informada. Para cálculos mais precisos, use os dados do holerite.'
+                  }
+                </Typography>
+              </Paper>
             </Stack>
           )}
         </Stack>

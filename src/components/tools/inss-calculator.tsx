@@ -1,17 +1,32 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Shield, Clock, DollarSign, Users, AlertCircle, CheckCircle } from "lucide-react";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  Typography, 
+  TextField, 
+  Button, 
+  Divider, 
+  Box, 
+  Stack, 
+  Paper,
+  useTheme,
+  alpha,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip
+} from '@mui/material';
+import { Shield, Clock, DollarSign, Users, AlertCircle, CheckCircle, Info } from "lucide-react";
 import { PayrollData } from "@/lib/types";
 import { getINSSFromPayroll, calculateINSSFromSalary, validatePayrollData } from "@/lib/payroll-utils";
 import { CalculatorModeToggle } from "./calculator-mode-toggle";
 import { ManualSalaryInput, ManualSalaryData } from "./manual-salary-input";
-import { Box, Stack, Typography, Divider } from "@mui/material";
 
 interface INSSCalculatorProps {
   payrollData: PayrollData;
@@ -110,21 +125,20 @@ export function INSSCalculator({ payrollData }: INSSCalculatorProps) {
     return `${value.toFixed(2)}%`;
   };
 
+  const theme = useTheme();
+
   return (
-    <Card>
-      <CardHeader>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Shield style={{ width: 20, height: 20, color: 'var(--primary)' }} />
-          <Typography component="span" sx={{ fontSize: '1.125rem' }}>
-            <CardTitle>Calculadora de INSS</CardTitle>
-          </Typography>
-        </Stack>
-        <Typography component="span">
-          <CardDescription>
-            Calcule sua contribuição previdenciária e estimativa de aposentadoria
-          </CardDescription>
-        </Typography>
-      </CardHeader>
+    <Card sx={{ height: '100%' }}>
+      <CardHeader
+        title={
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Shield style={{ width: '1.25rem', height: '1.25rem', color: theme.palette.primary.main }} />
+            Calculadora de INSS
+          </Box>
+        }
+        subheader="Calcule sua contribuição previdenciária e estimativa de aposentadoria"
+        titleTypographyProps={{ variant: 'h6' }}
+      />
       <CardContent>
         <Stack spacing={3}>
           {/* Toggle entre modos */}
@@ -136,49 +150,50 @@ export function INSSCalculator({ payrollData }: INSSCalculatorProps) {
 
           {/* Entrada de dados baseada no modo */}
           {mode === 'payroll' ? (
-            <Box sx={{ bgcolor: 'action.hover', p: 1.5, borderRadius: 1 }}>
+            <Paper variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.info.main, 0.1), borderColor: alpha(theme.palette.info.main, 0.2) }}>
               <Stack spacing={1}>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>Dados do Holerite:</Typography>
-                <Typography variant="caption" color="text.secondary">
-                  Salário Bruto: <Typography component="span" sx={{ fontWeight: 500 }}>
-                    {formatCurrency(payrollData.grossSalary)}
-                  </Typography>
+                <Typography variant="subtitle2" color="info.main" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Info size={16} /> Dados do Holerite:
+                </Typography>
+                <Typography variant="caption" color="text.secondary" sx={{ pl: 3 }}>
+                  Salário Bruto: <Box component="span" fontWeight="medium">{formatCurrency(payrollData.grossSalary)}</Box>
                 </Typography>
               </Stack>
-            </Box>
+            </Paper>
           ) : (
             <ManualSalaryInput data={manualData} onChange={setManualData} />
           )}
 
           {/* Inputs */}
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2 }}>
-            <Stack spacing={1}>
-              <Label htmlFor="currentAge">Idade atual</Label>
-              <Input
-                id="currentAge"
-                type="number"
-                value={currentAge}
-                onChange={(e) => setCurrentAge(Number(e.target.value))}
-                min="18"
-                max="70"
-              />
-            </Stack>
+            <TextField
+              label="Idade atual"
+              type="number"
+              value={currentAge}
+              onChange={(e) => setCurrentAge(Number(e.target.value))}
+              inputProps={{ min: 18, max: 70 }}
+              fullWidth
+              size="small"
+            />
             
-            <Stack spacing={1}>
-              <Label htmlFor="contributionYears">Anos já contribuídos</Label>
-              <Input
-                id="contributionYears"
-                type="number"
-                value={contributionYears}
-                onChange={(e) => setContributionYears(Number(e.target.value))}
-                min="0"
-                max="50"
-              />
-            </Stack>
+            <TextField
+              label="Anos já contribuídos"
+              type="number"
+              value={contributionYears}
+              onChange={(e) => setContributionYears(Number(e.target.value))}
+              inputProps={{ min: 0, max: 50 }}
+              fullWidth
+              size="small"
+            />
           </Box>
 
-          <Button onClick={calculateINSS} sx={{ width: '100%' }}>
-            <Shield style={{ width: 16, height: 16, marginRight: 8 }} />
+          <Button 
+            variant="contained" 
+            size="large"
+            onClick={calculateINSS} 
+            startIcon={<Shield />}
+            fullWidth
+          >
             Calcular INSS
           </Button>
 
@@ -191,45 +206,44 @@ export function INSSCalculator({ payrollData }: INSSCalculatorProps) {
                 const registeredINSS = getINSSFromPayroll(payrollData);
                 const calculatedINSS = calculateINSSFromSalary(payrollData.grossSalary);
                 const validation = validatePayrollData(payrollData);
+                const isConsistent = Math.abs(registeredINSS - calculatedINSS) <= 10;
                 
                 return (
                   <Stack spacing={2}>
                     {registeredINSS > 0 && (
-                      <Box sx={{ 
-                        bgcolor: Math.abs(registeredINSS - calculatedINSS) <= 10 ? 'success.light' : 'warning.light',
-                        p: 2,
-                        borderRadius: 1
+                      <Paper variant="outlined" sx={{ 
+                        bgcolor: isConsistent ? alpha(theme.palette.success.main, 0.1) : alpha(theme.palette.warning.main, 0.1),
+                        borderColor: isConsistent ? alpha(theme.palette.success.main, 0.2) : alpha(theme.palette.warning.main, 0.2),
+                        p: 2
                       }}>
                         <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                          {Math.abs(registeredINSS - calculatedINSS) <= 10 ? (
-                            <CheckCircle style={{ width: 16, height: 16, color: 'var(--success)' }} />
+                          {isConsistent ? (
+                            <CheckCircle style={{ width: 16, height: 16, color: theme.palette.success.main }} />
                           ) : (
-                            <AlertCircle style={{ width: 16, height: 16, color: 'var(--warning)' }} />
+                            <AlertCircle style={{ width: 16, height: 16, color: theme.palette.warning.main }} />
                           )}
-                          <Typography sx={{ fontWeight: 500 }}>Validação do INSS</Typography>
+                          <Typography variant="subtitle2" color={isConsistent ? 'success.main' : 'warning.main'}>
+                            Validação do INSS
+                          </Typography>
                         </Stack>
-                        <Stack spacing={0.5} sx={{ fontSize: '0.875rem' }}>
-                          <Typography variant="body2">
-                            INSS do seu holerite: <Typography component="span" sx={{ fontWeight: 500 }}>
-                              {formatCurrency(registeredINSS)}
-                            </Typography>
+                        <Stack spacing={0.5}>
+                          <Typography variant="caption" color="text.secondary">
+                            INSS do seu holerite: <Box component="span" fontWeight="medium">{formatCurrency(registeredINSS)}</Box>
                           </Typography>
-                          <Typography variant="body2">
-                            INSS calculado pela tabela: <Typography component="span" sx={{ fontWeight: 500 }}>
-                              {formatCurrency(calculatedINSS)}
-                            </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            INSS calculado pela tabela: <Box component="span" fontWeight="medium">{formatCurrency(calculatedINSS)}</Box>
                           </Typography>
-                          {Math.abs(registeredINSS - calculatedINSS) <= 10 ? (
-                            <Typography variant="body2" color="success.dark">
+                          {isConsistent ? (
+                            <Typography variant="caption" color="success.main" fontWeight="medium">
                               ✓ Valores estão consistentes
                             </Typography>
                           ) : (
-                            <Typography variant="body2" color="warning.dark">
+                            <Typography variant="caption" color="warning.main" fontWeight="medium">
                               ⚠️ Diferença de {formatCurrency(Math.abs(registeredINSS - calculatedINSS))} - verifique seus dados
                             </Typography>
                           )}
                         </Stack>
-                      </Box>
+                      </Paper>
                     )}
                   </Stack>
                 );
@@ -240,111 +254,109 @@ export function INSSCalculator({ payrollData }: INSSCalculatorProps) {
                 <Typography variant="h6" sx={{ fontWeight: 600 }}>Resultados do INSS</Typography>
                 
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2 }}>
-                  <Box sx={{ bgcolor: 'action.hover', p: 2, borderRadius: 1 }}>
+                  <Paper variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.action.hover, 0.1) }}>
                     <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                      <DollarSign style={{ width: 16, height: 16, color: 'var(--primary)' }} />
-                      <Typography sx={{ fontWeight: 500 }}>Contribuição Mensal</Typography>
+                      <DollarSign style={{ width: 16, height: 16, color: theme.palette.primary.main }} />
+                      <Typography variant="body2" fontWeight="medium">Contribuição Mensal</Typography>
                     </Stack>
                     <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main' }}>
                       {formatCurrency(calculation.monthlyContribution)}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="caption" color="text.secondary">
                       {formatPercentage(calculation.contributionRate)} do salário
                     </Typography>
-                  </Box>
+                  </Paper>
 
-                  <Box sx={{ bgcolor: 'action.hover', p: 2, borderRadius: 1 }}>
+                  <Paper variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.action.hover, 0.1) }}>
                     <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                      <Clock style={{ width: 16, height: 16, color: 'var(--primary)' }} />
-                      <Typography sx={{ fontWeight: 500 }}>Contribuição Anual</Typography>
+                      <Clock style={{ width: 16, height: 16, color: theme.palette.primary.main }} />
+                      <Typography variant="body2" fontWeight="medium">Contribuição Anual</Typography>
                     </Stack>
                     <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main' }}>
                       {formatCurrency(calculation.yearlyContribution)}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary">
+                    <Typography variant="caption" color="text.secondary">
                       Valor total no ano
                     </Typography>
-                  </Box>
+                  </Paper>
 
-                  <Box sx={{ bgcolor: '#e3f2fd', p: 2, borderRadius: 1 }}>
+                  <Paper variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.info.main, 0.1), borderColor: alpha(theme.palette.info.main, 0.2) }}>
                     <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                      <Clock style={{ width: 16, height: 16, color: '#1976d2' }} />
-                      <Typography sx={{ fontWeight: 500 }}>Anos para Aposentadoria</Typography>
+                      <Clock style={{ width: 16, height: 16, color: theme.palette.info.main }} />
+                      <Typography variant="body2" fontWeight="medium" color="info.main">Anos para Aposentadoria</Typography>
                     </Stack>
-                    <Typography variant="h4" sx={{ fontWeight: 700, color: '#1976d2' }}>
+                    <Typography variant="h4" sx={{ fontWeight: 700, color: 'info.main' }}>
                       {calculation.yearsToRetirement}
                     </Typography>
-                    <Typography variant="body2" sx={{ color: '#1976d2', opacity: 0.7 }}>
+                    <Typography variant="caption" color="text.secondary">
                       Baseado na idade mínima (65 anos)
                     </Typography>
-                  </Box>
+                  </Paper>
 
-                  <Box sx={{ bgcolor: 'success.light', p: 2, borderRadius: 1 }}>
+                  <Paper variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.success.main, 0.1), borderColor: alpha(theme.palette.success.main, 0.2) }}>
                     <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
-                      <Users style={{ width: 16, height: 16, color: 'var(--success)' }} />
-                      <Typography sx={{ fontWeight: 500 }}>Benefício Estimado</Typography>
+                      <Users style={{ width: 16, height: 16, color: theme.palette.success.main }} />
+                      <Typography variant="body2" fontWeight="medium" color="success.main">Benefício Estimado</Typography>
                     </Stack>
-                    <Typography variant="h4" sx={{ fontWeight: 700, color: 'success.dark' }}>
+                    <Typography variant="h4" sx={{ fontWeight: 700, color: 'success.main' }}>
                       {formatCurrency(calculation.estimatedBenefit)}
                     </Typography>
-                    <Typography variant="body2" sx={{ color: 'success.dark', opacity: 0.7 }}>
+                    <Typography variant="caption" color="text.secondary">
                       Aposentadoria mensal estimada
                     </Typography>
-                  </Box>
-                  </Box>
+                  </Paper>
+                </Box>
 
                 {/* Tabela INSS */}
-                <Box sx={{ bgcolor: 'action.hover', p: 2, borderRadius: 1 }}>
-                  <Typography sx={{ fontWeight: 500, mb: 1.5 }}>📊 Tabela INSS 2024/2025</Typography>
-                  <Box sx={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', fontSize: '0.875rem' }}>
-                      <thead>
-                        <tr style={{ borderBottom: '1px solid var(--border)' }}>
-                          <th style={{ textAlign: 'left', padding: '8px 0' }}>Faixa Salarial</th>
-                          <th style={{ textAlign: 'left', padding: '8px 0' }}>Alíquota</th>
-                          <th style={{ textAlign: 'left', padding: '8px 0' }}>Sua Situação</th>
-                        </tr>
-                      </thead>
-                      <tbody>
+                <Paper variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.action.hover, 0.1) }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1.5 }}>📊 Tabela INSS 2024/2025</Typography>
+                  <TableContainer>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Faixa Salarial</TableCell>
+                          <TableCell>Alíquota</TableCell>
+                          <TableCell>Sua Situação</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
                         {inssTable.map((bracket, index) => (
-                          <tr key={index} style={{ borderBottom: '1px solid var(--border)' }}>
-                            <td style={{ padding: '8px 0' }}>
+                          <TableRow key={index}>
+                            <TableCell>
                               {formatCurrency(bracket.min)} - {formatCurrency(bracket.max)}
-                            </td>
-                            <td style={{ padding: '8px 0' }}>{formatPercentage(bracket.rate * 100)}</td>
-                            <td style={{ padding: '8px 0' }}>
+                            </TableCell>
+                            <TableCell>{formatPercentage(bracket.rate * 100)}</TableCell>
+                            <TableCell>
                               {payrollData.grossSalary >= bracket.min && payrollData.grossSalary <= bracket.max ? (
-                                <Typography component="span" sx={{ color: 'success.main', fontWeight: 500 }}>
-                                  Sua faixa
-                                </Typography>
+                                <Chip label="Sua faixa" color="success" size="small" variant="outlined" />
                               ) : payrollData.grossSalary > bracket.max ? (
-                                <Typography component="span" sx={{ color: 'info.main' }}>
-                                  Já passou
-                                </Typography>
+                                <Chip label="Já passou" color="info" size="small" variant="outlined" />
                               ) : (
-                                <Typography component="span" sx={{ color: 'text.disabled' }}>
+                                <Typography variant="caption" color="text.disabled">
                                   Acima da sua faixa
                                 </Typography>
                               )}
-                            </td>
-                          </tr>
+                            </TableCell>
+                          </TableRow>
                         ))}
-                      </tbody>
-                    </table>
-                  </Box>
-                </Box>
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Paper>
 
                 {/* Informações importantes */}
-                <Box sx={{ bgcolor: 'warning.light', p: 2, borderRadius: 1 }}>
-                  <Typography sx={{ fontWeight: 500, mb: 1 }}>ℹ️ Informações importantes:</Typography>
-                  <Stack component="ul" spacing={0.5} sx={{ fontSize: '0.875rem', pl: 0, listStyle: 'none' }}>
+                <Paper variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.warning.main, 0.1), borderColor: alpha(theme.palette.warning.main, 0.2) }}>
+                  <Typography variant="subtitle2" color="warning.main" sx={{ mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Info size={16} /> Informações importantes:
+                  </Typography>
+                  <Stack component="ul" spacing={0.5} sx={{ fontSize: '0.875rem', pl: 2, m: 0, color: 'text.secondary' }}>
                     <li>• Contribuição obrigatória descontada do salário bruto</li>
                     <li>• Idade mínima: 65 anos (homens) / 62 anos (mulheres)</li>
                     <li>• Tempo mínimo de contribuição: 20 anos</li>
                     <li>• Teto do INSS: {formatCurrency(7786.02)} (2024)</li>
                     <li>• Cálculos são estimativas baseadas nas regras atuais</li>
                   </Stack>
-                </Box>
+                </Paper>
               </Stack>
             </>
           )}

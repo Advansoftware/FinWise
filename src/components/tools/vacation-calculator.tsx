@@ -1,18 +1,28 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Plane, Calculator } from "lucide-react";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  Typography, 
+  TextField, 
+  Button, 
+  Divider, 
+  Box, 
+  Stack, 
+  Paper,
+  Chip,
+  useTheme,
+  alpha,
+  InputAdornment
+} from '@mui/material';
+import { Plane, Calculator, Info, AlertTriangle, CheckCircle } from "lucide-react";
 import { PayrollData } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
 import { calculateConsignedImpactOnVacation, getConsignedLoanFromPayroll, calculateINSSFromSalary, calculateIRFromSalary } from "@/lib/payroll-utils";
 import { CalculatorModeToggle } from "./calculator-mode-toggle";
 import { ManualSalaryInput, ManualSalaryData } from "./manual-salary-input";
-import { Box, Stack, Typography } from "@mui/material";
 
 interface VacationCalculatorProps {
   payrollData: PayrollData;
@@ -179,21 +189,20 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
     });
   };
 
+  const theme = useTheme();
+
   return (
     <Card sx={{ height: '100%' }}>
-      <CardHeader>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <Plane style={{ width: 20, height: 20, color: 'var(--primary)' }} />
-          <Typography component="span" sx={{ fontSize: '1.125rem' }}>
-            <CardTitle>Calculadora de Férias</CardTitle>
-          </Typography>
-        </Stack>
-        <Typography component="span">
-          <CardDescription>
-            Calcule o valor das suas férias baseado no seu salário atual.
-          </CardDescription>
-        </Typography>
-      </CardHeader>
+      <CardHeader
+        title={
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Plane style={{ width: '1.25rem', height: '1.25rem', color: theme.palette.primary.main }} />
+            Calculadora de Férias
+          </Box>
+        }
+        subheader="Calcule o valor das suas férias baseado no seu salário atual."
+        titleTypographyProps={{ variant: 'h6' }}
+      />
       <CardContent>
         <Stack spacing={2}>
           {/* Toggle entre modos */}
@@ -205,28 +214,23 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
 
           {/* Entrada de dados baseada no modo */}
           {mode === 'payroll' ? (
-            <Box sx={{ bgcolor: 'action.hover', p: 1.5, borderRadius: 1 }}>
-              <Stack spacing={1.5}>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>
-                  Dados do Holerite Utilizados no Cálculo:
-                </Typography>
-                
-                {/* Dados salariais */}
-                <Stack spacing={0.5}>
-                  <Typography variant="caption" sx={{ fontWeight: 500 }} color="text.secondary">
-                    💰 Dados Salariais:
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ pl: 1 }}>
-                    Salário Bruto: <Typography component="span" sx={{ fontWeight: 500 }}>
-                      {formatCurrency(payrollData.grossSalary)}
+            <Paper variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.info.main, 0.1), borderColor: alpha(theme.palette.info.main, 0.2) }}>
+              <Typography variant="subtitle2" color="info.main" sx={{ mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Info size={16} /> Dados do Holerite Utilizados no Cálculo:
+              </Typography>
+              
+              <Stack spacing={2}>
+                <Box>
+                  <Typography variant="caption" color="info.dark" fontWeight="bold">💰 Dados Salariais:</Typography>
+                  <Box sx={{ pl: 2 }}>
+                    <Typography variant="caption" display="block" color="info.dark">
+                      Salário Bruto: <Box component="span" fontWeight="medium">{formatCurrency(payrollData.grossSalary)}</Box>
                     </Typography>
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary" sx={{ pl: 1 }}>
-                    Salário Líquido: <Typography component="span" sx={{ fontWeight: 500 }}>
-                      {formatCurrency(payrollData.netSalary)}
+                    <Typography variant="caption" display="block" color="info.dark">
+                      Salário Líquido: <Box component="span" fontWeight="medium">{formatCurrency(payrollData.netSalary)}</Box>
                     </Typography>
-                  </Typography>
-                </Stack>
+                  </Box>
+                </Box>
 
                 {/* Descontos regulares */}
                 {payrollData.discounts.filter(d => 
@@ -235,26 +239,22 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
                   !d.name.toLowerCase().includes('empréstimo') &&
                   !d.name.toLowerCase().includes('emprestimo')
                 ).length > 0 && (
-                  <Stack spacing={0.5}>
-                    <Typography variant="caption" sx={{ fontWeight: 500 }} color="text.secondary">
-                      📊 Descontos Regulares:
-                    </Typography>
-                    <Stack spacing={0.5} sx={{ pl: 1 }}>
+                  <Box>
+                    <Typography variant="caption" color="info.dark" fontWeight="bold">📊 Descontos Regulares:</Typography>
+                    <Box sx={{ pl: 2 }}>
                       {payrollData.discounts.filter(d => 
                         d.type === 'discount' && 
                         !d.name.toLowerCase().includes('consignado') &&
                         !d.name.toLowerCase().includes('empréstimo') &&
                         !d.name.toLowerCase().includes('emprestimo')
                       ).map((discount, index) => (
-                        <Stack key={index} direction="row" justifyContent="space-between">
-                          <Typography variant="caption" color="text.secondary">{discount.name}:</Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 500 }}>
-                            {formatCurrency(discount.amount)}
-                          </Typography>
-                        </Stack>
+                        <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="info.dark">{discount.name}:</Typography>
+                          <Typography variant="caption" fontWeight="medium" color="info.dark">{formatCurrency(discount.amount)}</Typography>
+                        </Box>
                       ))}
-                    </Stack>
-                  </Stack>
+                    </Box>
+                  </Box>
                 )}
 
                 {/* Empréstimo consignado */}
@@ -265,11 +265,9 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
                     d.name.toLowerCase().includes('emprestimo')
                   )
                 ).length > 0 && (
-                  <Stack spacing={0.5}>
-                    <Typography variant="caption" sx={{ fontWeight: 500 }} color="text.secondary">
-                      🏦 Empréstimo Consignado:
-                    </Typography>
-                    <Stack spacing={0.5} sx={{ pl: 1 }}>
+                  <Box>
+                    <Typography variant="caption" color="info.dark" fontWeight="bold">🏦 Empréstimo Consignado:</Typography>
+                    <Box sx={{ pl: 2 }}>
                       {payrollData.discounts.filter(d => 
                         d.type === 'discount' && (
                           d.name.toLowerCase().includes('consignado') ||
@@ -277,157 +275,148 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
                           d.name.toLowerCase().includes('emprestimo')
                         )
                       ).map((discount, index) => (
-                        <Stack key={index} direction="row" justifyContent="space-between">
-                          <Typography variant="caption" color="text.secondary">{discount.name}:</Typography>
-                          <Typography variant="caption" sx={{ fontWeight: 500 }}>
-                            {formatCurrency(discount.amount)}
-                          </Typography>
-                        </Stack>
+                        <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                          <Typography variant="caption" color="info.dark">{discount.name}:</Typography>
+                          <Typography variant="caption" fontWeight="medium" color="info.dark">{formatCurrency(discount.amount)}</Typography>
+                        </Box>
                       ))}
-                      <Typography variant="caption" sx={{ color: 'info.main', mt: 0.5 }}>
+                      <Typography variant="caption" color="info.main" sx={{ mt: 0.5, display: 'block' }}>
                         ✓ Será aplicado nas férias (limite 35%)
                       </Typography>
-                    </Stack>
-                  </Stack>
+                    </Box>
+                  </Box>
                 )}
               </Stack>
-            </Box>
+            </Paper>
           ) : (
             <ManualSalaryInput data={manualData} onChange={setManualData} />
           )}
 
           {/* Entrada de dados */}
-          <Stack spacing={1}>
-            <Label htmlFor="vacationDays">Dias de Férias</Label>
-            <Input
-              id="vacationDays"
+          <Box>
+            <TextField
+              label="Dias de Férias"
               type="number"
-              min="1"
-              max="30"
               value={vacationDays}
               onChange={(e) => setVacationDays(parseInt(e.target.value) || 30)}
               placeholder="30"
+              helperText="Máximo: 30 dias (férias completas)"
+              InputProps={{ inputProps: { min: 1, max: 30 } }}
+              fullWidth
             />
-            <Typography variant="caption" color="text.secondary">
-              Máximo: 30 dias (férias completas)
-            </Typography>
-          </Stack>
+          </Box>
 
           <Button 
+            variant="contained" 
+            size="large"
             onClick={calculateVacation} 
-            sx={{ width: '100%' }}
             disabled={(mode === 'manual' && (manualData.grossSalary <= 0 || manualData.netSalary <= 0)) || 
                      (mode === 'payroll' && !hasPayrollData)}
+            startIcon={<Calculator />}
+            fullWidth
           >
-            <Calculator style={{ width: 16, height: 16, marginRight: 8 }} />
             Calcular Férias
           </Button>
 
           {/* Resultado */}
           {result && (
-            <Stack spacing={1.5} sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
-              <Typography variant="body2" sx={{ fontWeight: 500 }}>Resultado do Cálculo:</Typography>
+            <Stack spacing={3} sx={{ pt: 2, borderTop: 1, borderColor: 'divider' }}>
+              <Typography variant="subtitle2">Resultado do Cálculo:</Typography>
               
-              <Stack spacing={1}>
+              <Stack spacing={2}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                   <Typography variant="body2">Valor das férias ({vacationDays} dias):</Typography>
-                  <Badge variant="outline">{formatCurrency(result.vacationSalary)}</Badge>
+                  <Chip label={formatCurrency(result.vacationSalary)} size="small" variant="outlined" />
                 </Stack>
                 
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                   <Typography variant="body2">1/3 Constitucional:</Typography>
-                  <Badge variant="outline">{formatCurrency(result.oneThirdBonus)}</Badge>
+                  <Chip label={formatCurrency(result.oneThirdBonus)} size="small" variant="outlined" />
                 </Stack>
                 
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
-                  <Typography variant="body2">Total Bruto:</Typography>
-                  <Badge variant="outline">{formatCurrency(result.grossTotal)}</Badge>
+                  <Typography variant="body2" fontWeight="medium">Total Bruto:</Typography>
+                  <Chip label={formatCurrency(result.grossTotal)} size="small" variant="outlined" sx={{ fontWeight: 'bold' }} />
                 </Stack>
                 
                 {/* Detalhamento dos descontos */}
-                <Box sx={{ bgcolor: 'action.hover', p: 1.5, borderRadius: 1 }}>
+                <Paper variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.error.main, 0.1), borderColor: alpha(theme.palette.error.main, 0.2) }}>
                   <Stack spacing={1}>
-                    <Typography variant="caption" sx={{ fontWeight: 500, mb: 1 }} color="text.secondary">
+                    <Typography variant="caption" sx={{ fontWeight: 500, mb: 1, display: 'block' }} color="error.main">
                       💼 Detalhamento dos Descontos:
                     </Typography>
                     
                     {result.detailedDiscounts.inss > 0 && (
                       <Stack direction="row" justifyContent="space-between" alignItems="center">
                         <Typography variant="caption" color="text.secondary">INSS (proporcional ao holerite):</Typography>
-                        <Badge variant="outline" sx={{ color: 'error.main', fontSize: '0.75rem' }}>
-                          -{formatCurrency(result.detailedDiscounts.inss)}
-                        </Badge>
+                        <Chip label={`-${formatCurrency(result.detailedDiscounts.inss)}`} size="small" variant="outlined" color="error" />
                       </Stack>
                     )}
                     
                     {result.detailedDiscounts.ir > 0 && (
                       <Stack direction="row" justifyContent="space-between" alignItems="center">
                         <Typography variant="caption" color="text.secondary">IR (proporcional ao holerite):</Typography>
-                        <Badge variant="outline" sx={{ color: 'error.main', fontSize: '0.75rem' }}>
-                          -{formatCurrency(result.detailedDiscounts.ir)}
-                        </Badge>
+                        <Chip label={`-${formatCurrency(result.detailedDiscounts.ir)}`} size="small" variant="outlined" color="error" />
                       </Stack>
                     )}
                     
                     {result.detailedDiscounts.otherDiscounts > 0 && (
                       <Stack direction="row" justifyContent="space-between" alignItems="center">
                         <Typography variant="caption" color="text.secondary">Outros descontos (proporcionais):</Typography>
-                        <Badge variant="outline" sx={{ color: 'error.main', fontSize: '0.75rem' }}>
-                          -{formatCurrency(result.detailedDiscounts.otherDiscounts)}
-                        </Badge>
+                        <Chip label={`-${formatCurrency(result.detailedDiscounts.otherDiscounts)}`} size="small" variant="outlined" color="error" />
                       </Stack>
                     )}
                     
                     {result.detailedDiscounts.consigned > 0 && (
                       <Stack direction="row" justifyContent="space-between" alignItems="center">
                         <Typography variant="caption" color="text.secondary">Empréstimo consignado (valor fixo):</Typography>
-                        <Badge variant="outline" sx={{ color: 'error.main', fontSize: '0.75rem' }}>
-                          -{formatCurrency(result.detailedDiscounts.consigned)}
-                        </Badge>
+                        <Chip label={`-${formatCurrency(result.detailedDiscounts.consigned)}`} size="small" variant="outlined" color="error" />
                       </Stack>
                     )}
                     
                     <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 1 }}>
                       <Stack direction="row" justifyContent="space-between" alignItems="center">
                         <Typography variant="caption" sx={{ fontWeight: 500 }}>Total dos Descontos:</Typography>
-                        <Badge variant="outline" sx={{ color: 'error.main', fontWeight: 700, fontSize: '0.75rem' }}>
-                          -{formatCurrency(result.estimatedDiscounts)}
-                        </Badge>
+                        <Chip label={`-${formatCurrency(result.estimatedDiscounts)}`} size="small" variant="outlined" color="error" sx={{ fontWeight: 'bold' }} />
                       </Stack>
                     </Box>
                   </Stack>
-                </Box>
+                </Paper>
                 
                 {/* Informação específica sobre empréstimo consignado */}
                 {result.consignedImpact && mode === 'payroll' && (
-                  <Box sx={{ bgcolor: 'info.light', p: 1.5, borderRadius: 1, border: 1, borderColor: 'info.main' }}>
+                  <Paper variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.info.main, 0.1), borderColor: alpha(theme.palette.info.main, 0.2) }}>
                     <Typography variant="caption" sx={{ fontWeight: 500, color: 'info.dark', display: 'block', mb: 0.5 }}>
                       💡 Empréstimo Consignado nas Férias de {vacationDays} Dias
                     </Typography>
-                    <Stack spacing={0.5} sx={{ fontSize: '0.75rem', color: 'text.secondary' }}>
+                    <Stack spacing={0.5} sx={{ color: 'text.secondary' }}>
                       <Typography variant="caption">Remuneração disponível: {formatCurrency(result.consignedImpact.availableRemuneration || 0)} (após INSS e IR)</Typography>
                       <Typography variant="caption">Limite máximo: {formatCurrency(result.consignedImpact.maxAllowedOnVacation)} (35% da remuneração disponível)</Typography>
                       <Typography variant="caption">Valor aplicado: {formatCurrency(result.consignedImpact.applicableAmount)}</Typography>
-                      <Typography variant="caption" sx={{ color: result.consignedImpact.isWithinLimit ? 'success.main' : 'warning.main' }}>
+                      <Typography variant="caption" sx={{ color: result.consignedImpact.isWithinLimit ? 'success.main' : 'warning.main', fontWeight: 'medium' }}>
                         {result.consignedImpact.explanation}
                       </Typography>
                     </Stack>
-                  </Box>
+                  </Paper>
                 )}
               
               <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ pt: 1, borderTop: 1, borderColor: 'divider' }}>
-                <Typography variant="body2" sx={{ fontWeight: 500 }}>Total Líquido Estimado:</Typography>
-                <Badge sx={{ bgcolor: 'success.main', color: 'success.contrastText', fontWeight: 700 }}>
-                  {formatCurrency(result.netTotal)}
-                </Badge>
+                <Typography variant="subtitle2">Total Líquido Estimado:</Typography>
+                <Chip 
+                  label={formatCurrency(result.netTotal)} 
+                  color="success" 
+                  sx={{ fontWeight: 'bold' }} 
+                />
               </Stack>
 
-                <Box sx={{ fontSize: '0.75rem', color: 'text.secondary', bgcolor: 'info.light', p: 1, borderRadius: 1, border: 1, borderColor: 'info.main' }}>
-                  <strong>Nota:</strong> {mode === 'payroll' 
-                    ? `Cálculo baseado nos valores reais do seu holerite. INSS e IR são calculados proporcionalmente aos ${vacationDays} dias de férias. Empréstimo consignado limitado a 35% da remuneração disponível (após descontos obrigatórios), conforme Portaria MTE nº 435/2025.`
-                    : 'Estimativa baseada na proporção de descontos informada. Para cálculos mais precisos com regras específicas de consignado, use os dados do holerite.'
-                  }
-                </Box>
+                <Paper variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.info.main, 0.1), borderColor: alpha(theme.palette.info.main, 0.2) }}>
+                  <Typography variant="caption" color="text.secondary">
+                    <Box component="span" fontWeight="bold">Nota:</Box> {mode === 'payroll' 
+                      ? `Cálculo baseado nos valores reais do seu holerite. INSS e IR são calculados proporcionalmente aos ${vacationDays} dias de férias. Empréstimo consignado limitado a 35% da remuneração disponível (após descontos obrigatórios), conforme Portaria MTE nº 435/2025.`
+                      : 'Estimativa baseada na proporção de descontos informada. Para cálculos mais precisos com regras específicas de consignado, use os dados do holerite.'
+                    }
+                  </Typography>
+                </Paper>
               </Stack>
             </Stack>
           )}

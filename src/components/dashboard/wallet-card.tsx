@@ -1,12 +1,20 @@
 
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  Typography, 
+  Chip, 
+  LinearProgress, 
+  Box, 
+  Stack, 
+  useTheme,
+  alpha
+} from '@mui/material';
 import { Transaction } from "@/lib/types";
 import { ArrowDown, ArrowUp, Wallet, TrendingUp, TrendingDown, Calendar, BarChart3, PieChart } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { useWallets } from "@/hooks/use-wallets";
 
 interface WalletCardProps {
@@ -15,6 +23,7 @@ interface WalletCardProps {
 
 export function WalletCard({ transactions }: WalletCardProps) {
     const { wallets, isLoading } = useWallets();
+    const theme = useTheme();
 
     const totalBalance = wallets.reduce((sum, wallet) => sum + wallet.balance, 0);
     const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
@@ -51,114 +60,135 @@ export function WalletCard({ transactions }: WalletCardProps) {
         .sort(([,a], [,b]) => b - a)[0];
 
     return (
-        <Card className="relative overflow-hidden bg-card/80 backdrop-blur-xl h-full flex flex-col">
-            <CardHeader className="pb-2 flex-shrink-0">
-                <div className="flex items-center gap-2">
-                    <div className="p-1.5 rounded-full bg-primary/20 text-primary">
-                        <Wallet className="h-4 w-4"/>
-                    </div>
-                    <div>
-                        <CardTitle className="text-sm">Carteira Consolidada</CardTitle>
-                        <CardDescription className="text-xs">Balanço total e insights</CardDescription>
-                    </div>
-                </div>
-            </CardHeader>
-            <CardContent className="pb-3 flex-1 flex flex-col">
-                <div className="flex flex-col gap-2 h-full">
+        <Card sx={{ 
+            height: '100%', 
+            display: 'flex', 
+            flexDirection: 'column',
+            position: 'relative',
+            overflow: 'hidden',
+            bgcolor: alpha(theme.palette.background.paper, 0.8),
+            backdropFilter: 'blur(12px)'
+        }}>
+            <CardHeader
+                title={
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                        <Box sx={{ p: 0.75, borderRadius: '50%', bgcolor: alpha(theme.palette.primary.main, 0.2), color: 'primary.main', display: 'flex' }}>
+                            <Wallet size={16} />
+                        </Box>
+                        <Box>
+                            <Typography variant="subtitle2" fontWeight="bold">Carteira Consolidada</Typography>
+                            <Typography variant="caption" color="text.secondary">Balanço total e insights</Typography>
+                        </Box>
+                    </Stack>
+                }
+                sx={{ pb: 1 }}
+            />
+            <CardContent sx={{ pb: 1.5, flex: 1, display: 'flex', flexDirection: 'column' }}>
+                <Stack spacing={2} sx={{ height: '100%' }}>
                     {/* Saldo Total */}
-                    <div className="space-y-0.5">
-                        <p className="text-xs text-muted-foreground">Saldo Total</p>
-                        <p className={cn("text-xl font-bold tracking-tight", (totalBalance || 0) >= 0 ? "text-foreground" : "text-destructive")}>
+                    <Box>
+                        <Typography variant="caption" color="text.secondary">Saldo Total</Typography>
+                        <Typography variant="h5" fontWeight="bold" color={(totalBalance || 0) >= 0 ? "text.primary" : "error.main"}>
                             R$ {(totalBalance || 0).toFixed(2)}
-                        </p>
-                    </div>
+                        </Typography>
+                    </Box>
                     
                     {/* Receitas e Despesas */}
-                    <div className="grid grid-cols-2 gap-2">
-                        <div className="flex items-center gap-1.5">
-                            <div className="p-1 rounded-full bg-emerald-500/10">
-                                <ArrowDown className="h-3 w-3 text-emerald-500" />
-                            </div>
-                            <div className="min-w-0">
-                                <p className="text-xs text-muted-foreground">Receitas</p>
-                                <p className="text-sm font-semibold text-emerald-500 truncate">
+                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                            <Box sx={{ p: 0.5, borderRadius: '50%', bgcolor: alpha(theme.palette.success.main, 0.1), display: 'flex' }}>
+                                <ArrowDown size={12} color={theme.palette.success.main} />
+                            </Box>
+                            <Box sx={{ minWidth: 0 }}>
+                                <Typography variant="caption" color="text.secondary" display="block">Receitas</Typography>
+                                <Typography variant="body2" fontWeight="bold" color="success.main" noWrap>
                                     +R$ {(totalIncome || 0).toFixed(2)}
-                                </p>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-1.5">
-                            <div className="p-1 rounded-full bg-red-500/10">
-                                <ArrowUp className="h-3 w-3 text-red-500" />
-                            </div>
-                            <div className="min-w-0">
-                                <p className="text-xs text-muted-foreground">Despesas</p>
-                                <p className="text-sm font-semibold text-red-500 truncate">
+                                </Typography>
+                            </Box>
+                        </Stack>
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                            <Box sx={{ p: 0.5, borderRadius: '50%', bgcolor: alpha(theme.palette.error.main, 0.1), display: 'flex' }}>
+                                <ArrowUp size={12} color={theme.palette.error.main} />
+                            </Box>
+                            <Box sx={{ minWidth: 0 }}>
+                                <Typography variant="caption" color="text.secondary" display="block">Despesas</Typography>
+                                <Typography variant="body2" fontWeight="bold" color="error.main" noWrap>
                                     -R$ {(totalExpense || 0).toFixed(2)}
-                                </p>
-                            </div>
-                        </div>
-                    </div>
+                                </Typography>
+                            </Box>
+                        </Stack>
+                    </Box>
                     
                     {/* Fluxo Líquido - compactado */}
-                    <div className="flex items-center justify-between p-1.5 rounded-lg bg-muted/50">
-                        <div className="flex items-center gap-1.5">
+                    <Box sx={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'space-between', 
+                        p: 1, 
+                        borderRadius: 1, 
+                        bgcolor: 'action.hover' 
+                    }}>
+                        <Stack direction="row" alignItems="center" spacing={1}>
                             {netFlow >= 0 ? (
-                                <TrendingUp className="h-3 w-3 text-emerald-500" />
+                                <TrendingUp size={12} color={theme.palette.success.main} />
                             ) : (
-                                <TrendingDown className="h-3 w-3 text-red-500" />
+                                <TrendingDown size={12} color={theme.palette.error.main} />
                             )}
-                            <span className="text-xs text-muted-foreground">Fluxo Líquido</span>
-                        </div>
-                        <span className={cn("text-sm font-semibold", (netFlow || 0) >= 0 ? "text-emerald-500" : "text-red-500")}>
+                            <Typography variant="caption" color="text.secondary">Fluxo Líquido</Typography>
+                        </Stack>
+                        <Typography variant="body2" fontWeight="bold" color={(netFlow || 0) >= 0 ? "success.main" : "error.main"}>
                             R$ {(netFlow || 0).toFixed(2)}
-                        </span>
-                    </div>
+                        </Typography>
+                    </Box>
                     
                     {/* Insights Adicionais - compactados */}
-                    <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div className="space-y-0.5">
-                            <div className="flex items-center gap-1">
-                                <BarChart3 className="h-3 w-3 text-muted-foreground" />
-                                <span className="text-muted-foreground">Gasto/Dia</span>
-                            </div>
-                            <p className="font-medium">R$ {(avgDailyExpense || 0).toFixed(2)}</p>
-                        </div>
-                        <div className="space-y-0.5">
-                            <div className="flex items-center gap-1">
-                                <PieChart className="h-3 w-3 text-muted-foreground" />
-                                <span className="text-muted-foreground">Taxa Economia</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                                <p className={cn("font-medium", savingsRate >= 0 ? "text-emerald-500" : "text-red-500")}>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+                        <Box>
+                            <Stack direction="row" alignItems="center" spacing={0.5}>
+                                <BarChart3 size={12} color={theme.palette.text.secondary} />
+                                <Typography variant="caption" color="text.secondary">Gasto/Dia</Typography>
+                            </Stack>
+                            <Typography variant="body2" fontWeight="medium">R$ {(avgDailyExpense || 0).toFixed(2)}</Typography>
+                        </Box>
+                        <Box>
+                            <Stack direction="row" alignItems="center" spacing={0.5}>
+                                <PieChart size={12} color={theme.palette.text.secondary} />
+                                <Typography variant="caption" color="text.secondary">Taxa Economia</Typography>
+                            </Stack>
+                            <Stack direction="row" alignItems="center" spacing={0.5}>
+                                <Typography variant="body2" fontWeight="medium" color={savingsRate >= 0 ? "success.main" : "error.main"}>
                                     {savingsRate.toFixed(1)}%
-                                </p>
-                                {savingsRate >= 20 && <Badge variant="secondary" className="text-xs px-1 py-0">Boa!</Badge>}
-                            </div>
-                        </div>
-                    </div>
+                                </Typography>
+                                {savingsRate >= 20 && (
+                                    <Chip label="Boa!" size="small" color="secondary" sx={{ height: 16, fontSize: '0.625rem', '& .MuiChip-label': { px: 0.5 } }} />
+                                )}
+                            </Stack>
+                        </Box>
+                    </Box>
                     
                     {/* Maior Categoria - compactada e no final */}
                     {topCategory && (
-                        <div className="p-1.5 rounded-lg border border-border/50 mt-auto">
-                            <div className="flex items-center justify-between">
-                                <div className="flex items-center gap-1.5">
-                                    <div className="w-2 h-2 rounded-full bg-primary"></div>
-                                    <span className="text-xs text-muted-foreground">Maior Gasto</span>
-                                </div>
-                                <span className="text-xs font-medium truncate ml-2">{topCategory[0]}</span>
-                            </div>
-                            <div className="mt-1 flex items-center justify-between">
-                                <Progress 
+                        <Box sx={{ p: 1, borderRadius: 1, border: 1, borderColor: 'divider', mt: 'auto' }}>
+                            <Stack direction="row" alignItems="center" justifyContent="space-between" mb={0.5}>
+                                <Stack direction="row" alignItems="center" spacing={0.5}>
+                                    <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: 'primary.main' }} />
+                                    <Typography variant="caption" color="text.secondary">Maior Gasto</Typography>
+                                </Stack>
+                                <Typography variant="caption" fontWeight="medium" noWrap sx={{ ml: 1 }}>{topCategory[0]}</Typography>
+                            </Stack>
+                            <Stack direction="row" alignItems="center" spacing={1}>
+                                <LinearProgress 
+                                    variant="determinate" 
                                     value={totalExpense > 0 ? (topCategory[1] / totalExpense) * 100 : 0} 
-                                    className="flex-1 h-1 mr-2" 
+                                    sx={{ flex: 1, height: 4, borderRadius: 2 }} 
                                 />
-                                <span className="text-xs font-semibold text-red-500 flex-shrink-0">
+                                <Typography variant="caption" fontWeight="bold" color="error.main">
                                     R$ {(topCategory[1] || 0).toFixed(2)}
-                                </span>
-                            </div>
-                        </div>
+                                </Typography>
+                            </Stack>
+                        </Box>
                     )}
-                </div>
+                </Stack>
             </CardContent>
         </Card>
     )

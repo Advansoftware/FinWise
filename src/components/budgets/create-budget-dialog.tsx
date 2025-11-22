@@ -8,27 +8,35 @@ import * as z from "zod";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+  DialogActions,
+  Button,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  FormHelperText,
+  CircularProgress,
+  Box,
+  Stack,
+  Typography,
+  useTheme,
+  alpha,
+  InputAdornment,
+  IconButton,
+  Tooltip
+} from '@mui/material';
 import { useToast } from "@/hooks/use-toast";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useBudgets } from "@/hooks/use-budgets";
 import { Budget, TransactionCategory } from "@/lib/types";
-import { Loader2, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { suggestBudgetAmountAction } from "@/services/ai-actions";
 import { useAuth } from "@/hooks/use-auth";
 import { subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { usePlan } from "@/hooks/use-plan";
 import { ProUpgradeButton } from "../pro-upgrade-button";
-import { Box, Stack } from '@mui/material';
 
 const budgetSchema = z.object({
   name: z.string().min(1, "O nome do orçamento é obrigatório."),
@@ -153,89 +161,117 @@ export function CreateBudgetDialog({ children, initialData }: CreateBudgetDialog
     }
   };
 
+  const theme = useTheme();
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{initialData ? "Editar Orçamento" : "Criar Novo Orçamento"}</DialogTitle>
-          <DialogDescription>
+    <>
+      <Box onClick={() => setIsOpen(true)} sx={{ display: 'inline-block' }}>
+        {children}
+      </Box>
+      <Dialog open={isOpen} onClose={() => setIsOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>
+          {initialData ? "Editar Orçamento" : "Criar Novo Orçamento"}
+        </DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
             Defina um limite de gastos para uma categoria específica neste mês.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', paddingTop: '1rem', paddingBottom: '1rem' }}>
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome do Orçamento</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Gastos com Comida" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="category"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Categoria</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione uma categoria" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
+          </Typography>
+          
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <Stack spacing={3} sx={{ mt: 1 }}>
+              <Controller
+                name="name"
+                control={form.control}
+                render={({ field, fieldState: { error } }) => (
+                  <TextField
+                    {...field}
+                    label="Nome do Orçamento"
+                    placeholder="Ex: Gastos com Comida"
+                    error={!!error}
+                    helperText={error?.message}
+                    fullWidth
+                  />
+                )}
+              />
+
+              <Controller
+                name="category"
+                control={form.control}
+                render={({ field, fieldState: { error } }) => (
+                  <FormControl fullWidth error={!!error}>
+                    <InputLabel>Categoria</InputLabel>
+                    <Select
+                      {...field}
+                      label="Categoria"
+                    >
                       {expenseCategories.map(cat => (
-                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                        <MenuItem key={cat} value={cat}>{cat}</MenuItem>
                       ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="amount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Valor Orçado (R$)</FormLabel>
-                   <Stack direction="row" alignItems="center" spacing={2}>
-                      <FormControl>
-                        <Input type="number" step="0.01" placeholder="Ex: 500.00" {...field} />
-                      </FormControl>
-                       <ProUpgradeButton requiredPlan="Plus" tooltipContent="Desbloqueie sugestões de orçamento com IA com o plano Plus.">
-                          <Button type="button" variant="outline" size="icon" onClick={handleSuggestion} disabled={isSuggesting || !selectedCategory || !isPlus}>
-                              {isSuggesting ? <Loader2 style={{ width: '1rem', height: '1rem' }} className="animate-spin"/> : <Sparkles style={{ width: '1rem', height: '1rem', color: 'var(--primary)' }} />}
-                          </Button>
-                      </ProUpgradeButton>
-                   </Stack>
-                   {suggestionJustification && isPlus && (
-                      <FormDescription>
-                        <Stack direction="row" alignItems="center" spacing={1.5} sx={{ color: 'rgba(var(--primary-rgb), 0.9)' }}>
-                          <Sparkles style={{ width: '0.75rem', height: '0.75rem' }}/>{suggestionJustification}
-                        </Stack>
-                      </FormDescription>
-                   )}
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} className="animate-spin" />}
+                    </Select>
+                    {error && <FormHelperText>{error.message}</FormHelperText>}
+                  </FormControl>
+                )}
+              />
+
+              <Controller
+                name="amount"
+                control={form.control}
+                render={({ field, fieldState: { error } }) => (
+                  <FormControl fullWidth error={!!error}>
+                     <Stack direction="row" spacing={1} alignItems="flex-start">
+                        <TextField
+                            {...field}
+                            label="Valor Orçado (R$)"
+                            type="number"
+                            placeholder="Ex: 500.00"
+                            fullWidth
+                            InputProps={{
+                                inputProps: { step: 0.01 }
+                            }}
+                            error={!!error}
+                            helperText={error?.message}
+                        />
+                         <ProUpgradeButton requiredPlan="Plus" tooltipContent="Desbloqueie sugestões de orçamento com IA com o plano Plus.">
+                            <Tooltip title="Sugestão de IA">
+                                <span>
+                                    <Button 
+                                        variant="outlined" 
+                                        sx={{ height: 56, minWidth: 56, p: 0 }}
+                                        onClick={handleSuggestion} 
+                                        disabled={isSuggesting || !selectedCategory || !isPlus}
+                                    >
+                                        {isSuggesting ? <CircularProgress size={20} /> : <Sparkles size={20} style={{ color: theme.palette.primary.main }} />}
+                                    </Button>
+                                </span>
+                            </Tooltip>
+                        </ProUpgradeButton>
+                     </Stack>
+                     {suggestionJustification && isPlus && (
+                        <FormHelperText sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: 'primary.main', mt: 1 }}>
+                           <Sparkles size={12} /> {suggestionJustification}
+                        </FormHelperText>
+                     )}
+                  </FormControl>
+                )}
+              />
+            </Stack>
+            
+            <DialogActions sx={{ p: 0, mt: 3 }}>
+              <Button onClick={() => setIsOpen(false)} disabled={isSubmitting} color="inherit">
+                Cancelar
+              </Button>
+              <Button 
+                type="submit" 
+                variant="contained" 
+                disabled={isSubmitting}
+                startIcon={isSubmitting ? <CircularProgress size={16} color="inherit" /> : null}
+              >
                 {initialData ? "Salvar Alterações" : "Criar Orçamento"}
               </Button>
-            </DialogFooter>
+            </DialogActions>
           </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

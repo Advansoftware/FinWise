@@ -4,22 +4,24 @@
 import { useState, useEffect } from "react";
 import { z } from "zod";
 import { TransactionCategory } from "@/lib/types";
+
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+  DialogActions,
+  Button,
+  Box,
+  Stack,
+  Typography,
+  CircularProgress,
+  useTheme,
+  alpha
+} from '@mui/material';
 import { useToast } from "@/hooks/use-toast";
 import { useBudgets } from "@/hooks/use-budgets";
-import { Loader2, Sparkles, CheckCircle, Circle } from "lucide-react";
+import { Sparkles, CheckCircle, Circle } from "lucide-react";
 import { BudgetItemSchema } from "@/ai/ai-types";
-import { ScrollArea } from "../ui/scroll-area";
-import { Input } from "../ui/input";
-import { Box, Stack, Typography } from '@mui/material';
 
 type SuggestedBudget = z.infer<typeof BudgetItemSchema>;
 
@@ -73,62 +75,67 @@ export function AutomaticBudgetDialog({ isOpen, setIsOpen, suggestedBudgets }: A
     }
   }
 
+  const theme = useTheme();
+
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent sx={{ maxWidth: '28rem' }}>
-        <DialogHeader>
-          <DialogTitle>
-            <Stack direction="row" alignItems="center" spacing={2}>
-              <Sparkles style={{ color: 'var(--primary)' }}/> Orçamentos Sugeridos
-            </Stack>
-          </DialogTitle>
-          <DialogDescription>
-            A IA analisou seus gastos e sugere os seguintes orçamentos. Selecione quais você quer criar.
-          </DialogDescription>
-        </DialogHeader>
+    <Dialog open={isOpen} onClose={() => setIsOpen(false)} maxWidth="sm" fullWidth>
+      <DialogTitle>
+        <Stack direction="row" alignItems="center" spacing={1.5}>
+          <Sparkles style={{ width: '1.25rem', height: '1.25rem', color: theme.palette.primary.main }}/> 
+          Orçamentos Sugeridos
+        </Stack>
+      </DialogTitle>
+      <DialogContent>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          A IA analisou seus gastos e sugere os seguintes orçamentos. Selecione quais você quer criar.
+        </Typography>
         
-        <ScrollArea sx={{ maxHeight: '20rem', my: 4 }}>
-          <Stack spacing={3} sx={{ pr: 4 }}>
+        <Box sx={{ maxHeight: '20rem', overflowY: 'auto', pr: 1 }}>
+          <Stack spacing={2}>
              {suggestedBudgets.map((budget, index) => {
                 const isSelected = selectedBudgets.some(b => b.category === budget.category);
                 return (
                     <Stack key={index} onClick={() => handleToggleSelection(budget)}
-                      direction="row" alignItems="center" spacing={4}
+                      direction="row" alignItems="center" spacing={2}
                       sx={{
-                        p: 3,
-                        borderRadius: 2,
+                        p: 2,
+                        borderRadius: 1,
                         border: 1,
                         cursor: 'pointer',
-                        transition: 'colors 0.2s',
-                        ...(isSelected ? {
-                          bgcolor: 'rgba(var(--primary-rgb), 0.1)',
-                          borderColor: 'rgba(var(--primary-rgb), 0.5)'
-                        } : {
-                          bgcolor: 'rgba(var(--muted-rgb), 0.5)',
-                          '&:hover': { bgcolor: 'action.hover' }
-                        })
+                        transition: 'all 0.2s',
+                        borderColor: isSelected ? alpha(theme.palette.primary.main, 0.5) : 'divider',
+                        bgcolor: isSelected ? alpha(theme.palette.primary.main, 0.05) : 'transparent',
+                        '&:hover': { 
+                            bgcolor: isSelected ? alpha(theme.palette.primary.main, 0.1) : 'action.hover' 
+                        }
                       }}
                     >
-                      {isSelected ? <CheckCircle style={{ width: '1.25rem', height: '1.25rem', color: 'var(--primary)' }}/> : <Circle style={{ width: '1.25rem', height: '1.25rem', color: 'var(--muted-foreground)' }}/>}
+                      {isSelected ? 
+                        <CheckCircle style={{ width: '1.25rem', height: '1.25rem', color: theme.palette.primary.main }}/> : 
+                        <Circle style={{ width: '1.25rem', height: '1.25rem', color: theme.palette.text.secondary }}/>
+                      }
                       <Box sx={{ flex: 1 }}>
-                        <Typography variant="body1" sx={{ fontWeight: 600 }}>{budget.name}</Typography>
-                        <Typography variant="body2" sx={{ fontSize: '0.875rem', color: 'text.secondary' }}>{budget.category}</Typography>
+                        <Typography variant="subtitle2">{budget.name}</Typography>
+                        <Typography variant="caption" color="text.secondary">{budget.category}</Typography>
                       </Box>
-                      <Typography variant="h6" sx={{ fontWeight: 700, fontSize: '1.125rem' }}>R$ {budget.amount.toFixed(2)}</Typography>
+                      <Typography variant="subtitle1" fontWeight="bold">R$ {budget.amount.toFixed(2)}</Typography>
                     </Stack>
                 )
              })}
           </Stack>
-        </ScrollArea>
-       
-        <DialogFooter>
-            <Button variant="ghost" onClick={() => setIsOpen(false)} disabled={isSaving}>Cancelar</Button>
-            <Button onClick={handleCreateBudgets} disabled={isSaving || selectedBudgets.length === 0}>
-                {isSaving && <Loader2 style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} className="animate-spin" />}
-                Criar {selectedBudgets.length} Orçamentos
-            </Button>
-        </DialogFooter>
+        </Box>
       </DialogContent>
+      <DialogActions sx={{ p: 3, pt: 0 }}>
+          <Button onClick={() => setIsOpen(false)} disabled={isSaving} color="inherit">Cancelar</Button>
+          <Button 
+            variant="contained"
+            onClick={handleCreateBudgets} 
+            disabled={isSaving || selectedBudgets.length === 0}
+            startIcon={isSaving ? <CircularProgress size={16} color="inherit" /> : null}
+          >
+              {isSaving ? 'Criando...' : `Criar ${selectedBudgets.length} Orçamentos`}
+          </Button>
+      </DialogActions>
     </Dialog>
   );
 }

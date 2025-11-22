@@ -1,14 +1,26 @@
 // src/components/budgets/budget-guidance.tsx
 
 import React, { useState, useMemo } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  Typography, 
+  Button, 
+  TextField, 
+  LinearProgress, 
+  Chip, 
+  Divider, 
+  Alert, 
+  AlertTitle, 
+  Box, 
+  Stack, 
+  Paper,
+  useTheme,
+  alpha,
+  InputAdornment,
+  Checkbox
+} from '@mui/material';
 import { 
   Calculator, 
   TrendingUp, 
@@ -27,7 +39,6 @@ import {
   Target
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
-import { cn } from "@/lib/utils";
 
 interface BudgetCategory {
   id: string;
@@ -247,262 +258,255 @@ export function BudgetGuidance({ onBudgetCreated }: BudgetGuidanceProps) {
     onBudgetCreated?.(budgetPlan);
   };
 
+  const theme = useTheme();
+
   return (
-    <div className="space-y-6">
+    <Stack spacing={3}>
       {/* Calculadora de Renda */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calculator className="h-5 w-5" />
-            Calculadora de Orçamento
-          </CardTitle>
-          <CardDescription>
-            Informe seus dados para receber um orçamento personalizado baseado na sua situação
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <Label htmlFor="income">Renda Líquida Mensal</Label>
-              <Input
-                id="income"
+        <CardHeader
+          title={
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Calculator style={{ width: 20, height: 20 }} />
+              <Typography variant="h6">Calculadora de Orçamento</Typography>
+            </Stack>
+          }
+          subheader="Informe seus dados para receber um orçamento personalizado baseado na sua situação"
+        />
+        <CardContent>
+          <Stack spacing={3}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 2 }}>
+              <TextField
+                label="Renda Líquida Mensal"
                 type="number"
                 placeholder="3100"
                 value={income}
                 onChange={(e) => setIncome(e.target.value)}
+                fullWidth
               />
-            </div>
-            <div>
-              <Label htmlFor="debts">Dívidas/Empréstimos Mensais</Label>
-              <Input
-                id="debts"
+              <TextField
+                label="Dívidas/Empréstimos Mensais"
                 type="number"
                 placeholder="1800"
                 value={debts}
                 onChange={(e) => setDebts(e.target.value)}
+                fullWidth
               />
-            </div>
-            <div>
-              <Label htmlFor="fixed">Gastos Fixos (Aluguel + Contas)</Label>
-              <Input
-                id="fixed"
+              <TextField
+                label="Gastos Fixos (Aluguel + Contas)"
                 type="number"
                 placeholder="1400"
                 value={fixedExpenses}
                 onChange={(e) => setFixedExpenses(e.target.value)}
+                fullWidth
               />
-            </div>
-          </div>
+            </Box>
 
-          {/* Cenário Futuro */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="future-scenario"
-                checked={showFutureScenario}
-                onChange={(e) => setShowFutureScenario(e.target.checked)}
-              />
-              <Label htmlFor="future-scenario" className="text-sm font-medium">
-                Planejar cenário futuro (mudança de renda)
-              </Label>
-            </div>
-            
-            {showFutureScenario && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-blue-50 dark:bg-blue-950/20">
-                <div>
-                  <Label htmlFor="future-income">Renda Futura</Label>
-                  <Input
-                    id="future-income"
-                    type="number"
-                    placeholder="5333"
-                    value={futureIncome}
-                    onChange={(e) => setFutureIncome(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="future-date">A partir de quando?</Label>
-                  <Input
-                    id="future-date"
-                    type="text"
-                    placeholder="Janeiro 2026"
-                    value={futureDate}
-                    onChange={(e) => setFutureDate(e.target.value)}
-                  />
-                </div>
-              </div>
+            {/* Cenário Futuro */}
+            <Stack spacing={2}>
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <Checkbox
+                  id="future-scenario"
+                  checked={showFutureScenario}
+                  onChange={(e) => setShowFutureScenario(e.target.checked)}
+                />
+                <Typography component="label" htmlFor="future-scenario" variant="body2" fontWeight="medium" sx={{ cursor: 'pointer' }}>
+                  Planejar cenário futuro (mudança de renda)
+                </Typography>
+              </Stack>
+              
+              {showFutureScenario && (
+                <Paper variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.info.main, 0.05), borderColor: alpha(theme.palette.info.main, 0.2) }}>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2 }}>
+                    <TextField
+                      label="Renda Futura"
+                      type="number"
+                      placeholder="5333"
+                      value={futureIncome}
+                      onChange={(e) => setFutureIncome(e.target.value)}
+                      fullWidth
+                      size="small"
+                    />
+                    <TextField
+                      label="A partir de quando?"
+                      placeholder="Janeiro 2026"
+                      value={futureDate}
+                      onChange={(e) => setFutureDate(e.target.value)}
+                      fullWidth
+                      size="small"
+                    />
+                  </Box>
+                </Paper>
+              )}
+            </Stack>
+
+            {numericIncome > 0 && (
+              <Paper variant="outlined" sx={{ p: 2, bgcolor: 'action.hover' }}>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 2, textAlign: 'center' }}>
+                  <Box>
+                    <Typography variant="h5" fontWeight="bold" color="success.main">
+                      {formatCurrency(numericIncome)}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">Renda Total</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="h5" fontWeight="bold" color="error.main">
+                      {formatCurrency(numericDebts)}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">Dívidas</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="h5" fontWeight="bold" color="info.main">
+                      {formatCurrency(availableIncome)}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">Renda Disponível</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="h5" fontWeight="bold" color={remainingAfterFixed >= 0 ? "success.main" : "error.main"}>
+                      {formatCurrency(remainingAfterFixed)}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">Após Gastos Fixos</Typography>
+                  </Box>
+                </Box>
+              </Paper>
             )}
-          </div>
-
-          {numericIncome > 0 && (
-            <div className="mt-4 p-4 bg-muted rounded-lg">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                <div>
-                  <p className="text-2xl font-bold text-green-600">
-                    {formatCurrency(numericIncome)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Renda Total</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-red-500">
-                    {formatCurrency(numericDebts)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Dívidas</p>
-                </div>
-                <div>
-                  <p className="text-2xl font-bold text-blue-600">
-                    {formatCurrency(availableIncome)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Renda Disponível</p>
-                </div>
-                <div>
-                  <p className={cn(
-                    "text-2xl font-bold",
-                    remainingAfterFixed >= 0 ? "text-green-600" : "text-red-500"
-                  )}>
-                    {formatCurrency(remainingAfterFixed)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Após Gastos Fixos</p>
-                </div>
-              </div>
-            </div>
-          )}
+          </Stack>
         </CardContent>
       </Card>
 
       {/* Status do Orçamento */}
       {numericIncome > 0 && (
-        <Alert className={cn(
-          statusInfo.color === 'destructive' && "border-red-200 bg-red-50 text-red-800"
-        )}>
-          <AlertTriangle className="h-4 w-4" />
+        <Alert severity={statusInfo.color === 'destructive' ? 'error' : 'info'} icon={<AlertTriangle />}>
           <AlertTitle>{statusInfo.title}</AlertTitle>
-          <AlertDescription className="mt-2">
-            <p className="mb-2">{statusInfo.description}</p>
-            <div className="space-y-1">
-              <p className="font-semibold">Estratégias recomendadas:</p>
-              <ul className="list-disc list-inside space-y-1">
-                {statusInfo.suggestions.map((suggestion, index) => (
-                  <li key={index} className="text-sm">{suggestion}</li>
-                ))}
-              </ul>
-            </div>
-          </AlertDescription>
+          <Box sx={{ mt: 1 }}>
+            <Typography variant="body2" paragraph>{statusInfo.description}</Typography>
+            <Typography variant="subtitle2" gutterBottom>Estratégias recomendadas:</Typography>
+            <Box component="ul" sx={{ pl: 2, m: 0 }}>
+              {statusInfo.suggestions.map((suggestion, index) => (
+                <Typography component="li" variant="body2" key={index}>{suggestion}</Typography>
+              ))}
+            </Box>
+          </Box>
         </Alert>
       )}
 
       {/* Distribuição por Categorias */}
       {availableIncome > 0 && (
         <Card>
-          <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2">
-                  <Target className="h-5 w-5" />
-                  Distribuição Recomendada
-                </CardTitle>
-                <CardDescription>
-                  Percentuais sugeridos baseados na sua situação financeira
-                </CardDescription>
-              </div>
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  onClick={() => setShowAdvanced(!showAdvanced)}
-                >
-                  {showAdvanced ? 'Simples' : 'Avançado'}
-                </Button>
-                <Button variant="outline" size="sm" onClick={resetToDefaults}>
-                  Resetar
-                </Button>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid gap-4">
-              {adjustedCategories.map((category) => {
-                const amount = (availableIncome * category.percentage) / 100;
-                const Icon = category.icon;
-                
-                return (
-                  <div key={category.id} className="flex items-center gap-4 p-3 border rounded-lg">
-                    <div className={cn("p-2 rounded-lg text-white", category.color)}>
-                      <Icon className="h-4 w-4" />
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <h4 className="font-medium">{category.name}</h4>
-                        <Badge variant={
-                          category.priority === 'essential' ? 'destructive' :
-                          category.priority === 'important' ? 'default' : 'secondary'
-                        }>
-                          {category.priority === 'essential' ? 'Essencial' :
-                           category.priority === 'important' ? 'Importante' : 'Opcional'}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground">{category.description}</p>
-                    </div>
-                    
-                    <div className="text-right">
-                      {showAdvanced ? (
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="number"
-                            value={category.percentage.toFixed(1)}
-                            onChange={(e) => updateCategoryPercentage(category.id, parseFloat(e.target.value))}
-                            className="w-16 h-8"
-                            min="0"
-                            max="100"
-                            step="0.1"
+          <CardHeader
+            title={
+              <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Target style={{ width: 20, height: 20 }} />
+                  <Typography variant="h6">Distribuição Recomendada</Typography>
+                </Stack>
+                <Stack direction="row" spacing={1}>
+                  <Button 
+                    variant="outlined" 
+                    size="small"
+                    onClick={() => setShowAdvanced(!showAdvanced)}
+                  >
+                    {showAdvanced ? 'Simples' : 'Avançado'}
+                  </Button>
+                  <Button variant="outlined" size="small" onClick={resetToDefaults}>
+                    Resetar
+                  </Button>
+                </Stack>
+              </Stack>
+            }
+            subheader="Percentuais sugeridos baseados na sua situação financeira"
+          />
+          <CardContent>
+            <Stack spacing={2}>
+              <Stack spacing={2}>
+                {adjustedCategories.map((category) => {
+                  const amount = (availableIncome * category.percentage) / 100;
+                  const Icon = category.icon;
+                  
+                  return (
+                    <Paper key={category.id} variant="outlined" sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Box sx={{ 
+                        p: 1, 
+                        borderRadius: 1, 
+                        bgcolor: category.color.replace('bg-', '').replace('-500', '.main').replace('-600', '.dark'), // This is a hack, ideally use theme colors or map properly
+                        color: 'white',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}>
+                        <Icon style={{ width: 16, height: 16 }} />
+                      </Box>
+                      
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                          <Typography variant="subtitle2">{category.name}</Typography>
+                          <Chip 
+                            label={category.priority === 'essential' ? 'Essencial' : category.priority === 'important' ? 'Importante' : 'Opcional'} 
+                            size="small"
+                            color={category.priority === 'essential' ? 'error' : category.priority === 'important' ? 'primary' : 'default'}
+                            variant="outlined"
                           />
-                          <span className="text-sm text-muted-foreground">%</span>
-                        </div>
-                      ) : (
-                        <p className="text-sm font-medium">{category.percentage.toFixed(1)}%</p>
-                      )}
-                      <p className="text-lg font-bold">{formatCurrency(amount)}</p>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                        </Stack>
+                        <Typography variant="caption" color="text.secondary">{category.description}</Typography>
+                      </Box>
+                      
+                      <Box sx={{ textAlign: 'right' }}>
+                        {showAdvanced ? (
+                          <Stack direction="row" alignItems="center" spacing={1}>
+                            <TextField
+                              type="number"
+                              value={category.percentage.toFixed(1)}
+                              onChange={(e) => updateCategoryPercentage(category.id, parseFloat(e.target.value))}
+                              size="small"
+                              sx={{ width: 80 }}
+                              inputProps={{ min: 0, max: 100, step: 0.1 }}
+                              InputProps={{
+                                endAdornment: <InputAdornment position="end">%</InputAdornment>,
+                              }}
+                            />
+                          </Stack>
+                        ) : (
+                          <Typography variant="subtitle2">{category.percentage.toFixed(1)}%</Typography>
+                        )}
+                        <Typography variant="h6" fontWeight="bold">{formatCurrency(amount)}</Typography>
+                      </Box>
+                    </Paper>
+                  );
+                })}
+              </Stack>
 
-            <Separator />
+              <Divider />
 
-            <div className="flex items-center justify-between p-3 bg-muted rounded-lg">
-              <span className="font-semibold">Total:</span>
-              <div className="text-right">
-                <p className={cn(
-                  "text-sm",
-                  Math.abs(totalPercentage - 100) > 0.1 ? "text-red-500" : "text-muted-foreground"
-                )}>
-                  {totalPercentage.toFixed(1)}%
-                </p>
-                <p className="text-lg font-bold">{formatCurrency(availableIncome)}</p>
-              </div>
-            </div>
+              <Paper variant="outlined" sx={{ p: 2, bgcolor: 'action.hover', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Typography variant="subtitle1" fontWeight="bold">Total:</Typography>
+                <Box sx={{ textAlign: 'right' }}>
+                  <Typography 
+                    variant="body2" 
+                    color={Math.abs(totalPercentage - 100) > 0.1 ? "error.main" : "text.secondary"}
+                  >
+                    {totalPercentage.toFixed(1)}%
+                  </Typography>
+                  <Typography variant="h6" fontWeight="bold">{formatCurrency(availableIncome)}</Typography>
+                </Box>
+              </Paper>
 
-            {Math.abs(totalPercentage - 100) > 0.1 && (
-              <Alert>
-                <InfoIcon className="h-4 w-4" />
-                <AlertDescription>
+              {Math.abs(totalPercentage - 100) > 0.1 && (
+                <Alert severity="warning" icon={<InfoIcon />}>
+                  <AlertTitle>Atenção</AlertTitle>
                   Os percentuais devem somar 100%. Atualmente: {totalPercentage.toFixed(1)}%
-                </AlertDescription>
-              </Alert>
-            )}
+                </Alert>
+              )}
 
-            <div className="flex gap-2">
               <Button 
+                variant="contained"
                 onClick={createBudgetsFromPlan}
                 disabled={Math.abs(totalPercentage - 100) > 0.1}
-                className="flex-1"
+                startIcon={<CheckCircle />}
+                fullWidth
               >
-                <CheckCircle className="mr-2 h-4 w-4" />
                 Criar Orçamentos
               </Button>
-            </div>
+            </Stack>
           </CardContent>
         </Card>
       )}
@@ -510,131 +514,134 @@ export function BudgetGuidance({ onBudgetCreated }: BudgetGuidanceProps) {
       {/* Cenário Futuro */}
       {showFutureScenario && numericFutureIncome > 0 && (
         <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="h-5 w-5" />
-              Cenário Futuro: {futureDate}
-            </CardTitle>
-            <CardDescription>
-              Como ficará seu orçamento quando a renda mudar para {formatCurrency(numericFutureIncome)}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center p-4 bg-muted rounded-lg">
-              <div>
-                <p className="text-2xl font-bold text-green-600">
-                  {formatCurrency(numericFutureIncome)}
-                </p>
-                <p className="text-xs text-muted-foreground">Renda Futura</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-blue-600">
-                  {formatCurrency(futureAvailableIncome)}
-                </p>
-                <p className="text-xs text-muted-foreground">Disponível</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-emerald-600">
-                  {formatCurrency(futureAvailableIncome - numericFixed)}
-                </p>
-                <p className="text-xs text-muted-foreground">Após Gastos Fixos</p>
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-purple-600">
-                  {formatCurrency(futureAvailableIncome - availableIncome)}
-                </p>
-                <p className="text-xs text-muted-foreground">Diferença</p>
-              </div>
-            </div>
+          <CardHeader
+            title={
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <TrendingUp style={{ width: 20, height: 20 }} />
+                <Typography variant="h6">Cenário Futuro: {futureDate}</Typography>
+              </Stack>
+            }
+            subheader={`Como ficará seu orçamento quando a renda mudar para ${formatCurrency(numericFutureIncome)}`}
+          />
+          <CardContent>
+            <Stack spacing={3}>
+              <Paper variant="outlined" sx={{ p: 2, bgcolor: 'action.hover' }}>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 2, textAlign: 'center' }}>
+                  <Box>
+                    <Typography variant="h5" fontWeight="bold" color="success.main">
+                      {formatCurrency(numericFutureIncome)}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">Renda Futura</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="h5" fontWeight="bold" color="info.main">
+                      {formatCurrency(futureAvailableIncome)}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">Disponível</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="h5" fontWeight="bold" color="success.dark">
+                      {formatCurrency(futureAvailableIncome - numericFixed)}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">Após Gastos Fixos</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="h5" fontWeight="bold" color="secondary.main">
+                      {formatCurrency(futureAvailableIncome - availableIncome)}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">Diferença</Typography>
+                  </Box>
+                </Box>
+              </Paper>
 
-            <div className="space-y-3">
-              <h4 className="font-semibold">Recomendações para o cenário futuro:</h4>
-              <div className="grid gap-2">
-                {futureAvailableIncome > availableIncome ? (
-                  <>
-                    <div className="p-3 border-l-4 border-green-500 bg-green-50 dark:bg-green-950/20">
-                      <p className="text-sm text-green-700 dark:text-green-300">
-                        <strong>✅ Aumento de {formatCurrency(futureAvailableIncome - availableIncome)}</strong>
-                        <br />
-                        Priorize: Reserva de emergência (20%), investimentos (15%), e melhore qualidade de vida moderadamente.
-                      </p>
-                    </div>
-                    <div className="p-3 border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-950/20">
-                      <p className="text-sm text-blue-700 dark:text-blue-300">
-                        <strong>💡 Sugestão de distribuição futura:</strong>
-                        <br />
-                        Moradia: {((numericFixed / futureAvailableIncome) * 100).toFixed(1)}% • 
-                        Poupança: 20% • Lazer: 15% • Alimentação: 20%
-                      </p>
-                    </div>
-                  </>
-                ) : (
-                  <div className="p-3 border-l-4 border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20">
-                    <p className="text-sm text-yellow-700 dark:text-yellow-300">
-                      <strong>⚠️ Redução de renda prevista</strong>
-                      <br />
-                      Prepare-se: Aumente reservas agora, renegocie dívidas, considere reduzir gastos fixos.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
+              <Stack spacing={2}>
+                <Typography variant="subtitle1" fontWeight="bold">Recomendações para o cenário futuro:</Typography>
+                <Stack spacing={2}>
+                  {futureAvailableIncome > availableIncome ? (
+                    <>
+                      <Paper variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.success.main, 0.1), borderColor: alpha(theme.palette.success.main, 0.3), borderLeftWidth: 4, borderLeftStyle: 'solid' }}>
+                        <Typography variant="body2" color="success.dark">
+                          <Box component="strong" display="block">✅ Aumento de {formatCurrency(futureAvailableIncome - availableIncome)}</Box>
+                          Priorize: Reserva de emergência (20%), investimentos (15%), e melhore qualidade de vida moderadamente.
+                        </Typography>
+                      </Paper>
+                      <Paper variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.info.main, 0.1), borderColor: alpha(theme.palette.info.main, 0.3), borderLeftWidth: 4, borderLeftStyle: 'solid' }}>
+                        <Typography variant="body2" color="info.dark">
+                          <Box component="strong" display="block">💡 Sugestão de distribuição futura:</Box>
+                          Moradia: {((numericFixed / futureAvailableIncome) * 100).toFixed(1)}% • 
+                          Poupança: 20% • Lazer: 15% • Alimentação: 20%
+                        </Typography>
+                      </Paper>
+                    </>
+                  ) : (
+                    <Paper variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.warning.main, 0.1), borderColor: alpha(theme.palette.warning.main, 0.3), borderLeftWidth: 4, borderLeftStyle: 'solid' }}>
+                      <Typography variant="body2" color="warning.dark">
+                        <Box component="strong" display="block">⚠️ Redução de renda prevista</Box>
+                        Prepare-se: Aumente reservas agora, renegocie dívidas, considere reduzir gastos fixos.
+                      </Typography>
+                    </Paper>
+                  )}
+                </Stack>
+              </Stack>
+            </Stack>
           </CardContent>
         </Card>
       )}
 
       {/* Dicas Extras */}
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Lightbulb className="h-5 w-5" />
-            Dicas para Situações Específicas
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid gap-4">
-            <div className="p-4 border-l-4 border-yellow-500 bg-yellow-50 dark:bg-yellow-950/20">
-              <h4 className="font-semibold text-yellow-800 dark:text-yellow-200">
+        <CardHeader
+          title={
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Lightbulb style={{ width: 20, height: 20 }} />
+              <Typography variant="h6">Dicas para Situações Específicas</Typography>
+            </Stack>
+          }
+        />
+        <CardContent>
+          <Stack spacing={2}>
+            <Paper variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.warning.main, 0.1), borderColor: alpha(theme.palette.warning.main, 0.3), borderLeftWidth: 4, borderLeftStyle: 'solid' }}>
+              <Typography variant="subtitle2" color="warning.dark" gutterBottom>
                 🏠 Quando aluguel + contas passam de 40% da renda
-              </h4>
-              <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
+              </Typography>
+              <Typography variant="body2" color="warning.dark">
                 Considere dividir o aluguel, negociar com proprietário ou buscar um local mais barato. 
                 Acima de 40% compromete muito o orçamento familiar.
-              </p>
-            </div>
+              </Typography>
+            </Paper>
 
-            <div className="p-4 border-l-4 border-red-500 bg-red-50 dark:bg-red-950/20">
-              <h4 className="font-semibold text-red-800 dark:text-red-200">
+            <Paper variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.error.main, 0.1), borderColor: alpha(theme.palette.error.main, 0.3), borderLeftWidth: 4, borderLeftStyle: 'solid' }}>
+              <Typography variant="subtitle2" color="error.dark" gutterBottom>
                 💳 Quando empréstimos passam de 30% da renda
-              </h4>
-              <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+              </Typography>
+              <Typography variant="body2" color="error.dark">
                 Priorize renegociar para alongar parcelas. Mesmo aumentando o prazo total, 
                 é melhor que quebrar o orçamento mensal e acumular mais dívidas.
-              </p>
-            </div>
+              </Typography>
+            </Paper>
 
-            <div className="p-4 border-l-4 border-blue-500 bg-blue-50 dark:bg-blue-950/20">
-              <h4 className="font-semibold text-blue-800 dark:text-blue-200">
+            <Paper variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.info.main, 0.1), borderColor: alpha(theme.palette.info.main, 0.3), borderLeftWidth: 4, borderLeftStyle: 'solid' }}>
+              <Typography variant="subtitle2" color="info.dark" gutterBottom>
                 📊 Analisando seus gastos históricos
-              </h4>
-              <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+              </Typography>
+              <Typography variant="body2" color="info.dark">
                 Use suas transações passadas para identificar padrões reais de gasto. 
                 Muitas vezes gastamos mais em determinadas categorias do que imaginamos.
-              </p>
-            </div>
+              </Typography>
+            </Paper>
 
-            <div className="p-4 border-l-4 border-green-500 bg-green-50 dark:bg-green-950/20">
-              <h4 className="font-semibold text-green-800 dark:text-green-200">
+            <Paper variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.success.main, 0.1), borderColor: alpha(theme.palette.success.main, 0.3), borderLeftWidth: 4, borderLeftStyle: 'solid' }}>
+              <Typography variant="subtitle2" color="success.dark" gutterBottom>
                 💰 Regra 50/30/20 para situações normais
-              </h4>
-              <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+              </Typography>
+              <Typography variant="body2" color="success.dark">
                 50% necessidades, 30% desejos, 20% poupança. Mas adapte à sua realidade: 
                 se está endividado, priorize quitação antes de focar em poupança.
-              </p>
-            </div>
-          </div>
+              </Typography>
+            </Paper>
+          </Stack>
         </CardContent>
       </Card>
-    </div>
+    </Stack>
   );
 }

@@ -1,9 +1,17 @@
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  Typography, 
+  Skeleton, 
+  Box, 
+  Stack, 
+  useTheme 
+} from '@mui/material';
 import { DollarSign, TrendingUp, TrendingDown, PieChart, Trophy } from "lucide-react";
 import { Transaction } from "@/lib/types";
 import { Area, AreaChart, ResponsiveContainer, Tooltip } from "recharts";
 import { useGamification } from "@/hooks/use-gamification";
-import { Skeleton } from "../ui/skeleton";
 
 interface StatsCardsProps {
   transactions: Transaction[];
@@ -62,6 +70,7 @@ const ChartSparkline = ({ data, positiveColor, negativeColor }: { data: any[], p
 )};
 
 export function StatsCards({ transactions }: StatsCardsProps) {
+  const theme = useTheme();
   const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
   const totalExpense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
   const balance = totalIncome - totalExpense;
@@ -90,60 +99,80 @@ export function StatsCards({ transactions }: StatsCardsProps) {
   return (
     <>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-4">
-          <CardTitle className="text-xs font-medium">Balanço do Período</CardTitle>
-          <DollarSign className="h-3.5 w-3.5 text-muted-foreground" />
-        </CardHeader>
-        <CardContent className="p-4 pt-0">
-          <div className="text-xl font-bold">R$ {(balance || 0).toFixed(2)}</div>
-          <p className="text-xs text-muted-foreground">Receitas vs Despesas no período</p>
-           <div className="mt-2 h-[35px]">
-             <ChartSparkline data={balanceSparklineData} positiveColor="hsl(var(--primary))" negativeColor="hsl(var(--destructive))" />
-           </div>
+        <CardHeader
+          title={
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <Typography variant="subtitle2" fontWeight="medium">Balanço do Período</Typography>
+              <DollarSign style={{ width: 14, height: 14, color: theme.palette.text.secondary }} />
+            </Stack>
+          }
+          sx={{ pb: 1 }}
+        />
+        <CardContent sx={{ pt: 0 }}>
+          <Typography variant="h5" fontWeight="bold">R$ {(balance || 0).toFixed(2)}</Typography>
+          <Typography variant="caption" color="text.secondary">Receitas vs Despesas no período</Typography>
+           <Box sx={{ mt: 2, height: 35 }}>
+             <ChartSparkline data={balanceSparklineData} positiveColor={theme.palette.primary.main} negativeColor={theme.palette.error.main} />
+           </Box>
         </CardContent>
       </Card>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-4">
-          <CardTitle className="text-xs font-medium">Total de Receitas</CardTitle>
-          <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />
-        </CardHeader>
-        <CardContent className="p-4 pt-0">
-          <div className="text-xl font-bold text-emerald-500">+ R$ {(totalIncome || 0).toFixed(2)}</div>
-          <p className="text-xs text-muted-foreground">Total de entradas no período</p>
-           <div className="mt-2 h-[35px]">
-             <ChartSparkline data={incomeSparklineData} positiveColor="hsl(var(--chart-2))" negativeColor="hsl(var(--chart-2))" />
-           </div>
+        <CardHeader
+          title={
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <Typography variant="subtitle2" fontWeight="medium">Total de Receitas</Typography>
+              <TrendingUp style={{ width: 14, height: 14, color: theme.palette.success.main }} />
+            </Stack>
+          }
+          sx={{ pb: 1 }}
+        />
+        <CardContent sx={{ pt: 0 }}>
+          <Typography variant="h5" fontWeight="bold" color="success.main">+ R$ {(totalIncome || 0).toFixed(2)}</Typography>
+          <Typography variant="caption" color="text.secondary">Total de entradas no período</Typography>
+           <Box sx={{ mt: 2, height: 35 }}>
+             <ChartSparkline data={incomeSparklineData} positiveColor={theme.palette.success.main} negativeColor={theme.palette.success.main} />
+           </Box>
         </CardContent>
       </Card>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-4">
-          <CardTitle className="text-xs font-medium">Total de Despesas</CardTitle>
-          <TrendingDown className="h-3.5 w-3.5 text-red-500" />
-        </CardHeader>
-        <CardContent className="p-4 pt-0">
-           <div className="text-xl font-bold text-red-500">- R$ {(totalExpense || 0).toFixed(2)}</div>
-           <p className="text-xs text-muted-foreground">Total de saídas no período</p>
-           <div className="mt-2 h-[35px]">
-              <ChartSparkline data={expenseSparklineData} positiveColor="hsl(var(--destructive))" negativeColor="hsl(var(--destructive))" />
-           </div>
+        <CardHeader
+          title={
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <Typography variant="subtitle2" fontWeight="medium">Total de Despesas</Typography>
+              <TrendingDown style={{ width: 14, height: 14, color: theme.palette.error.main }} />
+            </Stack>
+          }
+          sx={{ pb: 1 }}
+        />
+        <CardContent sx={{ pt: 0 }}>
+           <Typography variant="h5" fontWeight="bold" color="error.main">- R$ {(totalExpense || 0).toFixed(2)}</Typography>
+           <Typography variant="caption" color="text.secondary">Total de saídas no período</Typography>
+           <Box sx={{ mt: 2, height: 35 }}>
+              <ChartSparkline data={expenseSparklineData} positiveColor={theme.palette.error.main} negativeColor={theme.palette.error.main} />
+           </Box>
         </CardContent>
       </Card>
       <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-1 p-4">
-          <CardTitle className="text-xs font-medium">Nível de Gamificação</CardTitle>
-          <Trophy className="h-3.5 w-3.5 text-muted-foreground" />
-        </CardHeader>
-        <CardContent className="p-4 pt-0">
+        <CardHeader
+          title={
+            <Stack direction="row" alignItems="center" justifyContent="space-between">
+              <Typography variant="subtitle2" fontWeight="medium">Nível de Gamificação</Typography>
+              <Trophy style={{ width: 14, height: 14, color: theme.palette.text.secondary }} />
+            </Stack>
+          }
+          sx={{ pb: 1 }}
+        />
+        <CardContent sx={{ pt: 0 }}>
           {isGamificationLoading ? (
-            <div className="space-y-2">
-              <Skeleton className="h-6 w-1/2" />
-              <Skeleton className="h-4 w-3/4" />
-            </div>
+            <Stack spacing={2}>
+              <Skeleton variant="text" width="50%" height={32} />
+              <Skeleton variant="text" width="75%" height={24} />
+            </Stack>
           ) : (
             <>
-              <div className="text-xl font-bold">Nível {gamificationData?.level?.level || 1}</div>
-              <p className="text-xs text-muted-foreground">{gamificationData?.level?.name || 'Iniciante'}</p>
-              <p className="text-xs text-muted-foreground mt-2">{gamificationData?.points || 0} pontos</p>
+              <Typography variant="h5" fontWeight="bold">Nível {gamificationData?.level?.level || 1}</Typography>
+              <Typography variant="caption" color="text.secondary" display="block">{gamificationData?.level?.name || 'Iniciante'}</Typography>
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 2, display: 'block' }}>{gamificationData?.points || 0} pontos</Typography>
             </>
           )}
         </CardContent>
