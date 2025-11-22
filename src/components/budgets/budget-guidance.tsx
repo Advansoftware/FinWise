@@ -1,26 +1,7 @@
 // src/components/budgets/budget-guidance.tsx
 
 import React, { useState, useMemo } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  Typography, 
-  Button, 
-  TextField, 
-  LinearProgress, 
-  Chip, 
-  Divider, 
-  Alert, 
-  AlertTitle, 
-  Box, 
-  Stack, 
-  Paper,
-  useTheme,
-  alpha,
-  InputAdornment,
-  Checkbox
-} from '@mui/material';
+import {Card, CardContent, CardHeader, Typography, Button, TextField, LinearProgress, Chip, Divider, Alert, AlertTitle, Box, Stack, Paper, useTheme, alpha, InputAdornment, Checkbox} from '@mui/material';
 import { 
   Calculator, 
   TrendingUp, 

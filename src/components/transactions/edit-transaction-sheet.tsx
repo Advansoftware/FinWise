@@ -9,11 +9,11 @@ import {
   SheetTitle,
   SheetDescription,
   SheetFooter,
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+} from "@mui/material";
+import { Button } from "@mui/material";
+import { TextField } from "@mui/material";
+import { InputLabel } from "@mui/material";
+import { Select, SelectContent, MenuItem, SelectTrigger, SelectValue } from "@mui/material";
 import { Transaction, TransactionCategory } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
@@ -21,7 +21,7 @@ import { SingleDatePicker } from "../single-date-picker";
 import { useTransactions } from "@/hooks/use-transactions";
 import { Switch } from "../ui/switch";
 import { useWallets } from "@/hooks/use-wallets";
-import { Box, Stack } from '@mui/material';
+import {Box, Stack} from '@mui/material';
 
 interface EditTransactionSheetProps {
     transaction: Transaction;
@@ -147,19 +147,19 @@ export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTra
                 </Box>
                 <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', alignItems: 'center', gap: 4 }}>
                     <Label htmlFor="item" sx={{ textAlign: 'right' }}>Item</Label>
-                    <Input id="item" sx={{ gridColumn: 'span 3' }} value={formState.item || ''} onChange={(e) => handleInputChange('item', e.target.value)} />
+                    <TextField id="item" sx={{ gridColumn: 'span 3' }} value={formState.item || ''} onChange={(e) => handleInputChange('item', e.target.value)} />
                 </Box>
                 <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', alignItems: 'center', gap: 4 }}>
                     <Label htmlFor="establishment" sx={{ textAlign: 'right' }}>Estabelecimento</Label>
-                    <Input id="establishment" sx={{ gridColumn: 'span 3' }} value={formState.establishment || ''} onChange={(e) => handleInputChange('establishment', e.target.value)} />
+                    <TextField id="establishment" sx={{ gridColumn: 'span 3' }} value={formState.establishment || ''} onChange={(e) => handleInputChange('establishment', e.target.value)} />
                 </Box>
                 <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', alignItems: 'center', gap: 4 }}>
                     <Label htmlFor="quantity" sx={{ textAlign: 'right' }}>Qtd.</Label>
-                    <Input id="quantity" type="number" sx={{ gridColumn: 'span 3' }} value={formState.quantity || 1} onChange={(e) => handleInputChange('quantity', e.target.value)} />
+                    <TextField id="quantity" type="number" sx={{ gridColumn: 'span 3' }} value={formState.quantity || 1} onChange={(e) => handleInputChange('quantity', e.target.value)} />
                 </Box>
                 <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', alignItems: 'center', gap: 4 }}>
                     <Label htmlFor="amount" sx={{ textAlign: 'right' }}>Valor</Label>
-                    <Input id="amount" type="number" sx={{ gridColumn: 'span 3' }} value={formState.amount || ''} onChange={(e) => handleInputChange('amount', e.target.value)} />
+                    <TextField id="amount" type="number" sx={{ gridColumn: 'span 3' }} value={formState.amount || ''} onChange={(e) => handleInputChange('amount', e.target.value)} />
                 </Box>
                 <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', alignItems: 'center', gap: 4 }}>
                     <Label htmlFor="date" sx={{ textAlign: 'right' }}>Data</Label>
@@ -175,7 +175,7 @@ export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTra
                     </SelectTrigger>
                     <SelectContent>
                         {wallets.map(wallet => (
-                        <SelectItem key={wallet.id} value={wallet.id}>{wallet.name}</SelectItem>
+                        <MenuItem key={wallet.id} value={wallet.id}>{wallet.name}</MenuItem>
                         ))}
                     </SelectContent>
                     </Select>
@@ -188,7 +188,7 @@ export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTra
                         </SelectTrigger>
                         <SelectContent>
                             {categories.map(cat => (
-                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                            <MenuItem key={cat} value={cat}>{cat}</MenuItem>
                             ))}
                         </SelectContent>
                     </Select>
@@ -200,9 +200,9 @@ export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTra
                             <SelectValue placeholder={!formState.category ? "Selecione uma categoria primeiro" : availableSubcategories.length > 0 ? "Selecione uma subcategoria" : "Nenhuma subcategoria disponível"} />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="none">Nenhuma</SelectItem>
+                            <MenuItem value="none">Nenhuma</MenuItem>
                             {availableSubcategories.map(sub => (
-                                <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                                <MenuItem key={sub} value={sub}>{sub}</MenuItem>
                             ))}
                         </SelectContent>
                     </Select>

@@ -1,4 +1,4 @@
-import { TransactionCategory } from '@/lib/types';
+import {TransactionCategory} from '@/lib/types';
 
 // Categorias e subcategorias padrão que serão criadas para novos usuários
 export const DEFAULT_CATEGORIES: Record<TransactionCategory, string[]> = {

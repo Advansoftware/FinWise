@@ -1,44 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import {useState} from 'react';
 
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogActions,
-  Button,
-  Box,
-  Typography,
-  Stack,
-  IconButton,
-  useTheme,
-  alpha,
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  LinearProgress,
-  Tabs,
-  Tab
-} from '@mui/material';
-import { 
-  Trophy, 
-  Star, 
-  Flame, 
-  Target, 
-  Award,
-  Zap,
-  Shield,
-  Crown,
-  HelpCircle,
-  TrendingUp,
-  CheckCircle2,
-  AlertTriangle,
-  Clock,
-  X
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import {Dialog, DialogContent, DialogTitle, DialogActions, Button, Box, Typography, Stack, IconButton, useTheme, alpha, Card, CardContent, CardHeader, Chip, LinearProgress, Tabs, Tab} from '@mui/material';
+import {Trophy, Star, Flame, Target, Award, Zap, Shield, Crown, HelpCircle, TrendingUp, CheckCircle2, AlertTriangle, Clock, X} from 'lucide-react';
+import {motion, AnimatePresence} from 'framer-motion';
 
 interface GamificationGuideProps {
   currentPoints?: number;

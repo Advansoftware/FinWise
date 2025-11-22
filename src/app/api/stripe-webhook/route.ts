@@ -1,11 +1,11 @@
 
 // src/app/api/stripe-webhook/route.ts
-import { NextRequest, NextResponse } from 'next/server';
+import {NextRequest, NextResponse} from 'next/server';
 import Stripe from 'stripe';
-import { headers } from 'next/headers';
-import { connectToDatabase } from '@/lib/mongodb';
-import { UserPlan } from '@/lib/types';
-import { ObjectId } from 'mongodb';
+import {headers} from 'next/headers';
+import {connectToDatabase} from '@/lib/mongodb';
+import {UserPlan} from '@/lib/types';
+import {ObjectId} from 'mongodb';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string;

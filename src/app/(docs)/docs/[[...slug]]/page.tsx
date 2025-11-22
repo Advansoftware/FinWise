@@ -1,14 +1,14 @@
 
 // src/app/(docs)/docs/[[...slug]]/page.tsx
 
-import { promises as fs } from 'fs';
+import {promises as fs} from 'fs';
 import path from 'path';
-import { notFound } from 'next/navigation';
+import {notFound} from 'next/navigation';
 import matter from 'gray-matter';
 import ReactMarkdown from 'react-markdown';
-import { DocSidebarNav } from '@/app/(docs)/docs/_components/docs-sidebar-nav';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Metadata } from 'next';
+import {DocSidebarNav} from '@/app/(docs)/docs/_components/docs-sidebar-nav';
+import {ScrollArea} from '@/components/ui/scroll-area';
+import {Metadata} from 'next';
 
 const docsDirectory = path.join(process.cwd(), 'docs');
 

@@ -1,47 +1,16 @@
 // src/components/installments/installment-card.tsx
 
-import { useState } from 'react';
-import { 
-  Box, 
-  Stack, 
-  Typography, 
-  Grid, 
-  useTheme, 
-  alpha, 
-  IconButton, 
-  Menu, 
-  MenuItem,
-  Card,
-  CardContent,
-  CardHeader,
-  Chip,
-  LinearProgress,
-  Button,
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogActions,
-  DialogContentText
-} from '@mui/material';
-import { 
-  CreditCard, 
-  Calendar, 
-  DollarSign, 
-  MoreVertical,
-  CheckCircle2,
-  Clock,
-  AlertTriangle,
-  Edit3,
-  Trash2
-} from 'lucide-react';
-import { Installment } from '@/core/ports/installments.port';
-import { formatCurrency } from '@/lib/utils';
-import { format, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { useInstallments } from '@/hooks/use-installments';
-import { PayInstallmentDialog } from './pay-installment-dialog';
-import { EditInstallmentDialog } from './edit-installment-dialog';
-import { MarkAsPaidDialog } from './mark-as-paid-dialog';
+import {useState} from 'react';
+import {Box, Stack, Typography, Grid, useTheme, alpha, IconButton, Menu, MenuItem, Card, CardContent, CardHeader, Chip, LinearProgress, Button, Dialog, DialogContent, DialogTitle, DialogActions, DialogContentText} from '@mui/material';
+import {CreditCard, Calendar, DollarSign, MoreVertical, CheckCircle2, Clock, AlertTriangle, Edit3, Trash2} from 'lucide-react';
+import {Installment} from '@/core/ports/installments.port';
+import {formatCurrency} from '@/lib/utils';
+import {format, parseISO} from 'date-fns';
+import {ptBR} from 'date-fns/locale';
+import {useInstallments} from '@/hooks/use-installments';
+import {PayInstallmentDialog} from './pay-installment-dialog';
+import {EditInstallmentDialog} from './edit-installment-dialog';
+import {MarkAsPaidDialog} from './mark-as-paid-dialog';
 
 interface InstallmentCardProps {
   installment: Installment;

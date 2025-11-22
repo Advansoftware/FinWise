@@ -1,39 +1,14 @@
 // src/components/installments/monthly-projections.tsx
 
-import { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Stack, 
-  Typography, 
-  Grid, 
-  useTheme, 
-  alpha,
-  Card,
-  CardContent,
-  CardHeader,
-  Button,
-  Chip,
-  Tabs,
-  Tab,
-  Skeleton
-} from '@mui/material';
-import { 
-  TrendingUp, 
-  Calendar, 
-  DollarSign,
-  BarChart3,
-  Percent,
-  Home,
-  CreditCard,
-  Repeat,
-  Clock
-} from 'lucide-react';
-import { useInstallments } from '@/hooks/use-installments';
-import { usePayroll } from '@/hooks/use-payroll';
-import { formatCurrency } from '@/lib/utils';
-import { format, addMonths } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { MonthlyInstallmentsModal } from './monthly-installments-modal';
+import {useState, useEffect} from 'react';
+import {Box, Stack, Typography, Grid, useTheme, alpha, Card, CardContent, CardHeader, Button, Chip, Tabs, Tab, Skeleton} from '@mui/material';
+import {TrendingUp, Calendar, DollarSign, BarChart3, Percent, Home, CreditCard, Repeat, Clock} from 'lucide-react';
+import {useInstallments} from '@/hooks/use-installments';
+import {usePayroll} from '@/hooks/use-payroll';
+import {formatCurrency} from '@/lib/utils';
+import {format, addMonths} from 'date-fns';
+import {ptBR} from 'date-fns/locale';
+import {MonthlyInstallmentsModal} from './monthly-installments-modal';
 
 interface MonthlyProjection {
   month: string;

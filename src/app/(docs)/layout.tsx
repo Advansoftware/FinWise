@@ -2,7 +2,7 @@
 
 import { Logo } from "@/components/logo";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button } from "@mui/material";
 import { AuthGuard } from "@/components/auth/auth-guard";
 
 export default function DocsLayout({ children }: { children: React.ReactNode }) {

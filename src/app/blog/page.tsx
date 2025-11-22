@@ -1,9 +1,9 @@
-import { Metadata } from 'next';
+import {Metadata} from 'next';
 import Link from 'next/link';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { CalendarDays, Clock, ArrowRight } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import {Card, CardContent, CardHeader, Typography} from '@mui/material';
+import {Chip} from '@mui/material';
+import {CalendarDays, Clock, ArrowRight} from 'lucide-react';
+import {Button} from '@mui/material';
 
 export const metadata: Metadata = {
   title: 'Blog | Gastometria - Dicas de Educação Financeira e IA',
@@ -118,7 +118,7 @@ export default function BlogPage() {
             </p>
             <div className="flex flex-wrap justify-center gap-2">
               {categories.map((category) => (
-                <Badge key={category} variant="outline" className="cursor-pointer hover:bg-primary hover:text-primary-foreground">
+                <Badge key={category} variant="outlined" className="cursor-pointer hover:bg-primary hover:text-primary-foreground">
                   {category}
                 </Badge>
               ))}
@@ -145,14 +145,14 @@ export default function BlogPage() {
                         {post.readTime} min
                       </div>
                     </div>
-                    <CardTitle className="group-hover:text-primary transition-colors">
+                    <Typography variant="h6" className="group-hover:text-primary transition-colors">
                       <Link href={`/blog/${post.slug}`}>
                         {post.title}
                       </Link>
-                    </CardTitle>
-                    <CardDescription className="text-base">
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" className="text-base">
                       {post.description}
-                    </CardDescription>
+                    </Typography>
                   </CardHeader>
                   <CardContent>
                     <div className="flex items-center justify-between">
@@ -160,7 +160,7 @@ export default function BlogPage() {
                         <CalendarDays className="h-4 w-4 mr-1" />
                         {formatDate(post.publishedAt)}
                       </div>
-                      <Button variant="ghost" size="sm" asChild>
+                      <Button variant="text" size="small" asChild>
                         <Link href={`/blog/${post.slug}`}>
                           Ler mais
                           <ArrowRight className="h-4 w-4 ml-1" />
@@ -182,7 +182,7 @@ export default function BlogPage() {
               <Card key={post.id} className="hover:shadow-md transition-shadow group">
                 <CardHeader>
                   <div className="flex items-center justify-between mb-2">
-                    <Badge variant="outline" className={getCategoryColor(post.category)}>
+                    <Badge variant="outlined" className={getCategoryColor(post.category)}>
                       {post.category}
                     </Badge>
                     <div className="flex items-center text-sm text-muted-foreground">
@@ -190,14 +190,14 @@ export default function BlogPage() {
                       {post.readTime} min
                     </div>
                   </div>
-                  <CardTitle className="text-lg group-hover:text-primary transition-colors">
+                  <Typography variant="h6" className="text-lg group-hover:text-primary transition-colors">
                     <Link href={`/blog/${post.slug}`}>
                       {post.title}
                     </Link>
-                  </CardTitle>
-                  <CardDescription>
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
                     {post.description}
-                  </CardDescription>
+                  </Typography>
                 </CardHeader>
                 <CardContent>
                   <div className="flex items-center justify-between">
@@ -205,7 +205,7 @@ export default function BlogPage() {
                       <CalendarDays className="h-4 w-4 mr-1" />
                       {formatDate(post.publishedAt)}
                     </div>
-                    <Button variant="ghost" size="sm" asChild>
+                    <Button variant="text" size="small" asChild>
                       <Link href={`/blog/${post.slug}`}>
                         <ArrowRight className="h-4 w-4" />
                       </Link>

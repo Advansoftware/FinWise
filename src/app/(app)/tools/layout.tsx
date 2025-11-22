@@ -1,10 +1,5 @@
-import { Metadata } from 'next';
-import { 
-  financialToolsData, 
-  vacationCalculatorData, 
-  thirteenthSalaryCalculatorData, 
-  salaryProjectionCalculatorData 
-} from '@/lib/structured-data';
+import {Metadata} from 'next';
+import {financialToolsData, vacationCalculatorData, thirteenthSalaryCalculatorData, salaryProjectionCalculatorData} from '@/lib/structured-data';
 
 export const metadata: Metadata = {
   title: 'Ferramentas Financeiras - Calculadora de Férias, 13º Salário e Projeção Salarial',

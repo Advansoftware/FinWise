@@ -1,18 +1,7 @@
 // src/components/budgets/automatic-budget-card.tsx
 'use client';
 import { useState, useTransition, useMemo } from "react";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  Typography, 
-  Button, 
-  Box, 
-  Stack, 
-  CircularProgress,
-  useTheme,
-  alpha 
-} from '@mui/material';
+import {Card, CardContent, CardHeader, Typography, Button, Box, Stack, CircularProgress, useTheme, alpha} from '@mui/material';
 import { Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useTransactions } from "@/hooks/use-transactions";

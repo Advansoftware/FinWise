@@ -1,10 +1,10 @@
 "use client"
 
-import { useEffect, useState, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { ArrowDownToLine, Wifi, WifiOff } from 'lucide-react';
-import { Box, Stack, Typography } from '@mui/material';
+import {useEffect, useState, useCallback} from 'react';
+import {useToast} from '@/hooks/use-toast';
+import {Button, Typography} from '@mui/material';
+import {ArrowDownToLine, Wifi, WifiOff} from 'lucide-react';
+import {Box, Stack, Typography} from '@mui/material';
 
 export function PWAUpdater() {
   const { toast } = useToast();
@@ -73,7 +73,7 @@ export function PWAUpdater() {
         description: 'Adicione o Gastometria à sua tela inicial para acesso mais rápido.',
         duration: 10000,
         action: (
-          <Button onClick={handleInstallClick} size="sm" sx={{ height: '2rem', px: 3, py: 1 }}>
+          <Button onClick={handleInstallClick} size="small" sx={{ height: '2rem', px: 3, py: 1 }}>
             <ArrowDownToLine style={{ marginRight: '0.5rem', width: '0.75rem', height: '0.75rem' }} />
             Instalar
           </Button>
@@ -173,7 +173,7 @@ export function PWAUpdater() {
         description: 'Uma nova versão do Gastometria está pronta para usar.',
         duration: Infinity,
         action: (
-          <Button onClick={handleUpdate} size="sm" sx={{ height: '2rem', px: 3, py: 1 }}>
+          <Button onClick={handleUpdate} size="small" sx={{ height: '2rem', px: 3, py: 1 }}>
             <ArrowDownToLine style={{ marginRight: '0.5rem', width: '0.75rem', height: '0.75rem' }} />
             Atualizar
           </Button>

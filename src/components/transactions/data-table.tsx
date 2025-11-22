@@ -1,32 +1,14 @@
 
 'use client';
 
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
-  useReactTable,
-  SortingState,
-  ColumnFiltersState,
-  RowSelectionState,
-} from '@tanstack/react-table';
+import {ColumnDef, flexRender, getCoreRowModel, getPaginationRowModel, getSortedRowModel, getFilteredRowModel, useReactTable, SortingState, ColumnFiltersState, RowSelectionState} from '@tanstack/react-table';
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useState } from 'react';
-import { AnalyzeTransactionsDialog } from './analyze-transactions-dialog';
-import { Box, Stack } from '@mui/material';
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
+import {Button} from '@mui/material';
+import {TextField} from '@mui/material';
+import {useState} from 'react';
+import {AnalyzeTransactionsDialog} from './analyze-transactions-dialog';
+import {Box, Stack} from '@mui/material';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -133,16 +115,16 @@ export function DataTable<TData, TValue>({
           {table.getFilteredRowModel().rows.length} linha(s) selecionadas.
         </Box>
         <Button
-          variant="outline"
-          size="sm"
+          variant="outlined"
+          size="small"
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
         >
           Anterior
         </Button>
         <Button
-          variant="outline"
-          size="sm"
+          variant="outlined"
+          size="small"
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
         >

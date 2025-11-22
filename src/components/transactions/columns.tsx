@@ -1,20 +1,20 @@
 
 'use client';
 
-import { ColumnDef } from '@tanstack/react-table';
-import { Transaction, Wallet } from '@/lib/types';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { Badge } from '@/components/ui/badge';
-import { ArrowUpDown, MoreHorizontal, Pen, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
-import { Button } from '../ui/button';
-import { CategoryIcon } from '../icons';
-import { Checkbox } from '../ui/checkbox';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '../ui/dropdown-menu';
-import { useTransactions } from '@/hooks/use-transactions';
-import { useToast } from '@/hooks/use-toast';
-import { useState } from 'react';
-import { EditTransactionSheet } from './edit-transaction-sheet';
+import {ColumnDef} from '@tanstack/react-table';
+import {Transaction, Wallet} from '@/lib/types';
+import {format} from 'date-fns';
+import {ptBR} from 'date-fns/locale';
+import {Chip, Typography} from '@mui/material';
+import {ArrowUpDown, MoreHorizontal, Pen, Trash2, ArrowUp, ArrowDown} from 'lucide-react';
+import {Button} from '@mui/material';
+import {CategoryIcon} from '../icons';
+import {Checkbox} from '../ui/checkbox';
+import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger} from '../ui/dropdown-menu';
+import {useTransactions} from '@/hooks/use-transactions';
+import {useToast} from '@/hooks/use-toast';
+import {useState} from 'react';
+import {EditTransactionSheet} from './edit-transaction-sheet';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,8 +25,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { useWallets } from '@/hooks/use-wallets';
-import { Box, Stack, Typography } from '@mui/material';
+import {useWallets} from '@/hooks/use-wallets';
+import {Box, Stack, Typography} from '@mui/material';
 
 const ActionsCell = ({ row }: { row: any }) => {
     const transaction = row.original as Transaction;
@@ -69,7 +69,7 @@ const ActionsCell = ({ row }: { row: any }) => {
 
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button variant="ghost" sx={{ height: '2rem', width: '2rem', p: 0 }}>
+                <Button variant="text" sx={{ height: '2rem', width: '2rem', p: 0 }}>
                     <span className="sr-only">Abrir menu</span>
                     <MoreHorizontal style={{ width: '1rem', height: '1rem' }} />
                 </Button>
@@ -129,8 +129,8 @@ export const columns: ColumnDef<Transaction>[] = [
     header: ({ column }) => {
       return (
         <Button
-          variant="ghost"
-          size="sm"
+          variant="text"
+          size="small"
           onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
           sx={{ ml: -3, height: '2rem' }}
         >
@@ -174,7 +174,7 @@ export const columns: ColumnDef<Transaction>[] = [
     cell: ({ row }) => {
       const category = row.original.category;
       return (
-         <Badge variant="outline" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, width: 'fit-content', fontWeight: 400 }}>
+         <Badge variant="outlined" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, width: 'fit-content', fontWeight: 400 }}>
             <CategoryIcon category={category as any} className="h-3 w-3" />
             <span style={{ textTransform: 'capitalize' }}>{category}</span>
         </Badge>
@@ -187,7 +187,7 @@ export const columns: ColumnDef<Transaction>[] = [
     header: 'Subcategoria',
     cell: ({ row }) => {
       const subcategory = row.original.subcategory;
-      return subcategory ? <Badge variant="secondary" sx={{ width: 'fit-content', fontWeight: 400 }}>{subcategory}</Badge> : <Typography component="span" sx={{ color: 'text.secondary' }}>-</Typography>
+      return subcategory ? <Badge variant="contained" color="secondary" sx={{ width: 'fit-content', fontWeight: 400 }}>{subcategory}</Badge> : <Typography component="span" sx={{ color: 'text.secondary' }}>-</Typography>
     },
     size: 100,
   },
@@ -206,8 +206,8 @@ export const columns: ColumnDef<Transaction>[] = [
       return (
         <Box sx={{ textAlign: 'right' }}>
             <Button
-                variant="ghost"
-                size="sm"
+                variant="text"
+                size="small"
                 onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
                 sx={{ height: '2rem', mr: -4 }}
                 >

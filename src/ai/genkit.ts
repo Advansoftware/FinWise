@@ -3,11 +3,11 @@
  * It sets up plugins for different AI providers like Ollama and OpenAI.
  */
 
-import { genkit, type Genkit } from 'genkit';
-import { ollama } from 'genkitx-ollama';
-import { openAI } from 'genkitx-openai';
-import { AICredential } from '@/lib/types';
-import { googleAI } from '@genkit-ai/googleai';
+import {genkit, type Genkit} from 'genkit';
+import {ollama} from 'genkitx-ollama';
+import {openAI} from 'genkitx-openai';
+import {AICredential} from '@/lib/types';
+import {googleAI} from '@genkit-ai/googleai';
 
 /**
  * The global Genkit instance.

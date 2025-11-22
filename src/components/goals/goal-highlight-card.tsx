@@ -2,12 +2,12 @@
 'use client';
 
 import { useGoals } from "@/hooks/use-goals";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "../ui/card";
+import {Card, CardHeader, CardContent, Typography, CardActions} from '@mui/material';
 import { Skeleton } from "../ui/skeleton";
 import { Target, PiggyBank, Sparkles, RefreshCw } from "lucide-react";
 import Link from "next/link";
-import { Button } from "../ui/button";
-import { Progress } from "../ui/progress";
+import {Button} from '@mui/material';
+import {LinearProgress} from '@mui/material';
 import { AddDepositDialog } from "./add-deposit-dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { useTransactions } from "@/hooks/use-transactions";
@@ -17,7 +17,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { ProjectGoalCompletionOutput } from "@/ai/ai-types";
-import { Box, Stack, Typography } from '@mui/material';
+import {Box, Stack, Typography} from '@mui/material';
 
 
 export function GoalHighlightCard() {
@@ -95,12 +95,12 @@ export function GoalHighlightCard() {
         return (
             <Card>
                 <CardHeader sx={{ pb: 1 }}>
-                    <CardTitle>
+                    <Typography variant="h6">
                       <Typography component="span" sx={{ fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: 1 }}>
                         <PiggyBank style={{ width: '1rem', height: '1rem' }} />
                         <span>Metas</span>
                       </Typography>
-                    </CardTitle>
+                    </Typography>
                 </CardHeader>
                 <CardContent sx={{ pb: 1.5 }}>
                     <Stack spacing={1}>
@@ -117,15 +117,15 @@ export function GoalHighlightCard() {
         return (
              <Card sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', p: 2 }}>
                 <Target style={{ width: '2rem', height: '2rem', color: 'rgba(var(--primary-rgb), 0.7)', marginBottom: '0.5rem' }}/>
-                <CardTitle>
+                <Typography variant="h6">
                   <Typography component="span" sx={{ fontSize: '1rem' }}>Crie sua Primeira Meta</Typography>
-                </CardTitle>
+                </Typography>
                 <CardContent sx={{ p: 0, mt: 0.5, mb: 1.5 }}>
                     <Typography sx={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
                       Comece a economizar para seus sonhos.
                     </Typography>
                 </CardContent>
-                <Button asChild size="sm">
+                <Button asChild size="small">
                     <Link href="/goals">Criar Meta</Link>
                 </Button>
             </Card>
@@ -161,19 +161,19 @@ export function GoalHighlightCard() {
                         <Target style={{ width: '0.75rem', height: '0.75rem', color: 'var(--primary)' }}/>
                     </Box>
                     <Box sx={{ minWidth: 0, flex: 1 }}>
-                         <CardTitle>
+                         <Typography variant="h6">
                            <Typography component="span" sx={{ fontSize: '0.875rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
                              {firstGoal.name}
                            </Typography>
-                         </CardTitle>
-                         <CardDescription>
+                         </Typography>
+                         <Typography variant="body2" color="text.secondary">
                            <Typography component="span" sx={{ fontSize: '0.75rem' }}>Sua meta em destaque</Typography>
-                         </CardDescription>
+                         </Typography>
                     </Box>
                 </Stack>
             </CardHeader>
             <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 1, pb: 1.5, flex: 1 }}>
-                <Progress value={Math.min(percentage, 100)} sx={{ height: 6 }} />
+                <LinearProgress variant="determinate" value={Math.min(percentage, 100)} sx={{ height: 6 }} />
                  <Stack direction="row" justifyContent="space-between" alignItems="baseline">
                     <Typography sx={{ fontSize: '1rem', fontWeight: 700, color: 'var(--foreground)' }}>
                       R$ {firstGoal.currentAmount.toFixed(2)}
@@ -204,8 +204,8 @@ export function GoalHighlightCard() {
                     </Stack>
                     {projectionResult && !isProjecting && (
                         <Button 
-                            variant="ghost" 
-                            size="sm" 
+                            variant="text" 
+                            size="small" 
                             sx={{ height: 16, width: 16, p: 0, minWidth: 16, color: 'var(--muted-foreground)', '&:hover': { color: 'var(--primary)' }, flexShrink: 0 }}
                             onClick={refreshProjection}
                             title="Atualizar previsão"
@@ -215,16 +215,16 @@ export function GoalHighlightCard() {
                     )}
                 </Stack>
             </CardContent>
-             <CardFooter sx={{ display: 'flex', gap: 1, p: 2, pt: 0, flexShrink: 0 }}>
-                 <Button asChild variant="outline" sx={{ flex: 1 }} size="sm">
+             <CardActions sx={{ display: 'flex', gap: 1, p: 2, pt: 0, flexShrink: 0 }}>
+                 <Button asChild variant="outlined" sx={{ flex: 1 }} size="small">
                     <Link href="/goals">Ver Todas</Link>
                  </Button>
                   <AddDepositDialog goal={firstGoal}>
-                    <Button sx={{ flex: 1 }} size="sm" disabled={firstGoal.currentAmount >= firstGoal.targetAmount}>
+                    <Button sx={{ flex: 1 }} size="small" disabled={firstGoal.currentAmount >= firstGoal.targetAmount}>
                         <PiggyBank style={{ marginRight: '0.25rem', width: '0.75rem', height: '0.75rem' }}/>Depositar
                     </Button>
                 </AddDepositDialog>
-             </CardFooter>
+             </CardActions>
         </Card>
     )
 }

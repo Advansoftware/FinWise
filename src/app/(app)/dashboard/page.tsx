@@ -2,7 +2,7 @@
 // src/app/(app)/dashboard/page.tsx
 'use client';
 
-import { Button } from "@/components/ui/button";
+import { Button } from "@mui/material";
 import { PlusCircle, ScanLine } from "lucide-react";
 import { useTransactions } from "@/hooks/use-transactions";
 import { StatsCards } from "@/components/dashboard/stats-cards";
@@ -54,7 +54,7 @@ export default function DashboardPage() {
                     <ProUpgradeButton requiredPlan="Pro">
                        <ReceiptScannerDialog>
                            <Button 
-                               variant="outline" 
+                               variant="outlined" 
                                disabled={!isPro}
                                className="w-full sm:w-auto order-1 sm:order-1"
                            >

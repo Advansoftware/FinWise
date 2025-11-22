@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, type SxProps, type Theme, useTheme } from '@mui/material';
+import {Box, type SxProps, type Theme, useTheme} from '@mui/material';
 import * as React from 'react';
 
 interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {

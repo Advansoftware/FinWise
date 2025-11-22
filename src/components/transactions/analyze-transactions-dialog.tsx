@@ -11,8 +11,8 @@ import {
   DialogDescription,
   DialogFooter,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from "@mui/material";
+import { Button } from "@mui/material";
 import { Wand2, Loader2, Lock } from "lucide-react";
 import { Transaction } from "@/lib/types";
 import { analyzeTransactionsAction } from "@/services/ai-actions";
@@ -53,7 +53,7 @@ export function AnalyzeTransactionsDialog({ transactions }: AnalyzeTransactionsD
         <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if(!open) setAnalysis("")}}>
             <ProUpgradeButton requiredPlan="Pro" tooltipContent="Analise transações com IA no plano Pro.">
               <DialogTrigger asChild>
-                  <Button variant="outline" size="sm" onClick={() => handleAnalysis()} disabled={!user || !isPro || transactions.length === 0}>
+                  <Button variant="outlined" size="small" onClick={() => handleAnalysis()} disabled={!user || !isPro || transactions.length === 0}>
                       <Wand2 style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} />
                       Analisar com IA ({transactions.length})
                   </Button>

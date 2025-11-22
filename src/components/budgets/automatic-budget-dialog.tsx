@@ -5,19 +5,7 @@ import { useState, useEffect } from "react";
 import { z } from "zod";
 import { TransactionCategory } from "@/lib/types";
 
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogActions,
-  Button,
-  Box,
-  Stack,
-  Typography,
-  CircularProgress,
-  useTheme,
-  alpha
-} from '@mui/material';
+import {Dialog, DialogContent, DialogTitle, DialogActions, Button, Box, Stack, Typography, CircularProgress, useTheme, alpha} from '@mui/material';
 import { useToast } from "@/hooks/use-toast";
 import { useBudgets } from "@/hooks/use-budgets";
 import { Sparkles, CheckCircle, Circle } from "lucide-react";

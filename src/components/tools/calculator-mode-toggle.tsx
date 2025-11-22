@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Chip, Stack, Typography, useTheme, alpha } from '@mui/material';
+import {Button, Chip, Stack, Typography, useTheme, alpha} from '@mui/material';
 import { FileText, Edit3 } from "lucide-react";
 
 interface CalculatorModeToggleProps {

@@ -2,16 +2,16 @@
 
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
+import { Card, CardContent, CardHeader } from "@mui/material";
+import { Chip } from "@mui/material";
+import { LinearProgress } from "@mui/material";
 import { Trophy, Award, Target, Flame, Star } from "lucide-react";
 import { useGamification } from "@/hooks/use-gamification";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import { Button } from "../ui/button";
-import { Box, Stack, Typography } from '@mui/material';
+import {Button, Typography} from '@mui/material';
+import {Box, Stack, Typography} from '@mui/material';
 
 export function GamificationSummary() {
   const { gamificationData, isLoading } = useGamification();
@@ -20,12 +20,12 @@ export function GamificationSummary() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>
+          <Typography variant="h6">
             <Stack direction="row" alignItems="center" spacing={2}>
               <Trophy style={{ width: '1.25rem', height: '1.25rem' }} />
               Progresso Gamificado
             </Stack>
-          </CardTitle>
+          </Typography>
         </CardHeader>
         <CardContent>
           <Stack spacing={4}>
@@ -57,12 +57,12 @@ export function GamificationSummary() {
       borderColor: theme => theme.palette.mode === 'dark' ? 'rgba(147, 51, 234, 0.5)' : '#e9d5ff'
     }}>
       <CardHeader>
-        <CardTitle>
+        <Typography variant="h6">
           <Stack direction="row" alignItems="center" spacing={2} sx={{ color: theme => theme.palette.mode === 'dark' ? '#d8b4fe' : '#6b21a8' }}>
             <Trophy style={{ width: '1.25rem', height: '1.25rem' }} />
             Seu Progresso
           </Stack>
-        </CardTitle>
+        </Typography>
       </CardHeader>
       <CardContent>
         <Stack spacing={4}>
@@ -166,7 +166,7 @@ export function GamificationSummary() {
           </Stack>
         )}
         
-        <Button asChild variant="outline" sx={{ width: '100%', mt: 4 }}>
+        <Button asChild variant="outlined" sx={{ width: '100%', mt: 4 }}>
             <Link href="/installments?tab=gamification">
                 Ver todos os detalhes
             </Link>

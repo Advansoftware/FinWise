@@ -1,9 +1,9 @@
 
 'use server';
 
-import { TransactionCategory } from '@/lib/types';
-import { getDatabaseAdapter } from '@/core/services/service-factory';
-import { DEFAULT_CATEGORIES, DEFAULT_USER_SETTINGS } from '@/lib/default-categories';
+import {TransactionCategory} from '@/lib/types';
+import {getDatabaseAdapter} from '@/core/services/service-factory';
+import {DEFAULT_CATEGORIES, DEFAULT_USER_SETTINGS} from '@/lib/default-categories';
 
 /**
  * Configura dados padrão para um novo usuário

@@ -1,15 +1,4 @@
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  Typography, 
-  Avatar, 
-  Button, 
-  Box, 
-  Stack, 
-  useTheme,
-  alpha
-} from '@mui/material';
+import {Card, CardContent, CardHeader, Typography, Avatar, Button, Box, Stack, useTheme, alpha} from '@mui/material';
 import { CategoryIcon } from "../icons";
 import { Transaction } from "@/lib/types";
 import Link from "next/link";

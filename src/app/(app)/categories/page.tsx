@@ -4,11 +4,11 @@
 import { useState, useTransition } from "react";
 import { useTransactions } from "@/hooks/use-transactions";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@mui/material";
 import { TransactionCategory } from "@/lib/types";
-import { Badge } from "@/components/ui/badge";
+import { Chip } from "@mui/material";
 import { CategoryIcon } from "@/components/icons";
-import { Button } from "@/components/ui/button";
+import { Button } from "@mui/material";
 import { PlusCircle, MoreVertical, Edit, Trash2, Wand2, X, Check, Loader2, Settings } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import {
@@ -20,9 +20,9 @@ import {
   DialogFooter,
   DialogTrigger,
   DialogClose,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+} from "@mui/material";
+import { TextField } from "@mui/material";
+import { InputLabel } from "@mui/material";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -113,14 +113,14 @@ export default function CategoriesPage() {
                 </div>
                  <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
                     <Link href="/categories/default" className="w-full sm:w-auto">
-                        <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                        <Button variant="outlined" size="small" className="w-full sm:w-auto">
                             <Settings className="mr-2 h-4 w-4"/>
                             Ver Padrão
                         </Button>
                     </Link>
                     <Dialog>
                         <DialogTrigger asChild>
-                            <Button variant="outline" disabled={!user} className="w-full sm:w-auto">
+                            <Button variant="outlined" disabled={!user} className="w-full sm:w-auto">
                                 <Wand2 className="mr-2 h-4 w-4"/>Sugerir por IA
                             </Button>
                         </DialogTrigger>
@@ -131,7 +131,7 @@ export default function CategoriesPage() {
                             </DialogHeader>
                             <div className="space-y-4 py-4">
                                <div className="flex flex-col sm:flex-row gap-2">
-                                 <Input 
+                                 <TextField 
                                    id="item-name" 
                                    placeholder="ex: Conta de luz" 
                                    value={itemName}
@@ -148,7 +148,7 @@ export default function CategoriesPage() {
                                    <div className="p-4 bg-muted rounded-md space-y-2">
                                        <p className="font-semibold">Sugestão da IA:</p>
                                        {suggestion.category && <p>Categoria: <Badge>{suggestion.category}</Badge></p>}
-                                       {suggestion.subcategory && <p>Subcategoria: <Badge variant="secondary">{suggestion.subcategory}</Badge></p>}
+                                       {suggestion.subcategory && <p>Subcategoria: <Badge variant="contained" color="secondary">{suggestion.subcategory}</Badge></p>}
                                    </div>
                                )}
                             </div>
@@ -167,7 +167,7 @@ export default function CategoriesPage() {
                             </DialogHeader>
                              <div className="py-4">
                                 <Label htmlFor="new-category-name" className="sr-only">Nome da Categoria</Label>
-                                <Input 
+                                <TextField 
                                     id="new-category-name"
                                     value={newCategoryName}
                                     onChange={e => setNewCategoryName(e.target.value)}
@@ -191,15 +191,15 @@ export default function CategoriesPage() {
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
                                     <CategoryIcon category={category} className="h-5 w-5 text-primary shrink-0" />
-                                    <CardTitle className="text-base truncate">{category}</CardTitle>
+                                    <Typography variant="h6" className="text-base truncate">{category}</Typography>
                                 </div>
-                                <CardDescription className="text-xs">
+                                <Typography variant="body2" color="text.secondary" className="text-xs">
                                     Gasto: <span className="font-bold text-red-400">R$ {getCategoryTotal(category).toFixed(2)}</span>
-                                </CardDescription>
+                                </Typography>
                             </div>
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0">
+                                    <Button variant="text" size="icon" className="h-8 w-8 shrink-0">
                                         <MoreVertical className="h-4 w-4"/>
                                     </Button>
                                 </DropdownMenuTrigger>
@@ -235,7 +235,7 @@ export default function CategoriesPage() {
                             <div className="flex flex-wrap gap-1">
                                 {subcategories[category] && subcategories[category]!.length > 0 ? (
                                     subcategories[category]!.map(sub => (
-                                        <Badge key={sub} variant="secondary" className="group pr-1 text-xs">
+                                        <Badge key={sub} variant="contained" color="secondary" className="group pr-1 text-xs">
                                             {sub}
                                             <button onClick={() => deleteSubcategory(category, sub)} className="ml-1.5 opacity-50 group-hover:opacity-100 transition-opacity">
                                                 <X className="h-3 w-3"/>
@@ -247,7 +247,7 @@ export default function CategoriesPage() {
                                 )}
                                 {editingCategory === category && (
                                      <div className="flex items-center gap-1 w-full mt-2">
-                                        <Input 
+                                        <TextField 
                                             autoFocus
                                             value={newSubcategoryName}
                                             onChange={(e) => setNewSubcategoryName(e.target.value)}
@@ -256,7 +256,7 @@ export default function CategoriesPage() {
                                             className="h-7 text-xs flex-1"
                                         />
                                         <Button size="icon" className="h-7 w-7" onClick={() => handleAddSubcategory(category)} disabled={!newSubcategoryName.trim()}><Check className="h-4 w-4"/></Button>
-                                        <Button size="icon" variant="ghost" className="h-7 w-7" onClick={() => setEditingCategory(null)}><X className="h-4 w-4"/></Button>
+                                        <Button size="icon" variant="text" className="h-7 w-7" onClick={() => setEditingCategory(null)}><X className="h-4 w-4"/></Button>
                                     </div>
                                 )}
                             </div>

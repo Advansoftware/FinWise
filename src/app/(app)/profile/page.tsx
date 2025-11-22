@@ -1,7 +1,7 @@
 // src/app/(app)/profile/page.tsx
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@mui/material";
 import { FinancialProfileCard } from "@/components/profile/financial-profile-card";
 import { GamificationSummary } from "@/components/profile/gamification-summary";
 import { PayrollCard } from "@/components/profile/payroll-card";
@@ -25,8 +25,8 @@ export default function ProfilePage() {
                 <div className="lg:col-span-6">
                     <Card className="h-full">
                         <CardHeader>
-                            <CardTitle>Informações da Conta</CardTitle>
-                            <CardDescription>Atualize seu nome de exibição.</CardDescription>
+                            <Typography variant="h6">Informações da Conta</Typography>
+                            <Typography variant="body2" color="text.secondary">Atualize seu nome de exibição.</Typography>
                         </CardHeader>
                         <CardContent>
                            <UpdateNameForm />
@@ -36,8 +36,8 @@ export default function ProfilePage() {
                 <div className="lg:col-span-6">
                     <Card className="h-full">
                         <CardHeader>
-                            <CardTitle>Segurança</CardTitle>
-                            <CardDescription>Altere sua senha.</CardDescription>
+                            <Typography variant="h6">Segurança</Typography>
+                            <Typography variant="body2" color="text.secondary">Altere sua senha.</Typography>
                         </CardHeader>
                         <CardContent>
                            <UpdatePasswordForm />

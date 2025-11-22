@@ -1,4 +1,4 @@
-import { PayrollData, PayrollDiscount } from '@/lib/types';
+import {PayrollData, PayrollDiscount} from '@/lib/types';
 
 // Utilitários para extrair informações dos dados do holerite
 

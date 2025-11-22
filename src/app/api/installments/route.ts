@@ -1,7 +1,7 @@
 // src/app/api/installments/route.ts
 
-import { NextRequest, NextResponse } from 'next/server';
-import { getDatabaseAdapter } from '@/core/services/service-factory';
+import {NextRequest, NextResponse} from 'next/server';
+import {getDatabaseAdapter} from '@/core/services/service-factory';
 
 async function getMonthlyInstallmentDetails(userId: string, month: string, db: any, type?: string) {
   const [year, monthNumber] = month.split('-');

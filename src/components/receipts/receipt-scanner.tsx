@@ -1,13 +1,13 @@
 // src/components/receipts/receipt-scanner.tsx
 "use client";
 
-import { useState, useTransition } from 'react';
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {useState, useTransition} from 'react';
+import { Button } from "@mui/material";
+import { Alert, AlertDescription, AlertTitle } from "@mui/material";
+import { Chip } from "@mui/material";
+import { TextField } from "@mui/material";
+import { InputLabel } from "@mui/material";
+import { Select, SelectContent, MenuItem, SelectTrigger, SelectValue } from "@mui/material";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
@@ -22,7 +22,7 @@ import { Transaction, TransactionCategory } from "@/lib/types";
 import { MobileCamera } from "@/components/camera/mobile-camera";
 import { FileUpload } from "@/components/camera/file-upload";
 import { Loader2, RotateCcw, Sparkles, BrainCircuit, Info } from "lucide-react";
-import { Box, Stack, Typography } from '@mui/material';
+import {Box, Stack, Typography} from '@mui/material';
 
 interface ReceiptScannerProps {
   onComplete?: () => void;
@@ -192,12 +192,12 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
           <Stack spacing={3}>
             {extractedData.items?.map((item: any, index: number) => (
               <Box key={index} sx={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 2, alignItems: 'center', p: 3, borderRadius: 2, bgcolor: theme => `${(theme.palette as any).custom?.muted}80`, border: 1, borderColor: 'divider' }}>
-                <Input 
+                <TextField 
                   defaultValue={item.item} 
                   placeholder="Item"
                   readOnly={!extractedData.isValid}
                 />
-                <Input 
+                <TextField 
                   type="number" 
                   step="0.01" 
                   defaultValue={item.amount} 
@@ -217,7 +217,7 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4, p: 3, borderRadius: 2, bgcolor: theme => `${(theme.palette as any).custom?.muted}4D`, border: 1, borderColor: 'divider' }}>
           <Stack spacing={1}>
             <Label sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Total</Label>
-            <Input 
+            <TextField 
               type="number" 
               step="0.01" 
               defaultValue={extractedData.totalAmount || 0} 
@@ -227,7 +227,7 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
           </Stack>
           <Stack spacing={1}>
             <Label sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Data</Label>
-            <Input 
+            <TextField 
               type="date" 
               defaultValue={extractedData.date} 
               placeholder="Data" 
@@ -237,7 +237,7 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
         </Box>
         
         {!extractedData.isValid && (
-          <Alert variant="destructive">
+          <Alert variant="contained" color="error">
             <AlertTitle>Nota Não Reconhecida</AlertTitle>
             <AlertDescription>
               A IA não conseguiu identificar esta como uma nota fiscal válida. 
@@ -247,7 +247,7 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
         )}
 
         <Stack direction="row" spacing={2} sx={{ pt: 4 }}>
-          <Button variant="ghost" onClick={resetState} disabled={isProcessing || isSaving}>
+          <Button variant="text" onClick={resetState} disabled={isProcessing || isSaving}>
             <RotateCcw style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} />
             Nova Foto
           </Button>
@@ -278,12 +278,12 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
             </SelectTrigger>
             <SelectContent>
               {visionCapableCredentials.map(c => (
-                <SelectItem key={c.id} value={c.id}>
+                <MenuItem key={c.id} value={c.id}>
                   {c.name}
                   {c.id === DEFAULT_AI_CREDENTIAL.id && (
                     <Box component="span" sx={{ ml: 2, fontSize: '0.75rem', bgcolor: '#dbeafe', color: '#1e40af', px: 1, borderRadius: 1 }}>Padrão</Box>
                   )}
-                </SelectItem>
+                </MenuItem>
               ))}
             </SelectContent>
           </Select>

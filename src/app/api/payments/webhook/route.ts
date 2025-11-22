@@ -1,8 +1,8 @@
 // src/app/api/payments/webhook/route.ts
 
-import { NextRequest, NextResponse } from 'next/server';
-import { headers } from 'next/headers';
-import { getPaymentService } from '@/core/services/service-factory';
+import {NextRequest, NextResponse} from 'next/server';
+import {headers} from 'next/headers';
+import {getPaymentService} from '@/core/services/service-factory';
 
 export async function POST(req: NextRequest) {
   try {

@@ -1,7 +1,7 @@
 'use client';
 
-import { createContext, useContext, useCallback, ReactNode, useRef, useEffect } from 'react';
-import { usePathname } from 'next/navigation';
+import {createContext, useContext, useCallback, ReactNode, useRef, useEffect} from 'react';
+import {usePathname} from 'next/navigation';
 
 interface DataRefreshContextType {
   triggerRefresh: (type?: 'transactions' | 'wallets' | 'budgets' | 'goals' | 'all') => void;

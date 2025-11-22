@@ -1,18 +1,18 @@
 
 'use client';
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Sparkles, Info, Zap } from 'lucide-react';
-import { useCredits } from '@/hooks/use-credits';
-import { usePlan } from '@/hooks/use-plan';
-import { useAISettings } from '@/hooks/use-ai-settings';
-import { Skeleton } from '../ui/skeleton';
-import { CreditStatementDialog } from './ai-credit-statement-dialog';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
-import { Badge } from '../ui/badge';
-import { Box, Stack } from '@mui/material';
+import {useState} from 'react';
+import {Button} from '@mui/material';
+import {Sparkles, Info, Zap} from 'lucide-react';
+import {useCredits} from '@/hooks/use-credits';
+import {usePlan} from '@/hooks/use-plan';
+import {useAISettings} from '@/hooks/use-ai-settings';
+import {Skeleton} from '../ui/skeleton';
+import {CreditStatementDialog} from './ai-credit-statement-dialog';
+import {AnimatePresence, motion} from 'framer-motion';
+import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from '../ui/tooltip';
+import {Chip} from '@mui/material';
+import {Box, Stack} from '@mui/material';
 
 export function AICreditIndicator() {
   const { credits, isLoading: isLoadingCredits, logs } = useCredits();
@@ -69,7 +69,7 @@ export function AICreditIndicator() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
-                      variant="outline"
+                      variant="outlined"
                       onClick={() => setIsDialogOpen(true)}
                       sx={{
                         borderRadius: '9999px',
@@ -120,7 +120,7 @@ export function AICreditIndicator() {
                   <TooltipTrigger asChild>
                     <Box sx={{ display: { xs: 'none', md: 'block' } }}>
                         <Badge 
-                        variant="outline" 
+                        variant="outlined" 
                         sx={isUsingGastometriaAI 
                             ? { bgcolor: 'rgba(59, 130, 246, 0.1)', color: '#2563eb', borderColor: 'rgba(59, 130, 246, 0.2)' }
                             : { bgcolor: 'rgba(16, 185, 129, 0.1)', color: '#059669', borderColor: 'rgba(16, 185, 129, 0.2)' }

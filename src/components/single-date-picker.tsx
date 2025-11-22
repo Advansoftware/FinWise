@@ -6,13 +6,13 @@ import { format } from "date-fns"
 import { Calendar as CalendarIcon } from "lucide-react"
 import { ptBR } from "date-fns/locale"
 
-import { Button } from "@/components/ui/button"
+import { Button } from "@mui/material"
 import { Calendar } from "@/components/ui/calendar"
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
-} from "@/components/ui/popover"
+} from "@mui/material"
 
 interface SingleDatePickerProps {
     date: Date | undefined;

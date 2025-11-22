@@ -1,8 +1,8 @@
 // src/services/wallet-balance-service.ts
 
-import { Transaction, Wallet } from '@/lib/types';
-import { apiClient } from '@/lib/api-client';
-import { offlineStorage } from '@/lib/offline-storage';
+import {Transaction, Wallet} from '@/lib/types';
+import {apiClient} from '@/lib/api-client';
+import {offlineStorage} from '@/lib/offline-storage';
 
 export class WalletBalanceService {
   /**

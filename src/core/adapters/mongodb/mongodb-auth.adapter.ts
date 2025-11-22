@@ -1,7 +1,7 @@
 // src/core/adapters/mongodb/mongodb-auth.adapter.ts
 
-import { MongoClient, Db, Collection, ObjectId } from 'mongodb';
-import { IAuthService } from '@/core/ports/auth.port';
+import {MongoClient, Db, Collection, ObjectId} from 'mongodb';
+import {IAuthService} from '@/core/ports/auth.port';
 
 interface User {
   _id?: ObjectId;

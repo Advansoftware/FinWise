@@ -1,12 +1,7 @@
 "use client"
 
 import * as React from "react"
-import {
-  Select,
-  MenuItem,
-  FormControl,
-  Box
-} from '@mui/material';
+import {Select, MenuItem, FormControl, Box} from '@mui/material';
 
 interface ItemFilterProps {
   items: string[];

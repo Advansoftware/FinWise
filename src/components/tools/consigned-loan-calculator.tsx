@@ -1,31 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  Typography, 
-  TextField, 
-  Button, 
-  Divider, 
-  Box, 
-  Stack, 
-  Select, 
-  MenuItem, 
-  FormControl, 
-  InputLabel,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  useTheme,
-  alpha,
-  InputAdornment
-} from '@mui/material';
+import {useState, useEffect} from 'react';
+import {Card, CardContent, CardHeader, Typography, TextField, Button, Divider, Box, Stack, Select, MenuItem, FormControl, InputLabel, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, useTheme, alpha, InputAdornment} from '@mui/material';
 import { CreditCard, Percent, Calendar, DollarSign, AlertTriangle, Info } from "lucide-react";
 import { PayrollData } from "@/lib/types";
 import { CalculatorModeToggle } from "./calculator-mode-toggle";

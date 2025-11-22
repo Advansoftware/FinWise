@@ -1,14 +1,14 @@
 // src/components/billing/billing-portal-button.tsx
 'use client';
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { ExternalLink, Loader2, Settings } from 'lucide-react';
-import { usePayment } from '@/hooks/use-payment';
-import { useAuth } from '@/hooks/use-auth';
-import { usePlan } from '@/hooks/use-plan';
-import { useToast } from '@/hooks/use-toast';
-import { type SxProps, type Theme } from '@mui/material';
+import {useState} from 'react';
+import {Button} from '@mui/material';
+import {ExternalLink, Loader2, Settings} from 'lucide-react';
+import {usePayment} from '@/hooks/use-payment';
+import {useAuth} from '@/hooks/use-auth';
+import {usePlan} from '@/hooks/use-plan';
+import {useToast} from '@/hooks/use-toast';
+import {type SxProps, type Theme} from '@mui/material';
 
 interface BillingPortalButtonProps {
   variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'link' | 'destructive';

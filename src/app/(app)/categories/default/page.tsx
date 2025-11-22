@@ -1,17 +1,16 @@
 
 'use client';
 
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { CategoryIcon } from '@/components/icons';
-import { DEFAULT_CATEGORIES } from '@/lib/default-categories';
-import { TransactionCategory } from '@/lib/types';
-import { ChevronDown, ChevronRight, Users, Package, Settings } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
-import { useToast } from '@/hooks/use-toast';
-import { apiClient } from '@/lib/api-client';
+import {useState} from 'react';
+import {Card, CardContent, CardHeader, Button, Chip} from '@mui/material';
+import {Typography} from '@mui/material';
+import {CategoryIcon} from '@/components/icons';
+import {DEFAULT_CATEGORIES} from '@/lib/default-categories';
+import {TransactionCategory} from '@/lib/types';
+import {ChevronDown, ChevronRight, Users, Package, Settings} from 'lucide-react';
+import {useAuth} from '@/hooks/use-auth';
+import {useToast} from '@/hooks/use-toast';
+import {apiClient} from '@/lib/api-client';
 
 export default function DefaultCategoriesPreview() {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
@@ -117,10 +116,10 @@ export default function DefaultCategoriesPreview() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Typography variant="h6" className="text-sm font-medium flex items-center gap-2">
                 <Package className="h-4 w-4" />
                 Total de Categorias
-              </CardTitle>
+              </Typography>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{totalCategories}</div>
@@ -129,10 +128,10 @@ export default function DefaultCategoriesPreview() {
           
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
+              <Typography variant="h6" className="text-sm font-medium flex items-center gap-2">
                 <Users className="h-4 w-4" />
                 Total de Subcategorias
-              </CardTitle>
+              </Typography>
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{totalSubcategories}</div>
@@ -141,7 +140,7 @@ export default function DefaultCategoriesPreview() {
           
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Ações</CardTitle>
+              <Typography variant="h6" className="text-sm font-medium">Ações</Typography>
             </CardHeader>
             <CardContent>
               <Button onClick={handleApplyToUser} className="w-full">
@@ -170,16 +169,16 @@ export default function DefaultCategoriesPreview() {
                   <div className="flex items-center gap-3">
                     <CategoryIcon category={categoryKey} className="h-6 w-6 text-primary" />
                     <div>
-                      <CardTitle className="text-lg">{category}</CardTitle>
-                      <CardDescription className="flex items-center gap-2">
+                      <Typography variant="h6">{category}</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Badge 
-                          variant="outline" 
+                          variant="outlined" 
                           className={getCategoryTypeColor(categoryType)}
                         >
                           {categoryType}
                         </Badge>
                         <span>{subcategories.length} subcategorias</span>
-                      </CardDescription>
+                      </Typography>
                     </div>
                   </div>
                   {isExpanded ? (
@@ -200,7 +199,7 @@ export default function DefaultCategoriesPreview() {
                       {subcategories.map((subcategory) => (
                         <Badge 
                           key={subcategory} 
-                          variant="secondary"
+                          variant="contained" color="secondary"
                           className="text-xs"
                         >
                           {subcategory}
@@ -218,10 +217,10 @@ export default function DefaultCategoriesPreview() {
       {/* Footer Info */}
       <Card className="border-l-4 border-l-blue-500">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+          <Typography variant="h6" className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
             Como funciona
-          </CardTitle>
+          </Typography>
         </CardHeader>
         <CardContent className="space-y-3">
           <ul className="space-y-2 text-sm">

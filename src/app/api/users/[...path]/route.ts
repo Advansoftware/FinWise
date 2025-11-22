@@ -1,12 +1,12 @@
 
 // src/app/api/users/[...path]/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongodb';
-import { getAdminApp } from '@/lib/firebase-admin';
-import { ObjectId } from 'mongodb';
+import {NextRequest, NextResponse} from 'next/server';
+import {connectToDatabase} from '@/lib/mongodb';
+import {getAdminApp} from '@/lib/firebase-admin';
+import {ObjectId} from 'mongodb';
 import bcrypt from 'bcrypt';
 import * as admin from 'firebase-admin';
-import { setupDefaultUserData } from '@/services/default-setup-service';
+import {setupDefaultUserData} from '@/services/default-setup-service';
 
 const SALT_ROUNDS = 10;
 

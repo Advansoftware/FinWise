@@ -1,10 +1,10 @@
 // src/components/online-status-indicator.tsx
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Badge } from '@/components/ui/badge';
-import { Wifi, WifiOff } from 'lucide-react';
-import { Box, Stack, Typography } from '@mui/material';
+import {useState, useEffect} from 'react';
+import {Chip, Typography} from '@mui/material';
+import {Wifi, WifiOff} from 'lucide-react';
+import {Box, Stack, Typography} from '@mui/material';
 
 export function OnlineStatusIndicator() {
   const [isOnline, setIsOnline] = useState(true);

@@ -1,17 +1,8 @@
 // src/theme/mui-theme.ts
 'use client';
 
-import { createTheme, ThemeOptions, alpha } from '@mui/material/styles';
-import {
-  colorsDark,
-  colorsLight,
-  typography as typographyTokens,
-  radius,
-  shadows as shadowTokens,
-  breakpoints as breakpointsTokens,
-  zIndex as zIndexTokens,
-  transitions as transitionTokens,
-} from './tokens';
+import {createTheme, ThemeOptions, alpha} from '@mui/material/styles';
+import {colorsDark, colorsLight, typography as typographyTokens, radius, shadows as shadowTokens, breakpoints as breakpointsTokens, zIndex as zIndexTokens, transitions as transitionTokens} from './tokens';
 
 // Detectar modo escuro (pode ser refinado com context posteriormente)
 const getMode = (): 'light' | 'dark' => {

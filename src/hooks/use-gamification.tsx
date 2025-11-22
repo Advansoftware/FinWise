@@ -1,9 +1,9 @@
 // src/hooks/use-gamification.tsx
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { useAuth } from './use-auth';
-import { useDataRefresh } from './use-data-refresh';
-import { GamificationData, InstallmentBadge, InstallmentLevel, InstallmentAchievement } from '@/core/ports/installments.port';
+import {useAuth} from './use-auth';
+import {useDataRefresh} from './use-data-refresh';
+import {GamificationData, InstallmentBadge, InstallmentLevel, InstallmentAchievement} from '@/core/ports/installments.port';
 
 interface GamificationProfileInsights {
   disciplineLevel: 'Iniciante' | 'Intermediário' | 'Avançado' | 'Expert';

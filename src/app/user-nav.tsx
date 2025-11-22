@@ -2,26 +2,18 @@
 // src/app/user-nav.tsx
 'use client';
 
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { Button } from '@/components/ui/button';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { Settings, Gem, UserCircle, LogOut, Trophy, Sparkles, ExternalLink } from 'lucide-react';
+import {DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger} from '@/components/ui/dropdown-menu';
+import {Button} from '@mui/material';
+import {Avatar, AvatarFallback, AvatarImage} from '@mui/material';
+import {Settings, Gem, UserCircle, LogOut, Trophy, Sparkles, ExternalLink} from 'lucide-react';
 import Link from 'next/link';
-import { useAuth } from '@/hooks/use-auth';
-import { Skeleton } from '@/components/ui/skeleton';
-import { useGamification } from '@/hooks/use-gamification';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { BillingPortalButton } from '@/components/billing/billing-portal-button';
-import { usePlan } from '@/hooks/use-plan';
+import {useAuth} from '@/hooks/use-auth';
+import {Skeleton} from '@/components/ui/skeleton';
+import {useGamification} from '@/hooks/use-gamification';
+import {Chip} from '@mui/material';
+import {LinearProgress} from '@mui/material';
+import {BillingPortalButton} from '@/components/billing/billing-portal-button';
+import {usePlan} from '@/hooks/use-plan';
 
 export function UserNav() {
   const { user, logout, loading } = useAuth();
@@ -48,7 +40,7 @@ export function UserNav() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="ghost" className="relative h-9 w-9 rounded-full">
+        <Button variant="text" className="relative h-9 w-9 rounded-full">
           <Avatar className="h-9 w-9">
             <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
           </Avatar>
@@ -83,7 +75,7 @@ export function UserNav() {
                         </div>
                         <span className="text-muted-foreground">{gamificationData.points} pts</span>
                     </div>
-                    <Progress value={levelProgress} className="h-1" />
+                    <LinearProgress variant="determinate" value={levelProgress} className="h-1" />
                 </div>
             </>
         )}
@@ -110,8 +102,8 @@ export function UserNav() {
           </DropdownMenuItem>
           {plan && plan !== 'Básico' && (
             <BillingPortalButton 
-              variant="ghost" 
-              size="sm" 
+              variant="text" 
+              size="small" 
               sx={{ 
                 width: '100%', 
                 justifyContent: 'flex-start', 

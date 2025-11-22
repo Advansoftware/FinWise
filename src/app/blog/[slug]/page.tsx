@@ -1,10 +1,10 @@
-import { Metadata } from 'next';
-import { notFound } from 'next/navigation';
+import {Metadata} from 'next';
+import {notFound} from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, CalendarDays, Clock, Share2 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
+import {ArrowLeft, CalendarDays, Clock, Share2} from 'lucide-react';
+import {Button} from '@mui/material';
+import {Chip} from '@mui/material';
+import {Divider} from '@mui/material';
 
 // Mock data - em produção isso viria do CMS
 const blogPosts: Record<string, any> = {
@@ -152,7 +152,7 @@ export default function BlogPostPage({ params }: Props) {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Back Button */}
-        <Button variant="ghost" asChild className="mb-6">
+        <Button variant="text" asChild className="mb-6">
           <Link href="/blog">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar ao Blog
@@ -190,21 +190,21 @@ export default function BlogPostPage({ params }: Props) {
                 <span>Por {post.author}</span>
               </div>
 
-              <Button variant="outline" size="sm">
+              <Button variant="outlined" size="small">
                 <Share2 className="h-4 w-4 mr-2" />
                 Compartilhar
               </Button>
             </div>
           </header>
 
-          <Separator className="mb-8" />
+          <Divider className="mb-8" />
 
           {/* Content */}
           <div className="prose prose-lg max-w-none dark:prose-invert">
             <div dangerouslySetInnerHTML={{ __html: post.content.replace(/\n/g, '<br>') }} />
           </div>
 
-          <Separator className="my-12" />
+          <Divider className="my-12" />
 
           {/* CTA */}
           <div className="bg-card rounded-lg p-8 text-center">
@@ -216,12 +216,12 @@ export default function BlogPostPage({ params }: Props) {
               Comece gratuitamente e transforme sua vida financeira.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="lg">
+              <Button asChild size="large">
                 <Link href="/signup">
                   Criar Conta Grátis
                 </Link>
               </Button>
-              <Button variant="outline" asChild size="lg">
+              <Button variant="outlined" asChild size="large">
                 <Link href="/docs">
                   Ver Documentação
                 </Link>

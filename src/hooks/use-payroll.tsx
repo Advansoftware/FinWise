@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/hooks/use-auth';
-import { PayrollData } from '@/lib/types';
+import {useState, useEffect} from 'react';
+import {useAuth} from '@/hooks/use-auth';
+import {PayrollData} from '@/lib/types';
 
 export function usePayroll() {
   const [payrollData, setPayrollData] = useState<PayrollData | null>(null);

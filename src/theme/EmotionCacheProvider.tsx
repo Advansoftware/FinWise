@@ -3,8 +3,8 @@
 
 import * as React from 'react';
 import createCache from '@emotion/cache';
-import { CacheProvider } from '@emotion/react';
-import { useServerInsertedHTML } from 'next/navigation';
+import {CacheProvider} from '@emotion/react';
+import {useServerInsertedHTML} from 'next/navigation';
 
 // Este componente é necessário para SSR funcionar corretamente com Emotion no App Router do Next.js 13+
 // Ref: https://github.com/emotion-js/emotion/issues/2928

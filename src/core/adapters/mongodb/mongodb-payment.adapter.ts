@@ -1,8 +1,8 @@
 // src/core/adapters/mongodb/mongodb-payment.adapter.ts
 
-import { IPaymentRepository, SubscriptionData } from '@/core/ports/payment.port';
-import { UserPlan } from '@/lib/types';
-import { Db, ObjectId } from 'mongodb';
+import {IPaymentRepository, SubscriptionData} from '@/core/ports/payment.port';
+import {UserPlan} from '@/lib/types';
+import {Db, ObjectId} from 'mongodb';
 
 export class MongoPaymentRepository implements IPaymentRepository {
   constructor(private db: Db) { }

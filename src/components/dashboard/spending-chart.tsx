@@ -1,14 +1,7 @@
 "use client";
 
 import { Area, AreaChart, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid } from "recharts";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  Typography, 
-  useTheme,
-  alpha
-} from '@mui/material';
+import {Card, CardContent, CardHeader, Typography, useTheme, alpha} from '@mui/material';
 
 interface SpendingChartProps {
   data: { name: string; total: number }[];

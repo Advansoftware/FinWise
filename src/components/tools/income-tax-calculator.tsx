@@ -1,27 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  Typography, 
-  TextField, 
-  Button, 
-  Divider, 
-  Box, 
-  Stack, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
-  TableRow, 
-  Paper,
-  useTheme,
-  alpha,
-  InputAdornment
-} from '@mui/material';
+import {useState, useEffect} from 'react';
+import {Card, CardContent, CardHeader, Typography, TextField, Button, Divider, Box, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper, useTheme, alpha, InputAdornment} from '@mui/material';
 import { Receipt, TrendingDown, TrendingUp, Calculator, AlertCircle, CheckCircle } from "lucide-react";
 import { PayrollData } from "@/lib/types";
 import { getINSSFromPayroll, getIRFromPayroll, calculateIRFromSalary, validatePayrollData } from "@/lib/payroll-utils";

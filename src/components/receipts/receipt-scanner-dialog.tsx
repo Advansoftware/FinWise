@@ -8,7 +8,7 @@ import {
   DialogTitle,
   DialogDescription,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@mui/material";
 import {
   Sheet,
   SheetContent,
@@ -16,8 +16,8 @@ import {
   SheetTitle,
   SheetDescription,
   SheetTrigger,
-} from "@/components/ui/sheet";
-import { useState } from 'react';
+} from "@mui/material";
+import {useState} from 'react';
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ReceiptScanner } from "./receipt-scanner";
 

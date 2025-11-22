@@ -1,6 +1,6 @@
 // src/core/ports/payment.port.ts
 
-import { UserPlan } from '@/lib/types';
+import {UserPlan} from '@/lib/types';
 
 export interface CreateCheckoutSessionInput {
   userId: string;

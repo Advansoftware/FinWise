@@ -1,12 +1,12 @@
 // src/components/auth/auth-guard.tsx
 'use client';
 
-import { Box } from '@mui/material';
-import { useAuth } from '@/hooks/use-auth';
-import { useRouter, usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
-import { Logo } from '../logo';
+import {Box} from '@mui/material';
+import {useAuth} from '@/hooks/use-auth';
+import {useRouter, usePathname} from 'next/navigation';
+import {useEffect, useState} from 'react';
+import {Loader2} from 'lucide-react';
+import {Logo} from '../logo';
 
 const PROTECTED_ROOT = '/dashboard';
 const PUBLIC_ROOT = '/';

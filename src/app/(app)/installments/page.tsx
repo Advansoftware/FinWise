@@ -2,38 +2,23 @@
 
 'use client';
 
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { 
-  Calendar, 
-  CreditCard, 
-  DollarSign, 
-  AlertTriangle, 
-  CheckCircle2, 
-  Clock, 
-  Plus,
-  TrendingUp,
-  PieChart,
-  Trophy,
-  Award,
-  Flame,
-  Zap,
-  Target
-} from 'lucide-react';
-import { useInstallments } from '@/hooks/use-installments';
-import { CreateInstallmentDialog } from '@/components/installments/create-installment-dialog';
-import { InstallmentCard } from '@/components/installments/installment-card';
-import { PaymentSchedule } from '@/components/installments/payment-schedule';
-import { MonthlyProjections } from '@/components/installments/monthly-projections';
-import { GamificationGuide } from '@/components/installments/gamification-guide';
-import { formatCurrency } from '@/lib/utils';
-import { Skeleton } from '@/components/ui/skeleton';
-import { motion } from 'framer-motion';
-import { useGamification } from '@/hooks/use-gamification';
+import {useState} from 'react';
+import {Card, CardContent, CardHeader, Typography} from '@mui/material';
+import {Button} from '@mui/material';
+import {Chip} from '@mui/material';
+import {LinearProgress} from '@mui/material';
+import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs';
+import {Calendar, CreditCard, DollarSign, AlertTriangle, CheckCircle2, Clock, Plus, TrendingUp, PieChart, Trophy, Award, Flame, Zap, Target} from 'lucide-react';
+import {useInstallments} from '@/hooks/use-installments';
+import {CreateInstallmentDialog} from '@/components/installments/create-installment-dialog';
+import {InstallmentCard} from '@/components/installments/installment-card';
+import {PaymentSchedule} from '@/components/installments/payment-schedule';
+import {MonthlyProjections} from '@/components/installments/monthly-projections';
+import {GamificationGuide} from '@/components/installments/gamification-guide';
+import {formatCurrency} from '@/lib/utils';
+import {Skeleton} from '@/components/ui/skeleton';
+import {motion} from 'framer-motion';
+import {useGamification} from '@/hooks/use-gamification';
 
 export default function InstallmentsPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -104,13 +89,13 @@ export default function InstallmentsPage() {
           <CardHeader className="pb-3">
             <div className="flex items-center gap-2">
               <AlertTriangle className="h-5 w-5 text-destructive dark:text-destructive" />
-              <CardTitle className="text-destructive dark:text-destructive">
+              <Typography variant="h6" className="text-destructive dark:text-destructive">
                 {summary.overduePayments.length} Parcela{summary.overduePayments.length > 1 ? 's' : ''} em Atraso
-              </CardTitle>
+              </Typography>
             </div>
-            <CardDescription className="text-destructive/70 dark:text-destructive/70">
+            <Typography variant="body2" color="text.secondary" className="text-destructive/70 dark:text-destructive/70">
               Você tem pagamentos vencidos que precisam de atenção imediata.
-            </CardDescription>
+            </Typography>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="grid gap-2">
@@ -134,7 +119,7 @@ export default function InstallmentsPage() {
                       <div className="font-semibold text-foreground dark:text-foreground">
                         {formatCurrency(payment.scheduledAmount)}
                       </div>
-                      <Badge variant="destructive" className="text-xs">
+                      <Badge variant="contained" color="error" className="text-xs">
                         Em Atraso
                       </Badge>
                     </div>
@@ -151,7 +136,7 @@ export default function InstallmentsPage() {
             
             <div className="flex gap-2 pt-2">
               <Button 
-                size="sm" 
+                size="small" 
                 className="bg-destructive hover:bg-destructive/90 dark:bg-destructive dark:hover:bg-destructive/90 flex-1"
                 onClick={() => {
                   // TODO: Implementar funcionalidade de quitar múltiplas pendências
@@ -161,8 +146,8 @@ export default function InstallmentsPage() {
                 Quitar Pendências
               </Button>
               <Button 
-                size="sm" 
-                variant="outline" 
+                size="small" 
+                variant="outlined" 
                 className="border-destructive/30 dark:border-destructive/30 text-foreground dark:text-foreground hover:bg-destructive/10 dark:hover:bg-destructive/10"
                 onClick={() => setActiveTab('schedule')}
               >
@@ -177,7 +162,7 @@ export default function InstallmentsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-medium">Parcelamentos Ativos</CardTitle>
+            <Typography variant="h6" className="text-xs font-medium">Parcelamentos Ativos</Typography>
             <CreditCard className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -190,7 +175,7 @@ export default function InstallmentsPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-medium">Compromisso Mensal</CardTitle>
+            <Typography variant="h6" className="text-xs font-medium">Compromisso Mensal</Typography>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
@@ -205,9 +190,9 @@ export default function InstallmentsPage() {
 
         <Card className={`col-span-2 lg:col-span-1 ${summary && summary.overduePayments.length > 0 ? "border-destructive/20 dark:border-destructive/20" : ""}`}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-medium">
+            <Typography variant="h6" className="text-xs font-medium">
               {summary && summary.overduePayments.length > 0 ? "Parcelas em Atraso" : "Próximos Vencimentos"}
-            </CardTitle>
+            </Typography>
             {summary && summary.overduePayments.length > 0 ? (
               <AlertTriangle className="h-4 w-4 text-destructive dark:text-destructive" />
             ) : (
@@ -232,7 +217,7 @@ export default function InstallmentsPage() {
 
         <Card className="col-span-2 lg:col-span-1">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-medium">Parcelamentos Quitados</CardTitle>
+            <Typography variant="h6" className="text-xs font-medium">Parcelamentos Quitados</Typography>
             <CheckCircle2 className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
@@ -302,12 +287,12 @@ export default function InstallmentsPage() {
                         <Trophy className="h-6 w-6 text-white" />
                       </div>
                       <div>
-                        <CardTitle className="text-xl text-slate-100 dark:text-slate-100">
+                        <Typography variant="h6" className="text-xl text-slate-100 dark:text-slate-100">
                           Nível {gamificationData.level.level} - {gamificationData.level.name}
-                        </CardTitle>
-                        <CardDescription className="text-slate-300 dark:text-slate-300">
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" className="text-slate-300 dark:text-slate-300">
                           {gamificationData.points} pontos acumulados
-                        </CardDescription>
+                        </Typography>
                       </div>
                     </div>
                     <div className="flex-shrink-0 hidden md:block">
@@ -321,7 +306,7 @@ export default function InstallmentsPage() {
                       <span>Progresso para o próximo nível</span>
                       <span>{gamificationData.level.pointsToNext} pontos restantes</span>
                     </div>
-                    <Progress 
+                    <LinearProgress variant="determinate" 
                       value={(gamificationData.points / (gamificationData.level.pointsRequired + gamificationData.level.pointsToNext)) * 100} 
                       className="h-3"
                     />
@@ -342,10 +327,10 @@ export default function InstallmentsPage() {
               {gamificationData.badges.length > 0 && (
                 <Card>
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
+                    <Typography variant="h6" className="flex items-center gap-2">
                       <Award className="h-5 w-5" />
                       Badges Conquistadas
-                    </CardTitle>
+                    </Typography>
                   </CardHeader>
                   <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -360,7 +345,7 @@ export default function InstallmentsPage() {
                           <h4 className="font-medium text-sm">{badge.name}</h4>
                           <p className="text-xs text-muted-foreground">{badge.description}</p>
                           <Badge 
-                            variant="outline" 
+                            variant="outlined" 
                             className={`mt-2 text-xs ${
                               badge.rarity === 'legendary' ? 'border-yellow-400 text-yellow-700' :
                               badge.rarity === 'epic' ? 'border-purple-400 text-purple-700' :
@@ -380,10 +365,10 @@ export default function InstallmentsPage() {
               {/* Conquistas em Progresso */}
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
+                  <Typography variant="h6" className="flex items-center gap-2">
                     <Target className="h-5 w-5" />
                     Conquistas em Progresso
-                  </CardTitle>
+                  </Typography>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
@@ -395,7 +380,7 @@ export default function InstallmentsPage() {
                             <h4 className="font-medium">{achievement.name}</h4>
                             <p className="text-sm text-muted-foreground">{achievement.description}</p>
                           </div>
-                          <Badge variant="outline">{achievement.points} pts</Badge>
+                          <Badge variant="outlined">{achievement.points} pts</Badge>
                         </div>
                         
                         <div className="space-y-2">
@@ -403,7 +388,7 @@ export default function InstallmentsPage() {
                             <span>Progresso</span>
                             <span>{achievement.progress}/{achievement.target}</span>
                           </div>
-                          <Progress 
+                          <LinearProgress variant="determinate" 
                             value={(achievement.progress / achievement.target) * 100} 
                             className="h-2"
                           />

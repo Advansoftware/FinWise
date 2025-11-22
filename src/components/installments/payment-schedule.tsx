@@ -1,30 +1,13 @@
 // src/components/installments/payment-schedule.tsx
 
-import { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Card, 
-  CardContent, 
-  Typography, 
-  useTheme, 
-  alpha,
-  Stack,
-  Chip,
-  Skeleton,
-  Tabs,
-  Tab
-} from '@mui/material';
-import { 
-  Calendar, 
-  Clock, 
-  AlertTriangle, 
-  CheckCircle2
-} from 'lucide-react';
-import { InstallmentPayment } from '@/core/ports/installments.port';
-import { useInstallments } from '@/hooks/use-installments';
-import { formatCurrency } from '@/lib/utils';
-import { format, parseISO, isToday, isPast } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import {useState, useEffect} from 'react';
+import {Box, Card, CardContent, Typography, useTheme, alpha, Stack, Chip, Skeleton, Tabs, Tab} from '@mui/material';
+import {Calendar, Clock, AlertTriangle, CheckCircle2} from 'lucide-react';
+import {InstallmentPayment} from '@/core/ports/installments.port';
+import {useInstallments} from '@/hooks/use-installments';
+import {formatCurrency} from '@/lib/utils';
+import {format, parseISO, isToday, isPast} from 'date-fns';
+import {ptBR} from 'date-fns/locale';
 
 export function PaymentSchedule() {
   const [upcomingPayments, setUpcomingPayments] = useState<InstallmentPayment[]>([]);

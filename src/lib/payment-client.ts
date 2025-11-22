@@ -1,11 +1,6 @@
 // src/lib/payment-client.ts
 
-import {
-  CreateCheckoutSessionInput,
-  CreateCheckoutSessionOutput,
-  CreatePortalSessionInput,
-  CreatePortalSessionOutput
-} from '@/core/ports/payment.port';
+import {CreateCheckoutSessionInput, CreateCheckoutSessionOutput, CreatePortalSessionInput, CreatePortalSessionOutput} from '@/core/ports/payment.port';
 
 export class PaymentClient {
   private baseUrl = '/api/payments';

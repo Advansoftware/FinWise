@@ -1,6 +1,6 @@
 // src/ai/ai-types.ts
 
-import { z } from 'zod';
+import {z} from 'zod';
 
 // Schema for generating spending tips
 export const SpendingTipInputSchema = z.object({

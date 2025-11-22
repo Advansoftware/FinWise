@@ -5,10 +5,10 @@
  *
  * - extractReceiptInfo - A function that handles the receipt information extraction process.
  */
-import { ReceiptInfoInputSchema, ReceiptInfoOutputSchema } from '../ai-types';
+import {ReceiptInfoInputSchema, ReceiptInfoOutputSchema} from '../ai-types';
 import type { ReceiptInfoInput } from '../ai-types';
-import { createConfiguredAI, getModelReference } from '../genkit';
-import { AICredential } from '@/lib/types';
+import {createConfiguredAI, getModelReference} from '../genkit';
+import {AICredential} from '@/lib/types';
 
 
 const promptTemplate = `You are an expert OCR system specializing in extracting information from receipts.

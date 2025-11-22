@@ -18,10 +18,10 @@
  * - annual_report: Relatório anual
  */
 
-import { getDatabaseAdapter } from '@/core/services/service-factory';
-import { Transaction } from '@/lib/types';
-import { getActiveAICredential } from './settings-service';
-import { PredictFutureBalanceOutput, FinancialProfileOutput } from '@/ai/ai-types';
+import {getDatabaseAdapter} from '@/core/services/service-factory';
+import {Transaction} from '@/lib/types';
+import {getActiveAICredential} from './settings-service';
+import {PredictFutureBalanceOutput, FinancialProfileOutput} from '@/ai/ai-types';
 
 export interface AICacheEntry {
   userId: string;

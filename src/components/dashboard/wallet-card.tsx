@@ -1,18 +1,7 @@
 
 'use client';
 
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  Typography, 
-  Chip, 
-  LinearProgress, 
-  Box, 
-  Stack, 
-  useTheme,
-  alpha
-} from '@mui/material';
+import {Card, CardContent, CardHeader, Typography, Chip, LinearProgress, Box, Stack, useTheme, alpha} from '@mui/material';
 import { Transaction } from "@/lib/types";
 import { ArrowDown, ArrowUp, Wallet, TrendingUp, TrendingDown, Calendar, BarChart3, PieChart } from "lucide-react";
 import { useWallets } from "@/hooks/use-wallets";

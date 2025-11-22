@@ -1,11 +1,11 @@
 // src/components/goals/goal-celebration.tsx
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
-import { useEffect, useState } from 'react';
-import { Trophy, Sparkles } from 'lucide-react';
-import { Goal } from '@/lib/types';
-import { Box, Typography } from '@mui/material';
+import {motion, AnimatePresence} from 'framer-motion';
+import {useEffect, useState} from 'react';
+import {Trophy, Sparkles} from 'lucide-react';
+import {Goal} from '@/lib/types';
+import {Box, Typography} from '@mui/material';
 
 const ConfettiPiece = ({ x, y, rotate, color } : { x: number, y: number, rotate: number, color: string }) => (
     <motion.div

@@ -13,11 +13,11 @@ import {
   DialogDescription,
   DialogFooter,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from "@mui/material";
+import { Button } from "@mui/material";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TextField } from "@mui/material";
+import { Select, SelectContent, MenuItem, SelectTrigger, SelectValue } from "@mui/material";
 import { useToast } from "@/hooks/use-toast";
 import { useWallets } from "@/hooks/use-wallets";
 import { Wallet, WalletType } from "@/lib/types";
@@ -102,7 +102,7 @@ export function CreateWalletDialog({ children, initialData }: CreateWalletDialog
                 <FormItem>
                   <FormLabel>Nome da Carteira</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Conta Principal" {...field} />
+                    <TextField placeholder="Ex: Conta Principal" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -122,7 +122,7 @@ export function CreateWalletDialog({ children, initialData }: CreateWalletDialog
                     </FormControl>
                     <SelectContent>
                       {walletTypes.map(type => (
-                        <SelectItem key={type} value={type}>{type}</SelectItem>
+                        <MenuItem key={type} value={type}>{type}</MenuItem>
                       ))}
                     </SelectContent>
                   </Select>

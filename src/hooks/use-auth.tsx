@@ -2,14 +2,9 @@
 // src/hooks/use-auth.tsx
 'use client';
 
-import {
-  createContext,
-  useContext,
-  ReactNode,
-  useCallback,
-} from 'react';
-import { useSession, signIn as nextAuthSignIn, signOut as nextAuthSignOut } from 'next-auth/react';
-import { UserProfile } from '@/lib/types';
+import {createContext, useContext, ReactNode, useCallback} from 'react';
+import {useSession, signIn as nextAuthSignIn, signOut as nextAuthSignOut} from 'next-auth/react';
+import {UserProfile} from '@/lib/types';
 
 interface AuthContextType {
   user: UserProfile | null;

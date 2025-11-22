@@ -1,10 +1,10 @@
 // src/components/camera/file-upload.tsx
 "use client";
 
-import { useRef, useState } from 'react';
-import { Button } from "@/components/ui/button";
+import {useRef, useState} from 'react';
+import { Button } from "@mui/material";
 import { Upload, Paperclip, FileImage } from "lucide-react";
-import { Box, Typography, type SxProps, type Theme } from '@mui/material';
+import {Box, Typography, type SxProps, type Theme} from '@mui/material';
 
 interface FileUploadProps {
   onFileSelect: (imageData: string) => void;
@@ -78,7 +78,7 @@ export function FileUpload({
     return (
       <>
         <Button 
-          variant="outline" 
+          variant="outlined" 
           sx={{ width: '100%', ...sx }}
           onClick={() => fileInputRef.current?.click()}
         >

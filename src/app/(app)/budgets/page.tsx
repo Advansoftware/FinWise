@@ -2,13 +2,13 @@
 'use client';
 
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@mui/material";
+import { Button } from "@mui/material";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlusCircle, MoreVertical, Trash2, Edit, PiggyBank, Sparkles, Trophy, CheckCircle, Flame, Award, Calculator, BarChart3 } from "lucide-react";
 import { useBudgets } from "@/hooks/use-budgets";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Progress } from "@/components/ui/progress";
+import { LinearProgress } from "@mui/material";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { CreateBudgetDialog } from "@/components/budgets/create-budget-dialog";
@@ -129,10 +129,10 @@ export default function BudgetsPage() {
                     {gamificationData && (
                          <Card className="bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-950/20 dark:to-green-950/20">
                             <CardHeader>
-                                <CardTitle className="flex items-center gap-2 text-lg text-blue-800 dark:text-blue-300">
+                                <Typography variant="h6" className="flex items-center gap-2 text-lg text-blue-800 dark:text-blue-300">
                                     <Trophy className="h-5 w-5"/>
                                     Desempenho dos Orçamentos
-                                </CardTitle>
+                                </Typography>
                             </CardHeader>
                             <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                                 <div className="p-3 bg-background/50 rounded-lg">
@@ -178,10 +178,10 @@ export default function BudgetsPage() {
                                  Experimente usar nossas ferramentas inteligentes para criar orçamentos baseados na sua situação ou histórico de gastos.
                                </p>
                                <div className="flex gap-2">
-                                    <Button onClick={() => setActiveTab("guidance")} variant="outline">
+                                    <Button onClick={() => setActiveTab("guidance")} variant="outlined">
                                         <Calculator className="mr-2 h-4 w-4" /> Como Montar
                                     </Button>
-                                    <Button onClick={() => setActiveTab("analysis")} variant="outline">
+                                    <Button onClick={() => setActiveTab("analysis")} variant="outlined">
                                         <BarChart3 className="mr-2 h-4 w-4" /> Analisar Gastos
                                     </Button>
                                     <CreateBudgetDialog>
@@ -222,15 +222,15 @@ function BudgetCard({ budget, onDelete }: { budget: Budget, onDelete: () => void
             <CardHeader>
                 <div className="flex items-start justify-between">
                     <div>
-                         <CardTitle className="flex items-center gap-2">
+                         <Typography variant="h6" className="flex items-center gap-2">
                              {budget.currentSpending <= budget.amount && <Award className="h-4 w-4 text-yellow-500" />}
                             {budget.name}
-                         </CardTitle>
-                        <CardDescription>Categoria: {budget.category}</CardDescription>
+                         </Typography>
+                        <Typography variant="body2" color="text.secondary">Categoria: {budget.category}</Typography>
                     </div>
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Button variant="text" size="icon" className="h-8 w-8">
                                 <MoreVertical className="h-4 w-4"/>
                             </Button>
                         </DropdownMenuTrigger>
@@ -266,7 +266,7 @@ function BudgetCard({ budget, onDelete }: { budget: Budget, onDelete: () => void
             </CardHeader>
             <CardContent className="space-y-4">
                 <div>
-                     <Progress value={Math.min(percentage, 100)} indicatorSx={progressSxColor} />
+                     <LinearProgress variant="determinate" value={Math.min(percentage, 100)} indicatorSx={progressSxColor} />
                 </div>
                 <div className="flex justify-between items-baseline">
                     <p className="text-lg font-bold text-foreground">{formatCurrency(budget.currentSpending)}</p>

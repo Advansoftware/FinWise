@@ -1,21 +1,7 @@
 // src/components/budgets/spending-analysis.tsx
 
 import React, { useMemo } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  Typography, 
-  Button, 
-  Chip, 
-  LinearProgress, 
-  Divider, 
-  Box, 
-  Stack, 
-  Paper,
-  useTheme,
-  alpha
-} from '@mui/material';
+import {Card, CardContent, CardHeader, Typography, Button, Chip, LinearProgress, Divider, Box, Stack, Paper, useTheme, alpha} from '@mui/material';
 import { 
   TrendingUp, 
   TrendingDown,
@@ -29,7 +15,7 @@ import {
 import { formatCurrency } from "@/lib/utils";
 import { Transaction } from "@/lib/types";
 import { useTransactions } from "@/hooks/use-transactions";
-import { subMonths, format, isAfter, isBefore } from 'date-fns';
+import {subMonths, format, isAfter, isBefore} from 'date-fns';
 
 interface CategoryAnalysis {
   category: string;

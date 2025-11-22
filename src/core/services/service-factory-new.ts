@@ -1,9 +1,9 @@
 // src/core/services/service-factory.ts
 
-import { IDatabaseAdapter } from '@/core/ports/database.port';
-import { IAuthService } from '@/core/ports/auth.port';
-import { IPaymentService } from '@/core/ports/payment.port';
-import { MongoClient } from 'mongodb';
+import {IDatabaseAdapter} from '@/core/ports/database.port';
+import {IAuthService} from '@/core/ports/auth.port';
+import {IPaymentService} from '@/core/ports/payment.port';
+import {MongoClient} from 'mongodb';
 
 // Singleton factory class
 class ServiceFactory {

@@ -2,15 +2,15 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@mui/material"
+import { Chip } from "@mui/material"
+import { Card, CardContent, CardHeader } from "@mui/material"
 import { AlertTriangle, BarChart3, Bot, Image, MessageCircle, Settings } from "lucide-react"
 import { useCreditTransparency } from "@/hooks/use-credit-transparency"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Box, Stack, Typography } from '@mui/material'
+import { Button } from "@mui/material"
+import { Divider } from "@mui/material"
+import { Alert, AlertDescription } from "@mui/material"
+import { Box, Stack, Typography} from '@mui/material'
 
 interface CreditStatementDialogProps {
   open: boolean
@@ -187,9 +187,9 @@ export function CreditStatementDialog({ open, onOpenChange }: CreditStatementDia
                         {getCategoryLabel(typedCategory)}
                       </Typography>
                     </Box>
-                    <CardDescription>
+                    <Typography variant="body2" color="text.secondary">
                       {getCategoryDescription(typedCategory)}
-                    </CardDescription>
+                    </Typography>
                   </CardHeader>
                   <CardContent>
                     <Stack direction="row" justifyContent="space-between" alignItems="center">
@@ -202,7 +202,7 @@ export function CreditStatementDialog({ open, onOpenChange }: CreditStatementDia
                         </Typography>
                       </Stack>
                       <Box sx={{ textAlign: 'right' }}>
-                        <Badge variant="outline">
+                        <Badge variant="outlined">
                           {usage.used > 0 ? Math.round(usage.spent / usage.used) : 0} créditos/ação
                         </Badge>
                       </Box>
@@ -216,7 +216,7 @@ export function CreditStatementDialog({ open, onOpenChange }: CreditStatementDia
           {/* Alternativas Gratuitas */}
           {alternativeSuggestion && (
             <Stack spacing={3}>
-              <Separator />
+              <Divider />
               <Typography variant="h6" sx={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Settings style={{ width: '1.25rem', height: '1.25rem' }} />
                 Opções Gratuitas Disponíveis
@@ -234,7 +234,7 @@ export function CreditStatementDialog({ open, onOpenChange }: CreditStatementDia
           {/* Ações */}
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={3} sx={{ pt: 4 }}>
             <Button 
-              variant="outline" 
+              variant="outlined" 
               onClick={() => onOpenChange(false)}
               sx={{ flex: 1 }}
             >

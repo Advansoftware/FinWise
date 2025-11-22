@@ -1,14 +1,14 @@
 
 import './globals.css';
-import { Toaster } from '@/components/ui/toaster';
-import { Inter } from 'next/font/google';
-import { AuthProvider } from '@/hooks/use-auth';
-import { SessionProvider } from 'next-auth/react';
-import { PWAUpdater } from '@/components/pwa-updater';
-import { OfflineStorageInitializer } from '@/components/offline-storage-initializer';
-import { DataRefreshProvider } from '@/hooks/use-data-refresh';
-import { Metadata, Viewport } from 'next';
-import { structuredData, organizationData, websiteData, financialToolsData } from '@/lib/structured-data';
+import {Toaster} from '@/components/ui/toaster';
+import {Inter} from 'next/font/google';
+import {AuthProvider} from '@/hooks/use-auth';
+import {SessionProvider} from 'next-auth/react';
+import {PWAUpdater} from '@/components/pwa-updater';
+import {OfflineStorageInitializer} from '@/components/offline-storage-initializer';
+import {DataRefreshProvider} from '@/hooks/use-data-refresh';
+import {Metadata, Viewport} from 'next';
+import {structuredData, organizationData, websiteData, financialToolsData} from '@/lib/structured-data';
 import ThemeRegistry from '@/components/theme-registry/theme-registry';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });

@@ -5,8 +5,8 @@ import { usePlan } from "@/hooks/use-plan";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Lock, Gem } from "lucide-react";
 import Link from "next/link";
-import { Button } from "./ui/button";
-import { Box, Stack } from '@mui/material';
+import {Button} from '@mui/material';
+import {Box, Stack} from '@mui/material';
 
 interface ProUpgradeButtonProps {
     children: React.ReactNode;

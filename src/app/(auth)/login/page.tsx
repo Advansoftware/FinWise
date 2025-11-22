@@ -1,20 +1,20 @@
 'use client';
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import {useState} from 'react';
+import {useForm} from 'react-hook-form';
+import {zodResolver} from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useAuth } from '@/hooks/use-auth';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import {Button, Typography} from '@mui/material';
+import {TextField} from '@mui/material';
+import {Card, CardContent, CardHeader} from '@mui/material';
+import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from '@/components/ui/form';
+import {useAuth} from '@/hooks/use-auth';
+import {useToast} from '@/hooks/use-toast';
+import {Loader2} from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Logo } from '@/components/logo';
-import { ResetPasswordDialog } from '../reset-password-dialog';
+import {useRouter} from 'next/navigation';
+import {Logo} from '@/components/logo';
+import {ResetPasswordDialog} from '../reset-password-dialog';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Por favor, insira um email válido.' }),
@@ -61,8 +61,8 @@ export default function LoginPage() {
         <div className="mx-auto h-12 w-12">
             <Logo />
         </div>
-        <CardTitle>Bem-vindo de volta!</CardTitle>
-        <CardDescription>Faça login para acessar seu painel financeiro.</CardDescription>
+        <Typography variant="h6">Bem-vindo de volta!</Typography>
+        <Typography variant="body2" color="text.secondary">Faça login para acessar seu painel financeiro.</Typography>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -74,7 +74,7 @@ export default function LoginPage() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="seu@email.com" {...field} />
+                    <TextField placeholder="seu@email.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -94,7 +94,7 @@ export default function LoginPage() {
                     </ResetPasswordDialog>
                   </div>
                   <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
+                    <TextField type="password" placeholder="••••••••" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -1,24 +1,24 @@
 // src/app/(app)/import/page.tsx
 'use client';
-import { useState, useMemo } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from '@/components/ui/button';
-import { UploadCloud, FileText, X, Loader2, Wand2, ChevronRight, ChevronLeft, Sparkles, Lock } from 'lucide-react';
-import { useToast } from '@/hooks/use-toast';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import {useState, useMemo} from 'react';
+import { Card, CardContent, CardHeader } from "@mui/material";
+import {Button} from '@mui/material';
+import {UploadCloud, FileText, X, Loader2, Wand2, ChevronRight, ChevronLeft, Sparkles, Lock} from 'lucide-react';
+import {useToast} from '@/hooks/use-toast';
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
 import { Transaction, TransactionCategory, Wallet } from "@/lib/types";
 import { useTransactions } from "@/hooks/use-transactions";
 import Papa from 'papaparse';
-import { default as toJs } from 'ofx-js';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Label } from '@/components/ui/label';
-import { format } from 'date-fns';
-import { suggestCategoryForItemAction } from '@/services/ai-actions';
-import { useAuth } from '@/hooks/use-auth';
-import { usePlan } from '@/hooks/use-plan';
-import { ProUpgradeCard } from '@/components/pro-upgrade-card';
-import { ProUpgradeButton } from '@/components/pro-upgrade-button';
-import { useWallets } from '@/hooks/use-wallets';
+import {default as toJs} from 'ofx-js';
+import {Select, SelectContent, MenuItem, SelectTrigger, SelectValue} from '@mui/material';
+import {InputLabel} from '@mui/material';
+import {format} from 'date-fns';
+import {suggestCategoryForItemAction} from '@/services/ai-actions';
+import {useAuth} from '@/hooks/use-auth';
+import {usePlan} from '@/hooks/use-plan';
+import {ProUpgradeCard} from '@/components/pro-upgrade-card';
+import {ProUpgradeButton} from '@/components/pro-upgrade-button';
+import {useWallets} from '@/hooks/use-wallets';
 
 type ParsedTransaction = Omit<Transaction, 'id' | 'walletId'> & { walletId?: string };
 
@@ -318,7 +318,7 @@ export default function ImportPage() {
                           </SelectTrigger>
                           <SelectContent>
                              {headers.map(header => (
-                               <SelectItem key={header} value={header}>{header}</SelectItem>
+                               <MenuItem key={header} value={header}>{header}</MenuItem>
                              ))}
                           </SelectContent>
                         </Select>
@@ -346,7 +346,7 @@ export default function ImportPage() {
                 </div>
                  {!canUseAICategorization && (
                     <ProUpgradeButton requiredPlan="Plus" tooltipContent="Desbloqueie a categorização automática com o plano Plus.">
-                        <Button variant="outline" size="sm" disabled>
+                        <Button variant="outlined" size="small" disabled>
                             <Sparkles className="mr-2 h-4 w-4" />
                             Categorizar com IA
                         </Button>
@@ -374,7 +374,7 @@ export default function ImportPage() {
                                     <Select value={t.category} onValueChange={(val) => handleTransactionUpdate(i, 'category', val)}>
                                         <SelectTrigger><SelectValue/></SelectTrigger>
                                         <SelectContent>
-                                            {userCategories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                                            {userCategories.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
                                         </SelectContent>
                                     </Select>
                                 </TableCell>
@@ -382,7 +382,7 @@ export default function ImportPage() {
                                     <Select value={t.subcategory} onValueChange={(val) => handleTransactionUpdate(i, 'subcategory', val)} disabled={(userSubcategories[t.category]?.length || 0) === 0}>
                                         <SelectTrigger><SelectValue placeholder="-"/></SelectTrigger>
                                         <SelectContent>
-                                            {userSubcategories[t.category]?.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                                            {userSubcategories[t.category]?.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
                                         </SelectContent>
                                     </Select>
                                 </TableCell>
@@ -391,7 +391,7 @@ export default function ImportPage() {
                                         <SelectTrigger><SelectValue placeholder="Selecione"/></SelectTrigger>
                                         <SelectContent>
                                             {wallets.map(wallet => (
-                                                <SelectItem key={wallet.id} value={wallet.id}>{wallet.name}</SelectItem>
+                                                <MenuItem key={wallet.id} value={wallet.id}>{wallet.name}</MenuItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
@@ -404,7 +404,7 @@ export default function ImportPage() {
             </div>
              <div className="flex flex-wrap gap-2">
                 {fileType === 'csv' && (
-                  <Button variant="outline" onClick={() => setStage('mapping')} disabled={stage === 'importing'}>
+                  <Button variant="outlined" onClick={() => setStage('mapping')} disabled={stage === 'importing'}>
                      <ChevronLeft className="mr-2 h-4 w-4" /> Voltar ao Mapeamento
                   </Button>
                 )}
@@ -432,7 +432,7 @@ export default function ImportPage() {
                     <p className="text-muted-foreground">Faça o upload de um arquivo CSV ou OFX para adicionar transações em lote.</p>
                 </div>
                 {stage !== 'upload' && (
-                    <Button variant="ghost" onClick={handleReset} disabled={stage === 'importing'}>
+                    <Button variant="text" onClick={handleReset} disabled={stage === 'importing'}>
                         <X className="mr-2 h-4 w-4" /> Cancelar Importação
                     </Button>
                 )}

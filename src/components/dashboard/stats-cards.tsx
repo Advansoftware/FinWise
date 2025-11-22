@@ -1,13 +1,4 @@
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  Typography, 
-  Skeleton, 
-  Box, 
-  Stack, 
-  useTheme 
-} from '@mui/material';
+import {Card, CardContent, CardHeader, Typography, Skeleton, Box, Stack, useTheme} from '@mui/material';
 import { DollarSign, TrendingUp, TrendingDown, PieChart, Trophy } from "lucide-react";
 import { Transaction } from "@/lib/types";
 import { Area, AreaChart, ResponsiveContainer, Tooltip } from "recharts";

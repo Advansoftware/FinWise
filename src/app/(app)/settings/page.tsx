@@ -1,14 +1,14 @@
 // src/app/(app)/settings/page.tsx
 'use client';
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@mui/material";
+import { Card, CardContent, CardHeader } from "@mui/material";
 import { useAISettings } from "@/hooks/use-ai-settings";
 import { Skeleton } from "@/components/ui/skeleton";
 import { MoreVertical, Trash2, Edit, PlusCircle, CheckCircle, Radio, Sparkles, Lock } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
+import { Chip } from "@mui/material";
 import { AISettingsDialog } from "@/components/settings/ai-settings-dialog";
 import { usePlan } from "@/hooks/use-plan";
 import { AICredential } from "@/lib/types";
@@ -55,8 +55,8 @@ export default function SettingsPage() {
             
             <Card>
                 <CardHeader>
-                    <CardTitle>Credenciais Disponíveis</CardTitle>
-                    <CardDescription>Apenas a IA da credencial ativa consome seus créditos Gastometria.</CardDescription>
+                    <Typography variant="h6">Credenciais Disponíveis</Typography>
+                    <Typography variant="body2" color="text.secondary">Apenas a IA da credencial ativa consome seus créditos Gastometria.</Typography>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-4">
@@ -80,12 +80,12 @@ export default function SettingsPage() {
                                     </div>
                                     <div className="flex items-center gap-2">
                                         {!isActive && (
-                                            <Button variant="ghost" size="sm" onClick={() => handleActivate(cred.id)}>Ativar</Button>
+                                            <Button variant="text" size="small" onClick={() => handleActivate(cred.id)}>Ativar</Button>
                                         )}
                                          {!cred.isReadOnly && (
                                              <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                    <Button variant="text" size="icon" className="h-8 w-8">
                                                         <MoreVertical className="h-4 w-4"/>
                                                     </Button>
                                                 </DropdownMenuTrigger>

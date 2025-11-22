@@ -5,10 +5,10 @@
  *
  * - generateAnnualReport - A function that analyzes 12 monthly reports and produces a structured annual report.
  */
-import { GenerateAnnualReportInputSchema, GenerateAnnualReportOutputSchema } from '../ai-types';
+import {GenerateAnnualReportInputSchema, GenerateAnnualReportOutputSchema} from '../ai-types';
 import type { GenerateAnnualReportInput } from '../ai-types';
-import { createConfiguredAI, getModelReference } from '../genkit';
-import { AICredential } from '@/lib/types';
+import {createConfiguredAI, getModelReference} from '../genkit';
+import {AICredential} from '@/lib/types';
 
 
 const promptTemplate = `Você é um consultor financeiro sênior, encarregado de compilar e analisar os relatórios financeiros mensais de um cliente para criar um relatório anual abrangente.

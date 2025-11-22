@@ -1,11 +1,11 @@
 "use client"
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar } from '@/components/ui/sidebar';
-import { Home, History, Settings, FolderKanban, Upload, Gem, UserCircle, Target, Goal, Wallet, FileText, CreditCard, Calculator } from 'lucide-react';
-import { cn } from '@/lib/utils';
-import { useIsMobile } from '@/hooks/use-mobile';
+import {usePathname} from 'next/navigation';
+import {SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar} from '@/components/ui/sidebar';
+import {Home, History, Settings, FolderKanban, Upload, Gem, UserCircle, Target, Goal, Wallet, FileText, CreditCard, Calculator} from 'lucide-react';
+import {cn} from '@/lib/utils';
+import {useIsMobile} from '@/hooks/use-mobile';
 
 const navItems = [
     { href: '/dashboard', label: 'Painel', icon: Home },

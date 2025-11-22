@@ -1,8 +1,8 @@
 // src/app/(app)/wallets/page.tsx
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@mui/material";
+import { Button } from "@mui/material";
 import { PlusCircle, MoreVertical, Trash2, Edit, Banknote, CreditCard, PiggyBank, Landmark, CircleDollarSign, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import { useWallets } from "@/hooks/use-wallets";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -72,9 +72,9 @@ export default function WalletsPage() {
                         {/* Total Positivo */}
                         <Card className="bg-green-50 dark:bg-green-950 border-green-200 dark:border-green-800">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium text-green-900 dark:text-green-100">
+                                <Typography variant="h6" className="text-sm font-medium text-green-900 dark:text-green-100">
                                     Total Positivo
-                                </CardTitle>
+                                </Typography>
                                 <TrendingUp className="h-4 w-4 text-green-600 dark:text-green-400" />
                             </CardHeader>
                             <CardContent>
@@ -90,9 +90,9 @@ export default function WalletsPage() {
                         {/* Total Negativo */}
                         <Card className="bg-red-50 dark:bg-red-950 border-red-200 dark:border-red-800">
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className="text-sm font-medium text-red-900 dark:text-red-100">
+                                <Typography variant="h6" className="text-sm font-medium text-red-900 dark:text-red-100">
                                     Total Negativo
-                                </CardTitle>
+                                </Typography>
                                 <TrendingDown className="h-4 w-4 text-red-600 dark:text-red-400" />
                             </CardHeader>
                             <CardContent>
@@ -113,14 +113,14 @@ export default function WalletsPage() {
                                 : "bg-orange-50 dark:bg-orange-950 border-orange-200 dark:border-orange-800"
                         )}>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                                <CardTitle className={cn(
+                                <Typography variant="h6" className={cn(
                                     "text-sm font-medium",
                                     netBalance >= 0
                                         ? "text-blue-900 dark:text-blue-100"
                                         : "text-orange-900 dark:text-orange-100"
                                 )}>
                                     Saldo Líquido
-                                </CardTitle>
+                                </Typography>
                                 <DollarSign className={cn(
                                     "h-4 w-4",
                                     netBalance >= 0
@@ -195,13 +195,13 @@ function WalletCard({ wallet, onDelete }: { wallet: Wallet, onDelete: () => void
                             <WalletIcon type={wallet.type} />
                         </div>
                         <div>
-                             <CardTitle>{wallet.name}</CardTitle>
-                            <CardDescription>{wallet.type}</CardDescription>
+                             <Typography variant="h6">{wallet.name}</Typography>
+                            <Typography variant="body2" color="text.secondary">{wallet.type}</Typography>
                         </div>
                     </div>
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Button variant="text" size="icon" className="h-8 w-8">
                                 <MoreVertical className="h-4 w-4"/>
                             </Button>
                         </DropdownMenuTrigger>

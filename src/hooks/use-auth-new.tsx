@@ -1,16 +1,9 @@
 // src/hooks/use-auth.tsx
 'use client';
 
-import {
-  createContext,
-  useContext,
-  useState,
-  useEffect,
-  ReactNode,
-  useCallback,
-} from 'react';
-import { authClient } from '@/lib/auth-client';
-import { UserProfile } from '@/lib/types';
+import {createContext, useContext, useState, useEffect, ReactNode, useCallback} from 'react';
+import {authClient} from '@/lib/auth-client';
+import {UserProfile} from '@/lib/types';
 
 interface AuthContextType {
   user: UserProfile | null;

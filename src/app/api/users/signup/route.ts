@@ -1,6 +1,6 @@
 // src/app/api/users/signup/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { MongoClient, ObjectId } from 'mongodb';
+import {NextRequest, NextResponse} from 'next/server';
+import {MongoClient, ObjectId} from 'mongodb';
 import bcrypt from 'bcryptjs';
 
 if (!process.env.MONGODB_URI) {

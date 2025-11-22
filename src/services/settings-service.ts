@@ -1,8 +1,8 @@
 // src/services/settings-service.ts
 'use server';
 
-import { AICredential, OpenAIModel } from '@/lib/types';
-import { getDatabaseAdapter } from '@/core/services/service-factory';
+import {AICredential, OpenAIModel} from '@/lib/types';
+import {getDatabaseAdapter} from '@/core/services/service-factory';
 
 const GASTOMETRIA_AI_CREDENTIAL_ID = 'gastometria-ai-default';
 

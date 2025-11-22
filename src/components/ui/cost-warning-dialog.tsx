@@ -1,7 +1,7 @@
 // src/components/ui/cost-warning-dialog.tsx
 'use client';
 
-import { Box } from '@mui/material';
+import {Box} from '@mui/material';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -12,7 +12,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { Badge } from "@/components/ui/badge";
+import { Chip } from "@mui/material";
 import { Gem, Zap, Brain, Search, Info } from "lucide-react";
 import { useCreditTransparency } from "@/hooks/use-credit-transparency";
 
@@ -97,7 +97,7 @@ export function CostWarningDialog({
                 <Box component="h4" sx={{ fontWeight: theme => theme.typography.fontWeightMedium }}>
                   {action.name}
                 </Box>
-                <Badge variant="secondary">
+                <Badge variant="contained" color="secondary">
                   {action.cost} créditos
                 </Badge>
               </Box>

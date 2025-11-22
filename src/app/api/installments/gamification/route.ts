@@ -1,8 +1,8 @@
 // src/app/api/installments/gamification/route.ts
 
-import { NextRequest, NextResponse } from 'next/server';
-import { getDatabaseAdapter } from '@/core/services/service-factory';
-import { ObjectId } from 'mongodb';
+import {NextRequest, NextResponse} from 'next/server';
+import {getDatabaseAdapter} from '@/core/services/service-factory';
+import {ObjectId} from 'mongodb';
 
 async function getUserIdFromRequest(request: NextRequest): Promise<string | null> {
   const { searchParams } = new URL(request.url);

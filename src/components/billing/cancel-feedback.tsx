@@ -1,10 +1,10 @@
 
 'use client';
 
-import { motion, AnimatePresence } from 'framer-motion';
-import { useEffect } from 'react';
-import { HeartCrack, Frown } from 'lucide-react';
-import { Box, Typography } from '@mui/material';
+import {motion, AnimatePresence} from 'framer-motion';
+import {useEffect} from 'react';
+import {HeartCrack, Frown} from 'lucide-react';
+import {Box, Typography} from '@mui/material';
 
 export const CancelFeedback = ({ onComplete }: { onComplete: () => void }) => {
     useEffect(() => {

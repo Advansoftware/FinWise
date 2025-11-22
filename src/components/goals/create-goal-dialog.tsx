@@ -13,16 +13,16 @@ import {
   DialogDescription,
   DialogFooter,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from "@mui/material";
+import { Button } from "@mui/material";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { TextField } from "@mui/material";
 import { useToast } from "@/hooks/use-toast";
 import { useGoals } from "@/hooks/use-goals";
 import { Goal } from "@/lib/types";
 import { Calendar, Loader2 } from "lucide-react";
 import { SingleDatePicker } from "../single-date-picker";
-import { Box, Typography } from '@mui/material';
+import {Box, Typography} from '@mui/material';
 
 const goalSchema = z.object({
   name: z.string().min(1, "O nome da meta é obrigatório."),
@@ -112,7 +112,7 @@ export function CreateGoalDialog({ children, initialData }: CreateGoalDialogProp
                 <FormItem>
                   <FormLabel>Nome da Meta</FormLabel>
                   <FormControl>
-                    <Input placeholder="Ex: Comprar um Carro" {...field} />
+                    <TextField placeholder="Ex: Comprar um Carro" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -125,7 +125,7 @@ export function CreateGoalDialog({ children, initialData }: CreateGoalDialogProp
                 <FormItem>
                   <FormLabel>Valor da Meta (R$)</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" placeholder="Ex: 30000.00" {...field} />
+                    <TextField type="number" step="0.01" placeholder="Ex: 30000.00" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -149,7 +149,7 @@ export function CreateGoalDialog({ children, initialData }: CreateGoalDialogProp
                 <FormItem>
                   <FormLabel>Depósito Mensal Planejado (R$)</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" placeholder="Ex: 500.00" {...field} />
+                    <TextField type="number" step="0.01" placeholder="Ex: 500.00" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

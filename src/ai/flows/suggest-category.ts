@@ -5,10 +5,10 @@
  *
  * - suggestCategoryForItem - A function that handles the category suggestion process.
  */
-import { SuggestCategoryInputSchema, SuggestCategoryOutputSchema } from '../ai-types';
+import {SuggestCategoryInputSchema, SuggestCategoryOutputSchema} from '../ai-types';
 import type { SuggestCategoryInput } from '../ai-types';
-import { createConfiguredAI, getModelReference } from '../genkit';
-import { AICredential } from '@/lib/types';
+import {createConfiguredAI, getModelReference} from '../genkit';
+import {AICredential} from '@/lib/types';
 
 
 const promptTemplate = `Você é um especialista em finanças pessoais que categoriza despesas.

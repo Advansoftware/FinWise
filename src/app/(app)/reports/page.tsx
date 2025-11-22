@@ -1,18 +1,18 @@
 // src/app/(app)/reports/page.tsx
 'use client';
-import { useState, useMemo } from 'react';
-import { useReports } from '@/hooks/use-reports';
-import { useTransactions } from '@/hooks/use-transactions';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { getYear } from 'date-fns';
-import { Loader2, BarChart2, TrendingUp, TrendingDown, DollarSign, Sparkles, Calendar, Clock, RefreshCw } from 'lucide-react';
-import { Skeleton } from '@/components/ui/skeleton';
-import { ResponsiveContainer, PieChart, Pie, Cell, Legend, BarChart, Bar, XAxis, YAxis, Tooltip } from 'recharts';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { ProUpgradeCard } from '@/components/pro-upgrade-card';
-import { usePlan } from '@/hooks/use-plan';
-import { Report } from '@/core/ports/reports.port';
+import {useState, useMemo} from 'react';
+import {useReports} from '@/hooks/use-reports';
+import {useTransactions} from '@/hooks/use-transactions';
+import {Card, CardContent, CardHeader, Typography} from '@mui/material';
+import {getYear} from 'date-fns';
+import {Loader2, BarChart2, TrendingUp, TrendingDown, DollarSign, Sparkles, Calendar, Clock, RefreshCw} from 'lucide-react';
+import {Skeleton} from '@/components/ui/skeleton';
+import {ResponsiveContainer, PieChart, Pie, Cell, Legend, BarChart, Bar, XAxis, YAxis, Tooltip} from 'recharts';
+import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs';
+import {Button} from '@mui/material';
+import {ProUpgradeCard} from '@/components/pro-upgrade-card';
+import {usePlan} from '@/hooks/use-plan';
+import {Report} from '@/core/ports/reports.port';
 
 const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
 
@@ -149,10 +149,10 @@ function MonthlyReportCard({ year, month }: { year: number, month: number }) {
          return (
             <Card className="flex flex-col justify-between h-full">
                 <CardHeader className="pb-2 p-3 md:p-4">
-                    <CardTitle className="text-sm md:text-base capitalize truncate">
+                    <Typography variant="h6" className="text-sm md:text-base capitalize truncate">
                         {monthName}
-                    </CardTitle>
-                    <CardDescription className={`text-xs md:text-sm font-medium ${
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary" className={`text-xs md:text-sm font-medium ${
                         report.data.balance >= 0 ? "text-emerald-600" : "text-destructive"
                     }`}>
                         {report.data.balance.toLocaleString('pt-BR', { 
@@ -161,7 +161,7 @@ function MonthlyReportCard({ year, month }: { year: number, month: number }) {
                             minimumFractionDigits: 0,
                             maximumFractionDigits: 0
                         })}
-                    </CardDescription>
+                    </Typography>
                 </CardHeader>
                 <CardContent className="text-xs p-3 md:p-4 pt-0">
                     <div className="space-y-1">
@@ -204,8 +204,8 @@ function MonthlyReportCard({ year, month }: { year: number, month: number }) {
                     <span>Pendente</span>
                 </div>
                 <Button 
-                    variant="ghost" 
-                    size="sm" 
+                    variant="text" 
+                    size="small" 
                     className="h-7 text-xs"
                     onClick={handleGenerateReport}
                     disabled={isGenerating}
@@ -259,13 +259,13 @@ function AnnualReportDisplay({ report }: { report: Report }) {
                 {/* Pie Chart */}
                 <Card>
                     <CardHeader className="pb-3 p-4 md:p-6">
-                        <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+                        <Typography variant="h6" className="flex items-center gap-2 text-base md:text-lg">
                             <BarChart2 className="text-primary h-4 w-4 md:h-5 md:w-5"/> 
                             Top 5 Categorias
-                        </CardTitle>
-                        <CardDescription className="text-xs md:text-sm">
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" className="text-xs md:text-sm">
                             Maiores gastos do ano
-                        </CardDescription>
+                        </Typography>
                     </CardHeader>
                     <CardContent className="p-4 md:p-6 pt-0">
                         <div className="h-48 md:h-64">
@@ -297,13 +297,13 @@ function AnnualReportDisplay({ report }: { report: Report }) {
                 {/* Category Breakdown */}
                 <Card>
                     <CardHeader className="pb-3 p-4 md:p-6">
-                        <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+                        <Typography variant="h6" className="flex items-center gap-2 text-base md:text-lg">
                             <BarChart2 className="text-primary h-4 w-4 md:h-5 md:w-5"/> 
                             Breakdown por Categoria
-                        </CardTitle>
-                        <CardDescription className="text-xs md:text-sm">
+                        </Typography>
+                        <Typography variant="body2" color="text.secondary" className="text-xs md:text-sm">
                             Distribuição de gastos
-                        </CardDescription>
+                        </Typography>
                     </CardHeader>
                     <CardContent className="p-4 md:p-6 pt-0">
                         <div className="h-48 md:h-64">
@@ -334,10 +334,10 @@ function AnnualReportDisplay({ report }: { report: Report }) {
             {/* AI Summary */}
              <Card>
                 <CardHeader className="p-4 md:p-6">
-                    <CardTitle className="flex items-center gap-2 text-base md:text-lg">
+                    <Typography variant="h6" className="flex items-center gap-2 text-base md:text-lg">
                         <Sparkles className="text-primary h-4 w-4 md:h-5 md:w-5"/> 
                         Resumo Anual da IA
-                    </CardTitle>
+                    </Typography>
                 </CardHeader>
                 <CardContent className="p-4 md:p-6 pt-0">
                     <p className="text-sm md:text-base text-muted-foreground whitespace-pre-wrap leading-relaxed">
@@ -358,9 +358,9 @@ function StatCard({ icon: Icon, title, value, color }: {
     return (
         <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-4">
-                <CardTitle className="text-xs md:text-sm font-medium">
+                <Typography variant="h6" className="text-xs md:text-sm font-medium">
                     {title}
-                </CardTitle>
+                </Typography>
                 <Icon className={`h-4 w-4 ${color}`} />
             </CardHeader>
             <CardContent className="p-3 md:p-4 pt-0">

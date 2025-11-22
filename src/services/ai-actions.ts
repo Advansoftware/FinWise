@@ -42,48 +42,23 @@
 
 'use server';
 
-import { z } from 'zod';
-import {
-  ChatInput,
-  ReceiptInfoInput,
-  ReceiptInfoOutput,
-  SuggestCategoryInput,
-  SuggestCategoryOutput,
-  FinancialProfileInput,
-  FinancialProfileInputSchema,
-  FinancialProfileOutputSchema,
-  FinancialProfileOutput,
-  AnalyzeTransactionsInputSchema,
-  AnalyzeTransactionsOutputSchema,
-  GenerateReportInput,
-  GenerateReportOutput,
-  GenerateAnnualReportInput,
-  GenerateAnnualReportOutput,
-  SuggestBudgetInput,
-  SuggestBudgetOutput,
-  ProjectGoalCompletionInput,
-  ProjectGoalCompletionOutput,
-  GenerateAutomaticBudgetsInput,
-  GenerateAutomaticBudgetsOutput,
-  PredictFutureBalanceInput,
-  PredictFutureBalanceOutput,
-  AICreditLogAction
-} from '@/ai/ai-types';
-import { Transaction } from '@/lib/types';
-import { getActiveAICredential } from './settings-service';
-import { consumeAICredits, checkAICredits, CreditCheckResult } from './credits-service';
-import { generateSpendingTip } from '@/ai/flows/ai-powered-spending-tips';
-import { chatWithTransactions } from '@/ai/flows/chat-with-transactions';
-import { extractReceiptInfo } from '@/ai/flows/extract-receipt-info';
-import { suggestCategoryForItem } from '@/ai/flows/suggest-category';
-import { generateMonthlyReport } from '@/ai/flows/generate-monthly-report';
-import { generateAnnualReport } from '@/ai/flows/generate-annual-report';
-import { suggestBudgetAmount } from '@/ai/flows/suggest-budget-amount';
-import { projectGoalCompletion } from '@/ai/flows/project-goal-completion';
-import { generateAutomaticBudgets } from '@/ai/flows/generate-automatic-budgets';
-import { predictFutureBalance } from '@/ai/flows/predict-future-balance';
-import { createConfiguredAI, getModelReference } from '@/ai/genkit';
-import { AICredential } from '@/lib/types';
+import {z} from 'zod';
+import {ChatInput, ReceiptInfoInput, ReceiptInfoOutput, SuggestCategoryInput, SuggestCategoryOutput, FinancialProfileInput, FinancialProfileInputSchema, FinancialProfileOutputSchema, FinancialProfileOutput, AnalyzeTransactionsInputSchema, AnalyzeTransactionsOutputSchema, GenerateReportInput, GenerateReportOutput, GenerateAnnualReportInput, GenerateAnnualReportOutput, SuggestBudgetInput, SuggestBudgetOutput, ProjectGoalCompletionInput, ProjectGoalCompletionOutput, GenerateAutomaticBudgetsInput, GenerateAutomaticBudgetsOutput, PredictFutureBalanceInput, PredictFutureBalanceOutput, AICreditLogAction} from '@/ai/ai-types';
+import {Transaction} from '@/lib/types';
+import {getActiveAICredential} from './settings-service';
+import {consumeAICredits, checkAICredits, CreditCheckResult} from './credits-service';
+import {generateSpendingTip} from '@/ai/flows/ai-powered-spending-tips';
+import {chatWithTransactions} from '@/ai/flows/chat-with-transactions';
+import {extractReceiptInfo} from '@/ai/flows/extract-receipt-info';
+import {suggestCategoryForItem} from '@/ai/flows/suggest-category';
+import {generateMonthlyReport} from '@/ai/flows/generate-monthly-report';
+import {generateAnnualReport} from '@/ai/flows/generate-annual-report';
+import {suggestBudgetAmount} from '@/ai/flows/suggest-budget-amount';
+import {projectGoalCompletion} from '@/ai/flows/project-goal-completion';
+import {generateAutomaticBudgets} from '@/ai/flows/generate-automatic-budgets';
+import {predictFutureBalance} from '@/ai/flows/predict-future-balance';
+import {createConfiguredAI, getModelReference} from '@/ai/genkit';
+import {AICredential} from '@/lib/types';
 
 async function getCredentialAndHandleCredits(
   userId: string,

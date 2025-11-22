@@ -2,22 +2,22 @@
 'use client';
 
 import React from 'react';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from "@/components/ui/button";
+import {useEffect} from 'react';
+import {useRouter} from 'next/navigation';
+import { Button } from "@mui/material";
 import { ArrowRight, BarChart, Bot, LayoutDashboard, Wallet, Check, Goal, FolderKanban, Upload, KeyRound, CheckCircle, XCircle, HelpCircle, BookOpen, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { useAuth } from "@/hooks/use-auth";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from '@/components/ui/skeleton';
-import { AuthGuard } from '@/components/auth/auth-guard';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
-import { structuredData, organizationData, websiteData, breadcrumbData, faqData } from '@/lib/structured-data';
+import { Chip } from "@mui/material";
+import {Skeleton} from '@/components/ui/skeleton';
+import {AuthGuard} from '@/components/auth/auth-guard';
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
+import {Card, CardContent, CardHeader, Typography} from '@mui/material';
+import {cn} from '@/lib/utils';
+import {structuredData, organizationData, websiteData, breadcrumbData, faqData} from '@/lib/structured-data';
 import Head from 'next/head';
 
 const fadeIn = {
@@ -122,12 +122,12 @@ export default function Page() {
               transition={{ duration: 0.5, delay: 0.2 }} 
               className="flex items-center gap-2 sm:gap-4"
             >
-              <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+              <Button asChild variant="text" size="small" className="hidden sm:inline-flex">
                   <Link href="/docs">
                       Documentação
                   </Link>
               </Button>
-              <Button asChild size="sm" className="text-xs sm:text-sm">
+              <Button asChild size="small" className="text-xs sm:text-sm">
                   <Link href={user ? "/dashboard" : "/login"}>
                       {user ? "Painel" : "Entrar"}
                   </Link>
@@ -156,7 +156,7 @@ export default function Page() {
               transition={{ ...fadeIn.transition, delay: 0.4 }}
               className="mt-6 sm:mt-8 flex justify-center"
             >
-              <Button asChild size="lg" className="shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-shadow w-full sm:w-auto px-6 sm:px-8">
+              <Button asChild size="large" className="shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-shadow w-full sm:w-auto px-6 sm:px-8">
                 <Link href={user ? "/dashboard" : "/login"} className="text-sm sm:text-base">
                   Comece Agora Gratuitamente
                   <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
@@ -377,7 +377,7 @@ export default function Page() {
                                       </li>
                                   ))}
                               </ul>
-                              <Button asChild size="lg" className="w-full mt-6 sm:mt-8 text-sm sm:text-base" variant={plan.variant as any}>
+                              <Button asChild size="large" className="w-full mt-6 sm:mt-8 text-sm sm:text-base" variant={plan.variant as any}>
                                   <Link href="/login">{plan.cta}</Link>
                               </Button>
                           </motion.div>
@@ -460,7 +460,7 @@ export default function Page() {
                     >
                       <Card className={cn(plan === 'Pro' && 'border-primary')}>
                         <CardHeader className="pb-3 sm:pb-4">
-                            <CardTitle className={cn("text-lg sm:text-xl", plan === 'Pro' && 'text-primary')}>{plan}</CardTitle>
+                            <Typography variant="h6" className={cn("text-lg sm:text-xl", plan === 'Pro' && 'text-primary')}>{plan}</Typography>
                         </CardHeader>
                         <CardContent className="space-y-3 sm:space-y-4">
                             {Object.entries(featureComparison).map(([category, features]) => (
@@ -547,7 +547,7 @@ export default function Page() {
                 transition={{ ...fadeIn.transition, delay: 0.6 }}
                 className="text-center mt-8 sm:mt-12"
               >
-                <Button asChild variant="outline" size="lg">
+                <Button asChild variant="outlined" size="large">
                   <Link href="/faq" className="text-sm sm:text-base">
                     Ver Todas as Perguntas
                     <ChevronRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
@@ -610,22 +610,22 @@ export default function Page() {
                     <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                       <CardHeader className="pb-3 sm:pb-4">
                         <div className="flex items-center justify-between mb-2">
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outlined" className="text-xs">
                             {post.category}
                           </Badge>
                           <span className="text-xs text-muted-foreground">
                             {post.readTime} min
                           </span>
                         </div>
-                        <CardTitle className="text-base sm:text-lg leading-tight group-hover:text-primary transition-colors">
+                        <Typography variant="h6" className="text-base sm:text-lg leading-tight group-hover:text-primary transition-colors">
                           {post.title}
-                        </CardTitle>
+                        </Typography>
                       </CardHeader>
                       <CardContent className="pt-0">
                         <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-4">
                           {post.description}
                         </p>
-                        <Button asChild variant="ghost" size="sm" className="p-0 h-auto text-xs sm:text-sm">
+                        <Button asChild variant="text" size="small" className="p-0 h-auto text-xs sm:text-sm">
                           <Link href={`/blog/${post.slug}`} className="flex items-center">
                             Ler artigo
                             <ArrowRight className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
@@ -642,7 +642,7 @@ export default function Page() {
                 transition={{ ...fadeIn.transition, delay: 0.6 }}
                 className="text-center mt-8 sm:mt-12"
               >
-                <Button asChild variant="outline" size="lg">
+                <Button asChild variant="outlined" size="large">
                   <Link href="/blog" className="text-sm sm:text-base">
                     Ver Todos os Artigos
                     <ChevronRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />

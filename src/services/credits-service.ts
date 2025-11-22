@@ -1,7 +1,7 @@
 // src/services/credits-service.ts
 'use server';
 
-import { getDatabaseAdapter } from '@/core/services/service-factory';
+import {getDatabaseAdapter} from '@/core/services/service-factory';
 import { AICreditLogAction } from "@/ai/ai-types";
 
 export interface CreditCheckResult {

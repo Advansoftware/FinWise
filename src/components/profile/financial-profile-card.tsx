@@ -2,21 +2,16 @@
 "use client";
 
 import { useState, useEffect, useTransition, useCallback, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, Button, Divider, Typography, Chip, LinearProgress, Box, Stack } from '@mui/material';
 import { RefreshCw, Sparkles, Trophy, Award, Target, Zap } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useReports } from "@/hooks/use-reports";
 import { useGamification } from "@/hooks/use-gamification";
 import { getSmartFinancialProfile } from "@/services/ai-automation-service";
-import { Separator } from "../ui/separator";
 import { useAuth } from "@/hooks/use-auth";
 import { startOfMonth, getYear } from "date-fns";
 import { FinancialProfileOutput } from "@/ai/ai-types";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { Box, Stack, Typography } from '@mui/material';
 
 export function FinancialProfileCard() {
   const [profile, setProfile] = useState<FinancialProfileOutput | null>(null);
@@ -83,7 +78,7 @@ export function FinancialProfileCard() {
                 </Typography>
             </Box>
             <Button
-                variant="ghost"
+                variant="text"
                 size="icon"
                 onClick={() => fetchProfile(true)}
                 disabled={isPending || allTransactions.length === 0 || !user}
@@ -103,7 +98,7 @@ export function FinancialProfileCard() {
         </Stack>
       </CardHeader>
       <CardContent>
-        <Separator sx={{ mb: 4 }} />
+        <Divider sx={{ mb: 4 }} />
         {isPending || !profile ? (
            <Stack spacing={3} sx={{ pt: 2 }}>
             <Skeleton sx={{ height: '1.25rem', width: '60%', bgcolor: theme => `${theme.palette.primary.main}1a` }} />
@@ -123,7 +118,7 @@ export function FinancialProfileCard() {
             {/* Seção de Gamificação */}
             {profile.gamificationInfluence && profileInsights && (
               <div className="space-y-3">
-                <Separator className="my-3" />
+                <Divider className="my-3" />
                 <div className="space-y-3">
                   <div className="flex items-center gap-2 text-sm font-medium text-primary">
                     <Trophy className="h-4 w-4" />
@@ -133,13 +128,13 @@ export function FinancialProfileCard() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="p-3 bg-muted/50 rounded-lg">
                       <div className="text-xs text-muted-foreground">Disciplina</div>
-                      <Badge variant="outline" className="mt-1">
+                      <Badge variant="outlined" className="mt-1">
                         {profile.gamificationInfluence.disciplineLevel}
                       </Badge>
                     </div>
                     <div className="p-3 bg-muted/50 rounded-lg">
                       <div className="text-xs text-muted-foreground">Consistência</div>
-                      <Badge variant="outline" className="mt-1">
+                      <Badge variant="outlined" className="mt-1">
                         {profile.gamificationInfluence.paymentConsistency}
                       </Badge>
                     </div>
@@ -151,7 +146,7 @@ export function FinancialProfileCard() {
                         <span className="text-muted-foreground">Maturidade Financeira</span>
                         <span className="font-medium">{profileInsights.financialMaturity}%</span>
                       </div>
-                      <Progress value={profileInsights.financialMaturity} className="h-2" />
+                      <LinearProgress variant="determinate" value={profileInsights.financialMaturity} className="h-2" />
                     </div>
                   )}
 

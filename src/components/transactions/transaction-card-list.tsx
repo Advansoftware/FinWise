@@ -1,20 +1,20 @@
 
 'use client';
-import { useState } from 'react';
-import { Transaction } from '@/lib/types';
-import { Card, CardContent, CardFooter, CardHeader } from '../ui/card';
-import { Badge } from '../ui/badge';
-import { CategoryIcon } from '../icons';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { MoreVertical, Pen, Trash2, ArrowUp, ArrowDown } from 'lucide-react';
-import { Button } from '../ui/button';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../ui/dropdown-menu';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
-import { EditTransactionSheet } from './edit-transaction-sheet';
-import { useTransactions } from '@/hooks/use-transactions';
-import { useToast } from '@/hooks/use-toast';
-import { Box, Stack, Typography } from '@mui/material';
+import {useState} from 'react';
+import {Transaction} from '@/lib/types';
+import {Card, CardContent, CardHeader, Typography, CardActions} from '@mui/material';
+import {Chip} from '@mui/material';
+import {CategoryIcon} from '../icons';
+import {format} from 'date-fns';
+import {ptBR} from 'date-fns/locale';
+import {MoreVertical, Pen, Trash2, ArrowUp, ArrowDown} from 'lucide-react';
+import {Button} from '@mui/material';
+import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from '../ui/dropdown-menu';
+import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle} from '../ui/alert-dialog';
+import {EditTransactionSheet} from './edit-transaction-sheet';
+import {useTransactions} from '@/hooks/use-transactions';
+import {useToast} from '@/hooks/use-toast';
+import {Box, Stack, Typography} from '@mui/material';
 
 interface TransactionCardListProps {
   transactions: Transaction[];
@@ -101,7 +101,7 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
             </Stack>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" sx={{ height: '2rem', width: '2rem', flexShrink: 0 }}>
+                <Button variant="text" size="icon" sx={{ height: '2rem', width: '2rem', flexShrink: 0 }}>
                   <MoreVertical style={{ width: '1rem', height: '1rem' }} />
                 </Button>
               </DropdownMenuTrigger>
@@ -130,22 +130,22 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
               </Typography>
             </Box>
             <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-end', sm: 'center' }} spacing={{ xs: 1, sm: 2 }}>
-                <Badge variant="outline" sx={{ fontSize: '0.75rem' }}>{transaction.category}</Badge>
+                <Badge variant="outlined" sx={{ fontSize: '0.75rem' }}>{transaction.category}</Badge>
                 {transaction.subcategory && (
-                  <Badge variant="secondary" sx={{ fontSize: '0.75rem' }}>{transaction.subcategory}</Badge>
+                  <Badge variant="contained" color="secondary" sx={{ fontSize: '0.75rem' }}>{transaction.subcategory}</Badge>
                 )}
             </Stack>
           </Stack>
         </CardContent>
         
-        <CardFooter sx={{ p: { xs: 3, sm: 4 }, fontSize: '0.75rem', color: 'text.secondary', bgcolor: 'action.hover', borderBottomLeftRadius: 8, borderBottomRightRadius: 8 }}>
+        <CardActions sx={{ p: { xs: 3, sm: 4 }, fontSize: '0.75rem', color: 'text.secondary', bgcolor: 'action.hover', borderBottomLeftRadius: 8, borderBottomRightRadius: 8 }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ width: '100%' }}>
               <Typography component="span" variant="body2" sx={{ fontSize: '0.75rem' }}>{format(new Date(transaction.date), "dd 'de' MMMM 'de' yyyy", { locale: ptBR })}</Typography>
               {(transaction.quantity && transaction.quantity > 1) && (
                 <Typography component="span" variant="body2" sx={{ fontSize: '0.75rem' }}>Qtd: {transaction.quantity}</Typography>
               )}
             </Stack>
-        </CardFooter>
+        </CardActions>
       </Card>
     </>
   );

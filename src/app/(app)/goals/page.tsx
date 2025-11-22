@@ -1,12 +1,12 @@
 // src/app/(app)/goals/page.tsx
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@mui/material";
+import { Button } from "@mui/material";
 import { PlusCircle, MoreVertical, Trash2, Edit, Target, PiggyBank, CircleDollarSign, Sparkles, Loader2, Trophy } from "lucide-react";
 import { useGoals } from "@/hooks/use-goals";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Progress } from "@/components/ui/progress";
+import { LinearProgress } from "@mui/material";
 import { cn } from "@/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { CreateGoalDialog } from "@/components/goals/create-goal-dialog";
@@ -61,10 +61,10 @@ export default function GoalsPage() {
             {gamificationData && (
                 <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20">
                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2 text-lg text-yellow-800 dark:text-yellow-300">
+                        <Typography variant="h6" className="flex items-center gap-2 text-lg text-yellow-800 dark:text-yellow-300">
                             <Trophy className="h-5 w-5"/>
                             Jornada das Metas
-                        </CardTitle>
+                        </Typography>
                     </CardHeader>
                     <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
                         <div className="p-3 bg-background/50 rounded-lg">
@@ -166,11 +166,11 @@ function GoalCard({ goal, onDelete }: { goal: Goal, onDelete: () => void }) {
                 <div className="flex items-start justify-between">
                     <div className="flex items-center gap-3">
                          <div className="p-2 rounded-full bg-primary/20"><Target className="h-6 w-6 text-primary"/></div>
-                         <CardTitle>{goal.name}</CardTitle>
+                         <Typography variant="h6">{goal.name}</Typography>
                     </div>
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Button variant="text" size="icon" className="h-8 w-8">
                                 <MoreVertical className="h-4 w-4"/>
                             </Button>
                         </DropdownMenuTrigger>
@@ -211,7 +211,7 @@ function GoalCard({ goal, onDelete }: { goal: Goal, onDelete: () => void }) {
             </CardHeader>
             <CardContent className="space-y-4">
                 <div>
-                     <Progress value={Math.min(percentage, 100)} />
+                     <LinearProgress variant="determinate" value={Math.min(percentage, 100)} />
                 </div>
                 <div className="flex justify-between items-baseline">
                     <p className="text-lg font-bold text-foreground">R$ {goal.currentAmount.toFixed(2)}</p>
@@ -226,13 +226,13 @@ function GoalCard({ goal, onDelete }: { goal: Goal, onDelete: () => void }) {
                     )}
                 </div>
             </CardContent>
-             <CardFooter>
+             <CardActions>
                  <AddDepositDialog goal={goal}>
                     <Button className="w-full" disabled={goal.currentAmount >= goal.targetAmount}>
                         <PiggyBank className="mr-2 h-4 w-4"/>Fazer um Depósito
                     </Button>
                 </AddDepositDialog>
-             </CardFooter>
+             </CardActions>
         </Card>
     );
 }

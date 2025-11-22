@@ -1,7 +1,7 @@
 // src/scripts/migrate-passwords.ts
 // Script para migrar senhas do formato SHA256 para bcrypt
 
-import { MongoClient } from 'mongodb';
+import {MongoClient} from 'mongodb';
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
 

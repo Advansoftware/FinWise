@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongodb';
-import { PayrollData } from '@/lib/types';
+import {NextRequest, NextResponse} from 'next/server';
+import {connectToDatabase} from '@/lib/mongodb';
+import {PayrollData} from '@/lib/types';
 
 export async function GET(
   request: NextRequest,

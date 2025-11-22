@@ -1,20 +1,8 @@
 "use client"
 
 import * as React from "react"
-import {
-  Table as MuiTable,
-  TableBody as MuiTableBody,
-  TableCell as MuiTableCell,
-  TableContainer,
-  TableFooter as MuiTableFooter,
-  TableHead as MuiTableHead,
-  TableRow as MuiTableRow,
-  Paper,
-  type SxProps,
-  type Theme,
-  useTheme,
-} from '@mui/material';
-import { styled } from '@mui/material/styles';
+import {Table as MuiTable, TableBody as MuiTableBody, TableCell as MuiTableCell, TableContainer, TableFooter as MuiTableFooter, TableHead as MuiTableHead, TableRow as MuiTableRow, Paper, type SxProps, type Theme, useTheme} from '@mui/material';
+import {styled} from '@mui/material/styles';
 
 // Table Container com scroll
 interface TableProps extends React.HTMLAttributes<HTMLDivElement> {

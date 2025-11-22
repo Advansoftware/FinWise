@@ -1,11 +1,11 @@
 // src/components/pro-upgrade-card.tsx
 'use client';
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@mui/material";
+import { Button } from "@mui/material";
 import { Gem } from "lucide-react";
 import Link from "next/link";
-import { Box, Stack, Typography } from '@mui/material';
+import {Box, Stack, Typography} from '@mui/material';
 
 interface ProUpgradeCardProps {
     featureName: string;

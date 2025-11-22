@@ -1,8 +1,8 @@
 // src/app/api/ai/reasoning-chat/route.ts
-import { NextRequest } from 'next/server';
-import { getActiveAICredential } from '@/services/settings-service';
-import { checkAICredits } from '@/services/credits-service';
-import { ChatInput } from '@/ai/ai-types';
+import {NextRequest} from 'next/server';
+import {getActiveAICredential} from '@/services/settings-service';
+import {checkAICredits} from '@/services/credits-service';
+import {ChatInput} from '@/ai/ai-types';
 
 export async function POST(req: NextRequest) {
   try {

@@ -1,8 +1,8 @@
 // src/components/ui/credit-badge.tsx
 'use client';
 
-import { Box } from '@mui/material';
-import { Badge } from "@/components/ui/badge";
+import {Box} from '@mui/material';
+import { Chip } from "@mui/material";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Gem, Zap, Brain, Search } from "lucide-react";
 import { useCreditTransparency } from "@/hooks/use-credit-transparency";
@@ -58,7 +58,7 @@ export function CreditBadge({ actionKey, showWhenFree = false, variant = 'defaul
         <Tooltip>
           <TooltipTrigger asChild>
             <Badge 
-              variant="outline" 
+              variant="outlined" 
               sx={{ 
                 bgcolor: 'rgb(16 185 129 / 0.1)', 
                 color: 'rgb(5 150 105)', 
@@ -89,7 +89,7 @@ export function CreditBadge({ actionKey, showWhenFree = false, variant = 'defaul
 
   const content = (
     <Badge 
-      variant="outline" 
+      variant="outlined" 
       sx={{
         ...config.sx,
         display: 'inline-flex',

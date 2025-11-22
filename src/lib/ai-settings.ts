@@ -3,7 +3,7 @@
  * For server actions, use the functions in actions.ts instead
  */
 
-import { AICredential, AIProvider } from '@/lib/types';
+import {AICredential, AIProvider} from '@/lib/types';
 
 // Default AI settings - Gastometria IA (baseado nas configurações do .env)
 export const DEFAULT_AI_CREDENTIAL: AICredential = {

@@ -3,8 +3,8 @@
 import * as React from "react"
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog"
 import { styled, type Theme, type SxProps, useTheme } from '@mui/material/styles'
-import { Box, Typography } from '@mui/material'
-import { Button } from '@/components/ui/button'
+import { Box, Typography} from '@mui/material'
+import { Button } from '@mui/material'
 
 const AlertDialog = AlertDialogPrimitive.Root
 const AlertDialogTrigger = AlertDialogPrimitive.Trigger
@@ -91,7 +91,7 @@ const AlertDialogAction = React.forwardRef<React.ElementRef<typeof AlertDialogPr
 AlertDialogAction.displayName = AlertDialogPrimitive.Action.displayName
 
 const AlertDialogCancel = React.forwardRef<React.ElementRef<typeof AlertDialogPrimitive.Cancel>, React.ComponentPropsWithoutRef<typeof AlertDialogPrimitive.Cancel> & { sx?: SxProps<Theme> }>(
-  ({ sx, ...props }, ref) => <AlertDialogPrimitive.Cancel ref={ref} asChild><Button variant="outline" sx={sx} {...props} /></AlertDialogPrimitive.Cancel>
+  ({ sx, ...props }, ref) => <AlertDialogPrimitive.Cancel ref={ref} asChild><Button variant="outlined" sx={sx} {...props} /></AlertDialogPrimitive.Cancel>
 )
 AlertDialogCancel.displayName = AlertDialogPrimitive.Cancel.displayName
 

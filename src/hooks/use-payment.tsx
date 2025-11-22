@@ -1,11 +1,11 @@
 // src/hooks/use-payment.tsx
 'use client';
 
-import { useState } from 'react';
-import { paymentClient } from '@/lib/payment-client';
-import { useAuth } from './use-auth';
-import { useToast } from './use-toast';
-import { UserPlan } from '@/lib/types';
+import {useState} from 'react';
+import {paymentClient} from '@/lib/payment-client';
+import {useAuth} from './use-auth';
+import {useToast} from './use-toast';
+import {UserPlan} from '@/lib/types';
 
 export function usePayment() {
   const [isProcessing, setIsProcessing] = useState(false);

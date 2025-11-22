@@ -6,7 +6,7 @@ import { AICredential } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { apiClient } from "@/lib/api-client";
-import { v4 as uuidv4 } from 'uuid';
+import {v4 as uuidv4} from 'uuid';
 import { usePlan } from "./use-plan";
 import { useMemo } from "react";
 import { useDataRefresh } from "./use-data-refresh";

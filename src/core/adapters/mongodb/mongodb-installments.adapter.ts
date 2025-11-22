@@ -1,18 +1,8 @@
 // src/core/adapters/mongodb/mongodb-installments.adapter.ts
 
-import { Db, ObjectId } from 'mongodb';
-import {
-  IInstallmentsRepository,
-  Installment,
-  InstallmentPayment,
-  CreateInstallmentInput,
-  UpdateInstallmentInput,
-  PayInstallmentInput,
-  AdjustRecurringInstallmentInput,
-  InstallmentSummary,
-  GamificationData
-} from '@/core/ports/installments.port';
-import { addMonths, addYears, isAfter, isBefore, parseISO, format } from 'date-fns';
+import {Db, ObjectId} from 'mongodb';
+import {IInstallmentsRepository, Installment, InstallmentPayment, CreateInstallmentInput, UpdateInstallmentInput, PayInstallmentInput, AdjustRecurringInstallmentInput, InstallmentSummary, GamificationData} from '@/core/ports/installments.port';
+import {addMonths, addYears, isAfter, isBefore, parseISO, format} from 'date-fns';
 
 export class MongoInstallmentsRepository implements IInstallmentsRepository {
   constructor(private db: Db) { }

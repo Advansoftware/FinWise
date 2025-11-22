@@ -13,16 +13,16 @@ import {
   DialogDescription,
   DialogFooter,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+} from "@mui/material";
+import { Button } from "@mui/material";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+import { TextField } from "@mui/material";
 import { useToast } from "@/hooks/use-toast";
 import { useGoals } from "@/hooks/use-goals";
 import { Goal } from "@/lib/types";
 import { Loader2 } from "lucide-react";
 import { useWallets } from "@/hooks/use-wallets";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import {Select, SelectContent, MenuItem, SelectTrigger, SelectValue} from '@mui/material';
 
 const depositSchema = z.object({
   amount: z.coerce.number().positive("O valor do depósito deve ser maior que zero."),
@@ -81,7 +81,7 @@ export function AddDepositDialog({ children, goal }: AddDepositDialogProps) {
                 <FormItem>
                   <FormLabel>Valor do Depósito (R$)</FormLabel>
                   <FormControl>
-                    <Input type="number" step="0.01" placeholder="Ex: 100.00" {...field} />
+                    <TextField type="number" step="0.01" placeholder="Ex: 100.00" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -101,7 +101,7 @@ export function AddDepositDialog({ children, goal }: AddDepositDialogProps) {
                     </FormControl>
                     <SelectContent>
                       {wallets.map(wallet => (
-                        <SelectItem key={wallet.id} value={wallet.id}>{wallet.name} (R$ {(wallet.balance || 0).toFixed(2)})</SelectItem>
+                        <MenuItem key={wallet.id} value={wallet.id}>{wallet.name} (R$ {(wallet.balance || 0).toFixed(2)})</MenuItem>
                       ))}
                     </SelectContent>
                   </Select>

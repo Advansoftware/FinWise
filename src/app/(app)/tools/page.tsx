@@ -1,7 +1,7 @@
 'use client';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@mui/material";
+import { Button } from "@mui/material";
 import { Calculator, Calendar, TrendingUp, UserCheck, AlertTriangle } from "lucide-react";
 import { usePayroll } from "@/hooks/use-payroll";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -57,10 +57,10 @@ export default function ToolsPage() {
             <div className="mx-auto w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mb-4">
               <AlertTriangle className="h-6 w-6 text-amber-600" />
             </div>
-            <CardTitle className="text-amber-800">Dados do Holerite Necessários</CardTitle>
-            <CardDescription className="text-amber-700">
+            <Typography variant="h6" className="text-amber-800">Dados do Holerite Necessários</Typography>
+            <Typography variant="body2" color="text.secondary" className="text-amber-700">
               Para utilizar as ferramentas de cálculo, você precisa configurar seus dados de holerite primeiro.
-            </CardDescription>
+            </Typography>
           </CardHeader>
           <CardContent className="text-center">
             <p className="text-amber-700 mb-6">
@@ -82,14 +82,14 @@ export default function ToolsPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Calendar className="h-5 w-5 text-primary" />
-                <CardTitle className="text-lg">Calculadora de Férias</CardTitle>
+                <Typography variant="h6" className="text-lg">Calculadora de Férias</Typography>
               </div>
-              <CardDescription>
+              <Typography variant="body2" color="text.secondary">
                 Calcule o valor das suas férias considerando salário base e adicionais.
-              </CardDescription>
+              </Typography>
             </CardHeader>
             <CardContent>
-              <Button disabled variant="outline" className="w-full">
+              <Button disabled variant="outlined" className="w-full">
                 Requer dados do holerite
               </Button>
             </CardContent>
@@ -99,14 +99,14 @@ export default function ToolsPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <TrendingUp className="h-5 w-5 text-primary" />
-                <CardTitle className="text-lg">Calculadora do 13º Salário</CardTitle>
+                <Typography variant="h6" className="text-lg">Calculadora do 13º Salário</Typography>
               </div>
-              <CardDescription>
+              <Typography variant="body2" color="text.secondary">
                 Estime o valor do seu 13º salário baseado no salário atual.
-              </CardDescription>
+              </Typography>
             </CardHeader>
             <CardContent>
-              <Button disabled variant="outline" className="w-full">
+              <Button disabled variant="outlined" className="w-full">
                 Requer dados do holerite
               </Button>
             </CardContent>
@@ -116,14 +116,14 @@ export default function ToolsPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Calculator className="h-5 w-5 text-primary" />
-                <CardTitle className="text-lg">Projeção Salarial</CardTitle>
+                <Typography variant="h6" className="text-lg">Projeção Salarial</Typography>
               </div>
-              <CardDescription>
+              <Typography variant="body2" color="text.secondary">
                 Projete ganhos futuros e planeje aumentos salariais.
-              </CardDescription>
+              </Typography>
             </CardHeader>
             <CardContent>
-              <Button disabled variant="outline" className="w-full">
+              <Button disabled variant="outlined" className="w-full">
                 Requer dados do holerite
               </Button>
             </CardContent>
@@ -133,14 +133,14 @@ export default function ToolsPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Calculator className="h-5 w-5 text-primary" />
-                <CardTitle className="text-lg">Calculadora de FGTS</CardTitle>
+                <Typography variant="h6" className="text-lg">Calculadora de FGTS</Typography>
               </div>
-              <CardDescription>
+              <Typography variant="body2" color="text.secondary">
                 Calcule depósitos mensais e saldo projetado do FGTS.
-              </CardDescription>
+              </Typography>
             </CardHeader>
             <CardContent>
-              <Button disabled variant="outline" className="w-full">
+              <Button disabled variant="outlined" className="w-full">
                 Requer dados do holerite
               </Button>
             </CardContent>
@@ -150,14 +150,14 @@ export default function ToolsPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Calculator className="h-5 w-5 text-primary" />
-                <CardTitle className="text-lg">Calculadora de INSS</CardTitle>
+                <Typography variant="h6" className="text-lg">Calculadora de INSS</Typography>
               </div>
-              <CardDescription>
+              <Typography variant="body2" color="text.secondary">
                 Contribuição previdenciária e estimativa de aposentadoria.
-              </CardDescription>
+              </Typography>
             </CardHeader>
             <CardContent>
-              <Button disabled variant="outline" className="w-full">
+              <Button disabled variant="outlined" className="w-full">
                 Requer dados do holerite
               </Button>
             </CardContent>
@@ -167,14 +167,14 @@ export default function ToolsPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Calculator className="h-5 w-5 text-primary" />
-                <CardTitle className="text-lg">Calculadora de Rescisão</CardTitle>
+                <Typography variant="h6" className="text-lg">Calculadora de Rescisão</Typography>
               </div>
-              <CardDescription>
+              <Typography variant="body2" color="text.secondary">
                 Valores da rescisão trabalhista conforme a CLT.
-              </CardDescription>
+              </Typography>
             </CardHeader>
             <CardContent>
-              <Button disabled variant="outline" className="w-full">
+              <Button disabled variant="outlined" className="w-full">
                 Requer dados do holerite
               </Button>
             </CardContent>
@@ -184,14 +184,14 @@ export default function ToolsPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Calculator className="h-5 w-5 text-primary" />
-                <CardTitle className="text-lg">Calculadora de IR</CardTitle>
+                <Typography variant="h6" className="text-lg">Calculadora de IR</Typography>
               </div>
-              <CardDescription>
+              <Typography variant="body2" color="text.secondary">
                 Imposto de renda mensal, anual e estimativa de restituição.
-              </CardDescription>
+              </Typography>
             </CardHeader>
             <CardContent>
-              <Button disabled variant="outline" className="w-full">
+              <Button disabled variant="outlined" className="w-full">
                 Requer dados do holerite
               </Button>
             </CardContent>
@@ -201,14 +201,14 @@ export default function ToolsPage() {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Calculator className="h-5 w-5 text-primary" />
-                <CardTitle className="text-lg">Empréstimo Consignado</CardTitle>
+                <Typography variant="h6" className="text-lg">Empréstimo Consignado</Typography>
               </div>
-              <CardDescription>
+              <Typography variant="body2" color="text.secondary">
                 Simule empréstimos com desconto na folha de pagamento.
-              </CardDescription>
+              </Typography>
             </CardHeader>
             <CardContent>
-              <Button disabled variant="outline" className="w-full">
+              <Button disabled variant="outlined" className="w-full">
                 Requer dados do holerite
               </Button>
             </CardContent>

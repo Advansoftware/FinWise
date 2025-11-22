@@ -1,22 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  Typography, 
-  TextField, 
-  Button, 
-  Box, 
-  Stack, 
-  Paper,
-  useTheme,
-  alpha,
-  MenuItem,
-  Chip,
-  InputAdornment
-} from '@mui/material';
+import {useState} from 'react';
+import {Card, CardContent, CardHeader, Typography, TextField, Button, Box, Stack, Paper, useTheme, alpha, MenuItem, Chip, InputAdornment} from '@mui/material';
 import { Calculator, TrendingUp, Info } from "lucide-react";
 import { PayrollData } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";

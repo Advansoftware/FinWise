@@ -1,37 +1,15 @@
 // src/components/installments/create-installment-dialog.tsx
 
-import { useState, useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import {useState, useEffect} from 'react';
+import {useForm, Controller} from 'react-hook-form';
+import {zodResolver} from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogActions,
-  Button,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  FormHelperText,
-  Checkbox,
-  FormControlLabel,
-  Box,
-  Typography,
-  Stack,
-  InputAdornment,
-  IconButton,
-  useTheme,
-  alpha,
-  CircularProgress
-} from '@mui/material';
-import { Loader2, Plus, Repeat, Clock, Calendar as CalendarIcon, X } from 'lucide-react';
-import { useInstallments } from '@/hooks/use-installments';
-import { useWallets } from '@/hooks/use-wallets';
-import { useTransactions } from '@/hooks/use-transactions';
-import { format } from 'date-fns';
+import {Dialog, DialogContent, DialogTitle, DialogActions, Button, TextField, Select, MenuItem, FormControl, InputLabel, FormHelperText, Checkbox, FormControlLabel, Box, Typography, Stack, InputAdornment, IconButton, useTheme, alpha, CircularProgress} from '@mui/material';
+import {Loader2, Plus, Repeat, Clock, Calendar as CalendarIcon, X} from 'lucide-react';
+import {useInstallments} from '@/hooks/use-installments';
+import {useWallets} from '@/hooks/use-wallets';
+import {useTransactions} from '@/hooks/use-transactions';
+import {format} from 'date-fns';
 
 const installmentSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),

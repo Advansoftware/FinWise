@@ -1,26 +1,26 @@
 // src/components/chat/chat-assistant.tsx
 "use client";
 
-import { useState, useRef, useEffect, useTransition } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { ScrollArea } from '@/components/ui/scroll-area';
-import { Bot, Send, Sparkles, X, Loader2 } from 'lucide-react';
-import { AnimatePresence, motion } from 'framer-motion';
+import {useState, useRef, useEffect, useTransition} from 'react';
+import {Button, Typography, CardActions} from '@mui/material';
+import {Card, CardContent, CardHeader} from '@mui/material';
+import {TextField} from '@mui/material';
+import {ScrollArea} from '@/components/ui/scroll-area';
+import {Bot, Send, Sparkles, X, Loader2} from 'lucide-react';
+import {AnimatePresence, motion} from 'framer-motion';
 import { useTransactions } from "@/hooks/use-transactions";
-import { useReports } from '@/hooks/use-reports';
-import { getChatbotResponse } from '@/services/ai-actions';
-import { useToast } from '@/hooks/use-toast';
-import { Message } from '@/ai/ai-types';
-import { useAuth } from '@/hooks/use-auth';
-import { Badge } from '../ui/badge';
-import { getYear, startOfMonth } from 'date-fns';
-import { usePlan } from '@/hooks/use-plan';
-import { ProUpgradeCard } from '../pro-upgrade-card';
-import { useIsMobile } from '@/hooks/use-mobile';
-import { useReasoningChat } from '@/hooks/use-reasoning-chat';
-import { useAISettings } from '@/hooks/use-ai-settings';
+import {useReports} from '@/hooks/use-reports';
+import {getChatbotResponse} from '@/services/ai-actions';
+import {useToast} from '@/hooks/use-toast';
+import {Message} from '@/ai/ai-types';
+import {useAuth} from '@/hooks/use-auth';
+import {Chip} from '@mui/material';
+import {getYear, startOfMonth} from 'date-fns';
+import {usePlan} from '@/hooks/use-plan';
+import {ProUpgradeCard} from '../pro-upgrade-card';
+import {useIsMobile} from '@/hooks/use-mobile';
+import {useReasoningChat} from '@/hooks/use-reasoning-chat';
+import {useAISettings} from '@/hooks/use-ai-settings';
 
 const suggestionPrompts = [
     "Quanto gastei com Supermercado este mês?",
@@ -160,7 +160,7 @@ export function ChatAssistant() {
                     <p className="text-muted-foreground mb-4">Faça uma pergunta sobre suas finanças ou escolha uma sugestão.</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {suggestionPrompts.map(prompt => (
-                            <Button key={prompt} variant="outline" size="sm" className="h-auto py-2" onClick={() => handleSuggestionClick(prompt)}>
+                            <Button key={prompt} variant="outlined" size="small" className="h-auto py-2" onClick={() => handleSuggestionClick(prompt)}>
                                 <span className="text-wrap">{prompt}</span>
                             </Button>
                         ))}
@@ -231,7 +231,7 @@ export function ChatAssistant() {
                             <p className="text-xs text-muted-foreground">Pergunte sobre suas finanças</p>
                         </div>
                     </div>
-                    <Button variant="ghost" size="icon" onClick={() => setIsOpen(false)}>
+                    <Button variant="text" size="icon" onClick={() => setIsOpen(false)}>
                         <X className="h-6 w-6" />
                     </Button>
                 </div>
@@ -283,10 +283,10 @@ export function ChatAssistant() {
                             <CardHeader className="flex flex-row items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <Bot className="text-primary" />
-                                    <CardTitle className="text-lg">Assistente Gastometria</CardTitle>
-                                    {messages.length > 0 && <Badge variant="secondary">{messages.length}</Badge>}
+                                    <Typography variant="h6" className="text-lg">Assistente Gastometria</Typography>
+                                    {messages.length > 0 && <Badge variant="contained" color="secondary">{messages.length}</Badge>}
                                 </div>
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setIsOpen(false)}>
+                                <Button variant="text" size="icon" className="h-8 w-8" onClick={() => setIsOpen(false)}>
                                     <X className="h-4 w-4" />
                                 </Button>
                             </CardHeader>
@@ -295,7 +295,7 @@ export function ChatAssistant() {
                                     {renderChatContent()}
                                 </ScrollArea>
                             </CardContent>
-                            <CardFooter className="p-4 border-t">
+                            <CardActions className="p-4 border-t">
                                 <div className="flex gap-2 items-center w-full">
                                     <Input
                                         placeholder={isPro ? "Pergunte algo sobre seus gastos..." : "Faça upgrade para usar o chat"}
@@ -314,7 +314,7 @@ export function ChatAssistant() {
                                         <Send className="h-4 w-4" />
                                     </Button>
                                 </div>
-                            </CardFooter>
+                            </CardActions>
                         </Card>
                     </motion.div>
                 )}

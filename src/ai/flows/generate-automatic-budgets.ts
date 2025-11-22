@@ -6,9 +6,9 @@
  *
  * - generateAutomaticBudgets - A function that handles the automatic budget generation process.
  */
-import { AICredential } from '@/lib/types';
-import { createConfiguredAI, getModelReference } from '../genkit';
-import { GenerateAutomaticBudgetsInput, GenerateAutomaticBudgetsInputSchema, GenerateAutomaticBudgetsOutputSchema } from '../ai-types';
+import {AICredential} from '@/lib/types';
+import {createConfiguredAI, getModelReference} from '../genkit';
+import {GenerateAutomaticBudgetsInput, GenerateAutomaticBudgetsInputSchema, GenerateAutomaticBudgetsOutputSchema} from '../ai-types';
 
 
 const promptTemplate = `Você é um consultor financeiro pessoal que ajuda usuários a criarem seus primeiros orçamentos. Sua tarefa é analisar as transações do mês anterior e sugerir uma lista de orçamentos mensais para as principais categorias de despesa.

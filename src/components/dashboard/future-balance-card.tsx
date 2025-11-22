@@ -2,19 +2,7 @@
 'use client';
 
 import { useState, useEffect, useTransition, useCallback, useMemo } from "react";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  Typography, 
-  Button, 
-  IconButton, 
-  Skeleton, 
-  Box, 
-  Stack, 
-  useTheme,
-  alpha
-} from '@mui/material';
+import {Card, CardContent, CardHeader, Typography, Button, IconButton, Skeleton, Box, Stack, useTheme, alpha} from '@mui/material';
 import { RefreshCw, TrendingUp, AlertTriangle, Calculator } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useWallets } from "@/hooks/use-wallets";

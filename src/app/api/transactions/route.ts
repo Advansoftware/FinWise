@@ -1,10 +1,10 @@
 // src/app/api/transactions/route.ts
 
-import { NextRequest, NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongodb';
-import { ObjectId } from 'mongodb';
-import { WalletBalanceService } from '@/services/wallet-balance-service';
-import { Transaction } from '@/lib/types';
+import {NextRequest, NextResponse} from 'next/server';
+import {connectToDatabase} from '@/lib/mongodb';
+import {ObjectId} from 'mongodb';
+import {WalletBalanceService} from '@/services/wallet-balance-service';
+import {Transaction} from '@/lib/types';
 
 async function getUserIdFromRequest(request: NextRequest): Promise<string | null> {
   const { searchParams } = new URL(request.url);

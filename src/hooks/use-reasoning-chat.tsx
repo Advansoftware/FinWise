@@ -1,9 +1,9 @@
 // src/hooks/use-reasoning-chat.tsx
 'use client';
 
-import { useState, useCallback } from 'react';
-import { Message } from '@/ai/ai-types';
-import { useToast } from '@/hooks/use-toast';
+import {useState, useCallback} from 'react';
+import {Message} from '@/ai/ai-types';
+import {useToast} from '@/hooks/use-toast';
 
 export interface ReasoningState {
   isReasoning: boolean;

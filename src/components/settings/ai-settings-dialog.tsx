@@ -4,11 +4,11 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@mui/material";
+import { Button } from "@mui/material";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { TextField } from "@mui/material";
+import { Select, SelectContent, MenuItem, SelectTrigger, SelectValue } from "@mui/material";
 import { useToast } from "@/hooks/use-toast";
 import { AICredential, AIProvider, OpenAIModel } from "@/lib/types";
 import { useAISettings } from "@/hooks/use-ai-settings";
@@ -158,7 +158,7 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
                     <FormItem>
                         <FormLabel>Nome da Configuração</FormLabel>
                         <FormControl>
-                            <Input placeholder="Ex: Chave Pessoal OpenAI" {...field} />
+                            <TextField placeholder="Ex: Chave Pessoal OpenAI" {...field} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -177,9 +177,9 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                {isPlus && <SelectItem value="ollama">Ollama (Local/Remoto)</SelectItem>}
-                                {isInfinity && <SelectItem value="googleai">Google AI</SelectItem>}
-                                {isInfinity && <SelectItem value="openai">OpenAI</SelectItem>}
+                                {isPlus && <MenuItem value="ollama">Ollama (Local/Remoto)</MenuItem>}
+                                {isInfinity && <MenuItem value="googleai">Google AI</MenuItem>}
+                                {isInfinity && <MenuItem value="openai">OpenAI</MenuItem>}
                             </SelectContent>
                         </Select>
                         <FormMessage />
@@ -196,7 +196,7 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
                             <FormItem>
                                 <FormLabel>Endereço do Servidor Ollama</FormLabel>
                                 <FormControl>
-                                    <Input placeholder="http://127.0.0.1:11434" {...field} value={field.value || ''} />
+                                    <TextField placeholder="http://127.0.0.1:11434" {...field} value={field.value || ''} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>
@@ -217,11 +217,11 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
                                         </FormControl>
                                         <SelectContent>
                                             {ollamaModels.map(model => (
-                                                <SelectItem key={model} value={model}>{model}</SelectItem>
+                                                <MenuItem key={model} value={model}>{model}</MenuItem>
                                             ))}
                                         </SelectContent>
                                     </Select>
-                                    <Button type="button" variant="ghost" size="icon" onClick={fetchOllamaModels} disabled={isFetchingOllama || !form.getValues("ollamaServerAddress")}>
+                                    <Button type="button" variant="text" size="icon" onClick={fetchOllamaModels} disabled={isFetchingOllama || !form.getValues("ollamaServerAddress")}>
                                         <RefreshCw style={{ width: '1rem', height: '1rem' }} className={isFetchingOllama ? 'animate-spin': ''} />
                                     </Button>
                                 </div>
@@ -240,7 +240,7 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
                         <FormItem>
                             <FormLabel>Chave de API - Google AI</FormLabel>
                             <FormControl>
-                                <Input type="password" placeholder="Cole sua chave de API aqui" {...field} value={field.value || ''} />
+                                <TextField type="password" placeholder="Cole sua chave de API aqui" {...field} value={field.value || ''} />
                             </FormControl>
                             <FormMessage />
                         </FormItem>
@@ -263,10 +263,10 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
                                         </SelectTrigger>
                                     </FormControl>
                                     <SelectContent>
-                                        <SelectItem value="gpt-4o">GPT-4o</SelectItem>
-                                        <SelectItem value="gpt-4-vision-preview">GPT-4 Vision</SelectItem>
-                                        <SelectItem value="gpt-4">GPT-4</SelectItem>
-                                        <SelectItem value="gpt-3.5-turbo">GPT-3.5 Turbo</SelectItem>
+                                        <MenuItem value="gpt-4o">GPT-4o</MenuItem>
+                                        <MenuItem value="gpt-4-vision-preview">GPT-4 Vision</MenuItem>
+                                        <MenuItem value="gpt-4">GPT-4</MenuItem>
+                                        <MenuItem value="gpt-3.5-turbo">GPT-3.5 Turbo</MenuItem>
                                     </SelectContent>
                                 </Select>
                                 <FormMessage />
@@ -280,7 +280,7 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
                             <FormItem>
                                 <FormLabel>Chave de API - OpenAI</FormLabel>
                                 <FormControl>
-                                    <Input type="password" placeholder="Cole sua chave de API aqui" {...field} value={field.value || ''} />
+                                    <TextField type="password" placeholder="Cole sua chave de API aqui" {...field} value={field.value || ''} />
                                 </FormControl>
                                 <FormMessage />
                             </FormItem>

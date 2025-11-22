@@ -17,15 +17,10 @@
  * 5. Previsão de saldo usa cálculos diretos antes de enviar para IA
  */
 
-import { getDatabaseAdapter } from '@/core/services/service-factory';
-import { Transaction, Wallet, Budget } from '@/lib/types';
-import { getSpendingTip, getFinancialProfile, generateMonthlyReportAction, generateAnnualReportAction, predictFutureBalanceAction, projectGoalCompletionAction } from './ai-actions';
-import {
-  getCachedOrGenerate,
-  validateDataSufficiency,
-  shouldAutoGenerateCache,
-  DataValidationResult
-} from './ai-cache-service';
+import {getDatabaseAdapter} from '@/core/services/service-factory';
+import {Transaction, Wallet, Budget} from '@/lib/types';
+import {getSpendingTip, getFinancialProfile, generateMonthlyReportAction, generateAnnualReportAction, predictFutureBalanceAction, projectGoalCompletionAction} from './ai-actions';
+import {getCachedOrGenerate, validateDataSufficiency, shouldAutoGenerateCache, DataValidationResult} from './ai-cache-service';
 
 /**
  * Gera dica de gastos inteligente com validação de dados

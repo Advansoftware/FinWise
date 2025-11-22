@@ -1,6 +1,6 @@
 'use client';
 
-import { TextField, Box, Stack, Typography, useTheme, alpha } from '@mui/material';
+import {TextField, Box, Stack, Typography, useTheme, alpha} from '@mui/material';
 import { formatCurrency } from "@/lib/utils";
 
 export interface ManualSalaryData {

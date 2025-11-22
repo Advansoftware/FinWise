@@ -1,8 +1,8 @@
 // src/components/offline-storage-initializer.tsx
 'use client';
 
-import { useEffect } from 'react';
-import { offlineStorage } from '@/lib/offline-storage';
+import {useEffect} from 'react';
+import {offlineStorage} from '@/lib/offline-storage';
 
 export function OfflineStorageInitializer() {
   useEffect(() => {

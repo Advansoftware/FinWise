@@ -9,7 +9,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@mui/material";
 import {
   Sheet,
   SheetContent,
@@ -18,18 +18,18 @@ import {
   SheetDescription,
   SheetFooter,
   SheetTrigger,
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+} from "@mui/material";
+import { Button } from "@mui/material";
+import { Alert, AlertDescription, AlertTitle } from "@mui/material";
 import { Loader2, Upload, Camera, Paperclip, Sparkles, BrainCircuit, Info, RotateCcw, FlashlightIcon as Flashlight, SwitchCamera } from "lucide-react";
-import { useRef, useState, useEffect, useCallback, useTransition } from 'react';
+import {useRef, useState, useEffect, useCallback, useTransition} from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { extractReceiptInfoAction } from "@/services/ai-actions";
 import { Skeleton } from "../ui/skeleton";
-import { Badge } from "../ui/badge";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
+import {Chip, Typography} from '@mui/material';
+import {TextField} from '@mui/material';
+import {InputLabel} from '@mui/material';
 import { useTransactions } from "@/hooks/use-transactions";
 import { Transaction, TransactionCategory } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
@@ -37,10 +37,10 @@ import { useWallets } from "@/hooks/use-wallets";
 import { usePlan } from "@/hooks/use-plan";
 import { useAISettings } from "@/hooks/use-ai-settings";
 import { getVisionCapableModels, DEFAULT_AI_CREDENTIAL } from "@/lib/ai-settings";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import {Select, SelectContent, MenuItem, SelectTrigger, SelectValue} from '@mui/material';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { cn } from "@/lib/utils";
-import { Box, Stack, Typography, useTheme, alpha } from '@mui/material';
+import {Box, Stack, Typography, useTheme, alpha} from '@mui/material';
 
 
 export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
@@ -333,14 +333,14 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                     <Stack spacing={3}>
                         {extractedData.items?.map((item: any, index: number) => (
                             <Box key={index} sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, alignItems: 'center', p: 3, borderRadius: 1, bgcolor: 'action.hover', border: 1, borderColor: 'divider' }}>
-                                <Input 
+                                <TextField 
                                     className="col-span-2" 
                                     style={{ gridColumn: 'span 2' }}
                                     defaultValue={item.item} 
                                     placeholder="Item"
                                     readOnly={!extractedData.isValid}
                                 />
-                                <Input 
+                                <TextField 
                                     type="number" 
                                     step="0.01" 
                                     defaultValue={item.amount} 
@@ -360,7 +360,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 4, p: 3, borderRadius: 1, bgcolor: 'action.hover', border: 1, borderColor: 'divider' }}>
                      <Stack spacing={1}>
                         <Label className="text-sm font-medium">Total</Label>
-                        <Input 
+                        <TextField 
                             type="number" 
                             step="0.01" 
                             defaultValue={extractedData.totalAmount || 0} 
@@ -370,7 +370,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                      </Stack>
                       <Stack spacing={1}>
                         <Label className="text-sm font-medium">Data</Label>
-                        <Input 
+                        <TextField 
                             type="date" 
                             defaultValue={extractedData.date} 
                             placeholder="Data" 
@@ -380,7 +380,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                 </Box>
                 
                 {!extractedData.isValid && (
-                    <Alert variant="destructive">
+                    <Alert variant="contained" color="error">
                         <AlertTitle>Nota Não Reconhecida</AlertTitle>
                         <AlertDescription>
                             A IA não conseguiu identificar esta como uma nota fiscal válida. 
@@ -409,12 +409,12 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                             </SelectTrigger>
                             <SelectContent>
                                 {visionCapableCredentials.map(c => (
-                                    <SelectItem key={c.id} value={c.id}>
+                                    <MenuItem key={c.id} value={c.id}>
                                         {c.name}
                                         {c.id === DEFAULT_AI_CREDENTIAL.id && (
                                             <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-1 rounded">Padrão</span>
                                         )}
-                                    </SelectItem>
+                                    </MenuItem>
                                 ))}
                             </SelectContent>
                         </Select>
@@ -479,7 +479,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                                             {hasFlash && (
                                                 <Button
                                                     size="icon"
-                                                    variant="secondary"
+                                                    variant="contained" color="secondary"
                                                     className={cn(
                                                         "bg-black/60 hover:bg-black/80 border-0",
                                                         flashEnabled && "bg-yellow-500/80 hover:bg-yellow-500"
@@ -491,7 +491,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                                             )}
                                             <Button
                                                 size="icon"
-                                                variant="secondary"
+                                                variant="contained" color="secondary"
                                                 className="bg-black/60 hover:bg-black/80 border-0"
                                                 onClick={switchCamera}
                                             >
@@ -502,7 +502,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                                 </Box>
                                 
                                 {hasCameraPermission === false && (
-                                    <Alert variant="destructive">
+                                    <Alert variant="contained" color="error">
                                         <AlertTitle>Acesso à Câmera Necessário</AlertTitle>
                                         <AlertDescription>
                                             Permita o acesso à câmera para usar este recurso ou use a opção "Enviar da Galeria".
@@ -516,7 +516,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                                     <Box sx={{ height: '1px', flex: 1, bgcolor: 'divider' }}/>
                                 </Stack>
                                 
-                                <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>
+                                <Button variant="outlined" className="w-full" onClick={() => fileInputRef.current?.click()}>
                                     <Paperclip className="mr-2 h-4 w-4" /> Enviar da Galeria
                                 </Button>
                                 <input ref={fileInputRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileChange} />
@@ -542,7 +542,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                             <img src={receiptImage} alt="Pré-visualização da nota" style={{ borderRadius: '0.5rem', maxHeight: '15rem', width: '100%', objectFit: 'cover' }} />
                             <Button
                                 size="icon"
-                                variant="secondary"
+                                variant="contained" color="secondary"
                                 className="absolute top-2 right-2 bg-black/60 hover:bg-black/80"
                                 onClick={resetState}
                                 disabled={isProcessing || isSaving}
@@ -577,7 +577,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                     <SheetFooter sx={{ flexDirection: 'row', justifyContent: 'space-between', gap: 2, pt: 4 }}>
                         {receiptImage ? (
                             <>
-                                <Button variant="ghost" onClick={resetState} disabled={isProcessing || isSaving}>
+                                <Button variant="text" onClick={resetState} disabled={isProcessing || isSaving}>
                                     Nova Foto
                                 </Button>
                                 {extractedData?.isValid && (
@@ -592,7 +592,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                                 onClick={handleCapture} 
                                 disabled={hasCameraPermission === false || isProcessing || isSaving}
                                 sx={{ width: '100%', height: '3rem', fontSize: '1.125rem' }}
-                                size="lg"
+                                size="large"
                             >
                                <Camera style={{ marginRight: '0.5rem', width: '1.25rem', height: '1.25rem' }}/> Capturar Nota
                             </Button>
@@ -619,7 +619,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                 <DialogFooter sx={{ gap: 2, sm: { gap: 0, justifyContent: 'space-between' }, width: '100%' }}>
                     <Box>
                          {receiptImage && (
-                            <Button variant="ghost" onClick={resetState} disabled={isProcessing || isSaving}>
+                            <Button variant="text" onClick={resetState} disabled={isProcessing || isSaving}>
                                 Enviar Outra
                             </Button>
                         )}

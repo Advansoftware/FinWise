@@ -1,4 +1,4 @@
-import { SxProps, Theme } from '@mui/material/styles';
+import {SxProps, Theme} from '@mui/material/styles';
 
 export function Logo({ sx }: { sx?: SxProps<Theme> }) {
   return (

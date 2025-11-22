@@ -1,11 +1,11 @@
 // src/theme/MuiThemeProvider.tsx
 'use client';
 
-import { ThemeProvider } from '@mui/material/styles';
+import {ThemeProvider} from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import EmotionCacheProvider from './EmotionCacheProvider';
-import { getTheme } from './mui-theme';
-import { useEffect, useState } from 'react';
+import {getTheme} from './mui-theme';
+import {useEffect, useState} from 'react';
 
 export function MuiThemeProvider({ children }: { children: React.ReactNode }) {
   const [mode, setMode] = useState<'light' | 'dark'>('dark');

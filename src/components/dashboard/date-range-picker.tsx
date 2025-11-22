@@ -5,13 +5,8 @@ import { Calendar as CalendarIcon } from "lucide-react"
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { DateRange } from "react-day-picker"
-import { 
-  Button, 
-  Popover, 
-  Box,
-  useTheme 
-} from '@mui/material';
-import { DayPicker } from 'react-day-picker';
+import {Button, Popover, Box, useTheme} from '@mui/material';
+import {DayPicker} from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
 
 interface DateRangePickerProps extends React.HTMLAttributes<HTMLDivElement> {

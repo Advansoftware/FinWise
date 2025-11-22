@@ -11,9 +11,9 @@ import {
   type FieldPath,
   type FieldValues,
 } from "react-hook-form"
-import { Box, Typography, type SxProps, type Theme } from '@mui/material'
+import { Box, Typography, type SxProps, type Theme , Typography} from '@mui/material'
 
-import { Label } from "@/components/ui/label"
+import { InputLabel } from "@mui/material"
 
 const Form = FormProvider
 

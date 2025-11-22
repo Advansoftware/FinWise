@@ -1,32 +1,15 @@
 // src/components/installments/edit-installment-dialog.tsx
 
-import { useState, useEffect, useMemo } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import {useState, useEffect, useMemo} from 'react';
+import {useForm, Controller} from 'react-hook-form';
+import {zodResolver} from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogActions,
-  Button,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  FormHelperText,
-  Box,
-  Stack,
-  Typography,
-  IconButton,
-  CircularProgress
-} from '@mui/material';
-import { Loader2, Edit3, X } from 'lucide-react';
-import { Installment } from '@/core/ports/installments.port';
-import { useInstallments } from '@/hooks/use-installments';
-import { useWallets } from '@/hooks/use-wallets';
-import { useTransactions } from '@/hooks/use-transactions';
+import {Dialog, DialogContent, DialogTitle, DialogActions, Button, TextField, Select, MenuItem, FormControl, InputLabel, FormHelperText, Box, Stack, Typography, IconButton, CircularProgress} from '@mui/material';
+import {Loader2, Edit3, X} from 'lucide-react';
+import {Installment} from '@/core/ports/installments.port';
+import {useInstallments} from '@/hooks/use-installments';
+import {useWallets} from '@/hooks/use-wallets';
+import {useTransactions} from '@/hooks/use-transactions';
 
 const editInstallmentSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),

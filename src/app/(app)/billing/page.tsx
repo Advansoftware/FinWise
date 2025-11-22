@@ -1,19 +1,19 @@
 // src/app/(app)/billing/page.tsx
 'use client';
-import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams, useRouter, usePathname } from 'next/navigation';
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {useState, useEffect, Suspense} from 'react';
+import {useSearchParams, useRouter, usePathname} from 'next/navigation';
+import { Button } from "@mui/material";
+import { Card, CardContent, CardHeader } from "@mui/material";
 import { CheckCircle2, Loader2, Gem, BrainCircuit, Rocket } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Chip } from "@mui/material";
 import { usePlan } from "@/hooks/use-plan";
 import { usePayment } from "@/hooks/use-payment";
 import { UserPlan } from "@/lib/types";
-import { useAuth } from '@/hooks/use-auth';
-import { useToast } from '@/hooks/use-toast';
-import { UpgradeCelebration } from '@/components/billing/upgrade-celebration';
-import { CancelFeedback } from '@/components/billing/cancel-feedback';
-import { BillingPortalButton } from '@/components/billing/billing-portal-button';
+import {useAuth} from '@/hooks/use-auth';
+import {useToast} from '@/hooks/use-toast';
+import {UpgradeCelebration} from '@/components/billing/upgrade-celebration';
+import {CancelFeedback} from '@/components/billing/cancel-feedback';
+import {BillingPortalButton} from '@/components/billing/billing-portal-button';
 
 const plans = [
     {
@@ -182,11 +182,11 @@ function BillingPageContent() {
                      >
                         <CardHeader>
                             <div className="flex justify-between items-center">
-                                <CardTitle>{plan.name}</CardTitle>
-                                {isCurrent && <Badge variant="secondary">Plano Atual</Badge>}
+                                <Typography variant="h6">{plan.name}</Typography>
+                                {isCurrent && <Badge variant="contained" color="secondary">Plano Atual</Badge>}
                                 {plan.name === 'Pro' && <Badge>Popular</Badge>}
                             </div>
-                            <CardDescription>{plan.description}</CardDescription>
+                            <Typography variant="body2" color="text.secondary">{plan.description}</Typography>
                         </CardHeader>
                         <CardContent className="flex-1 space-y-4">
                              <div className="text-3xl font-bold">{plan.price}</div>
@@ -199,7 +199,7 @@ function BillingPageContent() {
                                 ))}
                              </ul>
                         </CardContent>
-                        <CardFooter>
+                        <CardActions>
                             <Button 
                                 className="w-full" 
                                 disabled={buttonDisabled} 
@@ -209,14 +209,14 @@ function BillingPageContent() {
                                 {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 {buttonText}
                             </Button>
-                        </CardFooter>
+                        </CardActions>
                     </Card>
                 )})}
             </div>
 
             <Card>
                 <CardHeader>
-                    <CardTitle>Como funcionam os Créditos de IA?</CardTitle>
+                    <Typography variant="h6">Como funcionam os Créditos de IA?</Typography>
                 </CardHeader>
                 <CardContent className="text-muted-foreground space-y-2">
                     <p>Créditos são consumidos **apenas ao usar a Gastometria AI**, nossa IA integrada. Se você configurar seu próprio provedor (Ollama no plano Plus, ou qualquer outro no plano Infinity), o uso é ilimitado e **não consome seus créditos**.</p>

@@ -9,10 +9,10 @@ import { PanelLeft } from "lucide-react"
 
 import { useIsMobile } from "@/hooks/use-mobile"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
-import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { Button } from "@mui/material"
+import { TextField } from "@mui/material"
+import { Divider } from "@mui/material"
+import { Drawer, SheetContent } from "@mui/material"
 import { Skeleton } from "@/components/ui/skeleton"
 import {
   Tooltip,
@@ -20,7 +20,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { Box } from '@mui/material';
+import {Box} from '@mui/material';
 
 const SIDEBAR_COOKIE_NAME = "sidebar_state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -237,7 +237,7 @@ const SidebarTrigger = React.forwardRef<
     <Button
       ref={ref}
       data-sidebar="trigger"
-      variant="ghost"
+      variant="text"
       size="icon"
       sx={{ height: 32, width: 32 }}
       className={className}
@@ -341,7 +341,7 @@ const SidebarSeparator = React.forwardRef<
   React.ComponentProps<typeof Separator>
 >(({ className, ...props }, ref) => {
   return (
-    <Separator
+    <Divider
       ref={ref}
       data-sidebar="separator"
       sx={{ mx: 1, width: 'auto', bgcolor: 'var(--sidebar-border)' }}

@@ -1,11 +1,11 @@
 // src/components/camera/mobile-camera.tsx
 "use client";
 
-import { useRef, useState, useCallback, useEffect } from 'react';
-import { Button } from "@/components/ui/button";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import {useRef, useState, useCallback, useEffect} from 'react';
+import { Button } from "@mui/material";
+import { Alert, AlertDescription, AlertTitle } from "@mui/material";
 import { Camera, SwitchCamera, FlashlightIcon as Flashlight, RefreshCw } from "lucide-react";
-import { Box, type SxProps, type Theme } from '@mui/material';
+import {Box, type SxProps, type Theme} from '@mui/material';
 
 type CameraFacing = 'user' | 'environment';
 
@@ -196,12 +196,12 @@ export function MobileCamera({ onCapture, onPermissionDenied, sx }: MobileCamera
   if (error || hasCameraPermission === false) {
     return (
       <Box sx={{ position: 'relative', width: '100%', height: '60vh', borderRadius: 2, ...sx }}>
-        <Alert variant="destructive" sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+        <Alert variant="contained" color="error" sx={{ height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
           <AlertTitle>Erro na Câmera</AlertTitle>
           <AlertDescription sx={{ mb: 4 }}>
             {error || 'Não foi possível acessar a câmera.'}
           </AlertDescription>
-          <Button onClick={retryCamera} variant="outline" size="sm">
+          <Button onClick={retryCamera} variant="outlined" size="small">
             <RefreshCw style={{ width: '1rem', height: '1rem', marginRight: '0.5rem' }} />
             Tentar Novamente
           </Button>
@@ -234,7 +234,7 @@ export function MobileCamera({ onCapture, onPermissionDenied, sx }: MobileCamera
           {hasFlash && (
             <Button
               size="icon"
-              variant="secondary"
+              variant="contained" color="secondary"
               sx={{
                 bgcolor: flashEnabled ? 'rgba(234, 179, 8, 0.8)' : 'rgba(0, 0, 0, 0.6)',
                 '&:hover': {
@@ -249,7 +249,7 @@ export function MobileCamera({ onCapture, onPermissionDenied, sx }: MobileCamera
           )}
           <Button
             size="icon"
-            variant="secondary"
+            variant="contained" color="secondary"
             sx={{
               bgcolor: 'rgba(0, 0, 0, 0.6)',
               '&:hover': {
@@ -268,7 +268,7 @@ export function MobileCamera({ onCapture, onPermissionDenied, sx }: MobileCamera
       <Box sx={{ display: 'flex', justifyContent: 'center', mt: 6 }}>
         <Button 
           onClick={capturePhoto}
-          size="lg"
+          size="large"
           sx={{
             height: '4rem',
             width: '4rem',

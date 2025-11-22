@@ -1,7 +1,7 @@
 // src/lib/offline-storage.ts
-import { openDB } from 'idb';
-import { Transaction, Wallet, Budget, Goal, UserProfile } from './types';
-import { apiClient } from './api-client';
+import {openDB} from 'idb';
+import {Transaction, Wallet, Budget, Goal, UserProfile} from './types';
+import {apiClient} from './api-client';
 
 interface SyncableItem {
   id: string;

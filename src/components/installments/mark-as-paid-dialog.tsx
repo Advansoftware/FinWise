@@ -1,30 +1,16 @@
 // src/components/installments/mark-as-paid-dialog.tsx
 
-import { useState } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import {useState} from 'react';
+import {useForm, Controller} from 'react-hook-form';
+import {zodResolver} from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogActions,
-  Button,
-  TextField,
-  Box,
-  Stack,
-  Typography,
-  IconButton,
-  useTheme,
-  alpha,
-  CircularProgress
-} from '@mui/material';
-import { Loader2, CheckCircle2, X } from 'lucide-react';
-import { Installment, InstallmentPayment } from '@/core/ports/installments.port';
-import { useInstallments } from '@/hooks/use-installments';
-import { formatCurrency } from '@/lib/utils';
-import { format, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import {Dialog, DialogContent, DialogTitle, DialogActions, Button, TextField, Box, Stack, Typography, IconButton, useTheme, alpha, CircularProgress} from '@mui/material';
+import {Loader2, CheckCircle2, X} from 'lucide-react';
+import {Installment, InstallmentPayment} from '@/core/ports/installments.port';
+import {useInstallments} from '@/hooks/use-installments';
+import {formatCurrency} from '@/lib/utils';
+import {format, parseISO} from 'date-fns';
+import {ptBR} from 'date-fns/locale';
 
 const markAsPaidSchema = z.object({
   paidDate: z.date({

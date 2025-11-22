@@ -1,12 +1,12 @@
-import { Metadata } from 'next';
+import {Metadata} from 'next';
 import Link from 'next/link';
-import { ArrowLeft, HelpCircle, MessageCircle, Mail } from 'lucide-react';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
-import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
-import { faqData } from '@/lib/structured-data';
+import {ArrowLeft, HelpCircle, MessageCircle, Mail} from 'lucide-react';
+import {Button, Typography} from '@mui/material';
+import {Card, CardContent, CardHeader} from '@mui/material';
+import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from '@/components/ui/accordion';
+import {Chip} from '@mui/material';
+import {Divider} from '@mui/material';
+import {faqData} from '@/lib/structured-data';
 
 export const metadata: Metadata = {
   title: 'FAQ - Perguntas Frequentes | Gastometria',
@@ -132,7 +132,7 @@ export default function FAQPage() {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="max-w-4xl mx-auto">
-          <Button variant="ghost" asChild className="mb-6">
+          <Button variant="text" asChild className="mb-6">
             <Link href="/">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar ao Início
@@ -158,10 +158,10 @@ export default function FAQPage() {
                       <category.icon className="h-4 w-4" />
                     </div>
                     <div>
-                      <CardTitle className="text-xl">{category.title}</CardTitle>
-                      <CardDescription>
+                      <Typography variant="h6" className="text-xl">{category.title}</Typography>
+                      <Typography variant="body2" color="text.secondary">
                         {category.questions.length} perguntas
-                      </CardDescription>
+                      </Typography>
                     </div>
                     <Badge className={category.color}>
                       {category.questions.length}
@@ -190,7 +190,7 @@ export default function FAQPage() {
             ))}
           </div>
 
-          <Separator className="my-12" />
+          <Divider className="my-12" />
 
           {/* Contact Section */}
           <Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 border-0">
@@ -208,7 +208,7 @@ export default function FAQPage() {
                     Enviar Email
                   </Link>
                 </Button>
-                <Button variant="outline" asChild>
+                <Button variant="outlined" asChild>
                   <Link href="/docs">
                     <HelpCircle className="h-4 w-4 mr-2" />
                     Ver Documentação
@@ -226,7 +226,7 @@ export default function FAQPage() {
             <p className="text-muted-foreground mb-6">
               Experimente o Gastometria gratuitamente e transforme sua gestão financeira
             </p>
-            <Button asChild size="lg">
+            <Button asChild size="large">
               <Link href="/signup">
                 Criar Conta Grátis
               </Link>

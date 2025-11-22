@@ -2,18 +2,7 @@
 "use client";
 
 import { useState, useEffect, useTransition, useCallback } from "react";
-import { 
-  Card, 
-  CardContent, 
-  CardHeader, 
-  Typography, 
-  IconButton, 
-  Skeleton, 
-  Box, 
-  Stack, 
-  useTheme,
-  alpha
-} from '@mui/material';
+import {Card, CardContent, CardHeader, Typography, IconButton, Skeleton, Box, Stack, useTheme, alpha} from '@mui/material';
 import { RefreshCw, Sparkles, AlertCircle } from "lucide-react";
 import { getSmartSpendingTip } from "@/services/ai-automation-service";
 import { validateDataSufficiency } from "@/services/ai-cache-service";

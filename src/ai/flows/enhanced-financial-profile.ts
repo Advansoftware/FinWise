@@ -2,14 +2,9 @@
 
 'use server';
 
-import {
-  FinancialProfileInputSchema,
-  FinancialProfileOutputSchema,
-  FinancialProfileInput,
-  FinancialProfileOutput
-} from '@/ai/ai-types';
-import { createConfiguredAI, getModelReference } from '../genkit';
-import { AICredential } from '@/lib/types';
+import {FinancialProfileInputSchema, FinancialProfileOutputSchema, FinancialProfileInput, FinancialProfileOutput} from '@/ai/ai-types';
+import {createConfiguredAI, getModelReference} from '../genkit';
+import {AICredential} from '@/lib/types';
 
 const promptTemplate = `Você é um consultor financeiro especializado em análise comportamental e gamificação financeira.
 

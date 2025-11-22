@@ -1,16 +1,16 @@
 
 'use client';
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import {useState} from 'react';
+import {useForm} from 'react-hook-form';
+import {zodResolver} from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useAuth } from '@/hooks/use-auth';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import {Button} from '@mui/material';
+import {TextField} from '@mui/material';
+import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from '@/components/ui/form';
+import {useAuth} from '@/hooks/use-auth';
+import {useToast} from '@/hooks/use-toast';
+import {Loader2} from 'lucide-react';
 
 const formSchema = z.object({
   currentPassword: z.string().min(1, { message: 'A senha atual é obrigatória.' }),
@@ -64,7 +64,7 @@ export function UpdatePasswordForm() {
             <FormItem>
               <FormLabel>Senha Atual</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="Sua senha atual" {...field} />
+                <TextField type="password" placeholder="Sua senha atual" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -77,7 +77,7 @@ export function UpdatePasswordForm() {
             <FormItem>
               <FormLabel>Nova Senha</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="••••••••" {...field} />
+                <TextField type="password" placeholder="••••••••" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -90,7 +90,7 @@ export function UpdatePasswordForm() {
             <FormItem>
               <FormLabel>Confirmar Nova Senha</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="••••••••" {...field} />
+                <TextField type="password" placeholder="••••••••" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>

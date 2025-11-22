@@ -1,8 +1,8 @@
 // src/app/api/data/[...path]/route.ts
 
-import { NextRequest, NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongodb';
-import { ObjectId } from 'mongodb';
+import {NextRequest, NextResponse} from 'next/server';
+import {connectToDatabase} from '@/lib/mongodb';
+import {ObjectId} from 'mongodb';
 
 // This is a placeholder for a real session/token validation mechanism.
 // In a production app, you would use a secure method like JWT or session cookies.

@@ -5,13 +5,10 @@
  *
  * - projectGoalCompletion - A function that handles the goal projection process.
  */
-import { createConfiguredAI, getModelReference } from '../genkit';
-import {
-  ProjectGoalCompletionInputSchema,
-  ProjectGoalCompletionOutputSchema,
-} from '../ai-types';
+import {createConfiguredAI, getModelReference} from '../genkit';
+import {ProjectGoalCompletionInputSchema, ProjectGoalCompletionOutputSchema} from '../ai-types';
 import type { ProjectGoalCompletionInput, ProjectGoalCompletionOutput } from '../ai-types';
-import { AICredential } from '@/lib/types';
+import {AICredential} from '@/lib/types';
 
 
 const promptTemplate = `Você é um planejador financeiro pragmático que projeta quando um usuário atingirá uma meta de economia. Sua tarefa é analisar os dados fornecidos e retornar uma projeção clara.

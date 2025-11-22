@@ -10,12 +10,12 @@ import {
   SheetDescription,
   SheetFooter,
   SheetTrigger,
-} from "@/components/ui/sheet";
+} from "@mui/material";
 import { Box } from '@mui/material'
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Button } from "@mui/material";
+import { TextField } from "@mui/material";
+import { InputLabel } from "@mui/material";
+import { Select, SelectContent, MenuItem, SelectTrigger, SelectValue } from "@mui/material";
 import { Transaction, TransactionCategory } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
@@ -23,8 +23,8 @@ import { SingleDatePicker } from "../single-date-picker";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useAuth } from "@/hooks/use-auth";
 import { useWallets } from "@/hooks/use-wallets";
-import { Popover, PopoverContent, PopoverTrigger, PopoverAnchor } from "../ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../ui/command";
+import {Popover, PopoverContent, PopoverTrigger, PopoverAnchor} from '@mui/material';
+import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList} from '@mui/material';
 import { cn } from "@/lib/utils";
 import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group";
 
@@ -238,7 +238,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
             {/* Valor */}
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                 <Label htmlFor="amount" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Valor</Label>
-                <Input 
+                <TextField 
                     id="amount" 
                     type="number" 
                     placeholder="ex: 50.00" 
@@ -264,7 +264,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                             </SelectTrigger>
                             <SelectContent>
                                 {wallets.map(wallet => (
-                                    <SelectItem key={wallet.id} value={wallet.id}>{wallet.name}</SelectItem>
+                                    <MenuItem key={wallet.id} value={wallet.id}>{wallet.name}</MenuItem>
                                 ))}
                             </SelectContent>
                         </Select>
@@ -279,7 +279,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                             </SelectTrigger>
                             <SelectContent>
                                 {wallets.filter(w => w.id !== formState.walletId).map(wallet => (
-                                    <SelectItem key={wallet.id} value={wallet.id}>{wallet.name}</SelectItem>
+                                    <MenuItem key={wallet.id} value={wallet.id}>{wallet.name}</MenuItem>
                                 ))}
                             </SelectContent>
                         </Select>
@@ -292,7 +292,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                         <Label htmlFor="item" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Item</Label>
                         <Popover open={isItemPopoverOpen} onOpenChange={setIsItemPopoverOpen}>
                             <PopoverAnchor>
-                                <Input 
+                                <TextField 
                                     id="item" 
                                     placeholder="ex: Café" 
                                     value={itemInputValue} 
@@ -321,7 +321,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                     {/* Estabelecimento */}
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                         <Label htmlFor="establishment" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Estabelecimento</Label>
-                        <Input 
+                        <TextField 
                             id="establishment" 
                             placeholder="ex: Padaria do Zé" 
                             value={formState.establishment} 
@@ -332,7 +332,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                     {/* Quantidade */}
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                         <Label htmlFor="quantity" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Quantidade</Label>
-                        <Input 
+                        <TextField 
                             id="quantity" 
                             type="number" 
                             placeholder="ex: 1" 
@@ -350,7 +350,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                             </SelectTrigger>
                             <SelectContent>
                                 {wallets.map(wallet => (
-                                    <SelectItem key={wallet.id} value={wallet.id}>{wallet.name}</SelectItem>
+                                    <MenuItem key={wallet.id} value={wallet.id}>{wallet.name}</MenuItem>
                                 ))}
                             </SelectContent>
                         </Select>
@@ -365,7 +365,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                             </SelectTrigger>
                             <SelectContent>
                                 {categories.filter(c => c !== 'Transferência').map(cat => (
-                                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                                    <MenuItem key={cat} value={cat}>{cat}</MenuItem>
                                 ))}
                             </SelectContent>
                         </Select>
@@ -380,7 +380,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
                             </SelectTrigger>
                             <SelectContent>
                                 {availableSubcategories.map(sub => (
-                                    <SelectItem key={sub} value={sub}>{sub}</SelectItem>
+                                    <MenuItem key={sub} value={sub}>{sub}</MenuItem>
                                 ))}
                             </SelectContent>
                         </Select>

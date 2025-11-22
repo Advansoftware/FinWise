@@ -1,25 +1,15 @@
 // src/core/adapters/mongodb/mongodb.adapter.ts
 
-import { MongoClient, Db, ObjectId, ClientSession } from 'mongodb';
-import {
-  IDatabaseAdapter,
-  IUserRepository,
-  ITransactionRepository,
-  IWalletRepository,
-  IBudgetRepository,
-  IGoalRepository,
-  IAICreditLogRepository,
-  ISettingsRepository,
-  IAIGeneratedDataRepository
-} from '@/core/ports/database.port';
-import { IPaymentRepository } from '@/core/ports/payment.port';
-import { IReportsRepository } from '@/core/ports/reports.port';
-import { IInstallmentsRepository } from '@/core/ports/installments.port';
-import { MongoPaymentRepository } from './mongodb-payment.adapter';
-import { MongoReportsRepository } from './mongodb-reports.adapter';
-import { MongoInstallmentsRepository } from './mongodb-installments.adapter';
-import { Transaction, Wallet, Budget, Goal, UserProfile } from '@/lib/types';
-import { AICreditLog } from '@/ai/ai-types';
+import {MongoClient, Db, ObjectId, ClientSession} from 'mongodb';
+import {IDatabaseAdapter, IUserRepository, ITransactionRepository, IWalletRepository, IBudgetRepository, IGoalRepository, IAICreditLogRepository, ISettingsRepository, IAIGeneratedDataRepository} from '@/core/ports/database.port';
+import {IPaymentRepository} from '@/core/ports/payment.port';
+import {IReportsRepository} from '@/core/ports/reports.port';
+import {IInstallmentsRepository} from '@/core/ports/installments.port';
+import {MongoPaymentRepository} from './mongodb-payment.adapter';
+import {MongoReportsRepository} from './mongodb-reports.adapter';
+import {MongoInstallmentsRepository} from './mongodb-installments.adapter';
+import {Transaction, Wallet, Budget, Goal, UserProfile} from '@/lib/types';
+import {AICreditLog} from '@/ai/ai-types';
 
 class MongoUserRepository implements IUserRepository {
   constructor(private db: Db) { }

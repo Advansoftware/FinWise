@@ -1,7 +1,7 @@
 // src/app/api/users/update/route.ts
-import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
-import { MongoClient, ObjectId } from 'mongodb';
+import {NextRequest, NextResponse} from 'next/server';
+import {auth} from '@/lib/auth';
+import {MongoClient, ObjectId} from 'mongodb';
 
 if (!process.env.MONGODB_URI) {
   throw new Error('MONGODB_URI environment variable is required');

@@ -11,7 +11,7 @@ import { ItemFilter } from "@/components/dashboard/item-filter";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { TransactionCardList } from "@/components/transactions/transaction-card-list";
 import { AddTransactionSheet } from "@/components/dashboard/add-transaction-sheet";
-import { Button } from "@/components/ui/button";
+import { Button } from "@mui/material";
 import { PlusCircle } from "lucide-react";
 
 export default function TransactionsPage() {

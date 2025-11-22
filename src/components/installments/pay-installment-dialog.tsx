@@ -1,37 +1,17 @@
 // src/components/installments/pay-installment-dialog.tsx
 
-import { useState, useEffect } from 'react';
-import { useForm, Controller } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import {useState, useEffect} from 'react';
+import {useForm, Controller} from 'react-hook-form';
+import {zodResolver} from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  DialogActions,
-  Button,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  FormHelperText,
-  Box,
-  Stack,
-  Typography,
-  IconButton,
-  InputAdornment,
-  useTheme,
-  alpha,
-  CircularProgress
-} from '@mui/material';
-import { Loader2, DollarSign, Wallet as WalletIcon, AlertCircle, X } from 'lucide-react';
-import { Installment, InstallmentPayment } from '@/core/ports/installments.port';
-import { useInstallments } from '@/hooks/use-installments';
-import { useWallets } from '@/hooks/use-wallets';
-import { formatCurrency } from '@/lib/utils';
-import { format, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import {Dialog, DialogContent, DialogTitle, DialogActions, Button, TextField, Select, MenuItem, FormControl, InputLabel, FormHelperText, Box, Stack, Typography, IconButton, InputAdornment, useTheme, alpha, CircularProgress} from '@mui/material';
+import {Loader2, DollarSign, Wallet as WalletIcon, AlertCircle, X} from 'lucide-react';
+import {Installment, InstallmentPayment} from '@/core/ports/installments.port';
+import {useInstallments} from '@/hooks/use-installments';
+import {useWallets} from '@/hooks/use-wallets';
+import {formatCurrency} from '@/lib/utils';
+import {format, parseISO} from 'date-fns';
+import {ptBR} from 'date-fns/locale';
 
 const paymentSchema = z.object({
   walletId: z.string().min(1, 'Selecione uma carteira'),

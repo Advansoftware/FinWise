@@ -1,19 +1,19 @@
 'use client';
 
-import { useState } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import {useState} from 'react';
+import {useForm} from 'react-hook-form';
+import {zodResolver} from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
-import { useAuth } from '@/hooks/use-auth';
-import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import {Button, Typography} from '@mui/material';
+import {TextField} from '@mui/material';
+import {Card, CardContent, CardHeader} from '@mui/material';
+import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from '@/components/ui/form';
+import {useAuth} from '@/hooks/use-auth';
+import {useToast} from '@/hooks/use-toast';
+import {Loader2} from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Logo } from '@/components/logo';
+import {useRouter} from 'next/navigation';
+import {Logo} from '@/components/logo';
 
 const formSchema = z.object({
   name: z.string().min(1, { message: 'O nome é obrigatório.' }),
@@ -72,8 +72,8 @@ export default function SignupPage() {
         <div className="mx-auto h-12 w-12">
             <Logo />
         </div>
-        <CardTitle>Crie sua Conta</CardTitle>
-        <CardDescription>É rápido e fácil. Comece a organizar suas finanças.</CardDescription>
+        <Typography variant="h6">Crie sua Conta</Typography>
+        <Typography variant="body2" color="text.secondary">É rápido e fácil. Comece a organizar suas finanças.</Typography>
       </CardHeader>
       <CardContent>
         <Form {...form}>
@@ -85,7 +85,7 @@ export default function SignupPage() {
                 <FormItem>
                   <FormLabel>Nome</FormLabel>
                   <FormControl>
-                    <Input placeholder="Seu nome" {...field} />
+                    <TextField placeholder="Seu nome" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -98,7 +98,7 @@ export default function SignupPage() {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="seu@email.com" {...field} />
+                    <TextField placeholder="seu@email.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -111,7 +111,7 @@ export default function SignupPage() {
                 <FormItem>
                   <FormLabel>Senha</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
+                    <TextField type="password" placeholder="••••••••" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -124,7 +124,7 @@ export default function SignupPage() {
                 <FormItem>
                   <FormLabel>Confirmar Senha</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
+                    <TextField type="password" placeholder="••••••••" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

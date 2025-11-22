@@ -4,11 +4,11 @@
 import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from "react";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
-import { useDataRefresh } from './use-data-refresh';
+import {useDataRefresh} from './use-data-refresh';
 import { getSmartMonthlyReport, getSmartAnnualReport } from "@/services/ai-automation-service";
 import { useTransactions } from "./use-transactions";
 import { startOfMonth, subMonths, getYear, getMonth, isToday } from "date-fns";
-import { Report } from '@/core/ports/reports.port';
+import {Report} from '@/core/ports/reports.port';
 import { offlineStorage } from "@/lib/offline-storage";
 
 interface ReportsContextType {

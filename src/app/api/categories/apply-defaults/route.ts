@@ -1,9 +1,9 @@
 
 // src/app/api/categories/apply-defaults/route.ts
 
-import { NextRequest, NextResponse } from 'next/server';
-import { getDatabaseAdapter } from '@/core/services/service-factory';
-import { DEFAULT_CATEGORIES } from '@/lib/default-categories';
+import {NextRequest, NextResponse} from 'next/server';
+import {getDatabaseAdapter} from '@/core/services/service-factory';
+import {DEFAULT_CATEGORIES} from '@/lib/default-categories';
 
 export async function POST(request: NextRequest) {
   try {

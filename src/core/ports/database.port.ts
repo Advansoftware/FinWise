@@ -1,10 +1,10 @@
 // src/core/ports/database.port.ts
 
-import { Transaction, Wallet, Budget, Goal, UserProfile } from '@/lib/types';
-import { AICreditLog } from '@/ai/ai-types';
-import { IPaymentRepository } from './payment.port';
-import { IReportsRepository } from './reports.port';
-import { IInstallmentsRepository } from './installments.port';
+import {Transaction, Wallet, Budget, Goal, UserProfile} from '@/lib/types';
+import {AICreditLog} from '@/ai/ai-types';
+import {IPaymentRepository} from './payment.port';
+import {IReportsRepository} from './reports.port';
+import {IInstallmentsRepository} from './installments.port';
 
 export interface IUserRepository {
   findById(id: string): Promise<UserProfile | null>;

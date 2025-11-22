@@ -1,6 +1,6 @@
 // MUI-based Calendar component with Shadcn-compatible API
 import * as React from "react";
-import { DayPicker, DayPickerProps } from 'react-day-picker';
+import {DayPicker, DayPickerProps} from 'react-day-picker';
 import { Box, useTheme } from "@mui/material";
 import 'react-day-picker/dist/style.css';
 

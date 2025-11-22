@@ -1,36 +1,12 @@
 // src/components/installments/monthly-installments-modal.tsx
 
-import { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogContent,
-  DialogTitle,
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Badge,
-  Skeleton,
-  Stack,
-  useTheme,
-  alpha,
-  IconButton
-} from '@mui/material';
-import { 
-  Calendar,
-  CreditCard,
-  DollarSign,
-  Clock,
-  CheckCircle,
-  AlertCircle,
-  Building,
-  Tag,
-  X
-} from 'lucide-react';
-import { formatCurrency } from '@/lib/utils';
-import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { useAuth } from '@/hooks/use-auth';
+import {useState, useEffect} from 'react';
+import {Dialog, DialogContent, DialogTitle, Box, Typography, Card, CardContent, Badge, Skeleton, Stack, useTheme, alpha, IconButton} from '@mui/material';
+import {Calendar, CreditCard, DollarSign, Clock, CheckCircle, AlertCircle, Building, Tag, X} from 'lucide-react';
+import {formatCurrency} from '@/lib/utils';
+import {format} from 'date-fns';
+import {ptBR} from 'date-fns/locale';
+import {useAuth} from '@/hooks/use-auth';
 
 interface InstallmentDetail {
   id: string;
