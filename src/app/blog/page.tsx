@@ -118,9 +118,7 @@ export default function BlogPage() {
             </p>
             <div className="flex flex-wrap justify-center gap-2">
               {categories.map((category) => (
-                <Chip key={category} variant="outlined" className="cursor-pointer hover:bg-primary hover:text-primary-foreground">
-                  {category}
-                </Chip>
+                <Chip key={category} label={category} variant="outlined" className="cursor-pointer hover:bg-primary hover:text-primary-foreground" />
               ))}
             </div>
           </div>

@@ -11,6 +11,7 @@ export interface Toast {
   description?: string;
   variant?: AlertColor;
   duration?: number;
+  action?: ReactNode;
 }
 
 interface ToastContextValue {
@@ -76,6 +77,7 @@ export function Toaster() {
           onClose={handleClose}
           severity={currentToast.variant || 'info'}
           variant="filled"
+          action={currentToast.action}
         >
           {currentToast.title && <strong>{currentToast.title}</strong>}
           {currentToast.description && <div>{currentToast.description}</div>}
