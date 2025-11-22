@@ -57,7 +57,7 @@ export function CreditBadge({ actionKey, showWhenFree = false, variant = 'defaul
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Badge 
+            <Chip 
               variant="outlined" 
               sx={{ 
                 bgcolor: 'rgb(16 185 129 / 0.1)', 
@@ -69,7 +69,7 @@ export function CreditBadge({ actionKey, showWhenFree = false, variant = 'defaul
             >
               <Gem style={{ width: '0.75rem', height: '0.75rem', marginRight: '0.25rem' }} />
               Grátis
-            </Badge>
+            </Chip>
           </TooltipTrigger>
           <TooltipContent>
             <Box
@@ -88,7 +88,7 @@ export function CreditBadge({ actionKey, showWhenFree = false, variant = 'defaul
   }
 
   const content = (
-    <Badge 
+    <Chip 
       variant="outlined" 
       sx={{
         ...config.sx,
@@ -100,7 +100,7 @@ export function CreditBadge({ actionKey, showWhenFree = false, variant = 'defaul
       {variant === 'icon-only' ? null : (
         variant === 'compact' ? `${badgeInfo.cost}c` : `${badgeInfo.cost} créditos`
       )}
-    </Badge>
+    </Chip>
   );
 
   return (

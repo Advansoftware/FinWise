@@ -2,19 +2,16 @@
 'use client';
 import {useState} from 'react';
 import {Transaction} from '@/lib/types';
-import {Card, CardContent, CardHeader, Typography, CardActions} from '@mui/material';
-import {Chip} from '@mui/material';
+import {Card, CardContent, CardHeader, Typography, CardActions, Chip, Button, Box, Stack} from '@mui/material';
 import {CategoryIcon} from '../icons';
 import {format} from 'date-fns';
 import {ptBR} from 'date-fns/locale';
 import {MoreVertical, Pen, Trash2, ArrowUp, ArrowDown} from 'lucide-react';
-import {Button} from '@mui/material';
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from '../ui/dropdown-menu';
 import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle} from '../ui/alert-dialog';
 import {EditTransactionSheet} from './edit-transaction-sheet';
 import {useTransactions} from '@/hooks/use-transactions';
 import {useToast} from '@/hooks/use-toast';
-import {Box, Stack, Typography} from '@mui/material';
 
 interface TransactionCardListProps {
   transactions: Transaction[];
@@ -130,9 +127,9 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
               </Typography>
             </Box>
             <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-end', sm: 'center' }} spacing={{ xs: 1, sm: 2 }}>
-                <Badge variant="outlined" sx={{ fontSize: '0.75rem' }}>{transaction.category}</Badge>
+                <Chip variant="outlined" sx={{ fontSize: '0.75rem' }}>{transaction.category}</Chip>
                 {transaction.subcategory && (
-                  <Badge variant="contained" color="secondary" sx={{ fontSize: '0.75rem' }}>{transaction.subcategory}</Badge>
+                  <Chip variant="contained" color="secondary" sx={{ fontSize: '0.75rem' }}>{transaction.subcategory}</Chip>
                 )}
             </Stack>
           </Stack>

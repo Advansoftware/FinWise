@@ -119,9 +119,9 @@ export default function InstallmentsPage() {
                       <div className="font-semibold text-foreground dark:text-foreground">
                         {formatCurrency(payment.scheduledAmount)}
                       </div>
-                      <Badge variant="contained" color="error" className="text-xs">
+                      <Chip variant="contained" color="error" className="text-xs">
                         Em Atraso
-                      </Badge>
+                      </Chip>
                     </div>
                   </div>
                 );
@@ -344,7 +344,7 @@ export default function InstallmentsPage() {
                           <div className="text-3xl mb-2">{badge.icon}</div>
                           <h4 className="font-medium text-sm">{badge.name}</h4>
                           <p className="text-xs text-muted-foreground">{badge.description}</p>
-                          <Badge 
+                          <Chip 
                             variant="outlined" 
                             className={`mt-2 text-xs ${
                               badge.rarity === 'legendary' ? 'border-yellow-400 text-yellow-700' :
@@ -354,7 +354,7 @@ export default function InstallmentsPage() {
                             }`}
                           >
                             {translateRarity(badge.rarity)}
-                          </Badge>
+                          </Chip>
                         </motion.div>
                       ))}
                     </div>
@@ -380,7 +380,7 @@ export default function InstallmentsPage() {
                             <h4 className="font-medium">{achievement.name}</h4>
                             <p className="text-sm text-muted-foreground">{achievement.description}</p>
                           </div>
-                          <Badge variant="outlined">{achievement.points} pts</Badge>
+                          <Chip variant="outlined">{achievement.points} pts</Chip>
                         </div>
                         
                         <div className="space-y-2">

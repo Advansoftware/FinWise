@@ -2,9 +2,8 @@
 
 import {useEffect, useState, useCallback} from 'react';
 import {useToast} from '@/hooks/use-toast';
-import {Button, Typography} from '@mui/material';
+import {Button, Typography, Box, Stack} from '@mui/material';
 import {ArrowDownToLine, Wifi, WifiOff} from 'lucide-react';
-import {Box, Stack, Typography} from '@mui/material';
 
 export function PWAUpdater() {
   const { toast } = useToast();

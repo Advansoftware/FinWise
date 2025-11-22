@@ -163,9 +163,9 @@ export default function BlogPostPage({ params }: Props) {
           {/* Header */}
           <header className="mb-8">
             <div className="flex items-center gap-4 mb-4">
-              <Badge className={getCategoryColor(post.category)}>
+              <Chip className={getCategoryColor(post.category)}>
                 {post.category}
-              </Badge>
+              </Chip>
               <div className="flex items-center text-sm text-muted-foreground">
                 <Clock className="h-4 w-4 mr-1" />
                 {post.readTime} min de leitura

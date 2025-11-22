@@ -2,9 +2,8 @@
 'use client';
 
 import {useState, useEffect} from 'react';
-import {Chip, Typography} from '@mui/material';
+import {Chip, Typography, Box, Stack} from '@mui/material';
 import {Wifi, WifiOff} from 'lucide-react';
-import {Box, Stack, Typography} from '@mui/material';
 
 export function OnlineStatusIndicator() {
   const [isOnline, setIsOnline] = useState(true);
@@ -40,7 +39,7 @@ export function OnlineStatusIndicator() {
 
   return (
     <Box sx={{ position: 'fixed', top: 16, right: 16, zIndex: 50 }}>
-      <Badge 
+      <Chip 
         variant={isOnline ? "default" : "destructive"}
         sx={{ display: 'flex', alignItems: 'center', gap: 2, px: 3, py: 1 }}
       >
@@ -55,7 +54,7 @@ export function OnlineStatusIndicator() {
             Offline
           </>
         )}
-      </Badge>
+      </Chip>
       
       {!isOnline && (
         <Typography variant="body2" sx={{ mt: 2, fontSize: '0.875rem', color: 'text.secondary' }}>

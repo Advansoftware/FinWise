@@ -180,12 +180,12 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
       <Stack spacing={4}>
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Typography variant="h6" sx={{ fontWeight: 600 }}>Itens Extraídos</Typography>
-          <Badge 
+          <Chip 
             variant={extractedData.isValid ? 'default' : 'destructive'} 
             sx={extractedData.isValid ? { bgcolor: 'rgba(34, 197, 94, 0.2)', color: '#86efac', borderColor: 'rgba(34, 197, 94, 0.3)' } : {}}
           >
             {extractedData.isValid ? 'Nota Válida' : 'Nota Inválida'}
-          </Badge>
+          </Chip>
         </Stack>
         
         {extractedData.items?.length > 0 ? (

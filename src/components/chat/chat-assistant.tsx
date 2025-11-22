@@ -284,7 +284,7 @@ export function ChatAssistant() {
                                 <div className="flex items-center gap-2">
                                     <Bot className="text-primary" />
                                     <Typography variant="h6" className="text-lg">Assistente Gastometria</Typography>
-                                    {messages.length > 0 && <Badge variant="contained" color="secondary">{messages.length}</Badge>}
+                                    {messages.length > 0 && <Chip variant="contained" color="secondary">{messages.length}</Chip>}
                                 </div>
                                 <Button variant="text" size="icon" className="h-8 w-8" onClick={() => setIsOpen(false)}>
                                     <X className="h-4 w-4" />

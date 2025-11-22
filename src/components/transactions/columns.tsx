@@ -5,9 +5,8 @@ import {ColumnDef} from '@tanstack/react-table';
 import {Transaction, Wallet} from '@/lib/types';
 import {format} from 'date-fns';
 import {ptBR} from 'date-fns/locale';
-import {Chip, Typography} from '@mui/material';
+import {Chip, Typography, Button, Box, Stack} from '@mui/material';
 import {ArrowUpDown, MoreHorizontal, Pen, Trash2, ArrowUp, ArrowDown} from 'lucide-react';
-import {Button} from '@mui/material';
 import {CategoryIcon} from '../icons';
 import {Checkbox} from '../ui/checkbox';
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger} from '../ui/dropdown-menu';
@@ -26,7 +25,6 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import {useWallets} from '@/hooks/use-wallets';
-import {Box, Stack, Typography} from '@mui/material';
 
 const ActionsCell = ({ row }: { row: any }) => {
     const transaction = row.original as Transaction;
@@ -174,10 +172,10 @@ export const columns: ColumnDef<Transaction>[] = [
     cell: ({ row }) => {
       const category = row.original.category;
       return (
-         <Badge variant="outlined" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, width: 'fit-content', fontWeight: 400 }}>
+         <Chip variant="outlined" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, width: 'fit-content', fontWeight: 400 }}>
             <CategoryIcon category={category as any} className="h-3 w-3" />
             <span style={{ textTransform: 'capitalize' }}>{category}</span>
-        </Badge>
+        </Chip>
       );
     },
     size: 100,
@@ -187,7 +185,7 @@ export const columns: ColumnDef<Transaction>[] = [
     header: 'Subcategoria',
     cell: ({ row }) => {
       const subcategory = row.original.subcategory;
-      return subcategory ? <Badge variant="contained" color="secondary" sx={{ width: 'fit-content', fontWeight: 400 }}>{subcategory}</Badge> : <Typography component="span" sx={{ color: 'text.secondary' }}>-</Typography>
+      return subcategory ? <Chip variant="contained" color="secondary" sx={{ width: 'fit-content', fontWeight: 400 }}>{subcategory}</Chip> : <Typography component="span" sx={{ color: 'text.secondary' }}>-</Typography>
     },
     size: 100,
   },

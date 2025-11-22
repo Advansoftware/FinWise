@@ -123,12 +123,12 @@ export function CreditStatementDialog({ open, onOpenChange }: CreditStatementDia
                 <Typography variant="h4" sx={{ fontWeight: 'bold', color: '#2563eb' }}>
                   {formatBalance(currentCredits)}
                 </Typography>
-                <Badge 
+                <Chip 
                   variant={currentCredits > 10 ? "secondary" : "destructive"}
                   sx={{ mt: 1 }}
                 >
                   {plan}
-                </Badge>
+                </Chip>
               </CardContent>
             </Card>
 
@@ -202,9 +202,9 @@ export function CreditStatementDialog({ open, onOpenChange }: CreditStatementDia
                         </Typography>
                       </Stack>
                       <Box sx={{ textAlign: 'right' }}>
-                        <Badge variant="outlined">
+                        <Chip variant="outlined">
                           {usage.used > 0 ? Math.round(usage.spent / usage.used) : 0} créditos/ação
-                        </Badge>
+                        </Chip>
                       </Box>
                     </Stack>
                   </CardContent>

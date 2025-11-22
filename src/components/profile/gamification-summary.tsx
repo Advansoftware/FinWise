@@ -10,8 +10,7 @@ import { useGamification } from "@/hooks/use-gamification";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
 import Link from "next/link";
-import {Button, Typography} from '@mui/material';
-import {Box, Stack, Typography} from '@mui/material';
+import {Button, Typography, Box, Stack} from '@mui/material';
 
 export function GamificationSummary() {
   const { gamificationData, isLoading } = useGamification();

@@ -171,12 +171,12 @@ export default function DefaultCategoriesPreview() {
                     <div>
                       <Typography variant="h6">{category}</Typography>
                       <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Badge 
+                        <Chip 
                           variant="outlined" 
                           className={getCategoryTypeColor(categoryType)}
                         >
                           {categoryType}
-                        </Badge>
+                        </Chip>
                         <span>{subcategories.length} subcategorias</span>
                       </Typography>
                     </div>
@@ -197,13 +197,13 @@ export default function DefaultCategoriesPreview() {
                     </h4>
                     <div className="flex flex-wrap gap-2">
                       {subcategories.map((subcategory) => (
-                        <Badge 
+                        <Chip 
                           key={subcategory} 
                           variant="contained" color="secondary"
                           className="text-xs"
                         >
                           {subcategory}
-                        </Badge>
+                        </Chip>
                       ))}
                     </div>
                   </div>

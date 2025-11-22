@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from "react";
-import { Card, CardContent, CardHeader } from "@mui/material";
+import { Card, CardContent, CardHeader, Typography } from "@mui/material";
 import { Button } from "@mui/material";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlusCircle, MoreVertical, Trash2, Edit, PiggyBank, Sparkles, Trophy, CheckCircle, Flame, Award, Calculator, BarChart3 } from "lucide-react";
@@ -230,7 +230,7 @@ function BudgetCard({ budget, onDelete }: { budget: Budget, onDelete: () => void
                     </div>
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="text" size="icon" className="h-8 w-8">
+                            <Button variant="text" size="small" className="h-8 w-8">
                                 <MoreVertical className="h-4 w-4"/>
                             </Button>
                         </DropdownMenuTrigger>

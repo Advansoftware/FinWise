@@ -163,9 +163,9 @@ export default function FAQPage() {
                         {category.questions.length} perguntas
                       </Typography>
                     </div>
-                    <Badge className={category.color}>
+                    <Chip className={category.color}>
                       {category.questions.length}
-                    </Badge>
+                    </Chip>
                   </div>
                 </CardHeader>
                 <CardContent className="p-0">

@@ -2,12 +2,10 @@
 'use client';
 
 import { useGoals } from "@/hooks/use-goals";
-import {Card, CardHeader, CardContent, Typography, CardActions} from '@mui/material';
+import { Card, CardHeader, CardContent, Typography, CardActions, Button, LinearProgress, Box, Stack } from '@mui/material';
 import { Skeleton } from "../ui/skeleton";
 import { Target, PiggyBank, Sparkles, RefreshCw } from "lucide-react";
 import Link from "next/link";
-import {Button} from '@mui/material';
-import {LinearProgress} from '@mui/material';
 import { AddDepositDialog } from "./add-deposit-dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { useTransactions } from "@/hooks/use-transactions";
@@ -17,7 +15,6 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { ProjectGoalCompletionOutput } from "@/ai/ai-types";
-import {Box, Stack, Typography} from '@mui/material';
 
 
 export function GoalHighlightCard() {

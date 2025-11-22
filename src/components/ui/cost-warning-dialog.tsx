@@ -97,9 +97,9 @@ export function CostWarningDialog({
                 <Box component="h4" sx={{ fontWeight: theme => theme.typography.fontWeightMedium }}>
                   {action.name}
                 </Box>
-                <Badge variant="contained" color="secondary">
+                <Chip variant="contained" color="secondary">
                   {action.cost} créditos
-                </Badge>
+                </Chip>
               </Box>
               <Box 
                 component="p" 
@@ -117,9 +117,9 @@ export function CostWarningDialog({
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', fontSize: theme => theme.typography.pxToRem(14) }}>
             <span>Créditos disponíveis:</span>
-            <Badge variant={hasEnoughCredits ? "default" : "destructive"}>
+            <Chip variant={hasEnoughCredits ? "default" : "destructive"}>
               {currentCredits} créditos
-            </Badge>
+            </Chip>
           </Box>
 
           {!hasEnoughCredits && (

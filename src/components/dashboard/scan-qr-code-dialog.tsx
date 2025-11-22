@@ -324,9 +324,9 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
             <Stack spacing={4}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                     <Typography variant="h6" fontWeight="semibold">Itens Extraídos</Typography>
-                     <Badge variant={extractedData.isValid ? 'default' : 'destructive'} className={extractedData.isValid ? "bg-green-500/20 text-green-300 border-green-500/30" : ""}>
+                     <Chip variant={extractedData.isValid ? 'default' : 'destructive'} className={extractedData.isValid ? "bg-green-500/20 text-green-300 border-green-500/30" : ""}>
                         {extractedData.isValid ? 'Nota Válida' : 'Nota Inválida'}
-                    </Badge>
+                    </Chip>
                 </Stack>
                 
                 {extractedData.items?.length > 0 ? (

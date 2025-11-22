@@ -118,9 +118,9 @@ export default function BlogPage() {
             </p>
             <div className="flex flex-wrap justify-center gap-2">
               {categories.map((category) => (
-                <Badge key={category} variant="outlined" className="cursor-pointer hover:bg-primary hover:text-primary-foreground">
+                <Chip key={category} variant="outlined" className="cursor-pointer hover:bg-primary hover:text-primary-foreground">
                   {category}
-                </Badge>
+                </Chip>
               ))}
             </div>
           </div>
@@ -137,9 +137,9 @@ export default function BlogPage() {
                 <Card key={post.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
                   <CardHeader>
                     <div className="flex items-center justify-between mb-2">
-                      <Badge className={getCategoryColor(post.category)}>
+                      <Chip className={getCategoryColor(post.category)}>
                         {post.category}
-                      </Badge>
+                      </Chip>
                       <div className="flex items-center text-sm text-muted-foreground">
                         <Clock className="h-4 w-4 mr-1" />
                         {post.readTime} min
@@ -182,9 +182,9 @@ export default function BlogPage() {
               <Card key={post.id} className="hover:shadow-md transition-shadow group">
                 <CardHeader>
                   <div className="flex items-center justify-between mb-2">
-                    <Badge variant="outlined" className={getCategoryColor(post.category)}>
+                    <Chip variant="outlined" className={getCategoryColor(post.category)}>
                       {post.category}
-                    </Badge>
+                    </Chip>
                     <div className="flex items-center text-sm text-muted-foreground">
                       <Clock className="h-4 w-4 mr-1" />
                       {post.readTime} min

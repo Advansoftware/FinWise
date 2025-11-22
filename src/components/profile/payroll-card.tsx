@@ -354,9 +354,9 @@ export function PayrollCard() {
                         <Typography sx={{ flex: 1, fontSize: '0.75rem', fontWeight: 500, color: '#dc2626' }}>
                           {discount.name}
                         </Typography>
-                        <Badge variant="contained" color="error" sx={{ fontSize: '0.75rem' }}>
+                        <Chip variant="contained" color="error" sx={{ fontSize: '0.75rem' }}>
                           -{formatCurrency(discount.amount)}
-                        </Badge>
+                        </Chip>
                       </>
                     )}
                   </Stack>
@@ -458,9 +458,9 @@ export function PayrollCard() {
                         <Typography sx={{ flex: 1, fontSize: '0.75rem', fontWeight: 500, color: '#16a34a' }}>
                           {allowance.name}
                         </Typography>
-                        <Badge variant="contained" color="secondary" sx={{ fontSize: '0.75rem', bgcolor: 'rgba(34, 197, 94, 0.2)', color: '#16a34a' }}>
+                        <Chip variant="contained" color="secondary" sx={{ fontSize: '0.75rem', bgcolor: 'rgba(34, 197, 94, 0.2)', color: '#16a34a' }}>
                           +{formatCurrency(allowance.amount)}
-                        </Badge>
+                        </Chip>
                       </>
                     )}
                   </Stack>

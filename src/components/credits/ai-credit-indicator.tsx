@@ -119,7 +119,7 @@ export function AICreditIndicator() {
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Box sx={{ display: { xs: 'none', md: 'block' } }}>
-                        <Badge 
+                        <Chip 
                         variant="outlined" 
                         sx={isUsingGastometriaAI 
                             ? { bgcolor: 'rgba(59, 130, 246, 0.1)', color: '#2563eb', borderColor: 'rgba(59, 130, 246, 0.2)' }
@@ -137,7 +137,7 @@ export function AICreditIndicator() {
                             IA Própria
                             </>
                         )}
-                        </Badge>
+                        </Chip>
                     </Box>
                   </TooltipTrigger>
                   <TooltipContent side="top" align="end" sx={{ maxWidth: '20rem' }}>

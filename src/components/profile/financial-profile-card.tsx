@@ -128,15 +128,15 @@ export function FinancialProfileCard() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="p-3 bg-muted/50 rounded-lg">
                       <div className="text-xs text-muted-foreground">Disciplina</div>
-                      <Badge variant="outlined" className="mt-1">
+                      <Chip variant="outlined" className="mt-1">
                         {profile.gamificationInfluence.disciplineLevel}
-                      </Badge>
+                      </Chip>
                     </div>
                     <div className="p-3 bg-muted/50 rounded-lg">
                       <div className="text-xs text-muted-foreground">Consistência</div>
-                      <Badge variant="outlined" className="mt-1">
+                      <Chip variant="outlined" className="mt-1">
                         {profile.gamificationInfluence.paymentConsistency}
-                      </Badge>
+                      </Chip>
                     </div>
                   </div>
 

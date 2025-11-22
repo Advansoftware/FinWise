@@ -68,7 +68,7 @@ export default function SettingsPage() {
                                         <div className="flex items-center gap-2">
                                             {isActive ? <CheckCircle className="h-5 w-5 text-primary"/> : <Radio className="h-5 w-5 text-muted-foreground"/>}
                                             <p className="font-semibold">{cred.name}</p>
-                                            <Badge variant={cred.provider === 'gastometria' ? 'default' : 'secondary'}>{cred.provider}</Badge>
+                                            <Chip variant={cred.provider === 'gastometria' ? 'default' : 'secondary'}>{cred.provider}</Chip>
                                              {cred.isReadOnly && <Lock className="h-3 w-3 text-muted-foreground" />}
                                         </div>
                                         <p className="text-sm text-muted-foreground pl-7">

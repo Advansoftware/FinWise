@@ -147,8 +147,8 @@ export default function CategoriesPage() {
                                {suggestion && (
                                    <div className="p-4 bg-muted rounded-md space-y-2">
                                        <p className="font-semibold">Sugestão da IA:</p>
-                                       {suggestion.category && <p>Categoria: <Badge>{suggestion.category}</Badge></p>}
-                                       {suggestion.subcategory && <p>Subcategoria: <Badge variant="contained" color="secondary">{suggestion.subcategory}</Badge></p>}
+                                       {suggestion.category && <p>Categoria: <Chip label={suggestion.category} /></p>}
+                                       {suggestion.subcategory && <p>Subcategoria: <Chip variant="contained" color="secondary">{suggestion.subcategory}</Chip></p>}
                                    </div>
                                )}
                             </div>
@@ -166,7 +166,6 @@ export default function CategoriesPage() {
                                 <DialogDescription>Insira o nome da nova categoria.</DialogDescription>
                             </DialogHeader>
                              <div className="py-4">
-                                <Label htmlFor="new-category-name" className="sr-only">Nome da Categoria</Label>
                                 <TextField 
                                     id="new-category-name"
                                     value={newCategoryName}
@@ -235,12 +234,12 @@ export default function CategoriesPage() {
                             <div className="flex flex-wrap gap-1">
                                 {subcategories[category] && subcategories[category]!.length > 0 ? (
                                     subcategories[category]!.map(sub => (
-                                        <Badge key={sub} variant="contained" color="secondary" className="group pr-1 text-xs">
+                                        <Chip key={sub} variant="contained" color="secondary" className="group pr-1 text-xs">
                                             {sub}
                                             <button onClick={() => deleteSubcategory(category, sub)} className="ml-1.5 opacity-50 group-hover:opacity-100 transition-opacity">
                                                 <X className="h-3 w-3"/>
                                             </button>
-                                        </Badge>
+                                        </Chip>
                                     ))
                                 ) : (
                                     <p className="text-xs text-muted-foreground">Nenhuma subcategoria registrada.</p>

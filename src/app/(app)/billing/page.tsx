@@ -2,10 +2,8 @@
 'use client';
 import {useState, useEffect, Suspense} from 'react';
 import {useSearchParams, useRouter, usePathname} from 'next/navigation';
-import { Button } from "@mui/material";
-import { Card, CardContent, CardHeader } from "@mui/material";
+import { Button, Card, CardContent, CardHeader, CardActions, Typography, Chip } from "@mui/material";
 import { CheckCircle2, Loader2, Gem, BrainCircuit, Rocket } from "lucide-react";
-import { Chip } from "@mui/material";
 import { usePlan } from "@/hooks/use-plan";
 import { usePayment } from "@/hooks/use-payment";
 import { UserPlan } from "@/lib/types";
@@ -183,8 +181,8 @@ function BillingPageContent() {
                         <CardHeader>
                             <div className="flex justify-between items-center">
                                 <Typography variant="h6">{plan.name}</Typography>
-                                {isCurrent && <Badge variant="contained" color="secondary">Plano Atual</Badge>}
-                                {plan.name === 'Pro' && <Badge>Popular</Badge>}
+                                {isCurrent && <Chip label="Plano Atual" color="secondary" />}
+                                {plan.name === 'Pro' && <Chip label="Popular" />}
                             </div>
                             <Typography variant="body2" color="text.secondary">{plan.description}</Typography>
                         </CardHeader>
@@ -204,7 +202,7 @@ function BillingPageContent() {
                                 className="w-full" 
                                 disabled={buttonDisabled} 
                                 onClick={buttonAction} 
-                                variant={isCurrent ? 'outline' : 'default'}
+                                variant={isCurrent ? 'outlined' : 'contained'}
                             >
                                 {isProcessing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                                 {buttonText}

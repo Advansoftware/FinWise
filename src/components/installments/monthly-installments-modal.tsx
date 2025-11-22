@@ -91,18 +91,18 @@ export function MonthlyInstallmentsModal({
     switch (status) {
       case 'paid':
         return (
-          <Badge sx={{ bgcolor: alpha(theme.palette.success.main, 0.1), color: 'success.main', border: 1, borderColor: alpha(theme.palette.success.main, 0.3) }}>
+          <Chip sx={{ bgcolor: alpha(theme.palette.success.main, 0.1), color: 'success.main', border: 1, borderColor: alpha(theme.palette.success.main, 0.3) }}>
             Pago
-          </Badge>
+          </Chip>
         );
       case 'overdue':
         return (
-          <Badge sx={{ bgcolor: alpha(theme.palette.error.main, 0.1), color: 'error.main', border: 1, borderColor: alpha(theme.palette.error.main, 0.3) }}>
+          <Chip sx={{ bgcolor: alpha(theme.palette.error.main, 0.1), color: 'error.main', border: 1, borderColor: alpha(theme.palette.error.main, 0.3) }}>
             Em atraso
-          </Badge>
+          </Chip>
         );
       default:
-        return <Badge variant="standard">Pendente</Badge>;
+        return <Chip variant="standard">Pendente</Chip>;
     }
   };
 
