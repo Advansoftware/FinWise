@@ -1,10 +1,19 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  Typography, 
+  Chip, 
+  Button, 
+  LinearProgress, 
+  Box, 
+  Stack, 
+  useTheme, 
+  alpha 
+} from '@mui/material';
 import { 
   Clock, 
   AlertTriangle, 
@@ -21,7 +30,6 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { useInstallments } from "@/hooks/use-installments";
 import { usePlan } from "@/hooks/use-plan";
-import { Box, Stack, Typography, useTheme, alpha } from '@mui/material';
 
 export function InstallmentsSummaryCard() {
   const { plan } = usePlan();
@@ -43,7 +51,7 @@ export function InstallmentsSummaryCard() {
                 Parcelamentos
               </Typography>
             </Box>
-            <Badge variant="outline">Pro+</Badge>
+            <Chip label="Pro+" variant="outlined" size="small" />
           </Stack>
         </CardHeader>
         <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -51,8 +59,8 @@ export function InstallmentsSummaryCard() {
             Gerencie suas compras parceladas com gamificação e controle total.
           </Typography>
           <Link href="/billing" passHref style={{ width: '100%' }}>
-            <Button size="sm" sx={{ width: '100%' }}>
-              Fazer Upgrade <ChevronRight style={{ width: '1rem', height: '1rem', marginLeft: '0.25rem' }} />
+            <Button size="small" variant="contained" fullWidth endIcon={<ChevronRight size={16} />}>
+              Fazer Upgrade
             </Button>
           </Link>
         </CardContent>
@@ -98,8 +106,8 @@ export function InstallmentsSummaryCard() {
             Nenhum parcelamento ativo no momento.
           </Typography>
           <Link href="/installments" passHref style={{ width: '100%' }}>
-            <Button size="sm" sx={{ width: '100%' }}>
-              Criar Parcelamento <ChevronRight style={{ width: '1rem', height: '1rem', marginLeft: '0.25rem' }} />
+            <Button size="small" variant="contained" fullWidth endIcon={<ChevronRight size={16} />}>
+              Criar Parcelamento
             </Button>
           </Link>
         </CardContent>
@@ -134,10 +142,12 @@ export function InstallmentsSummaryCard() {
                 </Typography>
               </motion.div>
             )}
-            <Badge variant="secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              <Trophy style={{ width: '0.75rem', height: '0.75rem' }} />
-              Nível {gamification.level.level}
-            </Badge>
+            <Chip 
+              icon={<Trophy size={12} />} 
+              label={`Nível ${gamification.level.level}`} 
+              color="secondary" 
+              size="small" 
+            />
           </Stack>
         </Stack>
       </CardHeader>
@@ -173,9 +183,10 @@ export function InstallmentsSummaryCard() {
               {gamification.points}/{gamification.level.pointsRequired + gamification.level.pointsToNext} pts
             </Typography>
           </Stack>
-          <Progress 
+          <LinearProgress 
+            variant="determinate"
             value={(gamification.points / (gamification.level.pointsRequired + gamification.level.pointsToNext)) * 100} 
-            sx={{ height: '0.5rem' }}
+            sx={{ height: 8, borderRadius: 4 }}
           />
         </Stack>
 
@@ -291,8 +302,8 @@ export function InstallmentsSummaryCard() {
       {/* Botão de ação */}
       <CardContent sx={{ pt: 0, pb: 4, flexShrink: 0 }}>
         <Link href="/installments" passHref style={{ width: '100%' }}>
-          <Button size="sm" variant="outline" sx={{ width: '100%' }}>
-            Ver Detalhes <ChevronRight style={{ width: '1rem', height: '1rem', marginLeft: '0.25rem' }} />
+          <Button size="small" variant="outlined" fullWidth endIcon={<ChevronRight size={16} />}>
+            Ver Detalhes
           </Button>
         </Link>
       </CardContent>

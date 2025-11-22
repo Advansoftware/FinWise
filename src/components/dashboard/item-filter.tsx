@@ -3,12 +3,10 @@
 import * as React from "react"
 import {
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
-import { Box } from '@mui/material';
+  MenuItem,
+  FormControl,
+  Box
+} from '@mui/material';
 
 interface ItemFilterProps {
   items: string[];
@@ -29,19 +27,21 @@ export function ItemFilter({ items, selectedItem, onItemSelected, className, pla
   }, [items, selectedItem, onItemSelected]);
   
   return (
-    <Box sx={{ display: 'grid', gap: 2, ...(className && {}) }}>
-        <Select value={selectedItem} onValueChange={onItemSelected} disabled={disabled}>
-            <SelectTrigger>
-                <SelectValue placeholder={placeholder || "Selecione um item"} />
-            </SelectTrigger>
-            <SelectContent>
+    <Box sx={{ display: 'grid', gap: 2 }} className={className}>
+        <FormControl fullWidth size="small" disabled={disabled}>
+            <Select 
+              value={selectedItem} 
+              onChange={(e) => onItemSelected(e.target.value)}
+              displayEmpty
+            >
                 {items.map((item) => (
-                    <SelectItem key={item} value={item} sx={{ textTransform: 'capitalize' }}>
+                    <MenuItem key={item} value={item} sx={{ textTransform: 'capitalize' }}>
                         {item === 'all' ? (placeholder || 'Todos') : item}
-                    </SelectItem>
+                    </MenuItem>
                 ))}
-            </SelectContent>
-        </Select>
+            </Select>
+        </FormControl>
     </Box>
   )
 }
+

@@ -2,16 +2,24 @@
 "use client";
 
 import { useState, useEffect, useTransition, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  Typography, 
+  IconButton, 
+  Skeleton, 
+  Box, 
+  Stack, 
+  useTheme,
+  alpha
+} from '@mui/material';
 import { RefreshCw, Sparkles, AlertCircle } from "lucide-react";
 import { getSmartSpendingTip } from "@/services/ai-automation-service";
 import { validateDataSufficiency } from "@/services/ai-cache-service";
-import { Skeleton } from "../ui/skeleton";
 import { Transaction } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import { usePlan } from "@/hooks/use-plan";
-import { Box, Stack, Typography } from '@mui/material';
 
 interface AITipCardProps {
     transactions: Transaction[];
@@ -24,6 +32,7 @@ export function AITipCard({ transactions }: AITipCardProps) {
   const [validationResult, setValidationResult] = useState<any>(null);
   const { user } = useAuth();
   const { isPro } = usePlan();
+  const theme = useTheme();
 
   // Valida dados quando transações mudam
   useEffect(() => {
@@ -79,58 +88,58 @@ export function AITipCard({ transactions }: AITipCardProps) {
 
   return (
     <Card sx={{ 
-      bgcolor: 'rgba(var(--card-rgb), 0.5)', 
+      bgcolor: alpha(theme.palette.background.paper, 0.5), 
       backdropFilter: 'blur(4px)',
-      borderColor: showInsufficientData ? 'rgba(245, 158, 11, 0.2)' : 'rgba(var(--primary-rgb), 0.2)'
+      borderColor: showInsufficientData ? alpha(theme.palette.warning.main, 0.2) : alpha(theme.palette.primary.main, 0.2)
     }}>
-      <CardHeader sx={{ display: 'flex', flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', pb: 2, p: 4 }}>
-        <Box sx={{ flex: 1 }}>
-            <Stack direction="row" alignItems="center" spacing={2}>
-                {showInsufficientData ? (
-                  <AlertCircle style={{ width: '1rem', height: '1rem', color: '#f59e0b' }} />
-                ) : (
-                  <Sparkles style={{ width: '1rem', height: '1rem', color: 'var(--primary)' }} className="animate-pulse" />
-                )}
-                <CardTitle>
-                  <Typography component="span" sx={{ fontSize: '0.875rem', color: showInsufficientData ? '#f59e0b' : 'rgba(var(--primary-rgb), 0.9)' }}>
-                    Dica Financeira com IA
-                  </Typography>
-                </CardTitle>
-            </Stack>
-            <CardDescription>
-              <Typography component="span" sx={{ fontSize: '0.75rem', mt: 1, color: showInsufficientData ? 'rgba(245, 158, 11, 0.7)' : 'rgba(var(--primary-rgb), 0.7)' }}>
-                {showInsufficientData 
-                  ? `Precisa de ${validationResult?.requiredMinimum || 0} transações (você tem ${validationResult?.currentCount || 0})`
-                  : "Cache mensal renovado automaticamente. Atualizar custa 1 crédito."
-                }
+      <CardHeader 
+        title={
+          <Stack direction="row" alignItems="center" spacing={1}>
+              {showInsufficientData ? (
+                <AlertCircle size={16} color={theme.palette.warning.main} />
+              ) : (
+                <Sparkles size={16} color={theme.palette.primary.main} className="animate-pulse" />
+              )}
+              <Typography variant="subtitle2" fontWeight="bold" color={showInsufficientData ? 'warning.main' : 'primary.main'}>
+                Dica Financeira com IA
               </Typography>
-            </CardDescription>
-        </Box>
-        <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => fetchTip(true)}
-            disabled={isPending || !user}
-            sx={{ 
-              color: 'rgba(var(--primary-rgb), 0.7)', 
-              '&:hover': { bgcolor: 'rgba(var(--primary-rgb), 0.1)', color: 'var(--primary)' },
-              borderRadius: '50%',
-              height: '1.75rem',
-              width: '1.75rem'
-            }}
-            title={showInsufficientData ? "Forçar geração (pode consumir crédito)" : "Atualizar dica (1 crédito)"}
-        >
-            <RefreshCw style={{ width: '0.875rem', height: '0.875rem' }} className={isPending ? "animate-spin" : ""} />
-        </Button>
-      </CardHeader>
-      <CardContent sx={{ p: 4, pt: 0 }}>
+          </Stack>
+        }
+        subheader={
+          <Typography variant="caption" sx={{ mt: 1, color: showInsufficientData ? alpha(theme.palette.warning.main, 0.7) : alpha(theme.palette.primary.main, 0.7) }}>
+            {showInsufficientData 
+              ? `Precisa de ${validationResult?.requiredMinimum || 0} transações (você tem ${validationResult?.currentCount || 0})`
+              : "Cache mensal renovado automaticamente. Atualizar custa 1 crédito."
+            }
+          </Typography>
+        }
+        action={
+          <IconButton
+              onClick={() => fetchTip(true)}
+              disabled={isPending || !user}
+              size="small"
+              title={showInsufficientData ? "Forçar geração (pode consumir crédito)" : "Atualizar dica (1 crédito)"}
+              sx={{ 
+                color: alpha(theme.palette.primary.main, 0.7), 
+                '&:hover': { 
+                  bgcolor: alpha(theme.palette.primary.main, 0.1), 
+                  color: 'primary.main' 
+                }
+              }}
+          >
+              <RefreshCw size={14} className={isPending ? "animate-spin" : ""} />
+          </IconButton>
+        }
+        sx={{ pb: 1 }}
+      />
+      <CardContent sx={{ pt: 0 }}>
         {isPending ? (
            <Stack spacing={2}>
-            <Skeleton sx={{ height: '0.75rem', width: '100%', bgcolor: 'rgba(var(--primary-rgb), 0.1)' }} />
-            <Skeleton sx={{ height: '0.75rem', width: '80%', bgcolor: 'rgba(var(--primary-rgb), 0.1)' }} />
+            <Skeleton variant="text" width="100%" height={12} sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }} />
+            <Skeleton variant="text" width="80%" height={12} sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }} />
           </Stack>
         ) : (
-          <Typography variant="body2" sx={{ fontSize: '0.875rem', color: showInsufficientData ? (theme => theme.palette.mode === 'dark' ? '#fbbf24' : '#d97706') : 'rgba(var(--foreground-rgb), 0.9)' }}>
+          <Typography variant="body2" color={showInsufficientData ? 'warning.dark' : 'text.primary'}>
             {tip}
           </Typography>
         )}

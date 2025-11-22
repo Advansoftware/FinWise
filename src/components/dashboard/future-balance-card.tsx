@@ -2,10 +2,20 @@
 'use client';
 
 import { useState, useEffect, useTransition, useCallback, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  Typography, 
+  Button, 
+  IconButton, 
+  Skeleton, 
+  Box, 
+  Stack, 
+  useTheme,
+  alpha
+} from '@mui/material';
 import { RefreshCw, TrendingUp, AlertTriangle, Calculator } from "lucide-react";
-import { Skeleton } from "../ui/skeleton";
 import { useAuth } from "@/hooks/use-auth";
 import { useWallets } from "@/hooks/use-wallets";
 import { useBudgets } from "@/hooks/use-budgets";
@@ -14,7 +24,6 @@ import { getSmartFutureBalance, calculateFutureBalancePreview } from "@/services
 import { validateDataSufficiency } from "@/services/ai-cache-service";
 import { PredictFutureBalanceOutput } from "@/ai/ai-types";
 import { subMonths, startOfMonth } from "date-fns";
-import { cn } from "@/lib/utils";
 import { usePlan } from "@/hooks/use-plan";
 
 export function FutureBalanceCard() {
@@ -107,23 +116,25 @@ export function FutureBalanceCard() {
   }, [user, isPlus, validationResult, fetchPrediction]);
 
   const renderContent = () => {
+    const theme = useTheme();
+    
     if (isPending || !prediction) {
       return (
-        <div className="space-y-3 pt-2">
-          <Skeleton className="h-8 w-2/5 bg-primary/10" />
-          <Skeleton className="h-4 w-4/5 bg-primary/10" />
-        </div>
+        <Stack spacing={3} sx={{ pt: 2 }}>
+          <Skeleton variant="text" width="40%" height={40} sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }} />
+          <Skeleton variant="text" width="80%" height={24} sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }} />
+        </Stack>
       );
     }
     
     return (
         <>
-            <p className={cn("text-3xl font-bold tracking-tight", prediction.isRiskOfNegativeBalance ? "text-destructive" : "text-foreground")}>
+            <Typography variant="h4" fontWeight="bold" color={prediction.isRiskOfNegativeBalance ? "error.main" : "text.primary"}>
               R$ {(prediction.projectedEndOfMonthBalance || 0).toFixed(2)}
-            </p>
-            <p className="text-sm text-muted-foreground mt-1">
+            </Typography>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
               {prediction.summary}
-            </p>
+            </Typography>
         </>
     );
   };
@@ -132,56 +143,93 @@ export function FutureBalanceCard() {
 
   const showInsufficientData = validationResult && !validationResult.isValid;
 
+  const theme = useTheme();
+  
+  const getIconColor = () => {
+    if (showInsufficientData) return theme.palette.warning.main;
+    if (prediction?.isRiskOfNegativeBalance) return theme.palette.error.main;
+    if (useBasicCalculation) return theme.palette.info.main;
+    return theme.palette.primary.main;
+  };
+  
+  const getIconBgColor = () => {
+    if (showInsufficientData) return alpha(theme.palette.warning.main, 0.2);
+    if (prediction?.isRiskOfNegativeBalance) return alpha(theme.palette.error.main, 0.2);
+    if (useBasicCalculation) return alpha(theme.palette.info.main, 0.2);
+    return alpha(theme.palette.primary.main, 0.2);
+  };
+
   return (
-    <Card className={`relative overflow-hidden bg-card/80 backdrop-blur-xl ${showInsufficientData ? 'border-amber-500/20' : 'border-primary/20'}`}>
-       <CardHeader className="pb-3 p-4">
-          <div className="flex items-start justify-between">
-             <div className="flex-1">
-                <div className="flex items-center gap-2">
-                    <div className={cn("p-1.5 rounded-full", 
-                      showInsufficientData ? "bg-amber-500/20 text-amber-500" :
-                      prediction?.isRiskOfNegativeBalance ? "bg-destructive/20 text-destructive" : 
-                      useBasicCalculation ? "bg-blue-500/20 text-blue-500" : "bg-primary/20 text-primary"
-                    )}>
+    <Card sx={{ 
+      position: 'relative', 
+      overflow: 'hidden', 
+      bgcolor: alpha(theme.palette.background.paper, 0.8), 
+      backdropFilter: 'blur(12px)',
+      borderColor: showInsufficientData ? alpha(theme.palette.warning.main, 0.2) : alpha(theme.palette.primary.main, 0.2)
+    }}>
+       <CardHeader sx={{ pb: 1.5 }}>
+          <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
+             <Box sx={{ flex: 1 }}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                    <Box sx={{ 
+                      p: 0.75, 
+                      borderRadius: '50%', 
+                      bgcolor: getIconBgColor(),
+                      color: getIconColor(),
+                      display: 'flex'
+                    }}>
                         {showInsufficientData ? (
-                          <AlertTriangle className="h-4 w-4"/>
+                          <AlertTriangle size={16} />
                         ) : useBasicCalculation ? (
-                          <Calculator className="h-4 w-4"/>
+                          <Calculator size={16} />
                         ) : prediction?.isRiskOfNegativeBalance ? (
-                          <AlertTriangle className="h-4 w-4"/>
+                          <AlertTriangle size={16} />
                         ) : (
-                          <TrendingUp className="h-4 w-4"/>
+                          <TrendingUp size={16} />
                         )}
-                    </div>
-                    <div>
-                        <CardTitle className="text-sm">Previsão de Saldo</CardTitle>
-                        <CardDescription className="text-xs">
+                    </Box>
+                    <Box>
+                        <Typography variant="subtitle2" fontWeight="bold">Previsão de Saldo</Typography>
+                        <Typography variant="caption" color="text.secondary">
                           {useBasicCalculation ? "Cálculo direto" : "Projeção IA para fim do mês"}
-                        </CardDescription>
-                    </div>
-                </div>
-                 <CardDescription className={`text-xs mt-1 pl-8 ${showInsufficientData ? 'text-amber-500/70' : 'text-primary/70'}`}>
+                        </Typography>
+                    </Box>
+                </Stack>
+                 <Typography 
+                   variant="caption" 
+                   sx={{ 
+                     mt: 1, 
+                     pl: 4, 
+                     display: 'block',
+                     color: showInsufficientData ? alpha(theme.palette.warning.main, 0.7) : alpha(theme.palette.primary.main, 0.7)
+                   }}
+                 >
                     {showInsufficientData 
                       ? `Precisa de ${validationResult?.requiredMinimum || 0} transações (você tem ${validationResult?.currentCount || 0})`
                       : useBasicCalculation 
                         ? "Cache mensal. Usar IA custa 5 créditos."
                         : "Cache mensal renovado. Atualizar IA custa 5 créditos."
                     }
-                </CardDescription>
-            </div>
-            <Button
-                variant="ghost"
-                size="icon"
+                </Typography>
+            </Box>
+            <IconButton
                 onClick={() => fetchPrediction(true)}
                 disabled={isPending || !user}
-                className="text-primary/70 hover:bg-primary/10 hover:text-primary rounded-full h-7 w-7 -mt-1"
+                size="small"
                 title={showInsufficientData ? "Forçar geração (pode consumir crédito)" : "Atualizar com IA (5 créditos)"}
+                sx={{ 
+                  color: alpha(theme.palette.primary.main, 0.7),
+                  '&:hover': {
+                    bgcolor: alpha(theme.palette.primary.main, 0.1),
+                    color: 'primary.main'
+                  }
+                }}
             >
-                <RefreshCw className={`h-3.5 w-3.5 ${isPending ? "animate-spin" : ""}`} />
-            </Button>
-        </div>
+                <RefreshCw size={14} className={isPending ? "animate-spin" : ""} />
+            </IconButton>
+        </Stack>
       </CardHeader>
-      <CardContent className="p-4 pt-0">
+      <CardContent sx={{ pt: 0 }}>
          {renderContent()}
       </CardContent>
     </Card>
