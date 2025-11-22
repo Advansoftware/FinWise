@@ -1,6 +1,7 @@
 'use client';
 
-import { Card, CardContent, CardHeader, Typography, Grid, Stack, Box, Button, Skeleton } from "@mui/material";
+import { Card, CardContent, CardHeader, Typography, Stack, Box, Button, Skeleton } from "@mui/material";
+import Grid from '@mui/material/Grid';
 import { Calculator, Calendar, TrendingUp, UserCheck, AlertTriangle } from "lucide-react";
 import { usePayroll } from "@/hooks/use-payroll";
 import Link from "next/link";
@@ -27,7 +28,7 @@ export default function ToolsPage() {
         
         <Grid container spacing={3}>
           {[1, 2, 3].map((i) => (
-            <Grid item xs={12} md={6} lg={4} key={i}>
+            <Grid size={{ xs: 12, md: 6, lg: 4 }} key={i}>
                 <Card>
                 <CardHeader
                     title={<Skeleton variant="text" width="75%" height={32} />}
@@ -84,7 +85,7 @@ export default function ToolsPage() {
 
         {/* Preview das ferramentas (desabilitadas) */}
         <Grid container spacing={3} sx={{ opacity: 0.5 }}>
-          <Grid item xs={12} md={6} lg={4}>
+          <Grid size={{ xs: 12, md: 6, lg: 4 }}>
             <Card>
                 <CardHeader
                     title={
@@ -103,7 +104,7 @@ export default function ToolsPage() {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={6} lg={4}>
+          <Grid size={{ xs: 12, md: 6, lg: 4 }}>
             <Card>
                 <CardHeader
                     title={
@@ -122,7 +123,7 @@ export default function ToolsPage() {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={6} lg={4}>
+          <Grid size={{ xs: 12, md: 6, lg: 4 }}>
             <Card>
                 <CardHeader
                     title={
@@ -141,7 +142,7 @@ export default function ToolsPage() {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={6} lg={4}>
+          <Grid size={{ xs: 12, md: 6, lg: 4 }}>
             <Card>
                 <CardHeader
                     title={
@@ -160,7 +161,7 @@ export default function ToolsPage() {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={6} lg={4}>
+          <Grid size={{ xs: 12, md: 6, lg: 4 }}>
             <Card>
                 <CardHeader
                     title={
@@ -179,7 +180,7 @@ export default function ToolsPage() {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={6} lg={4}>
+          <Grid size={{ xs: 12, md: 6, lg: 4 }}>
             <Card>
                 <CardHeader
                     title={
@@ -198,7 +199,7 @@ export default function ToolsPage() {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={6} lg={4}>
+          <Grid size={{ xs: 12, md: 6, lg: 4 }}>
             <Card>
                 <CardHeader
                     title={
@@ -217,7 +218,7 @@ export default function ToolsPage() {
             </Card>
           </Grid>
 
-          <Grid item xs={12} md={6} lg={4}>
+          <Grid size={{ xs: 12, md: 6, lg: 4 }}>
             <Card>
                 <CardHeader
                     title={
@@ -256,18 +257,18 @@ export default function ToolsPage() {
           <Typography variant="body2" color="text.secondary">Cálculos de férias, 13º salário e projeções salariais</Typography>
         </Box>
         <Grid container spacing={3}>
-          <Grid item xs={12} lg={6}>
+          <Grid size={{ xs: 12, lg: 6 }}>
              <VacationCalculator payrollData={payrollData!} />
           </Grid>
-          <Grid item xs={12} lg={6}>
+          <Grid size={{ xs: 12, lg: 6 }}>
              <ThirteenthSalaryCalculator payrollData={payrollData!} />
           </Grid>
         </Grid>
         <Grid container spacing={3}>
-          <Grid item xs={12} lg={6}>
+          <Grid size={{ xs: 12, lg: 6 }}>
              <PostVacationCalculator payrollData={payrollData!} />
           </Grid>
-          <Grid item xs={12} lg={6}>
+          <Grid size={{ xs: 12, lg: 6 }}>
              <SalaryProjectionCalculator payrollData={payrollData!} />
           </Grid>
         </Grid>
@@ -280,15 +281,15 @@ export default function ToolsPage() {
           <Typography variant="body2" color="text.secondary">FGTS, INSS e Imposto de Renda</Typography>
         </Box>
         <Grid container spacing={3}>
-          <Grid item xs={12} lg={6}>
+          <Grid size={{ xs: 12, lg: 6 }}>
              <FGTSCalculator payrollData={payrollData!} />
           </Grid>
-          <Grid item xs={12} lg={6}>
+          <Grid size={{ xs: 12, lg: 6 }}>
              <INSSCalculator payrollData={payrollData!} />
           </Grid>
         </Grid>
         <Grid container spacing={3}>
-          <Grid xs={12}>
+          <Grid size={{ xs: 12 }}>
              <IncomeTaxCalculator payrollData={payrollData!} />
           </Grid>
         </Grid>
@@ -301,10 +302,10 @@ export default function ToolsPage() {
           <Typography variant="body2" color="text.secondary">Rescisão trabalhista e empréstimo consignado</Typography>
         </Box>
         <Grid container spacing={3}>
-          <Grid item xs={12} lg={6}>
+          <Grid size={{ xs: 12, lg: 6 }}>
              <SeveranceCalculator payrollData={payrollData!} />
           </Grid>
-          <Grid item xs={12} lg={6}>
+          <Grid size={{ xs: 12, lg: 6 }}>
              <ConsignedLoanCalculator payrollData={payrollData!} />
           </Grid>
         </Grid>

@@ -15,7 +15,8 @@ import {
   DialogTrigger,
 } from "@mui/material";
 import { Button } from "@mui/material";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+// TODO: Migrar form para react-hook-form + MUI
+// import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { TextField } from "@mui/material";
 import { Select, SelectContent, MenuItem, SelectTrigger, SelectValue } from "@mui/material";
 import { useToast } from "@/hooks/use-toast";

@@ -8,7 +8,7 @@ import { Chip } from "@mui/material";
 import { TextField } from "@mui/material";
 import { InputLabel } from "@mui/material";
 import { Select, SelectContent, MenuItem, SelectTrigger, SelectValue } from "@mui/material";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@mui/material";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";

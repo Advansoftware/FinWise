@@ -7,7 +7,7 @@ import { Chip } from "@mui/material";
 import { LinearProgress } from "@mui/material";
 import { Trophy, Award, Target, Flame, Star } from "lucide-react";
 import { useGamification } from "@/hooks/use-gamification";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton } from "@mui/material";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import {Button, Typography, Box, Stack} from '@mui/material';

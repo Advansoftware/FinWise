@@ -1,7 +1,8 @@
 // src/app/(app)/profile/page.tsx
 'use client';
 
-import { Card, CardContent, CardHeader, Typography, Grid, Stack, Box } from "@mui/material";
+import { Card, CardContent, CardHeader, Typography, Stack, Box } from "@mui/material";
+import Grid from '@mui/material/Grid';
 import { FinancialProfileCard } from "@/components/profile/financial-profile-card";
 import { GamificationSummary } from "@/components/profile/gamification-summary";
 import { PayrollCard } from "@/components/profile/payroll-card";
@@ -24,7 +25,7 @@ export default function ProfilePage() {
             
             <Grid container spacing={3}>
                 {/* Primeira linha - Cards de configuração da conta */}
-                <Grid xs={12} lg={6}>
+                <Grid size={{ xs: 12, lg: 6 }}>
                     <Card sx={{ height: '100%' }}>
                         <CardHeader
                             title={<Typography variant="h6">Informações da Conta</Typography>}
@@ -35,7 +36,7 @@ export default function ProfilePage() {
                         </CardContent>
                     </Card>
                 </Grid>
-                <Grid xs={12} lg={6}>
+                <Grid size={{ xs: 12, lg: 6 }}>
                     <Card sx={{ height: '100%' }}>
                         <CardHeader
                             title={<Typography variant="h6">Segurança</Typography>}
@@ -48,10 +49,10 @@ export default function ProfilePage() {
                 </Grid>
 
                 {/* Segunda linha - Holerite e Perfil Financeiro */}
-                <Grid xs={12} lg={7}>
+                <Grid size={{ xs: 12, lg: 7 }}>
                     <PayrollCard />
                 </Grid>
-                <Grid xs={12} lg={5}>
+                <Grid size={{ xs: 12, lg: 5 }}>
                     {isPro ? (
                         <FinancialProfileCard />
                     ) : (
@@ -61,14 +62,14 @@ export default function ProfilePage() {
 
                 {/* Terceira linha - Gamificação (se Pro) */}
                 {isPro && (
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <GamificationSummary />
                     </Grid>
                 )}
                 
                 {/* Gamificação como upgrade para não-Pro */}
                 {!isPro && (
-                    <Grid xs={12}>
+                    <Grid size={{ xs: 12 }}>
                         <ProUpgradeCard featureName="Progresso Gamificado" />
                     </Grid>
                 )}

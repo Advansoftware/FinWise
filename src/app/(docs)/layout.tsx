@@ -15,8 +15,8 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
                     <Logo sx={{ width: '2rem', height: '2rem' }} />
                     <span className="text-xl font-bold">Gastometria</span>
                   </Link>
-                  <Button asChild>
-                      <Link href="/login">Acessar Painel</Link>
+                  <Button component={Link} href="/login">
+                      Acessar Painel
                   </Button>
               </div>
           </header>

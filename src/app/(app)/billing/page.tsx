@@ -2,7 +2,8 @@
 'use client';
 import {useState, useEffect, Suspense} from 'react';
 import {useSearchParams, useRouter, usePathname} from 'next/navigation';
-import { Button, Card, CardContent, CardHeader, CardActions, Typography, Chip, Stack, Box, List, ListItem, ListItemIcon, ListItemText, Divider, Grid } from "@mui/material";
+import { Button, Card, CardContent, CardHeader, CardActions, Typography, Chip, Stack, Box, List, ListItem, ListItemIcon, ListItemText, Divider } from "@mui/material";
+import Grid from '@mui/material/Grid';
 import { CheckCircle2, Loader2, Gem, BrainCircuit, Rocket } from "lucide-react";
 import { usePlan } from "@/hooks/use-plan";
 import { usePayment } from "@/hooks/use-payment";
@@ -151,7 +152,7 @@ function BillingPageContent() {
                 )}
             </Stack>
             
-            <Grid container spacing={3} alignItems="stretch">
+            <Grid container spacing={3}>
                 {plans.map(plan => {
                     const isCurrent = plan.planId === currentUserPlan;
                     const isDowngrade = planHierarchy[plan.planId] < planHierarchy[currentUserPlan];
@@ -175,12 +176,12 @@ function BillingPageContent() {
                     }
 
                     return (
-                     <Grid item xs={12} md={6} lg={3} key={plan.name} sx={{ display: 'flex' }}>
+                        <Grid size={{ xs: 12, md: 6, lg: 3 }} key={plan.name}>
                          <Card 
                             sx={{ 
                                 display: 'flex', 
                                 flexDirection: 'column', 
-                                width: '100%',
+                                height: '100%',
                                 border: isCurrent ? 2 : 1,
                                 borderColor: isCurrent ? 'primary.main' : 'divider',
                                 boxShadow: isCurrent ? 4 : 1
@@ -227,7 +228,7 @@ function BillingPageContent() {
                                 </Button>
                             </CardActions>
                         </Card>
-                    </Grid>
+                        </Grid>
                 )})}
             </Grid>
 

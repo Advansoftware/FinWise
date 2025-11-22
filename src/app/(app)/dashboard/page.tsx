@@ -2,7 +2,8 @@
 // src/app/(app)/dashboard/page.tsx
 'use client';
 
-import { Button, Grid, Stack, Box, Typography, Skeleton, useTheme, useMediaQuery } from "@mui/material";
+import { Button, Stack, Box, Typography, Skeleton, useTheme, useMediaQuery } from "@mui/material";
+import Grid from '@mui/material/Grid';
 import { PlusCircle, ScanLine } from "lucide-react";
 import { useTransactions } from "@/hooks/use-transactions";
 import { StatsCards } from "@/components/dashboard/stats-cards";
@@ -108,25 +109,25 @@ export default function DashboardPage() {
                     {/* Main Grid */}
                     <Grid container spacing={{ xs: 2, sm: 3 }}>
                         {/* Left Side - Wallet Card and Gamification */}
-                        <Grid xs={12} lg={6}>
+                        <Grid size={{ xs: 12, lg: 6 }}>
                            <Grid container spacing={{ xs: 2, sm: 3 }}>
-                               <Grid xs={12} sm={6}>
+                               <Grid size={{ xs: 12, sm: 6 }}>
                                    <WalletCard transactions={filteredTransactions} />
                                </Grid>
-                               <Grid xs={12} sm={6}>
+                               <Grid size={{ xs: 12, sm: 6 }}>
                                    {isPro && <GamificationSummary />}
                                </Grid>
                            </Grid>
                         </Grid>
                         
                         {/* Right Side - Goals, Installments, and Future Balance */}
-                        <Grid xs={12} lg={6}>
+                        <Grid size={{ xs: 12, lg: 6 }}>
                             <Stack spacing={{ xs: 2, sm: 3 }}>
                                 <Grid container spacing={{ xs: 2, sm: 3 }}>
-                                    <Grid xs={12} sm={6}>
+                                    <Grid size={{ xs: 12, sm: 6 }}>
                                         <GoalHighlightCard />
                                     </Grid>
-                                    <Grid xs={12} sm={6}>
+                                    <Grid size={{ xs: 12, sm: 6 }}>
                                         <InstallmentsSummaryCard />
                                     </Grid>
                                 </Grid>
@@ -172,10 +173,10 @@ export default function DashboardPage() {
 
                     {/* Chart and Recent Transactions */}
                     <Grid container spacing={{ xs: 2, sm: 3 }}>
-                       <Grid xs={12} lg={8} order={{ xs: 2, lg: 1 }}>
+                       <Grid size={{ xs: 12, lg: 8 }} sx={{ order: { xs: 2, lg: 1 } }}>
                          <SpendingChart data={chartData} />
                        </Grid>
-                       <Grid xs={12} lg={4} order={{ xs: 1, lg: 2 }}>
+                       <Grid size={{ xs: 12, lg: 4 }} sx={{ order: { xs: 1, lg: 2 } }}>
                          <RecentTransactions transactions={filteredTransactions} />
                        </Grid>
                     </Grid>
@@ -193,25 +194,25 @@ function DashboardSkeleton() {
              {/* Main Grid Skeleton */}
              <Grid container spacing={{ xs: 2, sm: 3 }}>
                 {/* Left Side */}
-                <Grid xs={12} lg={6}>
+                <Grid size={{ xs: 12, lg: 6 }}>
                     <Grid container spacing={{ xs: 2, sm: 3 }}>
-                        <Grid xs={12} sm={6}>
+                        <Grid size={{ xs: 12, sm: 6 }}>
                             <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
                         </Grid>
-                        <Grid xs={12} sm={6}>
+                        <Grid size={{ xs: 12, sm: 6 }}>
                             <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
                         </Grid>
                     </Grid>
                 </Grid>
                 
                 {/* Right Side */}
-                <Grid xs={12} lg={6}>
+                <Grid size={{ xs: 12, lg: 6 }}>
                     <Stack spacing={{ xs: 2, sm: 3 }}>
                         <Grid container spacing={{ xs: 2, sm: 3 }}>
-                            <Grid xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
                             </Grid>
-                            <Grid xs={12} sm={6}>
+                            <Grid size={{ xs: 12, sm: 6 }}>
                                 <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
                             </Grid>
                         </Grid>
@@ -223,7 +224,7 @@ function DashboardSkeleton() {
              {/* Stats Cards Skeleton */}
             <Grid container spacing={{ xs: 2, sm: 3 }}>
                 {[1, 2, 3, 4].map((i) => (
-                    <Grid xs={12} sm={6} lg={3} key={i}>
+                    <Grid size={{ xs: 12, sm: 6, lg: 3 }} key={i}>
                         <Skeleton variant="rectangular" height={140} sx={{ borderRadius: 2 }} />
                     </Grid>
                 ))}
@@ -231,10 +232,10 @@ function DashboardSkeleton() {
 
             {/* Chart and Recent Transactions Skeleton */}
             <Grid container spacing={{ xs: 2, sm: 3 }}>
-                <Grid xs={12} lg={8} order={{ xs: 2, lg: 1 }}>
+                <Grid size={{ xs: 12, lg: 8 }} sx={{ order: { xs: 2, lg: 1 } }}>
                     <Skeleton variant="rectangular" height={400} sx={{ borderRadius: 2 }} />
                 </Grid>
-                <Grid xs={12} lg={4} order={{ xs: 1, lg: 2 }}>
+                <Grid size={{ xs: 12, lg: 4 }} sx={{ order: { xs: 1, lg: 2 } }}>
                     <Skeleton variant="rectangular" height={400} sx={{ borderRadius: 2 }} />
                 </Grid>
             </Grid>

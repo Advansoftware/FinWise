@@ -1,14 +1,12 @@
 // src/app/(app)/settings/page.tsx
 'use client';
 
-import { Button } from "@mui/material";
-import { Card, CardContent, CardHeader } from "@mui/material";
+// TODO: Migrar componente completamente para MUI (remover Shadcn/Radix UI)
+import { Button, Card, CardContent, CardHeader, Typography, Skeleton, Chip } from "@mui/material";
 import { useAISettings } from "@/hooks/use-ai-settings";
-import { Skeleton } from "@/components/ui/skeleton";
 import { MoreVertical, Trash2, Edit, PlusCircle, CheckCircle, Radio, Sparkles, Lock } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Chip } from "@mui/material";
+// import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+// import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { AISettingsDialog } from "@/components/settings/ai-settings-dialog";
 import { usePlan } from "@/hooks/use-plan";
 import { AICredential } from "@/lib/types";
@@ -68,7 +66,11 @@ export default function SettingsPage() {
                                         <div className="flex items-center gap-2">
                                             {isActive ? <CheckCircle className="h-5 w-5 text-primary"/> : <Radio className="h-5 w-5 text-muted-foreground"/>}
                                             <p className="font-semibold">{cred.name}</p>
-                                            <Chip variant={cred.provider === 'gastometria' ? 'default' : 'secondary'}>{cred.provider}</Chip>
+                                            <Chip 
+                                                label={cred.provider} 
+                                                color={cred.provider === 'gastometria' ? 'primary' : 'default'}
+                                                size="small"
+                                            />
                                              {cred.isReadOnly && <Lock className="h-3 w-3 text-muted-foreground" />}
                                         </div>
                                         <p className="text-sm text-muted-foreground pl-7">
@@ -85,7 +87,11 @@ export default function SettingsPage() {
                                          {!cred.isReadOnly && (
                                              <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
-                                                    <Button variant="text" size="icon" className="h-8 w-8">
+                                                    <Button 
+                                                        variant="text" 
+                                                        size="small"
+                                                        sx={{ minWidth: 32, width: 32, height: 32, p: 0 }}
+                                                    >
                                                         <MoreVertical className="h-4 w-4"/>
                                                     </Button>
                                                 </DropdownMenuTrigger>

@@ -1,7 +1,9 @@
 
 'use client';
 
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { useState } from 'react';
+import { Drawer, AppBar, Toolbar, IconButton, Box, useMediaQuery, useTheme, Divider } from '@mui/material';
+import MenuIcon from '@mui/icons-material/Menu';
 import { UserNav } from "../user-nav";
 import { Logo } from "@/components/logo";
 import { AppNav } from "../app-nav";
@@ -20,66 +22,123 @@ import { GoalCompletionCelebration } from "@/components/goals/goal-celebration";
 import { OnlineStatusIndicator } from "@/components/online-status-indicator";
 import { useGoals } from "@/hooks/use-goals";
 import { AICreditIndicator } from "@/components/credits/ai-credit-indicator";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { GamificationProvider } from "@/hooks/use-gamification";
 import { PlanExpirationAlert } from "@/components/billing/plan-expiration-alert";
 
+const drawerWidth = 280;
+
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const { completedGoal, clearCompletedGoal } = useGoals();
-  const isMobile = useIsMobile();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const handleDrawerToggle = () => {
+    setMobileOpen(!mobileOpen);
+  };
+
+  const drawer = (
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+      <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Logo sx={{ width: '2rem', height: '2rem' }} />
+          <Box component="span" sx={{ fontSize: '18px', fontWeight: 600 }}>
+            Gastometria
+          </Box>
+        </Box>
+      </Box>
+      
+      <Box sx={{ flex: 1, overflow: 'auto', px: 2, py: 2 }}>
+        <AppNav />
+      </Box>
+      
+      <Divider />
+      <Box sx={{ p: 2 }}>
+        <UserNav />
+      </Box>
+    </Box>
+  );
 
   return (
-    <SidebarProvider defaultOpen={!isMobile}>
-       {completedGoal && <GoalCompletionCelebration goal={completedGoal} onComplete={clearCompletedGoal} />}
-       <OnlineStatusIndicator />
-      <div className="flex min-h-screen">
-          <Sidebar className="flex flex-col border-r fixed h-screen z-40 md:fixed md:inset-y-0 md:z-40">
-              <SidebarHeader className="border-b p-4">
-                  <div className="flex items-center gap-3 group-data-[state=collapsed]:justify-center">
-                      <Logo sx={{ width: '2rem', height: '2rem', flexShrink: 0 }} />
-                      <span className="text-lg font-semibold group-data-[state=collapsed]:hidden">
-                        Gastometria
-                      </span>
-                  </div>
-              </SidebarHeader>
-              <SidebarContent className="flex-1 overflow-hidden">
-                <div className="h-full px-3 py-4 overflow-y-auto">
-                    <AppNav />
-                </div>
-              </SidebarContent>
-              <SidebarFooter className="border-t p-4">
-                  <UserNav />
-              </SidebarFooter>
-          </Sidebar>
+    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
+      {completedGoal && <GoalCompletionCelebration goal={completedGoal} onComplete={clearCompletedGoal} />}
+      <OnlineStatusIndicator />
+      
+      <AppBar 
+        position="fixed" 
+        sx={{ 
+          width: { md: `calc(100% - ${drawerWidth}px)` },
+          ml: { md: `${drawerWidth}px` },
+          display: { md: 'none' }
+        }}
+      >
+        <Toolbar>
+          <IconButton
+            color="inherit"
+            edge="start"
+            onClick={handleDrawerToggle}
+            sx={{ mr: 2 }}
+          >
+            <MenuIcon />
+          </IconButton>
+          <Logo sx={{ width: '2rem', height: '2rem', mr: 1.5 }} />
+          <Box component="span" sx={{ fontSize: '18px', fontWeight: 600 }}>
+            Gastometria
+          </Box>
+          <Box sx={{ flexGrow: 1 }} />
+          <UserNav />
+        </Toolbar>
+      </AppBar>
 
-          <main className="flex-1 flex flex-col min-w-0 md:ml-[var(--sidebar-width)]">
-              <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 lg:hidden">
-                  <div className="flex items-center gap-3">
-                      <SidebarTrigger className="shrink-0" />
-                      <Logo sx={{ width: '2rem', height: '2rem', flexShrink: 0 }} />
-                      <span className="text-lg font-semibold">Gastometria</span>
-                  </div>
-                  <div className="flex-1" />
-                  <div className="lg:hidden">
-                      <UserNav />
-                  </div>
-              </header>
+      <Box
+        component="nav"
+        sx={{ width: { md: drawerWidth }, flexShrink: { md: 0 } }}
+      >
+        <Drawer
+          variant="temporary"
+          open={mobileOpen}
+          onClose={handleDrawerToggle}
+          ModalProps={{ keepMounted: true }}
+          sx={{
+            display: { xs: 'block', md: 'none' },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+          }}
+        >
+          {drawer}
+        </Drawer>
+        
+        <Drawer
+          variant="permanent"
+          sx={{
+            display: { xs: 'none', md: 'block' },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+          }}
+          open
+        >
+          {drawer}
+        </Drawer>
+      </Box>
 
-              <div className="flex-1 h-[calc(100vh-3.5rem)] lg:h-screen overflow-y-auto">
-                <div className="container mx-auto px-4 py-4 lg:px-6 lg:py-6 max-w-7xl pb-24 lg:pb-6">
-                    <PlanExpirationAlert />
-                    {children}
-                </div>
-              </div>
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          width: { md: `calc(100% - ${drawerWidth}px)` },
+          mt: { xs: 7, md: 0 }
+        }}
+      >
+        <Box sx={{ maxWidth: 1280, mx: 'auto', p: { xs: 2, sm: 3 }, pb: { xs: 12, md: 3 } }}>
+          <PlanExpirationAlert />
+          {children}
+        </Box>
 
-              <div className="fixed bottom-4 right-4 z-50 flex flex-col md:flex-row-reverse items-end gap-3">
-                <ChatAssistant />
-                <AICreditIndicator />
-              </div>
-          </main>
-      </div>
-    </SidebarProvider>
-  )
+        <Box sx={{ position: 'fixed', bottom: 16, right: 16, zIndex: 50, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1.5 }}>
+          <ChatAssistant />
+          <AICreditIndicator />
+        </Box>
+      </Box>
+    </Box>
+  );
 }
 
 function InnerLayout({ children }: { children: React.ReactNode }) {

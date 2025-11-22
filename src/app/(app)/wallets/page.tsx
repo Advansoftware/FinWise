@@ -1,25 +1,23 @@
 // src/app/(app)/wallets/page.tsx
 'use client';
 
-import { Card, CardContent, CardHeader } from "@mui/material";
-import { Button } from "@mui/material";
+// TODO: Migrar este componente completamente para MUI
+import { Card, CardContent, CardHeader, Button, Typography, Skeleton } from "@mui/material";
 import { PlusCircle, MoreVertical, Trash2, Edit, Banknote, CreditCard, PiggyBank, Landmark, CircleDollarSign, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import { useWallets } from "@/hooks/use-wallets";
-import { Skeleton } from "@/components/ui/skeleton";
-import { cn } from "@/lib/utils";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+// import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { CreateWalletDialog } from "@/components/wallets/create-wallet-dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+// import {
+//   AlertDialog,
+//   AlertDialogAction,
+//   AlertDialogCancel,
+//   AlertDialogContent,
+//   AlertDialogDescription,
+//   AlertDialogFooter,
+//   AlertDialogHeader,
+//   AlertDialogTitle,
+//   AlertDialogTrigger,
+// } from "@/components/ui/alert-dialog";
 import { Wallet, WalletType } from "@/lib/types";
 
 const WalletIcon = ({ type, className }: { type: WalletType, className?: string }) => {
@@ -201,7 +199,11 @@ function WalletCard({ wallet, onDelete }: { wallet: Wallet, onDelete: () => void
                     </div>
                      <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="text" size="icon" className="h-8 w-8">
+                            <Button 
+                                variant="text" 
+                                size="small"
+                                sx={{ minWidth: 32, width: 32, height: 32, p: 0 }}
+                            >
                                 <MoreVertical className="h-4 w-4"/>
                             </Button>
                         </DropdownMenuTrigger>
