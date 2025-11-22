@@ -1,7 +1,7 @@
 // src/app/(app)/profile/page.tsx
 'use client';
 
-import { Card, CardContent, CardHeader } from "@mui/material";
+import { Card, CardContent, CardHeader, Typography, Grid, Stack, Box } from "@mui/material";
 import { FinancialProfileCard } from "@/components/profile/financial-profile-card";
 import { GamificationSummary } from "@/components/profile/gamification-summary";
 import { PayrollCard } from "@/components/profile/payroll-card";
@@ -14,63 +14,65 @@ export default function ProfilePage() {
     const { isPro } = usePlan();
 
     return (
-        <div className="flex flex-col gap-6">
-            <div>
-                <h1 className="text-3xl font-bold tracking-tight">Perfil e Configurações da Conta</h1>
-                <p className="text-muted-foreground">Gerencie suas informações pessoais, segurança e veja a análise do seu perfil financeiro.</p>
-            </div>
+        <Stack spacing={3}>
+            <Box>
+                <Typography variant="h4" fontWeight="bold" gutterBottom>Perfil e Configurações da Conta</Typography>
+                <Typography variant="body1" color="text.secondary">
+                    Gerencie suas informações pessoais, segurança e veja a análise do seu perfil financeiro.
+                </Typography>
+            </Box>
             
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <Grid container spacing={3}>
                 {/* Primeira linha - Cards de configuração da conta */}
-                <div className="lg:col-span-6">
-                    <Card className="h-full">
-                        <CardHeader>
-                            <Typography variant="h6">Informações da Conta</Typography>
-                            <Typography variant="body2" color="text.secondary">Atualize seu nome de exibição.</Typography>
-                        </CardHeader>
+                <Grid xs={12} lg={6}>
+                    <Card sx={{ height: '100%' }}>
+                        <CardHeader
+                            title={<Typography variant="h6">Informações da Conta</Typography>}
+                            subheader={<Typography variant="body2" color="text.secondary">Atualize seu nome de exibição.</Typography>}
+                        />
                         <CardContent>
                            <UpdateNameForm />
                         </CardContent>
                     </Card>
-                </div>
-                <div className="lg:col-span-6">
-                    <Card className="h-full">
-                        <CardHeader>
-                            <Typography variant="h6">Segurança</Typography>
-                            <Typography variant="body2" color="text.secondary">Altere sua senha.</Typography>
-                        </CardHeader>
+                </Grid>
+                <Grid xs={12} lg={6}>
+                    <Card sx={{ height: '100%' }}>
+                        <CardHeader
+                            title={<Typography variant="h6">Segurança</Typography>}
+                            subheader={<Typography variant="body2" color="text.secondary">Altere sua senha.</Typography>}
+                        />
                         <CardContent>
                            <UpdatePasswordForm />
                         </CardContent>
                     </Card>
-                </div>
+                </Grid>
 
                 {/* Segunda linha - Holerite e Perfil Financeiro */}
-                <div className="lg:col-span-7">
+                <Grid xs={12} lg={7}>
                     <PayrollCard />
-                </div>
-                <div className="lg:col-span-5">
+                </Grid>
+                <Grid xs={12} lg={5}>
                     {isPro ? (
                         <FinancialProfileCard />
                     ) : (
                         <ProUpgradeCard featureName="Análise de Perfil com IA" />
                     )}
-                </div>
+                </Grid>
 
                 {/* Terceira linha - Gamificação (se Pro) */}
                 {isPro && (
-                    <div className="lg:col-span-12">
+                    <Grid xs={12}>
                         <GamificationSummary />
-                    </div>
+                    </Grid>
                 )}
                 
                 {/* Gamificação como upgrade para não-Pro */}
                 {!isPro && (
-                    <div className="lg:col-span-12">
+                    <Grid xs={12}>
                         <ProUpgradeCard featureName="Progresso Gamificado" />
-                    </div>
+                    </Grid>
                 )}
-            </div>
-        </div>
+            </Grid>
+        </Stack>
     )
 }

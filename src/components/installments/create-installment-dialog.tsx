@@ -63,10 +63,10 @@ type InstallmentForm = z.infer<typeof installmentSchema>;
 
 interface CreateInstallmentDialogProps {
   open: boolean;
-  onOpenChange: (open: boolean) => void;
+  onClose: () => void;
 }
 
-export function CreateInstallmentDialog({ open, onOpenChange }: CreateInstallmentDialogProps) {
+export function CreateInstallmentDialog({ open, onClose }: CreateInstallmentDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { createInstallment } = useInstallments();
   const { wallets } = useWallets();
@@ -133,7 +133,7 @@ export function CreateInstallmentDialog({ open, onOpenChange }: CreateInstallmen
       const installment = await createInstallment(installmentData);
       
       if (installment) {
-        onOpenChange(false);
+        onClose();
         form.reset();
       }
     } finally {
@@ -144,7 +144,7 @@ export function CreateInstallmentDialog({ open, onOpenChange }: CreateInstallmen
   return (
     <Dialog 
       open={open} 
-      onClose={() => onOpenChange(false)}
+      onClose={onClose}
       maxWidth="md"
       fullWidth
     >
@@ -155,7 +155,7 @@ export function CreateInstallmentDialog({ open, onOpenChange }: CreateInstallmen
             Crie um novo parcelamento para acompanhar suas prestações e pagamentos.
           </Typography>
         </Box>
-        <IconButton onClick={() => onOpenChange(false)} size="small">
+        <IconButton onClick={onClose} size="small">
           <X style={{ width: '1.25rem', height: '1.25rem' }} />
         </IconButton>
       </DialogTitle>
@@ -447,7 +447,7 @@ export function CreateInstallmentDialog({ open, onOpenChange }: CreateInstallmen
 
       <DialogActions sx={{ p: 3, pt: 2 }}>
         <Button
-          onClick={() => onOpenChange(false)}
+          onClick={onClose}
           disabled={isSubmitting}
           variant="outlined"
         >

@@ -1,17 +1,18 @@
 // src/app/(app)/import/page.tsx
 'use client';
 import {useState, useMemo} from 'react';
-import { Card, CardContent, CardHeader } from "@mui/material";
-import {Button} from '@mui/material';
+import { 
+    Card, CardContent, CardHeader, Button, 
+    Table, TableBody, TableCell, TableHead, TableRow, TableContainer, Paper,
+    TextField, MenuItem, Stack, Box, Typography, IconButton,
+    Select, FormControl, InputLabel
+} from "@mui/material";
 import {UploadCloud, FileText, X, Loader2, Wand2, ChevronRight, ChevronLeft, Sparkles, Lock} from 'lucide-react';
 import {useToast} from '@/hooks/use-toast';
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
 import { Transaction, TransactionCategory, Wallet } from "@/lib/types";
 import { useTransactions } from "@/hooks/use-transactions";
 import Papa from 'papaparse';
 import {default as toJs} from 'ofx-js';
-import {Select, SelectContent, MenuItem, SelectTrigger, SelectValue} from '@mui/material';
-import {InputLabel} from '@mui/material';
 import {format} from 'date-fns';
 import {suggestCategoryForItemAction} from '@/services/ai-actions';
 import {useAuth} from '@/hooks/use-auth';
@@ -288,172 +289,204 @@ export default function ImportPage() {
     }, [fieldMapping]);
     
     const renderUpload = () => (
-        <label htmlFor="file-upload" className="flex flex-col items-center justify-center w-full h-64 border-2 border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
-            <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                <UploadCloud className="w-10 h-10 mb-4 text-muted-foreground" />
-                <p className="mb-2 text-sm text-foreground"><span className="font-semibold text-primary">Clique para enviar</span> ou arraste e solte</p>
-                <p className="text-xs text-muted-foreground">CSV ou OFX (máx. 2MB)</p>
-            </div>
-            <input id="file-upload" type="file" className="hidden" accept=".csv,.ofx,.OFX" onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)} />
+        <label htmlFor="file-upload" style={{ width: '100%', cursor: 'pointer' }}>
+            <Box 
+                sx={{ 
+                    display: 'flex', 
+                    flexDirection: 'column', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    height: 256, 
+                    border: '2px dashed', 
+                    borderColor: 'divider', 
+                    borderRadius: 2, 
+                    '&:hover': { bgcolor: 'action.hover' },
+                    transition: 'background-color 0.2s'
+                }}
+            >
+                <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" pt={5} pb={6}>
+                    <UploadCloud size={40} style={{ marginBottom: 16, opacity: 0.5 }} />
+                    <Typography variant="body2" gutterBottom>
+                        <Box component="span" fontWeight="bold" color="primary.main">Clique para enviar</Box> ou arraste e solte
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">CSV ou OFX (máx. 2MB)</Typography>
+                </Box>
+                <input id="file-upload" type="file" className="hidden" accept=".csv,.ofx,.OFX" onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)} style={{ display: 'none' }} />
+            </Box>
         </label> 
     );
     
     const renderMapping = () => (
-         <div className="space-y-6">
-             <div>
-                <h3 className="text-lg font-semibold">Mapear Colunas do CSV</h3>
-                <p className="text-sm text-muted-foreground">Associe as colunas do seu arquivo aos campos do Gastometria. Campos com * são obrigatórios.</p>
-             </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+         <Stack spacing={3}>
+             <Box>
+                <Typography variant="h6" fontWeight="semibold">Mapear Colunas do CSV</Typography>
+                <Typography variant="body2" color="text.secondary">Associe as colunas do seu arquivo aos campos do Gastometria. Campos com * são obrigatórios.</Typography>
+             </Box>
+             <Box display="grid" gridTemplateColumns={{ xs: '1fr', md: '1fr 1fr' }} gap={2}>
                  {Object.entries(MAPPABLE_FIELDS).map(([key, label]) => {
                     const typedField = key as keyof typeof MAPPABLE_FIELDS;
                     return (
-                      <div key={key} className="space-y-1">
-                        <Label htmlFor={key} className="capitalize flex items-center">
+                      <Box key={key}>
+                        <Typography variant="caption" fontWeight="medium" display="block" mb={0.5} sx={{ textTransform: 'capitalize' }}>
                             {label}
-                        </Label>
-                        <Select onValueChange={(value) => setFieldMapping(prev => ({ ...prev, [key]: value }))} value={fieldMapping[typedField]}>
-                          <SelectTrigger id={key}>
-                            <SelectValue placeholder="Selecione uma coluna" />
-                          </SelectTrigger>
-                          <SelectContent>
-                             {headers.map(header => (
-                               <MenuItem key={header} value={header}>{header}</MenuItem>
-                             ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                        </Typography>
+                        <TextField
+                            select
+                            fullWidth
+                            size="small"
+                            value={fieldMapping[typedField]}
+                            onChange={(e) => setFieldMapping(prev => ({ ...prev, [key]: e.target.value }))}
+                            placeholder="Selecione uma coluna"
+                        >
+                            {headers.map(header => (
+                                <MenuItem key={header} value={header}>{header}</MenuItem>
+                            ))}
+                        </TextField>
+                      </Box>
                     )
                  })}
-             </div>
-             <Button onClick={handleProceedToCategorize} disabled={!isMappingComplete}>
+             </Box>
+             <Button variant="contained" onClick={handleProceedToCategorize} disabled={!isMappingComplete} startIcon={canUseAICategorization ? <Sparkles size={16} /> : undefined}>
                 {canUseAICategorization ? "Categorizar com IA" : "Revisar Transações"}
-                {canUseAICategorization && <Sparkles className="ml-2 h-4 w-4" />}
              </Button>
-         </div>
+         </Stack>
     );
     
     const renderConfirm = () => (
-        <div className="space-y-4">
-            <div className='flex justify-between items-start'>
-                <div>
-                    <h3 className="font-semibold">Revisão e Confirmação ({transactionsToImport.length} transações)</h3>
-                    <p className="text-sm text-muted-foreground">
+        <Stack spacing={2}>
+            <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                <Box>
+                    <Typography variant="h6" fontWeight="semibold">Revisão e Confirmação ({transactionsToImport.length} transações)</Typography>
+                    <Typography variant="body2" color="text.secondary">
                         {canUseAICategorization ? "Revise os dados e as categorias sugeridas pela IA." : "Revise os dados importados."}
                         <br/>
                         Você deve selecionar uma carteira para cada transação antes de importar.
-                    </p>
-                </div>
+                    </Typography>
+                </Box>
                  {!canUseAICategorization && (
                     <ProUpgradeButton requiredPlan="Plus" tooltipContent="Desbloqueie a categorização automática com o plano Plus.">
-                        <Button variant="outlined" size="small" disabled>
-                            <Sparkles className="mr-2 h-4 w-4" />
+                        <Button variant="outlined" size="small" disabled startIcon={<Sparkles size={16} />}>
                             Categorizar com IA
                         </Button>
                     </ProUpgradeButton>
                  )}
-            </div>
-            <div className="max-h-96 overflow-auto border rounded-md">
-                <Table>
-                    <TableHeader>
+            </Stack>
+            <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 400 }}>
+                <Table stickyHeader size="small">
+                    <TableHead>
                         <TableRow>
-                            <TableHead className="w-[120px]">Data</TableHead>
-                            <TableHead>Item</TableHead>
-                            <TableHead className="w-[180px]">Categoria</TableHead>
-                            <TableHead className="w-[180px]">Subcategoria</TableHead>
-                            <TableHead className="w-[180px]">Carteira*</TableHead>
-                            <TableHead className="text-right w-[120px]">Valor</TableHead>
+                            <TableCell width={120}>Data</TableCell>
+                            <TableCell>Item</TableCell>
+                            <TableCell width={180}>Categoria</TableCell>
+                            <TableCell width={180}>Subcategoria</TableCell>
+                            <TableCell width={180}>Carteira*</TableCell>
+                            <TableCell align="right" width={120}>Valor</TableCell>
                         </TableRow>
-                    </TableHeader>
+                    </TableHead>
                     <TableBody>
                         {transactionsToImport.map((t, i) => (
                             <TableRow key={i}>
                                 <TableCell>{format(new Date(t.date), 'dd/MM/yyyy')}</TableCell>
-                                <TableCell className="max-w-[200px] truncate">{t.item}</TableCell>
+                                <TableCell sx={{ maxWidth: 200, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.item}</TableCell>
                                 <TableCell>
-                                    <Select value={t.category} onValueChange={(val) => handleTransactionUpdate(i, 'category', val)}>
-                                        <SelectTrigger><SelectValue/></SelectTrigger>
-                                        <SelectContent>
-                                            {userCategories.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
-                                        </SelectContent>
-                                    </Select>
+                                    <TextField
+                                        select
+                                        fullWidth
+                                        size="small"
+                                        variant="standard"
+                                        value={t.category}
+                                        onChange={(e) => handleTransactionUpdate(i, 'category', e.target.value)}
+                                    >
+                                        {userCategories.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}
+                                    </TextField>
                                 </TableCell>
                                  <TableCell>
-                                    <Select value={t.subcategory} onValueChange={(val) => handleTransactionUpdate(i, 'subcategory', val)} disabled={(userSubcategories[t.category]?.length || 0) === 0}>
-                                        <SelectTrigger><SelectValue placeholder="-"/></SelectTrigger>
-                                        <SelectContent>
-                                            {userSubcategories[t.category]?.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
-                                        </SelectContent>
-                                    </Select>
+                                    <TextField
+                                        select
+                                        fullWidth
+                                        size="small"
+                                        variant="standard"
+                                        value={t.subcategory}
+                                        onChange={(e) => handleTransactionUpdate(i, 'subcategory', e.target.value)}
+                                        disabled={(userSubcategories[t.category]?.length || 0) === 0}
+                                    >
+                                        <MenuItem value="">-</MenuItem>
+                                        {userSubcategories[t.category]?.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                                    </TextField>
                                 </TableCell>
                                 <TableCell>
-                                     <Select value={t.walletId} onValueChange={(val) => handleTransactionUpdate(i, 'walletId', val)}>
-                                        <SelectTrigger><SelectValue placeholder="Selecione"/></SelectTrigger>
-                                        <SelectContent>
-                                            {wallets.map(wallet => (
-                                                <MenuItem key={wallet.id} value={wallet.id}>{wallet.name}</MenuItem>
-                                            ))}
-                                        </SelectContent>
-                                    </Select>
+                                     <TextField
+                                        select
+                                        fullWidth
+                                        size="small"
+                                        variant="standard"
+                                        value={t.walletId || ''}
+                                        onChange={(e) => handleTransactionUpdate(i, 'walletId', e.target.value)}
+                                        placeholder="Selecione"
+                                    >
+                                        {wallets.map(wallet => (
+                                            <MenuItem key={wallet.id} value={wallet.id}>{wallet.name}</MenuItem>
+                                        ))}
+                                    </TextField>
                                 </TableCell>
-                                <TableCell className="text-right">R$ {t.amount.toFixed(2)}</TableCell>
+                                <TableCell align="right">R$ {t.amount.toFixed(2)}</TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
                 </Table>
-            </div>
-             <div className="flex flex-wrap gap-2">
+            </TableContainer>
+             <Stack direction="row" spacing={1} flexWrap="wrap">
                 {fileType === 'csv' && (
-                  <Button variant="outlined" onClick={() => setStage('mapping')} disabled={stage === 'importing'}>
-                     <ChevronLeft className="mr-2 h-4 w-4" /> Voltar ao Mapeamento
+                  <Button variant="outlined" onClick={() => setStage('mapping')} disabled={stage === 'importing'} startIcon={<ChevronLeft size={16} />}>
+                     Voltar ao Mapeamento
                   </Button>
                 )}
-                 <Button onClick={handleImport} disabled={stage === 'importing'}>
+                 <Button variant="contained" onClick={handleImport} disabled={stage === 'importing'}>
                     {stage === 'importing' && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
                     Importar {transactionsToImport.length} Transações
                 </Button>
-             </div>
-        </div>
+             </Stack>
+        </Stack>
     );
     
     const renderCategorizing = () => (
-      <div className="flex flex-col items-center justify-center text-center gap-4 text-muted-foreground min-h-[20rem]">
+      <Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" textAlign="center" gap={2} color="text.secondary" minHeight="20rem">
         <Loader2 className="h-10 w-10 animate-spin text-primary"/>
-        <h3 className="text-lg font-semibold text-foreground">Categorizando com IA</h3>
-        <p>Aguarde enquanto analisamos e sugerimos categorias para suas transações. Isso pode levar um momento...</p>
-      </div>
+        <Typography variant="h6" color="text.primary">Categorizando com IA</Typography>
+        <Typography variant="body2">Aguarde enquanto analisamos e sugerimos categorias para suas transações. Isso pode levar um momento...</Typography>
+      </Box>
     );
 
     return (
-        <div className="flex flex-col gap-6">
-            <div className="flex justify-between items-start">
-                 <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Importar Transações</h1>
-                    <p className="text-muted-foreground">Faça o upload de um arquivo CSV ou OFX para adicionar transações em lote.</p>
-                </div>
+        <Stack spacing={3}>
+            <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+                 <Box>
+                    <Typography variant="h4" fontWeight="bold">Importar Transações</Typography>
+                    <Typography variant="body1" color="text.secondary">Faça o upload de um arquivo CSV ou OFX para adicionar transações em lote.</Typography>
+                </Box>
                 {stage !== 'upload' && (
-                    <Button variant="text" onClick={handleReset} disabled={stage === 'importing'}>
-                        <X className="mr-2 h-4 w-4" /> Cancelar Importação
+                    <Button variant="text" onClick={handleReset} disabled={stage === 'importing'} startIcon={<X size={16} />}>
+                        Cancelar Importação
                     </Button>
                 )}
-            </div>
+            </Stack>
             
             <Card>
-                <CardHeader>
-                    {file && <div className="flex items-center gap-2 text-sm text-muted-foreground"><FileText className="h-4 w-4"/> {file.name}</div>}
-                </CardHeader>
-                <CardContent className="min-h-[20rem] flex items-center justify-center">
+                <CardHeader
+                    title={file && <Box display="flex" alignItems="center" gap={1} fontSize="0.875rem" color="text.secondary"><FileText size={16}/> {file.name}</Box>}
+                />
+                <CardContent sx={{ minHeight: '20rem', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     {isParsing ? <Loader2 className="h-8 w-8 animate-spin text-primary" /> : (
-                        <div className="w-full">
+                        <Box width="100%">
                            {stage === 'upload' && renderUpload()}
                            {stage === 'mapping' && renderMapping()}
                            {stage === 'categorizing' && renderCategorizing()}
                            {stage === 'confirm' && renderConfirm()}
                            {stage === 'importing' && renderCategorizing()}
-                        </div>
+                        </Box>
                     )}
                 </CardContent>
             </Card>
-        </div>
+        </Stack>
     );
 }

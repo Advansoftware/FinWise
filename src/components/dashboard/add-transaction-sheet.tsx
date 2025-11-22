@@ -1,37 +1,41 @@
 
+// src/components/dashboard/add-transaction-sheet.tsx
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetFooter,
-  SheetTrigger,
+  Drawer,
+  Box,
+  Stack,
+  Typography,
+  Button,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  ToggleButton,
+  ToggleButtonGroup,
+  IconButton,
+  Autocomplete,
+  InputAdornment,
+  CircularProgress,
+  useTheme,
+  useMediaQuery
 } from "@mui/material";
-import { Box } from '@mui/material'
-import { Button } from "@mui/material";
-import { TextField } from "@mui/material";
-import { InputLabel } from "@mui/material";
-import { Select, SelectContent, MenuItem, SelectTrigger, SelectValue } from "@mui/material";
 import { Transaction, TransactionCategory } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, X, Plus } from "lucide-react";
 import { SingleDatePicker } from "../single-date-picker";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useAuth } from "@/hooks/use-auth";
 import { useWallets } from "@/hooks/use-wallets";
-import {Popover, PopoverContent, PopoverTrigger, PopoverAnchor} from '@mui/material';
-import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList} from '@mui/material';
-import { cn } from "@/lib/utils";
-import { ToggleGroup, ToggleGroupItem } from "../ui/toggle-group";
-
 
 export function AddTransactionSheet({ children }: { children: React.ReactNode }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   
   const { toast } = useToast();
   const { addTransaction, categories, subcategories, allTransactions } = useTransactions();
@@ -52,7 +56,6 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
   });
   
   const [itemInputValue, setItemInputValue] = useState("");
-  const [isItemPopoverOpen, setIsItemPopoverOpen] = useState(false);
 
   const uniqueTransactions = useMemo(() => {
     const seen = new Set<string>();
@@ -63,20 +66,6 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
     });
   }, [allTransactions]);
   
-  const filteredItems = useMemo(() => {
-      if (!itemInputValue) return [];
-      return uniqueTransactions.filter(t => t.item.toLowerCase().includes(itemInputValue.toLowerCase())).slice(0, 5);
-  }, [itemInputValue, uniqueTransactions]);
-
-  useEffect(() => {
-      if (itemInputValue && filteredItems.length > 0) {
-          setIsItemPopoverOpen(true);
-      } else {
-          setIsItemPopoverOpen(false);
-      }
-  }, [itemInputValue, filteredItems]);
-
-
   const resetForm = () => {
     setFormState({
         item: '',
@@ -112,29 +101,36 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
     }
   }
 
-  const handleItemSelect = (transaction: Transaction) => {
-    setFormState(prev => ({
-      ...prev,
-      item: transaction.item,
-      establishment: transaction.establishment || '',
-      amount: String(transaction.amount),
-      category: transaction.category,
-      subcategory: transaction.subcategory || '',
-    }));
-    setItemInputValue(transaction.item);
-    setIsItemPopoverOpen(false);
+  const handleItemSelect = (event: any, newValue: Transaction | string | null) => {
+    if (typeof newValue === 'string') {
+        setItemInputValue(newValue);
+        handleInputChange('item', newValue);
+    } else if (newValue && typeof newValue === 'object') {
+        setFormState(prev => ({
+            ...prev,
+            item: newValue.item,
+            establishment: newValue.establishment || '',
+            amount: String(newValue.amount),
+            category: newValue.category,
+            subcategory: newValue.subcategory || '',
+        }));
+        setItemInputValue(newValue.item);
+    } else {
+        setItemInputValue('');
+        handleInputChange('item', '');
+    }
   }
 
   const availableSubcategories = useMemo(() => {
       if (!formState.category) return [];
-      return subcategories[formState.category] || [];
+      return (subcategories as any)[formState.category] || [];
   }, [formState.category, subcategories]);
 
   const handleSubmit = async () => {
     // Evitar múltiplas submissões
     if (isSubmitting) return;
     
-    const finalItem = itemInputValue;
+    const finalItem = itemInputValue || formState.item;
     const { amount, date, category, walletId, toWalletId, type } = formState;
 
     if (!finalItem || !amount || !date) {
@@ -194,212 +190,233 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
   }
 
   const typeDescriptions = {
-      expense: "Registra uma saída de dinheiro. Diminui o saldo da carteira selecionada.",
-      income: "Registra uma entrada de dinheiro. Aumenta o saldo da carteira selecionada.",
-      transfer: "Move dinheiro entre duas de suas carteiras. Não altera seu saldo total, apenas o local do dinheiro."
+      expense: "Registra uma saída de dinheiro.",
+      income: "Registra uma entrada de dinheiro.",
+      transfer: "Move dinheiro entre carteiras."
   }
 
+  const toggleDrawer = (open: boolean) => (event: React.KeyboardEvent | React.MouseEvent) => {
+    if (
+      event.type === 'keydown' &&
+      ((event as React.KeyboardEvent).key === 'Tab' ||
+        (event as React.KeyboardEvent).key === 'Shift')
+    ) {
+      return;
+    }
+    setIsOpen(open);
+    if (!open) resetForm();
+  };
+
   return (
-    <Sheet open={isOpen} onOpenChange={(open) => { setIsOpen(open); if(!open) resetForm(); }}>
-            <SheetTrigger asChild>{children}</SheetTrigger>
-            <SheetContent sx={{ width: '100%', maxWidth: { sm: '28rem' }, display: 'flex', flexDirection: 'column', height: { xs: '100%', sm: 'auto' } }}>
-                <SheetHeader sx={{ gap: 2, pb: 2 }}>
-          <SheetTitle>Adicionar Nova Transação</SheetTitle>
-          <SheetDescription>
-            Insira os detalhes da sua movimentação.
-          </SheetDescription>
-        </SheetHeader>
-        
-                <Box sx={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 3, pr: 2 }}>
-            {/* Tipo de Transação */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
-                <Label sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Tipo</Label>
-                <ToggleGroup 
-                  type="single" 
-                  value={formState.type} 
-                  onValueChange={(value) => handleInputChange('type', value || 'expense')} 
-                  style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.5rem' }}
-                >
-                    <ToggleGroupItem value="expense" aria-label="Despesa" className="data-[state=on]:bg-destructive/80 data-[state=on]:text-white">
-                        Despesa
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="income" aria-label="Receita" className="data-[state=on]:bg-emerald-600 data-[state=on]:text-white">
-                        Receita
-                    </ToggleGroupItem>
-                    <ToggleGroupItem value="transfer" aria-label="Transferência" className="data-[state=on]:bg-sky-600 data-[state=on]:text-white">
-                        Transfer
-                    </ToggleGroupItem>
-                </ToggleGroup>
-                <Box component="p" sx={{ fontSize: '0.75rem', color: 'var(--muted-foreground)' }}>
-                    {typeDescriptions[formState.type]}
+    <>
+        <Box onClick={toggleDrawer(true)} sx={{ display: 'inline-block' }}>
+            {children}
+        </Box>
+        <Drawer
+            anchor={isMobile ? 'bottom' : 'right'}
+            open={isOpen}
+            onClose={toggleDrawer(false)}
+            PaperProps={{
+                sx: {
+                    width: isMobile ? '100%' : 450,
+                    height: isMobile ? '90vh' : '100%',
+                    borderTopLeftRadius: isMobile ? 16 : 0,
+                    borderTopRightRadius: isMobile ? 16 : 0,
+                }
+            }}
+        >
+            <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+                <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <Box>
+                        <Typography variant="h6" fontWeight="bold">Adicionar Transação</Typography>
+                        <Typography variant="body2" color="text.secondary">Insira os detalhes da sua movimentação.</Typography>
+                    </Box>
+                    <IconButton onClick={toggleDrawer(false)} size="small">
+                        <X size={20} />
+                    </IconButton>
+                </Box>
+
+                <Box sx={{ flex: 1, overflowY: 'auto', p: 3 }}>
+                    <Stack spacing={3}>
+                        {/* Tipo de Transação */}
+                        <Box>
+                            <Typography variant="subtitle2" fontWeight="medium" gutterBottom>Tipo</Typography>
+                            <ToggleButtonGroup
+                                value={formState.type}
+                                exclusive
+                                onChange={(e, value) => value && handleInputChange('type', value)}
+                                fullWidth
+                                size="small"
+                            >
+                                <ToggleButton value="expense" color="error">Despesa</ToggleButton>
+                                <ToggleButton value="income" color="success">Receita</ToggleButton>
+                                <ToggleButton value="transfer" color="primary">Transferência</ToggleButton>
+                            </ToggleButtonGroup>
+                            <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+                                {typeDescriptions[formState.type]}
+                            </Typography>
+                        </Box>
+
+                        {/* Valor */}
+                        <TextField
+                            label="Valor"
+                            placeholder="0.00"
+                            type="number"
+                            value={formState.amount}
+                            onChange={(e) => handleInputChange('amount', e.target.value)}
+                            fullWidth
+                            InputProps={{
+                                startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                            }}
+                        />
+
+                        {/* Data */}
+                        <Box>
+                            <Typography variant="subtitle2" fontWeight="medium" gutterBottom>Data</Typography>
+                            <SingleDatePicker date={formState.date} setDate={(d) => handleInputChange('date', d)} />
+                        </Box>
+
+                        {formState.type === 'transfer' ? (
+                            <>
+                                <FormControl fullWidth>
+                                    <InputLabel>De (Origem)</InputLabel>
+                                    <Select
+                                        value={formState.walletId}
+                                        label="De (Origem)"
+                                        onChange={(e) => handleInputChange('walletId', e.target.value)}
+                                    >
+                                        {wallets.map(wallet => (
+                                            <MenuItem key={wallet.id} value={wallet.id}>{wallet.name}</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+
+                                <FormControl fullWidth>
+                                    <InputLabel>Para (Destino)</InputLabel>
+                                    <Select
+                                        value={formState.toWalletId}
+                                        label="Para (Destino)"
+                                        onChange={(e) => handleInputChange('toWalletId', e.target.value)}
+                                    >
+                                        {wallets.filter(w => w.id !== formState.walletId).map(wallet => (
+                                            <MenuItem key={wallet.id} value={wallet.id}>{wallet.name}</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </>
+                        ) : (
+                            <>
+                                {/* Item com Autocomplete */}
+                                <Autocomplete
+                                    freeSolo
+                                    options={uniqueTransactions}
+                                    getOptionLabel={(option) => typeof option === 'string' ? option : option.item}
+                                    value={itemInputValue}
+                                    onChange={handleItemSelect}
+                                    onInputChange={(event, newInputValue) => {
+                                        setItemInputValue(newInputValue);
+                                        handleInputChange('item', newInputValue);
+                                    }}
+                                    renderInput={(params) => (
+                                        <TextField 
+                                            {...params} 
+                                            label="Item" 
+                                            placeholder="Ex: Café, Aluguel..." 
+                                            fullWidth
+                                        />
+                                    )}
+                                    renderOption={(props, option) => {
+                                         const { key, ...otherProps } = props;
+                                         return (
+                                            <li key={key} {...otherProps}>
+                                                <Box>
+                                                    <Typography variant="body1">{typeof option === 'string' ? option : option.item}</Typography>
+                                                    {typeof option !== 'string' && (
+                                                        <Typography variant="caption" color="text.secondary">
+                                                            {option.category} • {option.establishment || 'Sem estabelecimento'}
+                                                        </Typography>
+                                                    )}
+                                                </Box>
+                                            </li>
+                                        );
+                                    }}
+                                />
+
+                                <TextField
+                                    label="Estabelecimento"
+                                    placeholder="Ex: Padaria do Zé"
+                                    value={formState.establishment}
+                                    onChange={(e) => handleInputChange('establishment', e.target.value)}
+                                    fullWidth
+                                />
+
+                                <TextField
+                                    label="Quantidade"
+                                    type="number"
+                                    value={formState.quantity}
+                                    onChange={(e) => handleInputChange('quantity', e.target.value)}
+                                    fullWidth
+                                />
+
+                                <FormControl fullWidth>
+                                    <InputLabel>Carteira</InputLabel>
+                                    <Select
+                                        value={formState.walletId}
+                                        label="Carteira"
+                                        onChange={(e) => handleInputChange('walletId', e.target.value)}
+                                    >
+                                        {wallets.map(wallet => (
+                                            <MenuItem key={wallet.id} value={wallet.id}>{wallet.name}</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+
+                                <FormControl fullWidth>
+                                    <InputLabel>Categoria</InputLabel>
+                                    <Select
+                                        value={formState.category}
+                                        label="Categoria"
+                                        onChange={(e) => handleInputChange('category', e.target.value)}
+                                    >
+                                        {categories.filter(c => c !== 'Transferência').map(cat => (
+                                            <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+
+                                <FormControl fullWidth disabled={!formState.category || availableSubcategories.length === 0}>
+                                    <InputLabel>Subcategoria</InputLabel>
+                                    <Select
+                                        value={formState.subcategory}
+                                        label="Subcategoria"
+                                        onChange={(e) => handleInputChange('subcategory', e.target.value)}
+                                    >
+                                        <MenuItem value=""><em>Nenhuma</em></MenuItem>
+                                        {availableSubcategories.map((sub: string) => (
+                                            <MenuItem key={sub} value={sub}>{sub}</MenuItem>
+                                        ))}
+                                    </Select>
+                                </FormControl>
+                            </>
+                        )}
+                    </Stack>
+                </Box>
+
+                <Box sx={{ p: 3, borderTop: 1, borderColor: 'divider' }}>
+                    <Button 
+                        variant="contained" 
+                        fullWidth 
+                        size="large"
+                        onClick={handleSubmit}
+                        disabled={isSubmitting || wallets.length === 0}
+                        startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : <Plus />}
+                    >
+                        {wallets.length === 0 ? "Crie uma carteira primeiro" : "Salvar Transação"}
+                    </Button>
                 </Box>
             </Box>
-
-            {/* Valor */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Label htmlFor="amount" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Valor</Label>
-                <TextField 
-                    id="amount" 
-                    type="number" 
-                    placeholder="ex: 50.00" 
-                    value={formState.amount} 
-                    onChange={(e) => handleInputChange('amount', e.target.value)} 
-                />
-            </Box>
-
-            {/* Data */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                <Label htmlFor="date" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Data</Label>
-                <SingleDatePicker date={formState.date} setDate={(d) => handleInputChange('date', d)} />
-            </Box>
-
-            {formState.type === 'transfer' ? (
-                <>
-                    {/* Carteira de Origem */}
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                        <Label htmlFor="wallet" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>De</Label>
-                        <Select value={formState.walletId} onValueChange={(value) => handleInputChange('walletId', value)}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Carteira de Origem" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {wallets.map(wallet => (
-                                    <MenuItem key={wallet.id} value={wallet.id}>{wallet.name}</MenuItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </Box>
-
-                    {/* Carteira de Destino */}
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                        <Label htmlFor="toWallet" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Para</Label>
-                        <Select value={formState.toWalletId} onValueChange={(value) => handleInputChange('toWalletId', value)}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Carteira de Destino" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {wallets.filter(w => w.id !== formState.walletId).map(wallet => (
-                                    <MenuItem key={wallet.id} value={wallet.id}>{wallet.name}</MenuItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </Box>
-                </>
-            ) : (
-                <>
-                    {/* Item */}
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                        <Label htmlFor="item" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Item</Label>
-                        <Popover open={isItemPopoverOpen} onOpenChange={setIsItemPopoverOpen}>
-                            <PopoverAnchor>
-                                <TextField 
-                                    id="item" 
-                                    placeholder="ex: Café" 
-                                    value={itemInputValue} 
-                                    onChange={(e) => setItemInputValue(e.target.value)}
-                                    autoComplete="off"
-                                    disabled={(formState.type as any) === 'transfer'}
-                                />
-                            </PopoverAnchor>
-                            <PopoverContent sx={{ p: 0, width: 'var(--radix-popover-trigger-width)' }} onOpenAutoFocus={(e) => e.preventDefault()}>
-                                <Command>
-                                    <CommandList>
-                                        <CommandEmpty>Nenhuma sugestão encontrada.</CommandEmpty>
-                                        <CommandGroup>
-                                            {filteredItems.map((transaction) => (
-                                                <CommandItem key={transaction.id} onSelect={() => handleItemSelect(transaction)}>
-                                                    {transaction.item}
-                                                </CommandItem>
-                                            ))}
-                                        </CommandGroup>
-                                    </CommandList>
-                                </Command>
-                            </PopoverContent>
-                        </Popover>
-                    </Box>
-
-                    {/* Estabelecimento */}
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                        <Label htmlFor="establishment" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Estabelecimento</Label>
-                        <TextField 
-                            id="establishment" 
-                            placeholder="ex: Padaria do Zé" 
-                            value={formState.establishment} 
-                            onChange={(e) => handleInputChange('establishment', e.target.value)} 
-                        />
-                    </Box>
-
-                    {/* Quantidade */}
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                        <Label htmlFor="quantity" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Quantidade</Label>
-                        <TextField 
-                            id="quantity" 
-                            type="number" 
-                            placeholder="ex: 1" 
-                            value={formState.quantity} 
-                            onChange={(e) => handleInputChange('quantity', e.target.value)} 
-                        />
-                    </Box>
-
-                    {/* Carteira */}
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                        <Label htmlFor="wallet" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Carteira</Label>
-                        <Select value={formState.walletId} onValueChange={(value) => handleInputChange('walletId', value)}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Selecione uma carteira" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {wallets.map(wallet => (
-                                    <MenuItem key={wallet.id} value={wallet.id}>{wallet.name}</MenuItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </Box>
-
-                    {/* Categoria */}
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                        <Label htmlFor="category" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Categoria</Label>
-                        <Select value={formState.category} onValueChange={(value) => handleInputChange('category', value as TransactionCategory)}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Selecione uma categoria" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {categories.filter(c => c !== 'Transferência').map(cat => (
-                                    <MenuItem key={cat} value={cat}>{cat}</MenuItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </Box>
-
-                    {/* Subcategoria */}
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                        <Label htmlFor="subcategory" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Subcategoria</Label>
-                        <Select value={formState.subcategory} onValueChange={(v) => handleInputChange('subcategory', v)} disabled={!formState.category || availableSubcategories.length === 0}>
-                            <SelectTrigger>
-                                <SelectValue placeholder={availableSubcategories.length > 0 ? "Selecione" : "Nenhuma"} />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {availableSubcategories.map(sub => (
-                                    <MenuItem key={sub} value={sub}>{sub}</MenuItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </Box>
-                </>
-            )}
-        </Box>
-        
-        <SheetFooter sx={{ pt: 6 }}>
-            <Button 
-                onClick={handleSubmit} 
-                disabled={isSubmitting || wallets.length === 0}
-                sx={{ width: '100%' }}
-            >
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {wallets.length === 0 ? "Crie uma carteira primeiro" : "Salvar Transação"}
-            </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+        </Drawer>
+    </>
   );
 }
+

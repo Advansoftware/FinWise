@@ -1,17 +1,15 @@
-
+// src/app/(app)/transactions/page.tsx
 'use client';
 
 import { useEffect } from "react";
-import { Skeleton } from "@/components/ui/skeleton";
+import { Skeleton, Stack, Box, Typography, Button, useTheme, useMediaQuery } from "@mui/material";
 import { useTransactions } from "@/hooks/use-transactions";
 import { columns } from "@/components/transactions/columns";
 import { DataTable } from "@/components/transactions/data-table";
 import { DateRangePicker } from "@/components/dashboard/date-range-picker";
 import { ItemFilter } from "@/components/dashboard/item-filter";
-import { useIsMobile } from "@/hooks/use-mobile";
 import { TransactionCardList } from "@/components/transactions/transaction-card-list";
 import { AddTransactionSheet } from "@/components/dashboard/add-transaction-sheet";
-import { Button } from "@mui/material";
 import { PlusCircle } from "lucide-react";
 
 export default function TransactionsPage() {
@@ -28,67 +26,72 @@ export default function TransactionsPage() {
         setSelectedSubcategory
     } = useTransactions();
     
-    const isMobile = useIsMobile();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     // Data will automatically refresh on navigation via DataRefreshProvider
 
     return (
-        <div className="flex flex-col gap-4 sm:gap-6">
-            {/* Header - Mobile First */}
-            <div className="flex flex-col gap-3 sm:gap-4">
-                <div className="flex flex-col gap-2">
-                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Transações</h1>
-                    <p className="text-sm sm:text-base text-muted-foreground">
+        <Stack spacing={{ xs: 2, sm: 3 }}>
+            {/* Header */}
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between" alignItems={{ xs: 'stretch', sm: 'flex-start' }}>
+                <Box>
+                    <Typography variant="h4" fontWeight="bold" gutterBottom>Transações</Typography>
+                    <Typography variant="body1" color="text.secondary">
                         Visualize e gerencie suas transações com filtros e paginação.
-                    </p>
-                </div>
+                    </Typography>
+                </Box>
                 
-                {/* Add Transaction Button - Mobile Full Width */}
+                {/* Add Transaction Button */}
                 <AddTransactionSheet>
-                    <Button className="w-full sm:w-auto">
-                        <PlusCircle className="mr-2 h-4 w-4"/>
+                    <Button 
+                        variant="contained" 
+                        fullWidth={isMobile}
+                        startIcon={<PlusCircle size={18} />}
+                    >
                         Adicionar Transação
                     </Button>
                 </AddTransactionSheet>
-            </div>
+            </Stack>
             
-            {/* Filters - Mobile Stack, Desktop Row */}
-             <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            {/* Filters */}
+             <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
                <DateRangePicker 
-                    className="w-full sm:w-auto min-w-[200px]" 
                     initialDate={dateRange} 
                     onUpdate={setDateRange}
+                    className="w-full md:w-auto"
                 />
-                <ItemFilter 
-                    className="w-full sm:flex-1 sm:max-w-[200px]"
-                    placeholder="Todas as Categorias"
-                    items={['all', ...categories]} 
-                    selectedItem={selectedCategory} 
-                    onItemSelected={handleCategoryChange}
-                />
-                <ItemFilter 
-                    className="w-full sm:flex-1 sm:max-w-[200px]"
-                    placeholder="Todas as Subcategorias"
-                    items={['all', ...availableSubcategories]} 
-                    selectedItem={selectedSubcategory} 
-                    onItemSelected={setSelectedSubcategory}
-                    disabled={selectedCategory === 'all'}
-                />
-            </div>
+                <Box sx={{ flex: 1, display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+                    <ItemFilter 
+                        placeholder="Todas as Categorias"
+                        items={['all', ...categories]} 
+                        selectedItem={selectedCategory} 
+                        onItemSelected={handleCategoryChange}
+                        className="w-full sm:flex-1"
+                    />
+                    <ItemFilter 
+                        placeholder="Todas as Subcategorias"
+                        items={['all', ...availableSubcategories]} 
+                        selectedItem={selectedSubcategory} 
+                        onItemSelected={setSelectedSubcategory}
+                        disabled={selectedCategory === 'all'}
+                        className="w-full sm:flex-1"
+                    />
+                </Box>
+            </Stack>
 
             {/* Content */}
             {isLoading ? (
-                 <div className="space-y-3 sm:space-y-4">
-                    <Skeleton className="h-10 sm:h-12 w-full" />
-                    <Skeleton className="h-48 sm:h-64 w-full" />
-                    <Skeleton className="h-48 sm:h-64 w-full lg:hidden" />
-                </div>
+                 <Stack spacing={2}>
+                    <Skeleton variant="rectangular" height={48} sx={{ borderRadius: 1 }} />
+                    <Skeleton variant="rectangular" height={400} sx={{ borderRadius: 2 }} />
+                </Stack>
             ) : isMobile ? (
                 <TransactionCardList transactions={filteredTransactions} />
             ) : (
                 <DataTable columns={columns} data={filteredTransactions} />
             )}
 
-        </div>
+        </Stack>
     )
 }

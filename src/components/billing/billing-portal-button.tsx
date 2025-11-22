@@ -2,7 +2,7 @@
 'use client';
 
 import {useState} from 'react';
-import {Button} from '@mui/material';
+import {Button, ButtonProps} from '@mui/material';
 import {ExternalLink, Loader2, Settings} from 'lucide-react';
 import {usePayment} from '@/hooks/use-payment';
 import {useAuth} from '@/hooks/use-auth';
@@ -10,22 +10,18 @@ import {usePlan} from '@/hooks/use-plan';
 import {useToast} from '@/hooks/use-toast';
 import {type SxProps, type Theme} from '@mui/material';
 
-interface BillingPortalButtonProps {
-  variant?: 'default' | 'outline' | 'secondary' | 'ghost' | 'link' | 'destructive';
-  size?: 'default' | 'sm' | 'lg' | 'icon';
-  sx?: SxProps<Theme>;
-  children?: React.ReactNode;
+interface BillingPortalButtonProps extends Omit<ButtonProps, 'onClick'> {
   showIcon?: boolean;
-  disabled?: boolean;
 }
 
 export function BillingPortalButton({ 
-  variant = 'outline', 
-  size = 'default', 
+  variant = 'outlined', 
+  size = 'medium', 
   sx,
   children,
   showIcon = true,
-  disabled = false
+  disabled = false,
+  ...props
 }: BillingPortalButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { openCustomerPortal } = usePayment();
@@ -90,6 +86,7 @@ export function BillingPortalButton({
       variant={variant}
       size={size}
       sx={sx}
+      {...props}
     >
       {children || defaultChildren}
     </Button>

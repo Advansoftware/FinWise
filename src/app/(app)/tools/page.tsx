@@ -1,10 +1,8 @@
 'use client';
 
-import { Card, CardContent, CardHeader } from "@mui/material";
-import { Button } from "@mui/material";
+import { Card, CardContent, CardHeader, Typography, Grid, Stack, Box, Button, Skeleton } from "@mui/material";
 import { Calculator, Calendar, TrendingUp, UserCheck, AlertTriangle } from "lucide-react";
 import { usePayroll } from "@/hooks/use-payroll";
-import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
 import { VacationCalculator } from "@/components/tools/vacation-calculator";
 import { ThirteenthSalaryCalculator } from "@/components/tools/thirteenth-salary-calculator";
@@ -21,55 +19,63 @@ export default function ToolsPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Ferramentas Financeiras</h1>
-          <p className="text-muted-foreground">Calculadoras e ferramentas para planejamento financeiro.</p>
-        </div>
+      <Stack spacing={6}>
+        <Box>
+          <Typography variant="h4" fontWeight="bold" gutterBottom>Ferramentas Financeiras</Typography>
+          <Typography variant="body1" color="text.secondary">Calculadoras e ferramentas para planejamento financeiro.</Typography>
+        </Box>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <Grid container spacing={3}>
           {[1, 2, 3].map((i) => (
-            <Card key={i}>
-              <CardHeader>
-                <Skeleton className="h-6 w-3/4" />
-                <Skeleton className="h-4 w-full" />
-              </CardHeader>
-              <CardContent>
-                <Skeleton className="h-20 w-full" />
-              </CardContent>
-            </Card>
+            <Grid item xs={12} md={6} lg={4} key={i}>
+                <Card>
+                <CardHeader
+                    title={<Skeleton variant="text" width="75%" height={32} />}
+                    subheader={<Skeleton variant="text" width="100%" height={24} />}
+                />
+                <CardContent>
+                    <Skeleton variant="rectangular" height={80} sx={{ borderRadius: 1 }} />
+                </CardContent>
+                </Card>
+            </Grid>
           ))}
-        </div>
-      </div>
+        </Grid>
+      </Stack>
     );
   }
 
   if (!hasValidPayrollData()) {
     return (
-      <div className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Ferramentas Financeiras</h1>
-          <p className="text-muted-foreground">Calculadoras e ferramentas para planejamento financeiro.</p>
-        </div>
+      <Stack spacing={6}>
+        <Box>
+          <Typography variant="h4" fontWeight="bold" gutterBottom>Ferramentas Financeiras</Typography>
+          <Typography variant="body1" color="text.secondary">Calculadoras e ferramentas para planejamento financeiro.</Typography>
+        </Box>
         
-        <Card className="border-amber-200 bg-amber-50">
-          <CardHeader className="text-center">
-            <div className="mx-auto w-12 h-12 bg-amber-100 rounded-full flex items-center justify-center mb-4">
-              <AlertTriangle className="h-6 w-6 text-amber-600" />
-            </div>
-            <Typography variant="h6" className="text-amber-800">Dados do Holerite Necessários</Typography>
-            <Typography variant="body2" color="text.secondary" className="text-amber-700">
-              Para utilizar as ferramentas de cálculo, você precisa configurar seus dados de holerite primeiro.
-            </Typography>
-          </CardHeader>
-          <CardContent className="text-center">
-            <p className="text-amber-700 mb-6">
+        <Card sx={{ border: 1, borderColor: 'warning.light', bgcolor: 'warning.lighter' }}>
+          <CardHeader 
+            sx={{ textAlign: 'center' }}
+            title={
+                <Stack alignItems="center" spacing={2}>
+                    <Box sx={{ width: 48, height: 48, bgcolor: 'warning.light', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <AlertTriangle className="h-6 w-6 text-warning-main" />
+                    </Box>
+                    <Typography variant="h6" color="warning.dark">Dados do Holerite Necessários</Typography>
+                </Stack>
+            }
+            subheader={
+                <Typography variant="body2" color="warning.dark" sx={{ mt: 1 }}>
+                    Para utilizar as ferramentas de cálculo, você precisa configurar seus dados de holerite primeiro.
+                </Typography>
+            }
+          />
+          <CardContent sx={{ textAlign: 'center' }}>
+            <Typography variant="body1" color="warning.dark" paragraph>
               As calculadoras dependem das informações do seu salário bruto, descontos e ajuda de custo 
               para fazer cálculos precisos de férias, 13º salário e projeções.
-            </p>
-            <Link href="/profile">
-              <Button className="bg-amber-600 hover:bg-amber-700 text-white">
-                <UserCheck className="h-4 w-4 mr-2" />
+            </Typography>
+            <Link href="/profile" passHref>
+              <Button variant="contained" color="warning" startIcon={<UserCheck size={16} />}>
                 Configurar Holerite no Perfil
               </Button>
             </Link>
@@ -77,198 +83,232 @@ export default function ToolsPage() {
         </Card>
 
         {/* Preview das ferramentas (desabilitadas) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 opacity-50">
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Calendar className="h-5 w-5 text-primary" />
-                <Typography variant="h6" className="text-lg">Calculadora de Férias</Typography>
-              </div>
-              <Typography variant="body2" color="text.secondary">
-                Calcule o valor das suas férias considerando salário base e adicionais.
-              </Typography>
-            </CardHeader>
-            <CardContent>
-              <Button disabled variant="outlined" className="w-full">
-                Requer dados do holerite
-              </Button>
-            </CardContent>
-          </Card>
+        <Grid container spacing={3} sx={{ opacity: 0.5 }}>
+          <Grid item xs={12} md={6} lg={4}>
+            <Card>
+                <CardHeader
+                    title={
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                            <Calendar className="h-5 w-5 text-primary" />
+                            <Typography variant="h6">Calculadora de Férias</Typography>
+                        </Stack>
+                    }
+                    subheader={<Typography variant="body2" color="text.secondary">Calcule o valor das suas férias considerando salário base e adicionais.</Typography>}
+                />
+                <CardContent>
+                <Button disabled variant="outlined" fullWidth>
+                    Requer dados do holerite
+                </Button>
+                </CardContent>
+            </Card>
+          </Grid>
 
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                <Typography variant="h6" className="text-lg">Calculadora do 13º Salário</Typography>
-              </div>
-              <Typography variant="body2" color="text.secondary">
-                Estime o valor do seu 13º salário baseado no salário atual.
-              </Typography>
-            </CardHeader>
-            <CardContent>
-              <Button disabled variant="outlined" className="w-full">
-                Requer dados do holerite
-              </Button>
-            </CardContent>
-          </Card>
+          <Grid item xs={12} md={6} lg={4}>
+            <Card>
+                <CardHeader
+                    title={
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                            <TrendingUp className="h-5 w-5 text-primary" />
+                            <Typography variant="h6">Calculadora do 13º Salário</Typography>
+                        </Stack>
+                    }
+                    subheader={<Typography variant="body2" color="text.secondary">Estime o valor do seu 13º salário baseado no salário atual.</Typography>}
+                />
+                <CardContent>
+                <Button disabled variant="outlined" fullWidth>
+                    Requer dados do holerite
+                </Button>
+                </CardContent>
+            </Card>
+          </Grid>
 
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Calculator className="h-5 w-5 text-primary" />
-                <Typography variant="h6" className="text-lg">Projeção Salarial</Typography>
-              </div>
-              <Typography variant="body2" color="text.secondary">
-                Projete ganhos futuros e planeje aumentos salariais.
-              </Typography>
-            </CardHeader>
-            <CardContent>
-              <Button disabled variant="outlined" className="w-full">
-                Requer dados do holerite
-              </Button>
-            </CardContent>
-          </Card>
+          <Grid item xs={12} md={6} lg={4}>
+            <Card>
+                <CardHeader
+                    title={
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                            <Calculator className="h-5 w-5 text-primary" />
+                            <Typography variant="h6">Projeção Salarial</Typography>
+                        </Stack>
+                    }
+                    subheader={<Typography variant="body2" color="text.secondary">Projete ganhos futuros e planeje aumentos salariais.</Typography>}
+                />
+                <CardContent>
+                <Button disabled variant="outlined" fullWidth>
+                    Requer dados do holerite
+                </Button>
+                </CardContent>
+            </Card>
+          </Grid>
 
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Calculator className="h-5 w-5 text-primary" />
-                <Typography variant="h6" className="text-lg">Calculadora de FGTS</Typography>
-              </div>
-              <Typography variant="body2" color="text.secondary">
-                Calcule depósitos mensais e saldo projetado do FGTS.
-              </Typography>
-            </CardHeader>
-            <CardContent>
-              <Button disabled variant="outlined" className="w-full">
-                Requer dados do holerite
-              </Button>
-            </CardContent>
-          </Card>
+          <Grid item xs={12} md={6} lg={4}>
+            <Card>
+                <CardHeader
+                    title={
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                            <Calculator className="h-5 w-5 text-primary" />
+                            <Typography variant="h6">Calculadora de FGTS</Typography>
+                        </Stack>
+                    }
+                    subheader={<Typography variant="body2" color="text.secondary">Calcule depósitos mensais e saldo projetado do FGTS.</Typography>}
+                />
+                <CardContent>
+                <Button disabled variant="outlined" fullWidth>
+                    Requer dados do holerite
+                </Button>
+                </CardContent>
+            </Card>
+          </Grid>
 
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Calculator className="h-5 w-5 text-primary" />
-                <Typography variant="h6" className="text-lg">Calculadora de INSS</Typography>
-              </div>
-              <Typography variant="body2" color="text.secondary">
-                Contribuição previdenciária e estimativa de aposentadoria.
-              </Typography>
-            </CardHeader>
-            <CardContent>
-              <Button disabled variant="outlined" className="w-full">
-                Requer dados do holerite
-              </Button>
-            </CardContent>
-          </Card>
+          <Grid item xs={12} md={6} lg={4}>
+            <Card>
+                <CardHeader
+                    title={
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                            <Calculator className="h-5 w-5 text-primary" />
+                            <Typography variant="h6">Calculadora de INSS</Typography>
+                        </Stack>
+                    }
+                    subheader={<Typography variant="body2" color="text.secondary">Contribuição previdenciária e estimativa de aposentadoria.</Typography>}
+                />
+                <CardContent>
+                <Button disabled variant="outlined" fullWidth>
+                    Requer dados do holerite
+                </Button>
+                </CardContent>
+            </Card>
+          </Grid>
 
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Calculator className="h-5 w-5 text-primary" />
-                <Typography variant="h6" className="text-lg">Calculadora de Rescisão</Typography>
-              </div>
-              <Typography variant="body2" color="text.secondary">
-                Valores da rescisão trabalhista conforme a CLT.
-              </Typography>
-            </CardHeader>
-            <CardContent>
-              <Button disabled variant="outlined" className="w-full">
-                Requer dados do holerite
-              </Button>
-            </CardContent>
-          </Card>
+          <Grid item xs={12} md={6} lg={4}>
+            <Card>
+                <CardHeader
+                    title={
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                            <Calculator className="h-5 w-5 text-primary" />
+                            <Typography variant="h6">Calculadora de Rescisão</Typography>
+                        </Stack>
+                    }
+                    subheader={<Typography variant="body2" color="text.secondary">Valores da rescisão trabalhista conforme a CLT.</Typography>}
+                />
+                <CardContent>
+                <Button disabled variant="outlined" fullWidth>
+                    Requer dados do holerite
+                </Button>
+                </CardContent>
+            </Card>
+          </Grid>
 
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Calculator className="h-5 w-5 text-primary" />
-                <Typography variant="h6" className="text-lg">Calculadora de IR</Typography>
-              </div>
-              <Typography variant="body2" color="text.secondary">
-                Imposto de renda mensal, anual e estimativa de restituição.
-              </Typography>
-            </CardHeader>
-            <CardContent>
-              <Button disabled variant="outlined" className="w-full">
-                Requer dados do holerite
-              </Button>
-            </CardContent>
-          </Card>
+          <Grid item xs={12} md={6} lg={4}>
+            <Card>
+                <CardHeader
+                    title={
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                            <Calculator className="h-5 w-5 text-primary" />
+                            <Typography variant="h6">Calculadora de IR</Typography>
+                        </Stack>
+                    }
+                    subheader={<Typography variant="body2" color="text.secondary">Imposto de renda mensal, anual e estimativa de restituição.</Typography>}
+                />
+                <CardContent>
+                <Button disabled variant="outlined" fullWidth>
+                    Requer dados do holerite
+                </Button>
+                </CardContent>
+            </Card>
+          </Grid>
 
-          <Card>
-            <CardHeader>
-              <div className="flex items-center gap-2">
-                <Calculator className="h-5 w-5 text-primary" />
-                <Typography variant="h6" className="text-lg">Empréstimo Consignado</Typography>
-              </div>
-              <Typography variant="body2" color="text.secondary">
-                Simule empréstimos com desconto na folha de pagamento.
-              </Typography>
-            </CardHeader>
-            <CardContent>
-              <Button disabled variant="outlined" className="w-full">
-                Requer dados do holerite
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+          <Grid item xs={12} md={6} lg={4}>
+            <Card>
+                <CardHeader
+                    title={
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                            <Calculator className="h-5 w-5 text-primary" />
+                            <Typography variant="h6">Empréstimo Consignado</Typography>
+                        </Stack>
+                    }
+                    subheader={<Typography variant="body2" color="text.secondary">Simule empréstimos com desconto na folha de pagamento.</Typography>}
+                />
+                <CardContent>
+                <Button disabled variant="outlined" fullWidth>
+                    Requer dados do holerite
+                </Button>
+                </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Stack>
     );
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Ferramentas Financeiras</h1>
-        <p className="text-muted-foreground">
+    <Stack spacing={6}>
+      <Box>
+        <Typography variant="h4" fontWeight="bold" gutterBottom>Ferramentas Financeiras</Typography>
+        <Typography variant="body1" color="text.secondary">
           Gaveta completa de calculadoras baseadas nos seus dados de holerite para planejamento financeiro.
-        </p>
-      </div>
+        </Typography>
+      </Box>
 
       {/* Seção: Benefícios Trabalhistas */}
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-xl font-semibold text-primary">💰 Benefícios Trabalhistas</h2>
-          <p className="text-sm text-muted-foreground">Cálculos de férias, 13º salário e projeções salariais</p>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <VacationCalculator payrollData={payrollData!} />
-          <ThirteenthSalaryCalculator payrollData={payrollData!} />
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <PostVacationCalculator payrollData={payrollData!} />
-          <SalaryProjectionCalculator payrollData={payrollData!} />
-        </div>
-      </div>
+      <Stack spacing={4}>
+        <Box>
+          <Typography variant="h5" fontWeight="bold" color="primary" gutterBottom>💰 Benefícios Trabalhistas</Typography>
+          <Typography variant="body2" color="text.secondary">Cálculos de férias, 13º salário e projeções salariais</Typography>
+        </Box>
+        <Grid container spacing={3}>
+          <Grid item xs={12} lg={6}>
+             <VacationCalculator payrollData={payrollData!} />
+          </Grid>
+          <Grid item xs={12} lg={6}>
+             <ThirteenthSalaryCalculator payrollData={payrollData!} />
+          </Grid>
+        </Grid>
+        <Grid container spacing={3}>
+          <Grid item xs={12} lg={6}>
+             <PostVacationCalculator payrollData={payrollData!} />
+          </Grid>
+          <Grid item xs={12} lg={6}>
+             <SalaryProjectionCalculator payrollData={payrollData!} />
+          </Grid>
+        </Grid>
+      </Stack>
 
       {/* Seção: Contribuições e Impostos */}
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-xl font-semibold text-primary">🏛️ Contribuições e Impostos</h2>
-          <p className="text-sm text-muted-foreground">FGTS, INSS e Imposto de Renda</p>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <FGTSCalculator payrollData={payrollData!} />
-          <INSSCalculator payrollData={payrollData!} />
-        </div>
-        <div className="grid grid-cols-1 gap-6">
-          <IncomeTaxCalculator payrollData={payrollData!} />
-        </div>
-      </div>
+      <Stack spacing={4}>
+        <Box>
+          <Typography variant="h5" fontWeight="bold" color="primary" gutterBottom>🏛️ Contribuições e Impostos</Typography>
+          <Typography variant="body2" color="text.secondary">FGTS, INSS e Imposto de Renda</Typography>
+        </Box>
+        <Grid container spacing={3}>
+          <Grid item xs={12} lg={6}>
+             <FGTSCalculator payrollData={payrollData!} />
+          </Grid>
+          <Grid item xs={12} lg={6}>
+             <INSSCalculator payrollData={payrollData!} />
+          </Grid>
+        </Grid>
+        <Grid container spacing={3}>
+          <Grid xs={12}>
+             <IncomeTaxCalculator payrollData={payrollData!} />
+          </Grid>
+        </Grid>
+      </Stack>
 
       {/* Seção: Planejamento e Crédito */}
-      <div className="space-y-4">
-        <div>
-          <h2 className="text-xl font-semibold text-primary">📊 Planejamento e Crédito</h2>
-          <p className="text-sm text-muted-foreground">Rescisão trabalhista e empréstimo consignado</p>
-        </div>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <SeveranceCalculator payrollData={payrollData!} />
-          <ConsignedLoanCalculator payrollData={payrollData!} />
-        </div>
-      </div>
-    </div>
+      <Stack spacing={4}>
+        <Box>
+          <Typography variant="h5" fontWeight="bold" color="primary" gutterBottom>📊 Planejamento e Crédito</Typography>
+          <Typography variant="body2" color="text.secondary">Rescisão trabalhista e empréstimo consignado</Typography>
+        </Box>
+        <Grid container spacing={3}>
+          <Grid item xs={12} lg={6}>
+             <SeveranceCalculator payrollData={payrollData!} />
+          </Grid>
+          <Grid item xs={12} lg={6}>
+             <ConsignedLoanCalculator payrollData={payrollData!} />
+          </Grid>
+        </Grid>
+      </Stack>
+    </Stack>
   );
 }

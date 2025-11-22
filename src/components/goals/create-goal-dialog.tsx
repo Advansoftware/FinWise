@@ -2,27 +2,26 @@
 'use client';
 
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogTrigger,
+  DialogContentText,
+  DialogActions,
+  Button,
+  TextField,
+  Box,
+  Typography,
+  Stack
 } from "@mui/material";
-import { Button } from "@mui/material";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { TextField } from "@mui/material";
 import { useToast } from "@/hooks/use-toast";
 import { useGoals } from "@/hooks/use-goals";
 import { Goal } from "@/lib/types";
-import { Calendar, Loader2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { SingleDatePicker } from "../single-date-picker";
-import {Box, Typography} from '@mui/material';
 
 const goalSchema = z.object({
   name: z.string().min(1, "O nome da meta é obrigatório."),
@@ -34,17 +33,17 @@ const goalSchema = z.object({
 type GoalFormValues = z.infer<typeof goalSchema>;
 
 interface CreateGoalDialogProps {
-  children: React.ReactNode;
+  open: boolean;
+  onClose: () => void;
   initialData?: Goal;
 }
 
-export function CreateGoalDialog({ children, initialData }: CreateGoalDialogProps) {
+export function CreateGoalDialog({ open, onClose, initialData }: CreateGoalDialogProps) {
   const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { addGoal, updateGoal } = useGoals();
 
-  const form = useForm<GoalFormValues>({
+  const { control, handleSubmit, reset, formState: { errors } } = useForm<GoalFormValues>({
     resolver: zodResolver(goalSchema),
     defaultValues: {
       name: "",
@@ -55,19 +54,19 @@ export function CreateGoalDialog({ children, initialData }: CreateGoalDialogProp
   });
 
   useEffect(() => {
-    if (isOpen) {
+    if (open) {
         if (initialData) {
-            form.reset({
+            reset({
                 name: initialData.name,
                 targetAmount: initialData.targetAmount,
                 monthlyDeposit: initialData.monthlyDeposit || undefined,
                 targetDate: initialData.targetDate ? new Date(initialData.targetDate) : undefined
             });
         } else {
-            form.reset({ name: "", targetAmount: 0, monthlyDeposit: undefined, targetDate: undefined });
+            reset({ name: "", targetAmount: 0, monthlyDeposit: undefined, targetDate: undefined });
         }
     }
-  }, [isOpen, initialData, form]);
+  }, [open, initialData, reset]);
 
   const onSubmit = async (data: GoalFormValues) => {
     setIsSubmitting(true);
@@ -81,10 +80,12 @@ export function CreateGoalDialog({ children, initialData }: CreateGoalDialogProp
 
       if (initialData) {
         await updateGoal(initialData.id, goalData);
+        toast({ title: "Meta atualizada com sucesso!" });
       } else {
         await addGoal(goalData as Omit<Goal, 'id' | 'createdAt' | 'currentAmount'>);
+        toast({ title: "Meta criada com sucesso!" });
       }
-      setIsOpen(false);
+      onClose();
     } catch (error) {
       console.error("Failed to save goal:", error);
       toast({ variant: "destructive", title: "Erro ao salvar meta." });
@@ -94,88 +95,94 @@ export function CreateGoalDialog({ children, initialData }: CreateGoalDialogProp
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle>{initialData ? "Editar Meta" : "Criar Nova Meta"}</DialogTitle>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{initialData ? "Editar Meta" : "Criar Nova Meta"}</DialogTitle>
-          <DialogDescription>
+        <DialogContentText sx={{ mb: 3 }}>
             Defina um objetivo financeiro. Preencha os campos opcionais para ajudar a IA a fazer projeções mais precisas.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <Box component="form" onSubmit={form.handleSubmit(onSubmit)} sx={{ display: 'flex', flexDirection: 'column', gap: 2, py: 2 }}>
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome da Meta</FormLabel>
-                  <FormControl>
-                    <TextField placeholder="Ex: Comprar um Carro" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+        </DialogContentText>
+        
+        <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Controller
+                name="name"
+                control={control}
+                render={({ field }) => (
+                    <TextField
+                        {...field}
+                        label="Nome da Meta"
+                        placeholder="Ex: Comprar um Carro"
+                        fullWidth
+                        size="small"
+                        error={!!errors.name}
+                        helperText={errors.name?.message}
+                    />
+                )}
             />
-             <FormField
-              control={form.control}
-              name="targetAmount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Valor da Meta (R$)</FormLabel>
-                  <FormControl>
-                    <TextField type="number" step="0.01" placeholder="Ex: 30000.00" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+
+            <Controller
+                name="targetAmount"
+                control={control}
+                render={({ field }) => (
+                    <TextField
+                        {...field}
+                        label="Valor da Meta (R$)"
+                        type="number"
+                        placeholder="Ex: 30000.00"
+                        fullWidth
+                        size="small"
+                        error={!!errors.targetAmount}
+                        helperText={errors.targetAmount?.message}
+                        inputProps={{ step: "0.01" }}
+                    />
+                )}
             />
-            <Typography
-              sx={{
-                fontSize: theme => theme.typography.pxToRem(14),
-                fontWeight: theme => theme.typography.fontWeightMedium,
-                color: theme => (theme.palette as any).custom?.mutedForeground,
-                my: 2,
-                textAlign: 'center'
-              }}
-            >
-              Opcional
-            </Typography>
-             <FormField
-              control={form.control}
-              name="monthlyDeposit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Depósito Mensal Planejado (R$)</FormLabel>
-                  <FormControl>
-                    <TextField type="number" step="0.01" placeholder="Ex: 500.00" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+            
+            <Box position="relative" py={2}>
+                <Typography variant="caption" color="text.secondary" sx={{ position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)', bgcolor: 'background.paper', px: 1 }}>
+                    Opcional
+                </Typography>
+                <Box sx={{ borderTop: 1, borderColor: 'divider' }} />
+            </Box>
+
+            <Controller
+                name="monthlyDeposit"
+                control={control}
+                render={({ field }) => (
+                    <TextField
+                        {...field}
+                        label="Depósito Mensal Planejado (R$)"
+                        type="number"
+                        placeholder="Ex: 500.00"
+                        fullWidth
+                        size="small"
+                        error={!!errors.monthlyDeposit}
+                        helperText={errors.monthlyDeposit?.message}
+                        inputProps={{ step: "0.01" }}
+                        value={field.value || ''}
+                    />
+                )}
             />
-             <FormField
-              control={form.control}
-              name="targetDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Data Alvo para Conclusão</FormLabel>
-                  <FormControl>
-                    <SingleDatePicker date={field.value} setDate={field.onChange} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
+
+            <Controller
+                name="targetDate"
+                control={control}
+                render={({ field }) => (
+                    <Box>
+                        <Typography variant="caption" color="text.secondary" display="block" mb={0.5}>Data Alvo para Conclusão</Typography>
+                        <SingleDatePicker date={field.value} setDate={field.onChange} />
+                        {errors.targetDate && <Typography variant="caption" color="error">{errors.targetDate.message}</Typography>}
+                    </Box>
+                )}
             />
-            <DialogFooter>
-              <Button type="submit" disabled={isSubmitting}>
+
+            <DialogActions sx={{ px: 0, pt: 2 }}>
+              <Button onClick={onClose} disabled={isSubmitting}>Cancelar</Button>
+              <Button type="submit" variant="contained" disabled={isSubmitting}>
                 {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {initialData ? "Salvar Alterações" : "Criar Meta"}
               </Button>
-            </DialogFooter>
-          </Box>
-        </Form>
+            </DialogActions>
+        </Box>
       </DialogContent>
     </Dialog>
   );

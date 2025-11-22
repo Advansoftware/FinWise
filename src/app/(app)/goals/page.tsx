@@ -1,29 +1,21 @@
 // src/app/(app)/goals/page.tsx
 'use client';
 
-import { Card, CardContent, CardHeader } from "@mui/material";
-import { Button } from "@mui/material";
-import { PlusCircle, MoreVertical, Trash2, Edit, Target, PiggyBank, CircleDollarSign, Sparkles, Loader2, Trophy } from "lucide-react";
+import { useState, useTransition, useEffect, useMemo, MouseEvent } from "react";
+import { 
+  Card, CardContent, CardHeader, CardActions, Typography, Button, 
+  Stack, Box, LinearProgress, Menu, MenuItem, IconButton, 
+  Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions,
+  Skeleton, useTheme
+} from "@mui/material";
+import { 
+  PlusCircle, MoreVertical, Trash2, Edit, Target, 
+  PiggyBank, CircleDollarSign, Sparkles, Trophy 
+} from "lucide-react";
 import { useGoals } from "@/hooks/use-goals";
-import { Skeleton } from "@/components/ui/skeleton";
-import { LinearProgress } from "@mui/material";
-import { cn } from "@/lib/utils";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { CreateGoalDialog } from "@/components/goals/create-goal-dialog";
 import { AddDepositDialog } from "@/components/goals/add-deposit-dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Goal } from "@/lib/types";
-import { useState, useTransition, useEffect, useMemo } from "react";
 import { projectGoalCompletionAction } from "@/services/ai-actions";
 import { useAuth } from "@/hooks/use-auth";
 import { useTransactions } from "@/hooks/use-transactions";
@@ -36,6 +28,33 @@ import { formatCurrency } from "@/lib/utils";
 export default function GoalsPage() {
     const { goals, isLoading, deleteGoal } = useGoals();
     const { gamificationData } = useGamification();
+    const theme = useTheme();
+
+    // Dialog States
+    const [createDialogOpen, setCreateDialogOpen] = useState(false);
+    const [depositDialogOpen, setDepositDialogOpen] = useState(false);
+    const [selectedGoal, setSelectedGoal] = useState<Goal | undefined>(undefined);
+
+    const handleCreateGoal = () => {
+        setSelectedGoal(undefined);
+        setCreateDialogOpen(true);
+    };
+
+    const handleEditGoal = (goal: Goal) => {
+        setSelectedGoal(goal);
+        setCreateDialogOpen(true);
+    };
+
+    const handleDeposit = (goal: Goal) => {
+        setSelectedGoal(goal);
+        setDepositDialogOpen(true);
+    };
+
+    const handleCloseDialogs = () => {
+        setCreateDialogOpen(false);
+        setDepositDialogOpen(false);
+        setSelectedGoal(undefined);
+    };
 
     const completedGoalsCount = goals.filter(g => g.currentAmount >= g.targetAmount).length;
     
@@ -44,83 +63,124 @@ export default function GoalsPage() {
     }
     
     return (
-        <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Metas de Economia</h1>
-                    <p className="text-muted-foreground">Transforme seus sonhos em realidade. Crie metas financeiras e acompanhe seu progresso a cada depósito.</p>
-                </div>
-                 <CreateGoalDialog>
-                    <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Nova Meta
-                    </Button>
-                </CreateGoalDialog>
-            </div>
+        <Stack spacing={3}>
+            <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'center' }} spacing={2}>
+                <Box>
+                    <Typography variant="h4" fontWeight="bold">Metas de Economia</Typography>
+                    <Typography variant="body1" color="text.secondary">
+                        Transforme seus sonhos em realidade. Crie metas financeiras e acompanhe seu progresso a cada depósito.
+                    </Typography>
+                </Box>
+                <Button variant="contained" startIcon={<PlusCircle size={18} />} onClick={handleCreateGoal}>
+                    Nova Meta
+                </Button>
+            </Stack>
 
             {/* Gamification Summary for Goals */}
             {gamificationData && (
-                <Card className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20">
-                    <CardHeader>
-                        <Typography variant="h6" className="flex items-center gap-2 text-lg text-yellow-800 dark:text-yellow-300">
-                            <Trophy className="h-5 w-5"/>
-                            Jornada das Metas
-                        </Typography>
-                    </CardHeader>
-                    <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                        <div className="p-3 bg-background/50 rounded-lg">
-                            <p className="text-2xl font-bold">{goals.length}</p>
-                            <p className="text-xs text-muted-foreground">Metas Ativas</p>
-                        </div>
-                        <div className="p-3 bg-background/50 rounded-lg">
-                            <p className="text-2xl font-bold text-green-600">{completedGoalsCount}</p>
-                            <p className="text-xs text-muted-foreground">Metas Concluídas</p>
-                        </div>
-                        <div className="p-3 bg-background/50 rounded-lg">
-                           <p className="text-2xl font-bold text-blue-600">
-                                {formatCurrency(goals.reduce((sum, g) => sum + g.currentAmount, 0))}
-                           </p>
-                           <p className="text-xs text-muted-foreground">Total Economizado</p>
-                        </div>
-                         <div className="p-3 bg-background/50 rounded-lg">
-                            <p className="text-2xl font-bold text-purple-600">
-                                {gamificationData.badges.filter(b => b.id === 'finisher' || b.id === 'goal-setter').length}
-                            </p>
-                            <p className="text-xs text-muted-foreground">Conquistas de Metas</p>
-                        </div>
+                <Card sx={{ 
+                    background: 'linear-gradient(to right, #fefce8, #fff7ed)',
+                    '.dark &': { background: 'linear-gradient(to right, rgba(66, 32, 6, 0.2), rgba(67, 20, 7, 0.2))' }
+                }}>
+                    <CardHeader
+                        title={
+                            <Box display="flex" alignItems="center" gap={1}>
+                                <Trophy size={20} color={theme.palette.warning.main} />
+                                <Typography variant="h6" color="warning.dark" sx={{ '.dark &': { color: 'warning.light' } }}>
+                                    Jornada das Metas
+                                </Typography>
+                            </Box>
+                        }
+                    />
+                    <CardContent>
+                        <Box display="grid" gridTemplateColumns={{ xs: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }} gap={2} textAlign="center">
+                            <Box p={2} bgcolor="background.paper" borderRadius={1}>
+                                <Typography variant="h5" fontWeight="bold">{goals.length}</Typography>
+                                <Typography variant="caption" color="text.secondary">Metas Ativas</Typography>
+                            </Box>
+                            <Box p={2} bgcolor="background.paper" borderRadius={1}>
+                                <Typography variant="h5" fontWeight="bold" color="success.main">{completedGoalsCount}</Typography>
+                                <Typography variant="caption" color="text.secondary">Metas Concluídas</Typography>
+                            </Box>
+                            <Box p={2} bgcolor="background.paper" borderRadius={1}>
+                                <Typography variant="h5" fontWeight="bold" color="info.main">
+                                    {formatCurrency(goals.reduce((sum, g) => sum + g.currentAmount, 0))}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">Total Economizado</Typography>
+                            </Box>
+                             <Box p={2} bgcolor="background.paper" borderRadius={1}>
+                                <Typography variant="h5" fontWeight="bold" color="secondary.main">
+                                    {gamificationData.badges.filter(b => b.id === 'finisher' || b.id === 'goal-setter').length}
+                                </Typography>
+                                <Typography variant="caption" color="text.secondary">Conquistas de Metas</Typography>
+                            </Box>
+                        </Box>
                     </CardContent>
                 </Card>
             )}
             
             {goals.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <Box display="grid" gridTemplateColumns={{ xs: '1fr', md: '1fr 1fr', lg: '1fr 1fr 1fr' }} gap={3}>
                     {goals.map(goal => (
-                       <GoalCard key={goal.id} goal={goal} onDelete={() => deleteGoal(goal.id)} />
+                       <GoalCard 
+                           key={goal.id} 
+                           goal={goal} 
+                           onDelete={() => deleteGoal(goal.id)} 
+                           onEdit={() => handleEditGoal(goal)}
+                           onDeposit={() => handleDeposit(goal)}
+                       />
                     ))}
-                </div>
+                </Box>
             ) : (
-                 <Card className="col-span-full">
-                    <CardContent className="p-8 text-center text-muted-foreground flex flex-col items-center">
-                        <PiggyBank className="mx-auto h-12 w-12 mb-4 text-primary/50"/>
-                       <h3 className="text-lg font-semibold text-foreground">Nenhuma meta encontrada.</h3>
-                       <p className="text-sm max-w-md mx-auto">Crie sua primeira meta para começar a economizar. Que tal "Viagem de Férias" ou "Entrada do Apartamento"?</p>
-                         <CreateGoalDialog>
-                            <Button className="mt-4">
-                                <PlusCircle className="mr-2 h-4 w-4" /> Criar Meta
+                 <Card>
+                    <CardContent sx={{ p: 4, textAlign: 'center' }}>
+                        <Stack alignItems="center" spacing={2}>
+                            <PiggyBank size={48} style={{ opacity: 0.5 }} />
+                            <Typography variant="h6">Nenhuma meta encontrada.</Typography>
+                            <Typography variant="body2" color="text.secondary" maxWidth="sm">
+                                Crie sua primeira meta para começar a economizar. Que tal "Viagem de Férias" ou "Entrada do Apartamento"?
+                            </Typography>
+                            <Button variant="contained" startIcon={<PlusCircle size={16} />} onClick={handleCreateGoal}>
+                                Criar Meta
                             </Button>
-                        </CreateGoalDialog>
+                        </Stack>
                     </CardContent>
                 </Card>
             )}
-        </div>
+
+            {/* Dialogs */}
+            <CreateGoalDialog 
+                open={createDialogOpen} 
+                onClose={handleCloseDialogs} 
+                initialData={selectedGoal} 
+            />
+            
+            {selectedGoal && (
+                <AddDepositDialog 
+                    open={depositDialogOpen} 
+                    onClose={handleCloseDialogs} 
+                    goal={selectedGoal} 
+                />
+            )}
+        </Stack>
     )
 }
 
-function GoalCard({ goal, onDelete }: { goal: Goal, onDelete: () => void }) {
+interface GoalCardProps {
+    goal: Goal;
+    onDelete: () => void;
+    onEdit: () => void;
+    onDeposit: () => void;
+}
+
+function GoalCard({ goal, onDelete, onEdit, onDeposit }: GoalCardProps) {
     const percentage = Math.round((goal.currentAmount / goal.targetAmount) * 100);
     const { user } = useAuth();
     const { allTransactions } = useTransactions();
     const [isProjecting, startProjecting] = useTransition();
     const [projectionResult, setProjectionResult] = useState<ProjectGoalCompletionOutput | null>(null);
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
     const transactionsJson = useMemo(() => JSON.stringify(allTransactions, null, 2), [allTransactions]);
 
@@ -150,108 +210,139 @@ function GoalCard({ goal, onDelete }: { goal: Goal, onDelete: () => void }) {
     const getProjectionText = () => {
         if (!projectionResult) return null;
         if (projectionResult.projection === "Meta concluída!") {
-            return <span className="text-emerald-500 font-semibold">{projectionResult.projection}</span>
+            return <Typography variant="caption" color="success.main" fontWeight="bold">{projectionResult.projection}</Typography>
         }
         if (projectionResult.completionDate) {
             const date = new Date(projectionResult.completionDate);
             date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
-            return <span>Estimativa de conclusão: <span className="font-semibold text-foreground/80 capitalize">{format(date, "MMMM 'de' yyyy", { locale: ptBR })}</span></span>
+            return (
+                <Typography variant="caption">
+                    Estimativa: <Box component="span" fontWeight="bold" textTransform="capitalize">{format(date, "MMMM 'de' yyyy", { locale: ptBR })}</Box>
+                </Typography>
+            );
         }
-        return <span className="capitalize">{projectionResult.projection}</span>
+        return <Typography variant="caption" textTransform="capitalize">{projectionResult.projection}</Typography>
     }
     
+    const handleMenuOpen = (event: MouseEvent<HTMLElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+    };
+
+    const handleDeleteClick = () => {
+        setDeleteDialogOpen(true);
+        handleMenuClose();
+    };
+
+    const handleConfirmDelete = () => {
+        onDelete();
+        setDeleteDialogOpen(false);
+    };
+
     return (
-        <Card>
-            <CardHeader>
-                <div className="flex items-start justify-between">
-                    <div className="flex items-center gap-3">
-                         <div className="p-2 rounded-full bg-primary/20"><Target className="h-6 w-6 text-primary"/></div>
-                         <Typography variant="h6">{goal.name}</Typography>
-                    </div>
-                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="text" size="icon" className="h-8 w-8">
-                                <MoreVertical className="h-4 w-4"/>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <AddDepositDialog goal={goal}>
-                                <div className="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
-                                    <CircleDollarSign className="mr-2 h-4 w-4"/>Adicionar Depósito
-                                </div>
-                            </AddDepositDialog>
-                            <CreateGoalDialog initialData={goal}>
-                                <div className="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
-                                    <Edit className="mr-2 h-4 w-4"/>Editar Meta
-                                </div>
-                            </CreateGoalDialog>
-                           
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-400 focus:bg-destructive/10">
-                                        <Trash2 className="mr-2 h-4 w-4"/>Excluir Meta
-                                    </DropdownMenuItem>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            Esta ação não pode ser desfeita. Isso excluirá permanentemente a meta "{goal.name}".
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                        <AlertDialogAction onClick={onDelete} className="bg-destructive hover:bg-destructive/90">Excluir</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div>
-                     <LinearProgress variant="determinate" value={Math.min(percentage, 100)} />
-                </div>
-                <div className="flex justify-between items-baseline">
-                    <p className="text-lg font-bold text-foreground">R$ {goal.currentAmount.toFixed(2)}</p>
-                    <p className="text-sm text-muted-foreground">de R$ {goal.targetAmount.toFixed(2)}</p>
-                </div>
-                <div className="text-xs text-muted-foreground h-4 flex items-center gap-2">
-                    <Sparkles className={cn("h-3.5 w-3.5 text-primary/80", isProjecting && "animate-pulse")} />
-                    {isProjecting ? (
-                        <span>Calculando projeção...</span>
-                    ) : (
-                        getProjectionText()
-                    )}
-                </div>
-            </CardContent>
-             <CardActions>
-                 <AddDepositDialog goal={goal}>
-                    <Button className="w-full" disabled={goal.currentAmount >= goal.targetAmount}>
-                        <PiggyBank className="mr-2 h-4 w-4"/>Fazer um Depósito
+        <>
+            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <CardHeader
+                    action={
+                        <IconButton size="small" onClick={handleMenuOpen}>
+                            <MoreVertical size={18} />
+                        </IconButton>
+                    }
+                    title={
+                        <Box display="flex" alignItems="center" gap={1.5}>
+                            <Box p={1} borderRadius="50%" bgcolor="primary.light" color="primary.main" display="flex">
+                                <Target size={20} />
+                            </Box>
+                            <Typography variant="h6" noWrap title={goal.name}>{goal.name}</Typography>
+                        </Box>
+                    }
+                    sx={{ pb: 1 }}
+                />
+                <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    <Box>
+                        <LinearProgress 
+                            variant="determinate" 
+                            value={Math.min(percentage, 100)} 
+                            sx={{ height: 8, borderRadius: 4, mb: 1 }}
+                        />
+                        <Box display="flex" justifyContent="space-between" alignItems="baseline">
+                            <Typography variant="h6" fontWeight="bold">R$ {goal.currentAmount.toFixed(2)}</Typography>
+                            <Typography variant="caption" color="text.secondary">de R$ {goal.targetAmount.toFixed(2)}</Typography>
+                        </Box>
+                    </Box>
+                    
+                    <Box display="flex" alignItems="center" gap={1} minHeight={20}>
+                        <Sparkles size={14} className={isProjecting ? "animate-pulse" : ""} style={{ opacity: 0.7 }} />
+                        {isProjecting ? (
+                            <Typography variant="caption" color="text.secondary">Calculando projeção...</Typography>
+                        ) : (
+                            getProjectionText()
+                        )}
+                    </Box>
+                </CardContent>
+                <CardActions sx={{ p: 2, pt: 0 }}>
+                    <Button 
+                        variant="outlined" 
+                        fullWidth 
+                        startIcon={<PiggyBank size={16} />}
+                        disabled={goal.currentAmount >= goal.targetAmount}
+                        onClick={onDeposit}
+                    >
+                        Fazer um Depósito
                     </Button>
-                </AddDepositDialog>
-             </CardActions>
-        </Card>
+                </CardActions>
+            </Card>
+
+            <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+            >
+                <MenuItem onClick={() => { onDeposit(); handleMenuClose(); }}>
+                    <CircleDollarSign size={16} style={{ marginRight: 8 }} /> Adicionar Depósito
+                </MenuItem>
+                <MenuItem onClick={() => { onEdit(); handleMenuClose(); }}>
+                    <Edit size={16} style={{ marginRight: 8 }} /> Editar Meta
+                </MenuItem>
+                <MenuItem onClick={handleDeleteClick} sx={{ color: 'error.main' }}>
+                    <Trash2 size={16} style={{ marginRight: 8 }} /> Excluir Meta
+                </MenuItem>
+            </Menu>
+
+            <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+                <DialogTitle>Você tem certeza?</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Esta ação não pode ser desfeita. Isso excluirá permanentemente a meta "{goal.name}".
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDeleteDialogOpen(false)}>Cancelar</Button>
+                    <Button onClick={handleConfirmDelete} color="error" variant="contained" autoFocus>Excluir</Button>
+                </DialogActions>
+            </Dialog>
+        </>
     );
 }
 
 function GoalsSkeleton() {
     return (
-        <div className="flex flex-col gap-6">
-            <div className="flex justify-between items-center">
-                <div>
-                    <Skeleton className="h-10 w-48 mb-2" />
-                    <Skeleton className="h-4 w-96" />
-                </div>
-                <Skeleton className="h-10 w-36" />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <Skeleton className="h-64" />
-                <Skeleton className="h-64" />
-                <Skeleton className="h-64" />
-            </div>
-        </div>
+        <Stack spacing={3}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
+                <Box>
+                    <Skeleton variant="text" width={200} height={40} />
+                    <Skeleton variant="text" width={300} height={24} />
+                </Box>
+                <Skeleton variant="rectangular" width={120} height={36} sx={{ borderRadius: 1 }} />
+            </Stack>
+            <Box display="grid" gridTemplateColumns={{ xs: '1fr', md: '1fr 1fr', lg: '1fr 1fr 1fr' }} gap={3}>
+                {[1, 2, 3].map((i) => (
+                    <Skeleton key={i} variant="rectangular" height={250} sx={{ borderRadius: 2 }} />
+                ))}
+            </Box>
+        </Stack>
     )
 }

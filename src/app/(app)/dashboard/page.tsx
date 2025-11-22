@@ -2,13 +2,12 @@
 // src/app/(app)/dashboard/page.tsx
 'use client';
 
-import { Button } from "@mui/material";
+import { Button, Grid, Stack, Box, Typography, Skeleton, useTheme, useMediaQuery } from "@mui/material";
 import { PlusCircle, ScanLine } from "lucide-react";
 import { useTransactions } from "@/hooks/use-transactions";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { ItemFilter } from "@/components/dashboard/item-filter";
 import { DateRangePicker } from "@/components/dashboard/date-range-picker";
-import { Skeleton } from "@/components/ui/skeleton";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 import { SpendingChart } from "@/components/dashboard/spending-chart";
 import { AITipCard } from "@/components/dashboard/ai-tip-card";
@@ -37,169 +36,211 @@ export default function DashboardPage() {
         setSelectedSubcategory
     } = useTransactions();
     const { isPro, isPlus } = usePlan();
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
     return (
-        <div className="flex flex-col gap-4 sm:gap-6">
-            {/* Header - Mobile First */}
-            <div className="flex flex-col gap-3 sm:gap-4">
-                <div className="flex flex-col gap-2">
-                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Painel</h1>
-                    <p className="text-sm sm:text-base text-muted-foreground">
+        <Stack spacing={{ xs: 2, sm: 3 }}>
+            {/* Header */}
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="space-between" alignItems={{ xs: 'stretch', sm: 'flex-start' }}>
+                <Box>
+                    <Typography variant="h4" fontWeight="bold" gutterBottom>Painel</Typography>
+                    <Typography variant="body1" color="text.secondary">
                         Aqui está uma visão geral das suas finanças.
-                    </p>
-                </div>
+                    </Typography>
+                </Box>
                 
-                {/* Action Buttons - Mobile Stack, Desktop Side by Side */}
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:justify-end">
+                {/* Action Buttons */}
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
                     <ProUpgradeButton requiredPlan="Pro">
                        <ReceiptScannerDialog>
                            <Button 
                                variant="outlined" 
                                disabled={!isPro}
-                               className="w-full sm:w-auto order-1 sm:order-1"
+                               fullWidth={isMobile}
+                               startIcon={<ScanLine size={18} />}
                            >
-                                <ScanLine className="mr-2 h-4 w-4"/>
                                 Escanear Nota
                             </Button>
                         </ReceiptScannerDialog>
                     </ProUpgradeButton>
                     
                     <AddTransactionSheet>
-                        <Button className="w-full sm:w-auto order-2 sm:order-2">
-                            <PlusCircle className="mr-2 h-4 w-4"/>
+                        <Button 
+                            variant="contained" 
+                            fullWidth={isMobile}
+                            startIcon={<PlusCircle size={18} />}
+                        >
                             Adicionar Transação
                         </Button>
                     </AddTransactionSheet>
-                </div>
-            </div>
+                </Stack>
+            </Stack>
 
-            {/* Filters - Mobile Stack, Desktop Row */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+            {/* Filters */}
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
                <DateRangePicker 
-                    className="w-full sm:w-auto min-w-[200px]" 
                     initialDate={dateRange} 
                     onUpdate={setDateRange}
+                    className="w-full md:w-auto"
                 />
-                <ItemFilter 
-                    className="w-full sm:flex-1 sm:max-w-[200px]"
-                    placeholder="Todas as Categorias"
-                    items={['all', ...categories]} 
-                    selectedItem={selectedCategory} 
-                    onItemSelected={handleCategoryChange}
-                />
-                <ItemFilter 
-                    className="w-full sm:flex-1 sm:max-w-[200px]"
-                    placeholder="Todas as Subcategorias"
-                    items={['all', ...availableSubcategories]} 
-                    selectedItem={selectedSubcategory} 
-                    onItemSelected={setSelectedSubcategory}
-                    disabled={selectedCategory === 'all'}
-                />
-            </div>
+                <Box sx={{ flex: 1, display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' } }}>
+                    <ItemFilter 
+                        placeholder="Todas as Categorias"
+                        items={['all', ...categories]} 
+                        selectedItem={selectedCategory} 
+                        onItemSelected={handleCategoryChange}
+                        className="w-full sm:flex-1"
+                    />
+                    <ItemFilter 
+                        placeholder="Todas as Subcategorias"
+                        items={['all', ...availableSubcategories]} 
+                        selectedItem={selectedSubcategory} 
+                        onItemSelected={setSelectedSubcategory}
+                        disabled={selectedCategory === 'all'}
+                        className="w-full sm:flex-1"
+                    />
+                </Box>
+            </Stack>
 
             {isLoading ? <DashboardSkeleton /> : (
                 <>
-                    {/* Main Grid - 12 column system for precise control */}
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
-                        {/* Left Side - Wallet Card and Gamification - 6 columns */}
-                        <div className="lg:col-span-6 space-y-4 sm:space-y-6">
-                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                               <WalletCard transactions={filteredTransactions} />
-                               {isPro && <GamificationSummary />}
-                           </div>
-                        </div>
+                    {/* Main Grid */}
+                    <Grid container spacing={{ xs: 2, sm: 3 }}>
+                        {/* Left Side - Wallet Card and Gamification */}
+                        <Grid xs={12} lg={6}>
+                           <Grid container spacing={{ xs: 2, sm: 3 }}>
+                               <Grid xs={12} sm={6}>
+                                   <WalletCard transactions={filteredTransactions} />
+                               </Grid>
+                               <Grid xs={12} sm={6}>
+                                   {isPro && <GamificationSummary />}
+                               </Grid>
+                           </Grid>
+                        </Grid>
                         
-                        {/* Right Side - Goals, Installments, and Future Balance - 6 columns */}
-                        <div className="lg:col-span-6 space-y-4 sm:space-y-6">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                                <GoalHighlightCard />
-                                <InstallmentsSummaryCard />
-                            </div>
-                            
-                            {isPlus ? (
-                                <FutureBalanceCard />
-                            ) : (
-                                <div className="relative">
+                        {/* Right Side - Goals, Installments, and Future Balance */}
+                        <Grid xs={12} lg={6}>
+                            <Stack spacing={{ xs: 2, sm: 3 }}>
+                                <Grid container spacing={{ xs: 2, sm: 3 }}>
+                                    <Grid xs={12} sm={6}>
+                                        <GoalHighlightCard />
+                                    </Grid>
+                                    <Grid xs={12} sm={6}>
+                                        <InstallmentsSummaryCard />
+                                    </Grid>
+                                </Grid>
+                                
+                                {isPlus ? (
                                     <FutureBalanceCard />
-                                    <div className="absolute inset-0 bg-background/80 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                                        <div className="text-center space-y-3 p-6">
-                                            <h3 className="font-semibold text-lg">Previsão de Saldo Plus</h3>
-                                            <p className="text-sm text-muted-foreground max-w-xs">
-                                                Desbloqueie previsões inteligentes do seu saldo futuro com IA
-                                            </p>
-                                            <ProUpgradeButton requiredPlan="Plus">
-                                                <Button className="w-full">
-                                                    Fazer Upgrade para Plus
-                                                </Button>
-                                            </ProUpgradeButton>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+                                ) : (
+                                    <Box sx={{ position: 'relative' }}>
+                                        <FutureBalanceCard />
+                                        <Box sx={{ 
+                                            position: 'absolute', 
+                                            inset: 0, 
+                                            bgcolor: 'rgba(255, 255, 255, 0.8)', 
+                                            backdropFilter: 'blur(4px)', 
+                                            borderRadius: 2, 
+                                            display: 'flex', 
+                                            alignItems: 'center', 
+                                            justifyContent: 'center',
+                                            zIndex: 1
+                                        }}>
+                                            <Box sx={{ textAlign: 'center', p: 3, maxWidth: 300 }}>
+                                                <Typography variant="h6" fontWeight="bold" gutterBottom>Previsão de Saldo Plus</Typography>
+                                                <Typography variant="body2" color="text.secondary" paragraph>
+                                                    Desbloqueie previsões inteligentes do seu saldo futuro com IA
+                                                </Typography>
+                                                <ProUpgradeButton requiredPlan="Plus">
+                                                    <Button variant="contained" fullWidth>
+                                                        Fazer Upgrade para Plus
+                                                    </Button>
+                                                </ProUpgradeButton>
+                                            </Box>
+                                        </Box>
+                                    </Box>
+                                )}
+                            </Stack>
+                        </Grid>
+                    </Grid>
 
-                    {/* Stats Cards - 4 equal columns */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+                    {/* Stats Cards */}
+                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: 'repeat(4, 1fr)' }, gap: { xs: 2, sm: 3 } }}>
                         <StatsCards transactions={filteredTransactions} />
-                    </div>
+                    </Box>
 
-                    {/* Chart and Recent Transactions - 8:4 ratio for better balance */}
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
-                       <div className="lg:col-span-8 order-2 lg:order-1">
+                    {/* Chart and Recent Transactions */}
+                    <Grid container spacing={{ xs: 2, sm: 3 }}>
+                       <Grid xs={12} lg={8} order={{ xs: 2, lg: 1 }}>
                          <SpendingChart data={chartData} />
-                       </div>
-                       <div className="lg:col-span-4 order-1 lg:order-2">
+                       </Grid>
+                       <Grid xs={12} lg={4} order={{ xs: 1, lg: 2 }}>
                          <RecentTransactions transactions={filteredTransactions} />
-                       </div>
-                    </div>
+                       </Grid>
+                    </Grid>
 
                     {isPro && <AITipCard transactions={filteredTransactions} />}
                 </>
             )}
-        </div>
+        </Stack>
     );
 }
 
 function DashboardSkeleton() {
     return (
-        <>
-             {/* Main Grid Skeleton - 12 column layout */}
-             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
-                {/* Left Side - Wallet & Gamification Skeleton */}
-                <div className="lg:col-span-6 space-y-4 sm:space-y-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                        <Skeleton className="h-40 sm:h-48" />
-                        <Skeleton className="h-40 sm:h-48" />
-                    </div>
-                </div>
+        <Stack spacing={{ xs: 2, sm: 3 }}>
+             {/* Main Grid Skeleton */}
+             <Grid container spacing={{ xs: 2, sm: 3 }}>
+                {/* Left Side */}
+                <Grid xs={12} lg={6}>
+                    <Grid container spacing={{ xs: 2, sm: 3 }}>
+                        <Grid xs={12} sm={6}>
+                            <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
+                        </Grid>
+                        <Grid xs={12} sm={6}>
+                            <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
+                        </Grid>
+                    </Grid>
+                </Grid>
                 
-                {/* Right Side - Goals, Installments, Future Balance Skeleton */}
-                <div className="lg:col-span-6 space-y-4 sm:space-y-6">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                        <Skeleton className="h-40 sm:h-48" />
-                        <Skeleton className="h-40 sm:h-48" />
-                    </div>
-                    <Skeleton className="h-32 sm:h-36" />
-                </div>
-             </div>
+                {/* Right Side */}
+                <Grid xs={12} lg={6}>
+                    <Stack spacing={{ xs: 2, sm: 3 }}>
+                        <Grid container spacing={{ xs: 2, sm: 3 }}>
+                            <Grid xs={12} sm={6}>
+                                <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
+                            </Grid>
+                            <Grid xs={12} sm={6}>
+                                <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
+                            </Grid>
+                        </Grid>
+                        <Skeleton variant="rectangular" height={140} sx={{ borderRadius: 2 }} />
+                    </Stack>
+                </Grid>
+             </Grid>
 
-             {/* Stats Cards Skeleton - 4 equal columns */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                <Skeleton className="h-32 sm:h-36" />
-                <Skeleton className="h-32 sm:h-36" />
-                <Skeleton className="h-32 sm:h-36" />
-                <Skeleton className="h-32 sm:h-36" />
-            </div>
+             {/* Stats Cards Skeleton */}
+            <Grid container spacing={{ xs: 2, sm: 3 }}>
+                {[1, 2, 3, 4].map((i) => (
+                    <Grid xs={12} sm={6} lg={3} key={i}>
+                        <Skeleton variant="rectangular" height={140} sx={{ borderRadius: 2 }} />
+                    </Grid>
+                ))}
+            </Grid>
 
-            {/* Chart and Recent Transactions Skeleton - 8:4 ratio */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
-                <Skeleton className="h-[350px] sm:h-[400px] lg:h-[450px] lg:col-span-8 order-2 lg:order-1" />
-                <Skeleton className="h-[350px] sm:h-[400px] lg:h-[450px] lg:col-span-4 order-1 lg:order-2" />
-            </div>
+            {/* Chart and Recent Transactions Skeleton */}
+            <Grid container spacing={{ xs: 2, sm: 3 }}>
+                <Grid xs={12} lg={8} order={{ xs: 2, lg: 1 }}>
+                    <Skeleton variant="rectangular" height={400} sx={{ borderRadius: 2 }} />
+                </Grid>
+                <Grid xs={12} lg={4} order={{ xs: 1, lg: 2 }}>
+                    <Skeleton variant="rectangular" height={400} sx={{ borderRadius: 2 }} />
+                </Grid>
+            </Grid>
 
             {/* AI Tip Skeleton */}
-            <Skeleton className="h-24 sm:h-28" />
-        </>
+            <Skeleton variant="rectangular" height={100} sx={{ borderRadius: 2 }} />
+        </Stack>
     );
 }

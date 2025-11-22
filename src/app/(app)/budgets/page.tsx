@@ -1,35 +1,27 @@
 // src/app/(app)/budgets/page.tsx
 'use client';
 
-import { useState } from "react";
-import { Card, CardContent, CardHeader, Typography } from "@mui/material";
-import { Button } from "@mui/material";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { PlusCircle, MoreVertical, Trash2, Edit, PiggyBank, Sparkles, Trophy, CheckCircle, Flame, Award, Calculator, BarChart3 } from "lucide-react";
-import { useBudgets } from "@/hooks/use-budgets";
-import { Skeleton } from "@/components/ui/skeleton";
-import { LinearProgress } from "@mui/material";
-import { cn } from "@/lib/utils";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { CreateBudgetDialog } from "@/components/budgets/create-budget-dialog";
+import { useState, MouseEvent } from "react";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  Card, CardContent, CardHeader, Typography, Button,
+  Stack, Box, Tabs, Tab, LinearProgress, Skeleton,
+  Menu, MenuItem, IconButton, Dialog, DialogTitle,
+  DialogContent, DialogContentText, DialogActions,
+  Chip, useTheme
+} from "@mui/material";
+import {
+  PlusCircle, MoreVertical, Trash2, Edit, PiggyBank,
+  Trophy, Flame, Award, Calculator, BarChart3
+} from "lucide-react";
+import { useBudgets } from "@/hooks/use-budgets";
+import { formatCurrency } from "@/lib/utils";
+import { CreateBudgetDialog } from "@/components/budgets/create-budget-dialog";
 import { Budget } from "@/lib/types";
 import { AutomaticBudgetCard } from "@/components/budgets/automatic-budget-card";
 import { BudgetGuidance } from "@/components/budgets/budget-guidance";
 import { SpendingAnalysis } from "@/components/budgets/spending-analysis";
 import { usePlan } from "@/hooks/use-plan";
 import { useGamification } from "@/hooks/use-gamification";
-import { formatCurrency } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
 export default function BudgetsPage() {
@@ -38,7 +30,11 @@ export default function BudgetsPage() {
     const { gamificationData } = useGamification();
     const { toast } = useToast();
     const [activeTab, setActiveTab] = useState("budgets");
-    
+
+    const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
+        setActiveTab(newValue);
+    };
+
     if (isLoading) {
         return <BudgetsSkeleton />
     }
@@ -76,7 +72,7 @@ export default function BudgetsPage() {
                 title: "Orçamentos criados",
                 description: `${budgetPlans.length} orçamentos foram criados com sucesso.`,
             });
-            setActiveTab("budgets"); // Voltar para a aba de orçamentos
+            setActiveTab("budgets");
         } catch (error) {
             toast({
                 variant: "destructive",
@@ -93,217 +89,238 @@ export default function BudgetsPage() {
             amount
         });
     };
-    
+
     return (
-        <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Orçamentos</h1>
-                    <p className="text-muted-foreground">Defina limites de gastos mensais para suas categorias e evite surpresas no final do mês.</p>
-                </div>
-                 <CreateBudgetDialog>
-                    <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Novo Orçamento
+        <Stack spacing={3}>
+            <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'center' }} spacing={2}>
+                <Box>
+                    <Typography variant="h4" fontWeight="bold" gutterBottom>Orçamentos</Typography>
+                    <Typography variant="body1" color="text.secondary">
+                        Defina limites de gastos mensais para suas categorias e evite surpresas no final do mês.
+                    </Typography>
+                </Box>
+                <CreateBudgetDialog>
+                    <Button variant="contained" startIcon={<PlusCircle size={18} />}>
+                        Novo Orçamento
                     </Button>
                 </CreateBudgetDialog>
-            </div>
+            </Stack>
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="budgets" className="flex items-center gap-2">
-                        <PiggyBank className="h-4 w-4" />
-                        Meus Orçamentos
-                    </TabsTrigger>
-                    <TabsTrigger value="guidance" className="flex items-center gap-2">
-                        <Calculator className="h-4 w-4" />
-                        Como Montar
-                    </TabsTrigger>
-                    <TabsTrigger value="analysis" className="flex items-center gap-2">
-                        <BarChart3 className="h-4 w-4" />
-                        Análise dos Gastos
-                    </TabsTrigger>
-                </TabsList>
+            <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+                <Tabs value={activeTab} onChange={handleTabChange} aria-label="budget tabs">
+                    <Tab label="Meus Orçamentos" value="budgets" icon={<PiggyBank size={18} />} iconPosition="start" />
+                    <Tab label="Como Montar" value="guidance" icon={<Calculator size={18} />} iconPosition="start" />
+                    <Tab label="Análise dos Gastos" value="analysis" icon={<BarChart3 size={18} />} iconPosition="start" />
+                </Tabs>
+            </Box>
 
-                <TabsContent value="budgets" className="space-y-6">
-                    {/* Gamification Summary for Budgets */}
+            {activeTab === 'budgets' && (
+                <Stack spacing={3}>
                     {gamificationData && (
-                         <Card className="bg-gradient-to-r from-blue-50 to-green-50 dark:from-blue-950/20 dark:to-green-950/20">
-                            <CardHeader>
-                                <Typography variant="h6" className="flex items-center gap-2 text-lg text-blue-800 dark:text-blue-300">
-                                    <Trophy className="h-5 w-5"/>
-                                    Desempenho dos Orçamentos
-                                </Typography>
-                            </CardHeader>
-                            <CardContent className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                                <div className="p-3 bg-background/50 rounded-lg">
-                                    <p className="text-2xl font-bold">{budgets.length}</p>
-                                    <p className="text-xs text-muted-foreground">Orçamentos Ativos</p>
-                                </div>
-                                <div className="p-3 bg-background/50 rounded-lg">
-                                    <p className="text-2xl font-bold text-green-600">
-                                        {gamificationData.achievements.find(a => a.id === 'budget-master')?.progress || 0}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">Orçamentos Cumpridos</p>
-                                </div>
-                                <div className="p-3 bg-background/50 rounded-lg">
-                                    <p className="text-2xl font-bold text-red-500">
-                                         {gamificationData.achievements.find(a => a.id === 'overspending-avoider')?.progress || 0}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">Orçamentos Estourados</p>
-                                </div>
-                                <div className="p-3 bg-background/50 rounded-lg">
-                                    <p className="text-2xl font-bold text-orange-500 flex items-center justify-center gap-1">
-                                        <Flame className="h-5 w-5"/> {gamificationData.streak || 0}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">Meses no Controle</p>
-                                </div>
+                        <Card sx={{
+                            background: 'linear-gradient(to right, #eff6ff, #f0fdf4)',
+                            '.dark &': { background: 'linear-gradient(to right, rgba(23, 37, 84, 0.2), rgba(20, 83, 45, 0.2))' }
+                        }}>
+                            <CardHeader
+                                title={
+                                    <Box display="flex" alignItems="center" gap={1}>
+                                        <Trophy size={20} />
+                                        <Typography variant="h6">Desempenho dos Orçamentos</Typography>
+                                    </Box>
+                                }
+                                titleTypographyProps={{ color: 'primary.main' }}
+                            />
+                            <CardContent>
+                                <Box display="grid" gridTemplateColumns={{ xs: '1fr 1fr', md: '1fr 1fr 1fr 1fr' }} gap={2} textAlign="center">
+                                    <Box p={2} bgcolor="background.paper" borderRadius={1}>
+                                        <Typography variant="h5" fontWeight="bold">{budgets.length}</Typography>
+                                        <Typography variant="caption" color="text.secondary">Orçamentos Ativos</Typography>
+                                    </Box>
+                                    <Box p={2} bgcolor="background.paper" borderRadius={1}>
+                                        <Typography variant="h5" fontWeight="bold" color="success.main">
+                                            {gamificationData.achievements.find(a => a.id === 'budget-master')?.progress || 0}
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">Orçamentos Cumpridos</Typography>
+                                    </Box>
+                                    <Box p={2} bgcolor="background.paper" borderRadius={1}>
+                                        <Typography variant="h5" fontWeight="bold" color="error.main">
+                                            {gamificationData.achievements.find(a => a.id === 'overspending-avoider')?.progress || 0}
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">Orçamentos Estourados</Typography>
+                                    </Box>
+                                    <Box p={2} bgcolor="background.paper" borderRadius={1}>
+                                        <Typography variant="h5" fontWeight="bold" color="warning.main" display="flex" alignItems="center" justifyItems="center" justifyContent="center" gap={0.5}>
+                                            <Flame size={20} /> {gamificationData.streak || 0}
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">Meses no Controle</Typography>
+                                    </Box>
+                                </Box>
                             </CardContent>
                         </Card>
                     )}
 
                     {isPlus && <AutomaticBudgetCard />}
-                    
+
                     {budgets.length > 0 ? (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <Box display="grid" gridTemplateColumns={{ xs: '1fr', md: '1fr 1fr', lg: '1fr 1fr 1fr' }} gap={3}>
                             {budgets.map(budget => (
-                               <BudgetCard key={budget.id} budget={budget} onDelete={() => deleteBudget(budget.id)} />
+                                <BudgetCard key={budget.id} budget={budget} onDelete={() => deleteBudget(budget.id)} />
                             ))}
-                        </div>
+                        </Box>
                     ) : (
-                         <Card className="col-span-full border-dashed">
-                            <CardContent className="p-8 text-center text-muted-foreground flex flex-col items-center">
-                               <PiggyBank className="h-12 w-12 mb-4 text-primary/50" />
-                                <h3 className="text-lg font-semibold text-foreground">Nenhum orçamento encontrado.</h3>
-                               <p className="text-sm max-w-md mx-auto mb-4">
-                                 Experimente usar nossas ferramentas inteligentes para criar orçamentos baseados na sua situação ou histórico de gastos.
-                               </p>
-                               <div className="flex gap-2">
-                                    <Button onClick={() => setActiveTab("guidance")} variant="outlined">
-                                        <Calculator className="mr-2 h-4 w-4" /> Como Montar
-                                    </Button>
-                                    <Button onClick={() => setActiveTab("analysis")} variant="outlined">
-                                        <BarChart3 className="mr-2 h-4 w-4" /> Analisar Gastos
-                                    </Button>
-                                    <CreateBudgetDialog>
-                                        <Button>
-                                            <PlusCircle className="mr-2 h-4 w-4" /> Criar Manual
+                        <Card variant="outlined" sx={{ borderStyle: 'dashed' }}>
+                            <CardContent>
+                                <Stack alignItems="center" spacing={2} py={4}>
+                                    <PiggyBank size={48} style={{ opacity: 0.5 }} />
+                                    <Typography variant="h6">Nenhum orçamento encontrado.</Typography>
+                                    <Typography variant="body2" color="text.secondary" textAlign="center" maxWidth="sm">
+                                        Experimente usar nossas ferramentas inteligentes para criar orçamentos baseados na sua situação ou histórico de gastos.
+                                    </Typography>
+                                    <Stack direction="row" spacing={1}>
+                                        <Button variant="outlined" onClick={() => setActiveTab("guidance")} startIcon={<Calculator size={16} />}>
+                                            Como Montar
                                         </Button>
-                                    </CreateBudgetDialog>
-                               </div>
+                                        <Button variant="outlined" onClick={() => setActiveTab("analysis")} startIcon={<BarChart3 size={16} />}>
+                                            Analisar Gastos
+                                        </Button>
+                                        <CreateBudgetDialog>
+                                            <Button variant="contained" startIcon={<PlusCircle size={16} />}>
+                                                Criar Manual
+                                            </Button>
+                                        </CreateBudgetDialog>
+                                    </Stack>
+                                </Stack>
                             </CardContent>
                         </Card>
                     )}
-                </TabsContent>
+                </Stack>
+            )}
 
-                <TabsContent value="guidance" className="space-y-6">
-                    <BudgetGuidance onBudgetCreated={handleMultipleBudgetCreation} />
-                </TabsContent>
+            {activeTab === 'guidance' && (
+                <BudgetGuidance onBudgetCreated={handleMultipleBudgetCreation} />
+            )}
 
-                <TabsContent value="analysis" className="space-y-6">
-                    <SpendingAnalysis onBudgetSuggestionAccepted={handleSuggestionAccepted} />
-                </TabsContent>
-            </Tabs>
-        </div>
+            {activeTab === 'analysis' && (
+                <SpendingAnalysis onBudgetSuggestionAccepted={handleSuggestionAccepted} />
+            )}
+        </Stack>
     )
 }
 
 function BudgetCard({ budget, onDelete }: { budget: Budget, onDelete: () => void }) {
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const open = Boolean(anchorEl);
+
+    const handleMenuClick = (event: MouseEvent<HTMLElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+    };
+
+    const handleDeleteClick = () => {
+        handleMenuClose();
+        setDeleteDialogOpen(true);
+    };
+
+    const handleDeleteConfirm = () => {
+        onDelete();
+        setDeleteDialogOpen(false);
+    };
+
     const percentage = Math.round((budget.currentSpending / budget.amount) * 100);
-    const progressColor = percentage > 100 ? "bg-red-600" : percentage > 80 ? "bg-yellow-500" : "bg-primary";
-    const progressSxColor = percentage > 100 
-        ? { backgroundColor: 'rgb(220, 38, 38)' } 
-        : percentage > 80 
-        ? { backgroundColor: 'rgb(234, 179, 8)' } 
-        : {};
+    
+    let progressColor: 'primary' | 'secondary' | 'error' | 'warning' | 'success' = 'primary';
+    if (percentage > 100) progressColor = 'error';
+    else if (percentage > 80) progressColor = 'warning';
+
     const remainingAmount = budget.amount - budget.currentSpending;
 
     return (
         <Card>
-            <CardHeader>
-                <div className="flex items-start justify-between">
-                    <div>
-                         <Typography variant="h6" className="flex items-center gap-2">
-                             {budget.currentSpending <= budget.amount && <Award className="h-4 w-4 text-yellow-500" />}
-                            {budget.name}
-                         </Typography>
-                        <Typography variant="body2" color="text.secondary">Categoria: {budget.category}</Typography>
-                    </div>
-                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="text" size="small" className="h-8 w-8">
-                                <MoreVertical className="h-4 w-4"/>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+            <CardHeader
+                title={
+                    <Box display="flex" alignItems="center" gap={1}>
+                        {budget.currentSpending <= budget.amount && <Award size={16} className="text-yellow-500" />}
+                        <Typography variant="h6">{budget.name}</Typography>
+                    </Box>
+                }
+                subheader={`Categoria: ${budget.category}`}
+                action={
+                    <>
+                        <IconButton onClick={handleMenuClick} size="small">
+                            <MoreVertical size={16} />
+                        </IconButton>
+                        <Menu anchorEl={anchorEl} open={open} onClose={handleMenuClose}>
                             <CreateBudgetDialog initialData={budget}>
-                                <div className="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
-                                    <Edit className="mr-2 h-4 w-4"/>Editar
-                                </div>
+                                <MenuItem onClick={handleMenuClose}>
+                                    <Edit size={16} style={{ marginRight: 8 }} /> Editar
+                                </MenuItem>
                             </CreateBudgetDialog>
-                           
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-400 focus:bg-destructive/10">
-                                        <Trash2 className="mr-2 h-4 w-4"/>Excluir Orçamento
-                                    </DropdownMenuItem>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            Esta ação não pode ser desfeita. Isso excluirá permanentemente o orçamento "{budget.name}".
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                        <AlertDialogAction onClick={onDelete} className="bg-destructive hover:bg-destructive/90">Excluir</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div>
-                     <LinearProgress variant="determinate" value={Math.min(percentage, 100)} indicatorSx={progressSxColor} />
-                </div>
-                <div className="flex justify-between items-baseline">
-                    <p className="text-lg font-bold text-foreground">{formatCurrency(budget.currentSpending)}</p>
-                    <p className="text-sm text-muted-foreground">de {formatCurrency(budget.amount)}</p>
-                </div>
-                 <div className="text-right">
-                    <p className={cn(
-                        "text-sm font-semibold",
-                        remainingAmount >= 0 ? "text-green-500" : "text-red-500"
-                    )}>
-                        {remainingAmount >= 0 
-                            ? `${formatCurrency(remainingAmount)} restantes`
-                            : `${formatCurrency(Math.abs(remainingAmount))} acima do limite`
-                        }
-                    </p>
-                </div>
+                            <MenuItem onClick={handleDeleteClick} sx={{ color: 'error.main' }}>
+                                <Trash2 size={16} style={{ marginRight: 8 }} /> Excluir Orçamento
+                            </MenuItem>
+                        </Menu>
+                    </>
+                }
+            />
+            <CardContent>
+                <Stack spacing={2}>
+                    <LinearProgress 
+                        variant="determinate" 
+                        value={Math.min(percentage, 100)} 
+                        color={progressColor}
+                        sx={{ height: 8, borderRadius: 4 }}
+                    />
+                    <Box display="flex" justifyContent="space-between" alignItems="baseline">
+                        <Typography variant="h6" fontWeight="bold">{formatCurrency(budget.currentSpending)}</Typography>
+                        <Typography variant="body2" color="text.secondary">de {formatCurrency(budget.amount)}</Typography>
+                    </Box>
+                    <Box textAlign="right">
+                        <Typography variant="body2" fontWeight="bold" color={remainingAmount >= 0 ? 'success.main' : 'error.main'}>
+                            {remainingAmount >= 0 
+                                ? `${formatCurrency(remainingAmount)} restantes`
+                                : `${formatCurrency(Math.abs(remainingAmount))} acima do limite`
+                            }
+                        </Typography>
+                    </Box>
+                </Stack>
             </CardContent>
+
+            <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+                <DialogTitle>Você tem certeza?</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Esta ação não pode ser desfeita. Isso excluirá permanentemente o orçamento "{budget.name}".
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDeleteDialogOpen(false)}>Cancelar</Button>
+                    <Button onClick={handleDeleteConfirm} color="error" variant="contained">Excluir</Button>
+                </DialogActions>
+            </Dialog>
         </Card>
     );
 }
 
 function BudgetsSkeleton() {
     return (
-        <div className="flex flex-col gap-6">
-            <div className="flex justify-between items-center">
-                <div>
-                    <Skeleton className="h-10 w-48 mb-2" />
-                    <Skeleton className="h-4 w-96" />
-                </div>
-                <Skeleton className="h-10 w-36" />
-            </div>
-            <Skeleton className="h-24 w-full" />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <Skeleton className="h-56" />
-                <Skeleton className="h-56" />
-                <Skeleton className="h-56" />
-            </div>
-        </div>
+        <Stack spacing={3}>
+            <Stack direction="row" justifyContent="space-between">
+                <Box>
+                    <Skeleton width={200} height={40} />
+                    <Skeleton width={300} height={20} />
+                </Box>
+                <Skeleton width={150} height={40} />
+            </Stack>
+            <Skeleton variant="rectangular" height={100} />
+            <Box display="grid" gridTemplateColumns={{ xs: '1fr', md: '1fr 1fr 1fr' }} gap={3}>
+                <Skeleton variant="rectangular" height={200} />
+                <Skeleton variant="rectangular" height={200} />
+                <Skeleton variant="rectangular" height={200} />
+            </Box>
+        </Stack>
     )
 }

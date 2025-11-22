@@ -1,14 +1,15 @@
 // src/app/(app)/installments/page.tsx
-
 'use client';
 
 import {useState} from 'react';
-import {Card, CardContent, CardHeader, Typography} from '@mui/material';
-import {Button} from '@mui/material';
-import {Chip} from '@mui/material';
-import {LinearProgress} from '@mui/material';
-import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/ui/tabs';
-import {Calendar, CreditCard, DollarSign, AlertTriangle, CheckCircle2, Clock, Plus, TrendingUp, PieChart, Trophy, Award, Flame, Zap, Target} from 'lucide-react';
+import {
+    Card, CardContent, CardHeader, Typography, Button, Chip, LinearProgress,
+    Tabs, Tab, Skeleton, Stack, Box, IconButton
+} from '@mui/material';
+import {
+    CreditCard, DollarSign, AlertTriangle, CheckCircle2, Clock, Plus, 
+    Trophy, Award, Flame, Target
+} from 'lucide-react';
 import {useInstallments} from '@/hooks/use-installments';
 import {CreateInstallmentDialog} from '@/components/installments/create-installment-dialog';
 import {InstallmentCard} from '@/components/installments/installment-card';
@@ -16,7 +17,6 @@ import {PaymentSchedule} from '@/components/installments/payment-schedule';
 import {MonthlyProjections} from '@/components/installments/monthly-projections';
 import {GamificationGuide} from '@/components/installments/gamification-guide';
 import {formatCurrency} from '@/lib/utils';
-import {Skeleton} from '@/components/ui/skeleton';
 import {motion} from 'framer-motion';
 import {useGamification} from '@/hooks/use-gamification';
 
@@ -25,6 +25,10 @@ export default function InstallmentsPage() {
   const [activeTab, setActiveTab] = useState('gamification'); // Progresso é a aba padrão
   const { installments, summary, isLoading } = useInstallments();
   const { gamificationData, isLoading: isGamificationLoading } = useGamification();
+
+  const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
+    setActiveTab(newValue);
+  };
 
   // Função para traduzir raridade dos badges
   const translateRarity = (rarity: string) => {
@@ -40,20 +44,20 @@ export default function InstallmentsPage() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4 p-4">
-        <div className="flex flex-col gap-2">
-          <Skeleton className="h-8 w-48" />
-          <Skeleton className="h-4 w-96" />
-        </div>
+      <Stack spacing={4} p={4}>
+        <Stack spacing={2}>
+          <Skeleton variant="text" width={200} height={40} />
+          <Skeleton variant="text" width={400} height={24} />
+        </Stack>
         
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr 1fr 1fr' }} gap={4}>
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-32" />
+            <Skeleton key={i} variant="rectangular" height={128} sx={{ borderRadius: 2 }} />
           ))}
-        </div>
+        </Box>
         
-        <Skeleton className="h-96" />
-      </div>
+        <Skeleton variant="rectangular" height={400} sx={{ borderRadius: 2 }} />
+      </Stack>
     );
   }
 
@@ -61,44 +65,49 @@ export default function InstallmentsPage() {
   const completedInstallments = installments.filter(i => i.isCompleted);
 
   return (
-    <div className="space-y-4 p-4">
+    <Stack spacing={4}>
       {/* Header */}
-      <div className="flex flex-col gap-4">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Parcelamentos</h1>
-          <p className="text-muted-foreground text-sm">
-            Gerencie suas prestações, acompanhe pagamentos e projete compromissos futuros.
-          </p>
-        </div>
-        <div className="flex flex-col md:flex-row gap-2 md:justify-end">
-          <GamificationGuide 
-            currentPoints={gamificationData?.points}
-            currentLevel={gamificationData?.level}
-            badges={gamificationData?.badges}
-          />
-          <Button onClick={() => setIsCreateOpen(true)} className="w-full md:w-auto">
-            <Plus className="h-4 w-4 mr-2" />
-            Novo Parcelamento
-          </Button>
-        </div>
-      </div>
+      <Stack spacing={4}>
+        <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'center' }} spacing={2}>
+            <Box>
+                <Typography variant="h4" fontWeight="bold">Parcelamentos</Typography>
+                <Typography variant="body1" color="text.secondary">
+                    Gerencie suas prestações, acompanhe pagamentos e projete compromissos futuros.
+                </Typography>
+            </Box>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems="center">
+                <GamificationGuide 
+                    currentPoints={gamificationData?.points}
+                    currentLevel={gamificationData?.level}
+                    badges={gamificationData?.badges}
+                />
+                <Button variant="contained" onClick={() => setIsCreateOpen(true)} startIcon={<Plus size={18} />}>
+                    Novo Parcelamento
+                </Button>
+            </Stack>
+        </Stack>
+      </Stack>
 
       {/* Alerta de Atraso */}
       {summary && summary.overduePayments.length > 0 && (
-        <Card className="border-destructive/20 dark:border-destructive/20 bg-destructive/5 dark:bg-destructive/5">
-          <CardHeader className="pb-3">
-            <div className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-destructive dark:text-destructive" />
-              <Typography variant="h6" className="text-destructive dark:text-destructive">
-                {summary.overduePayments.length} Parcela{summary.overduePayments.length > 1 ? 's' : ''} em Atraso
-              </Typography>
-            </div>
-            <Typography variant="body2" color="text.secondary" className="text-destructive/70 dark:text-destructive/70">
-              Você tem pagamentos vencidos que precisam de atenção imediata.
-            </Typography>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="grid gap-2">
+        <Card sx={{ borderColor: 'error.main', bgcolor: 'error.light', color: 'error.contrastText' }}>
+          <CardHeader
+            title={
+                <Box display="flex" alignItems="center" gap={1}>
+                    <AlertTriangle size={20} />
+                    <Typography variant="h6">
+                        {summary.overduePayments.length} Parcela{summary.overduePayments.length > 1 ? 's' : ''} em Atraso
+                    </Typography>
+                </Box>
+            }
+            subheader={
+                <Typography variant="body2" sx={{ opacity: 0.9 }}>
+                    Você tem pagamentos vencidos que precisam de atenção imediata.
+                </Typography>
+            }
+          />
+          <CardContent>
+            <Stack spacing={2}>
               {summary.overduePayments.slice(0, 3).map((payment) => {
                 const installment = installments.find(inst => 
                   inst.payments.some(p => p.id === payment.id)
@@ -106,38 +115,36 @@ export default function InstallmentsPage() {
                 const daysOverdue = Math.floor((new Date().getTime() - new Date(payment.dueDate).getTime()) / (1000 * 60 * 60 * 24));
                 
                 return (
-                  <div key={payment.id} className="flex items-center justify-between p-3 bg-background/50 dark:bg-background/50 rounded-lg border border-destructive/30 dark:border-destructive/30">
-                    <div className="flex-1">
-                      <div className="font-medium text-foreground dark:text-foreground">
+                  <Box key={payment.id} display="flex" alignItems="center" justifyContent="space-between" p={2} bgcolor="background.paper" borderRadius={1} border={1} borderColor="error.main">
+                    <Box flex={1}>
+                      <Typography variant="subtitle2" fontWeight="bold" color="text.primary">
                         {installment?.name || 'Parcelamento'} - Parcela {payment.installmentNumber}
-                      </div>
-                      <div className="text-sm text-muted-foreground dark:text-muted-foreground">
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
                         Venceu em {new Date(payment.dueDate).toLocaleDateString('pt-BR')} • {daysOverdue} dias de atraso
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="font-semibold text-foreground dark:text-foreground">
+                      </Typography>
+                    </Box>
+                    <Box textAlign="right">
+                      <Typography variant="subtitle2" fontWeight="bold" color="text.primary">
                         {formatCurrency(payment.scheduledAmount)}
-                      </div>
-                      <Chip variant="contained" color="error" className="text-xs">
-                        Em Atraso
-                      </Chip>
-                    </div>
-                  </div>
+                      </Typography>
+                      <Chip label="Em Atraso" color="error" size="small" />
+                    </Box>
+                  </Box>
                 );
               })}
-            </div>
             
             {summary.overduePayments.length > 3 && (
-              <div className="text-sm text-muted-foreground dark:text-muted-foreground text-center py-2 border-t border-destructive/20 dark:border-destructive/20">
+              <Typography variant="caption" textAlign="center" display="block">
                 E mais {summary.overduePayments.length - 3} parcela{summary.overduePayments.length - 3 > 1 ? 's' : ''} em atraso
-              </div>
+              </Typography>
             )}
             
-            <div className="flex gap-2 pt-2">
+            <Stack direction="row" spacing={2}>
               <Button 
-                size="small" 
-                className="bg-destructive hover:bg-destructive/90 dark:bg-destructive dark:hover:bg-destructive/90 flex-1"
+                variant="contained" 
+                color="error" 
+                fullWidth
                 onClick={() => {
                   // TODO: Implementar funcionalidade de quitar múltiplas pendências
                   setActiveTab('active');
@@ -146,320 +153,347 @@ export default function InstallmentsPage() {
                 Quitar Pendências
               </Button>
               <Button 
-                size="small" 
                 variant="outlined" 
-                className="border-destructive/30 dark:border-destructive/30 text-foreground dark:text-foreground hover:bg-destructive/10 dark:hover:bg-destructive/10"
+                color="inherit"
+                fullWidth
                 onClick={() => setActiveTab('schedule')}
               >
                 Ver Cronograma
               </Button>
-            </div>
+            </Stack>
+            </Stack>
           </CardContent>
         </Card>
       )}
 
       {/* Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <Box display="grid" gridTemplateColumns={{ xs: '1fr 1fr', lg: '1fr 1fr 1fr 1fr' }} gap={4}>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <Typography variant="h6" className="text-xs font-medium">Parcelamentos Ativos</Typography>
-            <CreditCard className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
+          <CardHeader
+            title={<Typography variant="subtitle2" color="text.secondary">Parcelamentos Ativos</Typography>}
+            action={<CreditCard size={16} style={{ opacity: 0.5 }} />}
+            sx={{ pb: 1 }}
+          />
           <CardContent>
-            <div className="text-xl font-bold">{summary?.totalActiveInstallments || 0}</div>
-            <p className="text-xs text-muted-foreground">
+            <Typography variant="h5" fontWeight="bold">{summary?.totalActiveInstallments || 0}</Typography>
+            <Typography variant="caption" color="text.secondary">
               {activeInstallments.length} em andamento
-            </p>
+            </Typography>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <Typography variant="h6" className="text-xs font-medium">Compromisso Mensal</Typography>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
+          <CardHeader
+            title={<Typography variant="subtitle2" color="text.secondary">Compromisso Mensal</Typography>}
+            action={<DollarSign size={16} style={{ opacity: 0.5 }} />}
+            sx={{ pb: 1 }}
+          />
           <CardContent>
-            <div className="text-lg font-bold">
+            <Typography variant="h5" fontWeight="bold">
               {formatCurrency(summary?.totalMonthlyCommitment || 0)}
-            </div>
-            <p className="text-xs text-muted-foreground">
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
               Total das parcelas mensais
-            </p>
+            </Typography>
           </CardContent>
         </Card>
 
-        <Card className={`col-span-2 lg:col-span-1 ${summary && summary.overduePayments.length > 0 ? "border-destructive/20 dark:border-destructive/20" : ""}`}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <Typography variant="h6" className="text-xs font-medium">
-              {summary && summary.overduePayments.length > 0 ? "Parcelas em Atraso" : "Próximos Vencimentos"}
-            </Typography>
-            {summary && summary.overduePayments.length > 0 ? (
-              <AlertTriangle className="h-4 w-4 text-destructive dark:text-destructive" />
-            ) : (
-              <Clock className="h-4 w-4 text-muted-foreground" />
-            )}
-          </CardHeader>
+        <Card sx={summary && summary.overduePayments.length > 0 ? { borderColor: 'error.main' } : {}}>
+          <CardHeader
+            title={
+                <Typography variant="subtitle2" color={summary && summary.overduePayments.length > 0 ? "error.main" : "text.secondary"}>
+                    {summary && summary.overduePayments.length > 0 ? "Parcelas em Atraso" : "Próximos Vencimentos"}
+                </Typography>
+            }
+            action={
+                summary && summary.overduePayments.length > 0 ? (
+                  <AlertTriangle size={16} color="var(--mui-palette-error-main)" />
+                ) : (
+                  <Clock size={16} style={{ opacity: 0.5 }} />
+                )
+            }
+            sx={{ pb: 1 }}
+          />
           <CardContent>
-            <div className={`text-xl font-bold ${summary && summary.overduePayments.length > 0 ? "text-destructive dark:text-destructive" : ""}`}>
+            <Typography variant="h5" fontWeight="bold" color={summary && summary.overduePayments.length > 0 ? "error.main" : "text.primary"}>
               {summary && summary.overduePayments.length > 0 
                 ? summary.overduePayments.length 
                 : summary?.upcomingPayments.length || 0
               }
-            </div>
-            <p className={`text-xs ${summary && summary.overduePayments.length > 0 ? "text-destructive/80 dark:text-destructive/80" : "text-muted-foreground"}`}>
+            </Typography>
+            <Typography variant="caption" color={summary && summary.overduePayments.length > 0 ? "error.main" : "text.secondary"}>
               {summary && summary.overduePayments.length > 0 
                 ? "Precisam de atenção" 
                 : "Próximos 30 dias"
               }
-            </p>
+            </Typography>
           </CardContent>
         </Card>
 
-        <Card className="col-span-2 lg:col-span-1">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <Typography variant="h6" className="text-xs font-medium">Parcelamentos Quitados</Typography>
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-          </CardHeader>
+        <Card>
+          <CardHeader
+            title={<Typography variant="subtitle2" color="text.secondary">Parcelamentos Quitados</Typography>}
+            action={<CheckCircle2 size={16} color="var(--mui-palette-success-main)" />}
+            sx={{ pb: 1 }}
+          />
           <CardContent>
-            <div className="text-xl font-bold text-green-600">{completedInstallments.length}</div>
-            <p className="text-xs text-muted-foreground">
+            <Typography variant="h5" fontWeight="bold" color="success.main">{completedInstallments.length}</Typography>
+            <Typography variant="caption" color="text.secondary">
               Finalizados com sucesso
-            </p>
+            </Typography>
           </CardContent>
         </Card>
-      </div>
+      </Box>
 
       {/* Main Content */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <div className="overflow-x-auto">
-          <TabsList className="flex w-max min-w-full md:grid md:grid-cols-5 h-auto">
-            <TabsTrigger value="gamification" className="text-xs md:text-sm py-2 whitespace-nowrap flex-shrink-0">Progresso</TabsTrigger>
-            <TabsTrigger value="active" className="text-xs md:text-sm py-2 whitespace-nowrap flex-shrink-0">Ativos</TabsTrigger>
-            <TabsTrigger value="schedule" className="text-xs md:text-sm py-2 whitespace-nowrap flex-shrink-0">Cronograma</TabsTrigger>
-            <TabsTrigger value="projections" className="text-xs md:text-sm py-2 whitespace-nowrap flex-shrink-0">Projeções</TabsTrigger>
-            <TabsTrigger value="completed" className="text-xs md:text-sm py-2 whitespace-nowrap flex-shrink-0">Finalizados</TabsTrigger>
-          </TabsList>
-        </div>
+      <Box>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+            <Tabs value={activeTab} onChange={handleTabChange} variant="scrollable" scrollButtons="auto">
+                <Tab label="Progresso" value="gamification" />
+                <Tab label="Ativos" value="active" />
+                <Tab label="Cronograma" value="schedule" />
+                <Tab label="Projeções" value="projections" />
+                <Tab label="Finalizados" value="completed" />
+            </Tabs>
+        </Box>
 
-        <TabsContent value="active" className="space-y-4">
-          {activeInstallments.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <CreditCard className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Nenhum parcelamento ativo</h3>
-                <p className="text-muted-foreground text-center mb-4">
-                  Comece criando seu primeiro parcelamento para acompanhar suas prestações.
-                </p>
-                <Button onClick={() => setIsCreateOpen(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Criar Parcelamento
-                </Button>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {activeInstallments.map((installment) => (
-                <InstallmentCard 
-                  key={installment.id} 
-                  installment={installment}
-                  showActions
-                />
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="gamification" className="space-y-6">
-          {isGamificationLoading ? (
-            <div className="space-y-4">
-              <Skeleton className="h-40 w-full" />
-              <Skeleton className="h-24 w-full" />
-              <Skeleton className="h-64 w-full" />
-            </div>
-          ) : gamificationData ? (
-            <div className="space-y-6">
-              {/* Header da Gamificação com Guia */}
-              <Card className="bg-gradient-to-r from-slate-800/50 to-slate-900/50 dark:from-slate-800/50 dark:to-slate-900/50 border-slate-700 dark:border-slate-700">
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-blue-500 flex items-center justify-center">
-                        <Trophy className="h-6 w-6 text-white" />
-                      </div>
-                      <div>
-                        <Typography variant="h6" className="text-xl text-slate-100 dark:text-slate-100">
-                          Nível {gamificationData.level.level} - {gamificationData.level.name}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" className="text-slate-300 dark:text-slate-300">
-                          {gamificationData.points} pontos acumulados
-                        </Typography>
-                      </div>
-                    </div>
-                    <div className="flex-shrink-0 hidden md:block">
-                      <GamificationGuide />
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm text-slate-200 dark:text-slate-200">
-                      <span>Progresso para o próximo nível</span>
-                      <span>{gamificationData.level.pointsToNext} pontos restantes</span>
-                    </div>
-                    <LinearProgress variant="determinate" 
-                      value={(gamificationData.points / (gamificationData.level.pointsRequired + gamificationData.level.pointsToNext)) * 100} 
-                      className="h-3"
-                    />
-                  </div>
-                  
-                  {gamificationData.streak > 0 && (
-                    <div className="flex items-center gap-2 p-3 bg-orange-500/10 border border-orange-200 dark:border-orange-900/50 rounded-lg">
-                      <Flame className="h-5 w-5 text-orange-500" />
-                      <span className="font-medium text-orange-700 dark:text-orange-400 text-sm md:text-base break-words">
-                        Sequência de {gamificationData.streak} meses pagando tudo em dia! 🔥
-                      </span>
-                    </div>
-                  )}
+        {activeTab === 'active' && (
+          <Box>
+            {activeInstallments.length === 0 ? (
+              <Card>
+                <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 8 }}>
+                  <CreditCard size={48} style={{ opacity: 0.5, marginBottom: 16 }} />
+                  <Typography variant="h6" gutterBottom>Nenhum parcelamento ativo</Typography>
+                  <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 2 }}>
+                    Comece criando seu primeiro parcelamento para acompanhar suas prestações.
+                  </Typography>
+                  <Button variant="contained" onClick={() => setIsCreateOpen(true)} startIcon={<Plus size={18} />}>
+                    Criar Parcelamento
+                  </Button>
                 </CardContent>
               </Card>
+            ) : (
+              <Box display="grid" gridTemplateColumns={{ xs: '1fr', lg: '1fr 1fr' }} gap={4}>
+                {activeInstallments.map((installment) => (
+                  <InstallmentCard 
+                    key={installment.id} 
+                    installment={installment}
+                    showActions
+                  />
+                ))}
+              </Box>
+            )}
+          </Box>
+        )}
 
-              {/* Badges Conquistadas */}
-              {gamificationData.badges.length > 0 && (
-                <Card>
-                  <CardHeader>
-                    <Typography variant="h6" className="flex items-center gap-2">
-                      <Award className="h-5 w-5" />
-                      Badges Conquistadas
-                    </Typography>
-                  </CardHeader>
+        {activeTab === 'gamification' && (
+          <Stack spacing={4}>
+            {isGamificationLoading ? (
+              <Stack spacing={2}>
+                <Skeleton variant="rectangular" height={160} sx={{ borderRadius: 2 }} />
+                <Skeleton variant="rectangular" height={100} sx={{ borderRadius: 2 }} />
+                <Skeleton variant="rectangular" height={250} sx={{ borderRadius: 2 }} />
+              </Stack>
+            ) : gamificationData ? (
+              <Stack spacing={4}>
+                {/* Header da Gamificação com Guia */}
+                <Card sx={{ 
+                    background: 'linear-gradient(to right, #1e293b, #0f172a)', 
+                    color: 'white'
+                }}>
+                  <CardHeader
+                    title={
+                        <Box display="flex" alignItems="center" justifyContent="space-between">
+                            <Box display="flex" alignItems="center" gap={2}>
+                                <Box 
+                                    width={48} height={48} borderRadius="50%" 
+                                    display="flex" alignItems="center" justifyContent="center"
+                                    sx={{ background: 'linear-gradient(to bottom right, #a855f7, #3b82f6)' }}
+                                >
+                                    <Trophy size={24} color="white" />
+                                </Box>
+                                <Box>
+                                    <Typography variant="h6">
+                                        Nível {gamificationData.level.level} - {gamificationData.level.name}
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ opacity: 0.8 }}>
+                                        {gamificationData.points} pontos acumulados
+                                    </Typography>
+                                </Box>
+                            </Box>
+                            <Box display={{ xs: 'none', md: 'block' }}>
+                                <GamificationGuide />
+                            </Box>
+                        </Box>
+                    }
+                  />
                   <CardContent>
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {gamificationData.badges.map((badge) => (
-                        <motion.div
-                          key={badge.id}
-                          initial={{ scale: 0, rotate: -180 }}
-                          animate={{ scale: 1, rotate: 0 }}
-                          className="text-center p-4 border rounded-lg bg-card text-card-foreground"
-                        >
-                          <div className="text-3xl mb-2">{badge.icon}</div>
-                          <h4 className="font-medium text-sm">{badge.name}</h4>
-                          <p className="text-xs text-muted-foreground">{badge.description}</p>
-                          <Chip 
-                            variant="outlined" 
-                            className={`mt-2 text-xs ${
-                              badge.rarity === 'legendary' ? 'border-yellow-400 text-yellow-700' :
-                              badge.rarity === 'epic' ? 'border-purple-400 text-purple-700' :
-                              badge.rarity === 'rare' ? 'border-blue-400 text-blue-700' :
-                              'border-gray-400 text-gray-700'
-                            }`}
-                          >
-                            {translateRarity(badge.rarity)}
-                          </Chip>
-                        </motion.div>
-                      ))}
-                    </div>
+                    <Stack spacing={2}>
+                      <Box display="flex" justifyContent="space-between" fontSize="0.875rem">
+                        <Typography variant="body2">Progresso para o próximo nível</Typography>
+                        <Typography variant="body2">{gamificationData.level.pointsToNext} pontos restantes</Typography>
+                      </Box>
+                      <LinearProgress 
+                        variant="determinate" 
+                        value={(gamificationData.points / (gamificationData.level.pointsRequired + gamificationData.level.pointsToNext)) * 100} 
+                        sx={{ height: 8, borderRadius: 4, bgcolor: 'rgba(255,255,255,0.2)', '& .MuiLinearProgress-bar': { bgcolor: '#3b82f6' } }}
+                      />
+                    
+                    {gamificationData.streak > 0 && (
+                      <Box display="flex" alignItems="center" gap={1} p={1.5} bgcolor="rgba(249, 115, 22, 0.1)" border={1} borderColor="rgba(249, 115, 22, 0.3)" borderRadius={1}>
+                        <Flame size={20} color="#f97316" />
+                        <Typography variant="body2" color="#fb923c" fontWeight="medium">
+                          Sequência de {gamificationData.streak} meses pagando tudo em dia! 🔥
+                        </Typography>
+                      </Box>
+                    )}
+                    </Stack>
                   </CardContent>
                 </Card>
-              )}
 
-              {/* Conquistas em Progresso */}
-              <Card>
-                <CardHeader>
-                  <Typography variant="h6" className="flex items-center gap-2">
-                    <Target className="h-5 w-5" />
-                    Conquistas em Progresso
+                {/* Badges Conquistadas */}
+                {gamificationData.badges.length > 0 && (
+                  <Card>
+                    <CardHeader
+                      title={
+                          <Box display="flex" alignItems="center" gap={1}>
+                              <Award size={20} />
+                              <Typography variant="h6">Badges Conquistadas</Typography>
+                          </Box>
+                      }
+                    />
+                    <CardContent>
+                      <Box display="grid" gridTemplateColumns={{ xs: '1fr 1fr', md: '1fr 1fr 1fr', lg: '1fr 1fr 1fr 1fr' }} gap={2}>
+                        {gamificationData.badges.map((badge) => (
+                          <motion.div
+                            key={badge.id}
+                            initial={{ scale: 0, rotate: -180 }}
+                            animate={{ scale: 1, rotate: 0 }}
+                          >
+                            <Box textAlign="center" p={2} border={1} borderColor="divider" borderRadius={2} bgcolor="background.paper">
+                                <Typography variant="h3" mb={1}>{badge.icon}</Typography>
+                                <Typography variant="subtitle2" fontWeight="bold">{badge.name}</Typography>
+                                <Typography variant="caption" color="text.secondary" display="block" mb={1}>{badge.description}</Typography>
+                                <Chip 
+                                    label={translateRarity(badge.rarity)} 
+                                    variant="outlined" 
+                                    size="small"
+                                    sx={{ 
+                                        borderColor: badge.rarity === 'legendary' ? 'warning.main' : 
+                                                    badge.rarity === 'epic' ? 'secondary.main' : 
+                                                    badge.rarity === 'rare' ? 'info.main' : 'grey.400',
+                                        color: badge.rarity === 'legendary' ? 'warning.main' : 
+                                               badge.rarity === 'epic' ? 'secondary.main' : 
+                                               badge.rarity === 'rare' ? 'info.main' : 'text.secondary'
+                                    }}
+                                />
+                            </Box>
+                          </motion.div>
+                        ))}
+                      </Box>
+                    </CardContent>
+                  </Card>
+                )}
+
+                {/* Conquistas em Progresso */}
+                <Card>
+                  <CardHeader
+                    title={
+                        <Box display="flex" alignItems="center" gap={1}>
+                            <Target size={20} />
+                            <Typography variant="h6">Conquistas em Progresso</Typography>
+                        </Box>
+                    }
+                  />
+                  <CardContent>
+                    <Stack spacing={2}>
+                      {gamificationData.achievements.map((achievement) => (
+                        <Box key={achievement.id} border={1} borderColor="divider" borderRadius={2} p={2}>
+                          <Box display="flex" alignItems="center" gap={2} mb={2}>
+                            <Typography variant="h5">{achievement.icon}</Typography>
+                            <Box flex={1}>
+                              <Typography variant="subtitle1" fontWeight="bold">{achievement.name}</Typography>
+                              <Typography variant="body2" color="text.secondary">{achievement.description}</Typography>
+                            </Box>
+                            <Chip label={`${achievement.points} pts`} variant="outlined" size="small" />
+                          </Box>
+                          
+                          <Stack spacing={1}>
+                            <Box display="flex" justifyContent="space-between">
+                              <Typography variant="caption">Progresso</Typography>
+                              <Typography variant="caption">{achievement.progress}/{achievement.target}</Typography>
+                            </Box>
+                            <LinearProgress variant="determinate" value={(achievement.progress / achievement.target) * 100} />
+                            {achievement.isCompleted && (
+                              <Box display="flex" alignItems="center" gap={0.5} color="success.main">
+                                <CheckCircle2 size={16} />
+                                <Typography variant="caption" fontWeight="bold">Conquista completada!</Typography>
+                              </Box>
+                            )}
+                          </Stack>
+                        </Box>
+                      ))}
+                    </Stack>
+                  </CardContent>
+                </Card>
+              </Stack>
+            ) : (
+               <Card>
+                <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 8 }}>
+                  <Trophy size={48} style={{ opacity: 0.5, marginBottom: 16 }} />
+                  <Typography variant="h6" gutterBottom>Jornada de Progresso</Typography>
+                  <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 2 }}>
+                    Crie e pague seus parcelamentos em dia para ganhar pontos, subir de nível e desbloquear conquistas!
                   </Typography>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {gamificationData.achievements.map((achievement) => (
-                      <div key={achievement.id} className="border rounded-lg p-4">
-                        <div className="flex items-center gap-3 mb-3">
-                          <div className="text-2xl">{achievement.icon}</div>
-                          <div className="flex-1">
-                            <h4 className="font-medium">{achievement.name}</h4>
-                            <p className="text-sm text-muted-foreground">{achievement.description}</p>
-                          </div>
-                          <Chip variant="outlined">{achievement.points} pts</Chip>
-                        </div>
-                        
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span>Progresso</span>
-                            <span>{achievement.progress}/{achievement.target}</span>
-                          </div>
-                          <LinearProgress variant="determinate" 
-                            value={(achievement.progress / achievement.target) * 100} 
-                            className="h-2"
-                          />
-                          {achievement.isCompleted && (
-                            <div className="flex items-center gap-1 text-sm text-green-600">
-                              <CheckCircle2 className="h-4 w-4" />
-                              Conquista completada!
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <Button variant="contained" onClick={() => setActiveTab('active')} startIcon={<CreditCard size={18} />}>
+                    Ver Meus Parcelamentos
+                  </Button>
                 </CardContent>
               </Card>
-            </div>
-          ) : (
-             <Card>
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <Trophy className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Jornada de Progresso</h3>
-                <p className="text-muted-foreground text-center mb-4">
-                  Crie e pague seus parcelamentos em dia para ganhar pontos, subir de nível e desbloquear conquistas!
-                </p>
-                <Button onClick={() => setActiveTab('active')}>
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Ver Meus Parcelamentos
-                </Button>
-              </CardContent>
-            </Card>
-          )}
-        </TabsContent>
+            )}
+          </Stack>
+        )}
 
-        <TabsContent value="schedule">
+        {activeTab === 'schedule' && (
           <PaymentSchedule />
-        </TabsContent>
+        )}
 
-        <TabsContent value="projections">
+        {activeTab === 'projections' && (
           <MonthlyProjections />
-        </TabsContent>
+        )}
 
-        <TabsContent value="completed" className="space-y-4">
-          {completedInstallments.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <CheckCircle2 className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Nenhum parcelamento concluído</h3>
-                <p className="text-muted-foreground text-center">
-                  Parcelamentos que você finalizar aparecerão aqui.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {completedInstallments.map((installment) => (
-                <InstallmentCard 
-                  key={installment.id} 
-                  installment={installment}
-                  showActions={false}
-                />
-              ))}
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
+        {activeTab === 'completed' && (
+          <Box>
+            {completedInstallments.length === 0 ? (
+              <Card>
+                <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', py: 8 }}>
+                  <CheckCircle2 size={48} style={{ opacity: 0.5, marginBottom: 16 }} />
+                  <Typography variant="h6" gutterBottom>Nenhum parcelamento concluído</Typography>
+                  <Typography variant="body2" color="text.secondary" align="center">
+                    Parcelamentos que você finalizar aparecerão aqui.
+                  </Typography>
+                </CardContent>
+              </Card>
+            ) : (
+              <Box display="grid" gridTemplateColumns={{ xs: '1fr', lg: '1fr 1fr' }} gap={4}>
+                {completedInstallments.map((installment) => (
+                  <InstallmentCard 
+                    key={installment.id} 
+                    installment={installment}
+                    showActions={false}
+                  />
+                ))}
+              </Box>
+            )}
+          </Box>
+        )}
+      </Box>
 
       {/* Create Dialog */}
       <CreateInstallmentDialog 
         open={isCreateOpen} 
-        onOpenChange={setIsCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
       />
-    </div>
+    </Stack>
   );
 }

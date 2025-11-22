@@ -1,14 +1,24 @@
-
+// src/components/transactions/data-table.tsx
 'use client';
 
 import {ColumnDef, flexRender, getCoreRowModel, getPaginationRowModel, getSortedRowModel, getFilteredRowModel, useReactTable, SortingState, ColumnFiltersState, RowSelectionState} from '@tanstack/react-table';
 
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
-import {Button} from '@mui/material';
-import {TextField} from '@mui/material';
+import {
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableRow, 
+  TableContainer, 
+  Paper,
+  Button,
+  TextField,
+  Box,
+  Stack,
+  Typography
+} from '@mui/material';
 import {useState} from 'react';
 import {AnalyzeTransactionsDialog} from './analyze-transactions-dialog';
-import {Box, Stack} from '@mui/material';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -50,50 +60,57 @@ export function DataTable<TData, TValue>({
   const selectedRows = table.getFilteredSelectedRowModel().rows.map(row => row.original);
 
   return (
-    <Box sx={{ border: 1, borderColor: 'divider', borderRadius: 2 }}>
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ p: 4 }}>
-        <Input
+    <Paper variant="outlined" sx={{ width: '100%', overflow: 'hidden' }}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} alignItems="center" justifyContent="space-between" spacing={2} sx={{ p: 2 }}>
+        <TextField
           placeholder="Filtrar por item..."
           value={(table.getColumn("item")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("item")?.setFilterValue(event.target.value)
           }
-          sx={{ maxWidth: '24rem' }}
+          size="small"
+          sx={{ maxWidth: '24rem', width: '100%' }}
         />
         {selectedRows.length > 0 && (
           <AnalyzeTransactionsDialog transactions={selectedRows as any} />
         )}
       </Stack>
-      <Box sx={{ overflowX: 'auto' }}>
-        <Table>
-            <TableHeader>
+      <TableContainer sx={{ maxHeight: 600 }}>
+        <Table stickyHeader>
+            <TableHead>
             {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                     return (
-                    <TableHead key={header.id} sx={{ p: 2 }} style={{width: header.getSize() !== 150 ? `${header.getSize()}px` : undefined}}>
+                    <TableCell 
+                        key={header.id} 
+                        sx={{ 
+                            fontWeight: 'bold',
+                            width: header.getSize() !== 150 ? `${header.getSize()}px` : undefined
+                        }}
+                    >
                         {header.isPlaceholder
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
                             header.getContext()
                             )}
-                    </TableHead>
+                    </TableCell>
                     );
                 })}
                 </TableRow>
             ))}
-            </TableHeader>
+            </TableHead>
             <TableBody>
             {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
                 <TableRow
                     key={row.id}
-                    data-state={row.getIsSelected() && 'selected'}
-                    sx={{ height: '3rem' }}
+                    selected={row.getIsSelected()}
+                    hover
                 >
                     {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} sx={{ p: 2 }}>
+                    <TableCell key={cell.id}>
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                     ))}
@@ -101,19 +118,19 @@ export function DataTable<TData, TValue>({
                 ))
             ) : (
                 <TableRow>
-                <TableCell colSpan={columns.length} sx={{ height: '6rem', textAlign: 'center' }}>
-                    Nenhum resultado encontrado.
+                <TableCell colSpan={columns.length} align="center" sx={{ py: 6 }}>
+                    <Typography color="text.secondary">Nenhum resultado encontrado.</Typography>
                 </TableCell>
                 </TableRow>
             )}
             </TableBody>
         </Table>
-      </Box>
+      </TableContainer>
        <Stack direction="row" alignItems="center" justifyContent="flex-end" spacing={2} sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
-        <Box sx={{ flex: 1, fontSize: '0.875rem', color: 'text.secondary', px: 2 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
           {table.getFilteredSelectedRowModel().rows.length} de{" "}
           {table.getFilteredRowModel().rows.length} linha(s) selecionadas.
-        </Box>
+        </Typography>
         <Button
           variant="outlined"
           size="small"
@@ -131,6 +148,6 @@ export function DataTable<TData, TValue>({
           Próximo
         </Button>
       </Stack>
-    </Box>
+    </Paper>
   );
 }

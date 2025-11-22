@@ -1,21 +1,23 @@
-
+// src/app/(app)/categories/default/page.tsx
 'use client';
 
 import {useState} from 'react';
-import {Card, CardContent, CardHeader, Button, Chip} from '@mui/material';
-import {Typography} from '@mui/material';
+import {
+  Card, CardContent, CardHeader, Button, Chip, 
+  Typography, Stack, Box, useTheme
+} from '@mui/material';
 import {CategoryIcon} from '@/components/icons';
 import {DEFAULT_CATEGORIES} from '@/lib/default-categories';
 import {TransactionCategory} from '@/lib/types';
 import {ChevronDown, ChevronRight, Users, Package, Settings} from 'lucide-react';
 import {useAuth} from '@/hooks/use-auth';
 import {useToast} from '@/hooks/use-toast';
-import {apiClient} from '@/lib/api-client';
 
 export default function DefaultCategoriesPreview() {
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const { user } = useAuth();
   const { toast } = useToast();
+  const theme = useTheme();
 
   const toggleCategory = (category: string) => {
     const newExpanded = new Set(expandedCategories);
@@ -38,7 +40,6 @@ export default function DefaultCategoriesPreview() {
     }
 
     try {
-      // Usar API route em vez de import direto do serviço
       const response = await fetch('/api/categories/apply-defaults', {
         method: 'POST',
         headers: {
@@ -56,7 +57,6 @@ export default function DefaultCategoriesPreview() {
         description: "Categorias padrão aplicadas com sucesso ao seu perfil!"
       });
 
-      // Recarrega a página após 1 segundo para mostrar as novas categorias
       setTimeout(() => {
         window.location.href = '/categories';
       }, 1000);
@@ -83,12 +83,12 @@ export default function DefaultCategoriesPreview() {
     return 'Outros';
   };
 
-  const getCategoryTypeColor = (type: string): string => {
+  const getCategoryTypeColor = (type: string) => {
     switch (type) {
-      case 'Receitas': return 'bg-green-100 dark:bg-green-950/50 text-green-800 dark:text-green-400 border-green-200 dark:border-green-900/50';
-      case 'Essenciais': return 'bg-red-100 dark:bg-red-950/50 text-red-800 dark:text-red-400 border-red-200 dark:border-red-900/50';
-      case 'Pessoais': return 'bg-blue-100 dark:bg-blue-950/50 text-blue-800 dark:text-blue-400 border-blue-200 dark:border-blue-900/50';
-      default: return 'bg-gray-100 dark:bg-gray-950/50 text-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-900/50';
+      case 'Receitas': return { bgcolor: 'success.light', color: 'success.dark', borderColor: 'success.main' };
+      case 'Essenciais': return { bgcolor: 'error.light', color: 'error.dark', borderColor: 'error.main' };
+      case 'Pessoais': return { bgcolor: 'info.light', color: 'info.dark', borderColor: 'info.main' };
+      default: return { bgcolor: 'grey.100', color: 'grey.800', borderColor: 'grey.300' };
     }
   };
 
@@ -99,151 +99,175 @@ export default function DefaultCategoriesPreview() {
   );
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <Stack spacing={3}>
       {/* Header */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <Settings className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Categorias Padrão do Gastometria</h1>
-            <p className="text-muted-foreground">
+      <Stack spacing={2}>
+        <Stack direction="row" alignItems="center" spacing={2}>
+          <Settings size={32} color={theme.palette.primary.main} />
+          <Box>
+            <Typography variant="h4" fontWeight="bold">Categorias Padrão do Gastometria</Typography>
+            <Typography variant="body1" color="text.secondary">
               Categorias e subcategorias que são criadas automaticamente para novos usuários
-            </p>
-          </div>
-        </div>
+            </Typography>
+          </Box>
+        </Stack>
         
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Box display="grid" gridTemplateColumns={{ xs: '1fr', md: '1fr 1fr 1fr' }} gap={2}>
           <Card>
-            <CardHeader className="pb-3">
-              <Typography variant="h6" className="text-sm font-medium flex items-center gap-2">
-                <Package className="h-4 w-4" />
-                Total de Categorias
-              </Typography>
-            </CardHeader>
+            <CardHeader 
+                title={
+                    <Box display="flex" alignItems="center" gap={1}>
+                        <Package size={16} />
+                        <Typography variant="subtitle2" fontWeight="medium">Total de Categorias</Typography>
+                    </Box>
+                }
+                sx={{ pb: 1 }}
+            />
             <CardContent>
-              <div className="text-2xl font-bold">{totalCategories}</div>
+              <Typography variant="h5" fontWeight="bold">{totalCategories}</Typography>
             </CardContent>
           </Card>
           
           <Card>
-            <CardHeader className="pb-3">
-              <Typography variant="h6" className="text-sm font-medium flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Total de Subcategorias
-              </Typography>
-            </CardHeader>
+            <CardHeader 
+                title={
+                    <Box display="flex" alignItems="center" gap={1}>
+                        <Users size={16} />
+                        <Typography variant="subtitle2" fontWeight="medium">Total de Subcategorias</Typography>
+                    </Box>
+                }
+                sx={{ pb: 1 }}
+            />
             <CardContent>
-              <div className="text-2xl font-bold">{totalSubcategories}</div>
+              <Typography variant="h5" fontWeight="bold">{totalSubcategories}</Typography>
             </CardContent>
           </Card>
           
           <Card>
-            <CardHeader className="pb-3">
-              <Typography variant="h6" className="text-sm font-medium">Ações</Typography>
-            </CardHeader>
+            <CardHeader title={<Typography variant="subtitle2" fontWeight="medium">Ações</Typography>} sx={{ pb: 1 }} />
             <CardContent>
-              <Button onClick={handleApplyToUser} className="w-full">
-                <Settings className="h-4 w-4 mr-2" />
+              <Button 
+                variant="contained" 
+                fullWidth 
+                onClick={handleApplyToUser}
+                startIcon={<Settings size={16} />}
+              >
                 Aplicar ao Meu Usuário
               </Button>
             </CardContent>
           </Card>
-        </div>
-      </div>
+        </Box>
+      </Stack>
 
       {/* Categories List */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <Box display="grid" gridTemplateColumns={{ xs: '1fr', lg: '1fr 1fr' }} gap={3}>
         {Object.entries(DEFAULT_CATEGORIES).map(([category, subcategories]) => {
           const categoryKey = category as TransactionCategory;
           const isExpanded = expandedCategories.has(category);
           const categoryType = getCategoryType(categoryKey);
+          const typeColor = getCategoryTypeColor(categoryType);
           
           return (
-            <Card key={category} className="hover:shadow-md transition-shadow">
+            <Card key={category} sx={{ transition: 'box-shadow 0.3s', '&:hover': { boxShadow: 3 } }}>
               <CardHeader 
-                className="cursor-pointer hover:bg-muted/50 transition-colors"
+                sx={{ 
+                    cursor: 'pointer', 
+                    '&:hover': { bgcolor: 'action.hover' },
+                    transition: 'background-color 0.2s'
+                }}
                 onClick={() => toggleCategory(category)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <CategoryIcon category={categoryKey} className="h-6 w-6 text-primary" />
-                    <div>
-                      <Typography variant="h6">{category}</Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Chip 
-                          variant="outlined" 
-                          className={getCategoryTypeColor(categoryType)}
-                        >
-                          {categoryType}
-                        </Chip>
-                        <span>{subcategories.length} subcategorias</span>
-                      </Typography>
-                    </div>
-                  </div>
-                  {isExpanded ? (
-                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                  ) : (
-                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                  )}
-                </div>
-              </CardHeader>
+                title={
+                    <Box display="flex" alignItems="center" justifyContent="space-between">
+                        <Box display="flex" alignItems="center" gap={2}>
+                            <Box sx={{ color: 'primary.main' }}>
+                                <CategoryIcon category={categoryKey} />
+                            </Box>
+                            <Box>
+                                <Typography variant="h6">{category}</Typography>
+                                <Stack direction="row" alignItems="center" spacing={1} mt={0.5}>
+                                    <Chip 
+                                        label={categoryType}
+                                        variant="outlined" 
+                                        size="small"
+                                        sx={{ 
+                                            ...typeColor,
+                                            fontWeight: 'medium',
+                                            height: 24
+                                        }}
+                                    />
+                                    <Typography variant="caption" color="text.secondary">
+                                        {subcategories.length} subcategorias
+                                    </Typography>
+                                </Stack>
+                            </Box>
+                        </Box>
+                        {isExpanded ? (
+                            <ChevronDown size={20} color={theme.palette.text.secondary} />
+                        ) : (
+                            <ChevronRight size={20} color={theme.palette.text.secondary} />
+                        )}
+                    </Box>
+                }
+              />
               
               {isExpanded && (
-                <CardContent className="pt-0">
-                  <div className="space-y-3">
-                    <h4 className="font-semibold text-sm text-muted-foreground">
+                <CardContent sx={{ pt: 0 }}>
+                  <Stack spacing={1}>
+                    <Typography variant="subtitle2" color="text.secondary">
                       Subcategorias incluídas:
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
+                    </Typography>
+                    <Box display="flex" flexWrap="wrap" gap={1}>
                       {subcategories.map((subcategory) => (
                         <Chip 
                           key={subcategory} 
-                          variant="contained" color="secondary"
-                          className="text-xs"
-                        >
-                          {subcategory}
-                        </Chip>
+                          label={subcategory}
+                          variant="filled" 
+                          color="secondary"
+                          size="small"
+                        />
                       ))}
-                    </div>
-                  </div>
+                    </Box>
+                  </Stack>
                 </CardContent>
               )}
             </Card>
           );
         })}
-      </div>
+      </Box>
 
       {/* Footer Info */}
-      <Card className="border-l-4 border-l-blue-500">
-        <CardHeader>
-          <Typography variant="h6" className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Como funciona
-          </Typography>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <ul className="space-y-2 text-sm">
-            <li className="flex items-start gap-2">
-              <span className="font-medium text-green-600">✓</span>
-              <span>Quando um novo usuário se cadastra, essas categorias são criadas automaticamente</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="font-medium text-green-600">✓</span>
-              <span>Usuários existentes sem categorias também recebem essas configurações padrão</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="font-medium text-blue-600">ℹ</span>
-              <span>Usuários podem adicionar, editar ou remover categorias livremente após a criação</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="font-medium text-blue-600">ℹ</span>
-              <span>As categorias são organizadas por tipo: Receitas, Essenciais, Pessoais e Outros</span>
-            </li>
-          </ul>
+      <Card sx={{ borderLeft: 4, borderColor: 'info.main' }}>
+        <CardHeader 
+            title={
+                <Box display="flex" alignItems="center" gap={1}>
+                    <Settings size={20} />
+                    <Typography variant="h6">Como funciona</Typography>
+                </Box>
+            }
+        />
+        <CardContent>
+          <Stack spacing={1}>
+            <Box display="flex" gap={1}>
+              <Typography color="success.main" fontWeight="bold">✓</Typography>
+              <Typography variant="body2">Quando um novo usuário se cadastra, essas categorias são criadas automaticamente</Typography>
+            </Box>
+            <Box display="flex" gap={1}>
+              <Typography color="success.main" fontWeight="bold">✓</Typography>
+              <Typography variant="body2">Usuários existentes sem categorias também recebem essas configurações padrão</Typography>
+            </Box>
+            <Box display="flex" gap={1}>
+              <Typography color="info.main" fontWeight="bold">ℹ</Typography>
+              <Typography variant="body2">Usuários podem adicionar, editar ou remover categorias livremente após a criação</Typography>
+            </Box>
+            <Box display="flex" gap={1}>
+              <Typography color="info.main" fontWeight="bold">ℹ</Typography>
+              <Typography variant="body2">As categorias são organizadas por tipo: Receitas, Essenciais, Pessoais e Outros</Typography>
+            </Box>
+          </Stack>
         </CardContent>
       </Card>
-    </div>
+    </Stack>
   );
 }
 

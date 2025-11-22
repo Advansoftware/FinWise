@@ -1,44 +1,25 @@
-
 // src/app/(app)/categories/page.tsx
 'use client';
-import { useState, useTransition } from "react";
+
+import { useState, useTransition, MouseEvent } from "react";
 import { useTransactions } from "@/hooks/use-transactions";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Card, CardContent, CardHeader } from "@mui/material";
-import { TransactionCategory } from "@/lib/types";
-import { Chip } from "@mui/material";
-import { CategoryIcon } from "@/components/icons";
-import { Button } from "@mui/material";
-import { PlusCircle, MoreVertical, Edit, Trash2, Wand2, X, Check, Loader2, Settings } from "lucide-react";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogTrigger,
-  DialogClose,
+import { 
+  Card, CardContent, CardHeader, Typography, Button, 
+  Stack, Box, Dialog, DialogTitle, DialogContent, 
+  DialogContentText, DialogActions, TextField, 
+  Chip, IconButton, Menu, MenuItem, Skeleton,
+  useTheme, InputAdornment
 } from "@mui/material";
-import { TextField } from "@mui/material";
-import { InputLabel } from "@mui/material";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { TransactionCategory } from "@/lib/types";
+import { CategoryIcon } from "@/components/icons";
+import { 
+  PlusCircle, MoreVertical, Edit, Trash2, Wand2, 
+  X, Check, Loader2, Settings, AlertTriangle 
+} from "lucide-react";
 import { suggestCategoryForItemAction } from "@/services/ai-actions";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import Link from "next/link";
-
 
 export default function CategoriesPage() {
     const { 
@@ -56,10 +37,14 @@ export default function CategoriesPage() {
     const [suggestion, setSuggestion] = useState<{category: string; subcategory?: string} | null>(null);
     const [itemName, setItemName] = useState("");
     const [newCategoryName, setNewCategoryName] = useState("");
-    const [newSubcategoryName, setNewSubcategoryName] = useState("");
-    const [editingCategory, setEditingCategory] = useState<TransactionCategory | null>(null);
+    
+    // Dialog states
+    const [suggestDialogOpen, setSuggestDialogOpen] = useState(false);
+    const [createDialogOpen, setCreateDialogOpen] = useState(false);
+    
     const { toast } = useToast();
     const { user } = useAuth();
+    const theme = useTheme();
 
     if (isLoading) {
         return <CategoriesSkeleton />
@@ -76,7 +61,6 @@ export default function CategoriesPage() {
         setSuggestion(null);
         startSuggesting(async () => {
              try {
-                // Ensure categories are passed as string[]
                 const categoryStrings: string[] = categories.map(c => c as string);
                 const result = await suggestCategoryForItemAction({ itemName, existingCategories: categoryStrings }, user.uid);
                 setSuggestion(result);
@@ -95,202 +79,306 @@ export default function CategoriesPage() {
         if (!newCategoryName.trim()) return;
         await addCategory(newCategoryName.trim() as TransactionCategory);
         setNewCategoryName("");
+        setCreateDialogOpen(false);
     }
 
-    const handleAddSubcategory = async (category: TransactionCategory) => {
-        if (!newSubcategoryName.trim()) return;
-        await addSubcategory(category, newSubcategoryName.trim());
-        setNewSubcategoryName("");
-        setEditingCategory(null);
-    }
-    
     return (
-        <div className="flex flex-col gap-4 sm:gap-6">
-            <div className="flex flex-col gap-3 sm:gap-4">
-                 <div>
-                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Categorias</h1>
-                    <p className="text-sm sm:text-base text-muted-foreground">Gerencie suas categorias e veja os gastos de cada uma.</p>
-                </div>
-                 <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
-                    <Link href="/categories/default" className="w-full sm:w-auto">
-                        <Button variant="outlined" size="small" className="w-full sm:w-auto">
-                            <Settings className="mr-2 h-4 w-4"/>
-                            Ver Padrão
-                        </Button>
-                    </Link>
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button variant="outlined" disabled={!user} className="w-full sm:w-auto">
-                                <Wand2 className="mr-2 h-4 w-4"/>Sugerir por IA
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent className="w-[95vw] max-w-md">
-                            <DialogHeader>
-                                <DialogTitle>Sugestão de Categoria com IA</DialogTitle>
-                                <DialogDescription>Digite o nome de um item e a IA irá sugerir uma categoria e subcategoria para ele.</DialogDescription>
-                            </DialogHeader>
-                            <div className="space-y-4 py-4">
-                               <div className="flex flex-col sm:flex-row gap-2">
-                                 <TextField 
-                                   id="item-name" 
-                                   placeholder="ex: Conta de luz" 
-                                   value={itemName}
-                                   onChange={(e) => setItemName(e.target.value)}
-                                   onKeyDown={(e) => e.key === 'Enter' && handleAISuggestion()}
-                                   className="flex-1"
-                                  />
-                                  <Button onClick={handleAISuggestion} disabled={isSuggesting || !itemName} className="w-full sm:w-auto">
-                                      {isSuggesting ? <Loader2 className="h-4 w-4 animate-spin"/> : "Sugerir"}
-                                   </Button>
-                               </div>
-                               {isSuggesting && <p className="text-sm text-muted-foreground animate-pulse text-center">Analisando...</p>}
-                               {suggestion && (
-                                   <div className="p-4 bg-muted rounded-md space-y-2">
-                                       <p className="font-semibold">Sugestão da IA:</p>
-                                       {suggestion.category && <p>Categoria: <Chip label={suggestion.category} /></p>}
-                                       {suggestion.subcategory && <p>Subcategoria: <Chip variant="contained" color="secondary">{suggestion.subcategory}</Chip></p>}
-                                   </div>
-                               )}
-                            </div>
-                        </DialogContent>
-                    </Dialog>
-                    <Dialog>
-                        <DialogTrigger asChild>
-                            <Button disabled={!user} className="w-full sm:w-auto">
-                                <PlusCircle className="mr-2 h-4 w-4" /> Nova Categoria
-                            </Button>
-                        </DialogTrigger>
-                         <DialogContent className="w-[95vw] max-w-md">
-                            <DialogHeader>
-                                <DialogTitle>Criar Nova Categoria</DialogTitle>
-                                <DialogDescription>Insira o nome da nova categoria.</DialogDescription>
-                            </DialogHeader>
-                             <div className="py-4">
-                                <TextField 
-                                    id="new-category-name"
-                                    value={newCategoryName}
-                                    onChange={e => setNewCategoryName(e.target.value)}
-                                    placeholder="Ex: Educação"
-                                />
-                             </div>
-                             <DialogFooter>
-                                 <DialogClose asChild>
-                                    <Button onClick={handleAddCategory} disabled={!newCategoryName.trim()} className="w-full">Criar Categoria</Button>
-                                 </DialogClose>
-                             </DialogFooter>
-                        </DialogContent>
-                    </Dialog>
-                </div>
-            </div>
+        <Stack spacing={4}>
+            <Stack spacing={2}>
+                 <Box>
+                    <Typography variant="h4" fontWeight="bold">Categorias</Typography>
+                    <Typography variant="body1" color="text.secondary">Gerencie suas categorias e veja os gastos de cada uma.</Typography>
+                </Box>
+                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ xs: 'stretch', sm: 'center' }}>
+                    <Button 
+                        variant="outlined" 
+                        size="small" 
+                        component={Link} 
+                        href="/categories/default"
+                        startIcon={<Settings size={16} />}
+                    >
+                        Ver Padrão
+                    </Button>
+                    
+                    <Button 
+                        variant="outlined" 
+                        disabled={!user} 
+                        onClick={() => setSuggestDialogOpen(true)}
+                        startIcon={<Wand2 size={16} />}
+                    >
+                        Sugerir por IA
+                    </Button>
+
+                    <Button 
+                        variant="contained"
+                        disabled={!user} 
+                        onClick={() => setCreateDialogOpen(true)}
+                        startIcon={<PlusCircle size={16} />}
+                    >
+                        Nova Categoria
+                    </Button>
+                </Stack>
+            </Stack>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {/* AI Suggestion Dialog */}
+            <Dialog open={suggestDialogOpen} onClose={() => setSuggestDialogOpen(false)} fullWidth maxWidth="xs">
+                <DialogTitle>Sugestão de Categoria com IA</DialogTitle>
+                <DialogContent>
+                    <DialogContentText sx={{ mb: 2 }}>
+                        Digite o nome de um item e a IA irá sugerir uma categoria e subcategoria para ele.
+                    </DialogContentText>
+                    <Stack spacing={2}>
+                        <Stack direction="row" spacing={1}>
+                            <TextField 
+                                fullWidth
+                                placeholder="ex: Conta de luz" 
+                                value={itemName}
+                                onChange={(e) => setItemName(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleAISuggestion()}
+                                size="small"
+                            />
+                            <Button 
+                                variant="contained"
+                                onClick={handleAISuggestion} 
+                                disabled={isSuggesting || !itemName}
+                            >
+                                {isSuggesting ? <Loader2 size={16} className="animate-spin"/> : "Sugerir"}
+                            </Button>
+                        </Stack>
+                        
+                        {isSuggesting && <Typography variant="caption" color="text.secondary" align="center" className="animate-pulse">Analisando...</Typography>}
+                        
+                        {suggestion && (
+                            <Box p={2} bgcolor="action.hover" borderRadius={1}>
+                                <Typography variant="subtitle2" fontWeight="bold" gutterBottom>Sugestão da IA:</Typography>
+                                <Stack spacing={1}>
+                                    {suggestion.category && (
+                                        <Stack direction="row" alignItems="center" spacing={1}>
+                                            <Typography variant="body2">Categoria:</Typography>
+                                            <Chip label={suggestion.category} size="small" />
+                                        </Stack>
+                                    )}
+                                    {suggestion.subcategory && (
+                                        <Stack direction="row" alignItems="center" spacing={1}>
+                                            <Typography variant="body2">Subcategoria:</Typography>
+                                            <Chip label={suggestion.subcategory} size="small" color="secondary" />
+                                        </Stack>
+                                    )}
+                                </Stack>
+                            </Box>
+                        )}
+                    </Stack>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setSuggestDialogOpen(false)}>Fechar</Button>
+                </DialogActions>
+            </Dialog>
+
+            {/* Create Category Dialog */}
+            <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} fullWidth maxWidth="xs">
+                <DialogTitle>Criar Nova Categoria</DialogTitle>
+                <DialogContent>
+                    <DialogContentText sx={{ mb: 2 }}>
+                        Insira o nome da nova categoria.
+                    </DialogContentText>
+                    <TextField 
+                        autoFocus
+                        fullWidth
+                        value={newCategoryName}
+                        onChange={e => setNewCategoryName(e.target.value)}
+                        placeholder="Ex: Educação"
+                        onKeyDown={(e) => e.key === 'Enter' && handleAddCategory()}
+                    />
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setCreateDialogOpen(false)}>Cancelar</Button>
+                    <Button onClick={handleAddCategory} disabled={!newCategoryName.trim()} variant="contained">Criar</Button>
+                </DialogActions>
+            </Dialog>
+            
+            <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr 1fr' }} gap={3}>
                 {categories.map(category => (
-                    <Card key={category}>
-                        <CardHeader className="flex flex-row items-start justify-between pb-3">
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                    <CategoryIcon category={category} className="h-5 w-5 text-primary shrink-0" />
-                                    <Typography variant="h6" className="text-base truncate">{category}</Typography>
-                                </div>
-                                <Typography variant="body2" color="text.secondary" className="text-xs">
-                                    Gasto: <span className="font-bold text-red-400">R$ {getCategoryTotal(category).toFixed(2)}</span>
-                                </Typography>
-                            </div>
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="text" size="icon" className="h-8 w-8 shrink-0">
-                                        <MoreVertical className="h-4 w-4"/>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => setEditingCategory(category)}>
-                                        <PlusCircle className="mr-2 h-4 w-4"/>Adicionar Subcategoria
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-400 focus:bg-destructive/10">
-                                                <Trash2 className="mr-2 h-4 w-4"/>Excluir Categoria
-                                            </DropdownMenuItem>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent className="w-[95vw] max-w-md">
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    Esta ação não pode ser desfeita. Isso excluirá permanentemente a categoria "{category}" e todas as suas subcategorias. As transações nesta categoria não serão excluídas.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter className="flex-col sm:flex-row gap-2">
-                                                <AlertDialogCancel className="w-full sm:w-auto">Cancelar</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => deleteCategory(category)} className="w-full sm:w-auto bg-destructive hover:bg-destructive/90">Excluir</AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        </CardHeader>
-                        <CardContent className="pt-0">
-                            <h4 className="font-semibold mb-2 text-xs">Subcategorias:</h4>
-                            <div className="flex flex-wrap gap-1">
-                                {subcategories[category] && subcategories[category]!.length > 0 ? (
-                                    subcategories[category]!.map(sub => (
-                                        <Chip key={sub} variant="contained" color="secondary" className="group pr-1 text-xs">
-                                            {sub}
-                                            <button onClick={() => deleteSubcategory(category, sub)} className="ml-1.5 opacity-50 group-hover:opacity-100 transition-opacity">
-                                                <X className="h-3 w-3"/>
-                                            </button>
-                                        </Chip>
-                                    ))
-                                ) : (
-                                    <p className="text-xs text-muted-foreground">Nenhuma subcategoria registrada.</p>
-                                )}
-                                {editingCategory === category && (
-                                     <div className="flex items-center gap-1 w-full mt-2">
-                                        <TextField 
-                                            autoFocus
-                                            value={newSubcategoryName}
-                                            onChange={(e) => setNewSubcategoryName(e.target.value)}
-                                            onKeyDown={(e) => e.key === 'Enter' && handleAddSubcategory(category)}
-                                            placeholder="Nova subcategoria"
-                                            className="h-7 text-xs flex-1"
-                                        />
-                                        <Button size="icon" className="h-7 w-7" onClick={() => handleAddSubcategory(category)} disabled={!newSubcategoryName.trim()}><Check className="h-4 w-4"/></Button>
-                                        <Button size="icon" variant="text" className="h-7 w-7" onClick={() => setEditingCategory(null)}><X className="h-4 w-4"/></Button>
-                                    </div>
-                                )}
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <CategoryCard 
+                        key={category} 
+                        category={category}
+                        subcategories={subcategories[category] || []}
+                        total={getCategoryTotal(category)}
+                        onAddSubcategory={addSubcategory}
+                        onDeleteCategory={deleteCategory}
+                        onDeleteSubcategory={deleteSubcategory}
+                    />
                 ))}
                 {categories.length === 0 && !isLoading && (
-                    <Card className="sm:col-span-2 lg:col-span-3">
-                        <CardContent className="p-6 sm:p-8 text-center text-muted-foreground">
-                           <p>Nenhuma categoria encontrada.</p>
-                           <p className="text-sm">Adicione uma categoria para começar a organizar.</p>
+                    <Card sx={{ gridColumn: '1 / -1', textAlign: 'center', py: 4 }}>
+                        <CardContent>
+                           <Typography variant="h6" color="text.secondary" gutterBottom>Nenhuma categoria encontrada.</Typography>
+                           <Typography variant="body2" color="text.secondary">Adicione uma categoria para começar a organizar.</Typography>
                         </CardContent>
                     </Card>
                 )}
-            </div>
-        </div>
+            </Box>
+        </Stack>
     )
+}
+
+interface CategoryCardProps {
+    category: TransactionCategory;
+    subcategories: string[];
+    total: number;
+    onAddSubcategory: (category: TransactionCategory, name: string) => Promise<void>;
+    onDeleteCategory: (category: TransactionCategory) => Promise<void>;
+    onDeleteSubcategory: (category: TransactionCategory, subcategory: string) => Promise<void>;
+}
+
+function CategoryCard({ category, subcategories, total, onAddSubcategory, onDeleteCategory, onDeleteSubcategory }: CategoryCardProps) {
+    const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+    const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [newSubcategoryName, setNewSubcategoryName] = useState("");
+    const theme = useTheme();
+
+    const handleMenuOpen = (event: MouseEvent<HTMLElement>) => {
+        setAnchorEl(event.currentTarget);
+    };
+
+    const handleMenuClose = () => {
+        setAnchorEl(null);
+    };
+
+    const handleAddSubcategoryClick = () => {
+        setIsEditing(true);
+        handleMenuClose();
+    };
+
+    const handleDeleteClick = () => {
+        setDeleteDialogOpen(true);
+        handleMenuClose();
+    };
+
+    const handleConfirmDelete = async () => {
+        await onDeleteCategory(category);
+        setDeleteDialogOpen(false);
+    };
+
+    const handleSubmitSubcategory = async () => {
+        if (!newSubcategoryName.trim()) return;
+        await onAddSubcategory(category, newSubcategoryName.trim());
+        setNewSubcategoryName("");
+        setIsEditing(false);
+    };
+
+    return (
+        <>
+            <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <CardHeader 
+                    action={
+                        <IconButton size="small" onClick={handleMenuOpen}>
+                            <MoreVertical size={18} />
+                        </IconButton>
+                    }
+                    title={
+                        <Box display="flex" alignItems="center" gap={1}>
+                            <Box sx={{ color: 'primary.main', display: 'flex' }}>
+                                <CategoryIcon category={category} />
+                            </Box>
+                            <Typography variant="h6" noWrap title={category}>{category}</Typography>
+                        </Box>
+                    }
+                    subheader={
+                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                            Gasto: <Box component="span" fontWeight="bold" color="error.main">R$ {total.toFixed(2)}</Box>
+                        </Typography>
+                    }
+                    sx={{ pb: 1 }}
+                />
+                <CardContent sx={{ pt: 0, flexGrow: 1 }}>
+                    <Typography variant="subtitle2" fontWeight="bold" gutterBottom sx={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'text.secondary' }}>
+                        Subcategorias:
+                    </Typography>
+                    <Box display="flex" flexWrap="wrap" gap={1}>
+                        {subcategories.length > 0 ? (
+                            subcategories.map(sub => (
+                                <Chip 
+                                    key={sub} 
+                                    label={sub} 
+                                    onDelete={() => onDeleteSubcategory(category, sub)}
+                                    color="secondary" 
+                                    size="small"
+                                    variant="filled"
+                                />
+                            ))
+                        ) : (
+                            <Typography variant="caption" color="text.secondary">Nenhuma subcategoria registrada.</Typography>
+                        )}
+                        
+                        {isEditing && (
+                             <Stack direction="row" spacing={1} alignItems="center" width="100%" mt={1}>
+                                <TextField 
+                                    autoFocus
+                                    value={newSubcategoryName}
+                                    onChange={(e) => setNewSubcategoryName(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleSubmitSubcategory()}
+                                    placeholder="Nova subcategoria"
+                                    size="small"
+                                    fullWidth
+                                    InputProps={{
+                                        style: { fontSize: '0.875rem' }
+                                    }}
+                                />
+                                <IconButton size="small" onClick={handleSubmitSubcategory} disabled={!newSubcategoryName.trim()} color="primary">
+                                    <Check size={16}/>
+                                </IconButton>
+                                <IconButton size="small" onClick={() => setIsEditing(false)}>
+                                    <X size={16}/>
+                                </IconButton>
+                            </Stack>
+                        )}
+                    </Box>
+                </CardContent>
+            </Card>
+
+            <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+            >
+                <MenuItem onClick={handleAddSubcategoryClick}>
+                    <PlusCircle size={16} style={{ marginRight: 8 }} /> Adicionar Subcategoria
+                </MenuItem>
+                <MenuItem onClick={handleDeleteClick} sx={{ color: 'error.main' }}>
+                    <Trash2 size={16} style={{ marginRight: 8 }} /> Excluir Categoria
+                </MenuItem>
+            </Menu>
+
+            <Dialog open={deleteDialogOpen} onClose={() => setDeleteDialogOpen(false)}>
+                <DialogTitle>Você tem certeza?</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Esta ação não pode ser desfeita. Isso excluirá permanentemente a categoria "{category}" e todas as suas subcategorias. As transações nesta categoria não serão excluídas.
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button onClick={() => setDeleteDialogOpen(false)}>Cancelar</Button>
+                    <Button onClick={handleConfirmDelete} color="error" variant="contained" autoFocus>Excluir</Button>
+                </DialogActions>
+            </Dialog>
+        </>
+    );
 }
 
 function CategoriesSkeleton() {
     return (
-         <div className="flex flex-col gap-6">
-            <div>
-                <Skeleton className="h-10 w-64 mb-2" />
-                <Skeleton className="h-4 w-96" />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <Skeleton className="h-48" />
-                <Skeleton className="h-48" />
-                <Skeleton className="h-48" />
-                <Skeleton className="h-48" />
-                <Skeleton className="h-48" />
-                <Skeleton className="h-48" />
-            </div>
-        </div>
+         <Stack spacing={4}>
+            <Box>
+                <Skeleton variant="text" width={200} height={40} />
+                <Skeleton variant="text" width={300} height={24} />
+            </Box>
+            <Box display="grid" gridTemplateColumns={{ xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr 1fr' }} gap={3}>
+                {[1, 2, 3, 4, 5, 6].map((i) => (
+                    <Skeleton key={i} variant="rectangular" height={200} sx={{ borderRadius: 2 }} />
+                ))}
+            </Box>
+        </Stack>
     )
 }
 
