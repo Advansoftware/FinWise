@@ -1,6 +1,8 @@
 // src/components/goals/goal-highlight-card.tsx
 'use client';
 
+// Função temporária cn
+const cn = (...classes: (string | boolean | undefined | Record<string, boolean>)[]) => classes.map(c => typeof c === 'object' ? Object.keys(c).filter(k => c[k]).join(' ') : c).filter(Boolean).join(' ');
 import { useGoals } from "@/hooks/use-goals";
 import { Card, CardHeader, CardContent, Typography, CardActions, Button, LinearProgress, Box, Stack } from '@mui/material';
 import { Skeleton } from "@/components/mui-wrappers/skeleton";
@@ -13,7 +15,6 @@ import { useState, useEffect, useTransition, useMemo } from "react";
 import { getSmartGoalPrediction } from "@/services/ai-automation-service";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { cn } from "@/lib/utils";
 import { ProjectGoalCompletionOutput } from "@/ai/ai-types";
 
 
@@ -122,7 +123,7 @@ export function GoalHighlightCard() {
                       Comece a economizar para seus sonhos.
                     </Typography>
                 </CardContent>
-                <Button asChild size="small">
+                <Button size="small">
                     <Link href="/goals">Criar Meta</Link>
                 </Button>
             </Card>
@@ -189,7 +190,7 @@ export function GoalHighlightCard() {
                     <Stack direction="row" alignItems="center" spacing={0.5} sx={{ minWidth: 0 }}>
                         <Sparkles 
                           style={{ width: '0.75rem', height: '0.75rem', color: 'rgba(var(--primary-rgb), 0.8)' }}
-                          className={cn("flex-shrink-0", isProjecting && "animate-pulse")} 
+                          className={"flex-shrink-0", isProjecting && "animate-pulse"} 
                         />
                          <Box sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                          {isProjecting ? (
@@ -213,7 +214,7 @@ export function GoalHighlightCard() {
                 </Stack>
             </CardContent>
              <CardActions sx={{ display: 'flex', gap: 1, p: 2, pt: 0, flexShrink: 0 }}>
-                 <Button asChild variant="outlined" sx={{ flex: 1 }} size="small">
+                 <Button variant="outlined" sx={{ flex: 1 }} size="small">
                     <Link href="/goals">Ver Todas</Link>
                  </Button>
                   <AddDepositDialog goal={firstGoal}>

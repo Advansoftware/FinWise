@@ -5,7 +5,13 @@
 
 import Link from 'next/link';
 import {usePathname} from 'next/navigation';
-import {cn} from '@/lib/utils';
+
+// Função temporária cn
+const cn = (...classes: (string | boolean | undefined | Record<string, boolean>)[]) => 
+  classes
+    .map(c => typeof c === 'object' ? Object.keys(c).filter(k => c[k]).join(' ') : c)
+    .filter(Boolean)
+    .join(' ');
 
 interface DocsSidebarNavProps {
     items: {

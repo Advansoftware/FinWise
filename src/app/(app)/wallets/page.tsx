@@ -1,6 +1,9 @@
 // src/app/(app)/wallets/page.tsx
 'use client';
 
+
+// Função temporária cn
+const cn = (...classes: (string | boolean | undefined)[]) => classes.filter(Boolean).join(' ');
 import { Card, CardContent, CardHeader, Button, Typography, Skeleton } from "@mui/material";
 import { PlusCircle, MoreVertical, Trash2, Edit, Banknote, CreditCard, PiggyBank, Landmark, CircleDollarSign, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import { useWallets } from "@/hooks/use-wallets";
@@ -215,8 +218,8 @@ function WalletCard({ wallet, onDelete }: { wallet: Wallet, onDelete: () => void
                            
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-400 focus:bg-destructive/10">
-                                        <Trash2 className="mr-2 h-4 w-4"/>Excluir Carteira
+                                    <DropdownMenuItem onSelect={(e: Event) => e.preventDefault()} sx={{ color: 'error.main' }}>
+                                        <Trash2 style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }}/>Excluir Carteira
                                     </DropdownMenuItem>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
@@ -228,7 +231,7 @@ function WalletCard({ wallet, onDelete }: { wallet: Wallet, onDelete: () => void
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
                                         <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                        <AlertDialogAction onClick={onDelete} className="bg-destructive hover:bg-destructive/90">Excluir</AlertDialogAction>
+                                        <AlertDialogAction onClick={onDelete} color="error">Excluir</AlertDialogAction>
                                     </AlertDialogFooter>
                                 </AlertDialogContent>
                             </AlertDialog>

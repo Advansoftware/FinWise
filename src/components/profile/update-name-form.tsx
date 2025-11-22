@@ -48,8 +48,7 @@ export function UpdateNameForm() {
   };
 
   return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', maxWidth: '24rem' }}>
+    <Form form={form} onSubmit={onSubmit}>
         <FormField
           control={form.control}
           name="name"
@@ -67,7 +66,6 @@ export function UpdateNameForm() {
           {isLoading && <Loader2 style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} className="animate-spin" />}
           Salvar Alterações
         </Button>
-      </form>
     </Form>
   );
 }

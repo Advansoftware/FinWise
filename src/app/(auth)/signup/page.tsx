@@ -76,8 +76,7 @@ export default function SignupPage() {
         <Typography variant="body2" color="text.secondary">É rápido e fácil. Comece a organizar suas finanças.</Typography>
       </CardHeader>
       <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <Form form={form} onSubmit={onSubmit}>
             <FormField
               control={form.control}
               name="name"
@@ -134,7 +133,6 @@ export default function SignupPage() {
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Criar Conta
             </Button>
-          </form>
         </Form>
         <p className="mt-4 text-center text-sm text-muted-foreground">
           Já tem uma conta?{' '}

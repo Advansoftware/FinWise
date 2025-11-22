@@ -152,7 +152,7 @@ export default function BlogPostPage({ params }: Props) {
     <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 py-8">
         {/* Back Button */}
-        <Button variant="text" asChild className="mb-6">
+        <Button variant="text" className="mb-6">
           <Link href="/blog">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Voltar ao Blog
@@ -216,12 +216,12 @@ export default function BlogPostPage({ params }: Props) {
               Comece gratuitamente e transforme sua vida financeira.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button asChild size="large">
+              <Button size="large">
                 <Link href="/signup">
                   Criar Conta Grátis
                 </Link>
               </Button>
-              <Button variant="outlined" asChild size="large">
+              <Button variant="outlined" size="large">
                 <Link href="/docs">
                   Ver Documentação
                 </Link>

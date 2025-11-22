@@ -132,11 +132,9 @@ export default function FAQPage() {
       <div className="container mx-auto px-4 py-8">
         {/* Header */}
         <div className="max-w-4xl mx-auto">
-          <Button variant="text" asChild className="mb-6">
-            <Link href="/">
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar ao Início
-            </Link>
+          <Button variant="text" className="mb-6" component={Link} href="/">
+            <ArrowLeft style={{ width: '1rem', height: '1rem', marginRight: '0.5rem' }} />
+            Voltar ao Início
           </Button>
 
           <div className="text-center mb-12">
@@ -163,23 +161,21 @@ export default function FAQPage() {
                         {category.questions.length} perguntas
                       </Typography>
                     </div>
-                    <Chip className={category.color}>
-                      {category.questions.length}
-                    </Chip>
+                    <Chip label={category.questions.length} className={category.color} />
                   </div>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <Accordion type="multiple" className="w-full">
+                  <Accordion>
                     {category.questions.map((faq, index) => (
                       <AccordionItem
                         key={index}
                         value={`${category.id}-${index}`}
                         className="border-b last:border-b-0 px-6"
                       >
-                        <AccordionTrigger className="text-left text-base font-medium hover:no-underline">
+                        <AccordionTrigger>
                           {faq.question}
                         </AccordionTrigger>
-                        <AccordionContent className="text-muted-foreground leading-relaxed pb-4">
+                        <AccordionContent>
                           {faq.answer}
                         </AccordionContent>
                       </AccordionItem>
@@ -202,13 +198,13 @@ export default function FAQPage() {
                 Nossa equipe de suporte está sempre pronta para ajudar você
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button asChild>
+                <Button>
                   <Link href="mailto:suporte@gastometria.com.br">
                     <Mail className="h-4 w-4 mr-2" />
                     Enviar Email
                   </Link>
                 </Button>
-                <Button variant="outlined" asChild>
+                <Button variant="outlined">
                   <Link href="/docs">
                     <HelpCircle className="h-4 w-4 mr-2" />
                     Ver Documentação
@@ -226,7 +222,7 @@ export default function FAQPage() {
             <p className="text-muted-foreground mb-6">
               Experimente o Gastometria gratuitamente e transforme sua gestão financeira
             </p>
-            <Button asChild size="large">
+            <Button size="large">
               <Link href="/signup">
                 Criar Conta Grátis
               </Link>

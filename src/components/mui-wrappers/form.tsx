@@ -8,35 +8,48 @@ import { Controller, ControllerProps, FieldPath, FieldValues, FormProvider, UseF
 
 interface FormProps<TFieldValues extends FieldValues> {
   children: ReactNode;
-  form: UseFormReturn<TFieldValues>;
-  onSubmit: (data: TFieldValues) => void;
+  form?: UseFormReturn<TFieldValues>;
+  onSubmit?: (data: TFieldValues) => void;
 }
 
-export function Form<TFieldValues extends FieldValues>({ children, form, onSubmit }: FormProps<TFieldValues>) {
-  return (
-    <FormProvider {...form}>
-      <Box component="form" onSubmit={form.handleSubmit(onSubmit)} noValidate>
+export function Form<TFieldValues extends FieldValues>({ children, form, onSubmit, ...props }: FormProps<TFieldValues> & any) {
+  // Se form e onSubmit forem fornecidos, usar FormProvider com form submission
+  if (form && onSubmit) {
+    return (
+      <FormProvider {...form}>
+        <Box component="form" onSubmit={form.handleSubmit(onSubmit)} noValidate>
+          {children}
+        </Box>
+      </FormProvider>
+    );
+  }
+  
+  // Se apenas form for fornecido (...form spread), simplesmente espalhar os props
+  if (props && Object.keys(props).length > 0) {
+    return (
+      <FormProvider {...props}>
         {children}
-      </Box>
-    </FormProvider>
-  );
+      </FormProvider>
+    );
+  }
+  
+  // Fallback: apenas renderizar children
+  return <>{children}</>;
 }
 
-interface FormFieldProps<
-  TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
-> extends Omit<ControllerProps<TFieldValues, TName>, 'render'> {
-  children: (field: any) => ReactNode;
+interface FormFieldProps {
+  children?: (field: any) => ReactNode;
+  render?: (props: any) => ReactNode;
+  [key: string]: any;
 }
 
-export function FormField<
-  TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
->({ children, ...props }: FormFieldProps<TFieldValues, TName>) {
+export function FormField({ children, render, ...props }: FormFieldProps) {
+  const renderFn = render || ((fieldProps: any) => children?.(fieldProps.field));
+  
   return (
     <Controller
-      {...props}
-      render={({ field }) => children(field)}
+      {...props as any}
+      render={renderFn}
     />
   );
 }

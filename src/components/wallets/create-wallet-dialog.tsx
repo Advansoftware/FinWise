@@ -91,8 +91,7 @@ export function CreateWalletDialog({ children, initialData }: CreateWalletDialog
             Adicione uma nova conta, cartão ou outra fonte de recursos.
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', paddingTop: '1rem', paddingBottom: '1rem' }}>
+        <Form form={form} onSubmit={onSubmit}>
             <FormField
               control={form.control}
               name="name"
@@ -134,7 +133,6 @@ export function CreateWalletDialog({ children, initialData }: CreateWalletDialog
                 {initialData ? "Salvar Alterações" : "Criar Carteira"}
               </Button>
             </DialogFooter>
-          </form>
         </Form>
       </DialogContent>
     </Dialog>

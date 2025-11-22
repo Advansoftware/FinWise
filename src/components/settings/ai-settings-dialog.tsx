@@ -148,8 +148,7 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
             Forneça os detalhes para a configuração de IA.
           </DialogDescription>
         </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', paddingTop: '1rem', paddingBottom: '1rem' }}>
+        <Form form={form} onSubmit={onSubmit}>
              <FormField
                 control={form.control}
                 name="name"
@@ -293,7 +292,6 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
                     Salvar
                 </Button>
             </DialogFooter>
-          </form>
         </Form>
       </DialogContent>
     </Dialog>

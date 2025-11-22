@@ -165,7 +165,7 @@ export function GamificationSummary() {
           </Stack>
         )}
         
-        <Button asChild variant="outlined" sx={{ width: '100%', mt: 4 }}>
+        <Button variant="outlined" sx={{ width: '100%', mt: 4 }}>
             <Link href="/installments?tab=gamification">
                 Ver todos os detalhes
             </Link>

@@ -1,6 +1,8 @@
 // src/components/dashboard/scan-qr-code-dialog.tsx
 "use client";
 
+// Função temporária cn
+const cn = (...classes: (string | boolean | undefined | Record<string, boolean>)[]) => classes.map(c => typeof c === 'object' ? Object.keys(c).filter(k => c[k]).join(' ') : c).filter(Boolean).join(' ');
 import {
   Dialog,
   DialogContent,
@@ -39,7 +41,6 @@ import { useAISettings } from "@/hooks/use-ai-settings";
 import { getVisionCapableModels, DEFAULT_AI_CREDENTIAL } from "@/lib/ai-settings";
 import {Select, SelectContent, MenuItem, SelectTrigger, SelectValue} from '@mui/material';
 import { Tooltip } from "@mui/material";
-import { cn } from "@/lib/utils";
 import {Box, Stack, Typography, useTheme, alpha} from '@mui/material';
 
 

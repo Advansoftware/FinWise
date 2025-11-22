@@ -65,8 +65,7 @@ export default function LoginPage() {
         <Typography variant="body2" color="text.secondary">Faça login para acessar seu painel financeiro.</Typography>
       </CardHeader>
       <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <Form form={form} onSubmit={onSubmit}>
             <FormField
               control={form.control}
               name="email"
@@ -104,7 +103,6 @@ export default function LoginPage() {
               {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               Entrar
             </Button>
-          </form>
         </Form>
         <p className="mt-4 text-center text-sm text-muted-foreground">
           Não tem uma conta?{' '}
