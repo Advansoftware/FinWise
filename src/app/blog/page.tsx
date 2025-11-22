@@ -135,9 +135,7 @@ export default function BlogPage() {
                 <Card key={post.id} className="overflow-hidden hover:shadow-lg transition-shadow group">
                   <CardHeader>
                     <div className="flex items-center justify-between mb-2">
-                      <Chip className={getCategoryColor(post.category)}>
-                        {post.category}
-                      </Chip>
+                      <Chip label={post.category} className={getCategoryColor(post.category)} />
                       <div className="flex items-center text-sm text-muted-foreground">
                         <Clock className="h-4 w-4 mr-1" />
                         {post.readTime} min
@@ -158,11 +156,9 @@ export default function BlogPage() {
                         <CalendarDays className="h-4 w-4 mr-1" />
                         {formatDate(post.publishedAt)}
                       </div>
-                      <Button variant="text" size="small" asChild>
-                        <Link href={`/blog/${post.slug}`}>
-                          Ler mais
-                          <ArrowRight className="h-4 w-4 ml-1" />
-                        </Link>
+                      <Button variant="text" size="small" component={Link} href={`/blog/${post.slug}`}>
+                        Ler mais
+                        <ArrowRight className="h-4 w-4 ml-1" />
                       </Button>
                     </div>
                   </CardContent>
@@ -180,9 +176,7 @@ export default function BlogPage() {
               <Card key={post.id} className="hover:shadow-md transition-shadow group">
                 <CardHeader>
                   <div className="flex items-center justify-between mb-2">
-                    <Chip variant="outlined" className={getCategoryColor(post.category)}>
-                      {post.category}
-                    </Chip>
+                    <Chip label={post.category} variant="outlined" className={getCategoryColor(post.category)} />
                     <div className="flex items-center text-sm text-muted-foreground">
                       <Clock className="h-4 w-4 mr-1" />
                       {post.readTime} min
@@ -203,10 +197,8 @@ export default function BlogPage() {
                       <CalendarDays className="h-4 w-4 mr-1" />
                       {formatDate(post.publishedAt)}
                     </div>
-                    <Button variant="text" size="small" asChild>
-                      <Link href={`/blog/${post.slug}`}>
-                        <ArrowRight className="h-4 w-4" />
-                      </Link>
+                    <Button variant="text" size="small" component={Link} href={`/blog/${post.slug}`}>
+                      <ArrowRight className="h-4 w-4" />
                     </Button>
                   </div>
                 </CardContent>

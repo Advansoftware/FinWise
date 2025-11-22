@@ -363,7 +363,7 @@ export default function Page() {
                               transition={{ ...featureVariants.transition, delay: index * 0.1 }}
                               className={`flex flex-col rounded-lg border p-4 sm:p-6 h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-2 ${plan.highlight ? 'border-primary shadow-primary/20 shadow-lg' : 'border-border bg-card/30'}`}
                           >
-                              {plan.highlight && <Chip className="w-fit mb-3 sm:mb-4 -mt-1 sm:-mt-2 text-xs">Mais Popular</Chip>}
+                              {plan.highlight && <Chip label="Mais Popular" className="w-fit mb-3 sm:mb-4 -mt-1 sm:-mt-2 text-xs" />}
                               <h3 className="text-xl sm:text-2xl font-bold">{plan.name}</h3>
                               <p className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed">{plan.description}</p>
                               <div className="mt-4 sm:mt-6">
@@ -459,9 +459,9 @@ export default function Page() {
                       viewport={{ once: true, amount: 0.3 }}
                       transition={{ ...featureVariants.transition, delay: index * 0.1 }}
                     >
-                      <Card className={plan === 'Pro' && 'border-primary'}>
+                      <Card className={plan === 'Pro' ? 'border-primary' : ''}>
                         <CardHeader className="pb-3 sm:pb-4">
-                            <Typography variant="h6" className={"text-lg sm:text-xl", plan === 'Pro' && 'text-primary'}>{plan}</Typography>
+                            <Typography variant="h6" className={plan === 'Pro' ? 'text-lg sm:text-xl text-primary' : 'text-lg sm:text-xl'}>{plan}</Typography>
                         </CardHeader>
                         <CardContent className="space-y-3 sm:space-y-4">
                             {Object.entries(featureComparison).map(([category, features]) => (
@@ -611,9 +611,7 @@ export default function Page() {
                     <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                       <CardHeader className="pb-3 sm:pb-4">
                         <div className="flex items-center justify-between mb-2">
-                          <Chip variant="outlined" className="text-xs">
-                            {post.category}
-                          </Chip>
+                          <Chip label={post.category} variant="outlined" className="text-xs" />
                           <span className="text-xs text-muted-foreground">
                             {post.readTime} min
                           </span>
