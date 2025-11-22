@@ -120,7 +120,7 @@ const AccordionContent = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Content>,
   AccordionContentProps
 >(({ sx, children, ...props }, ref) => {
-  const theme = React.useContext(require('@mui/material/styles').ThemeContext)
+
   
   return (
     <StyledAccordionContent

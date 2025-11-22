@@ -9,6 +9,7 @@ import { OfflineStorageInitializer } from '@/components/offline-storage-initiali
 import { DataRefreshProvider } from '@/hooks/use-data-refresh';
 import { Metadata, Viewport } from 'next';
 import { structuredData, organizationData, websiteData, financialToolsData } from '@/lib/structured-data';
+import ThemeRegistry from '@/components/theme-registry/theme-registry';
 
 const inter = Inter({ subsets: ['latin'], variable: '--font-inter' });
 
@@ -186,7 +187,9 @@ export default function RootLayout({
             <AuthProvider>
               <DataRefreshProvider>
                 <OfflineStorageInitializer />
-                {children}
+                <ThemeRegistry>
+                  {children}
+                </ThemeRegistry>
                 <PWAUpdater />
               </DataRefreshProvider>
             </AuthProvider>
