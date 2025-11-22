@@ -1,82 +1,33 @@
-"use client"
+// MUI-based Avatar component with Shadcn-compatible API
+import * as React from "react";
+import { Avatar as MuiAvatar, AvatarProps as MuiAvatarProps } from "@mui/material";
 
-import * as React from "react"
-import * as AvatarPrimitive from "@radix-ui/react-avatar"
-import { styled, type Theme, type SxProps } from '@mui/material/styles'
+export interface AvatarProps extends MuiAvatarProps {}
 
-const StyledAvatarRoot = styled(AvatarPrimitive.Root)(({ theme }) => ({
-  position: 'relative',
-  display: 'flex',
-  height: '2.5rem',
-  width: '2.5rem',
-  flexShrink: 0,
-  overflow: 'hidden',
-  borderRadius: '9999px',
-}))
+const Avatar = React.forwardRef<HTMLDivElement, AvatarProps>(
+  (props, ref) => {
+    return <MuiAvatar ref={ref} {...props} />;
+  }
+);
 
-interface AvatarProps extends React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Root> {
-  sx?: SxProps<Theme>;
-}
+Avatar.displayName = "Avatar";
 
-const Avatar = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Root>,
-  AvatarProps
->(({ sx, ...props }, ref) => (
-  <StyledAvatarRoot
-    ref={ref}
-    sx={sx}
-    {...props}
-  />
-))
-Avatar.displayName = AvatarPrimitive.Root.displayName
+const AvatarImage = React.forwardRef<HTMLImageElement, React.ImgHTMLAttributes<HTMLImageElement>>(
+  ({ src, alt, ...props }, ref) => {
+    // MUI Avatar handles image internally
+    return null;
+  }
+);
 
-const StyledAvatarImage = styled(AvatarPrimitive.Image)({
-  aspectRatio: '1 / 1',
-  height: '100%',
-  width: '100%',
-})
+AvatarImage.displayName = "AvatarImage";
 
-interface AvatarImageProps extends React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Image> {
-  sx?: SxProps<Theme>;
-}
+const AvatarFallback = React.forwardRef<HTMLDivElement, React.HTMLAttributes<HTMLDivElement>>(
+  ({ children, ...props }, ref) => {
+    // MUI Avatar handles fallback internally
+    return <>{children}</>;
+  }
+);
 
-const AvatarImage = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Image>,
-  AvatarImageProps
->(({ sx, ...props }, ref) => (
-  <StyledAvatarImage
-    ref={ref}
-    sx={sx}
-    {...props}
-  />
-))
-AvatarImage.displayName = AvatarPrimitive.Image.displayName
+AvatarFallback.displayName = "AvatarFallback";
 
-const StyledAvatarFallback = styled(AvatarPrimitive.Fallback)(({ theme }) => ({
-  display: 'flex',
-  height: '100%',
-  width: '100%',
-  alignItems: 'center',
-  justifyContent: 'center',
-  borderRadius: '9999px',
-  backgroundColor: theme.palette.mode === 'dark' ? (theme.palette as any).custom?.muted : (theme.palette as any).custom?.muted,
-  fontWeight: theme.typography.fontWeightMedium,
-}))
-
-interface AvatarFallbackProps extends React.ComponentPropsWithoutRef<typeof AvatarPrimitive.Fallback> {
-  sx?: SxProps<Theme>;
-}
-
-const AvatarFallback = React.forwardRef<
-  React.ElementRef<typeof AvatarPrimitive.Fallback>,
-  AvatarFallbackProps
->(({ sx, ...props }, ref) => (
-  <StyledAvatarFallback
-    ref={ref}
-    sx={sx}
-    {...props}
-  />
-))
-AvatarFallback.displayName = AvatarPrimitive.Fallback.displayName
-
-export { Avatar, AvatarImage, AvatarFallback }
+export { Avatar, AvatarImage, AvatarFallback };

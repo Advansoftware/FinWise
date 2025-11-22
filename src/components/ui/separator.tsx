@@ -1,47 +1,24 @@
-"use client"
+// MUI-based Separator component with Shadcn-compatible API
+import * as React from "react";
+import { Divider, DividerProps } from "@mui/material";
 
-import * as React from "react"
-import * as SeparatorPrimitive from "@radix-ui/react-separator"
-import { Divider, type SxProps, type Theme, useTheme } from '@mui/material';
-
-interface SeparatorProps extends React.ComponentPropsWithoutRef<typeof SeparatorPrimitive.Root> {
-  sx?: SxProps<Theme>;
+export interface SeparatorProps extends DividerProps {
+  orientation?: "horizontal" | "vertical";
+  decorative?: boolean;
 }
 
-const Separator = React.forwardRef<
-  React.ElementRef<typeof SeparatorPrimitive.Root>,
-  SeparatorProps
->(
-  (
-    { orientation = "horizontal", decorative = true, sx, ...props },
-    ref
-  ) => {
-    const theme = useTheme();
-    
+const Separator = React.forwardRef<HTMLHRElement, SeparatorProps>(
+  ({ orientation = "horizontal", decorative, ...props }, ref) => {
     return (
-      <SeparatorPrimitive.Root
-        ref={ref}
-        decorative={decorative}
+      <Divider
+        ref={ref as any}
         orientation={orientation}
-        asChild
-      >
-        <Divider
-          orientation={orientation}
-          sx={{
-            flexShrink: 0,
-            backgroundColor: theme.palette.custom.border,
-            ...(orientation === "horizontal" 
-              ? { height: '1px', width: '100%' } 
-              : { height: '100%', width: '1px' }
-            ),
-            ...(typeof sx === 'function' ? sx(theme) : sx),
-          }}
-          {...props}
-        />
-      </SeparatorPrimitive.Root>
+        {...props}
+      />
     );
   }
 );
-Separator.displayName = SeparatorPrimitive.Root.displayName;
 
-export { Separator }
+Separator.displayName = "Separator";
+
+export { Separator };
