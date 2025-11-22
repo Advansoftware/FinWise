@@ -1,18 +1,27 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
+
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogHeader,
   DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
+  DialogActions,
+  Button,
+  Box,
+  Typography,
+  Stack,
+  IconButton,
+  useTheme,
+  alpha,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  LinearProgress,
+  Tabs,
+  Tab
+} from '@mui/material';
 import { 
   Trophy, 
   Star, 
@@ -26,7 +35,8 @@ import {
   TrendingUp,
   CheckCircle2,
   AlertTriangle,
-  Clock
+  Clock,
+  X
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -51,7 +61,9 @@ export function GamificationGuide({
   currentLevel,
   badges = []
 }: GamificationGuideProps) {
+  const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'levels' | 'badges' | 'achievements'>('overview');
+  const theme = useTheme();
 
   const levels = [
     { 
@@ -173,61 +185,66 @@ export function GamificationGuide({
 
   const getRarityColor = (rarity: string) => {
     switch (rarity) {
-      case 'common': return 'border-gray-300 bg-gray-50 text-gray-700';
-      case 'rare': return 'border-blue-300 bg-blue-50 text-blue-700';
-      case 'epic': return 'border-purple-300 bg-purple-50 text-purple-700';
-      case 'legendary': return 'border-yellow-300 bg-yellow-50 text-yellow-700';
-      default: return 'border-gray-300 bg-gray-50 text-gray-700';
+      case 'common': return { bgcolor: 'grey.100', color: 'grey.700', borderColor: 'grey.300' };
+      case 'rare': return { bgcolor: 'info.lighter', color: 'info.main', borderColor: 'info.light' };
+      case 'epic': return { bgcolor: 'secondary.lighter', color: 'secondary.main', borderColor: 'secondary.light' };
+      case 'legendary': return { bgcolor: 'warning.lighter', color: 'warning.main', borderColor: 'warning.light' };
+      default: return { bgcolor: 'grey.100', color: 'grey.700', borderColor: 'grey.300' };
     }
   };
 
   return (
-    <Dialog>
-      <DialogTrigger asChild>
-        <Button variant="outline" size="sm" className="gap-2 text-xs md:text-sm px-2 md:px-3 py-1 h-auto min-w-0 max-w-full overflow-hidden">
-          <HelpCircle className="h-3 w-3 md:h-4 md:w-4 flex-shrink-0" />
-          <span className="truncate">Como Funciona?</span>
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="w-[95vw] h-[95vh] md:max-w-4xl md:max-h-[80vh] overflow-hidden flex flex-col">
-        <DialogHeader className="flex-shrink-0">
-          <DialogTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-yellow-500" />
-            Sistema de Gamificação - Parcelamentos
-          </DialogTitle>
-          <DialogDescription>
-            Transforme o pagamento de parcelas em uma experiência divertida e motivadora!
-          </DialogDescription>
-        </DialogHeader>
+    <>
+      <Button 
+        variant="outlined" 
+        size="small" 
+        onClick={() => setOpen(true)}
+        startIcon={<HelpCircle style={{ width: '1rem', height: '1rem' }} />}
+        sx={{ minWidth: 0, whiteSpace: 'nowrap' }}
+      >
+        Como Funciona?
+      </Button>
 
-        <div className="flex flex-col h-full overflow-hidden">
-          {/* Tabs */}
-          <div className="flex-shrink-0 mb-4 overflow-x-auto">
-            <div className="flex gap-1 bg-muted p-1 rounded-lg min-w-max">
-              {[
-                { id: 'overview', label: 'Visão Geral', icon: Star },
-                { id: 'levels', label: 'Níveis', icon: TrendingUp },
-                { id: 'badges', label: 'Badges', icon: Award },
-                { id: 'achievements', label: 'Conquistas', icon: Trophy }
-              ].map(({ id, label, icon: Icon }) => (
-                <button
-                  key={id}
-                  onClick={() => setActiveTab(id as any)}
-                  className={`flex items-center gap-2 px-3 py-2 text-sm rounded-md transition-colors whitespace-nowrap ${
-                    activeTab === id 
-                      ? 'bg-background text-foreground shadow-sm' 
-                      : 'text-muted-foreground hover:text-foreground'
-                  }`}
-                >
-                  <Icon className="h-4 w-4" />
-                  <span className="hidden sm:inline">{label}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+      <Dialog 
+        open={open} 
+        onClose={() => setOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: { height: '80vh', maxHeight: '800px' }
+        }}
+      >
+        <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Box>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Trophy style={{ width: '1.25rem', height: '1.25rem', color: theme.palette.warning.main }} />
+              <span>Sistema de Gamificação</span>
+            </Stack>
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontWeight: 'normal' }}>
+              Transforme o pagamento de parcelas em uma experiência divertida!
+            </Typography>
+          </Box>
+          <IconButton onClick={() => setOpen(false)} size="small">
+            <X style={{ width: '1.25rem', height: '1.25rem' }} />
+          </IconButton>
+        </DialogTitle>
 
-          {/* Content */}
-          <div className="flex-1 overflow-y-auto">
+        <DialogContent dividers sx={{ p: 0, display: 'flex', flexDirection: 'column' }}>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 2, bgcolor: 'background.paper' }}>
+            <Tabs 
+              value={activeTab} 
+              onChange={(_, v) => setActiveTab(v)}
+              variant="scrollable"
+              scrollButtons="auto"
+            >
+              <Tab value="overview" label="Visão Geral" icon={<Star size={16} />} iconPosition="start" />
+              <Tab value="levels" label="Níveis" icon={<TrendingUp size={16} />} iconPosition="start" />
+              <Tab value="badges" label="Badges" icon={<Award size={16} />} iconPosition="start" />
+              <Tab value="achievements" label="Conquistas" icon={<Trophy size={16} />} iconPosition="start" />
+            </Tabs>
+          </Box>
+
+          <Box sx={{ flex: 1, overflowY: 'auto', p: 3 }}>
             <AnimatePresence mode="wait">
               {activeTab === 'overview' && (
                 <motion.div
@@ -235,75 +252,90 @@ export function GamificationGuide({
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="space-y-6"
                 >
-                  {/* Status Atual */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Seu Status Atual</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-2xl font-bold">{currentPoints} pontos</p>
-                          <p className="text-sm text-muted-foreground">
-                            {currentLevel ? `Nível ${currentLevel.level} - ${currentLevel.name}` : 'Nível 1 - Iniciante'}
-                          </p>
-                        </div>
-                        <div className="flex gap-1">
-                          {badges.slice(0, 3).map((badge, index) => (
-                            <div key={badge.id} className="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-yellow-600 flex items-center justify-center">
-                              <span className="text-xs">{badge.icon}</span>
-                            </div>
+                  <Stack spacing={3}>
+                    {/* Status Atual */}
+                    <Card>
+                      <CardHeader title="Seu Status Atual" titleTypographyProps={{ variant: 'h6' }} />
+                      <CardContent>
+                        <Stack spacing={2}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                            <Box>
+                              <Typography variant="h4" fontWeight="bold" color="primary.main">{currentPoints} pontos</Typography>
+                              <Typography variant="body2" color="text.secondary">
+                                {currentLevel ? `Nível ${currentLevel.level} - ${currentLevel.name}` : 'Nível 1 - Iniciante'}
+                              </Typography>
+                            </Box>
+                            <Stack direction="row" spacing={0.5}>
+                              {badges.slice(0, 3).map((badge) => (
+                                <Box 
+                                  key={badge.id} 
+                                  sx={{ 
+                                    width: 32, 
+                                    height: 32, 
+                                    borderRadius: '50%', 
+                                    background: `linear-gradient(135deg, ${theme.palette.warning.light}, ${theme.palette.warning.dark})`,
+                                    display: 'flex', 
+                                    alignItems: 'center', 
+                                    justifyContent: 'center',
+                                    fontSize: '0.75rem'
+                                  }}
+                                >
+                                  {badge.icon}
+                                </Box>
+                              ))}
+                            </Stack>
+                          </Box>
+                          
+                          {currentLevel && (
+                            <Box>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                                <Typography variant="caption">Próximo nível</Typography>
+                                <Typography variant="caption">{currentLevel.pointsToNext} pontos restantes</Typography>
+                              </Box>
+                              <LinearProgress 
+                                variant="determinate" 
+                                value={(currentPoints / (currentLevel.pointsRequired + currentLevel.pointsToNext)) * 100} 
+                                sx={{ height: 8, borderRadius: 4 }}
+                              />
+                            </Box>
+                          )}
+                        </Stack>
+                      </CardContent>
+                    </Card>
+
+                    {/* Como Ganhar Pontos */}
+                    <Card>
+                      <CardHeader title="Como Ganhar (ou Perder) Pontos" titleTypographyProps={{ variant: 'h6' }} />
+                      <CardContent>
+                        <Stack spacing={1.5}>
+                          {pointsSystem.map((item, index) => (
+                            <Box key={index} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 1.5, borderRadius: 1, border: 1, borderColor: 'divider' }}>
+                              <Typography variant="body2" fontWeight="medium">{item.action}</Typography>
+                              <Typography variant="body2" fontWeight="bold" sx={{ color: item.color.includes('red') ? 'error.main' : item.color.includes('green') ? 'success.main' : item.color.includes('blue') ? 'info.main' : 'secondary.main' }}>
+                                {item.points}
+                              </Typography>
+                            </Box>
                           ))}
-                        </div>
-                      </div>
-                      
-                      {currentLevel && (
-                        <div className="space-y-2">
-                          <div className="flex justify-between text-sm">
-                            <span>Próximo nível</span>
-                            <span>{currentLevel.pointsToNext} pontos restantes</span>
-                          </div>
-                          <Progress 
-                            value={(currentPoints / (currentLevel.pointsRequired + currentLevel.pointsToNext)) * 100} 
-                            className="h-2"
-                          />
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
+                        </Stack>
+                      </CardContent>
+                    </Card>
 
-                  {/* Como Ganhar Pontos */}
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-lg">Como Ganhar (ou Perder) Pontos</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {pointsSystem.map((item, index) => (
-                          <div key={index} className="flex items-center justify-between p-3 rounded-lg border">
-                            <span className="font-medium">{item.action}</span>
-                            <span className={`font-bold ${item.color}`}>{item.points}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  {/* Motivação */}
-                  <Card className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border-blue-500/20 dark:from-blue-400/10 dark:to-purple-400/10 dark:border-blue-400/20">
-                    <CardContent className="pt-6">
-                      <div className="text-center space-y-3">
-                        <Flame className="h-8 w-8 text-orange-500 mx-auto" />
-                        <h3 className="font-semibold text-lg">Por que funciona?</h3>
-                        <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                    {/* Motivação */}
+                    <Card sx={{ 
+                      background: `linear-gradient(to right, ${alpha(theme.palette.info.main, 0.1)}, ${alpha(theme.palette.secondary.main, 0.1)})`,
+                      borderColor: alpha(theme.palette.info.main, 0.2)
+                    }}>
+                      <CardContent sx={{ textAlign: 'center', py: 4 }}>
+                        <Flame style={{ width: '2rem', height: '2rem', color: theme.palette.warning.main, marginBottom: '0.75rem' }} />
+                        <Typography variant="h6" gutterBottom>Por que funciona?</Typography>
+                        <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 400, mx: 'auto' }}>
                           A gamificação transforma uma tarefa chata (pagar contas) em algo divertido e recompensador. 
                           Cada pagamento em dia é uma vitória que você pode comemorar!
-                        </p>
-                      </div>
-                    </CardContent>
-                  </Card>
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  </Stack>
                 </motion.div>
               )}
 
@@ -313,45 +345,54 @@ export function GamificationGuide({
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="space-y-4"
                 >
-                  {levels.map((level, index) => {
-                    const Icon = level.icon;
-                    const isCurrentLevel = currentLevel?.level === level.level;
-                    const isUnlocked = currentPoints >= level.pointsRequired;
-                    
-                    return (
-                      <Card key={level.level} className={`${isCurrentLevel ? 'ring-2 ring-primary' : ''}`}>
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-4">
-                            <div className={`w-12 h-12 rounded-full ${level.color} flex items-center justify-center ${!isUnlocked ? 'opacity-50' : ''}`}>
-                              <Icon className="h-6 w-6 text-white" />
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <h3 className="font-semibold">Nível {level.level} - {level.name}</h3>
-                                {isCurrentLevel && <Badge variant="default">Atual</Badge>}
-                                {!isUnlocked && <Badge variant="outline">Bloqueado</Badge>}
-                              </div>
-                              <p className="text-sm text-muted-foreground">
-                                {level.pointsRequired} pontos necessários
-                              </p>
-                              <div className="mt-2">
-                                <p className="text-xs font-medium mb-1">Benefícios:</p>
-                                <div className="flex flex-wrap gap-1">
-                                  {level.benefits.map((benefit, i) => (
-                                    <Badge key={i} variant="secondary" className="text-xs">
-                                      {benefit}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                  <Stack spacing={2}>
+                    {levels.map((level) => {
+                      const Icon = level.icon;
+                      const isCurrentLevel = currentLevel?.level === level.level;
+                      const isUnlocked = currentPoints >= level.pointsRequired;
+                      
+                      return (
+                        <Card key={level.level} sx={{ border: isCurrentLevel ? 2 : 1, borderColor: isCurrentLevel ? 'primary.main' : 'divider' }}>
+                          <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                            <Box sx={{ display: 'flex', gap: 2 }}>
+                              <Box sx={{ 
+                                width: 48, 
+                                height: 48, 
+                                borderRadius: '50%', 
+                                bgcolor: level.color.replace('bg-', '').replace('-500', '.main'), // This is a rough mapping, might need adjustment or explicit colors
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center',
+                                opacity: !isUnlocked ? 0.5 : 1,
+                                color: 'white'
+                              }}>
+                                <Icon size={24} />
+                              </Box>
+                              <Box sx={{ flex: 1 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                                  <Typography variant="subtitle1" fontWeight="bold">Nível {level.level} - {level.name}</Typography>
+                                  {isCurrentLevel && <Chip label="Atual" color="primary" size="small" />}
+                                  {!isUnlocked && <Chip label="Bloqueado" variant="outlined" size="small" />}
+                                </Box>
+                                <Typography variant="body2" color="text.secondary" gutterBottom>
+                                  {level.pointsRequired} pontos necessários
+                                </Typography>
+                                <Box sx={{ mt: 1 }}>
+                                  <Typography variant="caption" fontWeight="medium" display="block" gutterBottom>Benefícios:</Typography>
+                                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                    {level.benefits.map((benefit, i) => (
+                                      <Chip key={i} label={benefit} size="small" sx={{ bgcolor: 'action.hover' }} />
+                                    ))}
+                                  </Box>
+                                </Box>
+                              </Box>
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </Stack>
                 </motion.div>
               )}
 
@@ -361,40 +402,60 @@ export function GamificationGuide({
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="grid grid-cols-1 md:grid-cols-2 gap-4"
                 >
-                  {badgeTypes.map((badge) => {
-                    const isEarned = badges.some(b => b.id === badge.id);
-                    
-                    return (
-                      <Card key={badge.id} className={`${isEarned ? 'ring-2 ring-yellow-400' : ''}`}>
-                        <CardContent className="p-4">
-                          <div className="flex items-center gap-3">
-                            <div className={`w-12 h-12 rounded-full flex items-center justify-center text-2xl ${
-                              isEarned ? 'bg-yellow-100 border-2 border-yellow-400' : 'bg-gray-100 opacity-50'
-                            }`}>
-                              {badge.icon}
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2">
-                                <h4 className="font-medium">{badge.name}</h4>
-                                {isEarned && <CheckCircle2 className="h-4 w-4 text-green-500" />}
-                              </div>
-                              <p className="text-sm text-muted-foreground">{badge.description}</p>
-                              <div className="mt-2">
-                                <Badge variant="outline" className={getRarityColor(badge.rarity)}>
-                                  {badge.rarity}
-                                </Badge>
-                              </div>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                <strong>Como obter:</strong> {badge.requirement}
-                              </p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
+                    {badgeTypes.map((badge) => {
+                      const isEarned = badges.some(b => b.id === badge.id);
+                      const rarityColors = getRarityColor(badge.rarity);
+                      
+                      return (
+                        <Card key={badge.id} sx={{ border: isEarned ? 2 : 1, borderColor: isEarned ? 'warning.main' : 'divider' }}>
+                          <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                            <Box sx={{ display: 'flex', gap: 2 }}>
+                              <Box sx={{ 
+                                width: 48, 
+                                height: 48, 
+                                borderRadius: '50%', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                justifyContent: 'center',
+                                fontSize: '1.5rem',
+                                bgcolor: isEarned ? alpha(theme.palette.warning.main, 0.1) : 'action.disabledBackground',
+                                border: isEarned ? 1 : 0,
+                                borderColor: 'warning.main',
+                                opacity: isEarned ? 1 : 0.5
+                              }}>
+                                {badge.icon}
+                              </Box>
+                              <Box sx={{ flex: 1 }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                                  <Typography variant="subtitle2" fontWeight="bold">{badge.name}</Typography>
+                                  {isEarned && <CheckCircle2 size={16} color={theme.palette.success.main} />}
+                                </Box>
+                                <Typography variant="body2" color="text.secondary" sx={{ mb: 1, lineHeight: 1.2 }}>{badge.description}</Typography>
+                                <Chip 
+                                  label={badge.rarity} 
+                                  size="small" 
+                                  sx={{ 
+                                    bgcolor: rarityColors.bgcolor, 
+                                    color: rarityColors.color, 
+                                    border: 1, 
+                                    borderColor: rarityColors.borderColor,
+                                    height: 20,
+                                    fontSize: '0.625rem',
+                                    textTransform: 'uppercase'
+                                  }} 
+                                />
+                                <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 1 }}>
+                                  <strong>Como obter:</strong> {badge.requirement}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </Box>
                 </motion.div>
               )}
 
@@ -404,33 +465,34 @@ export function GamificationGuide({
                   initial={{ opacity: 0, y: 20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="space-y-4"
                 >
-                  {achievements.map((achievement, index) => (
-                    <Card key={index}>
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-4">
-                          <div className="text-3xl">{achievement.icon}</div>
-                          <div className="flex-1">
-                            <h4 className="font-semibold">{achievement.name}</h4>
-                            <p className="text-sm text-muted-foreground">{achievement.description}</p>
-                            <div className="flex items-center gap-2 mt-2">
-                              <Badge variant="outline">{achievement.points} pontos</Badge>
-                              <span className="text-xs text-muted-foreground">
-                                {achievement.progress}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                  <Stack spacing={2}>
+                    {achievements.map((achievement, index) => (
+                      <Card key={index}>
+                        <CardContent sx={{ p: 2, '&:last-child': { pb: 2 } }}>
+                          <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                            <Box sx={{ fontSize: '2rem' }}>{achievement.icon}</Box>
+                            <Box sx={{ flex: 1 }}>
+                              <Typography variant="subtitle1" fontWeight="bold">{achievement.name}</Typography>
+                              <Typography variant="body2" color="text.secondary">{achievement.description}</Typography>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 1 }}>
+                                <Chip label={`${achievement.points} pontos`} size="small" variant="outlined" />
+                                <Typography variant="caption" color="text.secondary">
+                                  {achievement.progress}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </Stack>
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+          </Box>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

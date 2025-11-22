@@ -1,11 +1,27 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
+import { 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  Typography, 
+  TextField, 
+  Button, 
+  Divider, 
+  Box, 
+  Stack, 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow, 
+  Paper,
+  useTheme,
+  alpha,
+  InputAdornment
+} from '@mui/material';
 import { Receipt, TrendingDown, TrendingUp, Calculator, AlertCircle, CheckCircle } from "lucide-react";
 import { PayrollData } from "@/lib/types";
 import { getINSSFromPayroll, getIRFromPayroll, calculateIRFromSalary, validatePayrollData } from "@/lib/payroll-utils";
@@ -38,6 +54,7 @@ export function IncomeTaxCalculator({ payrollData }: IncomeTaxCalculatorProps) {
   const [educationExpenses, setEducationExpenses] = useState<number>(0);
   const [inssContribution, setInssContribution] = useState<number>(0);
   const [calculation, setCalculation] = useState<IncomeTaxCalculation | null>(null);
+  const theme = useTheme();
 
   const hasPayrollData = payrollData.grossSalary > 0;
   const currentData = mode === 'payroll' ? payrollData : {
@@ -134,16 +151,18 @@ export function IncomeTaxCalculator({ payrollData }: IncomeTaxCalculatorProps) {
 
   return (
     <Card>
-      <CardHeader>
-        <div className="flex items-center gap-2">
-          <Receipt className="h-5 w-5 text-primary" />
-          <CardTitle className="text-lg">Calculadora de Imposto de Renda</CardTitle>
-        </div>
-        <CardDescription>
-          Calcule seu IR mensal, anual e estimativa de restituição
-        </CardDescription>
-      </CardHeader>
-            <CardContent className="space-y-6">
+      <CardHeader 
+        title={
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Receipt style={{ width: '1.25rem', height: '1.25rem', color: theme.palette.primary.main }} />
+            Calculadora de Imposto de Renda
+          </Box>
+        }
+        subheader="Calcule seu IR mensal, anual e estimativa de restituição"
+        titleTypographyProps={{ variant: 'h6' }}
+      />
+      <CardContent>
+        <Stack spacing={3}>
         {/* Toggle entre modos */}
         <CalculatorModeToggle 
           mode={mode} 
@@ -153,75 +172,72 @@ export function IncomeTaxCalculator({ payrollData }: IncomeTaxCalculatorProps) {
 
         {/* Entrada de dados baseada no modo */}
         {mode === 'payroll' ? (
-          <div className="bg-muted/30 dark:bg-muted/10 p-3 rounded-md space-y-2">
-            <div className="text-sm font-medium">Dados do Holerite:</div>
-            <div className="text-xs text-muted-foreground">
-              Salário Bruto: <span className="font-medium">{formatCurrency(payrollData.grossSalary)}</span>
-            </div>
-          </div>
+          <Paper variant="outlined" sx={{ p: 2, bgcolor: 'action.hover' }}>
+            <Typography variant="subtitle2" sx={{ mb: 1 }}>Dados do Holerite:</Typography>
+            <Typography variant="caption" color="text.secondary">
+              Salário Bruto: <Typography component="span" variant="caption" fontWeight="medium">{formatCurrency(payrollData.grossSalary)}</Typography>
+            </Typography>
+          </Paper>
         ) : (
           <ManualSalaryInput data={manualData} onChange={setManualData} />
         )}
 
         {/* Inputs para cálculos */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="space-y-2">
-            <Label htmlFor="dependents">Número de dependentes</Label>
-            <Input
-              id="dependents"
-              type="number"
-              value={dependents}
-              onChange={(e) => setDependents(Number(e.target.value))}
-              min="0"
-              max="10"
-            />
-          </div>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2 }}>
+          <TextField
+            label="Número de dependentes"
+            type="number"
+            value={dependents}
+            onChange={(e) => setDependents(Number(e.target.value))}
+            inputProps={{ min: 0, max: 10 }}
+            fullWidth
+          />
           
-          <div className="space-y-2">
-            <Label htmlFor="medicalExpenses">Gastos médicos/ano (R$)</Label>
-            <Input
-              id="medicalExpenses"
-              type="number"
-              value={medicalExpenses}
-              onChange={(e) => setMedicalExpenses(Number(e.target.value))}
-              min="0"
-            />
-          </div>
+          <TextField
+            label="Gastos médicos/ano (R$)"
+            type="number"
+            value={medicalExpenses}
+            onChange={(e) => setMedicalExpenses(Number(e.target.value))}
+            inputProps={{ min: 0 }}
+            fullWidth
+          />
           
-          <div className="space-y-2">
-            <Label htmlFor="educationExpenses">Gastos educação/ano (R$)</Label>
-            <Input
-              id="educationExpenses"
-              type="number"
-              value={educationExpenses}
-              onChange={(e) => setEducationExpenses(Number(e.target.value))}
-              min="0"
-            />
-          </div>
+          <TextField
+            label="Gastos educação/ano (R$)"
+            type="number"
+            value={educationExpenses}
+            onChange={(e) => setEducationExpenses(Number(e.target.value))}
+            inputProps={{ min: 0 }}
+            fullWidth
+          />
 
           {!getINSSFromPayroll(payrollData) && (
-            <div className="space-y-2">
-              <Label htmlFor="inssContribution">Desconto INSS mensal (R$)</Label>
-              <Input
-                id="inssContribution"
-                type="number"
-                value={inssContribution}
-                onChange={(e) => setInssContribution(Number(e.target.value))}
-                min="0"
-                placeholder="Será calculado automaticamente"
-              />
-            </div>
+            <TextField
+              label="Desconto INSS mensal (R$)"
+              type="number"
+              value={inssContribution}
+              onChange={(e) => setInssContribution(Number(e.target.value))}
+              inputProps={{ min: 0 }}
+              placeholder="Será calculado automaticamente"
+              fullWidth
+              helperText="Deixe 0 para calcular automaticamente"
+            />
           )}
-        </div>
+        </Box>
 
-        <Button onClick={calculateIncomeTax} className="w-full">
-          <Calculator className="h-4 w-4 mr-2" />
+        <Button 
+          onClick={calculateIncomeTax} 
+          variant="contained" 
+          fullWidth
+          startIcon={<Calculator />}
+        >
           Calcular Imposto de Renda
         </Button>
 
+
         {calculation && (
-          <>
-            <Separator />
+          <Stack spacing={3}>
+            <Divider />
             
             {/* Validação dos dados */}
             {(() => {
@@ -230,201 +246,216 @@ export function IncomeTaxCalculator({ payrollData }: IncomeTaxCalculatorProps) {
               const calculatedIR = calculateIRFromSalary(payrollData.grossSalary, registeredINSS, dependents);
               
               return (
-                <div className="space-y-4">
+                <Stack spacing={2}>
                   {registeredIR > 0 && (
-                    <div className={`p-4 rounded-lg ${Math.abs(registeredIR - calculatedIR) <= 20 ? 'bg-green-50 dark:bg-green-500/10' : 'bg-yellow-50 dark:bg-yellow-500/10'}`}>
-                      <div className="flex items-center gap-2 mb-2">
+                    <Paper 
+                      variant="outlined" 
+                      sx={{ 
+                        p: 2, 
+                        bgcolor: Math.abs(registeredIR - calculatedIR) <= 20 ? alpha(theme.palette.success.main, 0.1) : alpha(theme.palette.warning.main, 0.1),
+                        borderColor: Math.abs(registeredIR - calculatedIR) <= 20 ? alpha(theme.palette.success.main, 0.3) : alpha(theme.palette.warning.main, 0.3)
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                         {Math.abs(registeredIR - calculatedIR) <= 20 ? (
-                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <CheckCircle style={{ width: '1rem', height: '1rem', color: theme.palette.success.main }} />
                         ) : (
-                          <AlertCircle className="h-4 w-4 text-yellow-600" />
+                          <AlertCircle style={{ width: '1rem', height: '1rem', color: theme.palette.warning.main }} />
                         )}
-                        <span className="font-medium">Validação do IR</span>
-                      </div>
-                      <div className="text-sm space-y-1">
-                        <div>IR do seu holerite: <span className="font-medium">{formatCurrency(registeredIR)}</span></div>
-                        <div>IR calculado pela tabela: <span className="font-medium">{formatCurrency(calculatedIR)}</span></div>
+                        <Typography variant="subtitle2" fontWeight="medium">Validação do IR</Typography>
+                      </Box>
+                      <Stack spacing={0.5}>
+                        <Typography variant="body2">IR do seu holerite: <strong>{formatCurrency(registeredIR)}</strong></Typography>
+                        <Typography variant="body2">IR calculado pela tabela: <strong>{formatCurrency(calculatedIR)}</strong></Typography>
                         {Math.abs(registeredIR - calculatedIR) <= 20 ? (
-                          <div className="text-green-600 dark:text-green-400">✓ Valores estão consistentes</div>
+                          <Typography variant="caption" color="success.main">✓ Valores estão consistentes</Typography>
                         ) : (
-                          <div className="text-yellow-600 dark:text-yellow-400">⚠️ Diferença pode indicar dependentes ou outras deduções não consideradas</div>
+                          <Typography variant="caption" color="warning.main">⚠️ Diferença pode indicar dependentes ou outras deduções não consideradas</Typography>
                         )}
-                      </div>
-                    </div>
+                      </Stack>
+                    </Paper>
                   )}
                   
                   {registeredINSS > 0 && (
-                    <div className="bg-blue-50 dark:bg-blue-500/10 p-3 rounded-lg">
-                      <div className="text-sm text-blue-600 dark:text-blue-400">
+                    <Paper variant="outlined" sx={{ p: 2, bgcolor: alpha(theme.palette.info.main, 0.1), borderColor: alpha(theme.palette.info.main, 0.3) }}>
+                      <Typography variant="body2" color="info.main">
                         💡 <strong>Usando dados do seu holerite:</strong> INSS de {formatCurrency(registeredINSS)} 
                         {registeredIR > 0 && ` e IR de ${formatCurrency(registeredIR)}`}
-                      </div>
-                    </div>
+                      </Typography>
+                    </Paper>
                   )}
-                </div>
+                </Stack>
               );
             })()}
             
             {/* Resultados */}
-            <div className="space-y-4">
-              <h3 className="font-semibold text-lg">Resultados do Imposto de Renda</h3>
+            <Stack spacing={2}>
+              <Typography variant="h6">Resultados do Imposto de Renda</Typography>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="bg-muted/50 p-4 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Receipt className="h-4 w-4 text-primary" />
-                    <span className="font-medium">IR Mensal</span>
-                  </div>
-                  <p className="text-2xl font-bold text-primary">
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 2 }}>
+                <Paper sx={{ p: 2, bgcolor: 'action.hover' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Receipt style={{ width: '1rem', height: '1rem', color: theme.palette.primary.main }} />
+                    <Typography variant="subtitle2">IR Mensal</Typography>
+                  </Box>
+                  <Typography variant="h5" fontWeight="bold" color="primary">
                     {formatCurrency(calculation.monthlyIR)}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
                     Faixa: {calculation.bracket}
-                  </p>
-                </div>
+                  </Typography>
+                </Paper>
 
-                <div className="bg-muted/50 p-4 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <TrendingUp className="h-4 w-4 text-primary" />
-                    <span className="font-medium">IR Anual</span>
-                  </div>
-                  <p className="text-2xl font-bold text-primary">
+                <Paper sx={{ p: 2, bgcolor: 'action.hover' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <TrendingUp style={{ width: '1rem', height: '1rem', color: theme.palette.primary.main }} />
+                    <Typography variant="subtitle2">IR Anual</Typography>
+                  </Box>
+                  <Typography variant="h5" fontWeight="bold" color="primary">
                     {formatCurrency(calculation.yearlyIR)}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
                     {formatPercentage(calculation.effectiveRate)} do salário
-                  </p>
-                </div>
+                  </Typography>
+                </Paper>
 
-                <div className="bg-blue-50 dark:bg-blue-500/10 p-4 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Calculator className="h-4 w-4 text-blue-600" />
-                    <span className="font-medium">Base de Cálculo</span>
-                  </div>
-                  <p className="text-2xl font-bold text-blue-600">
+                <Paper sx={{ p: 2, bgcolor: alpha(theme.palette.info.main, 0.1) }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                    <Calculator style={{ width: '1rem', height: '1rem', color: theme.palette.info.main }} />
+                    <Typography variant="subtitle2">Base de Cálculo</Typography>
+                  </Box>
+                  <Typography variant="h5" fontWeight="bold" color="info.main">
                     {formatCurrency(calculation.taxableIncome)}
-                  </p>
-                  <p className="text-sm text-blue-600/70">
+                  </Typography>
+                  <Typography variant="caption" color="info.main" sx={{ opacity: 0.8 }}>
                     Renda tributável anual
-                  </p>
-                </div>
+                  </Typography>
+                </Paper>
 
-                <div className={`p-4 rounded-lg ${
-                  calculation.estimatedRefund > 0 ? 'bg-green-50 dark:bg-green-500/10' : 'bg-red-50 dark:bg-red-500/10'
-                }`}>
-                  <div className="flex items-center gap-2 mb-2">
+                <Paper 
+                  sx={{ 
+                    p: 2, 
+                    bgcolor: calculation.estimatedRefund > 0 ? alpha(theme.palette.success.main, 0.1) : alpha(theme.palette.error.main, 0.1)
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                     {calculation.estimatedRefund > 0 ? (
-                      <TrendingDown className="h-4 w-4 text-green-600" />
+                      <TrendingDown style={{ width: '1rem', height: '1rem', color: theme.palette.success.main }} />
                     ) : (
-                      <TrendingUp className="h-4 w-4 text-red-600" />
+                      <TrendingUp style={{ width: '1rem', height: '1rem', color: theme.palette.error.main }} />
                     )}
-                    <span className="font-medium">
+                    <Typography variant="subtitle2">
                       {calculation.estimatedRefund > 0 ? 'Restituição Estimada' : 'Imposto a Pagar'}
-                    </span>
-                  </div>
-                  <p className={`text-2xl font-bold ${
-                    calculation.estimatedRefund > 0 ? 'text-green-600' : 'text-red-600'
-                  }`}>
+                    </Typography>
+                  </Box>
+                  <Typography 
+                    variant="h5" 
+                    fontWeight="bold" 
+                    color={calculation.estimatedRefund > 0 ? 'success.main' : 'error.main'}
+                  >
                     {formatCurrency(Math.abs(calculation.estimatedRefund))}
-                  </p>
-                  <p className={`text-sm ${
-                    calculation.estimatedRefund > 0 ? 'text-green-600/70' : 'text-red-600/70'
-                  }`}>
+                  </Typography>
+                  <Typography 
+                    variant="caption" 
+                    color={calculation.estimatedRefund > 0 ? 'success.main' : 'error.main'}
+                    sx={{ opacity: 0.8 }}
+                  >
                     {calculation.estimatedRefund > 0 ? 'A receber' : 'A complementar'}
-                  </p>
-                </div>
-              </div>
+                  </Typography>
+                </Paper>
+              </Box>
+            </Stack>
 
               {/* Resumo das deduções */}
-              <div className="bg-muted/30 p-4 rounded-lg">
-                <h4 className="font-medium mb-3">📊 Resumo das Deduções</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <span className="text-muted-foreground">Renda Bruta Anual:</span>
-                    <span className="float-right font-medium">{formatCurrency(calculation.grossAnnualIncome)}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">INSS (12 meses):</span>
-                    <span className="float-right font-medium">{formatCurrency(inssContribution * 12)}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Dependentes ({dependents}):</span>
-                    <span className="float-right font-medium">{formatCurrency(dependents * 189.59 * 12)}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Gastos Médicos:</span>
-                    <span className="float-right font-medium">{formatCurrency(medicalExpenses)}</span>
-                  </div>
-                  <div>
-                    <span className="text-muted-foreground">Gastos Educação:</span>
-                    <span className="float-right font-medium">{formatCurrency(Math.min(educationExpenses, 3561.50 * 12))}</span>
-                  </div>
-                  <div className="border-t pt-2">
-                    <span className="text-muted-foreground">Total Deduções:</span>
-                    <span className="float-right font-bold">{formatCurrency(calculation.deductions)}</span>
-                  </div>
-                </div>
-              </div>
+              <Paper variant="outlined" sx={{ p: 2, bgcolor: 'action.hover' }}>
+                <Typography variant="subtitle2" sx={{ mb: 2 }}>📊 Resumo das Deduções</Typography>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 1.5 }}>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" component="span">Renda Bruta Anual:</Typography>
+                    <Typography variant="body2" fontWeight="medium" component="span" sx={{ float: 'right' }}>{formatCurrency(calculation.grossAnnualIncome)}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" component="span">INSS (12 meses):</Typography>
+                    <Typography variant="body2" fontWeight="medium" component="span" sx={{ float: 'right' }}>{formatCurrency(inssContribution * 12)}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" component="span">Dependentes ({dependents}):</Typography>
+                    <Typography variant="body2" fontWeight="medium" component="span" sx={{ float: 'right' }}>{formatCurrency(dependents * 189.59 * 12)}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" component="span">Gastos Médicos:</Typography>
+                    <Typography variant="body2" fontWeight="medium" component="span" sx={{ float: 'right' }}>{formatCurrency(medicalExpenses)}</Typography>
+                  </Box>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary" component="span">Gastos Educação:</Typography>
+                    <Typography variant="body2" fontWeight="medium" component="span" sx={{ float: 'right' }}>{formatCurrency(Math.min(educationExpenses, 3561.50 * 12))}</Typography>
+                  </Box>
+                  <Box sx={{ borderTop: 1, borderColor: 'divider', pt: 1, mt: 0.5 }}>
+                    <Typography variant="body2" color="text.secondary" component="span">Total Deduções:</Typography>
+                    <Typography variant="body2" fontWeight="bold" component="span" sx={{ float: 'right' }}>{formatCurrency(calculation.deductions)}</Typography>
+                  </Box>
+                </Box>
+              </Paper>
 
               {/* Tabela IR */}
-              <div className="bg-muted/30 p-4 rounded-lg">
-                <h4 className="font-medium mb-3">📋 Tabela IR 2024/2025 (Mensal)</h4>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left py-2">Base de Cálculo</th>
-                        <th className="text-left py-2">Alíquota</th>
-                        <th className="text-left py-2">Dedução</th>
-                        <th className="text-left py-2">Sua Situação</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+              <Paper variant="outlined" sx={{ p: 2, bgcolor: 'action.hover' }}>
+                <Typography variant="subtitle2" sx={{ mb: 2 }}>📋 Tabela IR 2024/2025 (Mensal)</Typography>
+                <TableContainer>
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Base de Cálculo</TableCell>
+                        <TableCell>Alíquota</TableCell>
+                        <TableCell>Dedução</TableCell>
+                        <TableCell>Sua Situação</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
                       {irTable.map((bracket, index) => {
                         const taxableMonthly = calculation.taxableIncome / 12;
                         const isCurrentBracket = taxableMonthly >= bracket.min && taxableMonthly <= bracket.max;
                         
                         return (
-                          <tr key={index} className="border-b">
-                            <td className="py-2">
+                          <TableRow key={index}>
+                            <TableCell>
                               {bracket.max === Infinity 
                                 ? `Acima de ${formatCurrency(bracket.min)}`
                                 : `${formatCurrency(bracket.min)} - ${formatCurrency(bracket.max)}`
                               }
-                            </td>
-                            <td className="py-2">{formatPercentage(bracket.rate * 100)}</td>
-                            <td className="py-2">{formatCurrency(bracket.deduction)}</td>
-                            <td className="py-2">
+                            </TableCell>
+                            <TableCell>{formatPercentage(bracket.rate * 100)}</TableCell>
+                            <TableCell>{formatCurrency(bracket.deduction)}</TableCell>
+                            <TableCell>
                               {isCurrentBracket ? (
-                                <span className="text-green-600 font-medium">Sua faixa</span>
+                                <Typography variant="caption" color="success.main" fontWeight="medium">Sua faixa</Typography>
                               ) : taxableMonthly > bracket.max ? (
-                                <span className="text-blue-600">Já passou</span>
+                                <Typography variant="caption" color="primary.main">Já passou</Typography>
                               ) : (
-                                <span className="text-gray-400">Acima da sua faixa</span>
+                                <Typography variant="caption" color="text.disabled">Acima da sua faixa</Typography>
                               )}
-                            </td>
-                          </tr>
+                            </TableCell>
+                          </TableRow>
                         );
                       })}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </Paper>
 
               {/* Informações importantes */}
-              <div className="bg-amber-50 p-4 rounded-lg">
-                <h4 className="font-medium text-amber-800 mb-2">ℹ️ Informações importantes:</h4>
-                <ul className="text-sm text-amber-700 space-y-1">
-                  <li>• Cálculo baseado na tabela 2024/2025 da Receita Federal</li>
-                  <li>• Deduções: INSS, dependentes (R$ 189,59), saúde (ilimitado), educação (até R$ 3.561,50)</li>
-                  <li>• Estimativa de restituição considera apenas IR na fonte vs IR devido</li>
-                  <li>• Para declaração completa, considere outras rendas e deduções</li>
-                  <li>• Consulte um contador para casos complexos</li>
-                </ul>
-              </div>
-            </div>
-          </>
+              <Paper sx={{ p: 2, bgcolor: alpha(theme.palette.warning.main, 0.1) }}>
+                <Typography variant="subtitle2" color="warning.dark" sx={{ mb: 1 }}>ℹ️ Informações importantes:</Typography>
+                <Stack spacing={0.5}>
+                  <Typography variant="caption" color="warning.dark">• Cálculo baseado na tabela 2024/2025 da Receita Federal</Typography>
+                  <Typography variant="caption" color="warning.dark">• Deduções: INSS, dependentes (R$ 189,59), saúde (ilimitado), educação (até R$ 3.561,50)</Typography>
+                  <Typography variant="caption" color="warning.dark">• Estimativa de restituição considera apenas IR na fonte vs IR devido</Typography>
+                  <Typography variant="caption" color="warning.dark">• Para declaração completa, considere outras rendas e deduções</Typography>
+                  <Typography variant="caption" color="warning.dark">• Consulte um contador para casos complexos</Typography>
+                </Stack>
+              </Paper>
+            </Stack>
         )}
+      </Stack>
       </CardContent>
     </Card>
   );

@@ -4,13 +4,18 @@ import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Skeleton } from '@/components/ui/skeleton';
-import { ScrollArea } from '@/components/ui/scroll-area';
+  Box,
+  Typography,
+  Card,
+  CardContent,
+  Badge,
+  Skeleton,
+  Stack,
+  useTheme,
+  alpha,
+  IconButton
+} from '@mui/material';
 import { 
   Calendar,
   CreditCard,
@@ -19,13 +24,13 @@ import {
   CheckCircle,
   AlertCircle,
   Building,
-  Tag
+  Tag,
+  X
 } from 'lucide-react';
 import { formatCurrency } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useAuth } from '@/hooks/use-auth';
-import { cn } from '@/lib/utils';
 
 interface InstallmentDetail {
   id: string;
@@ -63,6 +68,7 @@ export function MonthlyInstallmentsModal({
   const [installments, setInstallments] = useState<InstallmentDetail[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
+  const theme = useTheme();
 
   useEffect(() => {
     if (isOpen && month && user?.uid) {
@@ -97,22 +103,30 @@ export function MonthlyInstallmentsModal({
   const getStatusIcon = (status: string) => {
     switch (status) {
       case 'paid':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
+        return <CheckCircle style={{ width: '1rem', height: '1rem', color: theme.palette.success.main }} />;
       case 'overdue':
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
+        return <AlertCircle style={{ width: '1rem', height: '1rem', color: theme.palette.error.main }} />;
       default:
-        return <Clock className="h-4 w-4 text-yellow-500" />;
+        return <Clock style={{ width: '1rem', height: '1rem', color: theme.palette.warning.main }} />;
     }
   };
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'paid':
-        return <Badge variant="secondary" className="bg-green-100 text-green-700">Pago</Badge>;
+        return (
+          <Badge sx={{ bgcolor: alpha(theme.palette.success.main, 0.1), color: 'success.main', border: 1, borderColor: alpha(theme.palette.success.main, 0.3) }}>
+            Pago
+          </Badge>
+        );
       case 'overdue':
-        return <Badge variant="destructive">Em atraso</Badge>;
+        return (
+          <Badge sx={{ bgcolor: alpha(theme.palette.error.main, 0.1), color: 'error.main', border: 1, borderColor: alpha(theme.palette.error.main, 0.3) }}>
+            Em atraso
+          </Badge>
+        );
       default:
-        return <Badge variant="outline">Pendente</Badge>;
+        return <Badge variant="standard">Pendente</Badge>;
     }
   };
 
@@ -125,14 +139,16 @@ export function MonthlyInstallmentsModal({
   const overdueCount = installments.filter(i => i.status === 'overdue').length;
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className={cn(
-        "w-full h-full max-w-none max-h-none m-0 p-0 rounded-none flex flex-col",
-        "md:w-[90vw] md:h-[85vh] md:max-w-4xl md:max-h-[85vh] md:m-auto md:p-6 md:rounded-lg"
-      )}>
+    <Dialog 
+      open={isOpen} 
+      onClose={() => onOpenChange(false)}
+      maxWidth="md"
+      fullWidth
+    >
+      <DialogContent sx={{ p: 0, display: 'flex', flexDirection: 'column', height: { xs: '100%', md: '85vh' }, maxHeight: '85vh' }}>
         {/* Header fixo */}
-        <DialogHeader className="flex-shrink-0 p-6 pb-4 md:p-0 md:pb-4 border-b md:border-b-0">
-          <DialogTitle className="text-xl md:text-2xl">
+        <Box sx={{ p: 3, borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <DialogTitle sx={{ fontSize: { xs: '1.125rem', md: '1.5rem' } }}>
             {commitmentType === 'fixed' 
               ? `Compromissos Fixos de ${monthName}`
               : commitmentType === 'variable'
@@ -140,156 +156,163 @@ export function MonthlyInstallmentsModal({
               : `Parcelamentos de ${monthName}`
             }
           </DialogTitle>
-        </DialogHeader>
+          <IconButton onClick={() => onOpenChange(false)} size="small">
+            <X style={{ width: '1.25rem', height: '1.25rem' }} />
+          </IconButton>
+        </Box>
 
         {/* Summary Cards fixo */}
-        <div className="flex-shrink-0 px-6 pb-4 md:px-0 border-b md:border-b-0">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <Card className="p-3">
-              <div className="flex items-center space-x-2">
-                <DollarSign className="h-4 w-4 text-primary" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Total</p>
-                  <p className="text-sm font-semibold">{formatCurrency(totalAmount)}</p>
-                </div>
-              </div>
+        <Box sx={{ p: 3, pb: 2, borderBottom: { xs: 1, md: 0 }, borderColor: 'divider' }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' }, gap: 2 }}>
+            <Card sx={{ p: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <DollarSign style={{ width: '1rem', height: '1rem', color: theme.palette.primary.main }} />
+                <Box>
+                  <Typography variant="caption" color="text.secondary">Total</Typography>
+                  <Typography variant="body2" fontWeight="semibold">{formatCurrency(totalAmount)}</Typography>
+                </Box>
+              </Box>
             </Card>
             
-            <Card className="p-3">
-              <div className="flex items-center space-x-2">
-                <CheckCircle className="h-4 w-4 text-green-500" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Pagos</p>
-                  <p className="text-sm font-semibold">{paidCount}</p>
-                </div>
-              </div>
+            <Card sx={{ p: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <CheckCircle style={{ width: '1rem', height: '1rem', color: theme.palette.success.main }} />
+                <Box>
+                  <Typography variant="caption" color="text.secondary">Pagos</Typography>
+                  <Typography variant="body2" fontWeight="semibold">{paidCount}</Typography>
+                </Box>
+              </Box>
             </Card>
             
-            <Card className="p-3">
-              <div className="flex items-center space-x-2">
-                <Clock className="h-4 w-4 text-yellow-500" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Pendentes</p>
-                  <p className="text-sm font-semibold">{pendingCount}</p>
-                </div>
-              </div>
+            <Card sx={{ p: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Clock style={{ width: '1rem', height: '1rem', color: theme.palette.warning.main }} />
+                <Box>
+                  <Typography variant="caption" color="text.secondary">Pendentes</Typography>
+                  <Typography variant="body2" fontWeight="semibold">{pendingCount}</Typography>
+                </Box>
+              </Box>
             </Card>
             
-            <Card className="p-3">
-              <div className="flex items-center space-x-2">
-                <AlertCircle className="h-4 w-4 text-red-500" />
-                <div>
-                  <p className="text-xs text-muted-foreground">Atraso</p>
-                  <p className="text-sm font-semibold">{overdueCount}</p>
-                </div>
-              </div>
+            <Card sx={{ p: 1.5 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <AlertCircle style={{ width: '1rem', height: '1rem', color: theme.palette.error.main }} />
+                <Box>
+                  <Typography variant="caption" color="text.secondary">Atraso</Typography>
+                  <Typography variant="body2" fontWeight="semibold">{overdueCount}</Typography>
+                </Box>
+              </Box>
             </Card>
-          </div>
-        </div>
+          </Box>
+        </Box>
 
         {/* Área de scroll para a lista */}
-        <div className="flex-1 min-h-0 px-6 md:px-0">
-          <ScrollArea className="h-full">
-            <div className="pr-4">
-              {isLoading ? (
-                <div className="space-y-3">
-                  {Array.from({ length: 5 }).map((_, i) => (
-                    <Skeleton key={i} className="h-24 w-full" />
-                  ))}
-                </div>
-              ) : installments.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12">
-                  <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-medium mb-2">Nenhum parcelamento encontrado</h3>
-                  <p className="text-muted-foreground text-center">
-                    Não há parcelamentos registrados para este mês.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-3 pb-6">
-                  {installments.map((installment) => (
-                    <Card key={`${installment.id}-${installment.installmentNumber}`} className="p-4">
-                      <div className="flex flex-col space-y-3">
-                        {/* Header */}
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 min-w-0">
-                            <h4 className="font-semibold text-sm md:text-base truncate">
-                              {installment.name}
-                            </h4>
-                            {installment.description && (
-                              <p className="text-xs text-muted-foreground mt-1">
-                                {installment.description}
-                              </p>
-                            )}
-                          </div>
-                          <div className="flex items-center space-x-2 ml-2">
-                            {getStatusIcon(installment.status)}
-                            {getStatusBadge(installment.status)}
-                          </div>
-                        </div>
-
-                        {/* Amount and Installment Info */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center space-x-4">
-                            <div className="flex items-center space-x-1">
-                              <DollarSign className="h-4 w-4 text-muted-foreground" />
-                              <span className="font-semibold">
-                                {formatCurrency(installment.amount)}
-                              </span>
-                            </div>
-                            <div className="flex items-center space-x-1">
-                              <CreditCard className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-sm text-muted-foreground">
-                                {formatInstallmentInfo(installment.installmentNumber, installment.totalInstallments)}
-                              </span>
-                            </div>
-                          </div>
-                          
-                          <div className="text-xs text-muted-foreground">
-                            {format(new Date(installment.dueDate), 'dd/MM/yyyy', { locale: ptBR })}
-                          </div>
-                        </div>
-
-                        {/* Category and Details */}
-                        <div className="flex flex-wrap gap-2 text-xs">
-                          <div className="flex items-center space-x-1">
-                            <Tag className="h-3 w-3 text-muted-foreground" />
-                            <span className="text-muted-foreground">{installment.category}</span>
-                            {installment.subcategory && (
-                              <>
-                                <span className="text-muted-foreground">·</span>
-                                <span className="text-muted-foreground">{installment.subcategory}</span>
-                              </>
-                            )}
-                          </div>
-                          
-                          {installment.establishment && (
-                            <div className="flex items-center space-x-1">
-                              <Building className="h-3 w-3 text-muted-foreground" />
-                              <span className="text-muted-foreground">{installment.establishment}</span>
-                            </div>
+        <Box sx={{ flex: 1, overflow: 'auto', p: 3, pt: 1 }}>
+          <Box sx={{ pr: { md: 1 } }}>
+            {isLoading ? (
+              <Stack spacing={2}>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Skeleton key={i} variant="rectangular" height={96} sx={{ borderRadius: 1 }} />
+                ))}
+              </Stack>
+            ) : installments.length === 0 ? (
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 6 }}>
+                <Calendar style={{ width: '3rem', height: '3rem', color: theme.palette.text.secondary, marginBottom: '1rem' }} />
+                <Typography variant="h6" fontWeight="medium" sx={{ mb: 1 }}>Nenhum parcelamento encontrado</Typography>
+                <Typography color="text.secondary" align="center">
+                  Não há parcelamentos registrados para este mês.
+                </Typography>
+              </Box>
+            ) : (
+              <Stack spacing={2} sx={{ pb: 3 }}>
+                {installments.map((installment) => (
+                  <Card key={`${installment.id}-${installment.installmentNumber}`} sx={{ p: 2 }}>
+                    <Stack spacing={1.5}>
+                      {/* Header */}
+                      <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography variant="subtitle2" fontWeight="semibold" noWrap>
+                            {installment.name}
+                          </Typography>
+                          {installment.description && (
+                            <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                              {installment.description}
+                            </Typography>
                           )}
-                        </div>
+                        </Box>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, ml: 1 }}>
+                          {getStatusIcon(installment.status)}
+                          {getStatusBadge(installment.status)}
+                        </Box>
+                      </Box>
 
-                        {/* Payment Info */}
-                        {installment.status === 'paid' && installment.paidDate && (
-                          <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
-                            Pago em {format(new Date(installment.paidDate), 'dd/MM/yyyy', { locale: ptBR })}
-                            {installment.paidAmount && installment.paidAmount !== installment.amount && (
-                              <span className="ml-2">
-                                (Valor: {formatCurrency(installment.paidAmount)})
-                              </span>
-                            )}
-                          </div>
+                      {/* Amount and Installment Info */}
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <DollarSign style={{ width: '1rem', height: '1rem', color: theme.palette.text.secondary }} />
+                            <Typography variant="body2" fontWeight="semibold">
+                              {formatCurrency(installment.amount)}
+                            </Typography>
+                          </Box>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <CreditCard style={{ width: '1rem', height: '1rem', color: theme.palette.text.secondary }} />
+                            <Typography variant="caption" color="text.secondary">
+                              {formatInstallmentInfo(installment.installmentNumber, installment.totalInstallments)}
+                            </Typography>
+                          </Box>
+                        </Box>
+                        
+                        <Typography variant="caption" color="text.secondary">
+                          {format(new Date(installment.dueDate), 'dd/MM/yyyy', { locale: ptBR })}
+                        </Typography>
+                      </Box>
+
+                      {/* Category and Details */}
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Tag style={{ width: '0.75rem', height: '0.75rem', color: theme.palette.text.secondary }} />
+                          <Typography variant="caption" color="text.secondary">{installment.category}</Typography>
+                          {installment.subcategory && (
+                            <>
+                              <Typography variant="caption" color="text.secondary">·</Typography>
+                              <Typography variant="caption" color="text.secondary">{installment.subcategory}</Typography>
+                            </>
+                          )}
+                        </Box>
+                        
+                        {installment.establishment && (
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <Building style={{ width: '0.75rem', height: '0.75rem', color: theme.palette.text.secondary }} />
+                            <Typography variant="caption" color="text.secondary">{installment.establishment}</Typography>
+                          </Box>
                         )}
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </div>
-          </ScrollArea>
-        </div>
+                      </Box>
+
+                      {/* Payment Info */}
+                      {installment.status === 'paid' && installment.paidDate && (
+                        <Box sx={{ 
+                          bgcolor: alpha(theme.palette.success.main, 0.1), 
+                          p: 1, 
+                          borderRadius: 1,
+                          color: 'success.dark',
+                          fontSize: '0.75rem'
+                        }}>
+                          Pago em {format(new Date(installment.paidDate), 'dd/MM/yyyy', { locale: ptBR })}
+                          {installment.paidAmount && installment.paidAmount !== installment.amount && (
+                            <Box component="span" sx={{ ml: 1 }}>
+                              (Valor: {formatCurrency(installment.paidAmount)})
+                            </Box>
+                          )}
+                        </Box>
+                      )}
+                    </Stack>
+                  </Card>
+                ))}
+              </Stack>
+            )}
+          </Box>
+        </Box>
       </DialogContent>
     </Dialog>
   );

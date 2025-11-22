@@ -1,41 +1,37 @@
 // src/components/installments/create-installment-dialog.tsx
 
 import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
+import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
+  DialogActions,
+  Button,
+  TextField,
   Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2, Plus, Repeat, Clock } from 'lucide-react';
+  MenuItem,
+  FormControl,
+  InputLabel,
+  FormHelperText,
+  Checkbox,
+  FormControlLabel,
+  Box,
+  Typography,
+  Stack,
+  InputAdornment,
+  IconButton,
+  useTheme,
+  alpha,
+  CircularProgress
+} from '@mui/material';
+import { Loader2, Plus, Repeat, Clock, Calendar as CalendarIcon, X } from 'lucide-react';
 import { useInstallments } from '@/hooks/use-installments';
 import { useWallets } from '@/hooks/use-wallets';
 import { useTransactions } from '@/hooks/use-transactions';
-import { SingleDatePicker } from '@/components/single-date-picker';
+import { format } from 'date-fns';
 
 const installmentSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
@@ -97,6 +93,7 @@ export function CreateInstallmentDialog({ open, onOpenChange }: CreateInstallmen
   const { createInstallment } = useInstallments();
   const { wallets } = useWallets();
   const { categories, subcategories } = useTransactions();
+  const theme = useTheme();
 
   const form = useForm<InstallmentForm>({
     resolver: zodResolver(installmentSchema),
@@ -111,6 +108,7 @@ export function CreateInstallmentDialog({ open, onOpenChange }: CreateInstallmen
       sourceWalletId: '',
       isRecurring: false,
       recurringType: 'monthly',
+      startDate: new Date(),
     },
   });
 
@@ -166,348 +164,327 @@ export function CreateInstallmentDialog({ open, onOpenChange }: CreateInstallmen
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-2xl w-[95vw] h-[95vh] sm:h-auto max-h-[95vh] flex flex-col">
-        <DialogHeader className="flex-shrink-0">
-          <DialogTitle>Novo Parcelamento</DialogTitle>
-          <DialogDescription>
+    <Dialog 
+      open={open} 
+      onClose={() => onOpenChange(false)}
+      maxWidth="md"
+      fullWidth
+    >
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box>
+          Novo Parcelamento
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontWeight: 'normal' }}>
             Crie um novo parcelamento para acompanhar suas prestações e pagamentos.
-          </DialogDescription>
-        </DialogHeader>
+          </Typography>
+        </Box>
+        <IconButton onClick={() => onOpenChange(false)} size="small">
+          <X style={{ width: '1.25rem', height: '1.25rem' }} />
+        </IconButton>
+      </DialogTitle>
 
-        <div className="flex-1 overflow-y-auto pr-2">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
+      <DialogContent dividers sx={{ p: 3 }}>
+        <form onSubmit={form.handleSubmit(onSubmit)} id="create-installment-form">
+          <Stack spacing={3}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
+              <Controller
                 name="name"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Nome do Parcelamento</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ex: Notebook Dell, Sofá da Loja X..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                control={form.control}
+                render={({ field, fieldState: { error } }) => (
+                  <TextField
+                    {...field}
+                    label="Nome do Parcelamento"
+                    placeholder="Ex: Notebook Dell, Sofá da Loja X..."
+                    error={!!error}
+                    helperText={error?.message}
+                    fullWidth
+                    sx={{ gridColumn: { md: 'span 2' } }}
+                  />
                 )}
               />
 
-              <FormField
-                control={form.control}
+              <Controller
                 name="description"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Descrição (Opcional)</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Informações adicionais sobre o parcelamento..."
-                        className="resize-none"
-                        rows={2}
-                        {...field} 
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                control={form.control}
+                render={({ field, fieldState: { error } }) => (
+                  <TextField
+                    {...field}
+                    label="Descrição (Opcional)"
+                    placeholder="Informações adicionais sobre o parcelamento..."
+                    multiline
+                    rows={2}
+                    error={!!error}
+                    helperText={error?.message}
+                    fullWidth
+                    sx={{ gridColumn: { md: 'span 2' } }}
+                  />
                 )}
               />
 
-              <FormField
-                control={form.control}
+              <Controller
                 name="totalAmount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      {isRecurring ? 'Valor da Parcela Recorrente (R$)' : 'Valor Total (R$)'}
-                      <span className="text-red-500 ml-1">*</span>
-                    </FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="0.00"
-                        {...field} 
-                      />
-                    </FormControl>
-                    {isRecurring && (
-                      <p className="text-xs text-muted-foreground">
-                        Este valor será cobrado a cada período de recorrência
-                      </p>
-                    )}
-                    <FormMessage />
-                  </FormItem>
+                control={form.control}
+                render={({ field, fieldState: { error } }) => (
+                  <TextField
+                    {...field}
+                    label={isRecurring ? 'Valor da Parcela Recorrente' : 'Valor Total'}
+                    placeholder="0.00"
+                    type="number"
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                    }}
+                    error={!!error}
+                    helperText={error?.message || (isRecurring && "Este valor será cobrado a cada período de recorrência")}
+                    fullWidth
+                    required
+                  />
                 )}
               />
 
-              <FormField
-                control={form.control}
+              <Controller
                 name="totalInstallments"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>
-                      Número de Parcelas
-                      {!isRecurring && <span className="text-red-500 ml-1">*</span>}
-                      {isRecurring && <span className="text-muted-foreground ml-1">(opcional)</span>}
-                    </FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number"
-                        min="1"
-                        max="120"
-                        placeholder={isRecurring ? "Não aplicável para recorrentes" : "12"}
-                        disabled={isRecurring}
-                        {...field} 
-                      />
-                    </FormControl>
-                    {isRecurring && (
-                      <p className="text-xs text-muted-foreground">
-                        Para parcelamentos recorrentes, não há limite de parcelas
-                      </p>
-                    )}
-                    <FormMessage />
-                  </FormItem>
+                control={form.control}
+                render={({ field, fieldState: { error } }) => (
+                  <TextField
+                    {...field}
+                    label="Número de Parcelas"
+                    placeholder={isRecurring ? "Não aplicável" : "12"}
+                    type="number"
+                    disabled={isRecurring}
+                    error={!!error}
+                    helperText={error?.message || (isRecurring && "Para parcelamentos recorrentes, não há limite de parcelas")}
+                    fullWidth
+                    required={!isRecurring}
+                  />
                 )}
               />
 
               {/* Campos para parcelamentos recorrentes */}
-              <div className="md:col-span-2 space-y-4">
-                <FormField
-                  control={form.control}
+              <Box sx={{ gridColumn: { md: 'span 2' } }}>
+                <Controller
                   name="isRecurring"
+                  control={form.control}
                   render={({ field }) => (
-                    <FormItem className="flex flex-row items-start space-x-3 space-y-0">
-                      <FormControl>
+                    <FormControlLabel
+                      control={
                         <Checkbox
                           checked={field.value}
-                          onCheckedChange={field.onChange}
+                          onChange={field.onChange}
                         />
-                      </FormControl>
-                      <div className="space-y-1 leading-none">
-                        <FormLabel className="flex items-center gap-2">
-                          <Repeat className="h-4 w-4" />
-                          Parcelamento Recorrente
-                        </FormLabel>
-                        <p className="text-xs text-muted-foreground">
-                          Para pagamentos como aluguel, contas fixas, etc. que não têm fim definido.
-                        </p>
-                      </div>
-                    </FormItem>
+                      }
+                      label={
+                        <Box>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <Repeat style={{ width: '1rem', height: '1rem' }} />
+                            <Typography variant="body2" fontWeight="medium">Parcelamento Recorrente</Typography>
+                          </Box>
+                          <Typography variant="caption" color="text.secondary">
+                            Para pagamentos como aluguel, contas fixas, etc. que não têm fim definido.
+                          </Typography>
+                        </Box>
+                      }
+                    />
                   )}
                 />
 
                 {isRecurring && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={form.control}
+                  <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3, mt: 2, pl: 4, borderLeft: 2, borderColor: 'divider' }}>
+                    <Controller
                       name="recurringType"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>
-                            Tipo de Recorrência
-                            <span className="text-red-500 ml-1">*</span>
-                          </FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Selecione o tipo" />
-                              </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                              <SelectItem value="monthly">Mensal</SelectItem>
-                              <SelectItem value="yearly">Anual</SelectItem>
-                            </SelectContent>
+                      control={form.control}
+                      render={({ field, fieldState: { error } }) => (
+                        <FormControl fullWidth error={!!error} required>
+                          <InputLabel>Tipo de Recorrência</InputLabel>
+                          <Select
+                            {...field}
+                            label="Tipo de Recorrência"
+                            value={field.value || ''}
+                          >
+                            <MenuItem value="monthly">Mensal</MenuItem>
+                            <MenuItem value="yearly">Anual</MenuItem>
                           </Select>
-                          <FormMessage />
-                        </FormItem>
+                          <FormHelperText>{error?.message}</FormHelperText>
+                        </FormControl>
                       )}
                     />
 
-                    <FormField
-                      control={form.control}
+                    <Controller
                       name="endDate"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="flex items-center gap-2">
-                            <Clock className="h-4 w-4" />
-                            Data de Fim (Opcional)
-                          </FormLabel>
-                          <FormControl>
-                            <SingleDatePicker
-                              date={field.value}
-                              setDate={field.onChange}
-                            />
-                          </FormControl>
-                          <p className="text-xs text-muted-foreground">
-                            Deixe vazio se não há data de fim prevista
-                          </p>
-                          <FormMessage />
-                        </FormItem>
+                      control={form.control}
+                      render={({ field, fieldState: { error } }) => (
+                        <TextField
+                          type="date"
+                          label="Data de Fim (Opcional)"
+                          value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
+                          onChange={(e) => {
+                            const date = e.target.value ? new Date(e.target.value) : undefined;
+                            // Ajustar fuso horário para evitar problemas de dia anterior
+                            if (date) {
+                              date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+                            }
+                            field.onChange(date);
+                          }}
+                          InputLabelProps={{ shrink: true }}
+                          error={!!error}
+                          helperText={error?.message || "Deixe vazio se não há data de fim prevista"}
+                          fullWidth
+                        />
                       )}
                     />
-                  </div>
+                  </Box>
                 )}
-              </div>
+              </Box>
 
               {/* Calculated installment amount */}
               {totalAmount > 0 && (
-                <div className="md:col-span-2 p-3 bg-muted rounded-md">
+                <Box sx={{ gridColumn: { md: 'span 2' }, p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
                   {isRecurring ? (
                     <>
-                      <p className="text-sm text-muted-foreground">Valor de cada parcela recorrente:</p>
-                      <p className="text-lg font-semibold">
+                      <Typography variant="body2" color="text.secondary">Valor de cada parcela recorrente:</Typography>
+                      <Typography variant="h6" fontWeight="semibold" color="primary.main">
                         R$ {totalAmount.toFixed(2)}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
                         Este valor será cobrado de forma recorrente
-                      </p>
+                      </Typography>
                     </>
                   ) : installmentAmount > 0 ? (
                     <>
-                      <p className="text-sm text-muted-foreground">Valor de cada parcela:</p>
-                      <p className="text-lg font-semibold">
+                      <Typography variant="body2" color="text.secondary">Valor de cada parcela:</Typography>
+                      <Typography variant="h6" fontWeight="semibold" color="primary.main">
                         R$ {installmentAmount.toFixed(2)}
-                      </p>
+                      </Typography>
                     </>
                   ) : null}
-                </div>
+                </Box>
               )}
 
-              <FormField
-                control={form.control}
+              <Controller
                 name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Categoria</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a categoria" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {categories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
+                control={form.control}
+                render={({ field, fieldState: { error } }) => (
+                  <FormControl fullWidth error={!!error}>
+                    <InputLabel>Categoria</InputLabel>
+                    <Select
+                      {...field}
+                      label="Categoria"
+                      value={field.value || ''}
+                    >
+                      {categories.map((category) => (
+                        <MenuItem key={category} value={category}>
+                          {category}
+                        </MenuItem>
+                      ))}
                     </Select>
-                    <FormMessage />
-                  </FormItem>
+                    <FormHelperText>{error?.message}</FormHelperText>
+                  </FormControl>
                 )}
               />
 
-              <FormField
-                control={form.control}
+              <Controller
                 name="subcategory"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Subcategoria (Opcional)</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a subcategoria" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {(subcategories as any)[selectedCategory]?.map((sub: string) => (
-                          <SelectItem key={sub} value={sub}>
-                            {sub}
-                          </SelectItem>
-                        )) || []}
-                      </SelectContent>
+                control={form.control}
+                render={({ field, fieldState: { error } }) => (
+                  <FormControl fullWidth error={!!error}>
+                    <InputLabel>Subcategoria (Opcional)</InputLabel>
+                    <Select
+                      {...field}
+                      label="Subcategoria (Opcional)"
+                      value={field.value || ''}
+                    >
+                      {(subcategories as any)[selectedCategory]?.map((sub: string) => (
+                        <MenuItem key={sub} value={sub}>
+                          {sub}
+                        </MenuItem>
+                      )) || []}
                     </Select>
-                    <FormMessage />
-                  </FormItem>
+                    <FormHelperText>{error?.message}</FormHelperText>
+                  </FormControl>
                 )}
               />
 
-              <FormField
-                control={form.control}
+              <Controller
                 name="establishment"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Estabelecimento (Opcional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ex: Loja ABC, Magazine Luiza..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                control={form.control}
+                render={({ field, fieldState: { error } }) => (
+                  <TextField
+                    {...field}
+                    label="Estabelecimento (Opcional)"
+                    placeholder="Ex: Loja ABC, Magazine Luiza..."
+                    error={!!error}
+                    helperText={error?.message}
+                    fullWidth
+                  />
                 )}
               />
 
-              <FormField
-                control={form.control}
+              <Controller
                 name="startDate"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Data da Primeira Parcela</FormLabel>
-                    <FormControl>
-                      <SingleDatePicker
-                        date={field.value}
-                        setDate={field.onChange}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
                 control={form.control}
-                name="sourceWalletId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Carteira de Pagamento</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a carteira" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {wallets.map((wallet) => (
-                          <SelectItem key={wallet.id} value={wallet.id}>
-                            {wallet.name} ({wallet.type})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
+                render={({ field, fieldState: { error } }) => (
+                  <TextField
+                    type="date"
+                    label="Data da Primeira Parcela"
+                    value={field.value ? format(field.value, 'yyyy-MM-dd') : ''}
+                    onChange={(e) => {
+                      const date = e.target.value ? new Date(e.target.value) : undefined;
+                      if (date) {
+                        date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+                      }
+                      field.onChange(date);
+                    }}
+                    InputLabelProps={{ shrink: true }}
+                    error={!!error}
+                    helperText={error?.message}
+                    fullWidth
+                    required
+                  />
                 )}
               />
-            </div>
-          </form>
-        </Form>
-        </div>
 
-        <DialogFooter className="flex-shrink-0 pt-4 flex flex-col sm:flex-row gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={isSubmitting}
-            className="w-full sm:w-auto"
-          >
-            Cancelar
-          </Button>
-          <Button 
-            type="submit" 
-            disabled={isSubmitting} 
-            className="w-full sm:w-auto"
-            onClick={form.handleSubmit(onSubmit)}
-          >
-            {isSubmitting ? (
-              <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-              <Plus className="h-4 w-4 mr-2" />
-            )}
-            Criar Parcelamento
-          </Button>
-        </DialogFooter>
+              <Controller
+                name="sourceWalletId"
+                control={form.control}
+                render={({ field, fieldState: { error } }) => (
+                  <FormControl fullWidth error={!!error}>
+                    <InputLabel>Carteira de Pagamento</InputLabel>
+                    <Select
+                      {...field}
+                      label="Carteira de Pagamento"
+                      value={field.value || ''}
+                    >
+                      {wallets.map((wallet) => (
+                        <MenuItem key={wallet.id} value={wallet.id}>
+                          {wallet.name} ({wallet.type})
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    <FormHelperText>{error?.message}</FormHelperText>
+                  </FormControl>
+                )}
+              />
+            </Box>
+          </Stack>
+        </form>
       </DialogContent>
+
+      <DialogActions sx={{ p: 3, pt: 2 }}>
+        <Button
+          onClick={() => onOpenChange(false)}
+          disabled={isSubmitting}
+          variant="outlined"
+        >
+          Cancelar
+        </Button>
+        <Button 
+          type="submit"
+          form="create-installment-form"
+          disabled={isSubmitting} 
+          variant="contained"
+          startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : <Plus />}
+        >
+          Criar Parcelamento
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 }

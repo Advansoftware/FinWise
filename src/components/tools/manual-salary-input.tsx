@@ -33,7 +33,7 @@ export function ManualSalaryInput({ data, onChange }: ManualSalaryInputProps) {
   };
 
   return (
-    <Stack spacing={4} sx={{ p: 4, bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(var(--muted-rgb), 0.1)' : 'rgba(var(--muted-rgb), 0.3)', borderRadius: 2, border: 1, borderColor: 'divider' }}>
+    <Stack spacing={4} sx={{ p: 4, bgcolor: 'action.hover', borderRadius: 2, border: 1, borderColor: 'divider' }}>
       <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'text.secondary' }}>Entrada Manual de Dados:</Typography>
       
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 4 }}>
@@ -71,7 +71,7 @@ export function ManualSalaryInput({ data, onChange }: ManualSalaryInputProps) {
       </Box>
       
       {data.grossSalary > 0 && data.netSalary > 0 && (
-        <Box sx={{ fontSize: '0.75rem', color: 'text.secondary', bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(59, 130, 246, 0.1)' : '#eff6ff', p: 2, borderRadius: 1, border: 1, borderColor: 'divider' }}>
+        <Box sx={{ fontSize: '0.75rem', color: 'text.secondary', bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(59, 130, 246, 0.1)' : '#eff6ff', p: 2, borderRadius: 1, border: 1, borderColor: 'divider' }}>
           <Typography component="strong">Resumo:</Typography> Bruto: {formatCurrency(data.grossSalary)} | 
           Líquido: {formatCurrency(data.netSalary)} | 
           Desconto: {formatCurrency(data.grossSalary - data.netSalary)} ({((data.grossSalary - data.netSalary) / data.grossSalary * 100).toFixed(1)}%)

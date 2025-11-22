@@ -1,28 +1,37 @@
 // src/components/installments/payment-schedule.tsx
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  Box, 
+  Card, 
+  CardContent, 
+  Typography, 
+  useTheme, 
+  alpha,
+  Stack,
+  Chip,
+  Skeleton,
+  Tabs,
+  Tab
+} from '@mui/material';
 import { 
   Calendar, 
   Clock, 
   AlertTriangle, 
-  CheckCircle2,
-  DollarSign
+  CheckCircle2
 } from 'lucide-react';
 import { InstallmentPayment } from '@/core/ports/installments.port';
 import { useInstallments } from '@/hooks/use-installments';
 import { formatCurrency } from '@/lib/utils';
-import { format, parseISO, isToday, isPast, isFuture } from 'date-fns';
+import { format, parseISO, isToday, isPast } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Skeleton } from '@/components/ui/skeleton';
 
 export function PaymentSchedule() {
   const [upcomingPayments, setUpcomingPayments] = useState<InstallmentPayment[]>([]);
   const [overduePayments, setOverduePayments] = useState<InstallmentPayment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState('upcoming');
+  const theme = useTheme();
   
   const { getUpcomingPayments, getOverduePayments, installments } = useInstallments();
 
@@ -55,29 +64,33 @@ export function PaymentSchedule() {
       if (payment.status === 'paid') {
         return {
           icon: CheckCircle2,
-          color: 'text-green-600 dark:text-green-400',
-          bgColor: 'bg-green-50 dark:bg-green-950/50 border-green-200 dark:border-green-900/50',
+          color: theme.palette.success.main,
+          bgColor: alpha(theme.palette.success.main, 0.05),
+          borderColor: alpha(theme.palette.success.main, 0.2),
           label: 'Pago'
         };
       } else if (isPast(dueDate) && !isToday(dueDate)) {
         return {
           icon: AlertTriangle,
-          color: 'text-destructive dark:text-destructive',
-          bgColor: 'bg-destructive/5 dark:bg-destructive/5 border-destructive/20 dark:border-destructive/20',
+          color: theme.palette.error.main,
+          bgColor: alpha(theme.palette.error.main, 0.05),
+          borderColor: alpha(theme.palette.error.main, 0.2),
           label: 'Em Atraso'
         };
       } else if (isToday(dueDate)) {
         return {
           icon: Clock,
-          color: 'text-orange-600 dark:text-orange-400',
-          bgColor: 'bg-orange-50 dark:bg-orange-950/50 border-orange-200 dark:border-orange-900/50',
+          color: theme.palette.warning.main,
+          bgColor: alpha(theme.palette.warning.main, 0.05),
+          borderColor: alpha(theme.palette.warning.main, 0.2),
           label: 'Vence Hoje'
         };
       } else {
         return {
           icon: Calendar,
-          color: 'text-blue-600 dark:text-blue-400',
-          bgColor: 'bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-900/50',
+          color: theme.palette.info.main,
+          bgColor: alpha(theme.palette.info.main, 0.05),
+          borderColor: alpha(theme.palette.info.main, 0.2),
           label: 'Pendente'
         };
       }
@@ -87,42 +100,55 @@ export function PaymentSchedule() {
     const StatusIcon = statusInfo.icon;
 
     return (
-      <Card className={`${statusInfo.bgColor} transition-all hover:shadow-md`}>
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-2 mb-2">
-                <StatusIcon className={`h-4 w-4 ${statusInfo.color}`} />
-                <Badge variant="outline" className={statusInfo.color}>
-                  {statusInfo.label}
-                </Badge>
-              </div>
+      <Card sx={{ 
+        bgcolor: statusInfo.bgColor, 
+        borderColor: statusInfo.borderColor,
+        transition: 'all 0.2s',
+        '&:hover': { boxShadow: 3 }
+      }}>
+        <CardContent sx={{ p: 2 }}>
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+            <Box sx={{ flex: 1 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <StatusIcon style={{ width: '1rem', height: '1rem', color: statusInfo.color }} />
+                <Chip 
+                  label={statusInfo.label}
+                  size="small"
+                  sx={{ 
+                    color: statusInfo.color, 
+                    borderColor: statusInfo.borderColor,
+                    bgcolor: alpha(statusInfo.color, 0.1),
+                    fontWeight: 'bold',
+                    height: 24
+                  }}
+                />
+              </Box>
               
-              <h4 className="font-semibold text-sm mb-1 line-clamp-1">
+              <Typography variant="subtitle2" fontWeight="semibold" noWrap sx={{ mb: 0.5 }}>
                 {installmentName}
-              </h4>
+              </Typography>
               
-              <p className="text-xs text-muted-foreground mb-2">
+              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1 }}>
                 Parcela {payment.installmentNumber}
-              </p>
+              </Typography>
               
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">Vencimento</p>
-                  <p className="font-medium text-sm">
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography variant="caption" color="text.secondary">Vencimento</Typography>
+                  <Typography variant="body2" fontWeight="medium">
                     {format(dueDate, 'dd/MM/yyyy', { locale: ptBR })}
-                  </p>
-                </div>
+                  </Typography>
+                </Box>
                 
-                <div className="text-right">
-                  <p className="text-xs text-muted-foreground">Valor</p>
-                  <p className="font-semibold">
+                <Box sx={{ textAlign: 'right' }}>
+                  <Typography variant="caption" color="text.secondary">Valor</Typography>
+                  <Typography variant="subtitle2" fontWeight="semibold">
                     {formatCurrency(payment.paidAmount || payment.scheduledAmount)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          </Box>
         </CardContent>
       </Card>
     );
@@ -130,83 +156,91 @@ export function PaymentSchedule() {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <Stack spacing={4}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }, gap: 4 }}>
           {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton key={i} className="h-32" />
+            <Skeleton key={i} variant="rectangular" height={128} sx={{ borderRadius: 1 }} />
           ))}
-        </div>
-      </div>
+        </Box>
+      </Stack>
     );
   }
 
   return (
-    <div className="space-y-6">
-      <Tabs defaultValue="upcoming" className="w-full">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="upcoming">
-            Próximos Vencimentos ({upcomingPayments.length})
-          </TabsTrigger>
-          <TabsTrigger value="overdue">
-            Em Atraso ({overduePayments.length})
-          </TabsTrigger>
-        </TabsList>
+    <Stack spacing={6}>
+      <Box sx={{ width: '100%' }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 4 }}>
+          <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)}>
+            <Tab label={`Próximos Vencimentos (${upcomingPayments.length})`} value="upcoming" />
+            <Tab label={`Em Atraso (${overduePayments.length})`} value="overdue" />
+          </Tabs>
+        </Box>
 
-        <TabsContent value="upcoming" className="space-y-4">
-          {upcomingPayments.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <Calendar className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Nenhum vencimento próximo</h3>
-                <p className="text-muted-foreground text-center">
-                  Você está em dia com seus pagamentos! Não há parcelas para vencer nos próximos 60 dias.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {upcomingPayments.map((payment) => (
-                <PaymentCard key={`${payment.installmentId}-${payment.installmentNumber}`} payment={payment} />
-              ))}
-            </div>
-          )}
-        </TabsContent>
-
-        <TabsContent value="overdue" className="space-y-4">
-          {overduePayments.length === 0 ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <CheckCircle2 className="h-12 w-12 text-green-500 mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Nenhuma parcela em atraso</h3>
-                <p className="text-muted-foreground text-center">
-                  Parabéns! Você está em dia com todos os seus parcelamentos.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <>
-              <div className="bg-destructive/5 dark:bg-destructive/5 border border-destructive/20 dark:border-destructive/20 rounded-lg p-4">
-                <div className="flex items-start gap-3">
-                  <AlertTriangle className="h-5 w-5 text-destructive dark:text-destructive mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold text-destructive dark:text-destructive">Atenção: Parcelas em Atraso</h4>
-                    <p className="text-sm text-muted-foreground dark:text-muted-foreground mt-1">
-                      Você tem {overduePayments.length} parcela(s) em atraso. 
-                      Considere quitar esses pagamentos o quanto antes.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {overduePayments.map((payment) => (
+        {activeTab === 'upcoming' && (
+          <Box>
+            {upcomingPayments.length === 0 ? (
+              <Card>
+                <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 8 }}>
+                  <Calendar style={{ width: '3rem', height: '3rem', color: theme.palette.text.secondary, marginBottom: '1rem' }} />
+                  <Typography variant="h6" fontWeight="semibold" sx={{ mb: 1 }}>Nenhum vencimento próximo</Typography>
+                  <Typography color="text.secondary" align="center">
+                    Você está em dia com seus pagamentos! Não há parcelas para vencer nos próximos 60 dias.
+                  </Typography>
+                </CardContent>
+              </Card>
+            ) : (
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }, gap: 4 }}>
+                {upcomingPayments.map((payment) => (
                   <PaymentCard key={`${payment.installmentId}-${payment.installmentNumber}`} payment={payment} />
                 ))}
-              </div>
-            </>
-          )}
-        </TabsContent>
-      </Tabs>
-    </div>
+              </Box>
+            )}
+          </Box>
+        )}
+
+        {activeTab === 'overdue' && (
+          <Box>
+            {overduePayments.length === 0 ? (
+              <Card>
+                <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 8 }}>
+                  <CheckCircle2 style={{ width: '3rem', height: '3rem', color: theme.palette.success.main, marginBottom: '1rem' }} />
+                  <Typography variant="h6" fontWeight="semibold" sx={{ mb: 1 }}>Nenhuma parcela em atraso</Typography>
+                  <Typography color="text.secondary" align="center">
+                    Parabéns! Você está em dia com todos os seus parcelamentos.
+                  </Typography>
+                </CardContent>
+              </Card>
+            ) : (
+              <Stack spacing={4}>
+                <Box sx={{ 
+                  bgcolor: alpha(theme.palette.error.main, 0.05), 
+                  border: 1, 
+                  borderColor: alpha(theme.palette.error.main, 0.2), 
+                  borderRadius: 2, 
+                  p: 2 
+                }}>
+                  <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5 }}>
+                    <AlertTriangle style={{ width: '1.25rem', height: '1.25rem', color: theme.palette.error.main, marginTop: '0.125rem' }} />
+                    <Box>
+                      <Typography variant="subtitle2" fontWeight="semibold" color="error.main">Atenção: Parcelas em Atraso</Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+                        Você tem {overduePayments.length} parcela(s) em atraso. 
+                        Considere quitar esses pagamentos o quanto antes.
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+                
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }, gap: 4 }}>
+                  {overduePayments.map((payment) => (
+                    <PaymentCard key={`${payment.installmentId}-${payment.installmentNumber}`} payment={payment} />
+                  ))}
+                </Box>
+              </Stack>
+            )}
+          </Box>
+        )}
+      </Box>
+    </Stack>
   );
 }

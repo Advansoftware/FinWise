@@ -13,7 +13,7 @@ interface CalculatorModeToggleProps {
 
 export function CalculatorModeToggle({ mode, onModeChange, hasPayrollData = true }: CalculatorModeToggleProps) {
   return (
-    <Stack direction="row" alignItems="center" spacing={2} sx={{ p: 3, bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(var(--muted-rgb), 0.1)' : 'rgba(var(--muted-rgb), 0.3)', borderRadius: 2, border: 1, borderColor: 'divider' }}>
+    <Stack direction="row" alignItems="center" spacing={2} sx={{ p: 3, bgcolor: 'action.hover', borderRadius: 2, border: 1, borderColor: 'divider' }}>
       <Typography variant="body2" sx={{ fontSize: '0.875rem', fontWeight: 500, color: 'text.secondary' }}>Modo de Cálculo:</Typography>
       <Stack direction="row" spacing={1}>
         <Button

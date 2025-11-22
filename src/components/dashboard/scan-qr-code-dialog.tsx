@@ -40,6 +40,7 @@ import { getVisionCapableModels, DEFAULT_AI_CREDENTIAL } from "@/lib/ai-settings
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { cn } from "@/lib/utils";
+import { Box, Stack, Typography, useTheme, alpha } from '@mui/material';
 
 
 export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
@@ -63,6 +64,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
     const { wallets } = useWallets();
     const { isPlus } = usePlan();
     const { displayedCredentials, activeCredentialId } = useAISettings();
+    const theme = useTheme();
     
     // Filtrar apenas modelos com suporte a visão/imagem
     const visionCapableCredentials = getVisionCapableModels(displayedCredentials);
@@ -244,36 +246,36 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
     };
 
     const renderProcessingSkeleton = () => (
-        <div className="space-y-4">
-            <div className="flex justify-between items-center">
+        <Stack spacing={4}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
                 <Skeleton className="h-6 w-32" />
                 <Skeleton className="h-6 w-20" />
-            </div>
-            <div className="space-y-3">
-                <div className="grid grid-cols-3 gap-2">
-                    <Skeleton className="h-10 col-span-2" />
+            </Stack>
+            <Stack spacing={3}>
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
+                    <Skeleton className="h-10 col-span-2" style={{ gridColumn: 'span 2' }} />
                     <Skeleton className="h-10" />
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                    <Skeleton className="h-10 col-span-2" />
+                </Box>
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
+                    <Skeleton className="h-10 col-span-2" style={{ gridColumn: 'span 2' }} />
                     <Skeleton className="h-10" />
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                    <Skeleton className="h-10 col-span-2" />
+                </Box>
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2 }}>
+                    <Skeleton className="h-10 col-span-2" style={{ gridColumn: 'span 2' }} />
                     <Skeleton className="h-10" />
-                </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
+                </Box>
+            </Stack>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 4 }}>
                 <Skeleton className="h-10" />
                 <Skeleton className="h-10" />
-            </div>
-            <div className="text-center py-4">
-                <div className="inline-flex items-center gap-2 text-muted-foreground">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    <span className="text-sm">Analisando nota fiscal...</span>
-                </div>
-            </div>
-        </div>
+            </Box>
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+                <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 2, color: 'text.secondary' }}>
+                    <Loader2 style={{ width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />
+                    <Typography variant="body2">Analisando nota fiscal...</Typography>
+                </Box>
+            </Box>
+        </Stack>
     );
     
     const handleSaveTransactions = () => {
@@ -319,20 +321,21 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
     const renderExtractedData = () => {
         if (!extractedData) return null;
         return (
-            <div className="space-y-4">
-                <div className="flex justify-between items-center">
-                    <h3 className="font-semibold text-lg">Itens Extraídos</h3>
+            <Stack spacing={4}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center">
+                    <Typography variant="h6" fontWeight="semibold">Itens Extraídos</Typography>
                      <Badge variant={extractedData.isValid ? 'default' : 'destructive'} className={extractedData.isValid ? "bg-green-500/20 text-green-300 border-green-500/30" : ""}>
                         {extractedData.isValid ? 'Nota Válida' : 'Nota Inválida'}
                     </Badge>
-                </div>
+                </Stack>
                 
                 {extractedData.items?.length > 0 ? (
-                    <div className="space-y-3">
+                    <Stack spacing={3}>
                         {extractedData.items?.map((item: any, index: number) => (
-                            <div key={index} className="grid grid-cols-3 gap-2 items-center p-3 rounded-lg bg-muted/50 border">
+                            <Box key={index} sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 2, alignItems: 'center', p: 3, borderRadius: 1, bgcolor: 'action.hover', border: 1, borderColor: 'divider' }}>
                                 <Input 
                                     className="col-span-2" 
+                                    style={{ gridColumn: 'span 2' }}
                                     defaultValue={item.item} 
                                     placeholder="Item"
                                     readOnly={!extractedData.isValid}
@@ -344,18 +347,18 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                                     placeholder="Valor"
                                     readOnly={!extractedData.isValid}
                                 />
-                            </div>
+                            </Box>
                         ))}
-                    </div>
+                    </Stack>
                 ) : (
-                    <div className="text-center py-8 text-muted-foreground">
-                        <p>Nenhum item foi encontrado na nota.</p>
-                        <p className="text-sm">Tente uma imagem com melhor qualidade.</p>
-                    </div>
+                    <Box sx={{ textAlign: 'center', py: 8, color: 'text.secondary' }}>
+                        <Typography>Nenhum item foi encontrado na nota.</Typography>
+                        <Typography variant="caption">Tente uma imagem com melhor qualidade.</Typography>
+                    </Box>
                 )}
                 
-                 <div className="grid grid-cols-2 gap-4 p-3 rounded-lg bg-muted/30 border">
-                     <div className="space-y-1">
+                 <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 4, p: 3, borderRadius: 1, bgcolor: 'action.hover', border: 1, borderColor: 'divider' }}>
+                     <Stack spacing={1}>
                         <Label className="text-sm font-medium">Total</Label>
                         <Input 
                             type="number" 
@@ -364,8 +367,8 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                             placeholder="Total" 
                             readOnly={!extractedData.isValid}
                         />
-                     </div>
-                      <div className="space-y-1">
+                     </Stack>
+                      <Stack spacing={1}>
                         <Label className="text-sm font-medium">Data</Label>
                         <Input 
                             type="date" 
@@ -373,8 +376,8 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                             placeholder="Data" 
                             readOnly={!extractedData.isValid}
                         />
-                     </div>
-                </div>
+                     </Stack>
+                </Box>
                 
                 {!extractedData.isValid && (
                     <Alert variant="destructive">
@@ -385,16 +388,16 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                         </AlertDescription>
                     </Alert>
                 )}
-            </div>
+            </Stack>
         )
     };
 
     // Component content for both mobile and desktop
     const renderContent = () => (
         <>
-            <div className="space-y-4">
+            <Stack spacing={4}>
                 {!receiptImage && (
-                    <div className="space-y-2">
+                    <Stack spacing={2}>
                         <Label htmlFor="ai-provider">Provedor de IA</Label>
                         <Select 
                             value={selectedAI} 
@@ -446,33 +449,33 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                                 </AlertDescription>
                             </Alert>
                         )}
-                    </div>
+                    </Stack>
                 )}
                 
                 {!receiptImage ? (
                     <>
                         {isMobile ? (
-                            <div className="flex flex-col items-center justify-center w-full space-y-4">
-                                <div className="relative w-full">
+                            <Stack spacing={4} alignItems="center" justifyContent="center" width="100%">
+                                <Box sx={{ position: 'relative', width: '100%' }}>
                                     <video 
                                         ref={videoRef} 
                                         className="w-full h-[60vh] object-cover rounded-lg" 
                                         autoPlay 
                                         muted 
                                         playsInline 
-                                        style={{ backgroundColor: '#000' }}
+                                        style={{ backgroundColor: '#000', width: '100%', height: '60vh', objectFit: 'cover', borderRadius: '0.5rem' }}
                                     />
                                     {/* Camera overlay */}
-                                    <div className="absolute inset-0">
+                                    <Box sx={{ position: 'absolute', inset: 0 }}>
                                         {/* Guide overlay */}
-                                        <div className="absolute inset-4 border-2 border-dashed border-white/60 rounded-lg">
-                                            <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-black/60 px-2 py-1 rounded text-white text-xs">
+                                        <Box sx={{ position: 'absolute', inset: '1rem', border: '2px dashed rgba(255,255,255,0.6)', borderRadius: 2 }}>
+                                            <Box sx={{ position: 'absolute', top: '-0.75rem', left: '50%', transform: 'translateX(-50%)', bgcolor: 'rgba(0,0,0,0.6)', px: 1, py: 0.5, borderRadius: 1, color: 'white', fontSize: '0.75rem' }}>
                                                 Posicione a nota fiscal aqui
-                                            </div>
-                                        </div>
+                                            </Box>
+                                        </Box>
                                         
                                         {/* Camera controls */}
-                                        <div className="absolute top-4 right-4 flex flex-col gap-2">
+                                        <Stack spacing={2} sx={{ position: 'absolute', top: '1rem', right: '1rem' }}>
                                             {hasFlash && (
                                                 <Button
                                                     size="icon"
@@ -494,9 +497,9 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                                             >
                                                 <SwitchCamera className="h-4 w-4 text-white" />
                                             </Button>
-                                        </div>
-                                    </div>
-                                </div>
+                                        </Stack>
+                                    </Box>
+                                </Box>
                                 
                                 {hasCameraPermission === false && (
                                     <Alert variant="destructive">
@@ -507,34 +510,36 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                                     </Alert>
                                 )}
                                 
-                                <div className="w-full flex items-center gap-2">
-                                    <div className="h-px flex-1 bg-border"/>
-                                    <span className="text-xs text-muted-foreground">OU</span>
-                                    <div className="h-px flex-1 bg-border"/>
-                                </div>
+                                <Stack direction="row" alignItems="center" spacing={2} width="100%">
+                                    <Box sx={{ height: '1px', flex: 1, bgcolor: 'divider' }}/>
+                                    <Typography variant="caption" color="text.secondary">OU</Typography>
+                                    <Box sx={{ height: '1px', flex: 1, bgcolor: 'divider' }}/>
+                                </Stack>
                                 
                                 <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>
                                     <Paperclip className="mr-2 h-4 w-4" /> Enviar da Galeria
                                 </Button>
                                 <input ref={fileInputRef} type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileChange} />
-                            </div>
+                            </Stack>
                         ) : (
-                            <div className="flex items-center justify-center w-full">
-                                <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-64 border-2 border-primary/30 border-dashed rounded-lg cursor-pointer bg-muted hover:bg-muted/80 transition-colors">
-                                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                                        <Upload className="w-8 h-8 mb-4 text-primary" />
-                                        <p className="mb-2 text-sm text-foreground"><span className="font-semibold text-primary">Clique para enviar</span> ou arraste e solte</p>
-                                        <p className="text-xs text-muted-foreground">PDF, PNG, ou JPG</p>
-                                    </div>
+                            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '100%' }}>
+                                <label htmlFor="dropzone-file" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '16rem', border: `2px dashed ${alpha(theme.palette.primary.main, 0.3)}`, borderRadius: '0.5rem', cursor: 'pointer', backgroundColor: theme.palette.action.hover, transition: 'background-color 0.2s' }}>
+                                    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', pt: 5, pb: 6 }}>
+                                        <Upload style={{ width: '2rem', height: '2rem', marginBottom: '1rem', color: theme.palette.primary.main }} />
+                                        <Typography variant="body2" sx={{ mb: 1 }}>
+                                            <Box component="span" fontWeight="semibold" color="primary.main">Clique para enviar</Box> ou arraste e solte
+                                        </Typography>
+                                        <Typography variant="caption" color="text.secondary">PDF, PNG, ou JPG</Typography>
+                                    </Box>
                                     <input ref={fileInputRef} id="dropzone-file" type="file" accept="image/*,application/pdf" className="hidden" onChange={handleFileChange} />
                                 </label>
-                            </div>
+                            </Box>
                         )}
                     </>
                 ) : (
-                    <div className="space-y-4">
-                        <div className="relative">
-                            <img src={receiptImage} alt="Pré-visualização da nota" className="rounded-lg max-h-60 w-full object-cover" />
+                    <Stack spacing={4}>
+                        <Box sx={{ position: 'relative' }}>
+                            <img src={receiptImage} alt="Pré-visualização da nota" style={{ borderRadius: '0.5rem', maxHeight: '15rem', width: '100%', objectFit: 'cover' }} />
                             <Button
                                 size="icon"
                                 variant="secondary"
@@ -544,11 +549,11 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                             >
                                 <RotateCcw className="h-4 w-4 text-white" />
                             </Button>
-                        </div>
+                        </Box>
                         {isProcessing ? renderProcessingSkeleton() : renderExtractedData()}
-                    </div>
+                    </Stack>
                 )}
-            </div>
+            </Stack>
             <canvas ref={canvasRef} className="hidden" />
         </>
     );
@@ -557,27 +562,27 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
         return (
             <Sheet open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
                 <SheetTrigger asChild>{children}</SheetTrigger>
-                <SheetContent side="bottom" className="h-[95vh] flex flex-col">
-                    <SheetHeader className="text-left">
+                <SheetContent side="bottom" sx={{ height: '95vh', display: 'flex', flexDirection: 'column' }}>
+                    <SheetHeader sx={{ textAlign: 'left' }}>
                         <SheetTitle>Escanear Nota Fiscal</SheetTitle>
                         <SheetDescription>
                             Aponte a câmera para a nota fiscal ou envie uma imagem da galeria.
                         </SheetDescription>
                     </SheetHeader>
 
-                    <div className="flex-1 overflow-y-auto">
+                    <Box sx={{ flex: 1, overflowY: 'auto' }}>
                         {renderContent()}
-                    </div>
+                    </Box>
 
-                    <SheetFooter className="flex-row justify-between gap-2 pt-4">
+                    <SheetFooter sx={{ flexDirection: 'row', justifyContent: 'space-between', gap: 2, pt: 4 }}>
                         {receiptImage ? (
                             <>
                                 <Button variant="ghost" onClick={resetState} disabled={isProcessing || isSaving}>
                                     Nova Foto
                                 </Button>
                                 {extractedData?.isValid && (
-                                    <Button onClick={handleSaveTransactions} disabled={isSaving || isProcessing} className="flex-1">
-                                        {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                    <Button onClick={handleSaveTransactions} disabled={isSaving || isProcessing} sx={{ flex: 1 }}>
+                                        {isSaving && <Loader2 style={{ marginRight: '0.5rem', width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />}
                                         Salvar {extractedData.items?.length || 0} Itens
                                     </Button>
                                 )}
@@ -586,10 +591,10 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                             <Button 
                                 onClick={handleCapture} 
                                 disabled={hasCameraPermission === false || isProcessing || isSaving}
-                                className="w-full h-12 text-lg"
+                                sx={{ width: '100%', height: '3rem', fontSize: '1.125rem' }}
                                 size="lg"
                             >
-                               <Camera className="mr-2 h-5 w-5"/> Capturar Nota
+                               <Camera style={{ marginRight: '0.5rem', width: '1.25rem', height: '1.25rem' }}/> Capturar Nota
                             </Button>
                         )}
                     </SheetFooter>
@@ -601,7 +606,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
     return (
         <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
             <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent sx={{ maxWidth: '42rem', maxHeight: '90vh', overflowY: 'auto' }}>
                 <DialogHeader>
                     <DialogTitle>Escanear Nota Fiscal</DialogTitle>
                     <DialogDescription>
@@ -611,22 +616,22 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
 
                 {renderContent()}
 
-                <DialogFooter className="gap-2 sm:gap-0 sm:justify-between w-full">
-                    <div>
+                <DialogFooter sx={{ gap: 2, sm: { gap: 0, justifyContent: 'space-between' }, width: '100%' }}>
+                    <Box>
                          {receiptImage && (
                             <Button variant="ghost" onClick={resetState} disabled={isProcessing || isSaving}>
                                 Enviar Outra
                             </Button>
                         )}
-                    </div>
-                    <div className="flex gap-2">
+                    </Box>
+                    <Box sx={{ display: 'flex', gap: 2 }}>
                         {extractedData?.isValid && (
                              <Button onClick={handleSaveTransactions} disabled={isSaving || isProcessing}>
-                                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                                {isSaving && <Loader2 style={{ marginRight: '0.5rem', width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />}
                                 Salvar Transações
                             </Button>
                         )}
-                    </div>
+                    </Box>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

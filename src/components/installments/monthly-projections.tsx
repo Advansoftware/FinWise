@@ -1,10 +1,22 @@
 // src/components/installments/monthly-projections.tsx
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { 
+  Box, 
+  Stack, 
+  Typography, 
+  Grid, 
+  useTheme, 
+  alpha,
+  Card,
+  CardContent,
+  CardHeader,
+  Button,
+  Chip,
+  Tabs,
+  Tab,
+  Skeleton
+} from '@mui/material';
 import { 
   TrendingUp, 
   Calendar, 
@@ -21,7 +33,6 @@ import { usePayroll } from '@/hooks/use-payroll';
 import { formatCurrency } from '@/lib/utils';
 import { format, addMonths } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Skeleton } from '@/components/ui/skeleton';
 import { MonthlyInstallmentsModal } from './monthly-installments-modal';
 
 interface MonthlyProjection {
@@ -50,6 +61,7 @@ export function MonthlyProjections() {
   
   const { getMonthlyProjections } = useInstallments();
   const { payrollData } = usePayroll();
+  const theme = useTheme();
 
   // Separar projeções por tipo
   const getProjectionsByType = (type: 'fixed' | 'variable') => {
@@ -96,12 +108,12 @@ export function MonthlyProjections() {
     return `${percentage.toFixed(1)}%`;
   };
 
-  const getPercentageColor = (percentage: number | null) => {
-    if (percentage === null) return '';
-    if (percentage >= 80) return 'text-red-600 bg-red-50 border-red-200';
-    if (percentage >= 50) return 'text-orange-600 bg-orange-50 border-orange-200';
-    if (percentage >= 30) return 'text-yellow-600 bg-yellow-50 border-yellow-200';
-    return 'text-green-600 bg-green-50 border-green-200';
+  const getPercentageStatus = (percentage: number | null) => {
+    if (percentage === null) return 'info';
+    if (percentage >= 80) return 'error';
+    if (percentage >= 50) return 'warning';
+    if (percentage >= 30) return 'warning';
+    return 'success';
   };
 
   // Calcular valores baseados APENAS nos gastos variáveis (excluindo fixos)
@@ -132,407 +144,431 @@ export function MonthlyProjections() {
     const maxCommitment = Math.max(...projectionsData.map(p => p.totalCommitment), 0);
     
     return (
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', lg: 'repeat(3, 1fr)' }, gap: 2 }}>
         {projectionsData.map((projection) => {
           const salaryPercentage = calculateSalaryPercentage(projection.totalCommitment);
-          const percentageColor = getPercentageColor(salaryPercentage);
+          const status = getPercentageStatus(salaryPercentage);
           
           return (
             <Card 
               key={projection.month} 
-              className={`relative transition-all duration-200 ${
-                projection.installments.length > 0 
-                  ? 'cursor-pointer hover:shadow-md hover:scale-105' 
-                  : 'opacity-60'
-              }`}
+              sx={{ 
+                position: 'relative', 
+                transition: 'all 0.2s', 
+                cursor: projection.installments.length > 0 ? 'pointer' : 'default',
+                opacity: projection.installments.length > 0 ? 1 : 0.6,
+                '&:hover': projection.installments.length > 0 ? {
+                  transform: 'scale(1.05)',
+                  boxShadow: 3
+                } : {}
+              }}
               onClick={() => handleCardClick(projection)}
             >
               {/* Indicador de porcentagem do salário */}
               {salaryPercentage !== null && projection.totalCommitment > 0 && (
-                <Badge 
-                  variant="outline" 
-                  className={`absolute top-2 right-2 px-2 py-1 text-xs font-medium ${percentageColor}`}
-                >
-                  <Percent className="h-3 w-3 mr-1" />
-                  {formatPercentage(salaryPercentage)}
-                </Badge>
+                <Chip 
+                  label={`${formatPercentage(salaryPercentage)}`}
+                  size="small"
+                  icon={<Percent style={{ width: '0.75rem', height: '0.75rem' }} />}
+                  sx={{ 
+                    position: 'absolute', 
+                    top: 8, 
+                    right: 8, 
+                    height: 24,
+                    fontSize: '0.75rem', 
+                    fontWeight: 'medium',
+                    bgcolor: `${status}.lighter`,
+                    color: `${status}.main`,
+                    '& .MuiChip-icon': { 
+                      color: `${status}.main`
+                    }
+                  }}
+                />
               )}
 
               {/* Indicador de tipo */}
-              <Badge 
-                variant="secondary" 
-                className={`absolute top-2 left-2 px-2 py-1 text-xs font-medium ${
-                  type === 'fixed' 
-                    ? 'bg-blue-50 text-blue-700 border-blue-200' 
-                    : 'bg-green-50 text-green-700 border-green-200'
-                }`}
-              >
-                {type === 'fixed' ? (
-                  <>
-                    <Home className="h-3 w-3 mr-1" />
-                    Fixo
-                  </>
-                ) : (
-                  <>
-                    <CreditCard className="h-3 w-3 mr-1" />
-                    Variável
-                  </>
-                )}
-              </Badge>
+              <Chip 
+                label={type === 'fixed' ? 'Fixo' : 'Variável'}
+                size="small"
+                icon={type === 'fixed' ? <Home style={{ width: '0.75rem', height: '0.75rem' }} /> : <CreditCard style={{ width: '0.75rem', height: '0.75rem' }} />}
+                sx={{ 
+                  position: 'absolute', 
+                  top: 8, 
+                  left: 8, 
+                  height: 24,
+                  fontSize: '0.75rem', 
+                  fontWeight: 'medium',
+                  bgcolor: type === 'fixed' ? alpha(theme.palette.info.main, 0.1) : alpha(theme.palette.success.main, 0.1),
+                  color: type === 'fixed' ? 'info.main' : 'success.main',
+                  border: 1,
+                  borderColor: type === 'fixed' ? alpha(theme.palette.info.main, 0.2) : alpha(theme.palette.success.main, 0.2),
+                  '& .MuiChip-icon': { color: type === 'fixed' ? 'info.main' : 'success.main' }
+                }}
+              />
               
-              <CardHeader className="pb-3 pt-8">
-                <CardTitle className="text-lg capitalize">
-                  {formatMonthYear(projection.month)}
-                </CardTitle>
-              </CardHeader>
+              <CardHeader 
+                title={formatMonthYear(projection.month)}
+                titleTypographyProps={{ variant: 'h6', sx: { fontSize: '1.125rem', textTransform: 'capitalize' } }}
+                sx={{ pb: 3, pt: 8 }}
+              />
               
-              <CardContent className="space-y-4">
-                <div className="text-center">
-                  <p className="text-2xl font-bold text-primary">
+              <CardContent sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box sx={{ textAlign: 'center' }}>
+                  <Typography variant="h5" fontWeight="bold" color="primary">
                     {formatCurrency(projection.totalCommitment)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
                     Total do mês
-                  </p>
-                </div>
+                  </Typography>
+                </Box>
 
                 {projection.installments.length > 0 && (
-                  <div className="space-y-2">
-                    <p className="text-sm font-medium">
+                  <Stack spacing={1}>
+                    <Typography variant="body2" fontWeight="medium">
                       {type === 'fixed' ? 'Compromissos Fixos:' : 'Parcelamentos:'}
-                    </p>
-                    <div className="space-y-1">
+                    </Typography>
+                    <Stack spacing={0.5}>
                       {projection.installments.slice(0, 3).map((installment, index) => (
-                        <div key={index} className="flex justify-between text-xs">
-                          <span className="truncate flex-1 mr-2 flex items-center gap-1">
-                            {installment.isRecurring && <Repeat className="h-3 w-3" />}
+                        <Box key={index} sx={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem' }}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, mr: 1 }}>
+                            {installment.isRecurring && <Repeat style={{ width: '0.75rem', height: '0.75rem' }} />}
                             {installment.name}
-                          </span>
-                          <span className="font-medium">{formatCurrency(installment.amount)}</span>
-                        </div>
+                          </Box>
+                          <Typography variant="caption" fontWeight="medium">{formatCurrency(installment.amount)}</Typography>
+                        </Box>
                       ))}
                       {projection.installments.length > 3 && (
-                        <p className="text-xs text-muted-foreground">
+                        <Typography variant="caption" color="text.secondary">
                           +{projection.installments.length - 3} mais
-                        </p>
+                        </Typography>
                       )}
-                    </div>
-                  </div>
+                    </Stack>
+                  </Stack>
                 )}
 
                 {projection.installments.length > 0 && (
-                  <p className="text-xs text-muted-foreground text-center">
+                  <Typography variant="caption" color="text.secondary" align="center">
                     Clique para ver detalhes
-                  </p>
+                  </Typography>
                 )}
 
                 {/* Visual indicator */}
-                <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
-                  <div 
-                    className={`h-full transition-all ${
-                      type === 'fixed' ? 'bg-blue-500' : 'bg-green-500'
-                    }`}
-                    style={{ 
+                <Box sx={{ width: '100%', height: '0.5rem', borderRadius: 999, bgcolor: 'action.hover', overflow: 'hidden' }}>
+                  <Box 
+                    sx={{ 
+                      height: '100%', 
+                      transition: 'all 0.3s', 
+                      bgcolor: type === 'fixed' ? 'info.main' : 'success.main',
                       width: `${maxCommitment > 0 ? (projection.totalCommitment / maxCommitment) * 100 : 0}%` 
                     }}
                   />
-                </div>
+                </Box>
               </CardContent>
             </Card>
           );
         })}
-      </div>
+      </Box>
     );
   };
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <Stack spacing={4}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 4 }}>
           {Array.from({ length: 3 }).map((_, i) => (
-            <Skeleton key={i} className="h-24" />
+            <Skeleton key={i} variant="rectangular" height={96} sx={{ borderRadius: 1 }} />
           ))}
-        </div>
-        <Skeleton className="h-96" />
-      </div>
+        </Box>
+        <Skeleton variant="rectangular" height={384} sx={{ borderRadius: 1 }} />
+      </Stack>
     );
   }
 
   return (
-    <div className="space-y-6">
+    <Stack spacing={6}>
       {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 4 }}>
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Compromisso Variável Total</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
+          <CardHeader 
+            title="Compromisso Variável Total"
+            action={<DollarSign style={{ width: '1rem', height: '1rem', color: theme.palette.text.secondary }} />}
+            titleTypographyProps={{ variant: 'subtitle2', fontWeight: 'medium' }}
+            sx={{ pb: 2 }}
+          />
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(totalCommitment)}</div>
-            <p className="text-xs text-muted-foreground">
+            <Typography variant="h5" fontWeight="bold">{formatCurrency(totalCommitment)}</Typography>
+            <Typography variant="caption" color="text.secondary">
               Gastos variáveis - Próximos {selectedMonths} + últimos {includePastMonths} meses
-            </p>
+            </Typography>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Média Mensal Variável</CardTitle>
-            <BarChart3 className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
+          <CardHeader 
+            title="Média Mensal Variável"
+            action={<BarChart3 style={{ width: '1rem', height: '1rem', color: theme.palette.text.secondary }} />}
+            titleTypographyProps={{ variant: 'subtitle2', fontWeight: 'medium' }}
+            sx={{ pb: 2 }}
+          />
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(averageCommitment)}</div>
-            <p className="text-xs text-muted-foreground">
+            <Typography variant="h5" fontWeight="bold">{formatCurrency(averageCommitment)}</Typography>
+            <Typography variant="caption" color="text.secondary">
               Valor médio de gastos variáveis por mês
-            </p>
+            </Typography>
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Maior Compromisso Variável</CardTitle>
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
+          <CardHeader 
+            title="Maior Compromisso Variável"
+            action={<TrendingUp style={{ width: '1rem', height: '1rem', color: theme.palette.text.secondary }} />}
+            titleTypographyProps={{ variant: 'subtitle2', fontWeight: 'medium' }}
+            sx={{ pb: 2 }}
+          />
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(maxCommitment)}</div>
-            <p className="text-xs text-muted-foreground">
+            <Typography variant="h5" fontWeight="bold">{formatCurrency(maxCommitment)}</Typography>
+            <Typography variant="caption" color="text.secondary">
               Mês com maior gasto variável
-            </p>
+            </Typography>
           </CardContent>
         </Card>
-      </div>
+      </Box>
 
       {/* Period Selector */}
-      <div className="space-y-4">
-        <div>
-          <h3 className="text-sm font-medium mb-2">Período futuro:</h3>
-          <div className="flex gap-2">
-            <Button
-              variant={selectedMonths === 6 ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setSelectedMonths(6)}
-            >
-              6 meses
-            </Button>
-            <Button
-              variant={selectedMonths === 12 ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setSelectedMonths(12)}
-            >
-              12 meses
-            </Button>
-            <Button
-              variant={selectedMonths === 24 ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setSelectedMonths(24)}
-            >
-              24 meses
-            </Button>
-          </div>
-        </div>
+      <Stack spacing={4}>
+        <Box>
+          <Typography variant="body2" fontWeight="medium" sx={{ mb: 2 }}>Período futuro:</Typography>
+          <Stack direction="row" spacing={2}>
+            {[6, 12, 24].map((months) => (
+              <Button
+                key={months}
+                variant={selectedMonths === months ? 'contained' : 'outlined'}
+                size="small"
+                onClick={() => setSelectedMonths(months)}
+              >
+                {months} meses
+              </Button>
+            ))}
+          </Stack>
+        </Box>
         
-        <div>
-          <h3 className="text-sm font-medium mb-2">Incluir histórico:</h3>
-          <div className="flex gap-2">
-            <Button
-              variant={includePastMonths === 0 ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setIncludePastMonths(0)}
-            >
-              Nenhum
-            </Button>
-            <Button
-              variant={includePastMonths === 3 ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setIncludePastMonths(3)}
-            >
-              3 meses
-            </Button>
-            <Button
-              variant={includePastMonths === 6 ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setIncludePastMonths(6)}
-            >
-              6 meses
-            </Button>
-            <Button
-              variant={includePastMonths === 12 ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => setIncludePastMonths(12)}
-            >
-              12 meses
-            </Button>
-          </div>
-        </div>
-      </div>
+        <Box>
+          <Typography variant="body2" fontWeight="medium" sx={{ mb: 2 }}>Incluir histórico:</Typography>
+          <Stack direction="row" spacing={2}>
+            {[0, 3, 6, 12].map((months) => (
+              <Button
+                key={months}
+                variant={includePastMonths === months ? 'contained' : 'outlined'}
+                size="small"
+                onClick={() => setIncludePastMonths(months)}
+              >
+                {months === 0 ? 'Nenhum' : `${months} meses`}
+              </Button>
+            ))}
+          </Stack>
+        </Box>
+      </Stack>
 
       {/* Tabs para separar por tipo */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="fixed" className="flex items-center gap-2">
-            <Home className="h-4 w-4" />
-            Comprometimento Fixo
-          </TabsTrigger>
-          <TabsTrigger value="variable" className="flex items-center gap-2">
-            <CreditCard className="h-4 w-4" />
-            Comprometimento Variável
-          </TabsTrigger>
-        </TabsList>
+      <Box sx={{ width: '100%' }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 4 }}>
+          <Tabs value={activeTab} onChange={(_, newValue) => setActiveTab(newValue)}>
+            <Tab 
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Home style={{ width: '1rem', height: '1rem' }} />
+                  Comprometimento Fixo
+                </Box>
+              } 
+              value="fixed" 
+            />
+            <Tab 
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <CreditCard style={{ width: '1rem', height: '1rem' }} />
+                  Comprometimento Variável
+                </Box>
+              } 
+              value="variable" 
+            />
+          </Tabs>
+        </Box>
 
-        <TabsContent value="fixed" className="space-y-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Home className="h-5 w-5 text-blue-600" />
-            <div>
-              <h3 className="font-medium text-blue-900">Compromissos Fixos</h3>
-              <p className="text-sm text-muted-foreground">
-                Gastos recorrentes mensais - o que importa é o impacto mensal no orçamento
-              </p>
-            </div>
-          </div>
-          
-          {fixedProjections.length === 0 || fixedProjections.every(p => p.totalCommitment === 0) ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <Home className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Nenhum compromisso fixo</h3>
-                <p className="text-muted-foreground text-center">
-                  Não há parcelamentos recorrentes previstos para o período selecionado.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            <div className="space-y-6">
-              {/* Card de resumo mensal dos gastos fixos */}
-              <Card className="bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
-                <CardHeader>
-                  <CardTitle className="text-blue-900 dark:text-blue-100 flex items-center gap-2">
-                    <Home className="h-5 w-5" />
-                    Impacto Mensal dos Gastos Fixos
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {(() => {
-                    // Calcular total mensal dos gastos fixos
-                    const uniqueFixedCommitments = new Map();
-                    fixedProjections.forEach(projection => {
-                      projection.installments.forEach(installment => {
-                        if (installment.isRecurring === true) {
-                          uniqueFixedCommitments.set(installment.name, installment.amount);
-                        }
-                      });
-                    });
-                    
-                    const totalMonthlyFixed = Array.from(uniqueFixedCommitments.values())
-                      .reduce((sum: number, amount: number) => sum + amount, 0);
-                    const salaryPercentage = calculateSalaryPercentage(totalMonthlyFixed);
-                    
-                    return (
-                      <div className="text-center">
-                        <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                          {formatCurrency(totalMonthlyFixed)}
-                        </p>
-                        <p className="text-sm text-blue-700 dark:text-blue-300 mb-2">
-                          Compromisso fixo mensal
-                        </p>
-                        {salaryPercentage !== null && (
-                          <Badge variant="outline" className="bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 border-blue-300 dark:border-blue-700">
-                            <Percent className="h-3 w-3 mr-1" />
-                            {formatPercentage(salaryPercentage)} do salário
-                          </Badge>
-                        )}
-                      </div>
-                    );
-                  })()}
+        {activeTab === 'fixed' && (
+          <Stack spacing={4}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
+              <Home style={{ width: '1.25rem', height: '1.25rem', color: theme.palette.info.main }} />
+              <Box>
+                <Typography variant="subtitle1" fontWeight="medium" color="info.main">Compromissos Fixos</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Gastos recorrentes mensais - o que importa é o impacto mensal no orçamento
+                </Typography>
+              </Box>
+            </Box>
+            
+            {fixedProjections.length === 0 || fixedProjections.every(p => p.totalCommitment === 0) ? (
+              <Card>
+                <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 8 }}>
+                  <Home style={{ width: '3rem', height: '3rem', color: theme.palette.text.secondary, marginBottom: '1rem' }} />
+                  <Typography variant="h6" fontWeight="semibold" sx={{ mb: 1 }}>Nenhum compromisso fixo</Typography>
+                  <Typography color="text.secondary" align="center">
+                    Não há parcelamentos recorrentes previstos para o período selecionado.
+                  </Typography>
                 </CardContent>
               </Card>
-
-              {/* Lista dos gastos fixos individuais */}
-              <div className="space-y-3">
-                <h4 className="font-medium text-blue-900 dark:text-blue-100">Detalhamento dos Gastos Fixos:</h4>
-                <div className="grid gap-3">
-                  {(() => {
-                    const uniqueFixedCommitments = new Map();
-                    fixedProjections.forEach(projection => {
-                      projection.installments.forEach(installment => {
-                        if (installment.isRecurring === true) {
-                          uniqueFixedCommitments.set(installment.name, {
-                            name: installment.name,
-                            amount: installment.amount,
-                            category: 'Gasto Fixo'
-                          });
-                        }
+            ) : (
+              <Stack spacing={6}>
+                {/* Card de resumo mensal dos gastos fixos */}
+                <Card sx={{ bgcolor: alpha(theme.palette.info.main, 0.05), borderColor: alpha(theme.palette.info.main, 0.2) }}>
+                  <CardHeader 
+                    title={
+                      <Typography variant="h6" sx={{ color: 'info.main', display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Home style={{ width: '1.25rem', height: '1.25rem' }} />
+                        Impacto Mensal dos Gastos Fixos
+                      </Typography>
+                    }
+                  />
+                  <CardContent sx={{ spaceY: 4 }}>
+                    {(() => {
+                      // Calcular total mensal dos gastos fixos
+                      const uniqueFixedCommitments = new Map();
+                      fixedProjections.forEach(projection => {
+                        projection.installments.forEach(installment => {
+                          if (installment.isRecurring === true) {
+                            uniqueFixedCommitments.set(installment.name, installment.amount);
+                          }
+                        });
                       });
-                    });
-                    
-                    return Array.from(uniqueFixedCommitments.values()).map((commitment: any) => {
-                      const salaryPercentage = calculateSalaryPercentage(commitment.amount);
-                      const percentageColor = getPercentageColor(salaryPercentage);
+                      
+                      const totalMonthlyFixed = Array.from(uniqueFixedCommitments.values())
+                        .reduce((sum: number, amount: number) => sum + amount, 0);
+                      const salaryPercentage = calculateSalaryPercentage(totalMonthlyFixed);
                       
                       return (
-                        <Card key={commitment.name} className="hover:shadow-md transition-shadow bg-white dark:bg-gray-800 border-blue-100 dark:border-blue-800">
-                          <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3 flex-1">
-                                <div className="p-2 bg-blue-100 dark:bg-blue-900 rounded-lg">
-                                  <Repeat className="h-4 w-4 text-blue-600" />
-                                </div>
-                                <div className="flex-1">
-                                  <h5 className="font-medium text-gray-900 dark:text-gray-100">{commitment.name}</h5>
-                                  <p className="text-xs text-muted-foreground">{commitment.category}</p>
-                                </div>
-                              </div>
-                              <div className="text-right">
-                                <p className="font-bold text-lg text-blue-600 dark:text-blue-400">
-                                  {formatCurrency(commitment.amount)}
-                                </p>
-                                <p className="text-xs text-muted-foreground">por mês</p>
-                                {salaryPercentage !== null && (
-                                  <Badge 
-                                    variant="outline" 
-                                    className={`mt-1 text-xs ${percentageColor}`}
-                                  >
-                                    {formatPercentage(salaryPercentage)}
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
+                        <Box sx={{ textAlign: 'center' }}>
+                          <Typography variant="h4" fontWeight="bold" color="info.main">
+                            {formatCurrency(totalMonthlyFixed)}
+                          </Typography>
+                          <Typography variant="body2" color="info.main" sx={{ mb: 1, opacity: 0.8 }}>
+                            Compromisso fixo mensal
+                          </Typography>
+                          {salaryPercentage !== null && (
+                            <Chip 
+                              label={`${formatPercentage(salaryPercentage)} do salário`}
+                              variant="outlined"
+                              icon={<Percent style={{ width: '0.75rem', height: '0.75rem' }} />}
+                              sx={{ 
+                                bgcolor: alpha(theme.palette.info.main, 0.1), 
+                                color: 'info.main', 
+                                borderColor: alpha(theme.palette.info.main, 0.3),
+                                '& .MuiChip-icon': { color: 'info.main' }
+                              }}
+                            />
+                          )}
+                        </Box>
                       );
-                    });
-                  })()}
-                </div>
-              </div>
-            </div>
-          )}
-        </TabsContent>
+                    })()}
+                  </CardContent>
+                </Card>
 
-        <TabsContent value="variable" className="space-y-4">
-          <div className="flex items-center gap-2 mb-4">
-            <CreditCard className="h-5 w-5 text-green-600" />
-            <div>
-              <h3 className="font-medium text-green-900">Compromissos Variáveis</h3>
-              <p className="text-sm text-muted-foreground">
-                Empréstimos, financiamentos e parcelamentos com prazo definido
-              </p>
-            </div>
-          </div>
-          
-          {variableProjections.length === 0 || variableProjections.every(p => p.totalCommitment === 0) ? (
-            <Card>
-              <CardContent className="flex flex-col items-center justify-center py-16">
-                <CreditCard className="h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-semibold mb-2">Nenhum compromisso variável</h3>
-                <p className="text-muted-foreground text-center">
-                  Não há parcelamentos com prazo definido previstos para o período selecionado.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            renderProjectionCards(variableProjections, 'variable')
-          )}
-        </TabsContent>
-      </Tabs>
+                {/* Lista dos gastos fixos individuais */}
+                <Stack spacing={3}>
+                  <Typography variant="subtitle1" fontWeight="medium" color="info.main">Detalhamento dos Gastos Fixos:</Typography>
+                  <Stack spacing={3}>
+                    {(() => {
+                      const uniqueFixedCommitments = new Map();
+                      fixedProjections.forEach(projection => {
+                        projection.installments.forEach(installment => {
+                          if (installment.isRecurring === true) {
+                            uniqueFixedCommitments.set(installment.name, {
+                              name: installment.name,
+                              amount: installment.amount,
+                              category: 'Gasto Fixo'
+                            });
+                          }
+                        });
+                      });
+                      
+                      return Array.from(uniqueFixedCommitments.values()).map((commitment: any) => {
+                        const salaryPercentage = calculateSalaryPercentage(commitment.amount);
+                        const status = getPercentageStatus(salaryPercentage);
+                        
+                        return (
+                          <Card key={commitment.name} sx={{ transition: 'box-shadow 0.2s', '&:hover': { boxShadow: 3 }, bgcolor: 'background.paper', borderColor: alpha(theme.palette.info.main, 0.1) }}>
+                            <CardContent sx={{ p: 2 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1 }}>
+                                  <Box sx={{ p: 1, bgcolor: alpha(theme.palette.info.main, 0.1), borderRadius: 1 }}>
+                                    <Repeat style={{ width: '1rem', height: '1rem', color: theme.palette.info.main }} />
+                                  </Box>
+                                  <Box sx={{ flex: 1 }}>
+                                    <Typography variant="subtitle2" fontWeight="medium">{commitment.name}</Typography>
+                                    <Typography variant="caption" color="text.secondary">{commitment.category}</Typography>
+                                  </Box>
+                                </Box>
+                                <Box sx={{ textAlign: 'right' }}>
+                                  <Typography variant="h6" fontWeight="bold" color="info.main">
+                                    {formatCurrency(commitment.amount)}
+                                  </Typography>
+                                  <Typography variant="caption" color="text.secondary">por mês</Typography>
+                                  {salaryPercentage !== null && (
+                                    <Box sx={{ mt: 0.5 }}>
+                                      <Chip 
+                                        label={formatPercentage(salaryPercentage)}
+                                        variant="outlined" 
+                                        size="small"
+                                        sx={{ 
+                                          fontSize: '0.75rem',
+                                          height: 20,
+                                          bgcolor: `${status}.lighter`,
+                                          color: `${status}.main`,
+                                          borderColor: `${status}.light`,
+                                        }}
+                                      />
+                                    </Box>
+                                  )}
+                                </Box>
+                              </Box>
+                            </CardContent>
+                          </Card>
+                        );
+                      });
+                    })()}
+                  </Stack>
+                </Stack>
+              </Stack>
+            )}
+          </Stack>
+        )}
+
+        {activeTab === 'variable' && (
+          <Stack spacing={4}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 4 }}>
+              <CreditCard style={{ width: '1.25rem', height: '1.25rem', color: theme.palette.success.main }} />
+              <Box>
+                <Typography variant="subtitle1" fontWeight="medium" color="success.main">Compromissos Variáveis</Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Empréstimos, financiamentos e parcelamentos com prazo definido
+                </Typography>
+              </Box>
+            </Box>
+            
+            {variableProjections.length === 0 || variableProjections.every(p => p.totalCommitment === 0) ? (
+              <Card>
+                <CardContent sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', py: 8 }}>
+                  <CreditCard style={{ width: '3rem', height: '3rem', color: theme.palette.text.secondary, marginBottom: '1rem' }} />
+                  <Typography variant="h6" fontWeight="semibold" sx={{ mb: 1 }}>Nenhum compromisso variável</Typography>
+                  <Typography color="text.secondary" align="center">
+                    Não há parcelamentos com prazo definido previstos para o período selecionado.
+                  </Typography>
+                </CardContent>
+              </Card>
+            ) : (
+              renderProjectionCards(variableProjections, 'variable')
+            )}
+          </Stack>
+        )}
+      </Box>
 
       {/* Modal */}
       {selectedMonth && (
@@ -545,6 +581,6 @@ export function MonthlyProjections() {
           commitmentType={selectedMonth.commitmentType}
         />
       )}
-    </div>
+    </Stack>
   );
 }
