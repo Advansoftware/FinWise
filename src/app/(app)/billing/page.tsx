@@ -2,7 +2,7 @@
 'use client';
 import {useState, useEffect, Suspense} from 'react';
 import {useSearchParams, useRouter, usePathname} from 'next/navigation';
-import { Button, Card, CardContent, CardHeader, CardActions, Typography, Chip, Grid, Stack, Box, List, ListItem, ListItemIcon, ListItemText, Divider } from "@mui/material";
+import { Button, Card, CardContent, CardHeader, CardActions, Typography, Chip, Stack, Box, List, ListItem, ListItemIcon, ListItemText, Divider, Grid } from "@mui/material";
 import { CheckCircle2, Loader2, Gem, BrainCircuit, Rocket } from "lucide-react";
 import { usePlan } from "@/hooks/use-plan";
 import { usePayment } from "@/hooks/use-payment";
