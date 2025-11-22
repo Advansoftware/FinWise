@@ -20,7 +20,7 @@ export function ResetPasswordDialog({ children }: { children: React.ReactNode })
   const handleReset = async () => {
     if (!email) {
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Email obrigatório",
         description: "Por favor, insira seu endereço de email.",
       });
@@ -36,7 +36,7 @@ export function ResetPasswordDialog({ children }: { children: React.ReactNode })
       setIsSent(true);
     } catch (error: any) {
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Erro ao enviar email",
         description: "Verifique se o email está correto e tente novamente.",
       });

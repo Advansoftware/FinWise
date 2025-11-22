@@ -32,7 +32,7 @@ export default function DefaultCategoriesPreview() {
   const handleApplyToUser = async () => {
     if (!user) {
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Erro",
         description: "Usuário não autenticado"
       });
@@ -63,7 +63,7 @@ export default function DefaultCategoriesPreview() {
     } catch (error) {
       console.error('Erro ao aplicar categorias:', error);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Erro",
         description: "Erro ao aplicar categorias padrão. Tente novamente."
       });

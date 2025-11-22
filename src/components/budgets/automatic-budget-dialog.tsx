@@ -41,7 +41,7 @@ export function AutomaticBudgetDialog({ isOpen, setIsOpen, suggestedBudgets }: A
 
   const handleCreateBudgets = async () => {
     if (selectedBudgets.length === 0) {
-        toast({ variant: 'destructive', title: 'Nenhum orçamento selecionado'});
+        toast({ variant: "error", title: 'Nenhum orçamento selecionado'});
         return;
     }
 
@@ -59,7 +59,7 @@ export function AutomaticBudgetDialog({ isOpen, setIsOpen, suggestedBudgets }: A
         setIsOpen(false);
     } catch(e) {
         console.error("Error creating budgets in batch", e);
-        toast({ variant: 'destructive', title: 'Erro ao criar orçamentos.'});
+        toast({ variant: "error", title: 'Erro ao criar orçamentos.'});
     }
   }
 

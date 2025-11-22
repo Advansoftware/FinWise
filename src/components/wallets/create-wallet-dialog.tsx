@@ -8,17 +8,14 @@ import * as z from "zod";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogTrigger,
+  DialogActions,
+  Box,
+  Typography,
 } from "@mui/material";
 import { Button } from "@mui/material";
-// TODO: Migrar form para react-hook-form + MUI
-// import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { TextField } from "@mui/material";
-import { Select, SelectContent, MenuItem, SelectTrigger, SelectValue } from "@mui/material";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/mui-wrappers/form";
+import { TextField, Select, MenuItem } from "@mui/material";
 import { useToast } from "@/hooks/use-toast";
 import { useWallets } from "@/hooks/use-wallets";
 import { Wallet, WalletType } from "@/lib/types";
@@ -78,7 +75,7 @@ export function CreateWalletDialog({ children, initialData }: CreateWalletDialog
       setIsOpen(false);
     } catch (error) {
       console.error("Failed to save wallet:", error);
-      toast({ variant: "destructive", title: "Erro ao salvar carteira." });
+      toast({ variant: "error", title: "Erro ao salvar carteira." });
     } finally {
       setIsSubmitting(false);
     }

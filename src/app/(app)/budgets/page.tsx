@@ -51,7 +51,7 @@ export default function BudgetsPage() {
             });
         } catch (error) {
             toast({
-                variant: "destructive",
+                variant: "error",
                 title: "Erro ao criar orçamento",
                 description: "Não foi possível criar o orçamento. Tente novamente.",
             });
@@ -75,7 +75,7 @@ export default function BudgetsPage() {
             setActiveTab("budgets");
         } catch (error) {
             toast({
-                variant: "destructive",
+                variant: "error",
                 title: "Erro ao criar orçamentos",
                 description: "Não foi possível criar alguns orçamentos. Tente novamente.",
             });

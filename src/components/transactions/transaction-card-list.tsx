@@ -7,8 +7,8 @@ import {CategoryIcon} from '../icons';
 import {format} from 'date-fns';
 import {ptBR} from 'date-fns/locale';
 import {MoreVertical, Pen, Trash2, ArrowUp, ArrowDown} from 'lucide-react';
-import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from '../ui/dropdown-menu';
-import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle} from '../ui/alert-dialog';
+import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger} from '@/components/mui-wrappers/dropdown-menu';
+import {AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle} from '@/components/mui-wrappers/alert-dialog';
 import {EditTransactionSheet} from './edit-transaction-sheet';
 import {useTransactions} from '@/hooks/use-transactions';
 import {useToast} from '@/hooks/use-toast';
@@ -47,7 +47,7 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
             await deleteTransaction(transaction);
             toast({ title: "Transação excluída com sucesso." });
         } catch (error) {
-            toast({ variant: "destructive", title: "Erro ao excluir transação." });
+            toast({ variant: "error", title: "Erro ao excluir transação." });
         }
     };
 

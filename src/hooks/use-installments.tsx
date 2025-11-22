@@ -241,7 +241,7 @@ export function InstallmentsProvider({ children }: { children: React.ReactNode }
       toast({
         title: "Erro",
         description: error.message || "Falha ao criar parcelamento",
-        variant: "destructive",
+        variant: "error",
       });
       return null;
     }
@@ -315,7 +315,7 @@ export function InstallmentsProvider({ children }: { children: React.ReactNode }
       toast({
         title: "Erro",
         description: "Falha ao atualizar parcelamento",
-        variant: "destructive",
+        variant: "error",
       });
       return false;
     }
@@ -373,7 +373,7 @@ export function InstallmentsProvider({ children }: { children: React.ReactNode }
       toast({
         title: "Erro",
         description: "Falha ao remover parcelamento",
-        variant: "destructive",
+        variant: "error",
       });
       return false;
     }
@@ -467,7 +467,7 @@ export function InstallmentsProvider({ children }: { children: React.ReactNode }
       toast({
         title: "Erro",
         description: "Falha ao registrar pagamento",
-        variant: "destructive",
+        variant: "error",
       });
       return false;
     }

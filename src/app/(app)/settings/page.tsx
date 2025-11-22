@@ -1,12 +1,11 @@
 // src/app/(app)/settings/page.tsx
 'use client';
 
-// TODO: Migrar componente completamente para MUI (remover Shadcn/Radix UI)
 import { Button, Card, CardContent, CardHeader, Typography, Skeleton, Chip } from "@mui/material";
 import { useAISettings } from "@/hooks/use-ai-settings";
 import { MoreVertical, Trash2, Edit, PlusCircle, CheckCircle, Radio, Sparkles, Lock } from "lucide-react";
-// import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-// import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/mui-wrappers/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/mui-wrappers/alert-dialog";
 import { AISettingsDialog } from "@/components/settings/ai-settings-dialog";
 import { usePlan } from "@/hooks/use-plan";
 import { AICredential } from "@/lib/types";
@@ -101,8 +100,8 @@ export default function SettingsPage() {
                                                      </DropdownMenuItem>
                                                       <AlertDialog>
                                                             <AlertDialogTrigger asChild>
-                                                                 <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-400 focus:bg-destructive/10">
-                                                                    <Trash2 className="mr-2 h-4 w-4"/>Excluir
+                                                                 <DropdownMenuItem onSelect={(e: Event) => e.preventDefault()} sx={{ color: 'error.main' }}>
+                                                                    <Trash2 style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }}/>Excluir
                                                                 </DropdownMenuItem>
                                                             </AlertDialogTrigger>
                                                             <AlertDialogContent>
@@ -114,7 +113,7 @@ export default function SettingsPage() {
                                                                 </AlertDialogHeader>
                                                                 <AlertDialogFooter>
                                                                     <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                                                    <AlertDialogAction onClick={() => handleDelete(cred.id)} className="bg-destructive hover:bg-destructive/90">Excluir</AlertDialogAction>
+                                                                    <AlertDialogAction onClick={() => handleDelete(cred.id)} color="error">Excluir</AlertDialogAction>
                                                                 </AlertDialogFooter>
                                                             </AlertDialogContent>
                                                         </AlertDialog>

@@ -141,7 +141,7 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Erro ao adicionar carteira:', error);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Erro ao adicionar carteira",
         description: "Tente novamente"
       });
@@ -196,7 +196,7 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Erro ao atualizar carteira:', error);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Erro ao atualizar carteira",
         description: "Tente novamente"
       });
@@ -244,7 +244,7 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Erro ao excluir carteira:', error);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Erro ao excluir carteira",
         description: "Tente novamente"
       });

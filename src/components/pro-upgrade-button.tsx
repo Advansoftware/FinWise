@@ -2,7 +2,7 @@
 'use client';
 
 import { usePlan } from "@/hooks/use-plan";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip } from "@mui/material";
 import { Lock, Gem } from "lucide-react";
 import Link from "next/link";
 import {Button} from '@mui/material';
@@ -29,31 +29,26 @@ export function ProUpgradeButton({ children, requiredPlan, tooltipContent, class
     const defaultTooltip = `Este é um recurso do plano ${requiredPlan}. Clique para fazer upgrade.`;
 
     return (
-        <Tooltip>
-            <TooltipTrigger asChild>
-                <Box sx={{ position: 'relative', width: '100%' }}>
-                    {children}
-                    <Box sx={{ 
-                        position: 'absolute', 
-                        inset: 0, 
-                        bgcolor: 'rgba(var(--background-rgb), 0.6)', 
-                        backdropFilter: 'blur(4px)', 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        justifyContent: 'center', 
-                        borderRadius: 1, 
-                        cursor: 'pointer',
-                        '&:hover .gem-icon': { opacity: 1, transform: 'scale(1.1)' }
-                    }}>
-                        <Link href="/billing" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                           <Gem className="gem-icon" style={{ width: '1.25rem', height: '1.25rem', color: 'var(--primary)', opacity: 0.8, transition: 'all 0.2s' }} />
-                        </Link>
-                    </Box>
+        <Tooltip title={tooltipContent || defaultTooltip}>
+            <Box sx={{ position: 'relative', width: '100%' }}>
+                {children}
+                <Box sx={{ 
+                    position: 'absolute', 
+                    inset: 0, 
+                    bgcolor: 'rgba(var(--background-rgb), 0.6)', 
+                    backdropFilter: 'blur(4px)', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    borderRadius: 1, 
+                    cursor: 'pointer',
+                    '&:hover .gem-icon': { opacity: 1, transform: 'scale(1.1)' }
+                }}>
+                    <Link href="/billing" style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                       <Gem className="gem-icon" style={{ width: '1.25rem', height: '1.25rem', color: 'var(--primary)', opacity: 0.8, transition: 'all 0.2s' }} />
+                    </Link>
                 </Box>
-            </TooltipTrigger>
-            <TooltipContent>
-                <p>{tooltipContent || defaultTooltip}</p>
-            </TooltipContent>
+            </Box>
         </Tooltip>
     );
 }

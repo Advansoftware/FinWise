@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
 import { SingleDatePicker } from "../single-date-picker";
 import { useTransactions } from "@/hooks/use-transactions";
-import { Switch } from "../ui/switch";
+import { Switch } from "@/components/mui-wrappers/switch";
 import { useWallets } from "@/hooks/use-wallets";
 import {Box, Stack} from '@mui/material';
 
@@ -71,7 +71,7 @@ export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTra
     const { item, amount, date, category, walletId } = formState;
     if (!item || !amount || !date || !category || !walletId) {
         toast({
-            variant: "destructive",
+            variant: "error",
             title: "Campos obrigatórios",
             description: "Por favor, preencha todos os campos obrigatórios.",
         });
@@ -100,7 +100,7 @@ export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTra
     } catch (error) {
         console.error(error);
         toast({
-            variant: "destructive",
+            variant: "error",
             title: "Erro",
             description: "Não foi possível atualizar a transação. Tente novamente.",
         });

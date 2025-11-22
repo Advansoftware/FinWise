@@ -7,7 +7,7 @@ import {notFound} from 'next/navigation';
 import matter from 'gray-matter';
 import ReactMarkdown from 'react-markdown';
 import {DocSidebarNav} from '@/app/(docs)/docs/_components/docs-sidebar-nav';
-import {ScrollArea} from '@/components/ui/scroll-area';
+import {ScrollArea} from '@/components/mui-wrappers/scroll-area';
 import {Metadata} from 'next';
 
 const docsDirectory = path.join(process.cwd(), 'docs');

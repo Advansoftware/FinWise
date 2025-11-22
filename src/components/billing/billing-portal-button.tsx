@@ -37,7 +37,7 @@ export function BillingPortalButton({
       toast({
         title: "Erro de Autenticação",
         description: "Você precisa estar logado para acessar o portal.",
-        variant: "destructive"
+        variant: "error"
       });
       return;
     }
@@ -46,7 +46,7 @@ export function BillingPortalButton({
       toast({
         title: "Recurso Indisponível",
         description: "O portal de faturamento está disponível apenas para assinantes dos planos pagos.",
-        variant: "destructive"
+        variant: "error"
       });
       return;
     }

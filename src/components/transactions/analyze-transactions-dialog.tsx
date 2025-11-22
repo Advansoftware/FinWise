@@ -17,7 +17,7 @@ import { Wand2, Loader2, Lock } from "lucide-react";
 import { Transaction } from "@/lib/types";
 import { analyzeTransactionsAction } from "@/services/ai-actions";
 import { useToast } from "@/hooks/use-toast";
-import { ScrollArea } from "../ui/scroll-area";
+import { ScrollArea } from "@/components/mui-wrappers/scroll-area";
 import ReactMarkdown from 'react-markdown';
 import { useAuth } from "@/hooks/use-auth";
 import { ProUpgradeButton } from "../pro-upgrade-button";
@@ -44,7 +44,7 @@ export function AnalyzeTransactionsDialog({ transactions }: AnalyzeTransactionsD
                 setAnalysis(result);
             } catch (error: any) {
                 console.error("Analysis error:", error);
-                toast({ variant: "destructive", title: "Erro na Análise", description: error.message || "Não foi possível analisar as transações." });
+                toast({ variant: "error", title: "Erro na Análise", description: error.message || "Não foi possível analisar as transações." });
             }
         });
     }

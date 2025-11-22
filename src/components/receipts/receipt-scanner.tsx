@@ -58,7 +58,7 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
   const processImage = async (imageData: string) => {
     if (!user) {
       toast({ 
-        variant: 'destructive', 
+        variant: "error", 
         title: 'Erro de Autenticação', 
         description: 'Você precisa estar logado.' 
       });
@@ -80,7 +80,7 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
         
         if (!result.isValid) {
           toast({
-            variant: 'destructive',
+            variant: "error",
             title: 'Nota Inválida',
             description: 'A imagem não parece ser uma nota fiscal válida. Tente outra imagem.',
           });
@@ -88,7 +88,7 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
       } catch (error: any) {
         console.error(error);
         toast({
-          variant: 'destructive',
+          variant: "error",
           title: 'Erro ao Processar',
           description: error.message || 'Não foi possível extrair as informações da imagem. Verifique suas configurações de IA.',
         });
@@ -101,7 +101,7 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
     
     if (wallets.length === 0) {
       toast({
-        variant: 'destructive',
+        variant: "error",
         title: 'Nenhuma Carteira',
         description: 'Crie uma carteira antes de salvar transações.',
       });
@@ -138,7 +138,7 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
       } catch (error) {
         console.error(error);
         toast({
-          variant: 'destructive',
+          variant: "error",
           title: 'Erro ao Salvar',
           description: 'Não foi possível salvar as transações.',
         });
@@ -319,7 +319,7 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
               onCapture={processImage}
               onPermissionDenied={() => {
                 toast({
-                  variant: 'destructive',
+                  variant: "error",
                   title: 'Câmera Bloqueada',
                   description: 'Use a opção "Enviar da Galeria" para continuar.',
                 });

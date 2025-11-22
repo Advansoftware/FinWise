@@ -60,7 +60,7 @@ export function AddDepositDialog({ open, onClose, goal }: AddDepositDialogProps)
       onClose();
     } catch (error) {
       console.error("Failed to add deposit:", error);
-      toast({ variant: "destructive", title: "Erro ao adicionar depósito." });
+      toast({ variant: "error", title: "Erro ao adicionar depósito." });
     } finally {
       setIsSubmitting(false);
     }

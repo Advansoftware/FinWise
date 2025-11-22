@@ -164,7 +164,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Erro ao adicionar meta:', error);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Erro ao adicionar meta",
         description: "Tente novamente"
       });
@@ -212,7 +212,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Erro ao atualizar meta:', error);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Erro ao atualizar meta",
         description: "Tente novamente"
       });
@@ -253,7 +253,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Erro ao excluir meta:', error);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Erro ao excluir meta",
         description: "Tente novamente"
       });
@@ -348,7 +348,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Erro ao adicionar depósito:', error);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Erro ao adicionar depósito",
         description: "Tente novamente"
       });

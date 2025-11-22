@@ -113,7 +113,7 @@ export function useAISettings() {
     // Function to save all settings
     const saveSettings = async (newSettings: {credentials: AICredential[], activeCredentialId: string | null}) => {
         if (!user) {
-            toast({ variant: "destructive", title: "Usuário não autenticado." });
+            toast({ variant: "error", title: "Usuário não autenticado." });
             return;
         }
         setIsSaving(true);
@@ -128,7 +128,7 @@ export function useAISettings() {
             toast({ title: "Configurações de IA salvas!" });
             setSettings(newSettings);
         } catch (error) {
-            toast({ variant: "destructive", title: "Erro ao salvar configurações." });
+            toast({ variant: "error", title: "Erro ao salvar configurações." });
             throw error; // Re-throw error to be caught by caller
         } finally {
             setIsSaving(false);
@@ -221,7 +221,7 @@ export function useAISettings() {
             
         } catch (error) {
             console.error("Failed to activate credential", error);
-            toast({ variant: "destructive", title: "Erro ao ativar configuração de IA." });
+            toast({ variant: "error", title: "Erro ao ativar configuração de IA." });
         }
     };
 

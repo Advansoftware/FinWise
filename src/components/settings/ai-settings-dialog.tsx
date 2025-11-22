@@ -4,12 +4,10 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@mui/material";
+import { Dialog, DialogContent, DialogTitle, DialogActions } from "@mui/material";
 import { Button } from "@mui/material";
-// TODO: Migrar form para react-hook-form + MUI
-// import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { TextField } from "@mui/material";
-import { Select, SelectContent, MenuItem, SelectTrigger, SelectValue } from "@mui/material";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/mui-wrappers/form";
+import { TextField, Select, MenuItem, Box, Typography } from "@mui/material";
 import { useToast } from "@/hooks/use-toast";
 import { AICredential, AIProvider, OpenAIModel } from "@/lib/types";
 import { useAISettings } from "@/hooks/use-ai-settings";
@@ -101,7 +99,7 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
   const fetchOllamaModels = async () => {
     const address = form.getValues("ollamaServerAddress");
     if (!address) {
-        toast({ variant: 'destructive', title: 'Endereço do Servidor Ollama Necessário' });
+        toast({ variant: "error", title: 'Endereço do Servidor Ollama Necessário' });
         return;
     }
     startFetchingOllama(async () => {
@@ -121,14 +119,14 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
             setOllamaModels(models);
             if (models.length === 0) {
                  toast({
-                    variant: 'destructive',
+                    variant: "error",
                     title: 'Nenhum modelo Ollama encontrado',
                     description: `Verifique se o Ollama está em execução em ${address}.`,
                 });
             }
         } catch(e: any) {
              toast({
-                variant: 'destructive',
+                variant: "error",
                 title: 'Falha na Conexão com Ollama',
                 description: e.message || `Não foi possível conectar ao Ollama em ${address}.`,
             });

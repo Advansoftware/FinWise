@@ -88,7 +88,7 @@ export function CreateGoalDialog({ open, onClose, initialData }: CreateGoalDialo
       onClose();
     } catch (error) {
       console.error("Failed to save goal:", error);
-      toast({ variant: "destructive", title: "Erro ao salvar meta." });
+      toast({ variant: "error", title: "Erro ao salvar meta." });
     } finally {
       setIsSubmitting(false);
     }

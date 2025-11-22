@@ -2,13 +2,13 @@
 // src/app/user-nav.tsx
 'use client';
 
-import {DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger} from '@/components/ui/dropdown-menu';
+import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuGroup} from '@/components/mui-wrappers/dropdown-menu';
 import {Button} from '@mui/material';
 import {Avatar, AvatarFallback, AvatarImage} from '@mui/material';
 import {Settings, Gem, UserCircle, LogOut, Trophy, Sparkles, ExternalLink} from 'lucide-react';
 import Link from 'next/link';
 import {useAuth} from '@/hooks/use-auth';
-import {Skeleton} from '@/components/ui/skeleton';
+import {Skeleton} from '@/components/mui-wrappers/skeleton';
 import {useGamification} from '@/hooks/use-gamification';
 import {Chip} from '@mui/material';
 import {LinearProgress} from '@mui/material';

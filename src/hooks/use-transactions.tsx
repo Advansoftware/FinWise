@@ -183,7 +183,7 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
     } catch (error) {
       console.error('Erro ao adicionar transação:', error);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Erro ao adicionar transação",
         description: "Tente novamente"
       });
@@ -230,7 +230,7 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
     } catch (error) {
       console.error('Erro ao atualizar transação:', error);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Erro ao atualizar transação",
         description: "Tente novamente"
       });
@@ -273,7 +273,7 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
     } catch (error) {
       console.error('Erro ao excluir transação:', error);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Erro ao excluir transação",
         description: "Tente novamente"
       });
@@ -308,7 +308,7 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
     } catch (error) {
       console.error('Erro ao salvar categorias:', error);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Erro ao salvar categorias",
         description: "Tente novamente"
       });
@@ -317,7 +317,7 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
 
   const addCategory = async (categoryName: TransactionCategory) => {
     if (categories.includes(categoryName)) {
-      toast({ variant: "destructive", title: "Categoria já existe" });
+      toast({ variant: "error", title: "Categoria já existe" });
       return;
     }
     const newCategoryMap = { ...categoryMap, [categoryName]: [] };
@@ -334,7 +334,7 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
   const addSubcategory = async (categoryName: TransactionCategory, subcategoryName: string) => {
     const subs = categoryMap[categoryName] || [];
     if (subs.includes(subcategoryName)) {
-      toast({ variant: "destructive", title: "Subcategoria já existe" });
+      toast({ variant: "error", title: "Subcategoria já existe" });
       return;
     }
     const newCategoryMap = { ...categoryMap, [categoryName]: [...subs, subcategoryName].sort() };

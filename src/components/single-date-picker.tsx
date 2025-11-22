@@ -7,7 +7,7 @@ import { Calendar as CalendarIcon } from "lucide-react"
 import { ptBR } from "date-fns/locale"
 
 import { Button } from "@mui/material"
-import { Calendar } from "@/components/ui/calendar"
+import { Calendar } from "@/components/mui-wrappers/calendar"
 import {
   Popover,
   PopoverContent,

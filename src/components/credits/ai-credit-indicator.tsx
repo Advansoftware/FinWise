@@ -7,10 +7,10 @@ import {Sparkles, Info, Zap} from 'lucide-react';
 import {useCredits} from '@/hooks/use-credits';
 import {usePlan} from '@/hooks/use-plan';
 import {useAISettings} from '@/hooks/use-ai-settings';
-import {Skeleton} from '../ui/skeleton';
+import {Skeleton} from '@/components/mui-wrappers/skeleton';
 import {CreditStatementDialog} from './ai-credit-statement-dialog';
 import {AnimatePresence, motion} from 'framer-motion';
-import {Tooltip, TooltipContent, TooltipProvider, TooltipTrigger} from '../ui/tooltip';
+import {Tooltip} from '@mui/material';
 import {Chip} from '@mui/material';
 import {Box, Stack} from '@mui/material';
 

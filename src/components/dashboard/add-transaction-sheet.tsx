@@ -134,22 +134,22 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
     const { amount, date, category, walletId, toWalletId, type } = formState;
 
     if (!finalItem || !amount || !date) {
-        toast({ variant: "destructive", title: "Campos obrigatórios", description: "Por favor, preencha Item, Valor e Data."});
+        toast({ variant: "error", title: "Campos obrigatórios", description: "Por favor, preencha Item, Valor e Data."});
         return;
     }
     
     if (type === 'transfer') {
         if (!walletId || !toWalletId) {
-            toast({ variant: "destructive", title: "Campos obrigatórios", description: "Para transferências, as carteiras de origem e destino são obrigatórias."});
+            toast({ variant: "error", title: "Campos obrigatórios", description: "Para transferências, as carteiras de origem e destino são obrigatórias."});
             return;
         }
         if (walletId === toWalletId) {
-            toast({ variant: "destructive", title: "Seleção Inválida", description: "A carteira de origem não pode ser a mesma que a de destino."});
+            toast({ variant: "error", title: "Seleção Inválida", description: "A carteira de origem não pode ser a mesma que a de destino."});
             return;
         }
     } else {
         if (!walletId || !category) {
-             toast({ variant: "destructive", title: "Campos obrigatórios", description: "Por favor, preencha Categoria e Carteira."});
+             toast({ variant: "error", title: "Campos obrigatórios", description: "Por favor, preencha Categoria e Carteira."});
              return;
         }
     }
@@ -180,7 +180,7 @@ export function AddTransactionSheet({ children }: { children: React.ReactNode })
     } catch (error) {
         console.error(error);
         toast({
-            variant: "destructive",
+            variant: "error",
             title: "Erro",
             description: "Não foi possível adicionar a transação. Tente novamente.",
         });

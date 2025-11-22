@@ -144,7 +144,7 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Erro ao adicionar orçamento:', error);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Erro ao adicionar orçamento",
         description: "Tente novamente"
       });
@@ -189,7 +189,7 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Erro ao atualizar orçamento:', error);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Erro ao atualizar orçamento",
         description: "Tente novamente"
       });
@@ -227,7 +227,7 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
     } catch (error) {
       console.error('Erro ao excluir orçamento:', error);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Erro ao excluir orçamento",
         description: "Tente novamente"
       });

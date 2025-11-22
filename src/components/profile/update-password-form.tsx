@@ -7,7 +7,7 @@ import {zodResolver} from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {Button} from '@mui/material';
 import {TextField} from '@mui/material';
-import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from '@/components/ui/form';
+import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from '@/components/mui-wrappers/form';
 import {useAuth} from '@/hooks/use-auth';
 import {useToast} from '@/hooks/use-toast';
 import {Loader2} from 'lucide-react';
@@ -45,7 +45,7 @@ export function UpdatePasswordForm() {
       form.reset();
     } catch (error: any) {
        toast({
-        variant: 'destructive',
+        variant: "error",
         title: 'Erro ao alterar senha',
         description: 'Não foi possível alterar sua senha. Tente novamente.',
       });

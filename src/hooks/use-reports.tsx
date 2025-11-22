@@ -170,7 +170,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
         toast({
           title: "📡 Offline",
           description: "Relatórios só podem ser gerados quando você estiver online",
-          variant: "destructive"
+          variant: "error"
         });
         return null;
       }
@@ -228,7 +228,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
       toast({
         title: "Erro",
         description: "Falha ao gerar relatório mensal",
-        variant: "destructive",
+        variant: "error",
       });
       return null;
     }
@@ -252,7 +252,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
         toast({
           title: "📡 Offline",
           description: "Relatórios só podem ser gerados quando você estiver online",
-          variant: "destructive"
+          variant: "error"
         });
         return null;
       }
@@ -320,7 +320,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
       toast({
         title: "Erro",
         description: "Falha ao gerar relatório anual",
-        variant: "destructive",
+        variant: "error",
       });
       return null;
     }

@@ -1,23 +1,22 @@
 // src/app/(app)/wallets/page.tsx
 'use client';
 
-// TODO: Migrar este componente completamente para MUI
 import { Card, CardContent, CardHeader, Button, Typography, Skeleton } from "@mui/material";
 import { PlusCircle, MoreVertical, Trash2, Edit, Banknote, CreditCard, PiggyBank, Landmark, CircleDollarSign, TrendingUp, TrendingDown, DollarSign } from "lucide-react";
 import { useWallets } from "@/hooks/use-wallets";
-// import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/mui-wrappers/dropdown-menu";
 import { CreateWalletDialog } from "@/components/wallets/create-wallet-dialog";
-// import {
-//   AlertDialog,
-//   AlertDialogAction,
-//   AlertDialogCancel,
-//   AlertDialogContent,
-//   AlertDialogDescription,
-//   AlertDialogFooter,
-//   AlertDialogHeader,
-//   AlertDialogTitle,
-//   AlertDialogTrigger,
-// } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/mui-wrappers/alert-dialog";
 import { Wallet, WalletType } from "@/lib/types";
 
 const WalletIcon = ({ type, className }: { type: WalletType, className?: string }) => {

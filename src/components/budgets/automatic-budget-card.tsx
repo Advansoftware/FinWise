@@ -38,7 +38,7 @@ export function AutomaticBudgetCard() {
   const handleGenerate = () => {
     if (!user || lastMonthTransactions.length === 0) {
         toast({
-            variant: "destructive",
+            variant: "error",
             title: "Dados insuficientes",
             description: "Não há transações de despesa no mês passado para gerar orçamentos."
         })
@@ -64,7 +64,7 @@ export function AutomaticBudgetCard() {
       } catch (error) {
         console.error("Error generating automatic budgets", error);
         toast({
-            variant: "destructive",
+            variant: "error",
             title: "Erro na Geração Automática",
             description: "Não foi possível gerar as sugestões. Verifique suas configurações de IA.",
         })

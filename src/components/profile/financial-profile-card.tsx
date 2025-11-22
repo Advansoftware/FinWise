@@ -4,7 +4,7 @@
 import { useState, useEffect, useTransition, useCallback, useMemo } from "react";
 import { Card, CardContent, CardHeader, Button, Divider, Typography, Chip, LinearProgress, Box, Stack } from '@mui/material';
 import { RefreshCw, Sparkles, Trophy, Award, Target, Zap } from "lucide-react";
-import { Skeleton } from "../ui/skeleton";
+import { Skeleton } from "@/components/mui-wrappers/skeleton";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useReports } from "@/hooks/use-reports";
 import { useGamification } from "@/hooks/use-gamification";

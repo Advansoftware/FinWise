@@ -67,7 +67,7 @@ export default function CategoriesPage() {
             } catch (error) {
                 console.error("Error fetching AI suggestion:", error);
                 toast({
-                    variant: "destructive",
+                    variant: "error",
                     title: "Erro na Sugestão",
                     description: "Não foi possível obter a sugestão da IA. Verifique suas configurações.",
                 });

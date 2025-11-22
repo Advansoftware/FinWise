@@ -12,9 +12,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { Chip } from "@mui/material";
-import {Skeleton} from '@/components/ui/skeleton';
+import {Skeleton} from '@/components/mui-wrappers/skeleton';
 import {AuthGuard} from '@/components/auth/auth-guard';
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/ui/table';
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from '@/components/mui-wrappers/table';
 import {Card, CardContent, CardHeader, Typography} from '@mui/material';
 import {cn} from '@/lib/utils';
 import {structuredData, organizationData, websiteData, breadcrumbData, faqData} from '@/lib/structured-data';
@@ -317,7 +317,7 @@ export default function Page() {
                                   "Importação de extratos",
                               ],
                               cta: "Fazer Upgrade",
-                              variant: "default",
+                              variant: "info",
                               highlight: true
                           },
                           {

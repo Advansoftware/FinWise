@@ -73,7 +73,7 @@ export default function ImportPage() {
         const isOfx = ['application/ofx', 'text/ofx', 'application/x-ofx'].includes(selectedFile.type) || selectedFile.name.endsWith('.ofx')  || selectedFile.name.endsWith('.OFX');
 
         if (!isCsv && !isOfx) {
-            toast({ variant: 'destructive', title: 'Arquivo Inválido', description: 'Por favor, selecione um arquivo .csv ou .ofx' });
+            toast({ variant: "error", title: 'Arquivo Inválido', description: 'Por favor, selecione um arquivo .csv ou .ofx' });
             return;
         }
 
@@ -114,7 +114,7 @@ export default function ImportPage() {
             skipEmptyLines: true,
             complete: (result) => {
                 if(result.errors.length > 0) {
-                     toast({ variant: 'destructive', title: 'Erro ao ler CSV', description: 'O arquivo parece estar mal formatado.' });
+                     toast({ variant: "error", title: 'Erro ao ler CSV', description: 'O arquivo parece estar mal formatado.' });
                      handleReset();
                      return;
                 }
@@ -154,7 +154,7 @@ export default function ImportPage() {
             runCategorization(transactions);
         } catch (error) {
             console.error("OFX Parsing error:", error);
-            toast({ variant: 'destructive', title: 'Erro ao Ler OFX', description: `O arquivo parece estar mal formatado ou não é suportado. Detalhes: ${error}`});
+            toast({ variant: "error", title: 'Erro ao Ler OFX', description: `O arquivo parece estar mal formatado ou não é suportado. Detalhes: ${error}`});
             handleReset();
         } finally {
             setIsParsing(false);
@@ -203,7 +203,7 @@ export default function ImportPage() {
     
     const runCategorization = async (transactions: ParsedTransaction[]) => {
         if (!user) {
-             toast({ variant: 'destructive', title: 'Usuário não autenticado.' });
+             toast({ variant: "error", title: 'Usuário não autenticado.' });
              return;
         }
 
@@ -236,7 +236,7 @@ export default function ImportPage() {
             setTransactionsToImport(categorizedTransactions);
         } catch (error) {
             console.error("AI categorization error:", error);
-            toast({ variant: "destructive", title: "Erro na categorização por IA", description: "As transações serão carregadas com a categoria padrão 'Outros'."});
+            toast({ variant: "error", title: "Erro na categorização por IA", description: "As transações serão carregadas com a categoria padrão 'Outros'."});
             setTransactionsToImport(transactions);
         } finally {
             setIsCategorizing(false);
@@ -249,7 +249,7 @@ export default function ImportPage() {
         try {
             for (const transaction of transactionsToImport) {
                 if (!transaction.walletId) {
-                    toast({ variant: 'destructive', title: 'Carteira não selecionada', description: `Selecione uma carteira para a transação "${transaction.item}".` });
+                    toast({ variant: "error", title: 'Carteira não selecionada', description: `Selecione uma carteira para a transação "${transaction.item}".` });
                     setStage('confirm');
                     return;
                 }
@@ -258,7 +258,7 @@ export default function ImportPage() {
             toast({ title: 'Sucesso!', description: `${transactionsToImport.length} transações importadas.` });
             handleReset();
         } catch (error) {
-            toast({ variant: 'destructive', title: 'Erro na Importação', description: `Não foi possível importar as transações. Verifique os dados. Erro: ${error}` });
+            toast({ variant: "error", title: 'Erro na Importação', description: `Não foi possível importar as transações. Verifique os dados. Erro: ${error}` });
             setStage('confirm');
         }
     };

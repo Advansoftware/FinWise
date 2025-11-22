@@ -5,7 +5,7 @@ import {useState, useRef, useEffect, useTransition} from 'react';
 import {Button, Typography, CardActions} from '@mui/material';
 import {Card, CardContent, CardHeader} from '@mui/material';
 import {TextField} from '@mui/material';
-import {ScrollArea} from '@/components/ui/scroll-area';
+import {ScrollArea} from '@/components/mui-wrappers/scroll-area';
 import {Bot, Send, Sparkles, X, Loader2} from 'lucide-react';
 import {AnimatePresence, motion} from 'framer-motion';
 import { useTransactions } from "@/hooks/use-transactions";
@@ -116,13 +116,13 @@ export function ChatAssistant() {
                     toast({
                         title: "Créditos Insuficientes",
                         description: errorMessage,
-                        variant: "destructive"
+                        variant: "error"
                     });
                 } else {
                     toast({
                         title: "Erro no Chat",
                         description: errorMessage,
-                        variant: "destructive"
+                        variant: "error"
                     });
                 }
                 

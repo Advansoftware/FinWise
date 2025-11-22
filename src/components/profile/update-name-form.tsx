@@ -7,7 +7,7 @@ import {zodResolver} from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import {Button} from '@mui/material';
 import {TextField} from '@mui/material';
-import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from '@/components/ui/form';
+import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from '@/components/mui-wrappers/form';
 import {useAuth} from '@/hooks/use-auth';
 import {useToast} from '@/hooks/use-toast';
 import {Loader2} from 'lucide-react';
@@ -38,7 +38,7 @@ export function UpdateNameForm() {
       });
     } catch (error) {
       toast({
-        variant: 'destructive',
+        variant: "error",
         title: 'Erro',
         description: 'Não foi possível atualizar seu nome.',
       });

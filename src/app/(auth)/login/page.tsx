@@ -7,7 +7,7 @@ import * as z from 'zod';
 import {Button, Typography} from '@mui/material';
 import {TextField} from '@mui/material';
 import {Card, CardContent, CardHeader} from '@mui/material';
-import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from '@/components/ui/form';
+import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from '@/components/mui-wrappers/form';
 import {useAuth} from '@/hooks/use-auth';
 import {useToast} from '@/hooks/use-toast';
 import {Loader2} from 'lucide-react';
@@ -46,7 +46,7 @@ export default function LoginPage() {
       router.push('/dashboard');
     } catch (error: any) {
       toast({
-        variant: 'destructive',
+        variant: "error",
         title: 'Erro de Login',
         description: error.message || 'Email ou senha inválidos.',
       });

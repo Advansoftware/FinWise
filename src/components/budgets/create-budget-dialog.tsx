@@ -87,7 +87,7 @@ export function CreateBudgetDialog({ children, initialData }: CreateBudgetDialog
 
       if (transactionsFromLastMonth.length === 0) {
         toast({
-          variant: "destructive",
+          variant: "error",
           title: "Sem dados para sugestão",
           description: `Não há gastos na categoria "${selectedCategory}" no mês passado para analisar.`,
         });
@@ -106,7 +106,7 @@ export function CreateBudgetDialog({ children, initialData }: CreateBudgetDialog
       } catch (error) {
         console.error("Error suggesting budget:", error);
         toast({
-          variant: "destructive",
+          variant: "error",
           title: "Erro na Sugestão",
           description: "Não foi possível obter a sugestão da IA. Verifique suas configurações.",
         });
@@ -134,7 +134,7 @@ export function CreateBudgetDialog({ children, initialData }: CreateBudgetDialog
       setIsOpen(false);
     } catch (error) {
       console.error("Failed to save budget:", error);
-      toast({ variant: "destructive", title: "Erro ao salvar orçamento." });
+      toast({ variant: "error", title: "Erro ao salvar orçamento." });
     } finally {
       setIsSubmitting(false);
     }

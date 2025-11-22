@@ -174,7 +174,7 @@ export function useReasoningChat() {
       toast({
         title: "Erro no Chat",
         description: errorMessage,
-        variant: "destructive"
+        variant: "error"
       });
       
       throw error;

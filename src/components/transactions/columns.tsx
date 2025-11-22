@@ -8,8 +8,8 @@ import {ptBR} from 'date-fns/locale';
 import {Chip, Typography, Button, Box, Stack} from '@mui/material';
 import {ArrowUpDown, MoreHorizontal, Pen, Trash2, ArrowUp, ArrowDown} from 'lucide-react';
 import {CategoryIcon} from '../icons';
-import {Checkbox} from '../ui/checkbox';
-import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger} from '../ui/dropdown-menu';
+import {Checkbox} from '@mui/material';
+import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger} from '@/components/mui-wrappers/dropdown-menu';
 import {useTransactions} from '@/hooks/use-transactions';
 import {useToast} from '@/hooks/use-toast';
 import {useState} from 'react';
@@ -23,7 +23,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@/components/ui/alert-dialog"
+} from "@/components/mui-wrappers/alert-dialog"
 import {useWallets} from '@/hooks/use-wallets';
 
 const ActionsCell = ({ row }: { row: any }) => {
@@ -38,7 +38,7 @@ const ActionsCell = ({ row }: { row: any }) => {
             await deleteTransaction(transaction);
             toast({ title: "Transação excluída com sucesso." });
         } catch (error) {
-            toast({ variant: "destructive", title: "Erro ao excluir transação." });
+            toast({ variant: "error", title: "Erro ao excluir transação." });
         }
     };
     

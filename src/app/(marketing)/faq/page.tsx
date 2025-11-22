@@ -3,7 +3,7 @@ import Link from 'next/link';
 import {ArrowLeft, HelpCircle, MessageCircle, Mail} from 'lucide-react';
 import {Button, Typography} from '@mui/material';
 import {Card, CardContent, CardHeader} from '@mui/material';
-import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from '@/components/ui/accordion';
+import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from '@/components/mui-wrappers/accordion';
 import {Chip} from '@mui/material';
 import {Divider} from '@mui/material';
 import {faqData} from '@/lib/structured-data';

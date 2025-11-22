@@ -33,7 +33,7 @@ export function usePayment() {
     } catch (error: any) {
       console.error('Checkout error:', error);
       toast({
-        variant: 'destructive',
+        variant: "error",
         title: 'Erro no Checkout',
         description: error.message || 'Não foi possível redirecionar para a página de pagamento. Tente novamente mais tarde.'
       });
@@ -62,7 +62,7 @@ export function usePayment() {
     } catch (error: any) {
       console.error('Portal error:', error);
       toast({
-        variant: 'destructive',
+        variant: "error",
         title: 'Erro',
         description: error.message || 'Não foi possível abrir o portal de gerenciamento. Tente novamente mais tarde.'
       });

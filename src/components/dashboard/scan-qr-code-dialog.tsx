@@ -26,7 +26,7 @@ import {useRef, useState, useEffect, useCallback, useTransition} from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { extractReceiptInfoAction } from "@/services/ai-actions";
-import { Skeleton } from "../ui/skeleton";
+import { Skeleton } from "@/components/mui-wrappers/skeleton";
 import {Chip, Typography} from '@mui/material';
 import {TextField} from '@mui/material';
 import {InputLabel} from '@mui/material';
@@ -38,7 +38,7 @@ import { usePlan } from "@/hooks/use-plan";
 import { useAISettings } from "@/hooks/use-ai-settings";
 import { getVisionCapableModels, DEFAULT_AI_CREDENTIAL } from "@/lib/ai-settings";
 import {Select, SelectContent, MenuItem, SelectTrigger, SelectValue} from '@mui/material';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
+import { Tooltip } from "@mui/material";
 import { cn } from "@/lib/utils";
 import {Box, Stack, Typography, useTheme, alpha} from '@mui/material';
 
@@ -121,7 +121,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
             console.error('Error accessing camera:', error);
             setHasCameraPermission(false);
             toast({
-                variant: 'destructive',
+                variant: "error",
                 title: 'Erro de Câmera',
                 description: 'Não foi possível acessar a câmera. Verifique as permissões.',
             });
@@ -216,7 +216,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
 
     const processImage = async (imageData: string) => {
         if (!user) {
-            toast({ variant: 'destructive', title: 'Erro de Autenticação', description: 'Você precisa estar logado.'});
+            toast({ variant: "error", title: 'Erro de Autenticação', description: 'Você precisa estar logado.'});
             return;
         }
         setExtractedData(null);
@@ -226,7 +226,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                 setExtractedData(result);
                 if (!result.isValid) {
                      toast({
-                        variant: 'destructive',
+                        variant: "error",
                         title: 'Nota Inválida',
                         description: 'A imagem não parece ser uma nota fiscal válida. Tente outra imagem.',
                     });
@@ -234,7 +234,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
             } catch (error: any) {
                 console.error(error);
                 toast({
-                    variant: 'destructive',
+                    variant: "error",
                     title: 'Erro ao Processar',
                     description: error.message || 'Não foi possível extrair as informações da imagem. Verifique suas configurações de IA.',
                 });
@@ -310,7 +310,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
             } catch (error) {
                  console.error(error);
                  toast({
-                    variant: 'destructive',
+                    variant: "error",
                     title: 'Erro ao Salvar',
                     description: 'Não foi possível salvar as transações. Verifique se você tem uma carteira criada.',
                 });

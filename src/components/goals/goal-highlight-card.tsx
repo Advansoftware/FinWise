@@ -3,7 +3,7 @@
 
 import { useGoals } from "@/hooks/use-goals";
 import { Card, CardHeader, CardContent, Typography, CardActions, Button, LinearProgress, Box, Stack } from '@mui/material';
-import { Skeleton } from "../ui/skeleton";
+import { Skeleton } from "@/components/mui-wrappers/skeleton";
 import { Target, PiggyBank, Sparkles, RefreshCw } from "lucide-react";
 import Link from "next/link";
 import { AddDepositDialog } from "./add-deposit-dialog";

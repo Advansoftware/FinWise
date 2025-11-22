@@ -2,9 +2,8 @@
 
 import Link from 'next/link';
 import {usePathname} from 'next/navigation';
-import {SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar} from '@/components/ui/sidebar';
+import {SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar} from '@/components/mui-wrappers/sidebar';
 import {Home, History, Settings, FolderKanban, Upload, Gem, UserCircle, Target, Goal, Wallet, FileText, CreditCard, Calculator} from 'lucide-react';
-import {cn} from '@/lib/utils';
 import {useIsMobile} from '@/hooks/use-mobile';
 
 const navItems = [
@@ -41,18 +40,12 @@ export function AppNav() {
                 const isActive = pathname === item.href;
                 return (
                     <SidebarMenuItem key={item.href}>
-                        <Link 
-                            href={item.href} 
-                            onClick={handleNavClick}
-                            className={cn(
-                                "flex items-center w-full px-3 py-2 text-sm rounded-md transition-colors hover:bg-accent hover:text-accent-foreground",
-                                isActive ? "bg-accent text-accent-foreground" : "text-muted-foreground",
-                                "group-data-[state=collapsed]:justify-center group-data-[state=collapsed]:px-2"
-                            )}
-                        >
-                            <item.icon className="h-4 w-4 shrink-0" />
-                            <span className="flex-1 ml-2 truncate group-data-[state=collapsed]:hidden">{item.label}</span>
-                        </Link>
+                        <SidebarMenuButton isActive={isActive} onClick={handleNavClick}>
+                            <Link href={item.href} style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '0.5rem' }}>
+                                <item.icon style={{ width: '1rem', height: '1rem' }} />
+                                {state === 'expanded' && <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.label}</span>}
+                            </Link>
+                        </SidebarMenuButton>
                     </SidebarMenuItem>
                 );
             })}
