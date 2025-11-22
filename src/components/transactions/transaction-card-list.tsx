@@ -98,7 +98,7 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
             </Stack>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="text" size="icon" sx={{ height: '2rem', width: '2rem', flexShrink: 0 }}>
+                <Button variant="text" size="small" sx={{ height: '2rem', width: '2rem', minWidth: '2rem', flexShrink: 0, p: 0 }}>
                   <MoreVertical style={{ width: '1rem', height: '1rem' }} />
                 </Button>
               </DropdownMenuTrigger>
@@ -127,9 +127,9 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
               </Typography>
             </Box>
             <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-end', sm: 'center' }} spacing={{ xs: 1, sm: 2 }}>
-                <Chip variant="outlined" sx={{ fontSize: '0.75rem' }}>{transaction.category}</Chip>
+                <Chip variant="outlined" label={transaction.category} sx={{ fontSize: '0.75rem' }} />
                 {transaction.subcategory && (
-                  <Chip variant="contained" color="secondary" sx={{ fontSize: '0.75rem' }}>{transaction.subcategory}</Chip>
+                  <Chip variant="filled" color="secondary" label={transaction.subcategory} sx={{ fontSize: '0.75rem' }} />
                 )}
             </Stack>
           </Stack>

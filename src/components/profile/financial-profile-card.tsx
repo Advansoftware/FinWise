@@ -79,18 +79,18 @@ export function FinancialProfileCard() {
             </Box>
             <Button
                 variant="text"
-                size="icon"
-                onClick={() => fetchProfile(true)}
-                disabled={isPending || allTransactions.length === 0 || !user}
+                size="small"
                 sx={{
+                  minWidth: '2rem', 
+                  width: '2rem', 
+                  height: '2rem', 
+                  p: 0,
                   color: theme => `${theme.palette.primary.main}b3`,
                   '&:hover': {
                     bgcolor: theme => `${theme.palette.primary.main}1a`,
                     color: 'primary.main'
                   },
                   borderRadius: '9999px',
-                  height: '2rem',
-                  width: '2rem'
                 }}
             >
                 <RefreshCw style={{ width: '1rem', height: '1rem' }} className={isPending ? "animate-spin" : ""} />
@@ -128,15 +128,11 @@ export function FinancialProfileCard() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="p-3 bg-muted/50 rounded-lg">
                       <div className="text-xs text-muted-foreground">Disciplina</div>
-                      <Chip variant="outlined" className="mt-1">
-                        {profile.gamificationInfluence.disciplineLevel}
-                      </Chip>
+                      <Chip variant="outlined" className="mt-1" label={profile.gamificationInfluence.disciplineLevel} />
                     </div>
                     <div className="p-3 bg-muted/50 rounded-lg">
                       <div className="text-xs text-muted-foreground">Consistência</div>
-                      <Chip variant="outlined" className="mt-1">
-                        {profile.gamificationInfluence.paymentConsistency}
-                      </Chip>
+                      <Chip variant="outlined" className="mt-1" label={profile.gamificationInfluence.paymentConsistency} />
                     </div>
                   </div>
 

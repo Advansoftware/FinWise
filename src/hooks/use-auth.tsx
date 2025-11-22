@@ -33,6 +33,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     aiCredits: (session.user as any).aiCredits || 0,
     stripeCustomerId: (session.user as any).stripeCustomerId,
     createdAt: new Date().toISOString(), // Será carregado do banco posteriormente se necessário
+    image: session.user.image,
   } : null;
 
   const refreshUser = useCallback(async () => {
@@ -70,6 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           aiCredits: (session.user as any).aiCredits || 0,
           stripeCustomerId: (session.user as any).stripeCustomerId,
           createdAt: new Date().toISOString(),
+          image: session.user.image,
         } : null)) : null;
         if (usuarioAtualizado && usuarioAtualizado.email === email) {
           break;

@@ -40,21 +40,12 @@ export function OnlineStatusIndicator() {
   return (
     <Box sx={{ position: 'fixed', top: 16, right: 16, zIndex: 50 }}>
       <Chip 
-        variant={isOnline ? "default" : "destructive"}
-        sx={{ display: 'flex', alignItems: 'center', gap: 2, px: 3, py: 1 }}
-      >
-        {isOnline ? (
-          <>
-            <Wifi style={{ width: '0.75rem', height: '0.75rem' }} />
-            Online
-          </>
-        ) : (
-          <>
-            <WifiOff style={{ width: '0.75rem', height: '0.75rem' }} />
-            Offline
-          </>
-        )}
-      </Chip>
+        variant="filled"
+        color={isOnline ? "success" : "error"}
+        icon={isOnline ? <Wifi style={{ width: '0.75rem', height: '0.75rem' }} /> : <WifiOff style={{ width: '0.75rem', height: '0.75rem' }} />}
+        label={isOnline ? "Online" : "Offline"}
+        sx={{ px: 1 }}
+      />
       
       {!isOnline && (
         <Typography variant="body2" sx={{ mt: 2, fontSize: '0.875rem', color: 'text.secondary' }}>

@@ -14,10 +14,16 @@ const AlertDialogContext = createContext<AlertDialogContextType | null>(null);
 
 interface AlertDialogProps {
   children: ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function AlertDialog({ children }: AlertDialogProps) {
-  const [open, setOpen] = useState(false);
+export function AlertDialog({ children, open: controlledOpen, onOpenChange }: AlertDialogProps) {
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+  
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : uncontrolledOpen;
+  const setOpen = isControlled ? (onOpenChange || (() => {})) : setUncontrolledOpen;
 
   return (
     <AlertDialogContext.Provider value={{ open, setOpen }}>
@@ -96,13 +102,12 @@ export function AlertDialogFooter({ children }: AlertDialogFooterProps) {
   return <DialogActions>{children}</DialogActions>;
 }
 
-interface AlertDialogActionProps {
+interface AlertDialogActionProps extends React.ComponentProps<typeof Button> {
   children: ReactNode;
   onClick?: () => void;
-  color?: 'inherit' | 'primary' | 'secondary' | 'success' | 'error' | 'info' | 'warning';
 }
 
-export function AlertDialogAction({ children, onClick, color }: AlertDialogActionProps) {
+export function AlertDialogAction({ children, onClick, ...props }: AlertDialogActionProps) {
   const context = useContext(AlertDialogContext);
   
   const handleClick = () => {
@@ -110,15 +115,20 @@ export function AlertDialogAction({ children, onClick, color }: AlertDialogActio
     context?.setOpen(false);
   };
 
-  return <Button onClick={handleClick} variant="contained" color={color || 'primary'}>{children}</Button>;
+  return <Button variant="contained" onClick={handleClick} {...props}>{children}</Button>;
 }
 
-interface AlertDialogCancelProps {
+interface AlertDialogCancelProps extends React.ComponentProps<typeof Button> {
   children: ReactNode;
 }
 
-export function AlertDialogCancel({ children }: AlertDialogCancelProps) {
+export function AlertDialogCancel({ children, onClick, ...props }: AlertDialogCancelProps) {
   const context = useContext(AlertDialogContext);
 
-  return <Button onClick={() => context?.setOpen(false)} variant="outlined">{children}</Button>;
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+      if (onClick) onClick(e);
+      context?.setOpen(false);
+  }
+
+  return <Button variant="outlined" onClick={handleClick} {...props}>{children}</Button>;
 }

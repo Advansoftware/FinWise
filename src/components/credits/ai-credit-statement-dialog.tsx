@@ -2,14 +2,14 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@mui/material"
+import { Dialog, DialogContent, DialogTitle } from "@mui/material"
 import { Chip } from "@mui/material"
 import { Card, CardContent, CardHeader } from "@mui/material"
 import { AlertTriangle, BarChart3, Bot, Image, MessageCircle, Settings } from "lucide-react"
 import { useCreditTransparency } from "@/hooks/use-credit-transparency"
 import { Button } from "@mui/material"
 import { Divider } from "@mui/material"
-import { Alert, AlertDescription } from "@mui/material"
+import { Alert } from "@mui/material"
 import { Box, Stack, Typography} from '@mui/material'
 
 interface CreditStatementDialogProps {
@@ -103,14 +103,12 @@ export function CreditStatementDialog({ open, onOpenChange }: CreditStatementDia
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onClose={() => onOpenChange(false)}>
       <DialogContent sx={{ maxWidth: '42rem', maxHeight: '90vh', overflowY: 'auto' }}>
-        <DialogHeader>
-          <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 0, mb: 4 }}>
             <BarChart3 style={{ width: '1.25rem', height: '1.25rem' }} />
             Extrato de Créditos IA
           </DialogTitle>
-        </DialogHeader>
 
         <Stack spacing={6}>
           {/* Resumo Geral */}
@@ -124,11 +122,11 @@ export function CreditStatementDialog({ open, onOpenChange }: CreditStatementDia
                   {formatBalance(currentCredits)}
                 </Typography>
                 <Chip 
-                  variant={currentCredits > 10 ? "secondary" : "destructive"}
+                  variant="filled"
+                  color={currentCredits > 10 ? "secondary" : "error"}
+                  label={plan}
                   sx={{ mt: 1 }}
-                >
-                  {plan}
-                </Chip>
+                />
               </CardContent>
             </Card>
 
@@ -162,12 +160,11 @@ export function CreditStatementDialog({ open, onOpenChange }: CreditStatementDia
           </Box>
 
           {/* Aviso sobre Transparência */}
-          <Alert>
-            <AlertTriangle style={{ width: '1rem', height: '1rem' }} />
-            <AlertDescription>
-              <strong>Transparência Total:</strong> Mostramos exatamente quantos créditos cada ação consome. 
-              Conversas simples custam 1 crédito, análises complexas custam 5 créditos.
-            </AlertDescription>
+          <Alert icon={<AlertTriangle style={{ width: '1rem', height: '1rem' }} />}>
+              <Typography variant="body2">
+                <strong>Transparência Total:</strong> Mostramos exatamente quantos créditos cada ação consome. 
+                Conversas simples custam 1 crédito, análises complexas custam 5 créditos.
+              </Typography>
           </Alert>
 
           {/* Detalhamento por Categoria */}
@@ -202,9 +199,7 @@ export function CreditStatementDialog({ open, onOpenChange }: CreditStatementDia
                         </Typography>
                       </Stack>
                       <Box sx={{ textAlign: 'right' }}>
-                        <Chip variant="outlined">
-                          {usage.used > 0 ? Math.round(usage.spent / usage.used) : 0} créditos/ação
-                        </Chip>
+                        <Chip variant="outlined" label={`${usage.used > 0 ? Math.round(usage.spent / usage.used) : 0} créditos/ação`} />
                       </Box>
                     </Stack>
                   </CardContent>
@@ -222,11 +217,10 @@ export function CreditStatementDialog({ open, onOpenChange }: CreditStatementDia
                 Opções Gratuitas Disponíveis
               </Typography>
               
-              <Alert>
-                <Bot style={{ width: '1rem', height: '1rem' }} />
-                <AlertDescription>
-                  <strong>Economia de Créditos:</strong> {alternativeSuggestion}
-                </AlertDescription>
+              <Alert icon={<Bot style={{ width: '1rem', height: '1rem' }} />}>
+                  <Typography variant="body2">
+                    <strong>Economia de Créditos:</strong> {alternativeSuggestion}
+                  </Typography>
               </Alert>
             </Stack>
           )}

@@ -95,11 +95,13 @@ export function DateRangePicker({ className, initialDate, onUpdate }: DateRangeP
                 color: theme.palette.text.primary,
                 borderRadius: theme.shape.borderRadius,
               },
-              day_selected: {
+            }}
+            modifiersStyles={{
+              selected: {
                 backgroundColor: theme.palette.primary.main,
                 color: theme.palette.primary.contrastText,
               },
-              day_today: {
+              today: {
                 fontWeight: 'bold',
                 color: theme.palette.primary.main,
               },

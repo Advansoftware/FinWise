@@ -107,9 +107,9 @@ export function ChatAssistant() {
                 
                 const newModelMessage: Message = { role: 'model', content: response };
                 setMessages(prev => [...prev, newModelMessage]);
-            } catch (error) {
-                console.error('Error getting chatbot response:', error);
-                const errorMessage = error instanceof Error ? error.message : "Ocorreu um erro ao processar sua pergunta.";
+            } catch (e: any) {
+                console.error(e);
+                const errorMessage = e instanceof Error ? e.message : "Ocorreu um erro ao processar sua pergunta.";
                 
                 // Se for erro de créditos, mostrar mensagem amigável
                 if (errorMessage.includes("créditos") || errorMessage.includes("Você precisa de")) {
@@ -160,9 +160,15 @@ export function ChatAssistant() {
                     <p className="text-muted-foreground mb-4">Faça uma pergunta sobre suas finanças ou escolha uma sugestão.</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {suggestionPrompts.map(prompt => (
-                            <Button key={prompt} variant="outlined" size="small" className="h-auto py-2" onClick={() => handleSuggestionClick(prompt)}>
-                                <span className="text-wrap">{prompt}</span>
-                            </Button>
+                            <Chip 
+                                key={prompt} 
+                                label={prompt} 
+                                onClick={() => handleSuggestionClick(prompt)} 
+                                clickable 
+                                color="primary" 
+                                variant="outlined" 
+                                sx={{ mr: 1, mb: 1 }} 
+                            />
                         ))}
                     </div>
                 </div>
@@ -231,7 +237,7 @@ export function ChatAssistant() {
                             <p className="text-xs text-muted-foreground">Pergunte sobre suas finanças</p>
                         </div>
                     </div>
-                    <Button variant="text" size="icon" onClick={() => setIsOpen(false)}>
+                    <Button variant="text" size="small" sx={{ minWidth: '2rem', width: '2rem', height: '2rem', p: 0 }} onClick={() => setIsOpen(false)}>
                         <X className="h-6 w-6" />
                     </Button>
                 </div>
@@ -246,17 +252,20 @@ export function ChatAssistant() {
                 {/* Mobile Input */}
                 <div className="p-4 border-t bg-card/50 backdrop-blur-xl">
                     <div className="flex gap-2 items-center">
-                        <Input
+                        <TextField
                             placeholder={isPro ? "Digite sua pergunta..." : "Faça upgrade para usar o chat"}
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
                             disabled={isPending || !isPro}
-                            className="flex-1"
+                            fullWidth
+                            size="small"
+                            sx={{ flex: 1 }}
                         />
                         <Button
-                            size="icon"
-                            className="h-10 w-10 flex-shrink-0"
+                            variant="contained"
+                            size="small"
+                            sx={{ minWidth: '2.5rem', width: '2.5rem', height: '2.5rem', p: 0 }}
                             onClick={() => handleSubmit()}
                             disabled={!input.trim() || isPending || !isPro}
                         >
@@ -284,9 +293,9 @@ export function ChatAssistant() {
                                 <div className="flex items-center gap-2">
                                     <Bot className="text-primary" />
                                     <Typography variant="h6" className="text-lg">Assistente Gastometria</Typography>
-                                    {messages.length > 0 && <Chip variant="contained" color="secondary">{messages.length}</Chip>}
+                                    {messages.length > 0 && <Chip variant="filled" color="secondary" label={messages.length} size="small" />}
                                 </div>
-                                <Button variant="text" size="icon" className="h-8 w-8" onClick={() => setIsOpen(false)}>
+                                <Button variant="text" size="small" sx={{ minWidth: '2rem', width: '2rem', height: '2rem', p: 0 }} onClick={() => setIsOpen(false)}>
                                     <X className="h-4 w-4" />
                                 </Button>
                             </CardHeader>
@@ -297,17 +306,20 @@ export function ChatAssistant() {
                             </CardContent>
                             <CardActions className="p-4 border-t">
                                 <div className="flex gap-2 items-center w-full">
-                                    <Input
+                                    <TextField
                                         placeholder={isPro ? "Pergunte algo sobre seus gastos..." : "Faça upgrade para usar o chat"}
                                         value={input}
                                         onChange={(e) => setInput(e.target.value)}
                                         onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
                                         disabled={isPending || !isPro}
-                                        className="flex-1"
+                                        fullWidth
+                                        size="small"
+                                        sx={{ flex: 1 }}
                                     />
                                     <Button
-                                        size="icon"
-                                        className="h-10 w-10 flex-shrink-0"
+                                        variant="contained"
+                                        size="small"
+                                        sx={{ minWidth: '2.5rem', width: '2.5rem', height: '2.5rem', p: 0 }}
                                         onClick={() => handleSubmit()}
                                         disabled={!input.trim() || isPending || !isPro}
                                     >
@@ -321,8 +333,16 @@ export function ChatAssistant() {
             </AnimatePresence>
 
             <Button
-                size="icon"
-                className="rounded-full shadow-lg w-14 h-14 md:w-16 md:h-16"
+                variant="contained"
+                size="large"
+                sx={{ 
+                    borderRadius: '50%', 
+                    width: { xs: 56, md: 64 }, 
+                    height: { xs: 56, md: 64 },
+                    minWidth: 0,
+                    p: 0,
+                    boxShadow: 6
+                }}
                 onClick={() => setIsOpen(prev => !prev)}
             >
                 {isOpen ? <X className="h-6 w-6" /> : <Sparkles className="h-6 w-6" />}

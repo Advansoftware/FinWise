@@ -1,8 +1,8 @@
 // src/theme/mui-theme.ts
 'use client';
 
-import {createTheme, ThemeOptions, alpha} from '@mui/material/styles';
-import {colorsDark, colorsLight, typography as typographyTokens, radius, shadows as shadowTokens, breakpoints as breakpointsTokens, zIndex as zIndexTokens, transitions as transitionTokens} from './tokens';
+import { createTheme, ThemeOptions, alpha } from '@mui/material/styles';
+import { colorsDark, colorsLight, typography as typographyTokens, radius, shadows as shadowTokens, breakpoints as breakpointsTokens, zIndex as zIndexTokens, transitions as transitionTokens } from './tokens';
 
 // Detectar modo escuro (pode ser refinado com context posteriormente)
 const getMode = (): 'light' | 'dark' => {
@@ -348,6 +348,37 @@ const getThemeOptions = (mode: 'light' | 'dark'): ThemeOptions => ({
       styleOverrides: {
         root: {
           boxShadow: shadowTokens.sm,
+        },
+      },
+    },
+
+    MuiSnackbar: {
+      styleOverrides: {
+        root: {
+          '& .MuiSnackbarContent-root': {
+            borderRadius: radius.md,
+            boxShadow: shadowTokens.lg,
+          },
+        },
+      },
+    },
+
+    MuiSnackbarContent: {
+      styleOverrides: {
+        root: {
+          backgroundColor: mode === 'dark' ? colorsDark.card : colorsLight.card,
+          color: mode === 'dark' ? colorsDark.cardForeground : colorsLight.cardForeground,
+          borderRadius: radius.md,
+          boxShadow: shadowTokens.lg,
+          padding: '12px 16px',
+        },
+        message: {
+          padding: 0,
+          fontSize: typographyTokens.fontSize.sm,
+        },
+        action: {
+          paddingLeft: '16px',
+          marginRight: 0,
         },
       },
     },

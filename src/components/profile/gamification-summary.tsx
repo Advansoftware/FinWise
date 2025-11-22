@@ -89,14 +89,17 @@ export function GamificationSummary() {
             <Typography component="span" variant="body2" sx={{ fontSize: '0.75rem' }}>Próximo nível</Typography>
             <Typography component="span" variant="body2" sx={{ fontSize: '0.75rem' }}>{gamificationData.level.pointsToNext} pontos</Typography>
           </Stack>
-          <Progress
+          <LinearProgress
+            variant="determinate"
             value={(gamificationData.points / (gamificationData.level.pointsRequired + gamificationData.level.pointsToNext)) * 100}
             sx={{
               height: '0.5rem',
-              bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(55, 48, 163, 0.15)' : 'rgba(243, 232, 255, 0.8)'
-            }}
-            indicatorSx={{
-              background: 'linear-gradient(90deg, #8b5cf6 0%, #3b82f6 100%)'
+              borderRadius: '9999px',
+              bgcolor: theme => theme.palette.mode === 'dark' ? 'rgba(55, 48, 163, 0.15)' : 'rgba(243, 232, 255, 0.8)',
+              '& .MuiLinearProgress-bar': {
+                background: 'linear-gradient(90deg, #8b5cf6 0%, #3b82f6 100%)',
+                borderRadius: '9999px',
+              }
             }}
           />
         </Stack>

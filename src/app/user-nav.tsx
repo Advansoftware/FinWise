@@ -4,7 +4,7 @@
 
 import {DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuGroup} from '@/components/mui-wrappers/dropdown-menu';
 import {Button} from '@mui/material';
-import {Avatar, AvatarFallback, AvatarImage} from '@mui/material';
+import {Avatar} from '@mui/material';
 import {Settings, Gem, UserCircle, LogOut, Trophy, Sparkles, ExternalLink} from 'lucide-react';
 import Link from 'next/link';
 import {useAuth} from '@/hooks/use-auth';
@@ -40,13 +40,17 @@ export function UserNav() {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="text" className="relative h-9 w-9 rounded-full">
-          <Avatar className="h-9 w-9">
-            <AvatarFallback>{getInitials(user?.displayName)}</AvatarFallback>
+        <Button variant="text" className="relative h-9 w-9 rounded-full" sx={{ minWidth: 0, p: 0, borderRadius: '50%' }}>
+          <Avatar 
+            sx={{ width: 36, height: 36 }} 
+            src={user?.image || undefined} 
+            alt={user?.displayName || 'User'}
+          >
+            {getInitials(user?.displayName)}
           </Avatar>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="w-64" align="end" forceMount>
+      <DropdownMenuContent className="w-64" align="end">
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">

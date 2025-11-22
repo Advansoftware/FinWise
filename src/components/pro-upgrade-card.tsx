@@ -22,8 +22,8 @@ export function ProUpgradeCard({ featureName }: ProUpgradeCardProps) {
                 <Typography variant="body2" sx={{ fontSize: '0.875rem', maxWidth: '28rem', mx: 'auto', mt: 2 }}>
                    A funcionalidade de **{featureName}** está disponível apenas em nossos planos de assinatura. Faça o upgrade para desbloquear este e outros recursos inteligentes.
                 </Typography>
-                <Button sx={{ mt: 6 }} asChild>
-                    <Link href="/billing">Ver Planos</Link>
+                <Button component={Link} href="/billing" sx={{ mt: 6 }} variant="contained">
+                    Ver Planos
                 </Button>
             </CardContent>
         </Card>

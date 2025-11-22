@@ -342,7 +342,8 @@ export function PayrollCard() {
                         />
                         <Button
                           variant="outlined"
-                          size="icon"
+                          size="small"
+                          sx={{ minWidth: '2rem', width: '2rem', height: '2rem', p: 0 }}
                           onClick={() => removeDiscount(discount.id)}
                           sx={{ height: 32, width: 32 }}
                         >
@@ -436,17 +437,19 @@ export function PayrollCard() {
                             ))}
                           </SelectContent>
                         </Select>
-                        <Input
+                        <TextField
                           type="number"
-                          step="0.01"
                           value={allowance.amount}
-                          onChange={(e) => updateDiscount(allowance.id, "amount", parseFloat(e.target.value) || 0)}
-                          placeholder="0,00"
+                          onChange={(e) => updateDiscount(allowance.id, 'amount', Number(e.target.value) || 0)}
+                          placeholder="Valor"
+                          size="small"
+                          fullWidth
                           sx={{ width: 96, height: 32, fontSize: '0.75rem' }}
                         />
                         <Button
                           variant="outlined"
-                          size="icon"
+                          size="small"
+                          sx={{ minWidth: '2rem', width: '2rem', height: '2rem', p: 0 }}
                           onClick={() => removeDiscount(allowance.id)}
                           sx={{ height: 32, width: 32 }}
                         >

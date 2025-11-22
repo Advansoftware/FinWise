@@ -12,9 +12,9 @@ import {
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { ReactNode } from 'react';
 
-interface AccordionItemProps extends AccordionProps {
+interface AccordionItemProps extends Omit<AccordionProps, 'children'> {
   value: string;
-  children: ReactNode;
+  children: NonNullable<ReactNode>;
 }
 
 export function Accordion({ children, ...props }: { children: ReactNode }) {

@@ -6,25 +6,15 @@ const cn = (...classes: (string | boolean | undefined | Record<string, boolean>)
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogTrigger,
-} from "@mui/material";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetFooter,
-  SheetTrigger,
+  DialogContentText,
+  DialogActions,
+  Drawer,
 } from "@mui/material";
 import { Button } from "@mui/material";
-import { Alert, AlertDescription, AlertTitle } from "@mui/material";
+import { Alert, AlertTitle } from "@mui/material";
 import { Loader2, Upload, Camera, Paperclip, Sparkles, BrainCircuit, Info, RotateCcw, FlashlightIcon as Flashlight, SwitchCamera } from "lucide-react";
-import {useRef, useState, useEffect, useCallback, useTransition} from 'react';
+import {useRef, useState, useEffect, useCallback, useTransition, cloneElement, isValidElement} from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { extractReceiptInfoAction } from "@/services/ai-actions";
@@ -39,9 +29,8 @@ import { useWallets } from "@/hooks/use-wallets";
 import { usePlan } from "@/hooks/use-plan";
 import { useAISettings } from "@/hooks/use-ai-settings";
 import { getVisionCapableModels, DEFAULT_AI_CREDENTIAL } from "@/lib/ai-settings";
-import {Select, SelectContent, MenuItem, SelectTrigger, SelectValue} from '@mui/material';
-import { Tooltip } from "@mui/material";
-import {Box, Stack, Typography, useTheme, alpha} from '@mui/material';
+import {Select, MenuItem} from '@mui/material';
+import {Box, Stack, useTheme, alpha} from '@mui/material';
 
 
 export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
@@ -325,9 +314,12 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
             <Stack spacing={4}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center">
                     <Typography variant="h6" fontWeight="semibold">Itens Extraídos</Typography>
-                     <Chip variant={extractedData.isValid ? 'default' : 'destructive'} className={extractedData.isValid ? "bg-green-500/20 text-green-300 border-green-500/30" : ""}>
-                        {extractedData.isValid ? 'Nota Válida' : 'Nota Inválida'}
-                    </Chip>
+                     <Chip 
+                        variant="filled" 
+                        color={extractedData.isValid ? 'success' : 'error'}
+                        label={extractedData.isValid ? 'Nota Válida' : 'Nota Inválida'}
+                        sx={{ bgcolor: extractedData.isValid ? 'rgba(16, 185, 129, 0.2)' : undefined, color: extractedData.isValid ? '#10b981' : undefined }}
+                    />
                 </Stack>
                 
                 {extractedData.items?.length > 0 ? (
@@ -339,14 +331,15 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                                     style={{ gridColumn: 'span 2' }}
                                     defaultValue={item.item} 
                                     placeholder="Item"
-                                    readOnly={!extractedData.isValid}
+                                    InputProps={{ readOnly: !extractedData.isValid }}
+                                    size="small"
                                 />
                                 <TextField 
                                     type="number" 
-                                    step="0.01" 
                                     defaultValue={item.amount} 
                                     placeholder="Valor"
-                                    readOnly={!extractedData.isValid}
+                                    InputProps={{ readOnly: !extractedData.isValid }}
+                                    size="small"
                                 />
                             </Box>
                         ))}
@@ -360,33 +353,34 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                 
                  <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 4, p: 3, borderRadius: 1, bgcolor: 'action.hover', border: 1, borderColor: 'divider' }}>
                      <Stack spacing={1}>
-                        <Label className="text-sm font-medium">Total</Label>
+                        <InputLabel className="text-sm font-medium">Total</InputLabel>
                         <TextField 
                             type="number" 
-                            step="0.01" 
                             defaultValue={extractedData.totalAmount || 0} 
                             placeholder="Total" 
-                            readOnly={!extractedData.isValid}
+                            InputProps={{ readOnly: !extractedData.isValid }}
+                            size="small"
                         />
                      </Stack>
                       <Stack spacing={1}>
-                        <Label className="text-sm font-medium">Data</Label>
+                        <InputLabel className="text-sm font-medium">Data</InputLabel>
                         <TextField 
                             type="date" 
                             defaultValue={extractedData.date} 
                             placeholder="Data" 
-                            readOnly={!extractedData.isValid}
+                            InputProps={{ readOnly: !extractedData.isValid }}
+                            size="small"
                         />
                      </Stack>
                 </Box>
                 
                 {!extractedData.isValid && (
-                    <Alert variant="contained" color="error">
+                    <Alert variant="filled" severity="error" sx={{ mb: 4 }}>
                         <AlertTitle>Nota Não Reconhecida</AlertTitle>
-                        <AlertDescription>
+                        <Typography variant="body2">
                             A IA não conseguiu identificar esta como uma nota fiscal válida. 
                             Certifique-se de que a imagem esteja nítida e bem iluminada.
-                        </AlertDescription>
+                        </Typography>
                     </Alert>
                 )}
             </Stack>
@@ -399,55 +393,49 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
             <Stack spacing={4}>
                 {!receiptImage && (
                     <Stack spacing={2}>
-                        <Label htmlFor="ai-provider">Provedor de IA</Label>
+                        <InputLabel htmlFor="ai-provider">Provedor de IA</InputLabel>
                         <Select 
                             value={selectedAI} 
-                            onValueChange={setSelectedAI}
+                            onChange={(e) => setSelectedAI(e.target.value)}
                             disabled={!canSelectProvider}
+                            fullWidth
+                            size="small"
                         >
-                            <SelectTrigger id="ai-provider">
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {visionCapableCredentials.map(c => (
-                                    <MenuItem key={c.id} value={c.id}>
-                                        {c.name}
-                                        {c.id === DEFAULT_AI_CREDENTIAL.id && (
-                                            <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-1 rounded">Padrão</span>
-                                        )}
-                                    </MenuItem>
-                                ))}
-                            </SelectContent>
+                            {visionCapableCredentials.map(c => (
+                                <MenuItem key={c.id} value={c.id}>
+                                    {c.name}
+                                    {c.id === DEFAULT_AI_CREDENTIAL.id && (
+                                        <span className="ml-2 text-xs bg-blue-100 text-blue-800 px-1 rounded">Padrão</span>
+                                    )}
+                                </MenuItem>
+                            ))}
                         </Select>
                         
                         {!canSelectProvider && (
-                            <Alert variant="default" className="border-blue-500/50 text-blue-200">
-                                <Sparkles className="h-4 w-4 !text-blue-400" />
+                            <Alert variant="outlined" severity="info" sx={{ mb: 4 }} icon={<Sparkles className="h-4 w-4 !text-blue-400" />}>
                                 <AlertTitle>Gastometria IA</AlertTitle>
-                                <AlertDescription>
+                                <Typography variant="body2">
                                     Usando modelo padrão otimizado para análise de recibos. Faça upgrade para Plus ou Infinity para escolher outros modelos.
-                                </AlertDescription>
+                                </Typography>
                             </Alert>
                         )}
                         
                         {isOllamaSelected && (
-                             <Alert variant="default" className="border-amber-500/50 text-amber-200">
-                                <Info className="h-4 w-4 !text-amber-400" />
+                             <Alert variant="outlined" severity="warning" sx={{ mb: 4 }} icon={<Info className="h-4 w-4 !text-amber-400" />}>
                                 <AlertTitle>Aviso: Modelo Local com Visão</AlertTitle>
-                                <AlertDescription>
+                                <Typography variant="body2">
                                     Modelos locais (Ollama) com visão podem ter menor precisão e segurança na leitura de recibos. 
                                     Recomendamos usar o Gastometria IA para melhores resultados.
-                                </AlertDescription>
+                                </Typography>
                             </Alert>
                         )}
                         
                         {visionCapableCredentials.length === 1 && canSelectProvider && (
-                            <Alert variant="default" className="border-green-500/50 text-green-200">
-                                <BrainCircuit className="h-4 w-4 !text-green-400" />
+                            <Alert variant="filled" severity="success" className="border-green-500/50 text-green-200" icon={<BrainCircuit className="h-4 w-4 !text-green-400" />}>
                                 <AlertTitle>Modelo com Suporte a Visão</AlertTitle>
-                                <AlertDescription>
+                                <Typography variant="body2">
                                     Apenas modelos com capacidade de processamento de imagem estão disponíveis.
-                                </AlertDescription>
+                                </Typography>
                             </Alert>
                         )}
                     </Stack>
@@ -479,7 +467,8 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                                         <Stack spacing={2} sx={{ position: 'absolute', top: '1rem', right: '1rem' }}>
                                             {hasFlash && (
                                                 <Button
-                                                    size="icon"
+                                                    size="small"
+                                                    sx={{ minWidth: '2rem', width: '2rem', height: '2rem', p: 0 }}
                                                     variant="contained" color="secondary"
                                                     className={cn(
                                                         "bg-black/60 hover:bg-black/80 border-0",
@@ -491,8 +480,9 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                                                 </Button>
                                             )}
                                             <Button
-                                                size="icon"
                                                 variant="contained" color="secondary"
+                                                size="small"
+                                                sx={{ minWidth: '2rem', width: '2rem', height: '2rem', p: 0 }}
                                                 className="bg-black/60 hover:bg-black/80 border-0"
                                                 onClick={switchCamera}
                                             >
@@ -503,11 +493,11 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                                 </Box>
                                 
                                 {hasCameraPermission === false && (
-                                    <Alert variant="contained" color="error">
+                                    <Alert variant="filled" severity="success" sx={{ mb: 4 }}>
                                         <AlertTitle>Acesso à Câmera Necessário</AlertTitle>
-                                        <AlertDescription>
+                                        <Typography variant="body2">
                                             Permita o acesso à câmera para usar este recurso ou use a opção "Enviar da Galeria".
-                                        </AlertDescription>
+                                        </Typography>
                                     </Alert>
                                 )}
                                 
@@ -542,8 +532,9 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                         <Box sx={{ position: 'relative' }}>
                             <img src={receiptImage} alt="Pré-visualização da nota" style={{ borderRadius: '0.5rem', maxHeight: '15rem', width: '100%', objectFit: 'cover' }} />
                             <Button
-                                size="icon"
                                 variant="contained" color="secondary"
+                                size="small"
+                                sx={{ minWidth: '2rem', width: '2rem', height: '2rem', p: 0 }}
                                 className="absolute top-2 right-2 bg-black/60 hover:bg-black/80"
                                 onClick={resetState}
                                 disabled={isProcessing || isSaving}
@@ -559,30 +550,41 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
         </>
     );
 
+    const trigger = isValidElement(children) ? 
+        cloneElement(children as any, { onClick: () => handleDialogOpenChange(true) }) : 
+        <div onClick={() => handleDialogOpenChange(true)}>{children}</div>;
+
     if (isMobile) {
         return (
-            <Sheet open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
-                <SheetTrigger asChild>{children}</SheetTrigger>
-                <SheetContent side="bottom" sx={{ height: '95vh', display: 'flex', flexDirection: 'column' }}>
-                    <SheetHeader sx={{ textAlign: 'left' }}>
-                        <SheetTitle>Escanear Nota Fiscal</SheetTitle>
-                        <SheetDescription>
+            <>
+                {trigger}
+                <Drawer 
+                    anchor="bottom" 
+                    open={isDialogOpen} 
+                    onClose={() => handleDialogOpenChange(false)}
+                    PaperProps={{
+                        sx: { height: '95vh', borderTopLeftRadius: 16, borderTopRightRadius: 16 }
+                    }}
+                >
+                    <Box sx={{ p: 3, textAlign: 'left', borderBottom: 1, borderColor: 'divider' }}>
+                        <Typography variant="h6">Escanear Nota Fiscal</Typography>
+                        <Typography variant="body2" color="text.secondary">
                             Aponte a câmera para a nota fiscal ou envie uma imagem da galeria.
-                        </SheetDescription>
-                    </SheetHeader>
+                        </Typography>
+                    </Box>
 
-                    <Box sx={{ flex: 1, overflowY: 'auto' }}>
+                    <Box sx={{ flex: 1, overflowY: 'auto', p: 3 }}>
                         {renderContent()}
                     </Box>
 
-                    <SheetFooter sx={{ flexDirection: 'row', justifyContent: 'space-between', gap: 2, pt: 4 }}>
+                    <Box sx={{ p: 3, borderTop: 1, borderColor: 'divider', display: 'flex', flexDirection: 'row', justifyContent: 'space-between', gap: 2 }}>
                         {receiptImage ? (
                             <>
                                 <Button variant="text" onClick={resetState} disabled={isProcessing || isSaving}>
                                     Nova Foto
                                 </Button>
                                 {extractedData?.isValid && (
-                                    <Button onClick={handleSaveTransactions} disabled={isSaving || isProcessing} sx={{ flex: 1 }}>
+                                    <Button onClick={handleSaveTransactions} disabled={isSaving || isProcessing} sx={{ flex: 1 }} variant="contained">
                                         {isSaving && <Loader2 style={{ marginRight: '0.5rem', width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />}
                                         Salvar {extractedData.items?.length || 0} Itens
                                     </Button>
@@ -594,30 +596,30 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                                 disabled={hasCameraPermission === false || isProcessing || isSaving}
                                 sx={{ width: '100%', height: '3rem', fontSize: '1.125rem' }}
                                 size="large"
+                                variant="contained"
                             >
                                <Camera style={{ marginRight: '0.5rem', width: '1.25rem', height: '1.25rem' }}/> Capturar Nota
                             </Button>
                         )}
-                    </SheetFooter>
-                </SheetContent>
-            </Sheet>
+                    </Box>
+                </Drawer>
+            </>
         );
     }
 
     return (
-        <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
-            <DialogTrigger asChild>{children}</DialogTrigger>
-            <DialogContent sx={{ maxWidth: '42rem', maxHeight: '90vh', overflowY: 'auto' }}>
-                <DialogHeader>
-                    <DialogTitle>Escanear Nota Fiscal</DialogTitle>
-                    <DialogDescription>
+        <>
+            {trigger}
+            <Dialog open={isDialogOpen} onClose={() => handleDialogOpenChange(false)} maxWidth="md" fullWidth>
+                <DialogTitle>Escanear Nota Fiscal</DialogTitle>
+                <DialogContent>
+                    <DialogContentText sx={{ mb: 2 }}>
                         Faça upload da imagem (PDF, PNG, JPG) da nota fiscal para adicionar as transações.
-                    </DialogDescription>
-                </DialogHeader>
+                    </DialogContentText>
+                    {renderContent()}
+                </DialogContent>
 
-                {renderContent()}
-
-                <DialogFooter sx={{ gap: 2, sm: { gap: 0, justifyContent: 'space-between' }, width: '100%' }}>
+                <DialogActions sx={{ gap: 2, justifyContent: 'space-between', px: 3, pb: 3 }}>
                     <Box>
                          {receiptImage && (
                             <Button variant="text" onClick={resetState} disabled={isProcessing || isSaving}>
@@ -627,14 +629,14 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                     </Box>
                     <Box sx={{ display: 'flex', gap: 2 }}>
                         {extractedData?.isValid && (
-                             <Button onClick={handleSaveTransactions} disabled={isSaving || isProcessing}>
+                             <Button onClick={handleSaveTransactions} disabled={isSaving || isProcessing} variant="contained">
                                 {isSaving && <Loader2 style={{ marginRight: '0.5rem', width: '1rem', height: '1rem', animation: 'spin 1s linear infinite' }} />}
                                 Salvar Transações
                             </Button>
                         )}
                     </Box>
-                </DialogFooter>
-            </DialogContent>
-        </Dialog>
+                </DialogActions>
+            </Dialog>
+        </>
     );
 }

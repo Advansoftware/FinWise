@@ -1,6 +1,6 @@
 
 import './globals.css';
-import {Toaster, ToastProvider} from '@/components/mui-wrappers/toast';
+import {ToastProvider} from '@/components/providers/toast-provider';
 import {Inter} from 'next/font/google';
 import {AuthProvider} from '@/hooks/use-auth';
 import {SessionProvider} from 'next-auth/react';
@@ -190,7 +190,6 @@ export default function RootLayout({
                 <ThemeRegistry>
                   <ToastProvider>
                     {children}
-                    <Toaster />
                   </ToastProvider>
                 </ThemeRegistry>
                 <PWAUpdater />

@@ -1,7 +1,11 @@
 // src/components/installments/monthly-installments-modal.tsx
 
 import {useState, useEffect} from 'react';
-import {Dialog, DialogContent, DialogTitle, Box, Typography, Card, CardContent, Badge, Skeleton, Stack, useTheme, alpha, IconButton} from '@mui/material';
+import {Dialog, DialogContent, DialogTitle, Box, Typography, Card, CardContent, Badge, Skeleton, Stack,  useTheme,
+  alpha,
+  Chip,
+  IconButton
+} from "@mui/material";
 import {Calendar, CreditCard, DollarSign, Clock, CheckCircle, AlertCircle, Building, Tag, X} from 'lucide-react';
 import {formatCurrency} from '@/lib/utils';
 import {format} from 'date-fns';
@@ -57,8 +61,8 @@ export function MonthlyInstallmentsModal({
     
     setIsLoading(true);
     try {
-      const url = `/api/installments?userId=${user.uid}&action=monthly-details&month=${month}`;
-      const urlWithType = commitmentType ? `${url}&type=${commitmentType}` : url;
+      const url = '/api/installments?userId=' + user.uid + '&action=monthly-details&month=' + month;
+      const urlWithType = commitmentType ? url + '&type=' + commitmentType : url;
       const response = await fetch(urlWithType);
       
       if (response.ok) {
@@ -91,18 +95,20 @@ export function MonthlyInstallmentsModal({
     switch (status) {
       case 'paid':
         return (
-          <Chip sx={{ bgcolor: alpha(theme.palette.success.main, 0.1), color: 'success.main', border: 1, borderColor: alpha(theme.palette.success.main, 0.3) }}>
-            Pago
-          </Chip>
+          <Chip 
+            label="Pago"
+            sx={{ bgcolor: alpha(theme.palette.success.main, 0.1), color: 'success.main', border: 1, borderColor: alpha(theme.palette.success.main, 0.3) }} 
+          />
         );
       case 'overdue':
         return (
-          <Chip sx={{ bgcolor: alpha(theme.palette.error.main, 0.1), color: 'error.main', border: 1, borderColor: alpha(theme.palette.error.main, 0.3) }}>
-            Em atraso
-          </Chip>
+          <Chip 
+            label="Em atraso"
+            sx={{ bgcolor: alpha(theme.palette.error.main, 0.1), color: 'error.main', border: 1, borderColor: alpha(theme.palette.error.main, 0.3) }} 
+          />
         );
       default:
-        return <Chip variant="standard">Pendente</Chip>;
+        return <Chip variant="filled" label="Pendente" />;
     }
   };
 

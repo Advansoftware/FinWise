@@ -140,14 +140,12 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+    <Dialog open={isOpen} onClose={() => setIsOpen(false)} fullWidth maxWidth="sm">
+      <DialogTitle>{initialData ? "Editar Credencial" : "Nova Credencial de IA"}</DialogTitle>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{initialData ? "Editar Credencial" : "Nova Credencial de IA"}</DialogTitle>
-          <DialogDescription>
-            Forneça os detalhes para a configuração de IA.
-          </DialogDescription>
-        </DialogHeader>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Forneça os detalhes para a configuração de IA.
+        </Typography>
         <Form form={form} onSubmit={onSubmit}>
              <FormField
                 control={form.control}
@@ -168,17 +166,10 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
                 render={({ field }) => (
                     <FormItem>
                         <FormLabel>Provedor</FormLabel>
-                        <Select onValueChange={field.onChange} value={field.value}>
-                            <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Selecione um provedor de IA" />
-                                </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {isPlus && <MenuItem value="ollama">Ollama (Local/Remoto)</MenuItem>}
-                                {isInfinity && <MenuItem value="googleai">Google AI</MenuItem>}
-                                {isInfinity && <MenuItem value="openai">OpenAI</MenuItem>}
-                            </SelectContent>
+                        <Select onChange={field.onChange} value={field.value} fullWidth>
+                            {isPlus && <MenuItem value="ollama">Ollama (Local/Remoto)</MenuItem>}
+                            {isInfinity && <MenuItem value="googleai">Google AI</MenuItem>}
+                            {isInfinity && <MenuItem value="openai">OpenAI</MenuItem>}
                         </Select>
                         <FormMessage />
                     </FormItem>
@@ -207,19 +198,21 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
                             <FormItem>
                                 <FormLabel>Modelo Ollama</FormLabel>
                                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    <Select onValueChange={field.onChange} value={field.value || ''} disabled={isFetchingOllama || ollamaModels.length === 0}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                                <SelectValue placeholder={ollamaModels.length > 0 ? "Selecione um modelo" : "Nenhum modelo encontrado"} />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            {ollamaModels.map(model => (
-                                                <MenuItem key={model} value={model}>{model}</MenuItem>
-                                            ))}
-                                        </SelectContent>
+                                    <Select 
+                                        onChange={field.onChange} 
+                                        value={field.value || ''} 
+                                        disabled={isFetchingOllama || ollamaModels.length === 0}
+                                        fullWidth
+                                        displayEmpty
+                                    >
+                                        <MenuItem value="" disabled>
+                                            {ollamaModels.length > 0 ? "Selecione um modelo" : "Nenhum modelo encontrado"}
+                                        </MenuItem>
+                                        {ollamaModels.map(model => (
+                                            <MenuItem key={model} value={model}>{model}</MenuItem>
+                                        ))}
                                     </Select>
-                                    <Button type="button" variant="text" size="icon" onClick={fetchOllamaModels} disabled={isFetchingOllama || !form.getValues("ollamaServerAddress")}>
+                                    <Button type="button" variant="text" size="small" sx={{ minWidth: '2.5rem', width: '2.5rem', p: 0 }} onClick={fetchOllamaModels} disabled={isFetchingOllama || !form.getValues("ollamaServerAddress")}>
                                         <RefreshCw style={{ width: '1rem', height: '1rem' }} className={isFetchingOllama ? 'animate-spin': ''} />
                                     </Button>
                                 </div>
@@ -254,18 +247,11 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
                         render={({ field }) => (
                             <FormItem>
                                 <FormLabel>Modelo OpenAI</FormLabel>
-                                <Select onValueChange={field.onChange} value={field.value}>
-                                    <FormControl>
-                                        <SelectTrigger>
-                                            <SelectValue placeholder="Selecione um modelo OpenAI" />
-                                        </SelectTrigger>
-                                    </FormControl>
-                                    <SelectContent>
-                                        <MenuItem value="gpt-4o">GPT-4o</MenuItem>
-                                        <MenuItem value="gpt-4-vision-preview">GPT-4 Vision</MenuItem>
-                                        <MenuItem value="gpt-4">GPT-4</MenuItem>
-                                        <MenuItem value="gpt-3.5-turbo">GPT-3.5 Turbo</MenuItem>
-                                    </SelectContent>
+                                <Select onChange={field.onChange} value={field.value} fullWidth>
+                                    <MenuItem value="gpt-4o">GPT-4o</MenuItem>
+                                    <MenuItem value="gpt-4-vision-preview">GPT-4 Vision</MenuItem>
+                                    <MenuItem value="gpt-4">GPT-4</MenuItem>
+                                    <MenuItem value="gpt-3.5-turbo">GPT-3.5 Turbo</MenuItem>
                                 </Select>
                                 <FormMessage />
                             </FormItem>
@@ -286,14 +272,17 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
                     />
                 </>
             )}
-             <DialogFooter>
-                <Button type="submit" disabled={isSaving}>
-                    {isSaving && <Loader2 style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} className="animate-spin" />}
-                    Salvar
-                </Button>
-            </DialogFooter>
         </Form>
       </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 3 }}>
+        <Button onClick={() => setIsOpen(false)} color="inherit">
+          Cancelar
+        </Button>
+        <Button onClick={form.handleSubmit(onSubmit)} disabled={isSaving} variant="contained">
+            {isSaving && <Loader2 style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} className="animate-spin" />}
+            Salvar
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 }

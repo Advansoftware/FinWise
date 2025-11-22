@@ -190,7 +190,7 @@ export function GoalHighlightCard() {
                     <Stack direction="row" alignItems="center" spacing={0.5} sx={{ minWidth: 0 }}>
                         <Sparkles 
                           style={{ width: '0.75rem', height: '0.75rem', color: 'rgba(var(--primary-rgb), 0.8)' }}
-                          className={"flex-shrink-0", isProjecting && "animate-pulse"} 
+                          className={`flex-shrink-0 ${isProjecting ? "animate-pulse" : ""}`}
                         />
                          <Box sx={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                          {isProjecting ? (
