@@ -127,53 +127,41 @@ export default function DashboardPage() {
       {isLoading ? (
         <DashboardSkeleton />
       ) : (
-        <>
-          {/* Main Grid - 12 column system for precise control */}
-          <Box
-            display="grid"
-            gridTemplateColumns={{ xs: "1fr", lg: "repeat(12, 1fr)" }}
-            gap={{ xs: 2, sm: 3 }}
-          >
-            {/* Stats Cards - Full width on mobile, 8 cols on desktop */}
-            <Box sx={{ gridColumn: { xs: "1", lg: "span 8" } }}>
-              <StatsCards transactions={filteredTransactions} />
-            </Box>
+        <Stack spacing={{ xs: 2, sm: 3 }}>
+          {/* Stats Cards - Sempre full width, 4 cards em linha no desktop */}
+          <StatsCards transactions={filteredTransactions} />
 
-            {/* Wallet Summary - Full width on mobile, 4 cols on desktop */}
-            <Box sx={{ gridColumn: { xs: "1", lg: "span 4" } }}>
-              <WalletCard transactions={filteredTransactions} />
-            </Box>
+          {/* Main Content Grid */}
+          <Grid container spacing={{ xs: 2, sm: 3 }}>
+            {/* Coluna Principal - 8 colunas no desktop */}
+            <Grid size={{ xs: 12, lg: 8 }}>
+              <Stack spacing={{ xs: 2, sm: 3 }}>
+                {/* Spending Chart */}
+                <SpendingChart data={chartData} />
 
-            {/* Spending Chart - Full width on mobile, 8 cols on desktop */}
-            <Box sx={{ gridColumn: { xs: "1", lg: "span 8" } }}>
-              <SpendingChart data={chartData} />
-            </Box>
+                {/* Recent Transactions */}
+                <RecentTransactions transactions={filteredTransactions} />
+              </Stack>
+            </Grid>
 
-            {/* AI Tip - Full width on mobile, 4 cols on desktop */}
-            {isPro && (
-              <Box sx={{ gridColumn: { xs: "1", lg: "span 4" } }}>
-                <AITipCard transactions={filteredTransactions} />
-              </Box>
-            )}
+            {/* Coluna Lateral - 4 colunas no desktop */}
+            <Grid size={{ xs: 12, lg: 4 }}>
+              <Stack spacing={{ xs: 2, sm: 3 }}>
+                {/* Wallet Summary */}
+                <WalletCard transactions={filteredTransactions} />
 
-            {/* Recent Transactions - Full width on mobile, 8 cols on desktop */}
-            <Box sx={{ gridColumn: { xs: "1", lg: "span 8" } }}>
-              <RecentTransactions transactions={filteredTransactions} />
-            </Box>
+                {/* AI Tip */}
+                {isPro && <AITipCard transactions={filteredTransactions} />}
 
-            {/* Side cards - Full width on mobile, 4 cols on desktop */}
-            <Stack
-              sx={{ gridColumn: { xs: "1", lg: "span 4" } }}
-              spacing={{ xs: 2, sm: 3 }}
-            >
-              {/* Goal Highlight Card */}
-              <GoalHighlightCard />
+                {/* Goal Highlight Card */}
+                <GoalHighlightCard />
 
-              {/* Future Balance Card */}
-              {isPlus && <FutureBalanceCard />}
-            </Stack>
-          </Box>
-        </>
+                {/* Future Balance Card */}
+                {isPlus && <FutureBalanceCard />}
+              </Stack>
+            </Grid>
+          </Grid>
+        </Stack>
       )}
     </Stack>
   );
