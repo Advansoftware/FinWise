@@ -83,7 +83,7 @@ export function DateRangePicker({
   const handleQuickSelect = (option: "today" | "week" | "month" | "year") => {
     const now = new Date();
     let from: Date;
-    let to: Date = now;
+    const to: Date = now;
 
     switch (option) {
       case "today":
@@ -124,26 +124,18 @@ export function DateRangePicker({
         size="small"
         value={formatButtonText()}
         onClick={handleOpenDialog}
-        InputProps={{
-          readOnly: true,
-          startAdornment: (
-            <InputAdornment position="start">
-              <CalendarIcon size={18} />
-            </InputAdornment>
-          ),
-        }}
-        sx={{
-          minWidth: 180,
-          width: "auto",
-          "& .MuiInputBase-root": {
-            cursor: "pointer",
-          },
-          "& .MuiInputBase-input": {
-            cursor: "pointer",
-            paddingTop: "8.5px",
-            paddingBottom: "8.5px",
+        slotProps={{
+          input: {
+            readOnly: true,
+            startAdornment: (
+              <InputAdornment position="start">
+                <CalendarIcon size={18} />
+              </InputAdornment>
+            ),
+            sx: { cursor: "pointer" },
           },
         }}
+        sx={{ width: 200 }}
       />
 
       <Dialog
@@ -153,17 +145,17 @@ export function DateRangePicker({
         maxWidth="xs"
         fullWidth
       >
-        <DialogTitle
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <Typography variant="h6">Selecionar Período</Typography>
-          <IconButton onClick={handleCloseDialog} size="small">
-            <X size={20} />
-          </IconButton>
+        <DialogTitle>
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+          >
+            <Typography variant="h6">Selecionar Período</Typography>
+            <IconButton onClick={handleCloseDialog} size="small">
+              <X size={20} />
+            </IconButton>
+          </Stack>
         </DialogTitle>
 
         <DialogContent>
@@ -226,7 +218,6 @@ export function DateRangePicker({
                   maxDate={tempToDate || undefined}
                   slotProps={{
                     textField: {
-                      fullWidth: true,
                       size: "small",
                     },
                   }}
@@ -238,7 +229,6 @@ export function DateRangePicker({
                   minDate={tempFromDate || undefined}
                   slotProps={{
                     textField: {
-                      fullWidth: true,
                       size: "small",
                     },
                   }}
@@ -271,7 +261,7 @@ export function DateRangePicker({
           </Stack>
         </DialogContent>
 
-        <DialogActions sx={{ px: 3, pb: 3 }}>
+        <DialogActions>
           <Button onClick={handleClear} color="inherit">
             Limpar
           </Button>

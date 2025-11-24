@@ -150,8 +150,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
         sx={{
           flexGrow: 1,
           width: { md: `calc(100% - ${drawerWidth}px)` },
-          mt: { xs: 7, md: 0 },
-          pt: { xs: 0, md: 3 },
+          mt: { xs: "64px", md: 0 },
         }}
       >
         <Box

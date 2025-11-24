@@ -374,8 +374,7 @@ const getThemeOptions = (mode: 'light' | 'dark'): ThemeOptions => ({
       },
       defaultProps: {
         margin: 'dense',
-        fullWidth: true,
-        size: 'medium',
+        size: 'small',
       },
     },
 
@@ -386,7 +385,7 @@ const getThemeOptions = (mode: 'light' | 'dark'): ThemeOptions => ({
         },
       },
       defaultProps: {
-        size: 'medium',
+        size: 'small',
       },
     },
 
