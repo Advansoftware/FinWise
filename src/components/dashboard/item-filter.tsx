@@ -25,24 +25,26 @@ export function ItemFilter({
   }, [items, selectedItem, onItemSelected]);
 
   return (
-    <Box sx={{ display: "grid", gap: 2 }}>
-      <FormControl fullWidth size="small" disabled={disabled}>
-        <Select
-          value={selectedItem}
-          onChange={(e) => onItemSelected(e.target.value)}
-          displayEmpty
-        >
-          {items.map((item) => (
-            <MenuItem
-              key={item}
-              value={item}
-              sx={{ textTransform: "capitalize" }}
-            >
-              {item === "all" ? placeholder || "Todos" : item}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
-    </Box>
+    <FormControl
+      size="small"
+      disabled={disabled}
+      sx={{ minWidth: 180, width: "auto" }}
+    >
+      <Select
+        value={selectedItem}
+        onChange={(e) => onItemSelected(e.target.value)}
+        displayEmpty
+      >
+        {items.map((item) => (
+          <MenuItem
+            key={item}
+            value={item}
+            sx={{ textTransform: "capitalize" }}
+          >
+            {item === "all" ? placeholder || "Todos" : item}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
   );
 }

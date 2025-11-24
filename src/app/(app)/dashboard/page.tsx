@@ -37,91 +37,66 @@ export default function DashboardPage() {
     <Stack spacing={{ xs: 2, sm: 3 }}>
       {/* Header - Mobile First */}
       <Stack spacing={{ xs: 1.5, sm: 2 }}>
-        <Box>
-          <Typography
-            variant="h4"
-            sx={{
-              fontSize: { xs: "1.5rem", sm: "1.875rem" },
-              fontWeight: "bold",
-              letterSpacing: "-0.025em",
-            }}
-          >
-            Painel
-          </Typography>
-          <Typography
-            variant="body1"
-            color="text.secondary"
-            sx={{ fontSize: { xs: "0.875rem", sm: "1rem" } }}
-          >
-            Aqui está uma visão geral das suas finanças.
-          </Typography>
-        </Box>
-
-        {/* Action Buttons - Mobile Stack, Desktop Side by Side */}
-        <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
-          <AddTransactionSheet>
-            <Button
-              variant="contained"
-              fullWidth
-              startIcon={<PlusCircle size={18} />}
-              sx={{ flex: { sm: "none" }, minWidth: { sm: "auto" } }}
+        <Stack
+          direction={{ xs: "column", sm: "row" }}
+          justifyContent="space-between"
+          alignItems={{ xs: "flex-start", sm: "center" }}
+          spacing={2}
+        >
+          <Box>
+            <Typography
+              variant="h4"
+              sx={{
+                fontSize: { xs: "1.5rem", sm: "1.875rem" },
+                fontWeight: "bold",
+                letterSpacing: "-0.025em",
+              }}
             >
-              Nova Transação
-            </Button>
-          </AddTransactionSheet>
-          {isPro && (
-            <ScanQRCodeDialog>
-              <Button
-                variant="outlined"
-                fullWidth
-                startIcon={<ScanLine size={18} />}
-                sx={{ flex: { sm: "none" }, minWidth: { sm: "auto" } }}
-              >
-                Escanear QRCode
+              Painel
+            </Typography>
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              sx={{ fontSize: { xs: "0.875rem", sm: "1rem" } }}
+            >
+              Aqui está uma visão geral das suas finanças.
+            </Typography>
+          </Box>
+
+          {/* Action Buttons - Alinhados à direita */}
+          <Stack direction="row" spacing={1.5}>
+            {isPro && (
+              <ScanQRCodeDialog>
+                <Button variant="outlined" startIcon={<ScanLine size={18} />}>
+                  Escanear QRCode
+                </Button>
+              </ScanQRCodeDialog>
+            )}
+            <AddTransactionSheet>
+              <Button variant="contained" startIcon={<PlusCircle size={18} />}>
+                Nova Transação
               </Button>
-            </ScanQRCodeDialog>
-          )}
+            </AddTransactionSheet>
+          </Stack>
         </Stack>
       </Stack>
 
-      {/* Filters - Responsive */}
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        spacing={2}
-        sx={{ flexWrap: { sm: "wrap" } }}
-      >
-        <Box sx={{ width: { xs: "100%", sm: "auto" }, minWidth: { sm: 200 } }}>
-          <DateRangePicker initialDate={dateRange} onUpdate={setDateRange} />
-        </Box>
-        <Box
-          sx={{
-            width: { xs: "100%", sm: "auto" },
-            flex: { sm: 1 },
-            maxWidth: { sm: 200 },
-          }}
-        >
-          <ItemFilter
-            placeholder="Todas as Categorias"
-            items={["all", ...categories]}
-            selectedItem={selectedCategory}
-            onItemSelected={handleCategoryChange}
-          />
-        </Box>
-        <Box
-          sx={{
-            width: { xs: "100%", sm: "auto" },
-            flex: { sm: 1 },
-            maxWidth: { sm: 200 },
-          }}
-        >
-          <ItemFilter
-            placeholder="Todas as Subcategorias"
-            items={["all", ...availableSubcategories]}
-            selectedItem={selectedSubcategory}
-            onItemSelected={setSelectedSubcategory}
-            disabled={selectedCategory === "all"}
-          />
-        </Box>
+      {/* Filters - Todos com mesmo estilo */}
+      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+        <DateRangePicker initialDate={dateRange} onUpdate={setDateRange} />
+        <ItemFilter
+          placeholder="Todas as Categorias"
+          items={["all", ...categories]}
+          selectedItem={selectedCategory}
+          onItemSelected={handleCategoryChange}
+        />
+        <ItemFilter
+          placeholder="Todas as Subcategorias"
+          items={["all", ...availableSubcategories]}
+          selectedItem={selectedSubcategory}
+          onItemSelected={setSelectedSubcategory}
+          disabled={selectedCategory === "all"}
+        />
       </Stack>
 
       {isLoading ? (
