@@ -32,6 +32,7 @@ import { useGoals } from "@/hooks/use-goals";
 import { AICreditIndicator } from "@/components/credits/ai-credit-indicator";
 import { GamificationProvider } from "@/hooks/use-gamification";
 import { PlanExpirationAlert } from "@/components/billing/plan-expiration-alert";
+import { BankPaymentProvider } from "@/hooks/use-bank-payment";
 
 const drawerWidth = 280;
 
@@ -197,7 +198,9 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
                 <InstallmentsProvider>
                   <BudgetsProvider>
                     <GoalsProvider>
-                      <AppLayoutContent>{children}</AppLayoutContent>
+                      <BankPaymentProvider>
+                        <AppLayoutContent>{children}</AppLayoutContent>
+                      </BankPaymentProvider>
                     </GoalsProvider>
                   </BudgetsProvider>
                 </InstallmentsProvider>
