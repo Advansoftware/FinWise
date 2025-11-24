@@ -1,400 +1,791 @@
 // src/app/(app)/reports/page.tsx
-'use client';
-import {useState, useMemo} from 'react';
-import {useReports} from '@/hooks/use-reports';
-import {useTransactions} from '@/hooks/use-transactions';
-import {Card, CardContent, CardHeader, Typography} from '@mui/material';
-import {getYear} from 'date-fns';
-import {Loader2, BarChart2, TrendingUp, TrendingDown, DollarSign, Sparkles, Calendar, Clock, RefreshCw} from 'lucide-react';
-import {Skeleton} from '@/components/mui-wrappers/skeleton';
-import {ResponsiveContainer, PieChart, Pie, Cell, Legend, BarChart, Bar, XAxis, YAxis, Tooltip} from 'recharts';
-import {Tabs, TabsContent, TabsList, TabsTrigger} from '@/components/mui-wrappers/tabs';
-import {Button} from '@mui/material';
-import {ProUpgradeCard} from '@/components/pro-upgrade-card';
-import {usePlan} from '@/hooks/use-plan';
-import {Report} from '@/core/ports/reports.port';
+"use client";
+import { useState, useMemo } from "react";
+import { useReports } from "@/hooks/use-reports";
+import { useTransactions } from "@/hooks/use-transactions";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  Typography,
+  Box,
+  Stack,
+  Button,
+  Skeleton,
+  CircularProgress,
+} from "@mui/material";
+import { keyframes } from "@mui/material/styles";
+import { getYear } from "date-fns";
+import {
+  BarChart2,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  Sparkles,
+  Calendar,
+  Clock,
+  RefreshCw,
+} from "lucide-react";
+import {
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+} from "recharts";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/mui-wrappers/tabs";
+import { ProUpgradeCard } from "@/components/pro-upgrade-card";
+import { usePlan } from "@/hooks/use-plan";
+import { Report } from "@/core/ports/reports.port";
 
-const COLORS = ["hsl(var(--chart-1))", "hsl(var(--chart-2))", "hsl(var(--chart-3))", "hsl(var(--chart-4))", "hsl(var(--chart-5))"];
+const spin = keyframes`
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
+const COLORS = [
+  "hsl(var(--chart-1))",
+  "hsl(var(--chart-2))",
+  "hsl(var(--chart-3))",
+  "hsl(var(--chart-4))",
+  "hsl(var(--chart-5))",
+];
 
 export default function ReportsPage() {
-    const { allTransactions, isLoading: isTransactionsLoading } = useTransactions();
-    const { isPro, isLoading: isPlanLoading } = usePlan();
+  const { allTransactions, isLoading: isTransactionsLoading } =
+    useTransactions();
+  const { isPro, isLoading: isPlanLoading } = usePlan();
 
-    const availableYears = useMemo(() => {
-        const years = new Set(allTransactions.map(t => getYear(new Date(t.date))));
-        const currentYear = getYear(new Date());
-        years.add(currentYear);
-        return Array.from(years).sort((a, b) => b - a);
-    }, [allTransactions]);
-
-    if (isTransactionsLoading || isPlanLoading) {
-        return (
-            <div className="flex flex-col gap-4 p-4">
-                 <div>
-                    <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Relatórios</h1>
-                    <p className="text-sm md:text-base text-muted-foreground">Analise seus fechamentos mensais e anuais</p>
-                </div>
-                <Skeleton className="h-8 w-32"/>
-                <Skeleton className="h-48 w-full"/>
-            </div>
-        )
-    }
-
-    if (!isPro) {
-        return <ProUpgradeCard featureName="Relatórios Inteligentes" />
-    }
-
-    return (
-        <div className="flex flex-col gap-4 p-4">
-            <div>
-                <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Relatórios</h1>
-                <p className="text-sm md:text-base text-muted-foreground">
-                    Relatórios mensais e anuais gerados automaticamente pela IA
-                </p>
-            </div>
-            
-            <Tabs defaultValue={String(getYear(new Date()))} className="w-full">
-                <TabsList className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 w-full md:w-auto bg-card">
-                    {availableYears.slice(0, 4).map(year => (
-                        <TabsTrigger key={year} value={String(year)} className="text-xs md:text-sm data-[state=active]:bg-primary/20">
-                            {year}
-                        </TabsTrigger>
-                    ))}
-                </TabsList>
-                 
-                 {availableYears.map(year => (
-                    <TabsContent key={year} value={String(year)} className="mt-4">
-                        <YearlyReportView year={year} />
-                    </TabsContent>
-                ))}
-            </Tabs>
-        </div>
+  const availableYears = useMemo(() => {
+    const years = new Set(
+      allTransactions.map((t) => getYear(new Date(t.date)))
     );
+    const currentYear = getYear(new Date());
+    years.add(currentYear);
+    return Array.from(years).sort((a, b) => b - a);
+  }, [allTransactions]);
+
+  if (isTransactionsLoading || isPlanLoading) {
+    return (
+      <Stack spacing={4} sx={{ p: { xs: 2, md: 4 } }}>
+        <Box>
+          <Typography
+            variant="h4"
+            sx={{
+              fontSize: { xs: "1.5rem", md: "1.875rem" },
+              fontWeight: "bold",
+              letterSpacing: "-0.025em",
+            }}
+          >
+            Relatórios
+          </Typography>
+          <Typography
+            variant="body2"
+            sx={{
+              fontSize: { xs: "0.875rem", md: "1rem" },
+              color: "text.secondary",
+            }}
+          >
+            Analise seus fechamentos mensais e anuais
+          </Typography>
+        </Box>
+        <Skeleton
+          variant="rectangular"
+          height={32}
+          width={128}
+          sx={{ borderRadius: 1 }}
+        />
+        <Skeleton variant="rectangular" height={192} sx={{ borderRadius: 2 }} />
+      </Stack>
+    );
+  }
+
+  if (!isPro) {
+    return <ProUpgradeCard featureName="Relatórios Inteligentes" />;
+  }
+
+  return (
+    <Stack spacing={4} sx={{ p: { xs: 2, md: 4 } }}>
+      <Box>
+        <Typography
+          variant="h4"
+          sx={{
+            fontSize: { xs: "1.5rem", md: "1.875rem" },
+            fontWeight: "bold",
+            letterSpacing: "-0.025em",
+          }}
+        >
+          Relatórios
+        </Typography>
+        <Typography
+          variant="body2"
+          sx={{
+            fontSize: { xs: "0.875rem", md: "1rem" },
+            color: "text.secondary",
+          }}
+        >
+          Relatórios mensais e anuais gerados automaticamente pela IA
+        </Typography>
+      </Box>
+
+      <Tabs defaultValue={String(getYear(new Date()))}>
+        <TabsList
+          sx={{
+            display: "grid",
+            gridTemplateColumns: {
+              xs: "repeat(2, 1fr)",
+              md: "repeat(3, 1fr)",
+              lg: "repeat(4, 1fr)",
+            },
+            width: { xs: "100%", md: "auto" },
+            bgcolor: "background.paper",
+          }}
+        >
+          {availableYears.slice(0, 4).map((year) => (
+            <TabsTrigger
+              key={year}
+              value={String(year)}
+              sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}
+            >
+              {year}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+
+        {availableYears.map((year) => (
+          <TabsContent key={year} value={String(year)} sx={{ mt: 4 }}>
+            <YearlyReportView year={year} />
+          </TabsContent>
+        ))}
+      </Tabs>
+    </Stack>
+  );
 }
 
 function YearlyReportView({ year }: { year: number }) {
-    const { getAnnualReport, isLoading: isReportsLoading } = useReports();
-    
-    const annualReport = useMemo(() => getAnnualReport(year), [year, getAnnualReport]);
-    
-    if (isReportsLoading) return <ReportsSkeleton />;
+  const { getAnnualReport, isLoading: isReportsLoading } = useReports();
 
-    if (annualReport) {
-         return <AnnualReportDisplay report={annualReport} />;
-    }
+  const annualReport = useMemo(
+    () => getAnnualReport(year),
+    [year, getAnnualReport]
+  );
 
-    return (
-        <Tabs defaultValue="monthly" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 bg-card">
-                <TabsTrigger value="monthly" className="text-xs md:text-sm data-[state=active]:bg-primary/20">
-                    Visão Mensal
-                </TabsTrigger>
-                <TabsTrigger value="annual" disabled className="text-xs md:text-sm opacity-50">
-                    Visão Anual (Pendente)
-                </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="monthly" className="mt-4">
-                <MonthlyReportsGrid year={year} />
-            </TabsContent>
-            
-            <TabsContent value="annual" className="mt-4">
-                 <Card>
-                    <CardContent className="p-6 md:p-8 text-center text-muted-foreground flex flex-col items-center">
-                        <Calendar className="h-8 w-8 md:h-12 md:w-12 mb-3 md:mb-4 text-primary/50" />
-                        <h3 className="text-base md:text-lg font-semibold text-foreground">
-                            Relatório Anual de {year} Pendente
-                        </h3>
-                        <p className="text-sm max-w-md mx-auto mt-2">
-                           O relatório anual será gerado automaticamente quando houver pelo menos 6 relatórios mensais.
-                        </p>
-                    </CardContent>
-                </Card>
-            </TabsContent>
-        </Tabs>
-    );
+  if (isReportsLoading) return <ReportsSkeleton />;
+
+  if (annualReport) {
+    return <AnnualReportDisplay report={annualReport} />;
+  }
+
+  return (
+    <Tabs defaultValue="monthly">
+      <TabsList
+        sx={{
+          display: "grid",
+          width: "100%",
+          gridTemplateColumns: "repeat(2, 1fr)",
+          bgcolor: "background.paper",
+        }}
+      >
+        <TabsTrigger
+          value="monthly"
+          sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}
+        >
+          Visão Mensal
+        </TabsTrigger>
+        <TabsTrigger
+          value="annual"
+          disabled
+          sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" }, opacity: 0.5 }}
+        >
+          Visão Anual (Pendente)
+        </TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="monthly" sx={{ mt: 4 }}>
+        <MonthlyReportsGrid year={year} />
+      </TabsContent>
+
+      <TabsContent value="annual" sx={{ mt: 4 }}>
+        <Card>
+          <CardContent
+            sx={{
+              p: { xs: 3, md: 4 },
+              textAlign: "center",
+              color: "text.secondary",
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
+            <Box
+              component={Calendar}
+              sx={{
+                height: { xs: 32, md: 48 },
+                width: { xs: 32, md: 48 },
+                mb: { xs: 1.5, md: 2 },
+                color: "primary.main",
+                opacity: 0.5,
+              }}
+            />
+            <Typography
+              variant="h6"
+              sx={{
+                fontSize: { xs: "1rem", md: "1.125rem" },
+                fontWeight: 600,
+                color: "text.primary",
+              }}
+            >
+              Relatório Anual de {year} Pendente
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{ maxWidth: "md", mx: "auto", mt: 1 }}
+            >
+              O relatório anual será gerado automaticamente quando houver pelo
+              menos 6 relatórios mensais.
+            </Typography>
+          </CardContent>
+        </Card>
+      </TabsContent>
+    </Tabs>
+  );
 }
 
 function MonthlyReportsGrid({ year }: { year: number }) {
-    const availableMonths = Array.from({ length: 12 }, (_, i) => i + 1);
+  const availableMonths = Array.from({ length: 12 }, (_, i) => i + 1);
 
-    return (
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-3 md:gap-4">
-            {availableMonths.map(month => (
-                <MonthlyReportCard key={month} year={year} month={month} />
-            ))}
-        </div>
-    )
+  return (
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: {
+          xs: "repeat(2, 1fr)",
+          md: "repeat(3, 1fr)",
+          lg: "repeat(4, 1fr)",
+          xl: "repeat(6, 1fr)",
+        },
+        gap: { xs: 1.5, md: 2 },
+      }}
+    >
+      {availableMonths.map((month) => (
+        <MonthlyReportCard key={month} year={year} month={month} />
+      ))}
+    </Box>
+  );
 }
 
-function MonthlyReportCard({ year, month }: { year: number, month: number }) {
-    const { getMonthlyReport, generateMonthlyReport } = useReports();
-    const [isGenerating, setIsGenerating] = useState(false);
-    const report = getMonthlyReport(year, month);
-    const monthName = new Date(0, month - 1).toLocaleString('pt-BR', { month: 'short' });
-    const monthNameFull = new Date(0, month - 1).toLocaleString('pt-BR', { month: 'long' });
+function MonthlyReportCard({ year, month }: { year: number; month: number }) {
+  const { getMonthlyReport, generateMonthlyReport } = useReports();
+  const [isGenerating, setIsGenerating] = useState(false);
+  const report = getMonthlyReport(year, month);
+  const monthName = new Date(0, month - 1).toLocaleString("pt-BR", {
+    month: "short",
+  });
 
-    const handleGenerateReport = async () => {
-        setIsGenerating(true);
-        try {
-            await generateMonthlyReport(year, month, true);
-        } catch (error) {
-            console.error('Erro ao gerar relatório:', error);
-        } finally {
-            setIsGenerating(false);
-        }
-    };
-
-    if (report) {
-         return (
-            <Card className="flex flex-col justify-between h-full">
-                <CardHeader className="pb-2 p-3 md:p-4">
-                    <Typography variant="h6" className="text-sm md:text-base capitalize truncate">
-                        {monthName}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary" className={`text-xs md:text-sm font-medium ${
-                        report.data.balance >= 0 ? "text-emerald-600" : "text-destructive"
-                    }`}>
-                        {report.data.balance.toLocaleString('pt-BR', { 
-                            style: 'currency', 
-                            currency: 'BRL',
-                            minimumFractionDigits: 0,
-                            maximumFractionDigits: 0
-                        })}
-                    </Typography>
-                </CardHeader>
-                <CardContent className="text-xs p-3 md:p-4 pt-0">
-                    <div className="space-y-1">
-                        <p className="flex items-center gap-1 text-emerald-600">
-                            <TrendingUp className="h-3 w-3 flex-shrink-0"/>
-                            <span className="truncate">
-                                {report.data.totalIncome.toLocaleString('pt-BR', { 
-                                    style: 'currency', 
-                                    currency: 'BRL',
-                                    minimumFractionDigits: 0,
-                                    maximumFractionDigits: 0
-                                })}
-                            </span>
-                        </p>
-                        <p className="flex items-center gap-1 text-red-600">
-                            <TrendingDown className="h-3 w-3 flex-shrink-0"/>
-                            <span className="truncate">
-                                {report.data.totalExpense.toLocaleString('pt-BR', { 
-                                    style: 'currency', 
-                                    currency: 'BRL',
-                                    minimumFractionDigits: 0,
-                                    maximumFractionDigits: 0
-                                })}
-                            </span>
-                        </p>
-                    </div>
-                </CardContent>
-            </Card>
-        )
+  const handleGenerateReport = async () => {
+    setIsGenerating(true);
+    try {
+      await generateMonthlyReport(year, month, true);
+    } catch (error) {
+      console.error("Erro ao gerar relatório:", error);
+    } finally {
+      setIsGenerating(false);
     }
+  };
 
+  if (report) {
     return (
-        <Card className="flex flex-col justify-center items-center text-center h-full min-h-[120px] md:min-h-[140px] bg-muted/30 border-dashed">
-            <div className="p-3 md:p-4 space-y-2">
-                <h3 className="font-medium text-sm md:text-base capitalize">
-                    {monthName}
-                </h3>
-                <div className="flex items-center justify-center gap-1 text-muted-foreground text-xs">
-                    <Clock className="h-3 w-3"/>
-                    <span>Pendente</span>
-                </div>
-                <Button 
-                    variant="text" 
-                    size="small" 
-                    className="h-7 text-xs"
-                    onClick={handleGenerateReport}
-                    disabled={isGenerating}
-                >
-                    {isGenerating ? (
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                    ) : (
-                        <RefreshCw className="h-3 w-3" />
-                    )}
-                    <span className="ml-1 hidden md:inline">Gerar</span>
-                </Button>
-            </div>
-        </Card>
-    )
+      <Card
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "space-between",
+          height: "100%",
+        }}
+      >
+        <CardHeader
+          sx={{ pb: 1, p: { xs: 1.5, md: 2 } }}
+          title={
+            <Typography
+              variant="h6"
+              sx={{
+                fontSize: { xs: "0.875rem", md: "1rem" },
+                textTransform: "capitalize",
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {monthName}
+            </Typography>
+          }
+          subheader={
+            <Typography
+              variant="body2"
+              sx={{
+                fontSize: { xs: "0.75rem", md: "0.875rem" },
+                fontWeight: 500,
+                color: report.data.balance >= 0 ? "success.main" : "error.main",
+              }}
+            >
+              {report.data.balance.toLocaleString("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0,
+              })}
+            </Typography>
+          }
+        />
+        <CardContent sx={{ fontSize: "0.75rem", p: { xs: 1.5, md: 2 }, pt: 0 }}>
+          <Stack spacing={0.5}>
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={0.5}
+              sx={{ color: "success.main" }}
+            >
+              <Box
+                component={TrendingUp}
+                sx={{ height: 12, width: 12, flexShrink: 0 }}
+              />
+              <Typography
+                variant="caption"
+                sx={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {report.data.totalIncome.toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                })}
+              </Typography>
+            </Stack>
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={0.5}
+              sx={{ color: "error.main" }}
+            >
+              <Box
+                component={TrendingDown}
+                sx={{ height: 12, width: 12, flexShrink: 0 }}
+              />
+              <Typography
+                variant="caption"
+                sx={{
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {report.data.totalExpense.toLocaleString("pt-BR", {
+                  style: "currency",
+                  currency: "BRL",
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 0,
+                })}
+              </Typography>
+            </Stack>
+          </Stack>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "center",
+        alignItems: "center",
+        textAlign: "center",
+        height: "100%",
+        minHeight: { xs: 120, md: 140 },
+        bgcolor: "action.hover",
+        border: "1px dashed",
+        borderColor: "divider",
+      }}
+    >
+      <Box sx={{ p: { xs: 1.5, md: 2 } }}>
+        <Typography
+          variant="h6"
+          sx={{
+            fontWeight: 500,
+            fontSize: { xs: "0.875rem", md: "1rem" },
+            textTransform: "capitalize",
+          }}
+        >
+          {monthName}
+        </Typography>
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="center"
+          spacing={0.5}
+          sx={{ color: "text.secondary", fontSize: "0.75rem", mt: 1 }}
+        >
+          <Box component={Clock} sx={{ height: 12, width: 12 }} />
+          <Typography variant="caption">Pendente</Typography>
+        </Stack>
+        <Button
+          variant="text"
+          size="small"
+          sx={{ height: 28, fontSize: "0.75rem", mt: 1 }}
+          onClick={handleGenerateReport}
+          disabled={isGenerating}
+        >
+          {isGenerating ? (
+            <CircularProgress size={12} />
+          ) : (
+            <Box component={RefreshCw} sx={{ height: 12, width: 12 }} />
+          )}
+          <Box
+            component="span"
+            sx={{ ml: 0.5, display: { xs: "none", md: "inline" } }}
+          >
+            Gerar
+          </Box>
+        </Button>
+      </Box>
+    </Card>
+  );
 }
 
 function AnnualReportDisplay({ report }: { report: Report }) {
-    const chartData = report.data.topCategories
-        .slice(0, 5)
-        .map(cat => ({
-            name: cat.category,
-            value: cat.amount
-        }));
-    
-    return (
-         <div className="grid gap-4 md:gap-6">
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-               <StatCard 
-                   icon={TrendingUp} 
-                   title="Total Receitas" 
-                   value={report.data.totalIncome} 
-                   color="text-emerald-600"
-               />
-               <StatCard 
-                   icon={TrendingDown} 
-                   title="Total Despesas" 
-                   value={report.data.totalExpense} 
-                   color="text-red-600"
-               />
-               <StatCard 
-                   icon={DollarSign} 
-                   title="Balanço Final" 
-                   value={report.data.balance} 
-                   color={report.data.balance >= 0 ? "text-emerald-600" : "text-destructive"}
-               />
-            </div>
+  const chartData = report.data.topCategories.slice(0, 5).map((cat) => ({
+    name: cat.category,
+    value: cat.amount,
+  }));
 
-            {/* Charts Row */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-                {/* Pie Chart */}
-                <Card>
-                    <CardHeader className="pb-3 p-4 md:p-6">
-                        <Typography variant="h6" className="flex items-center gap-2 text-base md:text-lg">
-                            <BarChart2 className="text-primary h-4 w-4 md:h-5 md:w-5"/> 
-                            Top 5 Categorias
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" className="text-xs md:text-sm">
-                            Maiores gastos do ano
-                        </Typography>
-                    </CardHeader>
-                    <CardContent className="p-4 md:p-6 pt-0">
-                        <div className="h-48 md:h-64">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <PieChart>
-                                    <Pie 
-                                        data={chartData} 
-                                        dataKey="value" 
-                                        nameKey="name" 
-                                        cx="50%" 
-                                        cy="50%" 
-                                        outerRadius="60%"
-                                        fill="#8884d8"
-                                    >
-                                         {chartData.map((entry, index) => (
-                                             <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                                         ))}
-                                    </Pie>
-                                    <Legend 
-                                        iconSize={6} 
-                                        wrapperStyle={{fontSize: "11px"}}
-                                    />
-                                </PieChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </CardContent>
-                </Card>
+  return (
+    <Stack spacing={{ xs: 2, md: 3 }}>
+      {/* Stats Cards */}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
+          gap: { xs: 1.5, md: 2 },
+        }}
+      >
+        <StatCard
+          icon={TrendingUp}
+          title="Total Receitas"
+          value={report.data.totalIncome}
+          color="success.main"
+        />
+        <StatCard
+          icon={TrendingDown}
+          title="Total Despesas"
+          value={report.data.totalExpense}
+          color="error.main"
+        />
+        <StatCard
+          icon={DollarSign}
+          title="Balanço Final"
+          value={report.data.balance}
+          color={report.data.balance >= 0 ? "success.main" : "error.main"}
+        />
+      </Box>
 
-                {/* Category Breakdown */}
-                <Card>
-                    <CardHeader className="pb-3 p-4 md:p-6">
-                        <Typography variant="h6" className="flex items-center gap-2 text-base md:text-lg">
-                            <BarChart2 className="text-primary h-4 w-4 md:h-5 md:w-5"/> 
-                            Breakdown por Categoria
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary" className="text-xs md:text-sm">
-                            Distribuição de gastos
-                        </Typography>
-                    </CardHeader>
-                    <CardContent className="p-4 md:p-6 pt-0">
-                        <div className="h-48 md:h-64">
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
-                                    <XAxis 
-                                        dataKey="name" 
-                                        tick={{fontSize: 10}}
-                                        angle={-45}
-                                        textAnchor="end"
-                                        height={60}
-                                    />
-                                    <YAxis tick={{fontSize: 10}}/>
-                                    <Tooltip 
-                                        formatter={(value: number) => [
-                                            value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }),
-                                            'Valor'
-                                        ]}
-                                    />
-                                    <Bar dataKey="value" fill="hsl(var(--primary))" />
-                                </BarChart>
-                            </ResponsiveContainer>
-                        </div>
-                    </CardContent>
-                </Card>
-            </div>
+      {/* Charts Row */}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", lg: "repeat(2, 1fr)" },
+          gap: { xs: 2, md: 3 },
+        }}
+      >
+        {/* Pie Chart */}
+        <Card>
+          <CardHeader
+            sx={{ pb: 1.5, p: { xs: 2, md: 3 } }}
+            title={
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <Box
+                  component={BarChart2}
+                  sx={{
+                    color: "primary.main",
+                    height: { xs: 16, md: 20 },
+                    width: { xs: 16, md: 20 },
+                  }}
+                />
+                <Typography
+                  variant="h6"
+                  sx={{ fontSize: { xs: "1rem", md: "1.125rem" } }}
+                >
+                  Top 5 Categorias
+                </Typography>
+              </Stack>
+            }
+            subheader={
+              <Typography
+                variant="body2"
+                sx={{
+                  fontSize: { xs: "0.75rem", md: "0.875rem" },
+                  color: "text.secondary",
+                }}
+              >
+                Maiores gastos do ano
+              </Typography>
+            }
+          />
+          <CardContent sx={{ p: { xs: 2, md: 3 }, pt: 0 }}>
+            <Box sx={{ height: { xs: 192, md: 256 } }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={chartData}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius="60%"
+                    fill="#8884d8"
+                  >
+                    {chartData.map((entry, index) => (
+                      <Cell
+                        key={`cell-${index}`}
+                        fill={COLORS[index % COLORS.length]}
+                      />
+                    ))}
+                  </Pie>
+                  <Legend iconSize={6} wrapperStyle={{ fontSize: "11px" }} />
+                </PieChart>
+              </ResponsiveContainer>
+            </Box>
+          </CardContent>
+        </Card>
 
-            {/* AI Summary */}
-             <Card>
-                <CardHeader className="p-4 md:p-6">
-                    <Typography variant="h6" className="flex items-center gap-2 text-base md:text-lg">
-                        <Sparkles className="text-primary h-4 w-4 md:h-5 md:w-5"/> 
-                        Resumo Anual da IA
-                    </Typography>
-                </CardHeader>
-                <CardContent className="p-4 md:p-6 pt-0">
-                    <p className="text-sm md:text-base text-muted-foreground whitespace-pre-wrap leading-relaxed">
-                        {report.data.summary}
-                    </p>
-                </CardContent>
-            </Card>
-        </div>
-    )
+        {/* Category Breakdown */}
+        <Card>
+          <CardHeader
+            sx={{ pb: 1.5, p: { xs: 2, md: 3 } }}
+            title={
+              <Stack direction="row" alignItems="center" spacing={1}>
+                <Box
+                  component={BarChart2}
+                  sx={{
+                    color: "primary.main",
+                    height: { xs: 16, md: 20 },
+                    width: { xs: 16, md: 20 },
+                  }}
+                />
+                <Typography
+                  variant="h6"
+                  sx={{ fontSize: { xs: "1rem", md: "1.125rem" } }}
+                >
+                  Breakdown por Categoria
+                </Typography>
+              </Stack>
+            }
+            subheader={
+              <Typography
+                variant="body2"
+                sx={{
+                  fontSize: { xs: "0.75rem", md: "0.875rem" },
+                  color: "text.secondary",
+                }}
+              >
+                Distribuição de gastos
+              </Typography>
+            }
+          />
+          <CardContent sx={{ p: { xs: 2, md: 3 }, pt: 0 }}>
+            <Box sx={{ height: { xs: 192, md: 256 } }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={chartData}
+                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                >
+                  <XAxis
+                    dataKey="name"
+                    tick={{ fontSize: 10 }}
+                    angle={-45}
+                    textAnchor="end"
+                    height={60}
+                  />
+                  <YAxis tick={{ fontSize: 10 }} />
+                  <Tooltip
+                    formatter={(value: number) => [
+                      value.toLocaleString("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      }),
+                      "Valor",
+                    ]}
+                  />
+                  <Bar dataKey="value" fill="hsl(var(--primary))" />
+                </BarChart>
+              </ResponsiveContainer>
+            </Box>
+          </CardContent>
+        </Card>
+      </Box>
+
+      {/* AI Summary */}
+      <Card>
+        <CardHeader
+          sx={{ p: { xs: 2, md: 3 } }}
+          title={
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Box
+                component={Sparkles}
+                sx={{
+                  color: "primary.main",
+                  height: { xs: 16, md: 20 },
+                  width: { xs: 16, md: 20 },
+                }}
+              />
+              <Typography
+                variant="h6"
+                sx={{ fontSize: { xs: "1rem", md: "1.125rem" } }}
+              >
+                Resumo Anual da IA
+              </Typography>
+            </Stack>
+          }
+        />
+        <CardContent sx={{ p: { xs: 2, md: 3 }, pt: 0 }}>
+          <Typography
+            variant="body2"
+            sx={{
+              fontSize: { xs: "0.875rem", md: "1rem" },
+              color: "text.secondary",
+              whiteSpace: "pre-wrap",
+              lineHeight: 1.75,
+            }}
+          >
+            {report.data.summary}
+          </Typography>
+        </CardContent>
+      </Card>
+    </Stack>
+  );
 }
 
-function StatCard({ icon: Icon, title, value, color }: {
-    icon: any, 
-    title: string, 
-    value: number, 
-    color: string
+function StatCard({
+  icon: Icon,
+  title,
+  value,
+  color,
+}: {
+  icon: any;
+  title: string;
+  value: number;
+  color: string;
 }) {
-    return (
-        <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-3 md:p-4">
-                <Typography variant="h6" className="text-xs md:text-sm font-medium">
-                    {title}
-                </Typography>
-                <Icon className={`h-4 w-4 ${color}`} />
-            </CardHeader>
-            <CardContent className="p-3 md:p-4 pt-0">
-                <div className={`text-lg md:text-2xl font-bold ${color}`}>
-                    {value.toLocaleString('pt-BR', { 
-                        style: 'currency', 
-                        currency: 'BRL',
-                        minimumFractionDigits: 0,
-                        maximumFractionDigits: 0
-                    })}
-                </div>
-            </CardContent>
-        </Card>
-    )
+  return (
+    <Card>
+      <CardHeader
+        sx={{
+          display: "flex",
+          flexDirection: "row",
+          alignItems: "center",
+          justifyContent: "space-between",
+          pb: 1,
+          p: { xs: 1.5, md: 2 },
+        }}
+        title={
+          <Typography
+            variant="h6"
+            sx={{
+              fontSize: { xs: "0.75rem", md: "0.875rem" },
+              fontWeight: 500,
+            }}
+          >
+            {title}
+          </Typography>
+        }
+        action={<Box component={Icon} sx={{ height: 16, width: 16, color }} />}
+      />
+      <CardContent sx={{ p: { xs: 1.5, md: 2 }, pt: 0 }}>
+        <Typography
+          sx={{
+            fontSize: { xs: "1.125rem", md: "1.5rem" },
+            fontWeight: "bold",
+            color,
+          }}
+        >
+          {value.toLocaleString("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+          })}
+        </Typography>
+      </CardContent>
+    </Card>
+  );
 }
 
 function ReportsSkeleton() {
-    return (
-        <div className="grid gap-4 md:gap-6">
-            {/* Stats Cards Skeleton */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-                <Skeleton className="h-20 md:h-28"/>
-                <Skeleton className="h-20 md:h-28"/>
-                <Skeleton className="h-20 md:h-28"/>
-            </div>
-            
-            {/* Charts Skeleton */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
-                <Skeleton className="h-48 md:h-64"/>
-                <Skeleton className="h-48 md:h-64"/>
-            </div>
-            
-            {/* Summary Skeleton */}
-            <Skeleton className="h-24 md:h-32"/>
-        </div>
-    )
+  return (
+    <Stack spacing={{ xs: 2, md: 3 }}>
+      {/* Stats Cards Skeleton */}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
+          gap: { xs: 1.5, md: 2 },
+        }}
+      >
+        <Skeleton
+          variant="rectangular"
+          sx={{ borderRadius: 2, height: { xs: 80, md: 112 } }}
+        />
+        <Skeleton
+          variant="rectangular"
+          sx={{ borderRadius: 2, height: { xs: 80, md: 112 } }}
+        />
+        <Skeleton
+          variant="rectangular"
+          sx={{ borderRadius: 2, height: { xs: 80, md: 112 } }}
+        />
+      </Box>
+
+      {/* Charts Skeleton */}
+      <Box
+        sx={{
+          display: "grid",
+          gridTemplateColumns: { xs: "1fr", lg: "repeat(2, 1fr)" },
+          gap: { xs: 2, md: 3 },
+        }}
+      >
+        <Skeleton
+          variant="rectangular"
+          sx={{ borderRadius: 2, height: { xs: 192, md: 256 } }}
+        />
+        <Skeleton
+          variant="rectangular"
+          sx={{ borderRadius: 2, height: { xs: 192, md: 256 } }}
+        />
+      </Box>
+
+      {/* Summary Skeleton */}
+      <Skeleton
+        variant="rectangular"
+        sx={{ borderRadius: 2, height: { xs: 96, md: 128 } }}
+      />
+    </Stack>
+  );
 }

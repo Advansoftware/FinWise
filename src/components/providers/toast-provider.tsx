@@ -10,7 +10,7 @@ const StyledMaterialDesignContent = styled(MaterialDesignContent)(
     "&.notistack-MuiContent-success": {
       backgroundColor: theme.palette.success.main,
       color: theme.palette.success.contrastText,
-      borderRadius: theme.shape.borderRadius * 2,
+      borderRadius: Number(theme.shape.borderRadius) * 2,
       boxShadow: `0 4px 20px ${alpha(theme.palette.success.main, 0.3)}`,
       fontFamily: theme.typography.fontFamily,
       "& .MuiSvgIcon-root": {
@@ -20,7 +20,7 @@ const StyledMaterialDesignContent = styled(MaterialDesignContent)(
     "&.notistack-MuiContent-error": {
       backgroundColor: theme.palette.error.main,
       color: theme.palette.error.contrastText,
-      borderRadius: theme.shape.borderRadius * 2,
+      borderRadius: Number(theme.shape.borderRadius) * 2,
       boxShadow: `0 4px 20px ${alpha(theme.palette.error.main, 0.3)}`,
       fontFamily: theme.typography.fontFamily,
       "& .MuiSvgIcon-root": {
@@ -30,7 +30,7 @@ const StyledMaterialDesignContent = styled(MaterialDesignContent)(
     "&.notistack-MuiContent-warning": {
       backgroundColor: theme.palette.warning.main,
       color: theme.palette.warning.contrastText,
-      borderRadius: theme.shape.borderRadius * 2,
+      borderRadius: Number(theme.shape.borderRadius) * 2,
       boxShadow: `0 4px 20px ${alpha(theme.palette.warning.main, 0.3)}`,
       fontFamily: theme.typography.fontFamily,
       "& .MuiSvgIcon-root": {
@@ -40,7 +40,7 @@ const StyledMaterialDesignContent = styled(MaterialDesignContent)(
     "&.notistack-MuiContent-info": {
       backgroundColor: theme.palette.primary.main,
       color: theme.palette.primary.contrastText,
-      borderRadius: theme.shape.borderRadius * 2,
+      borderRadius: Number(theme.shape.borderRadius) * 2,
       boxShadow: `0 4px 20px ${alpha(theme.palette.primary.main, 0.3)}`,
       fontFamily: theme.typography.fontFamily,
       "& .MuiSvgIcon-root": {
@@ -50,7 +50,7 @@ const StyledMaterialDesignContent = styled(MaterialDesignContent)(
     "&.notistack-MuiContent-default": {
       backgroundColor: theme.palette.background.paper,
       color: theme.palette.text.primary,
-      borderRadius: theme.shape.borderRadius * 2,
+      borderRadius: Number(theme.shape.borderRadius) * 2,
       border: `1px solid ${theme.palette.divider}`,
       boxShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.15)}`,
       fontFamily: theme.typography.fontFamily,

@@ -1,16 +1,25 @@
-import {Metadata} from 'next';
-import {notFound} from 'next/navigation';
-import Link from 'next/link';
-import {ArrowLeft, CalendarDays, Clock, Share2} from 'lucide-react';
-import {Button} from '@mui/material';
-import {Chip} from '@mui/material';
-import {Divider} from '@mui/material';
+import { Metadata } from "next";
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft, CalendarDays, Clock, Share2 } from "lucide-react";
+import {
+  Button,
+  Chip,
+  Divider,
+  Box,
+  Typography,
+  Stack,
+  Container,
+  Card,
+  CardContent,
+} from "@mui/material";
 
 // Mock data - em produção isso viria do CMS
 const blogPosts: Record<string, any> = {
-  'controlar-gastos-2025': {
-    title: '10 Dicas Essenciais para Controlar seus Gastos em 2025',
-    description: 'Descubra estratégias práticas e eficazes para manter suas finanças organizadas e alcançar seus objetivos financeiros.',
+  "controlar-gastos-2025": {
+    title: "10 Dicas Essenciais para Controlar seus Gastos em 2025",
+    description:
+      "Descubra estratégias práticas e eficazes para manter suas finanças organizadas e alcançar seus objetivos financeiros.",
     content: `
 # 10 Dicas Essenciais para Controlar seus Gastos em 2025
 
@@ -83,10 +92,10 @@ Controlar gastos é um hábito que se desenvolve com o tempo. Comece implementan
 
 O **Gastometria** pode ser seu aliado nessa jornada, oferecendo ferramentas inteligentes para tornar o controle financeiro mais simples e eficaz.
     `,
-    category: 'Educação Financeira',
+    category: "Educação Financeira",
     readTime: 8,
-    publishedAt: '2025-01-15',
-    author: 'Equipe Gastometria',
+    publishedAt: "2025-01-15",
+    author: "Equipe Gastometria",
   },
 };
 
@@ -96,10 +105,10 @@ type Props = {
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const post = blogPosts[params.slug];
-  
+
   if (!post) {
     return {
-      title: 'Artigo não encontrado | Blog Gastometria',
+      title: "Artigo não encontrado | Blog Gastometria",
     };
   }
 
@@ -110,12 +119,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: post.title,
       description: post.description,
       url: `https://gastometria.com.br/blog/${params.slug}`,
-      type: 'article',
+      type: "article",
       publishedTime: post.publishedAt,
       authors: [post.author],
     },
     twitter: {
-      card: 'summary_large_image',
+      card: "summary_large_image",
       title: post.title,
       description: post.description,
     },
@@ -131,105 +140,193 @@ export default function BlogPostPage({ params }: Props) {
 
   function formatDate(dateString: string) {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('pt-BR', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
+    return new Intl.DateTimeFormat("pt-BR", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     }).format(date);
   }
 
-  function getCategoryColor(category: string) {
-    const colors: Record<string, string> = {
-      'Educação Financeira': 'bg-green-100 text-green-800',
-      'Tecnologia': 'bg-blue-100 text-blue-800',
-      'Planejamento': 'bg-purple-100 text-purple-800',
-      'Investimentos': 'bg-orange-100 text-orange-800',
+  function getCategoryColor(
+    category: string
+  ): "success" | "info" | "secondary" | "warning" | "default" {
+    const colors: Record<
+      string,
+      "success" | "info" | "secondary" | "warning" | "default"
+    > = {
+      "Educação Financeira": "success",
+      Tecnologia: "info",
+      Planejamento: "secondary",
+      Investimentos: "warning",
     };
-    return colors[category] || 'bg-gray-100 text-gray-800';
+    return colors[category] || "default";
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+    <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
         {/* Back Button */}
-        <Button variant="text" className="mb-6">
-          <Link href="/blog">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Voltar ao Blog
-          </Link>
+        <Button
+          component={Link}
+          href="/blog"
+          variant="text"
+          sx={{ mb: 3 }}
+          startIcon={
+            <Box component={ArrowLeft} sx={{ height: 16, width: 16 }} />
+          }
+        >
+          Voltar ao Blog
         </Button>
 
-        <article className="max-w-4xl mx-auto">
+        <Box component="article" sx={{ maxWidth: "56rem", mx: "auto" }}>
           {/* Header */}
-          <header className="mb-8">
-            <div className="flex items-center gap-4 mb-4">
-              <Chip className={getCategoryColor(post.category)}>
-                {post.category}
-              </Chip>
-              <div className="flex items-center text-sm text-muted-foreground">
-                <Clock className="h-4 w-4 mr-1" />
+          <Box component="header" sx={{ mb: 4 }}>
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={2}
+              sx={{ mb: 2 }}
+            >
+              <Chip
+                label={post.category}
+                color={getCategoryColor(post.category)}
+                size="small"
+              />
+              <Stack
+                direction="row"
+                alignItems="center"
+                sx={{ fontSize: "0.875rem", color: "text.secondary" }}
+              >
+                <Box
+                  component={Clock}
+                  sx={{ height: 16, width: 16, mr: 0.5 }}
+                />
                 {post.readTime} min de leitura
-              </div>
-            </div>
+              </Stack>
+            </Stack>
 
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
+            <Typography
+              variant="h1"
+              sx={{
+                fontSize: { xs: "2rem", md: "3rem" },
+                fontWeight: "bold",
+                letterSpacing: "-0.025em",
+                mb: 2,
+              }}
+            >
               {post.title}
-            </h1>
+            </Typography>
 
-            <p className="text-xl text-muted-foreground mb-6">
+            <Typography
+              variant="body1"
+              sx={{ fontSize: "1.25rem", color: "text.secondary", mb: 3 }}
+            >
               {post.description}
-            </p>
+            </Typography>
 
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                <div className="flex items-center">
-                  <CalendarDays className="h-4 w-4 mr-1" />
+            <Stack
+              direction="row"
+              justifyContent="space-between"
+              alignItems="center"
+            >
+              <Stack
+                direction="row"
+                alignItems="center"
+                spacing={2}
+                sx={{ fontSize: "0.875rem", color: "text.secondary" }}
+              >
+                <Stack direction="row" alignItems="center">
+                  <Box
+                    component={CalendarDays}
+                    sx={{ height: 16, width: 16, mr: 0.5 }}
+                  />
                   {formatDate(post.publishedAt)}
-                </div>
-                <span>•</span>
-                <span>Por {post.author}</span>
-              </div>
+                </Stack>
+                <Typography component="span">•</Typography>
+                <Typography component="span">Por {post.author}</Typography>
+              </Stack>
 
-              <Button variant="outlined" size="small">
-                <Share2 className="h-4 w-4 mr-2" />
+              <Button
+                variant="outlined"
+                size="small"
+                startIcon={
+                  <Box component={Share2} sx={{ height: 16, width: 16 }} />
+                }
+              >
                 Compartilhar
               </Button>
-            </div>
-          </header>
+            </Stack>
+          </Box>
 
-          <Divider className="mb-8" />
+          <Divider sx={{ mb: 4 }} />
 
           {/* Content */}
-          <div className="prose prose-lg max-w-none dark:prose-invert">
-            <div dangerouslySetInnerHTML={{ __html: post.content.replace(/\n/g, '<br>') }} />
-          </div>
+          <Box
+            sx={{
+              "& h1, & h2, & h3": {
+                fontWeight: "bold",
+                mt: 3,
+                mb: 2,
+              },
+              "& p": {
+                mb: 2,
+                lineHeight: 1.8,
+              },
+              "& ul, & ol": {
+                pl: 3,
+                mb: 2,
+              },
+              "& li": {
+                mb: 1,
+              },
+            }}
+          >
+            <div
+              dangerouslySetInnerHTML={{
+                __html: post.content.replace(/\n/g, "<br>"),
+              }}
+            />
+          </Box>
 
-          <Divider className="my-12" />
+          <Divider sx={{ my: 6 }} />
 
           {/* CTA */}
-          <div className="bg-card rounded-lg p-8 text-center">
-            <h2 className="text-2xl font-bold mb-4">
-              Gostou do artigo? Experimente o Gastometria!
-            </h2>
-            <p className="text-muted-foreground mb-6">
-              Coloque essas dicas em prática com nosso dashboard financeiro inteligente. 
-              Comece gratuitamente e transforme sua vida financeira.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="large">
-                <Link href="/signup">
+          <Card sx={{ bgcolor: "background.paper" }}>
+            <CardContent sx={{ p: 4, textAlign: "center" }}>
+              <Typography variant="h5" fontWeight="bold" sx={{ mb: 2 }}>
+                Gostou do artigo? Experimente o Gastometria!
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+                Coloque essas dicas em prática com nosso dashboard financeiro
+                inteligente. Comece gratuitamente e transforme sua vida
+                financeira.
+              </Typography>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={2}
+                justifyContent="center"
+              >
+                <Button
+                  component={Link}
+                  href="/signup"
+                  variant="contained"
+                  size="large"
+                >
                   Criar Conta Grátis
-                </Link>
-              </Button>
-              <Button variant="outlined" size="large">
-                <Link href="/docs">
+                </Button>
+                <Button
+                  component={Link}
+                  href="/docs"
+                  variant="outlined"
+                  size="large"
+                >
                   Ver Documentação
-                </Link>
-              </Button>
-            </div>
-          </div>
-        </article>
-      </div>
-    </div>
+                </Button>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Box>
+      </Container>
+    </Box>
   );
 }

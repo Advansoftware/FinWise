@@ -1,29 +1,52 @@
 import type { TransactionCategory } from "@/lib/types";
-import { Beef, Beer, Car, Film, HeartPulse, Home, ShoppingCart, Utensils, PiggyBank, Briefcase, TrendingUp } from "lucide-react";
+import { Box } from "@mui/material";
+import {
+  Car,
+  Film,
+  HeartPulse,
+  Home,
+  ShoppingCart,
+  Utensils,
+  PiggyBank,
+  Briefcase,
+  TrendingUp,
+  LucideIcon,
+} from "lucide-react";
+import { SxProps, Theme } from "@mui/material/styles";
+import { CSSProperties } from "react";
 
-export function CategoryIcon({ category, className }: { category: TransactionCategory, className?: string }) {
-  const iconProps = { className: className || "h-4 w-4 text-muted-foreground" };
-  
-  switch (category) {
-    case "Supermercado":
-      return <ShoppingCart {...iconProps} />;
-    case "Transporte":
-      return <Car {...iconProps} />;
-    case "Entretenimento":
-      return <Film {...iconProps} />;
-    case "Contas":
-      return <Home {...iconProps} />;
-    case "Restaurante":
-      return <Utensils {...iconProps} />;
-    case "Saúde":
-      return <HeartPulse {...iconProps} />;
-    case "Salário":
-      return <Briefcase {...iconProps} />;
-    case "Investimentos":
-      return <TrendingUp {...iconProps} />;
-    case "Vendas":
-       return <PiggyBank {...iconProps} />;
-    default:
-      return null;
+interface CategoryIconProps {
+  category: TransactionCategory;
+  sx?: SxProps<Theme>;
+  style?: CSSProperties;
+}
+
+const defaultSx: SxProps<Theme> = {
+  width: "1rem",
+  height: "1rem",
+  color: "text.secondary",
+};
+
+export function CategoryIcon({ category, sx, style }: CategoryIconProps) {
+  const mergedSx = { ...defaultSx, ...sx };
+
+  const iconMap: Record<string, LucideIcon> = {
+    Supermercado: ShoppingCart,
+    Transporte: Car,
+    Entretenimento: Film,
+    Contas: Home,
+    Restaurante: Utensils,
+    Saúde: HeartPulse,
+    Salário: Briefcase,
+    Investimentos: TrendingUp,
+    Vendas: PiggyBank,
+  };
+
+  const IconComponent = iconMap[category];
+
+  if (!IconComponent) {
+    return null;
   }
+
+  return <Box component={IconComponent} sx={mergedSx} style={style} />;
 }
