@@ -3,11 +3,11 @@
 
 import {useState, useTransition} from 'react';
 import { Button } from "@mui/material";
-import { Alert, AlertDescription, AlertTitle } from "@mui/material";
+import { Alert, AlertTitle, Typography } from "@mui/material";
 import { Chip } from "@mui/material";
 import { TextField } from "@mui/material";
 import { InputLabel } from "@mui/material";
-import { Select, SelectContent, MenuItem, SelectTrigger, SelectValue } from "@mui/material";
+import { Select, MenuItem } from "@mui/material";
 import { Skeleton } from "@mui/material";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useToast } from "@/hooks/use-toast";
@@ -22,7 +22,7 @@ import { Transaction, TransactionCategory } from "@/lib/types";
 import { MobileCamera } from "@/components/camera/mobile-camera";
 import { FileUpload } from "@/components/camera/file-upload";
 import { Loader2, RotateCcw, Sparkles, BrainCircuit, Info } from "lucide-react";
-import {Box, Stack, Typography} from '@mui/material';
+import {Box, Stack} from '@mui/material';
 
 interface ReceiptScannerProps {
   onComplete?: () => void;
@@ -181,11 +181,10 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
         <Stack direction="row" justifyContent="space-between" alignItems="center">
           <Typography variant="h6" sx={{ fontWeight: 600 }}>Itens Extraídos</Typography>
           <Chip 
-            variant={extractedData.isValid ? 'default' : 'destructive'} 
-            sx={extractedData.isValid ? { bgcolor: 'rgba(34, 197, 94, 0.2)', color: '#86efac', borderColor: 'rgba(34, 197, 94, 0.3)' } : {}}
-          >
-            {extractedData.isValid ? 'Nota Válida' : 'Nota Inválida'}
-          </Chip>
+            label={extractedData.isValid ? 'Nota Válida' : 'Nota Inválida'}
+            variant="filled"
+            color={extractedData.isValid ? 'success' : 'error'}
+          />
         </Stack>
         
         {extractedData.items?.length > 0 ? (
@@ -195,14 +194,18 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
                 <TextField 
                   defaultValue={item.item} 
                   placeholder="Item"
-                  readOnly={!extractedData.isValid}
+                  InputProps={{ readOnly: !extractedData.isValid }}
+                  size="small"
+                  fullWidth
                 />
                 <TextField 
                   type="number" 
-                  step="0.01" 
                   defaultValue={item.amount} 
                   placeholder="Valor"
-                  readOnly={!extractedData.isValid}
+                  InputProps={{ readOnly: !extractedData.isValid }}
+                  inputProps={{ step: "0.01" }}
+                  size="small"
+                  fullWidth
                 />
               </Box>
             ))}
@@ -216,33 +219,36 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
         
         <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 4, p: 3, borderRadius: 2, bgcolor: theme => `${(theme.palette as any).custom?.muted}4D`, border: 1, borderColor: 'divider' }}>
           <Stack spacing={1}>
-            <Label sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Total</Label>
+            <Typography component="label" htmlFor="total" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Total</Typography>
             <TextField 
               type="number" 
-              step="0.01" 
               defaultValue={extractedData.totalAmount || 0} 
               placeholder="Total" 
-              readOnly={!extractedData.isValid}
+              InputProps={{ readOnly: !extractedData.isValid }}
+              inputProps={{ step: "0.01" }}
+              size="small"
+              fullWidth
             />
           </Stack>
           <Stack spacing={1}>
-            <Label sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Data</Label>
+            <Typography component="label" htmlFor="date" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Data</Typography>
             <TextField 
               type="date" 
               defaultValue={extractedData.date} 
               placeholder="Data" 
-              readOnly={!extractedData.isValid}
+              InputProps={{ readOnly: !extractedData.isValid }}
+              size="small"
+              fullWidth
             />
           </Stack>
         </Box>
         
         {!extractedData.isValid && (
-          <Alert variant="contained" color="error">
+          <Alert variant="filled" severity="error">
             <AlertTitle>Nota Não Reconhecida</AlertTitle>
-            <AlertDescription>
-              A IA não conseguiu identificar esta como uma nota fiscal válida. 
-              Certifique-se de que a imagem esteja nítida e bem iluminada.
-            </AlertDescription>
+            <Typography variant="body2">
+              Não foi possível processar a imagem. Tente novamente com uma imagem mais clara.
+            </Typography>
           </Alert>
         )}
 
@@ -267,45 +273,41 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
       {/* AI Provider Selection */}
       {!receiptImage && (
         <Stack spacing={2}>
-          <Label htmlFor="ai-provider">Provedor de IA</Label>
+          <Typography component="label" htmlFor="ai-provider" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Provedor de IA</Typography>
           <Select 
+            id="ai-provider"
             value={selectedAI} 
-            onValueChange={setSelectedAI}
+            onChange={(e) => setSelectedAI(e.target.value)}
             disabled={!canSelectProvider}
+            size="small"
+            fullWidth
           >
-            <SelectTrigger id="ai-provider">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {visionCapableCredentials.map(c => (
-                <MenuItem key={c.id} value={c.id}>
-                  {c.name}
-                  {c.id === DEFAULT_AI_CREDENTIAL.id && (
-                    <Box component="span" sx={{ ml: 2, fontSize: '0.75rem', bgcolor: '#dbeafe', color: '#1e40af', px: 1, borderRadius: 1 }}>Padrão</Box>
-                  )}
-                </MenuItem>
-              ))}
-            </SelectContent>
+            {visionCapableCredentials.map(c => (
+              <MenuItem key={c.id} value={c.id}>
+                {c.name}
+                {c.id === DEFAULT_AI_CREDENTIAL.id && (
+                  <Box component="span" sx={{ ml: 2, fontSize: '0.75rem', bgcolor: '#dbeafe', color: '#1e40af', px: 1, borderRadius: 1 }}>Padrão</Box>
+                )}
+              </MenuItem>
+            ))}
           </Select>
           
           {!canSelectProvider && (
-            <Alert variant="default" sx={{ borderColor: 'rgba(59, 130, 246, 0.5)', color: '#bfdbfe' }}>
-              <Sparkles style={{ width: '1rem', height: '1rem', color: '#60a5fa' }} />
+            <Alert variant="standard" icon={<Sparkles style={{ width: '1rem', height: '1rem', color: '#60a5fa' }} />} sx={{ borderColor: 'rgba(59, 130, 246, 0.5)', color: '#bfdbfe' }}>
               <AlertTitle>Gastometria IA</AlertTitle>
-              <AlertDescription>
+              <Typography variant="body2">
                 Usando modelo padrão otimizado para análise de recibos. Faça upgrade para Plus ou Infinity para escolher outros modelos.
-              </AlertDescription>
+              </Typography>
             </Alert>
           )}
           
           {isOllamaSelected && (
-            <Alert variant="default" sx={{ borderColor: 'rgba(245, 158, 11, 0.5)', color: '#fcd34d' }}>
-              <Info style={{ width: '1rem', height: '1rem', color: '#fbbf24' }} />
+            <Alert variant="standard" icon={<Info style={{ width: '1rem', height: '1rem', color: '#fbbf24' }} />} sx={{ borderColor: 'rgba(245, 158, 11, 0.5)', color: '#fcd34d' }}>
               <AlertTitle>Aviso: Modelo Local com Visão</AlertTitle>
-              <AlertDescription>
+              <Typography variant="body2">
                 Modelos locais (Ollama) com visão podem ter menor precisão e segurança na leitura de recibos. 
                 Recomendamos usar o Gastometria IA para melhores resultados.
-              </AlertDescription>
+              </Typography>
             </Alert>
           )}
         </Stack>

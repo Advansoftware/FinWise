@@ -4,25 +4,19 @@
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogTrigger,
+  DialogContentText,
+  Drawer,
+  Box,
+  Typography,
+  Button
 } from "@mui/material";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetTrigger,
-} from "@mui/material";
-import {useState} from 'react';
+import {useState, cloneElement} from 'react';
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ReceiptScanner } from "./receipt-scanner";
 
 interface ReceiptScannerDialogProps {
-  children: React.ReactNode;
+  children: React.ReactElement;
 }
 
 export function ReceiptScannerDialog({ children }: ReceiptScannerDialogProps) {
@@ -37,39 +31,59 @@ export function ReceiptScannerDialog({ children }: ReceiptScannerDialogProps) {
     <ReceiptScanner onComplete={handleComplete} />
   );
 
+  const trigger = cloneElement(children, {
+    onClick: () => setIsOpen(true)
+  });
+
   if (isMobile) {
     return (
-      <Sheet open={isOpen} onOpenChange={setIsOpen}>
-        <SheetTrigger asChild>{children}</SheetTrigger>
-        <SheetContent side="bottom" sx={{ height: '95vh', display: 'flex', flexDirection: 'column' }}>
-          <SheetHeader sx={{ textAlign: 'left' }}>
-            <SheetTitle>Escanear Nota Fiscal</SheetTitle>
-            <SheetDescription>
+      <>
+        {trigger}
+        <Drawer 
+          anchor="bottom" 
+          open={isOpen} 
+          onClose={() => setIsOpen(false)}
+          PaperProps={{
+            sx: { height: '95vh', display: 'flex', flexDirection: 'column' }
+          }}
+        >
+          <Box sx={{ p: 3, textAlign: 'left' }}>
+            <Typography variant="h6" component="h2" sx={{ mb: 1 }}>
+              Escanear Nota Fiscal
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
               Aponte a câmera para a nota fiscal ou envie uma imagem da galeria.
-            </SheetDescription>
-          </SheetHeader>
+            </Typography>
+          </Box>
 
-          <div style={{ flex: 1, overflowY: 'auto' }}>
+          <Box sx={{ flex: 1, overflowY: 'auto', p: 3, pt: 0 }}>
             {renderContent()}
-          </div>
-        </SheetContent>
-      </Sheet>
+          </Box>
+        </Drawer>
+      </>
     );
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent sx={{ maxWidth: { sm: '42rem' }, maxHeight: '90vh', overflowY: 'auto' }}>
-        <DialogHeader>
-          <DialogTitle>Escanear Nota Fiscal</DialogTitle>
-          <DialogDescription>
-            Faça upload da imagem (PDF, PNG, JPG) da nota fiscal para adicionar as transações.
-          </DialogDescription>
-        </DialogHeader>
-
-        {renderContent()}
-      </DialogContent>
-    </Dialog>
+    <>
+      {trigger}
+      <Dialog 
+        open={isOpen} 
+        onClose={() => setIsOpen(false)}
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: { maxHeight: '90vh' }
+        }}
+      >
+        <DialogTitle>Escanear Nota Fiscal</DialogTitle>
+        <DialogContentText sx={{ px: 3, pb: 2 }}>
+          Faça upload da imagem (PDF, PNG, JPG) da nota fiscal para adicionar as transações.
+        </DialogContentText>
+        <DialogContent sx={{ overflowY: 'auto' }}>
+          {renderContent()}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

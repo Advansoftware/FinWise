@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader } from "@mui/material";
 import { Button } from "@mui/material";
 import { TextField } from "@mui/material";
 import { InputLabel } from "@mui/material";
-import { Select, SelectContent, MenuItem, SelectTrigger, SelectValue } from "@mui/material";
+import { Select, MenuItem } from "@mui/material";
 import { Save, Plus, X, Receipt, DollarSign } from "lucide-react";
 import { Divider } from "@mui/material";
 import { useAuth } from "@/hooks/use-auth";
@@ -200,7 +200,7 @@ export function PayrollCard() {
               </Button>
             )}
             <Button
-              variant={isEditing ? "default" : "outline"}
+              variant={isEditing ? "contained" : "outlined"}
               size="small"
               onClick={() => {
                 if (isEditing) {
@@ -230,19 +230,20 @@ export function PayrollCard() {
         {/* Salary Information Grid */}
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(3, 1fr)' }, gap: 2 }}>
           <Stack spacing={1}>
-            <Label htmlFor="grossSalary" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Salário Bruto</Label>
+            <Typography component="label" htmlFor="grossSalary" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Salário Bruto</Typography>
             {isEditing ? (
-              <Input
+              <TextField
                 id="grossSalary"
                 type="number"
-                step="0.01"
                 value={payrollData.grossSalary}
                 onChange={(e) => setPayrollData(prev => ({
                   ...prev,
                   grossSalary: parseFloat(e.target.value) || 0
                 }))}
                 placeholder="0,00"
-                sx={{ height: 36 }}
+                size="small"
+                fullWidth
+                inputProps={{ step: "0.01" }}
               />
             ) : (
               <Box sx={{ height: 36, display: 'flex', alignItems: 'center', px: 1.5, bgcolor: 'rgba(34, 197, 94, 0.1)', color: '#16a34a', fontWeight: 500, borderRadius: '0.375rem', border: '1px solid rgba(34, 197, 94, 0.2)' }}>
@@ -252,10 +253,10 @@ export function PayrollCard() {
           </Stack>
           
           <Stack spacing={1}>
-            <Label sx={{ fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Typography component="label" sx={{ fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <DollarSign style={{ width: '1rem', height: '1rem', color: '#2563eb' }} />
               <span>Total de Ajudas de Custo</span>
-            </Label>
+            </Typography>
             <Box sx={{ height: 36, display: 'flex', alignItems: 'center', px: 1.5, bgcolor: 'rgba(59, 130, 246, 0.1)', color: '#2563eb', fontWeight: 500, borderRadius: '0.375rem', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
               {formatCurrency(totalAllowances)}
             </Box>
@@ -263,10 +264,10 @@ export function PayrollCard() {
 
           {/* Net Salary - Highlighted */}
           <Stack spacing={1}>
-            <Label sx={{ fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Typography component="label" sx={{ fontSize: '0.875rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <DollarSign style={{ width: '1rem', height: '1rem', color: 'var(--primary)' }} />
               <span>Salário Líquido</span>
-            </Label>
+            </Typography>
             <Box sx={{ height: 36, display: 'flex', alignItems: 'center', px: 1.5, bgcolor: 'rgba(var(--primary-rgb), 0.1)', color: 'var(--primary)', fontWeight: 700, borderRadius: '0.375rem', border: '1px solid rgba(var(--primary-rgb), 0.2)' }}>
               {formatCurrency(payrollData.netSalary)}
             </Box>
@@ -278,9 +279,9 @@ export function PayrollCard() {
           {/* Descontos */}
           <Stack spacing={1.5}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <Label sx={{ fontSize: '0.875rem', fontWeight: 500, color: '#dc2626' }}>
+              <Typography component="label" sx={{ fontSize: '0.875rem', fontWeight: 500, color: '#dc2626' }}>
                 💳 Descontos {payrollData.discounts.filter(d => d.type === 'discount').length > 0 && `(${payrollData.discounts.filter(d => d.type === 'discount').length})`}
-              </Label>
+              </Typography>
               {isEditing && (
                 <Button
                   variant="outlined"
@@ -319,33 +320,31 @@ export function PayrollCard() {
                       <>
                         <Select
                           value={discount.name}
-                          onValueChange={(value) => updateDiscount(discount.id, "name", value)}
+                          onChange={(e) => updateDiscount(discount.id, "name", e.target.value)}
+                          size="small"
+                          fullWidth
+                          sx={{ flex: 1, fontSize: '0.75rem' }}
                         >
-                          <SelectTrigger sx={{ flex: 1, height: 32, fontSize: '0.75rem' }}>
-                            <SelectValue placeholder="Selecione o desconto" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {STANDARD_DISCOUNT_TYPES.map((discountType) => (
-                              <MenuItem key={discountType} value={discountType} sx={{ fontSize: '0.75rem' }}>
-                                {discountType}
-                              </MenuItem>
-                            ))}
-                          </SelectContent>
+                          {STANDARD_DISCOUNT_TYPES.map((discountType) => (
+                            <MenuItem key={discountType} value={discountType} sx={{ fontSize: '0.75rem' }}>
+                              {discountType}
+                            </MenuItem>
+                          ))}
                         </Select>
-                        <Input
+                        <TextField
                           type="number"
-                          step="0.01"
                           value={discount.amount}
                           onChange={(e) => updateDiscount(discount.id, "amount", parseFloat(e.target.value) || 0)}
                           placeholder="0,00"
-                          sx={{ width: 96, height: 32, fontSize: '0.75rem' }}
+                          size="small"
+                          inputProps={{ step: "0.01" }}
+                          sx={{ width: 96, fontSize: '0.75rem' }}
                         />
                         <Button
                           variant="outlined"
                           size="small"
-                          sx={{ minWidth: '2rem', width: '2rem', height: '2rem', p: 0 }}
                           onClick={() => removeDiscount(discount.id)}
-                          sx={{ height: 32, width: 32 }}
+                          sx={{ height: 32, width: 32, minWidth: '2rem', p: 0 }}
                         >
                           <X style={{ width: '0.75rem', height: '0.75rem' }} />
                         </Button>
@@ -355,9 +354,7 @@ export function PayrollCard() {
                         <Typography sx={{ flex: 1, fontSize: '0.75rem', fontWeight: 500, color: '#dc2626' }}>
                           {discount.name}
                         </Typography>
-                        <Chip variant="contained" color="error" sx={{ fontSize: '0.75rem' }}>
-                          -{formatCurrency(discount.amount)}
-                        </Chip>
+                        <Chip variant="filled" color="error" label={`-${formatCurrency(discount.amount)}`} sx={{ fontSize: '0.75rem' }} />
                       </>
                     )}
                   </Stack>
@@ -383,9 +380,9 @@ export function PayrollCard() {
           {/* Ajudas de Custo / Adicionais */}
           <Stack spacing={1.5}>
             <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <Label sx={{ fontSize: '0.875rem', fontWeight: 500, color: '#16a34a' }}>
+              <Typography component="label" sx={{ fontSize: '0.875rem', fontWeight: 500, color: '#16a34a' }}>
                 💰 Adicionais {payrollData.discounts.filter(d => d.type === 'allowance').length > 0 && `(${payrollData.discounts.filter(d => d.type === 'allowance').length})`}
-              </Label>
+              </Typography>
               {isEditing && (
                 <Button
                   variant="outlined"
@@ -424,18 +421,16 @@ export function PayrollCard() {
                       <>
                         <Select
                           value={allowance.name}
-                          onValueChange={(value) => updateDiscount(allowance.id, "name", value)}
+                          onChange={(e) => updateDiscount(allowance.id, "name", e.target.value)}
+                          size="small"
+                          fullWidth
+                          sx={{ flex: 1, fontSize: '0.75rem' }}
                         >
-                          <SelectTrigger sx={{ flex: 1, height: 32, fontSize: '0.75rem' }}>
-                            <SelectValue placeholder="Selecione o adicional" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {STANDARD_ALLOWANCE_TYPES.map((allowanceType) => (
-                              <MenuItem key={allowanceType} value={allowanceType} sx={{ fontSize: '0.75rem' }}>
-                                {allowanceType}
-                              </MenuItem>
-                            ))}
-                          </SelectContent>
+                          {STANDARD_ALLOWANCE_TYPES.map((allowanceType) => (
+                            <MenuItem key={allowanceType} value={allowanceType} sx={{ fontSize: '0.75rem' }}>
+                              {allowanceType}
+                            </MenuItem>
+                          ))}
                         </Select>
                         <TextField
                           type="number"
@@ -449,9 +444,8 @@ export function PayrollCard() {
                         <Button
                           variant="outlined"
                           size="small"
-                          sx={{ minWidth: '2rem', width: '2rem', height: '2rem', p: 0 }}
                           onClick={() => removeDiscount(allowance.id)}
-                          sx={{ height: 32, width: 32 }}
+                          sx={{ height: 32, width: 32, minWidth: '2rem', p: 0 }}
                         >
                           <X style={{ width: '0.75rem', height: '0.75rem' }} />
                         </Button>
@@ -461,9 +455,7 @@ export function PayrollCard() {
                         <Typography sx={{ flex: 1, fontSize: '0.75rem', fontWeight: 500, color: '#16a34a' }}>
                           {allowance.name}
                         </Typography>
-                        <Chip variant="contained" color="secondary" sx={{ fontSize: '0.75rem', bgcolor: 'rgba(34, 197, 94, 0.2)', color: '#16a34a' }}>
-                          +{formatCurrency(allowance.amount)}
-                        </Chip>
+                        <Chip variant="filled" color="success" label={`+${formatCurrency(allowance.amount)}`} sx={{ fontSize: '0.75rem' }} />
                       </>
                     )}
                   </Stack>
