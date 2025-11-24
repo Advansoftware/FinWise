@@ -180,18 +180,6 @@ export default function LoginPage() {
                       </InputAdornment>
                     ),
                   }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      bgcolor: "background.default",
-                      "&:hover": {
-                        bgcolor: (theme) =>
-                          alpha(theme.palette.background.default, 0.8),
-                      },
-                      "&.Mui-focused": {
-                        bgcolor: "background.default",
-                      },
-                    },
-                  }}
                 />
               )}
             />
@@ -259,18 +247,6 @@ export default function LoginPage() {
                           </IconButton>
                         </InputAdornment>
                       ),
-                    }}
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        bgcolor: "background.default",
-                        "&:hover": {
-                          bgcolor: (theme) =>
-                            alpha(theme.palette.background.default, 0.8),
-                        },
-                        "&.Mui-focused": {
-                          bgcolor: "background.default",
-                        },
-                      },
                     }}
                   />
                 )}

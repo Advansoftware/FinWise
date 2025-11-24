@@ -1,27 +1,32 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { Calendar as CalendarIcon } from "lucide-react"
-import { format } from "date-fns"
-import { ptBR } from "date-fns/locale"
-import { DateRange } from "react-day-picker"
-import {Button, Popover, Box, useTheme} from '@mui/material';
-import {DayPicker} from 'react-day-picker';
-import 'react-day-picker/dist/style.css';
+import * as React from "react";
+import { Calendar as CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { DateRange } from "react-day-picker";
+import { Button, Popover, Box, useTheme } from "@mui/material";
+import { DayPicker } from "react-day-picker";
+import "react-day-picker/dist/style.css";
 
-interface DateRangePickerProps extends React.HTMLAttributes<HTMLDivElement> {
+interface DateRangePickerProps {
   initialDate?: DateRange;
   onUpdate: (range?: DateRange) => void;
 }
 
-export function DateRangePicker({ className, initialDate, onUpdate }: DateRangePickerProps) {
-  const [date, setDate] = React.useState<DateRange | undefined>(initialDate)
-  const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(null);
+export function DateRangePicker({
+  initialDate,
+  onUpdate,
+}: DateRangePickerProps) {
+  const [date, setDate] = React.useState<DateRange | undefined>(initialDate);
+  const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
+    null
+  );
   const theme = useTheme();
 
   React.useEffect(() => {
-    onUpdate(date)
-  }, [date, onUpdate])
+    onUpdate(date);
+  }, [date, onUpdate]);
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
     setAnchorEl(event.currentTarget);
@@ -34,18 +39,18 @@ export function DateRangePicker({ className, initialDate, onUpdate }: DateRangeP
   const open = Boolean(anchorEl);
 
   return (
-    <Box sx={{ display: 'grid', gap: 2 }} className={className}>
+    <Box sx={{ display: "grid", gap: 2 }}>
       <Button
         id="date"
         variant="outlined"
         onClick={handleClick}
         startIcon={<CalendarIcon size={16} />}
         sx={{
-          width: '100%',
-          justifyContent: 'flex-start',
-          textAlign: 'left',
+          width: "100%",
+          justifyContent: "flex-start",
+          textAlign: "left",
           fontWeight: 400,
-          color: date ? 'text.primary' : 'text.secondary'
+          color: date ? "text.primary" : "text.secondary",
         }}
       >
         {date?.from ? (
@@ -66,12 +71,12 @@ export function DateRangePicker({ className, initialDate, onUpdate }: DateRangeP
         anchorEl={anchorEl}
         onClose={handleClose}
         anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'left',
+          vertical: "bottom",
+          horizontal: "left",
         }}
         transformOrigin={{
-          vertical: 'top',
-          horizontal: 'left',
+          vertical: "top",
+          horizontal: "left",
         }}
       >
         <Box sx={{ p: 2 }}>
@@ -83,13 +88,13 @@ export function DateRangePicker({ className, initialDate, onUpdate }: DateRangeP
             numberOfMonths={2}
             locale={ptBR}
             styles={{
-              months: { display: 'flex', gap: '1rem' },
+              months: { display: "flex", gap: "1rem" },
               month: { margin: 0 },
-              caption: { 
-                display: 'flex', 
-                justifyContent: 'center', 
-                padding: '0.5rem',
-                color: theme.palette.text.primary
+              caption: {
+                display: "flex",
+                justifyContent: "center",
+                padding: "0.5rem",
+                color: theme.palette.text.primary,
               },
               day: {
                 color: theme.palette.text.primary,
@@ -102,7 +107,7 @@ export function DateRangePicker({ className, initialDate, onUpdate }: DateRangeP
                 color: theme.palette.primary.contrastText,
               },
               today: {
-                fontWeight: 'bold',
+                fontWeight: "bold",
                 color: theme.palette.primary.main,
               },
             }}
@@ -110,5 +115,5 @@ export function DateRangePicker({ className, initialDate, onUpdate }: DateRangeP
         </Box>
       </Popover>
     </Box>
-  )
+  );
 }

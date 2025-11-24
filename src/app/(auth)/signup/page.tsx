@@ -217,11 +217,6 @@ export default function SignupPage() {
                       </InputAdornment>
                     ),
                   }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      bgcolor: "background.default",
-                    },
-                  }}
                 />
               )}
             />
@@ -253,11 +248,6 @@ export default function SignupPage() {
                         />
                       </InputAdornment>
                     ),
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      bgcolor: "background.default",
-                    },
                   }}
                 />
               )}
@@ -309,11 +299,6 @@ export default function SignupPage() {
                           </IconButton>
                         </InputAdornment>
                       ),
-                    }}
-                    sx={{
-                      "& .MuiOutlinedInput-root": {
-                        bgcolor: "background.default",
-                      },
                     }}
                   />
                 )}
@@ -400,11 +385,6 @@ export default function SignupPage() {
                         </IconButton>
                       </InputAdornment>
                     ),
-                  }}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      bgcolor: "background.default",
-                    },
                   }}
                 />
               )}

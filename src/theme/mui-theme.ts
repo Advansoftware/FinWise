@@ -334,25 +334,59 @@ const getThemeOptions = (mode: 'light' | 'dark'): ThemeOptions => ({
     MuiFormControl: {
       styleOverrides: {
         root: {
-          marginBottom: '16px', // Espaçamento entre inputs
+          // Espaçamento entre campos de formulário
         },
       },
       defaultProps: {
-        margin: 'normal', // Adiciona margin top e bottom por padrão
+        margin: 'dense',
+        fullWidth: true,
+      },
+    },
+
+    MuiFormLabel: {
+      styleOverrides: {
+        root: {
+          fontWeight: typographyTokens.fontWeight.medium,
+          marginBottom: '4px',
+          color: mode === 'dark' ? colorsDark.foreground : colorsLight.foreground,
+          '&.Mui-focused': {
+            color: mode === 'dark' ? colorsDark.primary : colorsLight.primary,
+          },
+        },
+      },
+    },
+
+    MuiInputLabel: {
+      styleOverrides: {
+        root: {
+          fontWeight: typographyTokens.fontWeight.medium,
+        },
       },
     },
 
     MuiTextField: {
       styleOverrides: {
         root: {
-          marginBottom: '8px', // Espaçamento extra entre TextFields
           '& .MuiOutlinedInput-root': {
             borderRadius: radius.md,
           },
         },
       },
       defaultProps: {
-        margin: 'normal', // margin top: 16px, margin bottom: 8px
+        margin: 'dense',
+        fullWidth: true,
+        size: 'medium',
+      },
+    },
+
+    MuiSelect: {
+      styleOverrides: {
+        root: {
+          borderRadius: radius.md,
+        },
+      },
+      defaultProps: {
+        size: 'medium',
       },
     },
 
@@ -403,6 +437,43 @@ const getThemeOptions = (mode: 'light' | 'dark'): ThemeOptions => ({
       styleOverrides: {
         paper: {
           borderRadius: radius.lg,
+          maxHeight: 'calc(100% - 64px)',
+        },
+        paperScrollBody: {
+          maxHeight: 'none',
+        },
+      },
+      defaultProps: {
+        scroll: 'body',
+      },
+    },
+
+    MuiDialogTitle: {
+      styleOverrides: {
+        root: {
+          fontWeight: typographyTokens.fontWeight.semibold,
+          fontSize: typographyTokens.fontSize.xl,
+          paddingBottom: '8px',
+        },
+      },
+    },
+
+    MuiDialogContent: {
+      styleOverrides: {
+        root: {
+          paddingTop: '8px',
+        },
+      },
+    },
+
+    MuiDialogActions: {
+      styleOverrides: {
+        root: {
+          padding: '16px 24px',
+          gap: '12px',
+          '& > :not(:first-of-type)': {
+            marginLeft: 0,
+          },
         },
       },
     },

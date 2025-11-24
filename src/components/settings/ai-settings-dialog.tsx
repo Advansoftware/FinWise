@@ -1,58 +1,104 @@
+"use client";
 
-
-'use client';
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Dialog, DialogContent, DialogTitle, DialogActions } from "@mui/material";
-import { Button } from "@mui/material";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/mui-wrappers/form";
-import { TextField, Select, MenuItem, Box, Typography } from "@mui/material";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogActions,
+  Button,
+  TextField,
+  Select,
+  MenuItem,
+  Box,
+  Typography,
+  Stack,
+  FormControl,
+  InputLabel,
+  FormHelperText,
+  CircularProgress,
+  IconButton,
+} from "@mui/material";
+import { Refresh as RefreshIcon } from "@mui/icons-material";
 import { useToast } from "@/hooks/use-toast";
-import { AICredential, AIProvider, OpenAIModel } from "@/lib/types";
+import { AICredential } from "@/lib/types";
 import { useAISettings } from "@/hooks/use-ai-settings";
 import { useEffect, useState, useTransition } from "react";
-import { Loader2, RefreshCw } from "lucide-react";
-import { v4 as uuidv4 } from "uuid";
 import { usePlan } from "@/hooks/use-plan";
 
-
-const credentialSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().min(1, "O nome é obrigatório."),
-  provider: z.enum(["ollama", "googleai", "openai", "gastometria"]),
-  ollamaModel: z.string().optional(),
-  ollamaServerAddress: z.string().optional(),
-  googleAIApiKey: z.string().optional(),
-  openAIModel: z.enum(["gpt-3.5-turbo", "gpt-4", "gpt-4-vision-preview", "gpt-4o", "gpt-4o-mini", "gpt-4-turbo"]).optional(),
-  openAIApiKey: z.string().optional(),
-}).superRefine((data, ctx) => {
-    if (data.provider === 'ollama') {
-        if (!data.ollamaModel) {
-          ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O modelo Ollama é obrigatório.", path: ["ollamaModel"] });
+const credentialSchema = z
+  .object({
+    id: z.string().optional(),
+    name: z.string().min(1, "O nome é obrigatório."),
+    provider: z.enum(["ollama", "googleai", "openai", "gastometria"]),
+    ollamaModel: z.string().optional(),
+    ollamaServerAddress: z.string().optional(),
+    googleAIApiKey: z.string().optional(),
+    openAIModel: z
+      .enum([
+        "gpt-3.5-turbo",
+        "gpt-4",
+        "gpt-4-vision-preview",
+        "gpt-4o",
+        "gpt-4o-mini",
+        "gpt-4-turbo",
+      ])
+      .optional(),
+    openAIApiKey: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (data.provider === "ollama") {
+      if (!data.ollamaModel) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "O modelo Ollama é obrigatório.",
+          path: ["ollamaModel"],
+        });
+      }
+      if (!data.ollamaServerAddress) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "O endereço do servidor é obrigatório.",
+          path: ["ollamaServerAddress"],
+        });
+      } else {
+        try {
+          new URL(data.ollamaServerAddress);
+        } catch (error) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "URL do servidor inválida.",
+            path: ["ollamaServerAddress"],
+          });
         }
-        if (!data.ollamaServerAddress) {
-          ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O endereço do servidor é obrigatório.", path: ["ollamaServerAddress"] });
-        } else {
-            try {
-                new URL(data.ollamaServerAddress);
-            } catch (error) {
-                ctx.addIssue({ code: z.ZodIssueCode.custom, message: "URL do servidor inválida.", path: ["ollamaServerAddress"] });
-            }
-        }
+      }
     }
-    if (data.provider === 'googleai' && !data.googleAIApiKey) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "A chave de API do Google AI é obrigatória.", path: ["googleAIApiKey"] });
+    if (data.provider === "googleai" && !data.googleAIApiKey) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "A chave de API do Google AI é obrigatória.",
+        path: ["googleAIApiKey"],
+      });
     }
-    if (data.provider === 'openai') {
-       if (!data.openAIApiKey) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "A chave de API do OpenAI é obrigatória.", path: ["openAIApiKey"] });
-       }
-       if (!data.openAIModel) {
-        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "O modelo OpenAI é obrigatório.", path: ["openAIModel"] });
-       }
+    if (data.provider === "openai") {
+      if (!data.openAIApiKey) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "A chave de API do OpenAI é obrigatória.",
+          path: ["openAIApiKey"],
+        });
+      }
+      if (!data.openAIModel) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "O modelo OpenAI é obrigatório.",
+          path: ["openAIModel"],
+        });
+      }
     }
-});
+  });
 
 type CredentialFormValues = z.infer<typeof credentialSchema>;
 
@@ -62,14 +108,25 @@ interface AISettingsDialogProps {
   initialData: AICredential | null;
 }
 
-export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsDialogProps) {
+export function AISettingsDialog({
+  isOpen,
+  setIsOpen,
+  initialData,
+}: AISettingsDialogProps) {
   const { toast } = useToast();
   const { handleSaveCredential, isSaving } = useAISettings();
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
   const [isFetchingOllama, startFetchingOllama] = useTransition();
   const { isPlus, isInfinity } = usePlan();
 
-  const form = useForm<CredentialFormValues>({
+  const {
+    control,
+    handleSubmit,
+    watch,
+    reset,
+    getValues,
+    formState: { errors },
+  } = useForm<CredentialFormValues>({
     resolver: zodResolver(credentialSchema),
     defaultValues: {
       name: "",
@@ -79,59 +136,65 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
     },
   });
 
-  const provider = form.watch("provider");
+  const provider = watch("provider");
 
   useEffect(() => {
     if (isOpen) {
-        if (initialData) {
-            form.reset(initialData);
-        } else {
-            form.reset({
-                name: "",
-                provider: "ollama",
-                ollamaServerAddress: "http://127.0.0.1:11434",
-                openAIModel: "gpt-4o-mini",
-            });
-        }
+      if (initialData) {
+        reset(initialData);
+      } else {
+        reset({
+          name: "",
+          provider: "ollama",
+          ollamaServerAddress: "http://127.0.0.1:11434",
+          openAIModel: "gpt-4o-mini",
+        });
+      }
     }
-  }, [initialData, form, isOpen]);
+  }, [initialData, reset, isOpen]);
 
   const fetchOllamaModels = async () => {
-    const address = form.getValues("ollamaServerAddress");
+    const address = getValues("ollamaServerAddress");
     if (!address) {
-        toast({ variant: "error", title: 'Endereço do Servidor Ollama Necessário' });
-        return;
+      toast({
+        variant: "error",
+        title: "Endereço do Servidor Ollama Necessário",
+      });
+      return;
     }
     startFetchingOllama(async () => {
-        try {
-            const response = await fetch('/api/ollama-proxy', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: `${address}/api/tags` }),
-            });
+      try {
+        const response = await fetch("/api/ollama-proxy", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: `${address}/api/tags` }),
+        });
 
-            if (!response.ok) {
-                const errorData = await response.json();
-                throw new Error(errorData.error || "Failed to fetch");
-            }
-            const data = await response.json();
-            const models = data.models.map((model: any) => model.name.replace(':latest', ''));
-            setOllamaModels(models);
-            if (models.length === 0) {
-                 toast({
-                    variant: "error",
-                    title: 'Nenhum modelo Ollama encontrado',
-                    description: `Verifique se o Ollama está em execução em ${address}.`,
-                });
-            }
-        } catch(e: any) {
-             toast({
-                variant: "error",
-                title: 'Falha na Conexão com Ollama',
-                description: e.message || `Não foi possível conectar ao Ollama em ${address}.`,
-            });
-            setOllamaModels([]);
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || "Failed to fetch");
         }
+        const data = await response.json();
+        const models = data.models.map((model: any) =>
+          model.name.replace(":latest", "")
+        );
+        setOllamaModels(models);
+        if (models.length === 0) {
+          toast({
+            variant: "error",
+            title: "Nenhum modelo Ollama encontrado",
+            description: `Verifique se o Ollama está em execução em ${address}.`,
+          });
+        }
+      } catch (e: any) {
+        toast({
+          variant: "error",
+          title: "Falha na Conexão com Ollama",
+          description:
+            e.message || `Não foi possível conectar ao Ollama em ${address}.`,
+        });
+        setOllamaModels([]);
+      }
     });
   };
 
@@ -140,147 +203,223 @@ export function AISettingsDialog({ isOpen, setIsOpen, initialData }: AISettingsD
   };
 
   return (
-    <Dialog open={isOpen} onClose={() => setIsOpen(false)} fullWidth maxWidth="sm">
-      <DialogTitle>{initialData ? "Editar Credencial" : "Nova Credencial de IA"}</DialogTitle>
+    <Dialog
+      open={isOpen}
+      onClose={() => setIsOpen(false)}
+      fullWidth
+      maxWidth="sm"
+    >
+      <DialogTitle>
+        {initialData ? "Editar Credencial" : "Nova Credencial de IA"}
+      </DialogTitle>
       <DialogContent>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
           Forneça os detalhes para a configuração de IA.
         </Typography>
-        <Form form={form} onSubmit={onSubmit}>
-             <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Nome da Configuração</FormLabel>
-                        <FormControl>
-                            <TextField placeholder="Ex: Chave Pessoal OpenAI" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <FormField
-                control={form.control}
-                name="provider"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Provedor</FormLabel>
-                        <Select onChange={field.onChange} value={field.value} fullWidth>
-                            {isPlus && <MenuItem value="ollama">Ollama (Local/Remoto)</MenuItem>}
-                            {isInfinity && <MenuItem value="googleai">Google AI</MenuItem>}
-                            {isInfinity && <MenuItem value="openai">OpenAI</MenuItem>}
-                        </Select>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
 
-            {provider === 'ollama' && (
-                <>
-                    <FormField
-                        control={form.control}
-                        name="ollamaServerAddress"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Endereço do Servidor Ollama</FormLabel>
-                                <FormControl>
-                                    <TextField placeholder="http://127.0.0.1:11434" {...field} value={field.value || ''} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="ollamaModel"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Modelo Ollama</FormLabel>
-                                <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                    <Select 
-                                        onChange={field.onChange} 
-                                        value={field.value || ''} 
-                                        disabled={isFetchingOllama || ollamaModels.length === 0}
-                                        fullWidth
-                                        displayEmpty
-                                    >
-                                        <MenuItem value="" disabled>
-                                            {ollamaModels.length > 0 ? "Selecione um modelo" : "Nenhum modelo encontrado"}
-                                        </MenuItem>
-                                        {ollamaModels.map(model => (
-                                            <MenuItem key={model} value={model}>{model}</MenuItem>
-                                        ))}
-                                    </Select>
-                                    <Button type="button" variant="text" size="small" sx={{ minWidth: '2.5rem', width: '2.5rem', p: 0 }} onClick={fetchOllamaModels} disabled={isFetchingOllama || !form.getValues("ollamaServerAddress")}>
-                                        <RefreshCw style={{ width: '1rem', height: '1rem' }} className={isFetchingOllama ? 'animate-spin': ''} />
-                                    </Button>
-                                </div>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </>
-            )}
-
-            {provider === 'googleai' && isInfinity && (
-                <FormField
-                    control={form.control}
-                    name="googleAIApiKey"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Chave de API - Google AI</FormLabel>
-                            <FormControl>
-                                <TextField type="password" placeholder="Cole sua chave de API aqui" {...field} value={field.value || ''} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
+        <Box
+          component="form"
+          onSubmit={handleSubmit(onSubmit)}
+          id="ai-settings-form"
+        >
+          <Stack spacing={2.5}>
+            {/* Nome */}
+            <Controller
+              name="name"
+              control={control}
+              render={({ field }) => (
+                <TextField
+                  {...field}
+                  label="Nome da Configuração"
+                  placeholder="Ex: Chave Pessoal OpenAI"
+                  error={!!errors.name}
+                  helperText={errors.name?.message}
                 />
+              )}
+            />
+
+            {/* Provedor */}
+            <Controller
+              name="provider"
+              control={control}
+              render={({ field }) => (
+                <FormControl error={!!errors.provider}>
+                  <InputLabel>Provedor</InputLabel>
+                  <Select {...field} label="Provedor">
+                    {isPlus && (
+                      <MenuItem value="ollama">Ollama (Local/Remoto)</MenuItem>
+                    )}
+                    {isInfinity && (
+                      <MenuItem value="googleai">Google AI</MenuItem>
+                    )}
+                    {isInfinity && <MenuItem value="openai">OpenAI</MenuItem>}
+                  </Select>
+                  {errors.provider && (
+                    <FormHelperText>{errors.provider.message}</FormHelperText>
+                  )}
+                </FormControl>
+              )}
+            />
+
+            {/* Campos Ollama */}
+            {provider === "ollama" && (
+              <>
+                <Controller
+                  name="ollamaServerAddress"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Endereço do Servidor Ollama"
+                      placeholder="http://127.0.0.1:11434"
+                      error={!!errors.ollamaServerAddress}
+                      helperText={errors.ollamaServerAddress?.message}
+                      value={field.value || ""}
+                    />
+                  )}
+                />
+
+                <Controller
+                  name="ollamaModel"
+                  control={control}
+                  render={({ field }) => (
+                    <FormControl error={!!errors.ollamaModel}>
+                      <InputLabel>Modelo Ollama</InputLabel>
+                      <Stack direction="row" spacing={1}>
+                        <Select
+                          {...field}
+                          label="Modelo Ollama"
+                          disabled={
+                            isFetchingOllama || ollamaModels.length === 0
+                          }
+                          displayEmpty
+                          value={field.value || ""}
+                          sx={{ flex: 1 }}
+                        >
+                          <MenuItem value="" disabled>
+                            {ollamaModels.length > 0
+                              ? "Selecione um modelo"
+                              : "Nenhum modelo encontrado"}
+                          </MenuItem>
+                          {ollamaModels.map((model) => (
+                            <MenuItem key={model} value={model}>
+                              {model}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                        <IconButton
+                          onClick={fetchOllamaModels}
+                          disabled={
+                            isFetchingOllama ||
+                            !getValues("ollamaServerAddress")
+                          }
+                          sx={{
+                            border: 1,
+                            borderColor: "divider",
+                            borderRadius: 1,
+                          }}
+                        >
+                          {isFetchingOllama ? (
+                            <CircularProgress size={20} />
+                          ) : (
+                            <RefreshIcon />
+                          )}
+                        </IconButton>
+                      </Stack>
+                      {errors.ollamaModel && (
+                        <FormHelperText>
+                          {errors.ollamaModel.message}
+                        </FormHelperText>
+                      )}
+                    </FormControl>
+                  )}
+                />
+              </>
             )}
 
-            {provider === 'openai' && isInfinity && (
-                <>
-                    <FormField
-                        control={form.control}
-                        name="openAIModel"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Modelo OpenAI</FormLabel>
-                                <Select onChange={field.onChange} value={field.value} fullWidth>
-                                    <MenuItem value="gpt-4o">GPT-4o</MenuItem>
-                                    <MenuItem value="gpt-4-vision-preview">GPT-4 Vision</MenuItem>
-                                    <MenuItem value="gpt-4">GPT-4</MenuItem>
-                                    <MenuItem value="gpt-3.5-turbo">GPT-3.5 Turbo</MenuItem>
-                                </Select>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="openAIApiKey"
-                        render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Chave de API - OpenAI</FormLabel>
-                                <FormControl>
-                                    <TextField type="password" placeholder="Cole sua chave de API aqui" {...field} value={field.value || ''} />
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                </>
+            {/* Campos Google AI */}
+            {provider === "googleai" && isInfinity && (
+              <Controller
+                name="googleAIApiKey"
+                control={control}
+                render={({ field }) => (
+                  <TextField
+                    {...field}
+                    label="Chave de API - Google AI"
+                    type="password"
+                    placeholder="Cole sua chave de API aqui"
+                    error={!!errors.googleAIApiKey}
+                    helperText={errors.googleAIApiKey?.message}
+                    value={field.value || ""}
+                  />
+                )}
+              />
             )}
-        </Form>
+
+            {/* Campos OpenAI */}
+            {provider === "openai" && isInfinity && (
+              <>
+                <Controller
+                  name="openAIModel"
+                  control={control}
+                  render={({ field }) => (
+                    <FormControl error={!!errors.openAIModel}>
+                      <InputLabel>Modelo OpenAI</InputLabel>
+                      <Select
+                        {...field}
+                        label="Modelo OpenAI"
+                        value={field.value || ""}
+                      >
+                        <MenuItem value="gpt-4o">GPT-4o</MenuItem>
+                        <MenuItem value="gpt-4-vision-preview">
+                          GPT-4 Vision
+                        </MenuItem>
+                        <MenuItem value="gpt-4">GPT-4</MenuItem>
+                        <MenuItem value="gpt-3.5-turbo">GPT-3.5 Turbo</MenuItem>
+                      </Select>
+                      {errors.openAIModel && (
+                        <FormHelperText>
+                          {errors.openAIModel.message}
+                        </FormHelperText>
+                      )}
+                    </FormControl>
+                  )}
+                />
+
+                <Controller
+                  name="openAIApiKey"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Chave de API - OpenAI"
+                      type="password"
+                      placeholder="Cole sua chave de API aqui"
+                      error={!!errors.openAIApiKey}
+                      helperText={errors.openAIApiKey?.message}
+                      value={field.value || ""}
+                    />
+                  )}
+                />
+              </>
+            )}
+          </Stack>
+        </Box>
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 3 }}>
+      <DialogActions>
         <Button onClick={() => setIsOpen(false)} color="inherit">
           Cancelar
         </Button>
-        <Button onClick={form.handleSubmit(onSubmit)} disabled={isSaving} variant="contained">
-            {isSaving && <Loader2 style={{ marginRight: '0.5rem', width: '1rem', height: '1rem' }} className="animate-spin" />}
-            Salvar
+        <Button
+          type="submit"
+          form="ai-settings-form"
+          disabled={isSaving}
+          variant="contained"
+          startIcon={
+            isSaving ? <CircularProgress size={16} color="inherit" /> : null
+          }
+        >
+          Salvar
         </Button>
       </DialogActions>
     </Dialog>

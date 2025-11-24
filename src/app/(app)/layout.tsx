@@ -150,14 +150,16 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
           flexGrow: 1,
           width: { md: `calc(100% - ${drawerWidth}px)` },
           mt: { xs: 7, md: 0 },
+          pt: { xs: 0, md: 3 },
         }}
       >
         <Box
           sx={{
             maxWidth: 1280,
             mx: "auto",
-            p: { xs: 2, sm: 3 },
-            pb: { xs: 12, md: 3 },
+            px: { xs: 2, sm: 3 },
+            py: { xs: 2, sm: 3 },
+            pb: { xs: 12, md: 4 },
           }}
         >
           <PlanExpirationAlert />

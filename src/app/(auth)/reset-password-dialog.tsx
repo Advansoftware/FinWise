@@ -160,11 +160,6 @@ export function ResetPasswordDialog({ children }: ResetPasswordDialogProps) {
               onChange={(e) => setEmail(e.target.value)}
               onKeyDown={handleKeyDown}
               disabled={isSending}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  bgcolor: "background.default",
-                },
-              }}
             />
           )}
         </DialogContent>
