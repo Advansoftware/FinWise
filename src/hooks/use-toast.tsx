@@ -4,8 +4,8 @@ import { useSnackbar, VariantType } from 'notistack';
 import { ReactNode } from 'react';
 
 export interface ToastOptions {
-  title?: string;
-  description?: string;
+  title?: ReactNode;
+  description?: ReactNode;
   variant?: VariantType;
   duration?: number;
   action?: ReactNode;

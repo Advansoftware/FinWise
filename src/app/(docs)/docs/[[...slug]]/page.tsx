@@ -175,16 +175,16 @@ export default async function DocPage({ params }: { params: { slug?: string[] } 
         <Container maxWidth="xl" sx={{ py: { xs: 4, md: 8 } }}>
             <Grid container spacing={4}>
                 {/* Sidebar */}
-                <Grid item xs={12} md={3} lg={2} sx={{ display: { xs: 'none', md: 'block' } }}>
+                <Grid size={{ xs: 12, md: 3, lg: 2 }} sx={{ display: { xs: 'none', md: 'block' } }}>
                     <Box sx={{ position: 'sticky', top: 80, height: 'calc(100vh - 100px)' }}>
-                        <ScrollArea className="h-full pr-4">
+                        <ScrollArea sx={{ height: '100%', pr: 2 }}>
                              <DocSidebarNav items={allDocs} />
                         </ScrollArea>
                     </Box>
                 </Grid>
 
                 {/* Main Content */}
-                <Grid item xs={12} md={9} lg={10}>
+                <Grid size={{ xs: 12, md: 9, lg: 10 }}>
                     <Box sx={markdownStyles}>
                         {doc.title && (
                             <Typography variant="h1" component="h1" sx={{ mb: 4 }}>

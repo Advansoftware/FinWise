@@ -68,7 +68,7 @@ const ActionsCell = ({ row }: { row: any }) => {
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
                 <Button variant="text" sx={{ height: '2rem', width: '2rem', p: 0 }}>
-                    <span className="sr-only">Abrir menu</span>
+                    <Box component="span" sx={{ position: 'absolute', width: '1px', height: '1px', padding: 0, margin: '-1px', overflow: 'hidden', clip: 'rect(0, 0, 0, 0)', whiteSpace: 'nowrap', borderWidth: 0 }}>Abrir menu</Box>
                     <MoreHorizontal style={{ width: '1rem', height: '1rem' }} />
                 </Button>
             </DropdownMenuTrigger>
@@ -101,20 +101,18 @@ export const columns: ColumnDef<Transaction>[] = [
     id: 'select',
     header: ({ table }) => (
       <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && 'indeterminate')
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Selecionar todas"
+        checked={table.getIsAllPageRowsSelected()}
+        indeterminate={table.getIsSomePageRowsSelected() && !table.getIsAllPageRowsSelected()}
+        onChange={(event) => table.toggleAllPageRowsSelected(event.target.checked)}
+        slotProps={{ input: { 'aria-label': 'Selecionar todas' } }}
         sx={{ transform: 'translateY(2px)' }}
       />
     ),
     cell: ({ row }) => (
       <Checkbox
         checked={row.getIsSelected()}
-        onCheckedChange={(value) => row.toggleSelected(!!value)}
-        aria-label="Selecionar linha"
+        onChange={(event) => row.toggleSelected(event.target.checked)}
+        slotProps={{ input: { 'aria-label': 'Selecionar linha' } }}
         sx={{ transform: 'translateY(2px)' }}
       />
     ),
@@ -172,10 +170,16 @@ export const columns: ColumnDef<Transaction>[] = [
     cell: ({ row }) => {
       const category = row.original.category;
       return (
-         <Chip variant="outlined" sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, width: 'fit-content', fontWeight: 400 }}>
-            <CategoryIcon category={category as any} className="h-3 w-3" />
-            <span style={{ textTransform: 'capitalize' }}>{category}</span>
-        </Chip>
+         <Chip 
+            variant="outlined" 
+            icon={
+                <Box sx={{ width: 12, height: 12, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <CategoryIcon category={category as any} />
+                </Box>
+            }
+            label={<span style={{ textTransform: 'capitalize' }}>{category}</span>}
+            sx={{ gap: 0.5, fontWeight: 400 }} 
+        />
       );
     },
     size: 100,
@@ -185,7 +189,7 @@ export const columns: ColumnDef<Transaction>[] = [
     header: 'Subcategoria',
     cell: ({ row }) => {
       const subcategory = row.original.subcategory;
-      return subcategory ? <Chip variant="contained" color="secondary" sx={{ width: 'fit-content', fontWeight: 400 }}>{subcategory}</Chip> : <Typography component="span" sx={{ color: 'text.secondary' }}>-</Typography>
+      return subcategory ? <Chip variant="filled" color="secondary" label={subcategory} sx={{ width: 'fit-content', fontWeight: 400 }} /> : <Typography component="span" sx={{ color: 'text.secondary' }}>-</Typography>
     },
     size: 100,
   },
