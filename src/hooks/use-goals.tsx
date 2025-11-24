@@ -1,7 +1,14 @@
 // src/hooks/use-goals.tsx
-'use client';
+"use client";
 
-import { useState, useEffect, createContext, useContext, ReactNode, useRef } from "react";
+import {
+  useState,
+  useEffect,
+  createContext,
+  useContext,
+  ReactNode,
+  useRef,
+} from "react";
 import { Goal, Transaction } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
@@ -14,10 +21,16 @@ interface GoalsContextType {
   goals: Goal[];
   isLoading: boolean;
   isOnline: boolean;
-  addGoal: (goal: Omit<Goal, 'id' | 'createdAt' | 'currentAmount' | 'userId'>) => Promise<void>;
+  addGoal: (
+    goal: Omit<Goal, "id" | "createdAt" | "currentAmount" | "userId">
+  ) => Promise<void>;
   updateGoal: (goalId: string, updates: Partial<Goal>) => Promise<void>;
   deleteGoal: (goalId: string) => Promise<void>;
-  addDeposit: (goalId: string, amount: number, walletId: string) => Promise<void>;
+  addDeposit: (
+    goalId: string,
+    amount: number,
+    walletId: string
+  ) => Promise<void>;
   completedGoal: Goal | null;
   clearCompletedGoal: () => void;
   refreshGoals: () => Promise<void>;
@@ -28,7 +41,8 @@ const GoalsContext = createContext<GoalsContextType | undefined>(undefined);
 export function GoalsProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
-  const { registerRefreshHandler, unregisterRefreshHandler, triggerRefresh } = useDataRefresh();
+  const { registerRefreshHandler, unregisterRefreshHandler, triggerRefresh } =
+    useDataRefresh();
   const [goals, setGoals] = useState<Goal[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isOnline, setIsOnline] = useState(true);
@@ -41,24 +55,30 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
       setIsOnline(navigator.onLine);
     };
 
-    window.addEventListener('online', updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
-    
+    window.addEventListener("online", updateOnlineStatus);
+    window.addEventListener("offline", updateOnlineStatus);
+
     return () => {
-      window.removeEventListener('online', updateOnlineStatus);
-      window.removeEventListener('offline', updateOnlineStatus);
+      window.removeEventListener("online", updateOnlineStatus);
+      window.removeEventListener("offline", updateOnlineStatus);
     };
   }, []);
 
   // Effect to check for newly completed goals
   useEffect(() => {
-    const justCompleted = goals.find(currentGoal => {
-        const prevGoal = prevGoalsRef.current.find(pg => pg.id === currentGoal.id);
-        return currentGoal.currentAmount >= currentGoal.targetAmount && prevGoal && prevGoal.currentAmount < prevGoal.targetAmount;
+    const justCompleted = goals.find((currentGoal) => {
+      const prevGoal = prevGoalsRef.current.find(
+        (pg) => pg.id === currentGoal.id
+      );
+      return (
+        currentGoal.currentAmount >= currentGoal.targetAmount &&
+        prevGoal &&
+        prevGoal.currentAmount < prevGoal.targetAmount
+      );
     });
 
     if (justCompleted) {
-        setCompletedGoal(justCompleted);
+      setCompletedGoal(justCompleted);
     }
 
     prevGoalsRef.current = goals;
@@ -72,8 +92,8 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
 
       if (navigator.onLine) {
         // Online: fetch from server and sync to offline storage
-        fetchedGoals = await apiClient.get('goals', user.uid);
-        
+        fetchedGoals = await apiClient.get("goals", user.uid);
+
         // Save to offline storage
         for (const goal of fetchedGoals) {
           await offlineStorage.saveGoal(goal, true);
@@ -85,13 +105,13 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
 
       setGoals(fetchedGoals);
     } catch (error) {
-      console.error('Erro ao carregar metas:', error);
+      console.error("Erro ao carregar metas:", error);
       // Try to load from offline storage as fallback
       try {
         const offlineGoals = await offlineStorage.getGoals(user.uid);
         setGoals(offlineGoals);
       } catch (offlineError) {
-        console.error('Erro ao carregar metas offline:', offlineError);
+        console.error("Erro ao carregar metas offline:", offlineError);
       }
     } finally {
       setIsLoading(false);
@@ -106,79 +126,81 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     }
 
     loadGoals();
-    
+
     // Register this hook's refresh function with the global system
-    registerRefreshHandler('goals', loadGoals);
-    
+    registerRefreshHandler("goals", loadGoals);
+
     return () => {
-      unregisterRefreshHandler('goals');
+      unregisterRefreshHandler("goals");
     };
   }, [user, authLoading]);
 
-  const addGoal = async (goal: Omit<Goal, 'id' | 'createdAt' | 'currentAmount' | 'userId'>) => {
+  const addGoal = async (
+    goal: Omit<Goal, "id" | "createdAt" | "currentAmount" | "userId">
+  ) => {
     if (!user) throw new Error("User not authenticated");
-    
+
     const goalWithUser = {
       ...goal,
       userId: user.uid,
       currentAmount: 0,
       createdAt: new Date().toISOString(),
-      id: `temp-${Date.now()}-${Math.random()}` // Temporary ID for offline
+      id: `temp-${Date.now()}-${Math.random()}`, // Temporary ID for offline
     };
-    
+
     try {
       if (navigator.onLine) {
         // Online: create on server
-        const newGoal = await apiClient.create('goals', goalWithUser);
+        const newGoal = await apiClient.create("goals", goalWithUser);
         await offlineStorage.saveGoal(newGoal, true);
-        setGoals(prev => [...prev, newGoal]);
+        setGoals((prev) => [...prev, newGoal]);
         toast({ title: "Meta criada com sucesso!" });
         triggerRefresh();
-        
+
         // Trigger global refresh to update other pages/components
         setTimeout(() => {
-          triggerRefresh('all');
+          triggerRefresh("all");
         }, 500);
       } else {
         // Offline: save locally and mark for sync
         await offlineStorage.saveGoal(goalWithUser, false);
         await offlineStorage.addPendingAction({
-          type: 'create',
-          collection: 'goals',
-          data: goalWithUser
+          type: "create",
+          collection: "goals",
+          data: goalWithUser,
         });
-        
-        setGoals(prev => [...prev, goalWithUser]);
+
+        setGoals((prev) => [...prev, goalWithUser]);
         toast({
           title: "💾 Meta salva offline",
-          description: "Será sincronizada quando você estiver online"
+          description: "Será sincronizada quando você estiver online",
         });
-        
+
         triggerRefresh();
-        
+
         // Trigger global refresh to update other pages/components
         setTimeout(() => {
-          triggerRefresh('all');
+          triggerRefresh("all");
         }, 500);
       }
     } catch (error) {
-      console.error('Erro ao adicionar meta:', error);
+      console.error("Erro ao adicionar meta:", error);
       toast({
         variant: "error",
         title: "Erro ao adicionar meta",
-        description: "Tente novamente"
+        description: "Tente novamente",
       });
     }
   };
 
   const updateGoal = async (goalId: string, updates: Partial<Goal>) => {
     if (!user) throw new Error("User not authenticated");
-    
+
     try {
       if (navigator.onLine) {
         // Online: update on server
-        await apiClient.update('goals', goalId, updates);
-        const updatedGoal = goals.find(g => g.id === goalId);
+        await apiClient.update("goals", goalId, updates);
+        const updatedGoal = goals.find((g) => g.id === goalId);
         if (updatedGoal) {
           const finalGoal = { ...updatedGoal, ...updates };
           await offlineStorage.saveGoal(finalGoal, true);
@@ -187,91 +209,95 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
         triggerRefresh();
       } else {
         // Offline: update locally and mark for sync
-        const updatedGoal = goals.find(g => g.id === goalId);
+        const updatedGoal = goals.find((g) => g.id === goalId);
         if (updatedGoal) {
           const finalGoal = { ...updatedGoal, ...updates };
           await offlineStorage.saveGoal(finalGoal, false);
           await offlineStorage.addPendingAction({
-            type: 'update',
-            collection: 'goals',
-            data: { id: goalId, ...updates }
+            type: "update",
+            collection: "goals",
+            data: { id: goalId, ...updates },
           });
         }
-        
+
         toast({
           title: "💾 Meta atualizada offline",
-          description: "Será sincronizada quando você estiver online"
+          description: "Será sincronizada quando você estiver online",
         });
-        
+
         triggerRefresh();
       }
-      
-      setGoals(prev => 
-        prev.map(g => g.id === goalId ? { ...g, ...updates } : g)
+
+      setGoals((prev) =>
+        prev.map((g) => (g.id === goalId ? { ...g, ...updates } : g))
       );
     } catch (error) {
-      console.error('Erro ao atualizar meta:', error);
+      console.error("Erro ao atualizar meta:", error);
       toast({
         variant: "error",
         title: "Erro ao atualizar meta",
-        description: "Tente novamente"
+        description: "Tente novamente",
       });
     }
   };
 
   const deleteGoal = async (goalId: string) => {
     if (!user) throw new Error("User not authenticated");
-    
+
     try {
       if (navigator.onLine) {
         // Online: delete on server
-        await apiClient.delete('goals', goalId);
-        await offlineStorage.deleteItem('goals', goalId);
+        await apiClient.delete("goals", goalId);
+        await offlineStorage.deleteItem("goals", goalId, user.uid);
         toast({ title: "Meta excluída." });
         triggerRefresh();
       } else {
         // Offline: mark as deleted locally and queue for sync
-        const goalToDelete = goals.find(g => g.id === goalId);
+        const goalToDelete = goals.find((g) => g.id === goalId);
         if (goalToDelete) {
-          await offlineStorage.deleteItem('goals', goalId);
+          await offlineStorage.deleteItem("goals", goalId, user.uid);
           await offlineStorage.addPendingAction({
-            type: 'delete',
-            collection: 'goals',
-            data: goalToDelete
+            type: "delete",
+            collection: "goals",
+            data: goalToDelete,
           });
         }
-        
+
         toast({
           title: "💾 Meta excluída offline",
-          description: "Será sincronizada quando você estiver online"
+          description: "Será sincronizada quando você estiver online",
         });
-        
+
         triggerRefresh();
       }
-      
-      setGoals(prev => prev.filter(g => g.id !== goalId));
+
+      setGoals((prev) => prev.filter((g) => g.id !== goalId));
     } catch (error) {
-      console.error('Erro ao excluir meta:', error);
+      console.error("Erro ao excluir meta:", error);
       toast({
         variant: "error",
         title: "Erro ao excluir meta",
-        description: "Tente novamente"
+        description: "Tente novamente",
       });
     }
   };
 
-  const addDeposit = async (goalId: string, amount: number, walletId: string) => {
+  const addDeposit = async (
+    goalId: string,
+    amount: number,
+    walletId: string
+  ) => {
     if (!user) throw new Error("User not authenticated");
-     
-    const goal = goals.find(g => g.id === goalId);
+
+    const goal = goals.find((g) => g.id === goalId);
     if (!goal) throw new Error("Meta não encontrada.");
 
-    const newTransaction: Omit<Transaction, 'id' | 'userId'> = {
+    const newTransaction: Omit<Transaction, "id" | "userId"> = {
       item: `Depósito para Meta: ${goal.name}`,
       amount: amount,
       date: new Date().toISOString(),
       category: "Transferência",
-      type: 'transfer',
+      type: "transfer",
       walletId: walletId,
       toWalletId: goalId, // Using goalId to signify transfer to goal
     };
@@ -279,35 +305,48 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     try {
       if (navigator.onLine) {
         // Online: create transaction and update goal/wallet
-        await apiClient.create('transactions', { ...newTransaction, userId: user.uid });
-        
-        const updatedGoal = { ...goal, currentAmount: goal.currentAmount + amount };
-        await apiClient.update('goals', goalId, { 
-          currentAmount: updatedGoal.currentAmount 
+        await apiClient.create("transactions", {
+          ...newTransaction,
+          userId: user.uid,
         });
-        
-        const wallet = await apiClient.get('wallets', user.uid, walletId);
+
+        const updatedGoal = {
+          ...goal,
+          currentAmount: goal.currentAmount + amount,
+        };
+        await apiClient.update("goals", goalId, {
+          currentAmount: updatedGoal.currentAmount,
+        });
+
+        const wallet = await apiClient.get("wallets", user.uid, walletId);
         if (wallet) {
-          await apiClient.update('wallets', walletId, { 
-            balance: wallet.balance - amount 
+          await apiClient.update("wallets", walletId, {
+            balance: wallet.balance - amount,
           });
         }
 
         // Generate AI prediction (only when online)
         try {
-          const userTransactions = await apiClient.get('transactions', user.uid);
+          const userTransactions = await apiClient.get(
+            "transactions",
+            user.uid
+          );
           const transactionsJson = JSON.stringify(userTransactions, null, 2);
-          
-          await getSmartGoalPrediction(goalId, {
-            goalName: updatedGoal.name,
-            targetAmount: updatedGoal.targetAmount,
-            currentAmount: updatedGoal.currentAmount,
-            targetDate: updatedGoal.targetDate,
-            monthlyDeposit: updatedGoal.monthlyDeposit,
-            transactions: transactionsJson,
-          }, user.uid);
+
+          await getSmartGoalPrediction(
+            goalId,
+            {
+              goalName: updatedGoal.name,
+              targetAmount: updatedGoal.targetAmount,
+              currentAmount: updatedGoal.currentAmount,
+              targetDate: updatedGoal.targetDate,
+              monthlyDeposit: updatedGoal.monthlyDeposit,
+              transactions: transactionsJson,
+            },
+            user.uid
+          );
         } catch (error) {
-          console.log('Erro ao gerar previsão de meta:', error);
+          console.log("Erro ao gerar previsão de meta:", error);
         }
 
         toast({ title: `Depósito de R$ ${amount.toFixed(2)} adicionado!` });
@@ -315,42 +354,51 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
       } else {
         // Offline: queue all operations for sync
         await offlineStorage.addPendingAction({
-          type: 'create',
-          collection: 'transactions',
-          data: { ...newTransaction, userId: user.uid, id: `temp-${Date.now()}-${Math.random()}` }
+          type: "create",
+          collection: "transactions",
+          data: {
+            ...newTransaction,
+            userId: user.uid,
+            id: `temp-${Date.now()}-${Math.random()}`,
+          },
         });
 
         await offlineStorage.addPendingAction({
-          type: 'update',
-          collection: 'goals',
-          data: { id: goalId, currentAmount: goal.currentAmount + amount }
+          type: "update",
+          collection: "goals",
+          data: { id: goalId, currentAmount: goal.currentAmount + amount },
         });
 
         await offlineStorage.addPendingAction({
-          type: 'update',
-          collection: 'wallets', 
-          data: { id: walletId, balanceChange: -amount }
+          type: "update",
+          collection: "wallets",
+          data: { id: walletId, balanceChange: -amount },
         });
 
         toast({
           title: "💾 Depósito salvo offline",
-          description: `R$ ${amount.toFixed(2)} será processado quando você estiver online`
+          description: `R$ ${amount.toFixed(
+            2
+          )} será processado quando você estiver online`,
         });
-        
+
         triggerRefresh();
       }
 
       // Update local state
-      setGoals(prev => 
-        prev.map(g => g.id === goalId ? { ...g, currentAmount: g.currentAmount + amount } : g)
+      setGoals((prev) =>
+        prev.map((g) =>
+          g.id === goalId
+            ? { ...g, currentAmount: g.currentAmount + amount }
+            : g
+        )
       );
-
     } catch (error) {
-      console.error('Erro ao adicionar depósito:', error);
+      console.error("Erro ao adicionar depósito:", error);
       toast({
         variant: "error",
         title: "Erro ao adicionar depósito",
-        description: "Tente novamente"
+        description: "Tente novamente",
       });
     }
   };
@@ -377,9 +425,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <GoalsContext.Provider value={value}>
-        {children}
-    </GoalsContext.Provider>
+    <GoalsContext.Provider value={value}>{children}</GoalsContext.Provider>
   );
 }
 

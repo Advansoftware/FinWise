@@ -1,8 +1,15 @@
-
 // src/hooks/use-transactions.tsx
 "use client";
 
-import { useState, useMemo, useEffect, createContext, useContext, ReactNode, useCallback } from "react";
+import {
+  useState,
+  useMemo,
+  useEffect,
+  createContext,
+  useContext,
+  ReactNode,
+  useCallback,
+} from "react";
 import { DateRange } from "react-day-picker";
 import { startOfMonth, endOfDay } from "date-fns";
 import { Transaction, TransactionCategory, Wallet } from "@/lib/types";
@@ -33,23 +40,38 @@ interface TransactionsContextType {
   availableSubcategories: string[];
   selectedSubcategory: string;
   setSelectedSubcategory: (subcategory: string) => void;
-  addTransaction: (transaction: Omit<Transaction, 'id' | 'userId'>) => Promise<void>;
-  updateTransaction: (transactionId: string, updates: Partial<Transaction>, originalTransaction: Transaction) => Promise<void>;
+  addTransaction: (
+    transaction: Omit<Transaction, "id" | "userId">
+  ) => Promise<void>;
+  updateTransaction: (
+    transactionId: string,
+    updates: Partial<Transaction>,
+    originalTransaction: Transaction
+  ) => Promise<void>;
   deleteTransaction: (transaction: Transaction) => Promise<void>;
   addCategory: (categoryName: TransactionCategory) => Promise<void>;
   deleteCategory: (categoryName: TransactionCategory) => Promise<void>;
-  addSubcategory: (categoryName: TransactionCategory, subcategoryName: string) => Promise<void>;
-  deleteSubcategory: (categoryName: TransactionCategory, subcategoryName: string) => Promise<void>;
+  addSubcategory: (
+    categoryName: TransactionCategory,
+    subcategoryName: string
+  ) => Promise<void>;
+  deleteSubcategory: (
+    categoryName: TransactionCategory,
+    subcategoryName: string
+  ) => Promise<void>;
   isOnline: boolean;
 }
 
-const TransactionsContext = createContext<TransactionsContextType | undefined>(undefined);
+const TransactionsContext = createContext<TransactionsContextType | undefined>(
+  undefined
+);
 
 export function TransactionsProvider({ children }: TransactionsProviderProps) {
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
-  const { refreshWallets } = useWallets(); 
-  const { registerRefreshHandler, unregisterRefreshHandler, triggerRefresh } = useDataRefresh();
+  const { refreshWallets } = useWallets();
+  const { registerRefreshHandler, unregisterRefreshHandler, triggerRefresh } =
+    useDataRefresh();
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [categoryMap, setCategoryMap] = useState<CategoryMap>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -58,8 +80,8 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
     from: startOfMonth(new Date()),
     to: new Date(),
   });
-  const [selectedCategory, setSelectedCategory] = useState<string>('all');
-  const [selectedSubcategory, setSelectedSubcategory] = useState<string>('all');
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string>("all");
 
   // Monitor online/offline status
   useEffect(() => {
@@ -67,15 +89,15 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
       setIsOnline(navigator.onLine);
     };
 
-    window.addEventListener('online', updateOnlineStatus);
-    window.addEventListener('offline', updateOnlineStatus);
-    
+    window.addEventListener("online", updateOnlineStatus);
+    window.addEventListener("offline", updateOnlineStatus);
+
     return () => {
-      window.removeEventListener('online', updateOnlineStatus);
-      window.removeEventListener('offline', updateOnlineStatus);
+      window.removeEventListener("online", updateOnlineStatus);
+      window.removeEventListener("offline", updateOnlineStatus);
     };
   }, []);
-  
+
   const refreshData = useCallback(async () => {
     if (!user) return;
     setIsLoading(true);
@@ -86,37 +108,44 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
       if (navigator.onLine) {
         // Online: fetch from server and sync to offline storage
         [fetchedTransactions, settings] = await Promise.all([
-          apiClient.get('transactions', user.uid),
-          apiClient.get('settings', user.uid)
+          apiClient.get("transactions", user.uid),
+          apiClient.get("settings", user.uid),
         ]);
 
         // Save to offline storage
         for (const transaction of fetchedTransactions) {
           await offlineStorage.saveTransaction(transaction, true);
         }
-        
+
         if (settings) {
-          await offlineStorage.saveSetting('categories', settings.categories || {});
+          await offlineStorage.saveSetting(
+            "categories",
+            settings.categories || {}
+          );
         }
       } else {
         // Offline: load from offline storage
         fetchedTransactions = await offlineStorage.getTransactions(user.uid);
-        const categoriesFromStorage = await offlineStorage.getSetting('categories');
+        const categoriesFromStorage = await offlineStorage.getSetting(
+          "categories"
+        );
         settings = { categories: categoriesFromStorage || {} };
       }
 
       setAllTransactions(fetchedTransactions);
       setCategoryMap(settings?.categories || {});
     } catch (error) {
-      console.error('Erro ao carregar dados:', error);
+      console.error("Erro ao carregar dados:", error);
       // Try to load from offline storage as fallback
       try {
-        const offlineTransactions = await offlineStorage.getTransactions(user.uid);
-        const offlineCategories = await offlineStorage.getSetting('categories');
+        const offlineTransactions = await offlineStorage.getTransactions(
+          user.uid
+        );
+        const offlineCategories = await offlineStorage.getSetting("categories");
         setAllTransactions(offlineTransactions);
         setCategoryMap(offlineCategories || {});
       } catch (offlineError) {
-        console.error('Erro ao carregar dados offline:', offlineError);
+        console.error("Erro ao carregar dados offline:", offlineError);
       }
     } finally {
       setIsLoading(false);
@@ -132,73 +161,82 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
     }
 
     refreshData();
-    
+
     // Register this hook's refresh function with the global system
-    registerRefreshHandler('transactions', refreshData);
-    
+    registerRefreshHandler("transactions", refreshData);
+
     return () => {
-      unregisterRefreshHandler('transactions');
+      unregisterRefreshHandler("transactions");
     };
   }, [user?.uid, authLoading]);
-  
-  const addTransaction = async (transaction: Omit<Transaction, 'id' | 'userId'>) => {
+
+  const addTransaction = async (
+    transaction: Omit<Transaction, "id" | "userId">
+  ) => {
     if (!user) throw new Error("User not authenticated");
-    
-    const transactionWithUser = { 
-      ...transaction, 
+
+    const transactionWithUser = {
+      ...transaction,
       userId: user.uid,
-      id: `temp-${Date.now()}-${Math.random()}` // Temporary ID for offline
+      id: `temp-${Date.now()}-${Math.random()}`, // Temporary ID for offline
     };
 
     try {
       if (navigator.onLine) {
         // Online: create on server
-        const created = await apiClient.create('transactions', transactionWithUser);
+        const created = await apiClient.create(
+          "transactions",
+          transactionWithUser
+        );
         await offlineStorage.saveTransaction(created, true);
       } else {
         // Offline: save locally and mark for sync
         await offlineStorage.saveTransaction(transactionWithUser, false);
         await offlineStorage.addPendingAction({
-          type: 'create',
-          collection: 'transactions',
-          data: transactionWithUser
+          type: "create",
+          collection: "transactions",
+          data: transactionWithUser,
         });
-        
+
         toast({
           title: "💾 Transação salva offline",
-          description: "Será sincronizada quando você estiver online"
+          description: "Será sincronizada quando você estiver online",
         });
       }
-      
+
       await refreshData();
       // Add a small delay to ensure balance update is processed on server
       setTimeout(() => {
         refreshWallets();
       }, 500);
-      
+
       // Trigger global refresh to update other pages/components
       setTimeout(() => {
-        triggerRefresh('all');
+        triggerRefresh("all");
       }, 1000);
     } catch (error) {
-      console.error('Erro ao adicionar transação:', error);
+      console.error("Erro ao adicionar transação:", error);
       toast({
         variant: "error",
         title: "Erro ao adicionar transação",
-        description: "Tente novamente"
+        description: "Tente novamente",
       });
     }
   };
 
-  const updateTransaction = async (transactionId: string, updates: Partial<Transaction>, originalTransaction: Transaction) => {
+  const updateTransaction = async (
+    transactionId: string,
+    updates: Partial<Transaction>,
+    originalTransaction: Transaction
+  ) => {
     if (!user) throw new Error("User not authenticated");
-    
+
     try {
       const payload = { updates, originalTransaction };
-      
+
       if (navigator.onLine) {
         // Online: update on server
-        await apiClient.update('transactions', transactionId, payload);
+        await apiClient.update("transactions", transactionId, payload);
         const updatedTransaction = { ...originalTransaction, ...updates };
         await offlineStorage.saveTransaction(updatedTransaction, true);
       } else {
@@ -206,76 +244,84 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
         const updatedTransaction = { ...originalTransaction, ...updates };
         await offlineStorage.saveTransaction(updatedTransaction, false);
         await offlineStorage.addPendingAction({
-          type: 'update',
-          collection: 'transactions',
-          data: payload
+          type: "update",
+          collection: "transactions",
+          data: payload,
         });
-        
+
         toast({
           title: "💾 Transação atualizada offline",
-          description: "Será sincronizada quando você estiver online"
+          description: "Será sincronizada quando você estiver online",
         });
       }
-      
+
       await refreshData();
       // Add a small delay to ensure balance update is processed on server
       setTimeout(() => {
         refreshWallets();
       }, 500);
-      
-      // Trigger global refresh to update other pages/components  
+
+      // Trigger global refresh to update other pages/components
       setTimeout(() => {
-        triggerRefresh('all');
+        triggerRefresh("all");
       }, 1000);
     } catch (error) {
-      console.error('Erro ao atualizar transação:', error);
+      console.error("Erro ao atualizar transação:", error);
       toast({
         variant: "error",
         title: "Erro ao atualizar transação",
-        description: "Tente novamente"
+        description: "Tente novamente",
       });
     }
   };
-  
+
   const deleteTransaction = async (transaction: Transaction) => {
     if (!user) throw new Error("User not authenticated");
-    
+
     try {
       if (navigator.onLine) {
         // Online: delete on server
-        await apiClient.delete('transactions', transaction.id, transaction);
-        await offlineStorage.deleteItem('transactions', transaction.id);
+        await apiClient.delete("transactions", transaction.id, transaction);
+        await offlineStorage.deleteItem(
+          "transactions",
+          transaction.id,
+          user.uid
+        );
       } else {
         // Offline: mark as deleted locally and queue for sync
-        await offlineStorage.deleteItem('transactions', transaction.id);
+        await offlineStorage.deleteItem(
+          "transactions",
+          transaction.id,
+          user.uid
+        );
         await offlineStorage.addPendingAction({
-          type: 'delete',
-          collection: 'transactions',
-          data: transaction
+          type: "delete",
+          collection: "transactions",
+          data: transaction,
         });
-        
+
         toast({
           title: "💾 Transação excluída offline",
-          description: "Será sincronizada quando você estiver online"
+          description: "Será sincronizada quando você estiver online",
         });
       }
-      
+
       await refreshData();
       // Add a small delay to ensure balance update is processed on server
       setTimeout(() => {
         refreshWallets();
       }, 500);
-      
+
       // Trigger global refresh to update other pages/components
       setTimeout(() => {
-        triggerRefresh('all');
+        triggerRefresh("all");
       }, 1000);
     } catch (error) {
-      console.error('Erro ao excluir transação:', error);
+      console.error("Erro ao excluir transação:", error);
       toast({
         variant: "error",
         title: "Erro ao excluir transação",
-        description: "Tente novamente"
+        description: "Tente novamente",
       });
     }
   };
@@ -284,33 +330,37 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
     const categoryNames = Object.keys(categoryMap) as TransactionCategory[];
     return {
       categories: categoryNames.sort(),
-      subcategories: categoryMap
+      subcategories: categoryMap,
     };
   }, [categoryMap]);
-  
+
   const saveCategories = async (newCategories: CategoryMap) => {
     if (!user) throw new Error("User not authenticated");
-    
+
     try {
       if (navigator.onLine) {
-        const currentSettings = await apiClient.get('settings', user.uid) || {};
-        await apiClient.update('settings', user.uid, { ...currentSettings, categories: newCategories });
-        await offlineStorage.saveSetting('categories', newCategories);
+        const currentSettings =
+          (await apiClient.get("settings", user.uid)) || {};
+        await apiClient.update("settings", user.uid, {
+          ...currentSettings,
+          categories: newCategories,
+        });
+        await offlineStorage.saveSetting("categories", newCategories);
       } else {
-        await offlineStorage.saveSetting('categories', newCategories);
+        await offlineStorage.saveSetting("categories", newCategories);
         toast({
           title: "💾 Categorias salvas offline",
-          description: "Serão sincronizadas quando você estiver online"
+          description: "Serão sincronizadas quando você estiver online",
         });
       }
-      
+
       setCategoryMap(newCategories);
     } catch (error) {
-      console.error('Erro ao salvar categorias:', error);
+      console.error("Erro ao salvar categorias:", error);
       toast({
         variant: "error",
         title: "Erro ao salvar categorias",
-        description: "Tente novamente"
+        description: "Tente novamente",
       });
     }
   };
@@ -328,64 +378,96 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
     const newCategoryMap = { ...categoryMap };
     delete newCategoryMap[categoryName];
     await saveCategories(newCategoryMap);
-    if (selectedCategory === categoryName) setSelectedCategory('all');
+    if (selectedCategory === categoryName) setSelectedCategory("all");
   };
 
-  const addSubcategory = async (categoryName: TransactionCategory, subcategoryName: string) => {
+  const addSubcategory = async (
+    categoryName: TransactionCategory,
+    subcategoryName: string
+  ) => {
     const subs = categoryMap[categoryName] || [];
     if (subs.includes(subcategoryName)) {
       toast({ variant: "error", title: "Subcategoria já existe" });
       return;
     }
-    const newCategoryMap = { ...categoryMap, [categoryName]: [...subs, subcategoryName].sort() };
+    const newCategoryMap = {
+      ...categoryMap,
+      [categoryName]: [...subs, subcategoryName].sort(),
+    };
     await saveCategories(newCategoryMap);
   };
 
-  const deleteSubcategory = async (categoryName: TransactionCategory, subcategoryName: string) => {
+  const deleteSubcategory = async (
+    categoryName: TransactionCategory,
+    subcategoryName: string
+  ) => {
     const subs = categoryMap[categoryName] || [];
-    const newCategoryMap = { ...categoryMap, [categoryName]: subs.filter(s => s !== subcategoryName) };
+    const newCategoryMap = {
+      ...categoryMap,
+      [categoryName]: subs.filter((s) => s !== subcategoryName),
+    };
     await saveCategories(newCategoryMap);
   };
 
   const handleCategoryChange = (category: string) => {
     setSelectedCategory(category);
-    setSelectedSubcategory('all');
+    setSelectedSubcategory("all");
   };
 
   const filteredTransactions = useMemo(() => {
-    return allTransactions.filter((t) => {
-      const transactionDate = new Date(t.date);
-      const toDate = dateRange?.to ? endOfDay(dateRange.to) : undefined;
-      const dateCondition = dateRange?.from && toDate ? transactionDate >= dateRange.from && transactionDate <= toDate : true;
-      const categoryCondition = selectedCategory === 'all' || t.category === selectedCategory;
-      const subcategoryCondition = selectedCategory === 'all' || selectedSubcategory === 'all' || t.subcategory === selectedSubcategory;
-      return dateCondition && categoryCondition && subcategoryCondition;
-    }).sort((a, b) => {
-      // Ordenar por data decrescente (mais recente primeiro)
-      return new Date(b.date).getTime() - new Date(a.date).getTime();
-    });
+    return allTransactions
+      .filter((t) => {
+        const transactionDate = new Date(t.date);
+        const toDate = dateRange?.to ? endOfDay(dateRange.to) : undefined;
+        const dateCondition =
+          dateRange?.from && toDate
+            ? transactionDate >= dateRange.from && transactionDate <= toDate
+            : true;
+        const categoryCondition =
+          selectedCategory === "all" || t.category === selectedCategory;
+        const subcategoryCondition =
+          selectedCategory === "all" ||
+          selectedSubcategory === "all" ||
+          t.subcategory === selectedSubcategory;
+        return dateCondition && categoryCondition && subcategoryCondition;
+      })
+      .sort((a, b) => {
+        // Ordenar por data decrescente (mais recente primeiro)
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      });
   }, [allTransactions, dateRange, selectedCategory, selectedSubcategory]);
 
   const chartData = useMemo(() => {
-    const expenseTransactions = filteredTransactions.filter(t => t.type === 'expense');
-    if (selectedCategory === 'all') {
+    const expenseTransactions = filteredTransactions.filter(
+      (t) => t.type === "expense"
+    );
+    if (selectedCategory === "all") {
       const categoryTotals = expenseTransactions.reduce((acc, t) => {
         const key = t.category || "Outros";
         acc[key] = (acc[key] || 0) + t.amount;
         return acc;
       }, {} as Record<string, number>);
-      return Object.entries(categoryTotals).map(([name, total]) => ({ name, total }));
+      return Object.entries(categoryTotals).map(([name, total]) => ({
+        name,
+        total,
+      }));
     } else {
-      const subcategoryTotals = expenseTransactions.filter(t => t.category === selectedCategory).reduce((acc, t) => {
-        const key = t.subcategory || 'Sem Subcategoria';
-        acc[key] = (acc[key] || 0) + t.amount;
-        return acc;
-      }, {} as Record<string, number>);
-      return Object.entries(subcategoryTotals).map(([name, total]) => ({ name, total }));
+      const subcategoryTotals = expenseTransactions
+        .filter((t) => t.category === selectedCategory)
+        .reduce((acc, t) => {
+          const key = t.subcategory || "Sem Subcategoria";
+          acc[key] = (acc[key] || 0) + t.amount;
+          return acc;
+        }, {} as Record<string, number>);
+      return Object.entries(subcategoryTotals).map(([name, total]) => ({
+        name,
+        total,
+      }));
     }
   }, [filteredTransactions, selectedCategory]);
 
-  const availableSubcategories = subcategories[selectedCategory as TransactionCategory] || [];
+  const availableSubcategories =
+    subcategories[selectedCategory as TransactionCategory] || [];
 
   const value: TransactionsContextType = {
     allTransactions,
@@ -421,7 +503,9 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
 export function useTransactions() {
   const context = useContext(TransactionsContext);
   if (context === undefined) {
-    throw new Error("useTransactions must be used within a TransactionsProvider");
+    throw new Error(
+      "useTransactions must be used within a TransactionsProvider"
+    );
   }
   return context;
 }

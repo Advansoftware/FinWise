@@ -1,8 +1,8 @@
 // src/services/wallet-balance-service.ts
 
-import {Transaction, Wallet} from '@/lib/types';
-import {apiClient} from '@/lib/api-client';
-import {offlineStorage} from '@/lib/offline-storage';
+import { Transaction, Wallet } from '@/lib/types';
+import { apiClient } from '@/lib/api-client';
+import { offlineStorage } from '@/lib/offline-storage';
 
 export class WalletBalanceService {
   /**
@@ -208,13 +208,13 @@ export class WalletBalanceService {
     try {
       const pendingActions = await offlineStorage.getPendingActions();
       const walletActions = pendingActions.filter(action =>
-        action.data.collection === 'wallets'
+        action.collection === 'wallets'
       );
 
       for (const action of walletActions) {
         try {
-          if (action.type === 'update') {
-            await apiClient.update('wallets', action.data.id, action.data.updates);
+          if (action.operation === 'update' && action.data) {
+            await apiClient.update('wallets', action.itemId, action.data);
           }
 
           // Remove from pending after successful sync

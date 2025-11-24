@@ -1,4 +1,5 @@
-import { Metadata } from "next";
+"use client";
+
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, CalendarDays, Clock, Share2 } from "lucide-react";
@@ -102,34 +103,6 @@ O **Gastometria** pode ser seu aliado nessa jornada, oferecendo ferramentas inte
 type Props = {
   params: { slug: string };
 };
-
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const post = blogPosts[params.slug];
-
-  if (!post) {
-    return {
-      title: "Artigo não encontrado | Blog Gastometria",
-    };
-  }
-
-  return {
-    title: `${post.title} | Blog Gastometria`,
-    description: post.description,
-    openGraph: {
-      title: post.title,
-      description: post.description,
-      url: `https://gastometria.com.br/blog/${params.slug}`,
-      type: "article",
-      publishedTime: post.publishedAt,
-      authors: [post.author],
-    },
-    twitter: {
-      card: "summary_large_image",
-      title: post.title,
-      description: post.description,
-    },
-  };
-}
 
 export default function BlogPostPage({ params }: Props) {
   const post = blogPosts[params.slug];

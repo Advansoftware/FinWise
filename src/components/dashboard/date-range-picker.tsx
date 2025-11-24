@@ -5,9 +5,23 @@ import { Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { DateRange } from "react-day-picker";
-import { Button, Popover, Box, useTheme } from "@mui/material";
-import { DayPicker } from "react-day-picker";
-import "react-day-picker/dist/style.css";
+import {
+  Button,
+  Box,
+  useTheme,
+  useMediaQuery,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Stack,
+  Typography,
+  IconButton,
+} from "@mui/material";
+import { MobileDatePicker } from "@mui/x-date-pickers/MobileDatePicker";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { X } from "lucide-react";
 
 interface DateRangePickerProps {
   initialDate?: DateRange;
@@ -18,102 +32,247 @@ export function DateRangePicker({
   initialDate,
   onUpdate,
 }: DateRangePickerProps) {
-  const [date, setDate] = React.useState<DateRange | undefined>(initialDate);
-  const [anchorEl, setAnchorEl] = React.useState<HTMLButtonElement | null>(
-    null
+  const [fromDate, setFromDate] = React.useState<Date | null>(
+    initialDate?.from || null
   );
+  const [toDate, setToDate] = React.useState<Date | null>(
+    initialDate?.to || null
+  );
+  const [dialogOpen, setDialogOpen] = React.useState(false);
+  const [tempFromDate, setTempFromDate] = React.useState<Date | null>(null);
+  const [tempToDate, setTempToDate] = React.useState<Date | null>(null);
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
+  // Atualiza quando initialDate muda
   React.useEffect(() => {
-    onUpdate(date);
-  }, [date, onUpdate]);
+    setFromDate(initialDate?.from || null);
+    setToDate(initialDate?.to || null);
+  }, [initialDate]);
 
-  const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
-    setAnchorEl(event.currentTarget);
+  const handleOpenDialog = () => {
+    setTempFromDate(fromDate);
+    setTempToDate(toDate);
+    setDialogOpen(true);
   };
 
-  const handleClose = () => {
-    setAnchorEl(null);
+  const handleCloseDialog = () => {
+    setDialogOpen(false);
   };
 
-  const open = Boolean(anchorEl);
+  const handleConfirm = () => {
+    setFromDate(tempFromDate);
+    setToDate(tempToDate);
+
+    const newRange: DateRange | undefined = tempFromDate
+      ? { from: tempFromDate, to: tempToDate || undefined }
+      : undefined;
+
+    onUpdate(newRange);
+    setDialogOpen(false);
+  };
+
+  const handleClear = () => {
+    setTempFromDate(null);
+    setTempToDate(null);
+  };
+
+  // Quick select options
+  const handleQuickSelect = (option: "today" | "week" | "month" | "year") => {
+    const now = new Date();
+    let from: Date;
+    let to: Date = now;
+
+    switch (option) {
+      case "today":
+        from = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        break;
+      case "week":
+        from = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+        break;
+      case "month":
+        from = new Date(now.getFullYear(), now.getMonth(), 1);
+        break;
+      case "year":
+        from = new Date(now.getFullYear(), 0, 1);
+        break;
+    }
+
+    setTempFromDate(from);
+    setTempToDate(to);
+  };
+
+  const formatButtonText = () => {
+    if (!fromDate) return "Selecione um período";
+
+    if (toDate) {
+      return `${format(fromDate, "dd/MM/yy", { locale: ptBR })} - ${format(
+        toDate,
+        "dd/MM/yy",
+        { locale: ptBR }
+      )}`;
+    }
+
+    return format(fromDate, "dd MMM, yyyy", { locale: ptBR });
+  };
 
   return (
-    <Box sx={{ display: "grid", gap: 2 }}>
-      <Button
-        id="date"
-        variant="outlined"
-        onClick={handleClick}
-        startIcon={<CalendarIcon size={16} />}
-        sx={{
-          width: "100%",
-          justifyContent: "flex-start",
-          textAlign: "left",
-          fontWeight: 400,
-          color: date ? "text.primary" : "text.secondary",
-        }}
-      >
-        {date?.from ? (
-          date.to ? (
-            <>
-              {format(date.from, "LLL dd, y", { locale: ptBR })} -{" "}
-              {format(date.to, "LLL dd, y", { locale: ptBR })}
-            </>
-          ) : (
-            format(date.from, "LLL dd, y", { locale: ptBR })
-          )
-        ) : (
-          <span>Selecione um período</span>
-        )}
-      </Button>
-      <Popover
-        open={open}
-        anchorEl={anchorEl}
-        onClose={handleClose}
-        anchorOrigin={{
-          vertical: "bottom",
-          horizontal: "left",
-        }}
-        transformOrigin={{
-          vertical: "top",
-          horizontal: "left",
-        }}
-      >
-        <Box sx={{ p: 2 }}>
-          <DayPicker
-            mode="range"
-            defaultMonth={date?.from}
-            selected={date}
-            onSelect={setDate}
-            numberOfMonths={2}
-            locale={ptBR}
-            styles={{
-              months: { display: "flex", gap: "1rem" },
-              month: { margin: 0 },
-              caption: {
-                display: "flex",
-                justifyContent: "center",
-                padding: "0.5rem",
-                color: theme.palette.text.primary,
-              },
-              day: {
-                color: theme.palette.text.primary,
-                borderRadius: theme.shape.borderRadius,
-              },
+    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+      <Box>
+        <Button
+          variant="outlined"
+          onClick={handleOpenDialog}
+          startIcon={<CalendarIcon size={16} />}
+          fullWidth={isMobile}
+          sx={{
+            justifyContent: "flex-start",
+            textAlign: "left",
+            fontWeight: 400,
+            color: fromDate ? "text.primary" : "text.secondary",
+            minWidth: { xs: "100%", sm: 220 },
+            textTransform: "none",
+          }}
+        >
+          {formatButtonText()}
+        </Button>
+
+        <Dialog
+          open={dialogOpen}
+          onClose={handleCloseDialog}
+          fullScreen={isMobile}
+          maxWidth="xs"
+          fullWidth
+        >
+          <DialogTitle
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
             }}
-            modifiersStyles={{
-              selected: {
-                backgroundColor: theme.palette.primary.main,
-                color: theme.palette.primary.contrastText,
-              },
-              today: {
-                fontWeight: "bold",
-                color: theme.palette.primary.main,
-              },
-            }}
-          />
-        </Box>
-      </Popover>
-    </Box>
+          >
+            <Typography variant="h6">Selecionar Período</Typography>
+            <IconButton onClick={handleCloseDialog} size="small">
+              <X size={20} />
+            </IconButton>
+          </DialogTitle>
+
+          <DialogContent>
+            <Stack spacing={3}>
+              {/* Quick Select Buttons */}
+              <Box>
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  gutterBottom
+                >
+                  Seleção Rápida
+                </Typography>
+                <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => handleQuickSelect("today")}
+                  >
+                    Hoje
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => handleQuickSelect("week")}
+                  >
+                    Últimos 7 dias
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => handleQuickSelect("month")}
+                  >
+                    Este mês
+                  </Button>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    onClick={() => handleQuickSelect("year")}
+                  >
+                    Este ano
+                  </Button>
+                </Stack>
+              </Box>
+
+              {/* Date Pickers */}
+              <Box>
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  gutterBottom
+                >
+                  Período Personalizado
+                </Typography>
+                <Stack spacing={2}>
+                  <MobileDatePicker
+                    label="Data Inicial"
+                    value={tempFromDate}
+                    onChange={(newValue) => setTempFromDate(newValue)}
+                    maxDate={tempToDate || undefined}
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        size: "small",
+                      },
+                    }}
+                  />
+                  <MobileDatePicker
+                    label="Data Final"
+                    value={tempToDate}
+                    onChange={(newValue) => setTempToDate(newValue)}
+                    minDate={tempFromDate || undefined}
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        size: "small",
+                      },
+                    }}
+                  />
+                </Stack>
+              </Box>
+
+              {/* Selected Range Preview */}
+              {tempFromDate && (
+                <Box
+                  sx={{
+                    p: 2,
+                    bgcolor: "action.hover",
+                    borderRadius: 1,
+                    textAlign: "center",
+                  }}
+                >
+                  <Typography variant="body2" color="text.secondary">
+                    Período selecionado:
+                  </Typography>
+                  <Typography variant="body1" fontWeight={600}>
+                    {format(tempFromDate, "dd/MM/yyyy", { locale: ptBR })}
+                    {tempToDate &&
+                      ` até ${format(tempToDate, "dd/MM/yyyy", {
+                        locale: ptBR,
+                      })}`}
+                  </Typography>
+                </Box>
+              )}
+            </Stack>
+          </DialogContent>
+
+          <DialogActions sx={{ px: 3, pb: 3 }}>
+            <Button onClick={handleClear} color="inherit">
+              Limpar
+            </Button>
+            <Box sx={{ flex: 1 }} />
+            <Button onClick={handleCloseDialog}>Cancelar</Button>
+            <Button onClick={handleConfirm} variant="contained">
+              Aplicar
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </Box>
+    </LocalizationProvider>
   );
 }
