@@ -1,9 +1,17 @@
+"use client";
 
-'use client';
-
-import { useState } from 'react';
-import { Drawer, AppBar, Toolbar, IconButton, Box, useMediaQuery, useTheme, Divider } from '@mui/material';
-import MenuIcon from '@mui/icons-material/Menu';
+import { useState } from "react";
+import {
+  Drawer,
+  AppBar,
+  Toolbar,
+  IconButton,
+  Box,
+  useMediaQuery,
+  useTheme,
+  Divider,
+} from "@mui/material";
+import MenuIcon from "@mui/icons-material/Menu";
 import { UserNav } from "../user-nav";
 import { Logo } from "@/components/logo";
 import { AppNav } from "../app-nav";
@@ -30,28 +38,34 @@ const drawerWidth = 280;
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const { completedGoal, clearCompletedGoal } = useGoals();
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleDrawerToggle = () => {
     setMobileOpen(!mobileOpen);
   };
 
+  const handleMobileNavigation = () => {
+    if (mobileOpen) {
+      setMobileOpen(false);
+    }
+  };
+
   const drawer = (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-          <Logo sx={{ width: '2rem', height: '2rem' }} />
-          <Box component="span" sx={{ fontSize: '18px', fontWeight: 600 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <Logo sx={{ width: "2rem", height: "2rem" }} />
+          <Box component="span" sx={{ fontSize: "18px", fontWeight: 600 }}>
             Gastometria
           </Box>
         </Box>
       </Box>
-      
-      <Box sx={{ flex: 1, overflow: 'auto', px: 2, py: 2 }}>
-        <AppNav />
+
+      <Box sx={{ flex: 1, overflow: "auto", px: 2, py: 2 }}>
+        <AppNav onNavigate={handleMobileNavigation} />
       </Box>
-      
+
       <Divider />
       <Box sx={{ p: 2 }}>
         <UserNav />
@@ -60,16 +74,21 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <Box sx={{ display: 'flex', minHeight: '100vh' }}>
-      {completedGoal && <GoalCompletionCelebration goal={completedGoal} onComplete={clearCompletedGoal} />}
+    <Box sx={{ display: "flex", minHeight: "100vh" }}>
+      {completedGoal && (
+        <GoalCompletionCelebration
+          goal={completedGoal}
+          onComplete={clearCompletedGoal}
+        />
+      )}
       <OnlineStatusIndicator />
-      
-      <AppBar 
-        position="fixed" 
-        sx={{ 
+
+      <AppBar
+        position="fixed"
+        sx={{
           width: { md: `calc(100% - ${drawerWidth}px)` },
           ml: { md: `${drawerWidth}px` },
-          display: { md: 'none' }
+          display: { md: "none" },
         }}
       >
         <Toolbar>
@@ -81,8 +100,8 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
           >
             <MenuIcon />
           </IconButton>
-          <Logo sx={{ width: '2rem', height: '2rem', mr: 1.5 }} />
-          <Box component="span" sx={{ fontSize: '18px', fontWeight: 600 }}>
+          <Logo sx={{ width: "2rem", height: "2rem", mr: 1.5 }} />
+          <Box component="span" sx={{ fontSize: "18px", fontWeight: 600 }}>
             Gastometria
           </Box>
           <Box sx={{ flexGrow: 1 }} />
@@ -100,18 +119,24 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
           onClose={handleDrawerToggle}
           ModalProps={{ keepMounted: true }}
           sx={{
-            display: { xs: 'block', md: 'none' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            display: { xs: "block", md: "none" },
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+              width: drawerWidth,
+            },
           }}
         >
           {drawer}
         </Drawer>
-        
+
         <Drawer
           variant="permanent"
           sx={{
-            display: { xs: 'none', md: 'block' },
-            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: drawerWidth },
+            display: { xs: "none", md: "block" },
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+              width: drawerWidth,
+            },
           }}
           open
         >
@@ -124,15 +149,33 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
         sx={{
           flexGrow: 1,
           width: { md: `calc(100% - ${drawerWidth}px)` },
-          mt: { xs: 7, md: 0 }
+          mt: { xs: 7, md: 0 },
         }}
       >
-        <Box sx={{ maxWidth: 1280, mx: 'auto', p: { xs: 2, sm: 3 }, pb: { xs: 12, md: 3 } }}>
+        <Box
+          sx={{
+            maxWidth: 1280,
+            mx: "auto",
+            p: { xs: 2, sm: 3 },
+            pb: { xs: 12, md: 3 },
+          }}
+        >
           <PlanExpirationAlert />
           {children}
         </Box>
 
-        <Box sx={{ position: 'fixed', bottom: 16, right: 16, zIndex: 50, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1.5 }}>
+        <Box
+          sx={{
+            position: "fixed",
+            bottom: 16,
+            right: 16,
+            zIndex: 50,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-end",
+            gap: 1.5,
+          }}
+        >
           <ChatAssistant />
           <AICreditIndicator />
         </Box>
@@ -143,26 +186,26 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
 
 function InnerLayout({ children }: { children: React.ReactNode }) {
   return (
-     <PlanProvider>
-        <CreditsProvider>
-          <WalletsProvider>
-            <TransactionsProvider>
-              <ReportsProvider>
-                 <GamificationProvider>
-                    <InstallmentsProvider>
-                      <BudgetsProvider>
-                        <GoalsProvider>
-                          <AppLayoutContent>{children}</AppLayoutContent>
-                        </GoalsProvider>
-                      </BudgetsProvider>
-                    </InstallmentsProvider>
-                 </GamificationProvider>
-              </ReportsProvider>
-            </TransactionsProvider>
-          </WalletsProvider>
-        </CreditsProvider>
-      </PlanProvider>
-  )
+    <PlanProvider>
+      <CreditsProvider>
+        <WalletsProvider>
+          <TransactionsProvider>
+            <ReportsProvider>
+              <GamificationProvider>
+                <InstallmentsProvider>
+                  <BudgetsProvider>
+                    <GoalsProvider>
+                      <AppLayoutContent>{children}</AppLayoutContent>
+                    </GoalsProvider>
+                  </BudgetsProvider>
+                </InstallmentsProvider>
+              </GamificationProvider>
+            </ReportsProvider>
+          </TransactionsProvider>
+        </WalletsProvider>
+      </CreditsProvider>
+    </PlanProvider>
+  );
 }
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {

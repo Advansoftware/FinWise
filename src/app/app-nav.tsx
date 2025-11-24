@@ -1,54 +1,110 @@
-"use client"
+"use client";
 
-import Link from 'next/link';
-import {usePathname} from 'next/navigation';
-import {SidebarMenu, SidebarMenuItem, SidebarMenuButton, useSidebar} from '@/components/mui-wrappers/sidebar';
-import {Home, History, Settings, FolderKanban, Upload, Gem, UserCircle, Target, Goal, Wallet, FileText, CreditCard, Calculator} from 'lucide-react';
-import {useIsMobile} from '@/hooks/use-mobile';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import {
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  alpha,
+} from "@mui/material";
+import {
+  Home,
+  History,
+  Settings,
+  FolderKanban,
+  Upload,
+  Gem,
+  UserCircle,
+  Target,
+  Goal,
+  Wallet,
+  FileText,
+  CreditCard,
+  Calculator,
+} from "lucide-react";
 
 const navItems = [
-    { href: '/dashboard', label: 'Painel', icon: Home },
-    { href: '/transactions', label: 'Transações', icon: History },
-    { href: '/wallets', label: 'Carteiras', icon: Wallet },
-    { href: '/categories', label: 'Categorias', icon: FolderKanban },
-    { href: '/budgets', label: 'Orçamentos', icon: Target },
-    { href: '/goals', label: 'Metas', icon: Goal },
-    { href: '/installments', label: 'Parcelamentos', icon: CreditCard },
-    { href: '/reports', label: 'Relatórios', icon: FileText },
-    { href: '/tools', label: 'Ferramentas', icon: Calculator },
-    { href: '/import', label: 'Importar', icon: Upload },
-    { href: '/settings', label: 'Configurações', icon: Settings },
-    { href: '/billing', label: 'Assinatura', icon: Gem },
-    { href: '/profile', label: 'Perfil', icon: UserCircle },
+  { href: "/dashboard", label: "Painel", icon: Home },
+  { href: "/transactions", label: "Transações", icon: History },
+  { href: "/wallets", label: "Carteiras", icon: Wallet },
+  { href: "/categories", label: "Categorias", icon: FolderKanban },
+  { href: "/budgets", label: "Orçamentos", icon: Target },
+  { href: "/goals", label: "Metas", icon: Goal },
+  { href: "/installments", label: "Parcelamentos", icon: CreditCard },
+  { href: "/reports", label: "Relatórios", icon: FileText },
+  { href: "/tools", label: "Ferramentas", icon: Calculator },
+  { href: "/import", label: "Importar", icon: Upload },
+  { href: "/settings", label: "Configurações", icon: Settings },
+  { href: "/billing", label: "Assinatura", icon: Gem },
+  { href: "/profile", label: "Perfil", icon: UserCircle },
 ];
 
-export function AppNav() {
-    const pathname = usePathname();
-    const { state, setOpenMobile } = useSidebar();
-    const isMobile = useIsMobile();
+interface AppNavProps {
+  onNavigate?: () => void;
+}
 
-    const handleNavClick = () => {
-        // Fecha o sidebar apenas no mobile
-        if (isMobile) {
-            setOpenMobile(false);
-        }
-    };
+export function AppNav({ onNavigate }: AppNavProps) {
+  const pathname = usePathname();
 
-    return (
-        <SidebarMenu>
-            {navItems.map(item => {
-                const isActive = pathname === item.href;
-                return (
-                    <SidebarMenuItem key={item.href}>
-                        <SidebarMenuButton isActive={isActive} onClick={handleNavClick}>
-                            <Link href={item.href} style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '0.5rem' }}>
-                                <item.icon style={{ width: '1rem', height: '1rem' }} />
-                                {state === 'expanded' && <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.label}</span>}
-                            </Link>
-                        </SidebarMenuButton>
-                    </SidebarMenuItem>
-                );
-            })}
-        </SidebarMenu>
-    );
+  const handleNavClick = () => {
+    onNavigate?.();
+  };
+
+  return (
+    <List disablePadding>
+      {navItems.map((item) => {
+        const isActive = pathname === item.href;
+        const IconComponent = item.icon;
+
+        return (
+          <ListItem key={item.href} disablePadding sx={{ mb: 0.5 }}>
+            <ListItemButton
+              component={Link}
+              href={item.href}
+              onClick={handleNavClick}
+              selected={isActive}
+              sx={{
+                borderRadius: 2,
+                py: 1,
+                px: 1.5,
+                transition: "all 0.2s ease-in-out",
+                "&.Mui-selected": {
+                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.12),
+                  color: "primary.main",
+                  "& .MuiListItemIcon-root": {
+                    color: "primary.main",
+                  },
+                  "&:hover": {
+                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.18),
+                  },
+                },
+                "&:hover": {
+                  bgcolor: "action.hover",
+                },
+              }}
+            >
+              <ListItemIcon
+                sx={{
+                  minWidth: 36,
+                  color: isActive ? "primary.main" : "text.secondary",
+                }}
+              >
+                <IconComponent size={18} />
+              </ListItemIcon>
+              <ListItemText
+                primary={item.label}
+                primaryTypographyProps={{
+                  fontSize: "0.875rem",
+                  fontWeight: isActive ? 600 : 400,
+                }}
+              />
+            </ListItemButton>
+          </ListItem>
+        );
+      })}
+    </List>
+  );
 }
