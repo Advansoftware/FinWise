@@ -434,9 +434,16 @@ const getThemeOptions = (mode: 'light' | 'dark'): ThemeOptions => ({
 
     MuiDialog: {
       styleOverrides: {
+        root: {
+          '& .MuiDialog-container': {
+            alignItems: 'flex-start',
+            paddingTop: '32px',
+            paddingBottom: '32px',
+          },
+        },
         paper: {
           borderRadius: radius.lg,
-          maxHeight: 'calc(100% - 64px)',
+          margin: '0 16px',
         },
         paperScrollBody: {
           maxHeight: 'none',
@@ -444,6 +451,7 @@ const getThemeOptions = (mode: 'light' | 'dark'): ThemeOptions => ({
       },
       defaultProps: {
         scroll: 'body',
+        maxWidth: 'sm',
       },
     },
 

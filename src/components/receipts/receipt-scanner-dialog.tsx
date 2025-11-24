@@ -9,9 +9,9 @@ import {
   Drawer,
   Box,
   Typography,
-  Button
+  Button,
 } from "@mui/material";
-import {useState, cloneElement} from 'react';
+import { useState, cloneElement } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ReceiptScanner } from "./receipt-scanner";
 
@@ -27,27 +27,25 @@ export function ReceiptScannerDialog({ children }: ReceiptScannerDialogProps) {
     setIsOpen(false);
   };
 
-  const renderContent = () => (
-    <ReceiptScanner onComplete={handleComplete} />
-  );
+  const renderContent = () => <ReceiptScanner onComplete={handleComplete} />;
 
   const trigger = cloneElement(children, {
-    onClick: () => setIsOpen(true)
+    onClick: () => setIsOpen(true),
   });
 
   if (isMobile) {
     return (
       <>
         {trigger}
-        <Drawer 
-          anchor="bottom" 
-          open={isOpen} 
+        <Drawer
+          anchor="bottom"
+          open={isOpen}
           onClose={() => setIsOpen(false)}
           PaperProps={{
-            sx: { height: '95vh', display: 'flex', flexDirection: 'column' }
+            sx: { height: "95vh", display: "flex", flexDirection: "column" },
           }}
         >
-          <Box sx={{ p: 3, textAlign: 'left' }}>
+          <Box sx={{ p: 3, textAlign: "left" }}>
             <Typography variant="h6" component="h2" sx={{ mb: 1 }}>
               Escanear Nota Fiscal
             </Typography>
@@ -56,7 +54,7 @@ export function ReceiptScannerDialog({ children }: ReceiptScannerDialogProps) {
             </Typography>
           </Box>
 
-          <Box sx={{ flex: 1, overflowY: 'auto', p: 3, pt: 0 }}>
+          <Box sx={{ flex: 1, overflowY: "auto", p: 3, pt: 0 }}>
             {renderContent()}
           </Box>
         </Drawer>
@@ -67,22 +65,18 @@ export function ReceiptScannerDialog({ children }: ReceiptScannerDialogProps) {
   return (
     <>
       {trigger}
-      <Dialog 
-        open={isOpen} 
+      <Dialog
+        open={isOpen}
         onClose={() => setIsOpen(false)}
         maxWidth="md"
         fullWidth
-        PaperProps={{
-          sx: { maxHeight: '90vh' }
-        }}
       >
         <DialogTitle>Escanear Nota Fiscal</DialogTitle>
         <DialogContentText sx={{ px: 3, pb: 2 }}>
-          Faça upload da imagem (PDF, PNG, JPG) da nota fiscal para adicionar as transações.
+          Faça upload da imagem (PDF, PNG, JPG) da nota fiscal para adicionar as
+          transações.
         </DialogContentText>
-        <DialogContent sx={{ overflowY: 'auto' }}>
-          {renderContent()}
-        </DialogContent>
+        <DialogContent>{renderContent()}</DialogContent>
       </Dialog>
     </>
   );
