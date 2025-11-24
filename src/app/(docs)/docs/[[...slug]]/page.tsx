@@ -10,6 +10,7 @@ import {DocSidebarNav} from '@/app/(docs)/docs/_components/docs-sidebar-nav';
 import {ScrollArea} from '@/components/mui-wrappers/scroll-area';
 import {Metadata} from 'next';
 import { Box, Container, Typography, Grid, Paper } from '@mui/material';
+import DocsContent from './DocsContent';
 
 const docsDirectory = path.join(process.cwd(), 'docs');
 
@@ -163,42 +164,17 @@ const markdownStyles = {
 };
 
 export default async function DocPage({ params }: { params: { slug?: string[] } }) {
-    const slug = params.slug?.join('/') || 'introducao';
-    const doc = await getDocContent(slug);
-    const allDocs = await getDocs();
-    
-    if (!doc) {
-        notFound();
-    }
+  const slug = params.slug?.join('/') || 'introducao';
+  const doc = await getDocContent(slug);
+  const allDocs = await getDocs();
 
-    return (
-        <Container maxWidth="xl" sx={{ py: { xs: 4, md: 8 } }}>
-            <Grid container spacing={4}>
-                {/* Sidebar */}
-                <Grid size={{ xs: 12, md: 3, lg: 2 }} sx={{ display: { xs: 'none', md: 'block' } }}>
-                    <Box sx={{ position: 'sticky', top: 80, height: 'calc(100vh - 100px)' }}>
-                        <ScrollArea sx={{ height: '100%', pr: 2 }}>
-                             <DocSidebarNav items={allDocs} />
-                        </ScrollArea>
-                    </Box>
-                </Grid>
+  if (!doc) {
+    notFound();
+  }
 
-                {/* Main Content */}
-                <Grid size={{ xs: 12, md: 9, lg: 10 }}>
-                    <Box sx={markdownStyles}>
-                        {doc.title && (
-                            <Typography variant="h1" component="h1" sx={{ mb: 4 }}>
-                                {doc.title}
-                            </Typography>
-                        )}
-                        <ReactMarkdown>{doc.content}</ReactMarkdown>
-                    </Box>
-                </Grid>
-            </Grid>
-        </Container>
-    );
+  // Render client component that uses MUI components
+  return <DocsContent doc={doc!} allDocs={allDocs} />;
 }
-
 export async function generateStaticParams() {
     const docs = await getDocs();
     return docs.map(doc => ({
