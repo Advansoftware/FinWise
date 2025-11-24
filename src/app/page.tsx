@@ -211,6 +211,38 @@ const comparisonFeatures = [
       { name: "Transações", basico: true, pro: true, plus: true, infinity: true },
       { name: "Categorização Manual", basico: true, pro: true, plus: true, infinity: true },
       { name: "Transferências entre Carteiras", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Categorias Personalizadas", basico: true, pro: true, plus: true, infinity: true },
+    ]
+  },
+  {
+    category: "Parcelamentos & Gestão",
+    features: [
+      { name: "Criar Parcelamentos", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Acompanhar Pagamentos", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Cronograma de Vencimentos", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Projeções Mensais", basico: true, pro: true, plus: true, infinity: true },
+    ]
+  },
+  {
+    category: "Calculadoras Financeiras",
+    features: [
+      { name: "Calculadora de Férias", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Calculadora 13º Salário", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Projeção Salarial", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Calculadora FGTS", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Calculadora INSS", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Calculadora Rescisão", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Calculadora IR", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Empréstimo Consignado", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Pós-Férias", basico: true, pro: true, plus: true, infinity: true },
+    ]
+  },
+  {
+    category: "Folha de Pagamento",
+    features: [
+      { name: "Configurar Dados do Holerite", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Salário Bruto e Descontos", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Ajuda de Custo", basico: true, pro: true, plus: true, infinity: true },
     ]
   },
   {
@@ -400,7 +432,7 @@ export default function Page() {
         {/* Main Content */}
         <Box component="main" sx={{ flex: 1 }}>
           {/* Hero Section */}
-          <Container maxWidth="lg" sx={{ py: { xs: 8, sm: 12, md: 16 } }}>
+          <Container maxWidth="xl" sx={{ py: { xs: 8, sm: 12, md: 16 } }}>
             <Stack spacing={4} alignItems="center" textAlign="center">
               <Typography
                 component={motion.h1}
@@ -506,7 +538,7 @@ export default function Page() {
 
           {/* Why Section */}
           <Box sx={{ py: { xs: 8, sm: 12, md: 16 }, bgcolor: 'background.paper' }}>
-            <Container maxWidth="lg">
+            <Container maxWidth="xl">
               <Box
                 component={motion.div}
                 {...fadeIn}
@@ -537,9 +569,9 @@ export default function Page() {
                           '&:hover': {
                             transform: 'translateY(-8px)',
                             boxShadow: 12,
-                            borderColor: 'primary.main',
-                            borderWidth: 1,
-                            borderStyle: 'solid'
+                            outline: '2px solid',
+                            outlineColor: 'primary.main',
+                            outlineOffset: '-2px'
                           }
                         }}
                       >
@@ -563,7 +595,7 @@ export default function Page() {
           </Box>
 
           {/* Pricing Section */}
-          <Container maxWidth="lg" sx={{ py: { xs: 8, sm: 12, md: 16 } }}>
+          <Container maxWidth="xl" sx={{ py: { xs: 8, sm: 12, md: 16 } }}>
             <Box
               component={motion.div}
               {...fadeIn}
@@ -672,7 +704,7 @@ export default function Page() {
 
           {/* Feature Comparison Table */}
           <Box sx={{ py: { xs: 8, sm: 12, md: 16 }, bgcolor: 'background.paper' }}>
-            <Container maxWidth="lg">
+            <Container maxWidth="xl">
               <Box
                 component={motion.div}
                 {...fadeIn}
@@ -745,7 +777,7 @@ export default function Page() {
           </Box>
 
           {/* FAQ Section */}
-          <Container maxWidth="lg" sx={{ py: { xs: 8, sm: 12, md: 16 } }}>
+          <Container maxWidth="xl" sx={{ py: { xs: 8, sm: 12, md: 16 } }}>
             <Box
               component={motion.div}
               {...fadeIn}
@@ -818,7 +850,7 @@ export default function Page() {
 
           {/* Blog Preview Section */}
           <Box sx={{ py: { xs: 8, sm: 12, md: 16 }, bgcolor: 'background.paper' }}>
-            <Container maxWidth="lg">
+            <Container maxWidth="xl">
               <Box
                 component={motion.div}
                 {...fadeIn}
@@ -928,7 +960,7 @@ export default function Page() {
             bgcolor: 'background.paper'
           }}
         >
-          <Container maxWidth="lg">
+          <Container maxWidth="xl">
             <Typography variant="body2" align="center" sx={{ color: 'text.secondary' }}>
               © {new Date().getFullYear()} Gastometria. Todos os direitos reservados.
             </Typography>

@@ -4,13 +4,21 @@ import {useState} from 'react';
 import {useForm} from 'react-hook-form';
 import {zodResolver} from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import {Button, Typography} from '@mui/material';
-import {TextField} from '@mui/material';
-import {Card, CardContent, CardHeader} from '@mui/material';
+import {
+  Button, 
+  Typography, 
+  TextField, 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  Box, 
+  Stack, 
+  Link as MuiLink,
+  CircularProgress
+} from '@mui/material';
 import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from '@/components/mui-wrappers/form';
 import {useAuth} from '@/hooks/use-auth';
 import {useToast} from '@/hooks/use-toast';
-import {Loader2} from 'lucide-react';
 import Link from 'next/link';
 import {useRouter} from 'next/navigation';
 import {Logo} from '@/components/logo';
@@ -56,60 +64,111 @@ export default function LoginPage() {
   };
 
   return (
-    <Card>
-      <CardHeader className="text-center">
-        <div className="mx-auto h-12 w-12">
-            <Logo />
-        </div>
-        <Typography variant="h6">Bem-vindo de volta!</Typography>
-        <Typography variant="body2" color="text.secondary">Faça login para acessar seu painel financeiro.</Typography>
-      </CardHeader>
+    <Card sx={{ 
+      width: '100%', 
+      maxWidth: 400, 
+      mx: 'auto',
+      transition: 'all 0.3s ease',
+      '&:hover': {
+        boxShadow: 8,
+        transform: 'translateY(-2px)'
+      }
+    }}>
+      <CardHeader 
+        sx={{ textAlign: 'center', pb: 0 }}
+        title={
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
+            <Box sx={{ width: 48, height: 48 }}>
+                <Logo />
+            </Box>
+            <Typography variant="h5" fontWeight="bold">Bem-vindo de volta!</Typography>
+          </Box>
+        }
+        subheader={
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+            Faça login para acessar seu painel financeiro.
+          </Typography>
+        }
+      />
       <CardContent>
         <Form form={form} onSubmit={onSubmit}>
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
-                  <FormControl>
-                    <TextField placeholder="seu@email.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <div className="flex items-center justify-between">
-                    <FormLabel>Senha</FormLabel>
-                    <ResetPasswordDialog>
-                        <button type="button" className="text-sm font-medium text-primary hover:underline focus:outline-none">
-                            Esqueceu sua senha?
-                        </button>
-                    </ResetPasswordDialog>
-                  </div>
-                  <FormControl>
-                    <TextField type="password" placeholder="••••••••" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Entrar
-            </Button>
+            <Stack spacing={2}>
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Email</FormLabel>
+                    <FormControl>
+                      <TextField 
+                        placeholder="seu@email.com" 
+                        fullWidth 
+                        autoComplete="email"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <Stack direction="row" justifyContent="space-between" alignItems="center">
+                      <FormLabel>Senha</FormLabel>
+                      <ResetPasswordDialog>
+                          <MuiLink 
+                            component="button" 
+                            type="button" 
+                            variant="caption" 
+                            underline="hover"
+                            sx={{ fontWeight: 500 }}
+                          >
+                              Esqueceu sua senha?
+                          </MuiLink>
+                      </ResetPasswordDialog>
+                    </Stack>
+                    <FormControl>
+                      <TextField 
+                        type="password" 
+                        placeholder="••••••••" 
+                        fullWidth 
+                        autoComplete="current-password"
+                        {...field} 
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button 
+                type="submit" 
+                variant="contained" 
+                fullWidth 
+                size="large"
+                disabled={isLoading}
+                sx={{ mt: 2 }}
+              >
+                {isLoading && <CircularProgress size={20} color="inherit" sx={{ mr: 1 }} />}
+                Entrar
+              </Button>
+            </Stack>
         </Form>
-        <p className="mt-4 text-center text-sm text-muted-foreground">
+        
+        <Typography variant="body2" align="center" color="text.secondary" sx={{ mt: 3 }}>
           Não tem uma conta?{' '}
-          <Link href="/signup" className="font-semibold text-primary hover:underline">
+          <MuiLink 
+            component={Link} 
+            href="/signup" 
+            underline="hover" 
+            fontWeight="bold"
+            color="primary"
+          >
             Cadastre-se
-          </Link>
-        </p>
+          </MuiLink>
+        </Typography>
       </CardContent>
     </Card>
   );

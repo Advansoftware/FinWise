@@ -1,11 +1,22 @@
 import {Metadata} from 'next';
 import Link from 'next/link';
-import {ArrowLeft, HelpCircle, MessageCircle, Mail} from 'lucide-react';
-import {Button, Typography} from '@mui/material';
-import {Card, CardContent, CardHeader} from '@mui/material';
-import {Accordion, AccordionContent, AccordionItem, AccordionTrigger} from '@/components/mui-wrappers/accordion';
-import {Chip} from '@mui/material';
-import {Divider} from '@mui/material';
+import {ArrowLeft, HelpCircle, MessageCircle, Mail, ChevronDown} from 'lucide-react';
+import {
+  Button, 
+  Typography, 
+  Container, 
+  Box, 
+  Stack, 
+  Card, 
+  CardContent, 
+  CardHeader, 
+  Chip, 
+  Divider,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Paper
+} from '@mui/material';
 import {faqData} from '@/lib/structured-data';
 
 export const metadata: Metadata = {
@@ -24,7 +35,8 @@ const faqCategories = [
     id: 'geral',
     title: 'Geral',
     icon: HelpCircle,
-    color: 'bg-blue-100 text-blue-800',
+    color: 'info.main',
+    bgcolor: 'info.lighter',
     questions: [
       {
         question: 'O que é o Gastometria?',
@@ -48,7 +60,8 @@ const faqCategories = [
     id: 'ia',
     title: 'Inteligência Artificial',
     icon: MessageCircle,
-    color: 'bg-purple-100 text-purple-800',
+    color: 'secondary.main',
+    bgcolor: 'secondary.lighter',
     questions: [
       {
         question: 'Como funciona a inteligência artificial?',
@@ -72,7 +85,8 @@ const faqCategories = [
     id: 'seguranca',
     title: 'Segurança e Privacidade',
     icon: Mail,
-    color: 'bg-green-100 text-green-800',
+    color: 'success.main',
+    bgcolor: 'success.lighter',
     questions: [
       {
         question: 'Meus dados financeiros estão seguros?',
@@ -96,7 +110,8 @@ const faqCategories = [
     id: 'funcionalidades',
     title: 'Funcionalidades',
     icon: HelpCircle,
-    color: 'bg-orange-100 text-orange-800',
+    color: 'warning.main',
+    bgcolor: 'warning.lighter',
     questions: [
       {
         question: 'Posso importar dados do meu banco?',
@@ -120,7 +135,7 @@ const faqCategories = [
 
 export default function FAQPage() {
   return (
-    <div className="min-h-screen bg-background">
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
       {/* Structured Data */}
       <script
         type="application/ld+json"
@@ -129,107 +144,205 @@ export default function FAQPage() {
         }}
       />
       
-      <div className="container mx-auto px-4 py-8">
+      <Container maxWidth="xl" sx={{ py: { xs: 4, md: 8 } }}>
         {/* Header */}
-        <div className="max-w-4xl mx-auto">
-          <Button variant="text" className="mb-6" component={Link} href="/">
-            <ArrowLeft style={{ width: '1rem', height: '1rem', marginRight: '0.5rem' }} />
+        <Box sx={{ maxWidth: 'md', mx: 'auto' }}>
+          <Button 
+            variant="text" 
+            component={Link} 
+            href="/"
+            startIcon={<ArrowLeft size={16} />}
+            sx={{ mb: 3, color: 'text.secondary', '&:hover': { color: 'primary.main', bgcolor: 'transparent' } }}
+          >
             Voltar ao Início
           </Button>
 
-          <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
+          <Box sx={{ textAlign: 'center', mb: 6 }}>
+            <Typography 
+              variant="h2" 
+              component="h1" 
+              sx={{ 
+                fontWeight: 700, 
+                mb: 2,
+                fontSize: { xs: '2rem', md: '3rem' },
+                background: (theme) => `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+                backgroundClip: 'text',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+              }}
+            >
               Perguntas Frequentes
-            </h1>
-            <p className="text-xl text-muted-foreground mb-8">
+            </Typography>
+            <Typography variant="h5" color="text.secondary" sx={{ fontWeight: 400 }}>
               Encontre respostas para as dúvidas mais comuns sobre o Gastometria
-            </p>
-          </div>
+            </Typography>
+          </Box>
 
           {/* FAQ Categories */}
-          <div className="space-y-8">
+          <Stack spacing={4}>
             {faqCategories.map((category) => (
-              <Card key={category.id} className="overflow-hidden">
-                <CardHeader className="bg-muted/50">
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-lg bg-background flex items-center justify-center">
-                      <category.icon className="h-4 w-4" />
-                    </div>
-                    <div>
-                      <Typography variant="h6" className="text-xl">{category.title}</Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        {category.questions.length} perguntas
-                      </Typography>
-                    </div>
-                    <Chip label={category.questions.length} className={category.color} />
-                  </div>
-                </CardHeader>
-                <CardContent className="p-0">
-                  <Accordion>
-                    {category.questions.map((faq, index) => (
-                      <AccordionItem
-                        key={index}
-                        value={`${category.id}-${index}`}
-                        className="border-b last:border-b-0 px-6"
+              <Card 
+                key={category.id} 
+                sx={{ 
+                  overflow: 'hidden',
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-4px)',
+                    boxShadow: 8,
+                    outline: '2px solid',
+                    outlineColor: 'primary.main',
+                    outlineOffset: '-2px'
+                  }
+                }}
+              >
+                <CardHeader 
+                  sx={{ 
+                    bgcolor: 'action.hover',
+                    borderBottom: 1,
+                    borderColor: 'divider'
+                  }}
+                  title={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                      <Box 
+                        sx={{ 
+                          width: 40, 
+                          height: 40, 
+                          borderRadius: 2, 
+                          bgcolor: 'background.paper', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center',
+                          color: category.color,
+                          boxShadow: 1
+                        }}
                       >
-                        <AccordionTrigger>
-                          {faq.question}
-                        </AccordionTrigger>
-                        <AccordionContent>
+                        <category.icon size={20} />
+                      </Box>
+                      <Box sx={{ flexGrow: 1 }}>
+                        <Typography variant="h6" fontWeight="bold">{category.title}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {category.questions.length} perguntas
+                        </Typography>
+                      </Box>
+                      <Chip 
+                        label={category.questions.length} 
+                        size="small"
+                        sx={{ 
+                          bgcolor: category.color, 
+                          color: 'white',
+                          fontWeight: 'bold'
+                        }} 
+                      />
+                    </Box>
+                  }
+                />
+                <CardContent sx={{ p: 0 }}>
+                  {category.questions.map((faq, index) => (
+                    <Accordion 
+                      key={index} 
+                      disableGutters 
+                      elevation={0}
+                      sx={{ 
+                        '&:before': { display: 'none' },
+                        borderBottom: 1,
+                        borderColor: 'divider',
+                        '&:last-child': { borderBottom: 0 }
+                      }}
+                    >
+                      <AccordionSummary 
+                        expandIcon={<ChevronDown size={16} />}
+                        sx={{ 
+                          px: 3,
+                          '&:hover': { bgcolor: 'action.hover' }
+                        }}
+                      >
+                        <Typography fontWeight="medium">{faq.question}</Typography>
+                      </AccordionSummary>
+                      <AccordionDetails sx={{ px: 3, pb: 3, pt: 0 }}>
+                        <Typography color="text.secondary">
                           {faq.answer}
-                        </AccordionContent>
-                      </AccordionItem>
-                    ))}
-                  </Accordion>
+                        </Typography>
+                      </AccordionDetails>
+                    </Accordion>
+                  ))}
                 </CardContent>
               </Card>
             ))}
-          </div>
+          </Stack>
 
-          <Divider className="my-12" />
+          <Divider sx={{ my: 6 }} />
 
           {/* Contact Section */}
-          <Card className="bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-950/20 dark:to-purple-950/20 border-0">
-            <CardContent className="p-8 text-center">
-              <h2 className="text-2xl font-bold mb-4">
-                Não encontrou a resposta que procurava?
-              </h2>
-              <p className="text-muted-foreground mb-6">
-                Nossa equipe de suporte está sempre pronta para ajudar você
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button>
-                  <Link href="mailto:suporte@gastometria.com.br">
-                    <Mail className="h-4 w-4 mr-2" />
-                    Enviar Email
-                  </Link>
-                </Button>
-                <Button variant="outlined">
-                  <Link href="/docs">
-                    <HelpCircle className="h-4 w-4 mr-2" />
-                    Ver Documentação
-                  </Link>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
+          <Paper 
+            elevation={0}
+            sx={{ 
+              p: 4, 
+              textAlign: 'center',
+              background: (theme) => `linear-gradient(135deg, ${theme.palette.primary.light}15, ${theme.palette.secondary.light}15)`,
+              borderRadius: 4,
+              border: 1,
+              borderColor: 'divider'
+            }}
+          >
+            <Typography variant="h5" fontWeight="bold" gutterBottom>
+              Não encontrou a resposta que procurava?
+            </Typography>
+            <Typography color="text.secondary" sx={{ mb: 3 }}>
+              Nossa equipe de suporte está sempre pronta para ajudar você
+            </Typography>
+            
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} justifyContent="center">
+              <Button 
+                variant="contained" 
+                size="large"
+                component={Link} 
+                href="mailto:suporte@gastometria.com.br"
+                startIcon={<Mail size={18} />}
+              >
+                Enviar Email
+              </Button>
+              <Button 
+                variant="outlined" 
+                size="large"
+                component={Link} 
+                href="/docs"
+                startIcon={<HelpCircle size={18} />}
+              >
+                Ver Documentação
+              </Button>
+            </Stack>
+          </Paper>
 
           {/* CTA Section */}
-          <div className="text-center mt-12">
-            <h3 className="text-xl font-semibold mb-4">
+          <Box sx={{ textAlign: 'center', mt: 8 }}>
+            <Typography variant="h5" fontWeight="bold" gutterBottom>
               Pronto para começar?
-            </h3>
-            <p className="text-muted-foreground mb-6">
+            </Typography>
+            <Typography color="text.secondary" sx={{ mb: 3 }}>
               Experimente o Gastometria gratuitamente e transforme sua gestão financeira
-            </p>
-            <Button size="large">
-              <Link href="/signup">
-                Criar Conta Grátis
-              </Link>
+            </Typography>
+            <Button 
+              variant="contained" 
+              size="large"
+              component={Link} 
+              href="/signup"
+              sx={{ 
+                px: 4,
+                py: 1.5,
+                borderRadius: 2,
+                fontSize: '1.1rem',
+                boxShadow: 4,
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: 8
+                }
+              }}
+            >
+              Criar Conta Grátis
             </Button>
-          </div>
-        </div>
-      </div>
-    </div>
+          </Box>
+        </Box>
+      </Container>
+    </Box>
   );
 }
