@@ -289,16 +289,6 @@ export default function LoginPage() {
                 mt: 1,
                 fontWeight: 600,
                 fontSize: "1rem",
-                borderRadius: 2,
-                textTransform: "none",
-                boxShadow: (theme) =>
-                  `0 4px 14px 0 ${alpha(theme.palette.primary.main, 0.4)}`,
-                "&:hover": {
-                  boxShadow: (theme) =>
-                    `0 6px 20px 0 ${alpha(theme.palette.primary.main, 0.5)}`,
-                  transform: "translateY(-1px)",
-                },
-                transition: "all 0.2s ease-in-out",
               }}
             >
               {isLoading ? (

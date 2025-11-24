@@ -271,16 +271,38 @@ const getThemeOptions = (mode: 'light' | 'dark'): ThemeOptions => ({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: radius.md,
+          borderRadius: radius.xl, // Mais arredondado (12px)
           textTransform: 'none',
           fontWeight: typographyTokens.fontWeight.medium,
-          transition: transitionTokens.base,
+          transition: 'all 0.2s ease-in-out',
         },
         contained: {
           boxShadow: shadowTokens.sm,
           '&:hover': {
             boxShadow: shadowTokens.md,
+            transform: 'translateY(-1px)',
           },
+          '&:active': {
+            transform: 'translateY(0)',
+          },
+        },
+        outlined: {
+          '&:hover': {
+            transform: 'translateY(-1px)',
+          },
+        },
+        sizeSmall: {
+          borderRadius: radius.md, // 8px para botões pequenos
+          padding: '6px 16px',
+        },
+        sizeMedium: {
+          borderRadius: radius.xl, // 12px para botões médios
+          padding: '8px 20px',
+        },
+        sizeLarge: {
+          borderRadius: radius['2xl'], // 16px para botões grandes
+          padding: '12px 28px',
+          fontSize: typographyTokens.fontSize.base,
         },
       },
       defaultProps: {
@@ -309,13 +331,71 @@ const getThemeOptions = (mode: 'light' | 'dark'): ThemeOptions => ({
       },
     },
 
+    MuiFormControl: {
+      styleOverrides: {
+        root: {
+          marginBottom: '16px', // Espaçamento entre inputs
+        },
+      },
+      defaultProps: {
+        margin: 'normal', // Adiciona margin top e bottom por padrão
+      },
+    },
+
     MuiTextField: {
       styleOverrides: {
         root: {
+          marginBottom: '8px', // Espaçamento extra entre TextFields
           '& .MuiOutlinedInput-root': {
             borderRadius: radius.md,
           },
         },
+      },
+      defaultProps: {
+        margin: 'normal', // margin top: 16px, margin bottom: 8px
+      },
+    },
+
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          '&:hover .MuiOutlinedInput-notchedOutline': {
+            borderColor: alpha(theme.palette.primary.main, 0.5),
+          },
+          '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+            borderColor: theme.palette.primary.main,
+          },
+        }),
+        notchedOutline: ({ theme }) => ({
+          borderColor: theme.palette.divider,
+          transition: 'border-color 0.2s ease-in-out',
+        }),
+      },
+    },
+
+    MuiInputBase: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          '&:hover:not(.Mui-disabled):not(.Mui-error)': {
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: alpha(theme.palette.primary.main, 0.5),
+            },
+          },
+        }),
+      },
+    },
+
+    MuiFilledInput: {
+      styleOverrides: {
+        root: ({ theme }) => ({
+          backgroundColor: alpha(theme.palette.primary.main, 0.04),
+          '&:hover': {
+            backgroundColor: alpha(theme.palette.primary.main, 0.08),
+          },
+          '&.Mui-focused': {
+            backgroundColor: alpha(theme.palette.primary.main, 0.08),
+          },
+        }),
       },
     },
 

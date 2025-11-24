@@ -143,11 +143,11 @@ export const spacing = {
 
 // Border Radius
 export const radius = {
-  sm: '0.375rem',  // 6px (calc(0.5rem - 4px))
-  md: '0.5rem',    // 8px (calc(0.5rem - 2px))
-  lg: '0.5rem',    // 8px (padrão --radius)
-  xl: '0.75rem',   // 12px
-  '2xl': '1rem',   // 16px
+  sm: '0.5rem',    // 8px
+  md: '0.75rem',   // 12px
+  lg: '1rem',      // 16px
+  xl: '1.25rem',   // 20px
+  '2xl': '1.5rem', // 24px
   full: '9999px',
 };
 
