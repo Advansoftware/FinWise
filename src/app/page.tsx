@@ -22,9 +22,10 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  Paper
+  Paper,
+  TableContainer
 } from "@mui/material";
-import { ArrowRight, BarChart, Bot, LayoutDashboard, Wallet, Check, Goal, FolderKanban, Upload, KeyRound, CheckCircle, XCircle, HelpCircle, BookOpen, ChevronRight } from "lucide-react";
+import { ArrowRight, BarChart, Bot, LayoutDashboard, Wallet, Check, Goal, Upload, CheckCircle, XCircle, HelpCircle, ChevronRight, Sparkles, TrendingUp, Shield, Zap } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { useAuth } from "@/hooks/use-auth";
@@ -43,7 +44,7 @@ const fadeIn = {
 
 const plans = [
   {
-    name: "Free",
+    name: "Básico",
     price: "R$ 0",
     period: "/mês",
     description: "Perfeito para começar sua jornada financeira",
@@ -56,61 +57,66 @@ const plans = [
     ],
     cta: "Começar Grátis",
     variant: "outlined",
-    popular: false
+    popular: false,
+    credits: "0 créditos IA"
+  },
+  {
+    name: "Pro",
+    price: "R$ 14,90",
+    period: "/mês",
+    description: "Recursos essenciais com IA",
+    features: [
+      "Tudo do Básico",
+      "Carteiras ilimitadas",
+      "100 créditos IA/mês",
+      "IA para dicas rápidas",
+      "Chat básico com IA",
+      "Relatórios avançados"
+    ],
+    cta: "Assinar Pro",
+    variant: "outlined",
+    popular: false,
+    credits: "100 créditos IA/mês"
   },
   {
     name: "Plus",
-    price: "R$ 19,90",
+    price: "R$ 29,90",
     period: "/mês",
-    description: "Para quem quer mais controle e insights",
+    description: "Poder completo da IA + Ollama",
     features: [
-      "Carteiras ilimitadas",
-      "IA para categorização",
+      "Tudo do Pro",
+      "300 créditos IA/mês",
       "OCR de notas fiscais",
       "Importação CSV/OFX",
-      "Relatórios avançados",
+      "Ollama local (ilimitado)",
       "Metas financeiras",
+      "Análises preditivas",
       "Suporte prioritário"
     ],
     cta: "Assinar Plus",
     variant: "contained",
-    popular: true
+    popular: true,
+    credits: "300 créditos IA/mês"
   },
   {
     name: "Infinity",
-    price: "R$ 39,90",
+    price: "R$ 49,90",
     period: "/mês",
-    description: "Controle total com IA avançada",
+    description: "Liberdade total com qualquer IA",
     features: [
       "Tudo do Plus",
-      "IA local (Ollama)",
-      "Modelos personalizados",
+      "500 créditos IA/mês",
+      "OpenAI (sua chave)",
+      "Google AI (sua chave)",
+      "Qualquer provedor IA",
+      "Uso ilimitado c/ suas chaves",
       "API access",
-      "Exportação ilimitada",
-      "Análises preditivas",
       "Suporte 24/7"
     ],
     cta: "Assinar Infinity",
     variant: "contained",
-    popular: false
-  },
-  {
-    name: "Enterprise",
-    price: "Custom",
-    period: "",
-    description: "Soluções personalizadas para empresas",
-    features: [
-      "Tudo do Infinity",
-      "Deploy on-premise",
-      "SSO/SAML",
-      "SLA garantido",
-      "Treinamento dedicado",
-      "Gerente de conta",
-      "Customizações"
-    ],
-    cta: "Fale Conosco",
-    variant: "outlined",
-    popular: false
+    popular: false,
+    credits: "500 créditos IA/mês"
   }
 ];
 
@@ -118,39 +124,45 @@ const features = [
   {
     icon: Wallet,
     title: "Múltiplas Carteiras",
-    description: "Organize seu dinheiro em carteiras separadas: pessoal, trabalho, investimentos e muito mais."
+    description: "Organize seu dinheiro em carteiras separadas: pessoal, trabalho, investimentos e muito mais.",
+    color: "#2196f3"
   },
   {
     icon: Bot,
     title: "IA Inteligente",
-    description: "Categorização automática de transações com IA. Economize tempo e tenha insights precisos."
+    description: "Categorização automática de transações com IA. Economize tempo e tenha insights precisos.",
+    color: "#9c27b0"
   },
   {
     icon: BarChart,
     title: "Relatórios Detalhados",
-    description: "Visualize seus gastos com gráficos interativos e relatórios personalizáveis."
+    description: "Visualize seus gastos com gráficos interativos e relatórios personalizáveis.",
+    color: "#ff9800"
   },
   {
     icon: Goal,
     title: "Metas Financeiras",
-    description: "Defina objetivos e acompanhe seu progresso rumo à independência financeira."
+    description: "Defina objetivos e acompanhe seu progresso rumo à independência financeira.",
+    color: "#4caf50"
   },
   {
     icon: Upload,
     title: "Importação Fácil",
-    description: "Importe extratos bancários (CSV/OFX) e digitalize notas fiscais com OCR."
+    description: "Importe extratos bancários (CSV/OFX) e digitalize notas fiscais com OCR.",
+    color: "#f44336"
   },
   {
     icon: LayoutDashboard,
     title: "Dashboard Intuitivo",
-    description: "Interface moderna e fácil de usar. Acesse tudo que precisa em um só lugar."
+    description: "Interface moderna e fácil de usar. Acesse tudo que precisa em um só lugar.",
+    color: "#00bcd4"
   }
 ];
 
 const faqs = [
   {
     question: "O Gastometria é gratuito?",
-    answer: "Sim! Oferecemos um plano gratuito completo com recursos essenciais. Você pode fazer upgrade para Plus ou Infinity quando quiser mais funcionalidades."
+    answer: "Sim! Oferecemos um plano Básico completo com recursos essenciais. Você pode fazer upgrade para Pro, Plus ou Infinity quando quiser mais funcionalidades."
   },
   {
     question: "Meus dados estão seguros?",
@@ -161,8 +173,8 @@ const faqs = [
     answer: "Sim! O Gastometria é um PWA (Progressive Web App) que funciona offline. Suas transações são sincronizadas quando você volta online."
   },
   {
-    question: "Como funciona a IA?",
-    answer: "Nossa IA analisa o histórico de transações e aprende seus padrões de gastos para categorizar automaticamente novas transações e fornecer insights personalizados."
+    question: "Como funcionam os créditos de IA?",
+    answer: "Cada plano oferece créditos mensais para usar a Gastometria IA. Ações simples custam 1-2 créditos, complexas 5-10. Você pode usar Ollama (Plus) ou suas próprias chaves de IA (Infinity) ilimitadamente."
   }
 ];
 
@@ -171,19 +183,92 @@ const blogPosts = [
     title: "Como Economizar R$ 1000 por Mês",
     description: "Descubra estratégias práticas para reduzir gastos e aumentar sua poupança mensal.",
     category: "Economia",
-    slug: "como-economizar-1000-por-mes"
+    slug: "como-economizar-1000-por-mes",
+    color: "#4caf50"
   },
   {
     title: "Guia Completo de Investimentos para Iniciantes",
     description: "Tudo que você precisa saber para começar a investir com segurança.",
     category: "Investimentos",
-    slug: "guia-investimentos-iniciantes"
+    slug: "guia-investimentos-iniciantes",
+    color: "#2196f3"
   },
   {
     title: "Planejamento Financeiro Familiar",
     description: "Organize as finanças da família e alcance seus objetivos juntos.",
     category: "Planejamento",
-    slug: "planejamento-financeiro-familiar"
+    slug: "planejamento-financeiro-familiar",
+    color: "#ff9800"
+  }
+];
+
+// Tabela de comparação completa com recursos reais
+const comparisonFeatures = [
+  {
+    category: "Carteiras & Transações",
+    features: [
+      { name: "Número de Carteiras", basico: "3", pro: "Ilimitadas", plus: "Ilimitadas", infinity: "Ilimitadas" },
+      { name: "Transações", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Categorização Manual", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Transferências entre Carteiras", basico: true, pro: true, plus: true, infinity: true },
+    ]
+  },
+  {
+    category: "Inteligência Artificial",
+    features: [
+      { name: "Créditos IA/mês", basico: "0", pro: "100", plus: "300", infinity: "500" },
+      { name: "Dicas Rápidas (1 crédito)", basico: false, pro: true, plus: true, infinity: true },
+      { name: "Chat com IA", basico: false, pro: "Básico", plus: "Avançado", infinity: "Avançado" },
+      { name: "Categorização Automática", basico: false, pro: true, plus: true, infinity: true },
+      { name: "Análise de Transações (5 créditos)", basico: false, pro: true, plus: true, infinity: true },
+      { name: "Gastometria IA (padrão)", basico: false, pro: true, plus: true, infinity: true },
+      { name: "Ollama Local (ilimitado)", basico: false, pro: false, plus: true, infinity: true },
+      { name: "OpenAI (sua chave)", basico: false, pro: false, plus: false, infinity: true },
+      { name: "Google AI (sua chave)", basico: false, pro: false, plus: false, infinity: true },
+    ]
+  },
+  {
+    category: "Importação & Digitalização",
+    features: [
+      { name: "Importação CSV", basico: false, pro: false, plus: true, infinity: true },
+      { name: "Importação OFX", basico: false, pro: false, plus: true, infinity: true },
+      { name: "OCR Notas Fiscais (10 créditos)", basico: false, pro: false, plus: true, infinity: true },
+    ]
+  },
+  {
+    category: "Metas & Planejamento",
+    features: [
+      { name: "Metas Financeiras", basico: false, pro: false, plus: true, infinity: true },
+      { name: "Depósitos em Metas", basico: false, pro: false, plus: true, infinity: true },
+      { name: "Projeção de Metas (2 créditos)", basico: false, pro: false, plus: true, infinity: true },
+      { name: "Orçamentos", basico: false, pro: false, plus: true, infinity: true },
+      { name: "Sugestão de Orçamento IA (2 créditos)", basico: false, pro: false, plus: true, infinity: true },
+    ]
+  },
+  {
+    category: "Relatórios & Análises",
+    features: [
+      { name: "Dashboard Básico", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Relatórios Avançados", basico: false, pro: true, plus: true, infinity: true },
+      { name: "Análises Preditivas (5 créditos)", basico: false, pro: false, plus: true, infinity: true },
+      { name: "Previsão de Saldo (5 créditos)", basico: false, pro: false, plus: true, infinity: true },
+      { name: "Exportação de Dados", basico: false, pro: false, plus: true, infinity: true },
+    ]
+  },
+  {
+    category: "Offline & Sincronização",
+    features: [
+      { name: "Modo Offline (PWA)", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Sincronização Automática", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Cache Local (IndexedDB)", basico: true, pro: true, plus: true, infinity: true },
+    ]
+  },
+  {
+    category: "Suporte",
+    features: [
+      { name: "Tipo de Suporte", basico: "Email", pro: "Email", plus: "Prioritário", infinity: "24/7" },
+      { name: "Tempo de Resposta", basico: "48h", pro: "24h", plus: "12h", infinity: "4h" },
+    ]
   }
 ];
 
@@ -204,6 +289,34 @@ export default function Page() {
       </Box>
     );
   }
+
+  const renderCellValue = (value: any) => {
+    if (typeof value === 'boolean') {
+      return value ? (
+        <CheckCircle size={24} style={{ color: '#4caf50' }} />
+      ) : (
+        <XCircle size={24} style={{ color: '#f44336' }} />
+      );
+    }
+    if (typeof value === 'string') {
+      // Se for número de créditos, renderizar com chip
+      if (value.includes('crédito') || !isNaN(Number(value))) {
+        return (
+          <Chip 
+            label={value} 
+            size="small"
+            sx={{ 
+              bgcolor: value === '0' || value === 'Email' || value === '48h' ? 'grey.200' : 'primary.light',
+              color: value === '0' || value === 'Email' || value === '48h' ? 'text.secondary' : 'primary.contrastText',
+              fontWeight: 600
+            }}
+          />
+        );
+      }
+      return <Typography variant="body2">{value}</Typography>;
+    }
+    return value;
+  };
 
   return (
     <AuthGuard>
@@ -336,7 +449,12 @@ export default function Page() {
                   sx={{ 
                     px: 4, 
                     py: 1.5,
-                    fontSize: { xs: '0.875rem', sm: '1rem' }
+                    fontSize: { xs: '0.875rem', sm: '1rem' },
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: 8
+                    }
                   }}
                 >
                   Comece Agora Gratuitamente
@@ -354,7 +472,12 @@ export default function Page() {
                   sx={{ 
                     borderRadius: 2,
                     overflow: 'hidden',
-                    position: 'relative'
+                    position: 'relative',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'scale(1.02)',
+                      boxShadow: 12
+                    }
                   }}
                 >
                   <Image
@@ -405,10 +528,24 @@ export default function Page() {
                       {...fadeIn}
                       transition={{ ...fadeIn.transition, delay: index * 0.1 }}
                     >
-                      <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                      <Card 
+                        sx={{ 
+                          height: '100%', 
+                          display: 'flex', 
+                          flexDirection: 'column',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            transform: 'translateY(-8px)',
+                            boxShadow: 12,
+                            borderColor: 'primary.main',
+                            borderWidth: 1,
+                            borderStyle: 'solid'
+                          }
+                        }}
+                      >
                         <CardContent sx={{ flexGrow: 1 }}>
-                          <Box sx={{ mb: 2, color: 'primary.main' }}>
-                            <feature.icon size={32} />
+                          <Box sx={{ mb: 2, color: feature.color }}>
+                            <feature.icon size={40} />
                           </Box>
                           <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
                             {feature.title}
@@ -455,13 +592,24 @@ export default function Page() {
                         display: 'flex',
                         flexDirection: 'column',
                         position: 'relative',
-                        border: plan.popular ? 2 : 1,
-                        borderColor: plan.popular ? 'primary.main' : 'divider'
+                        border: 2,
+                        borderColor: plan.popular ? 'primary.main' : 'divider',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          borderColor: 'primary.main',
+                          transform: 'scale(1.02)',
+                          boxShadow: 12
+                        }
                       }}
                     >
                       {plan.popular && (
                         <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
-                          <Chip label="Mais Popular" color="primary" size="small" />
+                          <Chip 
+                            label="Mais Popular" 
+                            color="primary" 
+                            size="small"
+                            icon={<Sparkles size={16} />}
+                          />
                         </Box>
                       )}
                       
@@ -473,7 +621,7 @@ export default function Page() {
                       />
                       
                       <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
-                        <Box sx={{ mb: 3 }}>
+                        <Box sx={{ mb: 2 }}>
                           <Typography variant="h3" component="span" sx={{ fontWeight: 700 }}>
                             {plan.price}
                           </Typography>
@@ -482,10 +630,17 @@ export default function Page() {
                           </Typography>
                         </Box>
 
+                        <Chip 
+                          label={plan.credits} 
+                          size="small" 
+                          sx={{ mb: 3, width: 'fit-content' }}
+                          color={plan.name === 'Básico' ? 'default' : 'secondary'}
+                        />
+
                         <Stack spacing={1.5} sx={{ mb: 3, flexGrow: 1 }}>
                           {plan.features.map((feature, idx) => (
                             <Stack direction="row" spacing={1} key={idx}>
-                              <Check size={20} style={{ flexShrink: 0, marginTop: 2 }} />
+                              <Check size={20} style={{ flexShrink: 0, marginTop: 2, color: '#4caf50' }} />
                               <Typography variant="body2">{feature}</Typography>
                             </Stack>
                           ))}
@@ -497,6 +652,13 @@ export default function Page() {
                           component={Link}
                           href={user ? "/dashboard" : "/login"}
                           fullWidth
+                          sx={{
+                            transition: 'all 0.3s ease',
+                            '&:hover': {
+                              transform: 'translateY(-2px)',
+                              boxShadow: 4
+                            }
+                          }}
                         >
                           {plan.cta}
                         </Button>
@@ -517,60 +679,68 @@ export default function Page() {
                 sx={{ textAlign: 'center', mb: { xs: 6, sm: 8 } }}
               >
                 <Typography variant="h2" sx={{ fontSize: { xs: '1.875rem', sm: '2.25rem', md: '3rem' }, fontWeight: 700, mb: 2 }}>
-                  Comparação de Recursos
+                  Comparação Completa de Recursos
+                </Typography>
+                <Typography variant="body1" sx={{ color: 'text.secondary', maxWidth: '48rem', mx: 'auto' }}>
+                  Veja todos os recursos disponíveis em cada plano
                 </Typography>
               </Box>
 
-              <Paper sx={{ overflow: 'auto' }}>
-                <Table>
+              <TableContainer 
+                component={Paper} 
+                sx={{ 
+                  overflow: 'auto',
+                  '&::-webkit-scrollbar': {
+                    height: 8
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    bgcolor: 'background.default'
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    bgcolor: 'primary.main',
+                    borderRadius: 1
+                  }
+                }}
+              >
+                <Table sx={{ minWidth: 650 }}>
                   <TableHead>
-                    <TableRow>
-                      <TableCell>Recurso</TableCell>
-                      <TableCell align="center">Free</TableCell>
-                      <TableCell align="center">Plus</TableCell>
-                      <TableCell align="center">Infinity</TableCell>
-                      <TableCell align="center">Enterprise</TableCell>
+                    <TableRow sx={{ bgcolor: 'primary.main' }}>
+                      <TableCell sx={{ color: 'primary.contrastText', fontWeight: 700 }}>Recurso</TableCell>
+                      <TableCell align="center" sx={{ color: 'primary.contrastText', fontWeight: 700 }}>Básico</TableCell>
+                      <TableCell align="center" sx={{ color: 'primary.contrastText', fontWeight: 700 }}>Pro</TableCell>
+                      <TableCell align="center" sx={{ color: 'primary.contrastText', fontWeight: 700 }}>Plus</TableCell>
+                      <TableCell align="center" sx={{ color: 'primary.contrastText', fontWeight: 700 }}>Infinity</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    <TableRow>
-                      <TableCell>Carteiras</TableCell>
-                      <TableCell align="center">3</TableCell>
-                      <TableCell align="center">Ilimitadas</TableCell>
-                      <TableCell align="center">Ilimitadas</TableCell>
-                      <TableCell align="center">Ilimitadas</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>IA Categorização</TableCell>
-                      <TableCell align="center"><XCircle size={20} /></TableCell>
-                      <TableCell align="center"><CheckCircle size={20} /></TableCell>
-                      <TableCell align="center"><CheckCircle size={20} /></TableCell>
-                      <TableCell align="center"><CheckCircle size={20} /></TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>OCR Notas Fiscais</TableCell>
-                      <TableCell align="center"><XCircle size={20} /></TableCell>
-                      <TableCell align="center"><CheckCircle size={20} /></TableCell>
-                      <TableCell align="center"><CheckCircle size={20} /></TableCell>
-                      <TableCell align="center"><CheckCircle size={20} /></TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>IA Local (Ollama)</TableCell>
-                      <TableCell align="center"><XCircle size={20} /></TableCell>
-                      <TableCell align="center"><XCircle size={20} /></TableCell>
-                      <TableCell align="center"><CheckCircle size={20} /></TableCell>
-                      <TableCell align="center"><CheckCircle size={20} /></TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell>Deploy On-Premise</TableCell>
-                      <TableCell align="center"><XCircle size={20} /></TableCell>
-                      <TableCell align="center"><XCircle size={20} /></TableCell>
-                      <TableCell align="center"><XCircle size={20} /></TableCell>
-                      <TableCell align="center"><CheckCircle size={20} /></TableCell>
-                    </TableRow>
+                    {comparisonFeatures.map((category, catIndex) => (
+                      <React.Fragment key={catIndex}>
+                        <TableRow sx={{ bgcolor: 'action.hover' }}>
+                          <TableCell colSpan={5} sx={{ fontWeight: 700, fontSize: '1rem', py: 2 }}>
+                            {category.category}
+                          </TableCell>
+                        </TableRow>
+                        {category.features.map((feature, featIndex) => (
+                          <TableRow 
+                            key={featIndex}
+                            sx={{ 
+                              '&:nth-of-type(even)': { bgcolor: 'action.hover' },
+                              '&:hover': { bgcolor: 'action.selected' },
+                              transition: 'background-color 0.2s ease'
+                            }}
+                          >
+                            <TableCell>{feature.name}</TableCell>
+                            <TableCell align="center">{renderCellValue(feature.basico)}</TableCell>
+                            <TableCell align="center">{renderCellValue(feature.pro)}</TableCell>
+                            <TableCell align="center">{renderCellValue(feature.plus)}</TableCell>
+                            <TableCell align="center">{renderCellValue(feature.infinity)}</TableCell>
+                          </TableRow>
+                        ))}
+                      </React.Fragment>
+                    ))}
                   </TableBody>
                 </Table>
-              </Paper>
+              </TableContainer>
             </Container>
           </Box>
 
@@ -594,10 +764,18 @@ export default function Page() {
                   transition={{ ...fadeIn.transition, delay: index * 0.1 }}
                   key={index}
                 >
-                  <Card>
+                  <Card
+                    sx={{
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        bgcolor: 'action.hover',
+                        boxShadow: 4
+                      }
+                    }}
+                  >
                     <CardContent>
                       <Stack direction="row" spacing={2} alignItems="flex-start">
-                        <HelpCircle size={24} style={{ flexShrink: 0, marginTop: 2 }} />
+                        <HelpCircle size={24} style={{ flexShrink: 0, marginTop: 2, color: '#2196f3' }} />
                         <Box>
                           <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
                             {faq.question}
@@ -625,6 +803,13 @@ export default function Page() {
                 component={Link}
                 href="/faq"
                 endIcon={<ChevronRight />}
+                sx={{
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: 4
+                  }
+                }}
               >
                 Ver Todas as Perguntas
               </Button>
@@ -655,9 +840,28 @@ export default function Page() {
                       {...fadeIn}
                       transition={{ ...fadeIn.transition, delay: index * 0.1 }}
                     >
-                      <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+                      <Card 
+                        sx={{ 
+                          height: '100%', 
+                          display: 'flex', 
+                          flexDirection: 'column',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            transform: 'translateY(-8px)',
+                            boxShadow: 8
+                          }
+                        }}
+                      >
                         <CardContent sx={{ flexGrow: 1 }}>
-                          <Chip label={post.category} size="small" sx={{ mb: 2 }} />
+                          <Chip 
+                            label={post.category} 
+                            size="small" 
+                            sx={{ 
+                              mb: 2,
+                              bgcolor: post.color,
+                              color: 'white'
+                            }} 
+                          />
                           <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
                             {post.title}
                           </Typography>
@@ -670,7 +874,13 @@ export default function Page() {
                             component={Link}
                             href={`/blog/${post.slug}`}
                             endIcon={<ArrowRight size={16} />}
-                            sx={{ p: 0 }}
+                            sx={{ 
+                              p: 0,
+                              transition: 'all 0.3s ease',
+                              '&:hover': {
+                                transform: 'translateX(4px)'
+                              }
+                            }}
                           >
                             Ler artigo
                           </Button>
@@ -693,6 +903,13 @@ export default function Page() {
                   component={Link}
                   href="/blog"
                   endIcon={<ChevronRight />}
+                  sx={{
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: 4
+                    }
+                  }}
                 >
                   Ver Todos os Artigos
                 </Button>
