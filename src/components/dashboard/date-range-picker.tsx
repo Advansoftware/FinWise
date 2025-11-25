@@ -20,10 +20,8 @@ import {
   TextField,
   InputAdornment,
 } from "@mui/material";
-import { MobileDatePicker } from "@mui/x-date-pickers/MobileDatePicker";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { X } from "lucide-react";
+import { DatePickerButton } from "@/components/date-picker-button";
 
 interface DateRangePickerProps {
   initialDate?: DateRange;
@@ -119,7 +117,7 @@ export function DateRangePicker({
   };
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+    <>
       <TextField
         size="small"
         value={formatButtonText()}
@@ -211,28 +209,38 @@ export function DateRangePicker({
                 Período Personalizado
               </Typography>
               <Stack spacing={2}>
-                <MobileDatePicker
-                  label="Data Inicial"
-                  value={tempFromDate}
-                  onChange={(newValue) => setTempFromDate(newValue)}
-                  maxDate={tempToDate || undefined}
-                  slotProps={{
-                    textField: {
-                      size: "small",
-                    },
-                  }}
-                />
-                <MobileDatePicker
-                  label="Data Final"
-                  value={tempToDate}
-                  onChange={(newValue) => setTempToDate(newValue)}
-                  minDate={tempFromDate || undefined}
-                  slotProps={{
-                    textField: {
-                      size: "small",
-                    },
-                  }}
-                />
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mb: 0.5, display: "block" }}
+                  >
+                    Data Inicial
+                  </Typography>
+                  <DatePickerButton
+                    value={tempFromDate}
+                    onChange={(newValue) => setTempFromDate(newValue)}
+                    maxDate={tempToDate || undefined}
+                    placeholder="Selecione a data inicial"
+                    formatString="dd/MM/yyyy"
+                  />
+                </Box>
+                <Box>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ mb: 0.5, display: "block" }}
+                  >
+                    Data Final
+                  </Typography>
+                  <DatePickerButton
+                    value={tempToDate}
+                    onChange={(newValue) => setTempToDate(newValue)}
+                    minDate={tempFromDate || undefined}
+                    placeholder="Selecione a data final"
+                    formatString="dd/MM/yyyy"
+                  />
+                </Box>
               </Stack>
             </Box>
 
@@ -272,6 +280,6 @@ export function DateRangePicker({
           </Button>
         </DialogActions>
       </Dialog>
-    </LocalizationProvider>
+    </>
   );
 }
