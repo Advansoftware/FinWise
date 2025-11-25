@@ -27,7 +27,7 @@ const BANK_INFO: Record<SupportedBank, {
     icon: '💜',
     supportsPixKey: true,
     supportsBoleto: true,
-    scheme: 'nuapp',
+    scheme: 'nubank',
     packageAndroid: 'com.nu.production',
     appStoreId: '814456780',
     webUrl: 'https://nubank.com.br',
@@ -402,32 +402,58 @@ export class BankDeepLinkService implements IBankDeepLinkService {
 
       document.addEventListener('visibilitychange', handleVisibilityChange);
 
-      // Tentar abrir o app
-      if (isAndroid && deepLink.androidIntent) {
-        window.location.href = deepLink.androidIntent;
-      } else if (isIOS && deepLink.iosUniversalLink) {
-        window.location.href = deepLink.iosUniversalLink;
-      } else {
-        window.location.href = deepLink.url;
+      // Primeiro tentar o deep link nativo (scheme://)
+      // Isso tenta abrir o app diretamente se instalado
+      const iframe = document.createElement('iframe');
+      iframe.style.display = 'none';
+      document.body.appendChild(iframe);
+
+      // Tentar abrir via iframe (funciona melhor em alguns devices)
+      try {
+        if (iframe.contentWindow) {
+          iframe.contentWindow.location.href = deepLink.url;
+        }
+      } catch {
+        // Silently ignore - some browsers block this
       }
 
+      // Também tentar via window.location para garantir
+      window.location.href = deepLink.url;
+
       // Aguardar um pouco para ver se o app abriu
-      await new Promise(resolve => setTimeout(resolve, 2500));
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       document.removeEventListener('visibilitychange', handleVisibilityChange);
 
-      // Se o app não abriu, ir para fallback
-      if (!appOpened && deepLink.fallbackUrl) {
-        window.open(deepLink.fallbackUrl, '_blank');
+      // Limpar iframe
+      try {
+        document.body.removeChild(iframe);
+      } catch {
+        // Ignore if already removed
+      }
+
+      // Se o app não abriu (página ainda visível), o app não está instalado
+      // NÃO abrir fallback automaticamente - deixar o deep link tentar
+      if (!appOpened) {
+        // Tentar novamente com Android Intent se disponível
+        if (isAndroid && deepLink.androidIntent) {
+          // Pequeno delay antes de tentar o intent
+          await new Promise(resolve => setTimeout(resolve, 500));
+          window.location.href = deepLink.androidIntent;
+          return true; // Assumir que o intent vai funcionar
+        }
+
+        // No iOS, o deep link já deveria ter funcionado
+        // Se chegou aqui, o app provavelmente não está instalado
+        // Mas não abrir fallback automaticamente para evitar ir para Play Store
+        console.log('App pode não estar instalado, mas não abriremos fallback automaticamente');
         return false;
       }
 
       return appOpened;
     } catch (error) {
       console.error('Erro ao abrir app do banco:', error);
-      if (deepLink.fallbackUrl) {
-        window.open(deepLink.fallbackUrl, '_blank');
-      }
+      // NÃO abrir fallback automaticamente
       return false;
     }
   }
@@ -456,14 +482,17 @@ export class BankDeepLinkService implements IBankDeepLinkService {
       if (data.receiverName) params.set('name', data.receiverName);
       if (data.description) params.set('description', data.description);
 
-      return `nuapp://br.com.nubank/pix?${params.toString()}`;
+      // O Nubank usa nubank:// para abrir o app diretamente
+      // nuapp:// é para links que funcionam via web
+      return `nubank://pix/transfer?${params.toString()}`;
     }
 
     if (data.type === 'boleto' && data.barcode) {
-      return `nuapp://br.com.nubank/boleto?code=${encodeParam(data.barcode)}`;
+      return `nubank://boleto/pay?code=${encodeParam(data.barcode)}`;
     }
 
-    return 'nuapp://br.com.nubank/';
+    // Abre a tela inicial do app
+    return 'nubank://';
   }
 
   private generateItauDeepLink(data: PaymentData): string {
@@ -597,9 +626,13 @@ export class BankDeepLinkService implements IBankDeepLinkService {
 
   /**
    * Gera Android Intent URI para fallback
+   * O formato S.browser_fallback_url evita que vá para Play Store automaticamente
    */
   private generateAndroidIntent(packageName: string, deepLink: string): string {
-    return `intent://${deepLink.replace(/^[a-z]+:\/\//, '')}#Intent;scheme=${deepLink.split('://')[0]};package=${packageName};end`;
+    const scheme = deepLink.split('://')[0];
+    const path = deepLink.replace(/^[a-z]+:\/\//, '');
+    // Remover o fallback para Play Store - queremos que tente abrir o app diretamente
+    return `intent://${path}#Intent;scheme=${scheme};package=${packageName};end`;
   }
 
   /**

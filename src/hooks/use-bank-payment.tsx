@@ -46,6 +46,7 @@ interface BankPaymentContextType {
   isPushEnabled: boolean;
   isMobile: boolean;
   hasMobileDevice: boolean;
+  hasMobileDeviceWithPush: boolean;
   paymentHistory: PaymentRequest[];
 
   // Contatos
@@ -666,9 +667,9 @@ export function BankPaymentProvider({
             });
           } else {
             toast({
-              title: "Nenhum dispositivo móvel",
+              title: "Notificações push não ativadas",
               description:
-                "Registre seu celular para receber notificações de pagamento.",
+                "Ative as notificações push no seu celular para receber alertas de pagamento.",
               variant: "error",
             });
           }
@@ -935,7 +936,10 @@ export function BankPaymentProvider({
 
   // Alias e computed values
   const isMobile = detectIsMobile();
-  const hasMobileDevice = devices.some(
+  // Verificar se tem dispositivo móvel cadastrado (para mostrar UI)
+  const hasMobileDevice = devices.some((d) => d.type === "mobile");
+  // Verificar se tem dispositivo móvel com push ativado (para enviar notificações)
+  const hasMobileDeviceWithPush = devices.some(
     (d) => d.type === "mobile" && d.pushEndpoint
   );
   const paymentHistory = paymentRequests;
@@ -1192,6 +1196,7 @@ export function BankPaymentProvider({
     isPushEnabled,
     isMobile,
     hasMobileDevice,
+    hasMobileDeviceWithPush,
     paymentHistory,
 
     // Contatos

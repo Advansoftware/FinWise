@@ -53,8 +53,13 @@ export function PaymentButton({
   onSuccess,
   onError,
 }: PaymentButtonProps) {
-  const { initiatePayment, isMobile, hasMobileDevice, loading } =
-    useBankPayment();
+  const {
+    initiatePayment,
+    isMobile,
+    hasMobileDevice,
+    hasMobileDeviceWithPush,
+    loading,
+  } = useBankPayment();
   const { setPendingPaymentBeforeRedirect } = usePaymentConfirmation();
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -285,11 +290,12 @@ export function PaymentButton({
             {/* Mensagem de erro */}
             {error && <Alert severity="error">{error}</Alert>}
 
-            {/* Aviso se não houver dispositivo */}
-            {!isMobile && !hasMobileDevice && !pushSent && (
+            {/* Aviso se não houver dispositivo móvel com push */}
+            {!isMobile && !hasMobileDeviceWithPush && !pushSent && (
               <Alert severity="warning">
-                Você não tem um dispositivo móvel cadastrado. Cadastre nas
-                configurações para receber notificações de pagamento.
+                {hasMobileDevice
+                  ? "Seu dispositivo móvel não tem notificações push ativadas. Ative nas configurações para receber alertas de pagamento."
+                  : "Você não tem um dispositivo móvel cadastrado. Cadastre nas configurações para receber notificações de pagamento."}
               </Alert>
             )}
           </Stack>
@@ -303,7 +309,7 @@ export function PaymentButton({
             <Button
               variant="contained"
               onClick={handlePay}
-              disabled={processing || (!isMobile && !hasMobileDevice)}
+              disabled={processing || (!isMobile && !hasMobileDeviceWithPush)}
               startIcon={
                 processing ? <CircularProgress size={16} /> : <SendIcon />
               }
