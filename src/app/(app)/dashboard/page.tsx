@@ -1,7 +1,7 @@
 // src/app/(app)/dashboard/page.tsx
 "use client";
 
-import { Button, Stack, Box, Typography, Skeleton, Grid } from "@mui/material";
+import { Button, Box, Typography, Skeleton, Grid } from "@mui/material";
 import { PlusCircle, ScanLine } from "lucide-react";
 import { useTransactions } from "@/hooks/use-transactions";
 import { StatsCards } from "@/components/dashboard/stats-cards";
@@ -39,135 +39,228 @@ export default function DashboardPage() {
   const { isPro, isPlus } = usePlan();
 
   return (
-    <Stack spacing={{ xs: 2, sm: 3 }}>
-      {/* Header - Mobile First */}
-      <Stack spacing={{ xs: 1.5, sm: 2 }}>
-        <Stack
-          direction={{ xs: "column", sm: "row" }}
-          justifyContent="space-between"
-          alignItems={{ xs: "flex-start", sm: "center" }}
-          spacing={2}
-        >
-          <Box>
-            <Typography
-              variant="h4"
-              sx={{
-                fontSize: { xs: "1.5rem", sm: "1.875rem" },
-                fontWeight: "bold",
-                letterSpacing: "-0.025em",
-              }}
-            >
-              Painel
-            </Typography>
-            <Typography
-              variant="body1"
-              color="text.secondary"
-              sx={{ fontSize: { xs: "0.875rem", sm: "1rem" } }}
-            >
-              Aqui está uma visão geral das suas finanças.
-            </Typography>
+    <Box sx={{ flexGrow: 1 }}>
+      <Grid
+        container
+        spacing={{ xs: 2, sm: 3 }}
+        columns={{ xs: 4, sm: 8, md: 12 }}
+      >
+        {/* Header - Mobile First */}
+        <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+          <Grid
+            container
+            spacing={{ xs: 2, sm: 3 }}
+            columns={{ xs: 4, sm: 8, md: 12 }}
+          >
+            <Grid size={{ xs: 4, sm: 5, md: 6 }}>
+              <Box>
+                <Typography
+                  variant="h4"
+                  sx={{
+                    fontSize: { xs: "1.5rem", sm: "1.875rem" },
+                    fontWeight: "bold",
+                    letterSpacing: "-0.025em",
+                  }}
+                >
+                  Painel
+                </Typography>
+                <Typography
+                  variant="body1"
+                  color="text.secondary"
+                  sx={{ fontSize: { xs: "0.875rem", sm: "1rem" } }}
+                >
+                  Aqui está uma visão geral das suas finanças.
+                </Typography>
+              </Box>
+            </Grid>
+
+            {/* Action Buttons - Alinhados à direita */}
+            <Grid size={{ xs: 4, sm: 3, md: 6 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  gap: 1.5,
+                  justifyContent: { xs: "flex-start", sm: "flex-end" },
+                }}
+              >
+                <GamificationGuide />
+                {isPro && (
+                  <ScanQRCodeDialog>
+                    <Button
+                      variant="outlined"
+                      startIcon={<ScanLine size={18} />}
+                    >
+                      Escanear QRCode
+                    </Button>
+                  </ScanQRCodeDialog>
+                )}
+                <AddTransactionSheet>
+                  <Button
+                    variant="contained"
+                    startIcon={<PlusCircle size={18} />}
+                  >
+                    Nova Transação
+                  </Button>
+                </AddTransactionSheet>
+              </Box>
+            </Grid>
+          </Grid>
+        </Grid>
+
+        {/* Filters - Todos com mesmo estilo */}
+        <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+            <DateRangePicker initialDate={dateRange} onUpdate={setDateRange} />
+            <ItemFilter
+              placeholder="Todas as Categorias"
+              items={["all", ...categories]}
+              selectedItem={selectedCategory}
+              onItemSelected={handleCategoryChange}
+            />
+            <ItemFilter
+              placeholder="Todas as Subcategorias"
+              items={["all", ...availableSubcategories]}
+              selectedItem={selectedSubcategory}
+              onItemSelected={setSelectedSubcategory}
+              disabled={selectedCategory === "all"}
+            />
           </Box>
+        </Grid>
 
-          {/* Action Buttons - Alinhados à direita */}
-          <Stack direction="row" spacing={1.5}>
-            <GamificationGuide />
-            {isPro && (
-              <ScanQRCodeDialog>
-                <Button variant="outlined" startIcon={<ScanLine size={18} />}>
-                  Escanear QRCode
-                </Button>
-              </ScanQRCodeDialog>
-            )}
-            <AddTransactionSheet>
-              <Button variant="contained" startIcon={<PlusCircle size={18} />}>
-                Nova Transação
-              </Button>
-            </AddTransactionSheet>
-          </Stack>
-        </Stack>
-      </Stack>
+        {isLoading ? (
+          <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+            <DashboardSkeleton />
+          </Grid>
+        ) : (
+          <>
+            {/* Stats Cards - Sempre full width, 4 cards em linha no desktop */}
+            <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+              <StatsCards transactions={filteredTransactions} />
+            </Grid>
 
-      {/* Filters - Todos com mesmo estilo */}
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
-        <DateRangePicker initialDate={dateRange} onUpdate={setDateRange} />
-        <ItemFilter
-          placeholder="Todas as Categorias"
-          items={["all", ...categories]}
-          selectedItem={selectedCategory}
-          onItemSelected={handleCategoryChange}
-        />
-        <ItemFilter
-          placeholder="Todas as Subcategorias"
-          items={["all", ...availableSubcategories]}
-          selectedItem={selectedSubcategory}
-          onItemSelected={setSelectedSubcategory}
-          disabled={selectedCategory === "all"}
-        />
-      </Stack>
-
-      {isLoading ? (
-        <DashboardSkeleton />
-      ) : (
-        <Stack spacing={{ xs: 2, sm: 3 }}>
-          {/* Stats Cards - Sempre full width, 4 cards em linha no desktop */}
-          <StatsCards transactions={filteredTransactions} />
-
-          {/* Main Content Grid */}
-          <Grid container spacing={{ xs: 2, sm: 3 }}>
+            {/* Main Content Grid */}
             {/* Coluna Principal - 8 colunas no desktop */}
-            <Grid size={{ xs: 12, lg: 8 }}>
-              <Stack spacing={{ xs: 2, sm: 3 }}>
+            <Grid size={{ xs: 4, sm: 8, md: 8 }}>
+              <Grid
+                container
+                spacing={{ xs: 2, sm: 3 }}
+                columns={{ xs: 4, sm: 8, md: 12 }}
+              >
                 {/* Spending Chart */}
-                <SpendingChart data={chartData} />
+                <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+                  <SpendingChart data={chartData} />
+                </Grid>
 
                 {/* Recent Transactions */}
-                <RecentTransactions transactions={filteredTransactions} />
-              </Stack>
+                <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+                  <RecentTransactions transactions={filteredTransactions} />
+                </Grid>
+              </Grid>
             </Grid>
 
             {/* Coluna Lateral - 4 colunas no desktop */}
-            <Grid size={{ xs: 12, lg: 4 }}>
-              <Stack spacing={{ xs: 2, sm: 3 }}>
+            <Grid size={{ xs: 4, sm: 8, md: 4 }}>
+              <Grid
+                container
+                spacing={{ xs: 2, sm: 3 }}
+                columns={{ xs: 4, sm: 8, md: 12 }}
+              >
                 {/* Gamification Progress */}
-                <GamificationProgressWidget variant="expanded" showBadges />
+                <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+                  <GamificationProgressWidget variant="expanded" showBadges />
+                </Grid>
 
                 {/* Wallet Summary */}
-                <WalletCard transactions={filteredTransactions} />
+                <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+                  <WalletCard transactions={filteredTransactions} />
+                </Grid>
 
                 {/* Daily Quests */}
-                <DailyQuestsCard pageContext="dashboard" compact />
+                <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+                  <DailyQuestsCard pageContext="dashboard" compact />
+                </Grid>
 
                 {/* AI Tip */}
-                {isPro && <AITipCard transactions={filteredTransactions} />}
+                {isPro && (
+                  <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+                    <AITipCard transactions={filteredTransactions} />
+                  </Grid>
+                )}
 
                 {/* Goal Highlight Card */}
-                <GoalHighlightCard />
+                <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+                  <GoalHighlightCard />
+                </Grid>
 
                 {/* Future Balance Card */}
-                {isPlus && <FutureBalanceCard />}
-              </Stack>
+                {isPlus && (
+                  <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+                    <FutureBalanceCard />
+                  </Grid>
+                )}
+              </Grid>
             </Grid>
-          </Grid>
-        </Stack>
-      )}
-    </Stack>
+          </>
+        )}
+      </Grid>
+    </Box>
   );
 }
 
 function DashboardSkeleton() {
   return (
-    <Grid container spacing={{ xs: 2, sm: 3 }}>
-      <Grid size={{ xs: 12, lg: 8 }}>
-        <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
+    <Grid
+      container
+      spacing={{ xs: 2, sm: 3 }}
+      columns={{ xs: 4, sm: 8, md: 12 }}
+    >
+      {/* Coluna Principal */}
+      <Grid size={{ xs: 4, sm: 8, md: 8 }}>
+        <Grid
+          container
+          spacing={{ xs: 2, sm: 3 }}
+          columns={{ xs: 4, sm: 8, md: 12 }}
+        >
+          <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+            <Skeleton
+              variant="rectangular"
+              height={180}
+              sx={{ borderRadius: 2 }}
+            />
+          </Grid>
+          <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+            <Skeleton
+              variant="rectangular"
+              height={350}
+              sx={{ borderRadius: 2 }}
+            />
+          </Grid>
+        </Grid>
       </Grid>
-      <Grid size={{ xs: 12, lg: 4 }}>
-        <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
-      </Grid>
-      <Grid size={{ xs: 12, lg: 8 }}>
-        <Skeleton variant="rectangular" height={350} sx={{ borderRadius: 2 }} />
-      </Grid>
-      <Grid size={{ xs: 12, lg: 4 }}>
-        <Skeleton variant="rectangular" height={350} sx={{ borderRadius: 2 }} />
+
+      {/* Coluna Lateral */}
+      <Grid size={{ xs: 4, sm: 8, md: 4 }}>
+        <Grid
+          container
+          spacing={{ xs: 2, sm: 3 }}
+          columns={{ xs: 4, sm: 8, md: 12 }}
+        >
+          <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+            <Skeleton
+              variant="rectangular"
+              height={180}
+              sx={{ borderRadius: 2 }}
+            />
+          </Grid>
+          <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+            <Skeleton
+              variant="rectangular"
+              height={350}
+              sx={{ borderRadius: 2 }}
+            />
+          </Grid>
+        </Grid>
       </Grid>
     </Grid>
   );
