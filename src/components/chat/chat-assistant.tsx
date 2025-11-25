@@ -1,7 +1,14 @@
 // src/components/chat/chat-assistant.tsx
 "use client";
 
-import { useState, useRef, useEffect, useTransition } from "react";
+import {
+  useState,
+  useRef,
+  useEffect,
+  useTransition,
+  useCallback,
+  memo,
+} from "react";
 import {
   Button,
   Typography,
@@ -41,6 +48,88 @@ import { usePlan } from "@/hooks/use-plan";
 import { ProUpgradeCard } from "../pro-upgrade-card";
 import { useReasoningChat } from "@/hooks/use-reasoning-chat";
 import { useAISettings } from "@/hooks/use-ai-settings";
+
+// Componente de input isolado para evitar re-renders
+interface ChatInputFieldProps {
+  value: string;
+  onChange: (value: string) => void;
+  onSubmit: () => void;
+  disabled: boolean;
+  isPro: boolean;
+}
+
+const ChatInputField = memo(function ChatInputField({
+  value,
+  onChange,
+  onSubmit,
+  disabled,
+  isPro,
+}: ChatInputFieldProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      onSubmit();
+    }
+  };
+
+  return (
+    <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+      <TextField
+        inputRef={inputRef}
+        placeholder={
+          isPro
+            ? "Pergunte sobre seus gastos..."
+            : "Faça upgrade para usar o chat"
+        }
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onKeyDown={handleKeyDown}
+        disabled={disabled || !isPro}
+        fullWidth
+        size="small"
+        multiline
+        maxRows={3}
+        autoComplete="off"
+        inputProps={{
+          autoComplete: "off",
+          autoCorrect: "off",
+          autoCapitalize: "off",
+          spellCheck: false,
+          enterKeyHint: "send",
+        }}
+        sx={{
+          "& .MuiOutlinedInput-root": {
+            borderRadius: 3,
+            bgcolor: "background.default",
+          },
+        }}
+      />
+      <IconButton
+        onClick={onSubmit}
+        disabled={!value.trim() || disabled || !isPro}
+        color="primary"
+        sx={{
+          bgcolor: "primary.main",
+          color: "primary.contrastText",
+          width: 40,
+          height: 40,
+          flexShrink: 0,
+          "&:hover": {
+            bgcolor: "primary.dark",
+          },
+          "&.Mui-disabled": {
+            bgcolor: "action.disabledBackground",
+            color: "action.disabled",
+          },
+        }}
+      >
+        <SendIcon sx={{ fontSize: 20 }} />
+      </IconButton>
+    </Box>
+  );
+});
 
 const suggestionPrompts = [
   "Quanto gastei com Supermercado este mês?",
@@ -96,88 +185,111 @@ export function ChatAssistant() {
     }
   }, [messages, reasoning]);
 
-  const handleSubmit = (prompt: string = input) => {
-    if (!prompt.trim() || !isPro) return;
+  const handleInputChange = useCallback((value: string) => {
+    setInput(value);
+  }, []);
 
-    const newUserMessage: Message = { role: "user", content: prompt };
-    setMessages((prev) => [...prev, newUserMessage]);
-    setInput("");
-    clearReasoning();
+  const handleSubmit = useCallback(
+    (prompt?: string) => {
+      const messageToSend = prompt || input;
+      if (!messageToSend.trim() || !isPro) return;
 
-    startTransition(async () => {
-      try {
-        const currentYear = getYear(new Date());
-        const startOfCurrentMonth = startOfMonth(new Date());
+      const newUserMessage: Message = { role: "user", content: messageToSend };
+      setMessages((prev) => [...prev, newUserMessage]);
+      setInput("");
+      clearReasoning();
 
-        const currentMonthTransactions = allTransactions.filter(
-          (t) => new Date(t.date) >= startOfCurrentMonth
-        );
-        const currentYearMonthlyReports = monthlyReports.filter((r) =>
-          r.period.startsWith(currentYear.toString())
-        );
-        const pastAnnualReports = annualReports.filter(
-          (r) => parseInt(r.period) < currentYear
-        );
+      startTransition(async () => {
+        try {
+          const currentYear = getYear(new Date());
+          const startOfCurrentMonth = startOfMonth(new Date());
 
-        let response: string;
-
-        if (shouldUseReasoning) {
-          response = await streamReasoningResponse(
-            messages,
-            prompt,
-            user!.uid,
-            currentMonthTransactions,
-            currentYearMonthlyReports,
-            pastAnnualReports
+          const currentMonthTransactions = allTransactions.filter(
+            (t) => new Date(t.date) >= startOfCurrentMonth
           );
-        } else {
-          response = await getChatbotResponse(
-            {
-              history: messages,
-              prompt: prompt,
-              transactions: currentMonthTransactions,
-              monthlyReports: currentYearMonthlyReports,
-              annualReports: pastAnnualReports,
-            },
-            user!.uid
+          const currentYearMonthlyReports = monthlyReports.filter((r) =>
+            r.period.startsWith(currentYear.toString())
           );
+          const pastAnnualReports = annualReports.filter(
+            (r) => parseInt(r.period) < currentYear
+          );
+
+          let response: string;
+
+          if (shouldUseReasoning) {
+            response = await streamReasoningResponse(
+              messages,
+              messageToSend,
+              user!.uid,
+              currentMonthTransactions,
+              currentYearMonthlyReports,
+              pastAnnualReports
+            );
+          } else {
+            response = await getChatbotResponse(
+              {
+                history: messages,
+                prompt: messageToSend,
+                transactions: currentMonthTransactions,
+                monthlyReports: currentYearMonthlyReports,
+                annualReports: pastAnnualReports,
+              },
+              user!.uid
+            );
+          }
+
+          const newModelMessage: Message = { role: "model", content: response };
+          setMessages((prev) => [...prev, newModelMessage]);
+        } catch (e: any) {
+          console.error(e);
+          const errorMessage =
+            e instanceof Error
+              ? e.message
+              : "Ocorreu um erro ao processar sua pergunta.";
+
+          if (
+            errorMessage.includes("créditos") ||
+            errorMessage.includes("Você precisa de")
+          ) {
+            toast({
+              title: "Créditos Insuficientes",
+              description: errorMessage,
+              variant: "error",
+            });
+          } else {
+            toast({
+              title: "Erro no Chat",
+              description: errorMessage,
+              variant: "error",
+            });
+          }
+
+          setMessages((prev) => prev.filter((msg) => msg !== newUserMessage));
+          clearReasoning();
         }
+      });
+    },
+    [
+      input,
+      isPro,
+      messages,
+      allTransactions,
+      monthlyReports,
+      annualReports,
+      shouldUseReasoning,
+      user,
+      toast,
+      clearReasoning,
+      streamReasoningResponse,
+    ]
+  );
 
-        const newModelMessage: Message = { role: "model", content: response };
-        setMessages((prev) => [...prev, newModelMessage]);
-      } catch (e: any) {
-        console.error(e);
-        const errorMessage =
-          e instanceof Error
-            ? e.message
-            : "Ocorreu um erro ao processar sua pergunta.";
-
-        if (
-          errorMessage.includes("créditos") ||
-          errorMessage.includes("Você precisa de")
-        ) {
-          toast({
-            title: "Créditos Insuficientes",
-            description: errorMessage,
-            variant: "error",
-          });
-        } else {
-          toast({
-            title: "Erro no Chat",
-            description: errorMessage,
-            variant: "error",
-          });
-        }
-
-        setMessages((prev) => prev.filter((msg) => msg !== newUserMessage));
-        clearReasoning();
-      }
-    });
-  };
-
-  const handleSuggestionClick = (prompt: string) => {
-    handleSubmit(prompt);
-  };
+  const handleSuggestionClick = useCallback(
+    (prompt: string) => {
+      handleSubmit(prompt);
+    },
+    [handleSubmit]
+  );
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -186,8 +298,8 @@ export function ChatAssistant() {
     }
   };
 
-  // Chat content component
-  const ChatContent = () => {
+  // Renderiza conteúdo do chat
+  const renderChatContent = () => {
     if (loading) {
       return (
         <Box
@@ -421,63 +533,6 @@ export function ChatAssistant() {
     );
   };
 
-  // Input component
-  const ChatInput = () => (
-    <Box
-      sx={{
-        p: 2,
-        borderTop: 1,
-        borderColor: "divider",
-        bgcolor: (theme) => alpha(theme.palette.background.paper, 0.8),
-        backdropFilter: "blur(8px)",
-      }}
-    >
-      <Box sx={{ display: "flex", gap: 1, alignItems: "flex-end" }}>
-        <TextField
-          placeholder={
-            isPro
-              ? "Pergunte sobre seus gastos..."
-              : "Faça upgrade para usar o chat"
-          }
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          onKeyDown={handleKeyDown}
-          disabled={isPending || !isPro}
-          fullWidth
-          size="small"
-          multiline
-          maxRows={3}
-          sx={{
-            "& .MuiOutlinedInput-root": {
-              borderRadius: 3,
-              bgcolor: "background.default",
-            },
-          }}
-        />
-        <IconButton
-          onClick={() => handleSubmit()}
-          disabled={!input.trim() || isPending || !isPro}
-          color="primary"
-          sx={{
-            bgcolor: "primary.main",
-            color: "primary.contrastText",
-            width: 40,
-            height: 40,
-            "&:hover": {
-              bgcolor: "primary.dark",
-            },
-            "&.Mui-disabled": {
-              bgcolor: "action.disabledBackground",
-              color: "action.disabled",
-            },
-          }}
-        >
-          <SendIcon sx={{ fontSize: 20 }} />
-        </IconButton>
-      </Box>
-    </Box>
-  );
-
   // Mobile fullscreen dialog
   if (isMobile) {
     return (
@@ -510,9 +565,11 @@ export function ChatAssistant() {
               top: 0,
               left: 0,
               right: 0,
+              // Safe area para notch/dynamic island
+              paddingTop: "env(safe-area-inset-top)",
             }}
           >
-            <Toolbar sx={{ minHeight: 64 }}>
+            <Toolbar sx={{ minHeight: 64, px: { xs: 2, sm: 3 } }}>
               <Box
                 sx={{
                   width: 40,
@@ -545,6 +602,9 @@ export function ChatAssistant() {
                 sx={{
                   color: "text.primary",
                   bgcolor: (theme) => alpha(theme.palette.action.active, 0.1),
+                  width: 44,
+                  height: 44,
+                  mr: 0.5,
                   "&:hover": {
                     bgcolor: (theme) => alpha(theme.palette.action.active, 0.2),
                   },
@@ -561,8 +621,9 @@ export function ChatAssistant() {
               display: "flex",
               flexDirection: "column",
               flex: 1,
-              mt: "64px", // Height of AppBar
-              height: "calc(100dvh - 64px)",
+              // Considera safe area do notch + altura do AppBar
+              mt: "calc(64px + env(safe-area-inset-top))",
+              height: "calc(100dvh - 64px - env(safe-area-inset-top))",
               overflow: "hidden",
             }}
           >
@@ -576,7 +637,7 @@ export function ChatAssistant() {
                 WebkitOverflowScrolling: "touch",
               }}
             >
-              <ChatContent />
+              {renderChatContent()}
             </Box>
 
             {/* Mobile Input - Fixed at bottom */}
@@ -590,50 +651,13 @@ export function ChatAssistant() {
                 backdropFilter: "blur(8px)",
               }}
             >
-              <Box sx={{ display: "flex", gap: 1, alignItems: "flex-end" }}>
-                <TextField
-                  placeholder={
-                    isPro
-                      ? "Pergunte sobre seus gastos..."
-                      : "Faça upgrade para usar o chat"
-                  }
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  disabled={isPending || !isPro}
-                  fullWidth
-                  size="small"
-                  multiline
-                  maxRows={3}
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: 3,
-                      bgcolor: "background.default",
-                    },
-                  }}
-                />
-                <IconButton
-                  onClick={() => handleSubmit()}
-                  disabled={!input.trim() || isPending || !isPro}
-                  color="primary"
-                  sx={{
-                    bgcolor: "primary.main",
-                    color: "primary.contrastText",
-                    width: 40,
-                    height: 40,
-                    flexShrink: 0,
-                    "&:hover": {
-                      bgcolor: "primary.dark",
-                    },
-                    "&.Mui-disabled": {
-                      bgcolor: "action.disabledBackground",
-                      color: "action.disabled",
-                    },
-                  }}
-                >
-                  <SendIcon sx={{ fontSize: 20 }} />
-                </IconButton>
-              </Box>
+              <ChatInputField
+                value={input}
+                onChange={handleInputChange}
+                onSubmit={() => handleSubmit()}
+                disabled={isPending}
+                isPro={isPro}
+              />
             </Box>
           </Box>
         </Dialog>
@@ -738,11 +762,27 @@ export function ChatAssistant() {
               overflow: "auto",
             }}
           >
-            <ChatContent />
+            {renderChatContent()}
           </Box>
 
           {/* Input */}
-          <ChatInput />
+          <Box
+            sx={{
+              p: 2,
+              borderTop: 1,
+              borderColor: "divider",
+              bgcolor: (theme) => alpha(theme.palette.background.paper, 0.8),
+              backdropFilter: "blur(8px)",
+            }}
+          >
+            <ChatInputField
+              value={input}
+              onChange={handleInputChange}
+              onSubmit={() => handleSubmit()}
+              disabled={isPending}
+              isPro={isPro}
+            />
+          </Box>
         </Paper>
       </Zoom>
 

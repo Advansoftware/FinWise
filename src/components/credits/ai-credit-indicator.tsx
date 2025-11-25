@@ -101,8 +101,27 @@ export function AICreditIndicator() {
               sx={{
                 borderRadius: "9999px",
                 textTransform: "none",
-                borderColor: credits < 5 ? "error.main" : "primary.main",
+                backdropFilter: "blur(12px)",
+                backgroundColor:
+                  credits < 5
+                    ? "rgba(239, 68, 68, 0.1)"
+                    : "rgba(99, 102, 241, 0.1)",
+                borderColor:
+                  credits < 5
+                    ? "rgba(239, 68, 68, 0.3)"
+                    : "rgba(99, 102, 241, 0.3)",
                 color: credits < 5 ? "error.main" : "primary.main",
+                "&:hover": {
+                  backdropFilter: "blur(16px)",
+                  backgroundColor:
+                    credits < 5
+                      ? "rgba(239, 68, 68, 0.15)"
+                      : "rgba(99, 102, 241, 0.15)",
+                  borderColor:
+                    credits < 5
+                      ? "rgba(239, 68, 68, 0.4)"
+                      : "rgba(99, 102, 241, 0.4)",
+                },
               }}
             >
               <Sparkles style={{ width: 16, height: 16, marginRight: 8 }} />
