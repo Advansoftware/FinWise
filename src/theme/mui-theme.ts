@@ -908,7 +908,9 @@ const createComponents = (): Components<Omit<Theme, 'components'>> => {
     MuiBackdrop: {
       styleOverrides: {
         root: {
-          backgroundColor: alpha(colors.background, 0.8),
+          backgroundColor: alpha(colors.background, 0.6),
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
         },
       },
     },
@@ -959,7 +961,9 @@ const createComponents = (): Components<Omit<Theme, 'components'>> => {
           borderRadius: radius.md,
           boxShadow: shadowTokens.lg,
           border: `1px solid ${colors.border}`,
-          backgroundColor: colors.popover,
+          backgroundColor: alpha(colors.popover, 0.9),
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
           backgroundImage: 'none',
         },
       },
@@ -1039,26 +1043,38 @@ const createComponents = (): Components<Omit<Theme, 'components'>> => {
         },
         filled: {
           backgroundColor: alpha(colors.muted, 0.2),
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
           color: colors.foreground,
         },
         filledPrimary: {
           backgroundColor: alpha(colors.primary, 0.15),
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
           color: colors.primary,
         },
         filledSecondary: {
           backgroundColor: alpha(colors.secondary, 0.15),
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
           color: colors.foreground,
         },
         colorSuccess: {
           backgroundColor: alpha('#10b981', 0.15),
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
           color: '#10b981',
         },
         colorError: {
           backgroundColor: alpha('#ef4444', 0.15),
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
           color: '#ef4444',
         },
         colorWarning: {
           backgroundColor: alpha('#f59e0b', 0.15),
+          backdropFilter: 'blur(8px)',
+          WebkitBackdropFilter: 'blur(8px)',
           color: '#f59e0b',
         },
         outlined: {
@@ -1317,10 +1333,12 @@ const createComponents = (): Components<Omit<Theme, 'components'>> => {
             '& .MuiAlertTitle-root': { color: '#ffffff' },
             '& .MuiTypography-root': { color: '#ffffff' },
           }),
-          // Outlined variants
+          // Outlined variants - com efeito glassmorphism
           ...(ownerState.variant === 'outlined' && {
             borderWidth: '1px',
-            backgroundColor: alpha(colors.card, 0.5),
+            backgroundColor: alpha(colors.card, 0.7),
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
           }),
           ...(ownerState.variant === 'outlined' && ownerState.severity === 'success' && {
             borderColor: '#10b981',
@@ -1346,27 +1364,35 @@ const createComponents = (): Components<Omit<Theme, 'components'>> => {
             '& .MuiAlert-message': { color: '#3b82f6' },
             '& .MuiAlertTitle-root': { color: '#3b82f6' },
           }),
-          // Standard variants
+          // Standard variants - com efeito glassmorphism
           ...(ownerState.variant === 'standard' && ownerState.severity === 'success' && {
             backgroundColor: alpha('#10b981', 0.15),
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
             '& .MuiAlert-icon': { color: '#10b981' },
             '& .MuiAlert-message': { color: '#10b981' },
             '& .MuiAlertTitle-root': { color: '#10b981' },
           }),
           ...(ownerState.variant === 'standard' && ownerState.severity === 'error' && {
             backgroundColor: alpha('#ef4444', 0.15),
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
             '& .MuiAlert-icon': { color: '#ef4444' },
             '& .MuiAlert-message': { color: '#ef4444' },
             '& .MuiAlertTitle-root': { color: '#ef4444' },
           }),
           ...(ownerState.variant === 'standard' && ownerState.severity === 'warning' && {
             backgroundColor: alpha('#f59e0b', 0.15),
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
             '& .MuiAlert-icon': { color: '#f59e0b' },
             '& .MuiAlert-message': { color: '#f59e0b' },
             '& .MuiAlertTitle-root': { color: '#f59e0b' },
           }),
           ...(ownerState.variant === 'standard' && ownerState.severity === 'info' && {
             backgroundColor: alpha('#3b82f6', 0.15),
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
             '& .MuiAlert-icon': { color: '#3b82f6' },
             '& .MuiAlert-message': { color: '#3b82f6' },
             '& .MuiAlertTitle-root': { color: '#3b82f6' },
@@ -1401,7 +1427,9 @@ const createComponents = (): Components<Omit<Theme, 'components'>> => {
     MuiSnackbarContent: {
       styleOverrides: {
         root: {
-          backgroundColor: colors.card,
+          backgroundColor: alpha(colors.card, 0.85),
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
           color: colors.cardForeground,
           borderRadius: radius.md,
           boxShadow: shadowTokens.lg,
@@ -1426,7 +1454,9 @@ const createComponents = (): Components<Omit<Theme, 'components'>> => {
       },
       styleOverrides: {
         tooltip: {
-          backgroundColor: colors.popover,
+          backgroundColor: alpha(colors.popover, 0.9),
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
           color: colors.popoverForeground,
           borderRadius: radius.sm,
           fontSize: typographyTokens.fontSize.xs,

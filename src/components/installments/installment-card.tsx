@@ -462,7 +462,7 @@ export function InstallmentCard({
 
               {showActions && (
                 <Stack spacing={1} sx={{ mt: 2 }}>
-                  <Stack direction="row" spacing={1}>
+                  <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
                     <Button
                       onClick={() => setIsPayDialogOpen(true)}
                       variant="contained"
@@ -470,7 +470,8 @@ export function InstallmentCard({
                         nextPayment.status === "overdue" ? "error" : "primary"
                       }
                       size="small"
-                      sx={{ flex: 1 }}
+                      sx={{ flex: { sm: 1 } }}
+                      fullWidth
                     >
                       <DollarSign
                         style={{
@@ -479,9 +480,7 @@ export function InstallmentCard({
                           marginRight: "0.5rem",
                         }}
                       />
-                      {nextPayment.status === "overdue"
-                        ? "Registrar"
-                        : "Registrar"}
+                      Registrar
                     </Button>
 
                     <PaymentButton
@@ -494,6 +493,7 @@ export function InstallmentCard({
                       bank="nubank"
                       variant="contained"
                       size="small"
+                      fullWidth
                     />
                   </Stack>
 

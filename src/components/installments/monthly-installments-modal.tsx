@@ -16,6 +16,8 @@ import {
   alpha,
   Chip,
   IconButton,
+  Grid,
+  useMediaQuery,
 } from "@mui/material";
 import {
   Calendar,
@@ -70,6 +72,7 @@ export function MonthlyInstallmentsModal({
   const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   useEffect(() => {
     if (isOpen && month && user?.uid) {
@@ -194,12 +197,13 @@ export function MonthlyInstallmentsModal({
       onClose={() => onOpenChange(false)}
       maxWidth="md"
       fullWidth
+      fullScreen={isMobile}
     >
       <DialogContent sx={{ p: 0, display: "flex", flexDirection: "column" }}>
         {/* Header fixo */}
         <Box
           sx={{
-            p: 3,
+            p: { xs: 2, md: 3 },
             borderBottom: 1,
             borderColor: "divider",
             display: "flex",
@@ -207,13 +211,21 @@ export function MonthlyInstallmentsModal({
             justifyContent: "space-between",
           }}
         >
-          <DialogTitle sx={{ fontSize: { xs: "1.125rem", md: "1.5rem" } }}>
-            {commitmentType === "fixed"
-              ? `Compromissos Fixos de ${monthName}`
-              : commitmentType === "variable"
-              ? `Compromissos Variáveis de ${monthName}`
-              : `Parcelamentos de ${monthName}`}
-          </DialogTitle>
+          <Box>
+            <Typography
+              variant={isMobile ? "subtitle1" : "h6"}
+              fontWeight="bold"
+            >
+              {commitmentType === "fixed"
+                ? "Compromissos Fixos"
+                : commitmentType === "variable"
+                ? "Compromissos Variáveis"
+                : "Parcelamentos"}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              {monthName}
+            </Typography>
+          </Box>
           <IconButton onClick={() => onOpenChange(false)} size="small">
             <X style={{ width: "1.25rem", height: "1.25rem" }} />
           </IconButton>
@@ -222,114 +234,136 @@ export function MonthlyInstallmentsModal({
         {/* Summary Cards fixo */}
         <Box
           sx={{
-            p: 3,
-            pb: 2,
-            borderBottom: { xs: 1, md: 0 },
+            p: { xs: 1.5, md: 3 },
+            pb: { xs: 1, md: 2 },
+            borderBottom: 1,
             borderColor: "divider",
           }}
         >
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "repeat(2, 1fr)",
-                md: "repeat(4, 1fr)",
-              },
-              gap: 2,
-            }}
-          >
-            <Card sx={{ p: 1.5 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <DollarSign
-                  style={{
-                    width: "1rem",
-                    height: "1rem",
-                    color: theme.palette.primary.main,
-                  }}
-                />
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Total
-                  </Typography>
-                  <Typography variant="body2" fontWeight="semibold">
-                    {formatCurrency(totalAmount)}
-                  </Typography>
+          <Grid container spacing={{ xs: 1, md: 2 }}>
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <Card sx={{ p: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                  <DollarSign
+                    style={{
+                      width: "0.875rem",
+                      height: "0.875rem",
+                      color: theme.palette.primary.main,
+                    }}
+                  />
+                  <Box>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontSize: "0.65rem" }}
+                    >
+                      Total
+                    </Typography>
+                    <Typography variant="body2" fontWeight="semibold">
+                      {formatCurrency(totalAmount)}
+                    </Typography>
+                  </Box>
                 </Box>
-              </Box>
-            </Card>
+              </Card>
+            </Grid>
 
-            <Card sx={{ p: 1.5 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <CheckCircle
-                  style={{
-                    width: "1rem",
-                    height: "1rem",
-                    color: theme.palette.success.main,
-                  }}
-                />
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Pagos
-                  </Typography>
-                  <Typography variant="body2" fontWeight="semibold">
-                    {paidCount}
-                  </Typography>
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <Card sx={{ p: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                  <CheckCircle
+                    style={{
+                      width: "0.875rem",
+                      height: "0.875rem",
+                      color: theme.palette.success.main,
+                    }}
+                  />
+                  <Box>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontSize: "0.65rem" }}
+                    >
+                      Pagos
+                    </Typography>
+                    <Typography variant="body2" fontWeight="semibold">
+                      {paidCount}
+                    </Typography>
+                  </Box>
                 </Box>
-              </Box>
-            </Card>
+              </Card>
+            </Grid>
 
-            <Card sx={{ p: 1.5 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Clock
-                  style={{
-                    width: "1rem",
-                    height: "1rem",
-                    color: theme.palette.warning.main,
-                  }}
-                />
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Pendentes
-                  </Typography>
-                  <Typography variant="body2" fontWeight="semibold">
-                    {pendingCount}
-                  </Typography>
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <Card sx={{ p: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                  <Clock
+                    style={{
+                      width: "0.875rem",
+                      height: "0.875rem",
+                      color: theme.palette.warning.main,
+                    }}
+                  />
+                  <Box>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontSize: "0.65rem" }}
+                    >
+                      Pendentes
+                    </Typography>
+                    <Typography variant="body2" fontWeight="semibold">
+                      {pendingCount}
+                    </Typography>
+                  </Box>
                 </Box>
-              </Box>
-            </Card>
+              </Card>
+            </Grid>
 
-            <Card sx={{ p: 1.5 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <AlertCircle
-                  style={{
-                    width: "1rem",
-                    height: "1rem",
-                    color: theme.palette.error.main,
-                  }}
-                />
-                <Box>
-                  <Typography variant="caption" color="text.secondary">
-                    Atraso
-                  </Typography>
-                  <Typography variant="body2" fontWeight="semibold">
-                    {overdueCount}
-                  </Typography>
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <Card sx={{ p: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                  <AlertCircle
+                    style={{
+                      width: "0.875rem",
+                      height: "0.875rem",
+                      color: theme.palette.error.main,
+                    }}
+                  />
+                  <Box>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontSize: "0.65rem" }}
+                    >
+                      Atraso
+                    </Typography>
+                    <Typography variant="body2" fontWeight="semibold">
+                      {overdueCount}
+                    </Typography>
+                  </Box>
                 </Box>
-              </Box>
-            </Card>
-          </Box>
+              </Card>
+            </Grid>
+          </Grid>
         </Box>
 
         {/* Área de scroll para a lista */}
-        <Box sx={{ flex: 1, overflow: "auto", p: 3, pt: 1 }}>
-          <Box sx={{ pr: { md: 1 } }}>
+        <Box
+          sx={{
+            flex: 1,
+            overflow: "auto",
+            p: { xs: 1.5, md: 3 },
+            pt: { xs: 1.5, md: 2 },
+          }}
+        >
+          <Box>
             {isLoading ? (
-              <Stack spacing={2}>
+              <Stack spacing={1.5}>
                 {Array.from({ length: 5 }).map((_, i) => (
                   <Skeleton
                     key={i}
                     variant="rectangular"
-                    height={96}
+                    height={80}
                     sx={{ borderRadius: 1 }}
                   />
                 ))}
@@ -341,32 +375,40 @@ export function MonthlyInstallmentsModal({
                   flexDirection: "column",
                   alignItems: "center",
                   justifyContent: "center",
-                  py: 6,
+                  py: { xs: 4, md: 6 },
                 }}
               >
                 <Calendar
                   style={{
-                    width: "3rem",
-                    height: "3rem",
+                    width: "2.5rem",
+                    height: "2.5rem",
                     color: theme.palette.text.secondary,
-                    marginBottom: "1rem",
+                    marginBottom: "0.75rem",
                   }}
                 />
-                <Typography variant="h6" fontWeight="medium" sx={{ mb: 1 }}>
+                <Typography
+                  variant="subtitle1"
+                  fontWeight="medium"
+                  sx={{ mb: 0.5 }}
+                >
                   Nenhum parcelamento encontrado
                 </Typography>
-                <Typography color="text.secondary" align="center">
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  align="center"
+                >
                   Não há parcelamentos registrados para este mês.
                 </Typography>
               </Box>
             ) : (
-              <Stack spacing={2} sx={{ pb: 3 }}>
+              <Stack spacing={1.5} sx={{ pb: 2 }}>
                 {installments.map((installment) => (
                   <Card
                     key={`${installment.id}-${installment.installmentNumber}`}
-                    sx={{ p: 2 }}
+                    sx={{ p: 1.5 }}
                   >
-                    <Stack spacing={1.5}>
+                    <Stack spacing={1}>
                       {/* Header */}
                       <Box
                         sx={{
@@ -377,7 +419,7 @@ export function MonthlyInstallmentsModal({
                       >
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Typography
-                            variant="subtitle2"
+                            variant="body2"
                             fontWeight="semibold"
                             noWrap
                           >
@@ -387,7 +429,12 @@ export function MonthlyInstallmentsModal({
                             <Typography
                               variant="caption"
                               color="text.secondary"
-                              sx={{ display: "block", mt: 0.5 }}
+                              sx={{
+                                display: "block",
+                                mt: 0.25,
+                                fontSize: "0.65rem",
+                              }}
+                              noWrap
                             >
                               {installment.description}
                             </Typography>
@@ -397,7 +444,7 @@ export function MonthlyInstallmentsModal({
                           sx={{
                             display: "flex",
                             alignItems: "center",
-                            gap: 1,
+                            gap: 0.5,
                             ml: 1,
                           }}
                         >
@@ -415,7 +462,11 @@ export function MonthlyInstallmentsModal({
                         }}
                       >
                         <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 2 }}
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1.5,
+                          }}
                         >
                           <Box
                             sx={{
@@ -426,8 +477,8 @@ export function MonthlyInstallmentsModal({
                           >
                             <DollarSign
                               style={{
-                                width: "1rem",
-                                height: "1rem",
+                                width: "0.875rem",
+                                height: "0.875rem",
                                 color: theme.palette.text.secondary,
                               }}
                             />
@@ -444,8 +495,8 @@ export function MonthlyInstallmentsModal({
                           >
                             <CreditCard
                               style={{
-                                width: "1rem",
-                                height: "1rem",
+                                width: "0.875rem",
+                                height: "0.875rem",
                                 color: theme.palette.text.secondary,
                               }}
                             />
@@ -469,7 +520,9 @@ export function MonthlyInstallmentsModal({
                       </Box>
 
                       {/* Category and Details */}
-                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                      <Box
+                        sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}
+                      >
                         <Box
                           sx={{
                             display: "flex",
@@ -479,30 +532,20 @@ export function MonthlyInstallmentsModal({
                         >
                           <Tag
                             style={{
-                              width: "0.75rem",
-                              height: "0.75rem",
+                              width: "0.65rem",
+                              height: "0.65rem",
                               color: theme.palette.text.secondary,
                             }}
                           />
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ fontSize: "0.65rem" }}
+                          >
                             {installment.category}
+                            {installment.subcategory &&
+                              ` · ${installment.subcategory}`}
                           </Typography>
-                          {installment.subcategory && (
-                            <>
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                              >
-                                ·
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                              >
-                                {installment.subcategory}
-                              </Typography>
-                            </>
-                          )}
                         </Box>
 
                         {installment.establishment && (
@@ -515,14 +558,15 @@ export function MonthlyInstallmentsModal({
                           >
                             <Building
                               style={{
-                                width: "0.75rem",
-                                height: "0.75rem",
+                                width: "0.65rem",
+                                height: "0.65rem",
                                 color: theme.palette.text.secondary,
                               }}
                             />
                             <Typography
                               variant="caption"
                               color="text.secondary"
+                              sx={{ fontSize: "0.65rem" }}
                             >
                               {installment.establishment}
                             </Typography>
@@ -536,10 +580,10 @@ export function MonthlyInstallmentsModal({
                           <Box
                             sx={{
                               bgcolor: alpha(theme.palette.success.main, 0.1),
-                              p: 1,
+                              p: 0.75,
                               borderRadius: 1,
                               color: "success.dark",
-                              fontSize: "0.75rem",
+                              fontSize: "0.65rem",
                             }}
                           >
                             Pago em{" "}
@@ -551,8 +595,7 @@ export function MonthlyInstallmentsModal({
                             {installment.paidAmount &&
                               installment.paidAmount !== installment.amount && (
                                 <Box component="span" sx={{ ml: 1 }}>
-                                  (Valor:{" "}
-                                  {formatCurrency(installment.paidAmount)})
+                                  ({formatCurrency(installment.paidAmount)})
                                 </Box>
                               )}
                           </Box>

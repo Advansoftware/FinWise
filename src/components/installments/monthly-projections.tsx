@@ -167,7 +167,7 @@ export function MonthlyProjections() {
     );
 
     return (
-      <Grid container spacing={2}>
+      <Grid container spacing={{ xs: 1.5, md: 2 }}>
         {projectionsData.map((projection) => {
           const salaryPercentage = calculateSalaryPercentage(
             projection.totalCommitment
@@ -175,7 +175,7 @@ export function MonthlyProjections() {
           const status = getPercentageStatus(salaryPercentage);
 
           return (
-            <Grid key={projection.month} size={{ xs: 12, md: 6, lg: 4 }}>
+            <Grid key={projection.month} size={{ xs: 12, sm: 6, lg: 4 }}>
               <Card
                 sx={{
                   position: "relative",
@@ -186,7 +186,7 @@ export function MonthlyProjections() {
                   "&:hover":
                     projection.installments.length > 0
                       ? {
-                          transform: "scale(1.05)",
+                          transform: "scale(1.02)",
                           boxShadow: 3,
                         }
                       : {},
@@ -201,15 +201,15 @@ export function MonthlyProjections() {
                       size="small"
                       icon={
                         <Percent
-                          style={{ width: "0.75rem", height: "0.75rem" }}
+                          style={{ width: "0.65rem", height: "0.65rem" }}
                         />
                       }
                       sx={{
                         position: "absolute",
-                        top: 8,
-                        right: 8,
-                        height: 24,
-                        fontSize: "0.75rem",
+                        top: 6,
+                        right: 6,
+                        height: 20,
+                        fontSize: "0.65rem",
                         fontWeight: "medium",
                         bgcolor: `${status}.lighter`,
                         color: `${status}.main`,
@@ -222,23 +222,23 @@ export function MonthlyProjections() {
 
                 {/* Indicador de tipo */}
                 <Chip
-                  label={type === "fixed" ? "Fixo" : "Variável"}
+                  label={type === "fixed" ? "Fixo" : "Var"}
                   size="small"
                   icon={
                     type === "fixed" ? (
-                      <Home style={{ width: "0.75rem", height: "0.75rem" }} />
+                      <Home style={{ width: "0.65rem", height: "0.65rem" }} />
                     ) : (
                       <CreditCard
-                        style={{ width: "0.75rem", height: "0.75rem" }}
+                        style={{ width: "0.65rem", height: "0.65rem" }}
                       />
                     )
                   }
                   sx={{
                     position: "absolute",
-                    top: 8,
-                    left: 8,
-                    height: 24,
-                    fontSize: "0.75rem",
+                    top: 6,
+                    left: 6,
+                    height: 20,
+                    fontSize: "0.65rem",
                     fontWeight: "medium",
                     bgcolor:
                       type === "fixed"
@@ -259,17 +259,25 @@ export function MonthlyProjections() {
                 <CardHeader
                   title={formatMonthYear(projection.month)}
                   titleTypographyProps={{
-                    variant: "h6",
-                    sx: { fontSize: "1.125rem", textTransform: "capitalize" },
+                    variant: "subtitle1",
+                    sx: {
+                      fontSize: { xs: "0.875rem", md: "1rem" },
+                      textTransform: "capitalize",
+                    },
                   }}
-                  sx={{ pb: 3, pt: 8 }}
+                  sx={{ pb: 1, pt: 5 }}
                 />
 
                 <CardContent
-                  sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 1.5,
+                    pt: 0,
+                  }}
                 >
                   <Box sx={{ textAlign: "center" }}>
-                    <Typography variant="h5" fontWeight="bold" color="primary">
+                    <Typography variant="h6" fontWeight="bold" color="primary">
                       {formatCurrency(projection.totalCommitment)}
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
@@ -278,22 +286,20 @@ export function MonthlyProjections() {
                   </Box>
 
                   {projection.installments.length > 0 && (
-                    <Stack spacing={1}>
-                      <Typography variant="body2" fontWeight="medium">
-                        {type === "fixed"
-                          ? "Compromissos Fixos:"
-                          : "Parcelamentos:"}
+                    <Stack spacing={0.5}>
+                      <Typography variant="caption" fontWeight="medium">
+                        {type === "fixed" ? "Compromissos:" : "Parcelamentos:"}
                       </Typography>
-                      <Stack spacing={0.5}>
+                      <Stack spacing={0.25}>
                         {projection.installments
-                          .slice(0, 3)
+                          .slice(0, 2)
                           .map((installment, index) => (
                             <Box
                               key={index}
                               sx={{
                                 display: "flex",
                                 justifyContent: "space-between",
-                                fontSize: "0.75rem",
+                                fontSize: "0.7rem",
                               }}
                             >
                               <Box
@@ -311,21 +317,27 @@ export function MonthlyProjections() {
                                 {installment.isRecurring && (
                                   <Repeat
                                     style={{
-                                      width: "0.75rem",
-                                      height: "0.75rem",
+                                      width: "0.65rem",
+                                      height: "0.65rem",
                                     }}
                                   />
                                 )}
-                                {installment.name}
+                                <Typography variant="caption" noWrap>
+                                  {installment.name}
+                                </Typography>
                               </Box>
                               <Typography variant="caption" fontWeight="medium">
                                 {formatCurrency(installment.amount)}
                               </Typography>
                             </Box>
                           ))}
-                        {projection.installments.length > 3 && (
-                          <Typography variant="caption" color="text.secondary">
-                            +{projection.installments.length - 3} mais
+                        {projection.installments.length > 2 && (
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                            sx={{ fontSize: "0.65rem" }}
+                          >
+                            +{projection.installments.length - 2} mais
                           </Typography>
                         )}
                       </Stack>
@@ -337,8 +349,9 @@ export function MonthlyProjections() {
                       variant="caption"
                       color="text.secondary"
                       align="center"
+                      sx={{ fontSize: "0.65rem" }}
                     >
-                      Clique para ver detalhes
+                      Toque para ver detalhes
                     </Typography>
                   )}
 
@@ -346,7 +359,7 @@ export function MonthlyProjections() {
                   <Box
                     sx={{
                       width: "100%",
-                      height: "0.5rem",
+                      height: "0.35rem",
                       borderRadius: 999,
                       bgcolor: "action.hover",
                       overflow: "hidden",
@@ -377,10 +390,10 @@ export function MonthlyProjections() {
 
   if (isLoading) {
     return (
-      <Stack spacing={4}>
-        <Grid container spacing={4}>
+      <Stack spacing={{ xs: 2, md: 4 }}>
+        <Grid container spacing={{ xs: 1.5, md: 2 }}>
           {Array.from({ length: 3 }).map((_, i) => (
-            <Grid key={i} size={{ xs: 12, md: 4 }}>
+            <Grid key={i} size={{ xs: 12, sm: 4 }}>
               <Skeleton
                 variant="rectangular"
                 height={96}
@@ -389,16 +402,16 @@ export function MonthlyProjections() {
             </Grid>
           ))}
         </Grid>
-        <Skeleton variant="rectangular" height={384} sx={{ borderRadius: 1 }} />
+        <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 1 }} />
       </Stack>
     );
   }
 
   return (
-    <Stack spacing={6}>
+    <Stack spacing={{ xs: 3, md: 6 }}>
       {/* Summary Cards */}
-      <Grid container spacing={4}>
-        <Grid size={{ xs: 12, md: 4 }}>
+      <Grid container spacing={{ xs: 1.5, md: 2 }}>
+        <Grid size={{ xs: 12, sm: 4 }}>
           <Card>
             <CardHeader
               title="Compromisso Variável Total"
@@ -414,25 +427,29 @@ export function MonthlyProjections() {
               titleTypographyProps={{
                 variant: "subtitle2",
                 fontWeight: "medium",
+                fontSize: { xs: "0.75rem", md: "0.875rem" },
               }}
-              sx={{ pb: 2 }}
+              sx={{ pb: 1 }}
             />
-            <CardContent>
-              <Typography variant="h5" fontWeight="bold">
+            <CardContent sx={{ pt: 0 }}>
+              <Typography variant="h6" fontWeight="bold">
                 {formatCurrency(totalCommitment)}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Gastos variáveis - Próximos {selectedMonths} + últimos{" "}
-                {includePastMonths} meses
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontSize: "0.65rem" }}
+              >
+                Próximos {selectedMonths} + últimos {includePastMonths} meses
               </Typography>
             </CardContent>
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 6, sm: 4 }}>
           <Card>
             <CardHeader
-              title="Média Mensal Variável"
+              title="Média Mensal"
               action={
                 <BarChart3
                   style={{
@@ -445,24 +462,29 @@ export function MonthlyProjections() {
               titleTypographyProps={{
                 variant: "subtitle2",
                 fontWeight: "medium",
+                fontSize: { xs: "0.75rem", md: "0.875rem" },
               }}
-              sx={{ pb: 2 }}
+              sx={{ pb: 1 }}
             />
-            <CardContent>
-              <Typography variant="h5" fontWeight="bold">
+            <CardContent sx={{ pt: 0 }}>
+              <Typography variant="h6" fontWeight="bold">
                 {formatCurrency(averageCommitment)}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Valor médio de gastos variáveis por mês
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontSize: "0.65rem" }}
+              >
+                Valor médio por mês
               </Typography>
             </CardContent>
           </Card>
         </Grid>
 
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 6, sm: 4 }}>
           <Card>
             <CardHeader
-              title="Maior Compromisso Variável"
+              title="Maior Compromisso"
               action={
                 <TrendingUp
                   style={{
@@ -475,15 +497,20 @@ export function MonthlyProjections() {
               titleTypographyProps={{
                 variant: "subtitle2",
                 fontWeight: "medium",
+                fontSize: { xs: "0.75rem", md: "0.875rem" },
               }}
-              sx={{ pb: 2 }}
+              sx={{ pb: 1 }}
             />
-            <CardContent>
-              <Typography variant="h5" fontWeight="bold">
+            <CardContent sx={{ pt: 0 }}>
+              <Typography variant="h6" fontWeight="bold">
                 {formatCurrency(maxCommitment)}
               </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Mês com maior gasto variável
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ fontSize: "0.65rem" }}
+              >
+                Mês com maior gasto
               </Typography>
             </CardContent>
           </Card>
@@ -491,18 +518,19 @@ export function MonthlyProjections() {
       </Grid>
 
       {/* Period Selector */}
-      <Stack spacing={4}>
+      <Stack spacing={2}>
         <Box>
-          <Typography variant="body2" fontWeight="medium" sx={{ mb: 2 }}>
+          <Typography variant="body2" fontWeight="medium" sx={{ mb: 1 }}>
             Período futuro:
           </Typography>
-          <Stack direction="row" spacing={2}>
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
             {[6, 12, 24].map((months) => (
               <Button
                 key={months}
                 variant={selectedMonths === months ? "contained" : "outlined"}
                 size="small"
                 onClick={() => setSelectedMonths(months)}
+                sx={{ minWidth: 70 }}
               >
                 {months} meses
               </Button>
@@ -511,10 +539,10 @@ export function MonthlyProjections() {
         </Box>
 
         <Box>
-          <Typography variant="body2" fontWeight="medium" sx={{ mb: 2 }}>
+          <Typography variant="body2" fontWeight="medium" sx={{ mb: 1 }}>
             Incluir histórico:
           </Typography>
-          <Stack direction="row" spacing={2}>
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
             {[0, 3, 6, 12].map((months) => (
               <Button
                 key={months}
@@ -523,6 +551,7 @@ export function MonthlyProjections() {
                 }
                 size="small"
                 onClick={() => setIncludePastMonths(months)}
+                sx={{ minWidth: 70 }}
               >
                 {months === 0 ? "Nenhum" : `${months} meses`}
               </Button>
@@ -533,25 +562,42 @@ export function MonthlyProjections() {
 
       {/* Tabs para separar por tipo */}
       <Box sx={{ width: "100%" }}>
-        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 4 }}>
+        <Box
+          sx={{ borderBottom: 1, borderColor: "divider", mb: { xs: 2, md: 4 } }}
+        >
           <Tabs
             value={activeTab}
             onChange={(_, newValue) => setActiveTab(newValue)}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
           >
             <Tab
               label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                   <Home style={{ width: "1rem", height: "1rem" }} />
-                  Comprometimento Fixo
+                  <Typography
+                    variant="body2"
+                    sx={{ display: { xs: "none", sm: "block" } }}
+                  >
+                    Comprometimento
+                  </Typography>
+                  Fixo
                 </Box>
               }
               value="fixed"
             />
             <Tab
               label={
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                   <CreditCard style={{ width: "1rem", height: "1rem" }} />
-                  Comprometimento Variável
+                  <Typography
+                    variant="body2"
+                    sx={{ display: { xs: "none", sm: "block" } }}
+                  >
+                    Comprometimento
+                  </Typography>
+                  Variável
                 </Box>
               }
               value="variable"
@@ -560,26 +606,32 @@ export function MonthlyProjections() {
         </Box>
 
         {activeTab === "fixed" && (
-          <Stack spacing={4}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 4 }}>
+          <Stack spacing={{ xs: 2, md: 4 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                mb: { xs: 1, md: 2 },
+              }}
+            >
               <Home
                 style={{
-                  width: "1.25rem",
-                  height: "1.25rem",
+                  width: "1rem",
+                  height: "1rem",
                   color: theme.palette.info.main,
                 }}
               />
               <Box>
                 <Typography
-                  variant="subtitle1"
+                  variant="subtitle2"
                   fontWeight="medium"
                   color="info.main"
                 >
                   Compromissos Fixos
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Gastos recorrentes mensais - o que importa é o impacto mensal
-                  no orçamento
+                <Typography variant="caption" color="text.secondary">
+                  Gastos recorrentes mensais
                 </Typography>
               </Box>
             </Box>
@@ -593,28 +645,36 @@ export function MonthlyProjections() {
                     flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",
-                    py: 8,
+                    py: { xs: 4, md: 8 },
                   }}
                 >
                   <Home
                     style={{
-                      width: "3rem",
-                      height: "3rem",
+                      width: "2.5rem",
+                      height: "2.5rem",
                       color: theme.palette.text.secondary,
-                      marginBottom: "1rem",
+                      marginBottom: "0.75rem",
                     }}
                   />
-                  <Typography variant="h6" fontWeight="semibold" sx={{ mb: 1 }}>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight="semibold"
+                    sx={{ mb: 0.5 }}
+                  >
                     Nenhum compromisso fixo
                   </Typography>
-                  <Typography color="text.secondary" align="center">
-                    Não há parcelamentos recorrentes previstos para o período
-                    selecionado.
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    align="center"
+                    sx={{ px: 2 }}
+                  >
+                    Não há parcelamentos recorrentes previstos.
                   </Typography>
                 </CardContent>
               </Card>
             ) : (
-              <Stack spacing={6}>
+              <Stack spacing={{ xs: 3, md: 6 }}>
                 {/* Card de resumo mensal dos gastos fixos */}
                 <Card
                   sx={{
@@ -622,23 +682,7 @@ export function MonthlyProjections() {
                     borderColor: alpha(theme.palette.info.main, 0.2),
                   }}
                 >
-                  <CardHeader
-                    title={
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          color: "info.main",
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1,
-                        }}
-                      >
-                        <Home style={{ width: "1.25rem", height: "1.25rem" }} />
-                        Impacto Mensal dos Gastos Fixos
-                      </Typography>
-                    }
-                  />
-                  <CardContent sx={{ spaceY: 4 }}>
+                  <CardContent sx={{ py: { xs: 2, md: 3 } }}>
                     {(() => {
                       // Calcular total mensal dos gastos fixos
                       const uniqueFixedCommitments = new Map();
@@ -664,44 +708,67 @@ export function MonthlyProjections() {
 
                       return (
                         <Box sx={{ textAlign: "center" }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              gap: 1,
+                              mb: 1,
+                            }}
+                          >
+                            <Home
+                              style={{
+                                width: "1rem",
+                                height: "1rem",
+                                color: theme.palette.info.main,
+                              }}
+                            />
+                            <Typography variant="caption" color="info.main">
+                              Impacto Mensal
+                            </Typography>
+                          </Box>
                           <Typography
-                            variant="h4"
+                            variant="h5"
                             fontWeight="bold"
                             color="info.main"
                           >
                             {formatCurrency(totalMonthlyFixed)}
                           </Typography>
                           <Typography
-                            variant="body2"
+                            variant="caption"
                             color="info.main"
-                            sx={{ mb: 1, opacity: 0.8 }}
+                            sx={{ opacity: 0.8 }}
                           >
                             Compromisso fixo mensal
                           </Typography>
                           {salaryPercentage !== null && (
-                            <Chip
-                              label={`${formatPercentage(
-                                salaryPercentage
-                              )} do salário`}
-                              variant="outlined"
-                              icon={
-                                <Percent
-                                  style={{
-                                    width: "0.75rem",
-                                    height: "0.75rem",
-                                  }}
-                                />
-                              }
-                              sx={{
-                                bgcolor: alpha(theme.palette.info.main, 0.1),
-                                color: "info.main",
-                                borderColor: alpha(
-                                  theme.palette.info.main,
-                                  0.3
-                                ),
-                                "& .MuiChip-icon": { color: "info.main" },
-                              }}
-                            />
+                            <Box sx={{ mt: 1 }}>
+                              <Chip
+                                label={`${formatPercentage(
+                                  salaryPercentage
+                                )} do salário`}
+                                variant="outlined"
+                                size="small"
+                                icon={
+                                  <Percent
+                                    style={{
+                                      width: "0.65rem",
+                                      height: "0.65rem",
+                                    }}
+                                  />
+                                }
+                                sx={{
+                                  bgcolor: alpha(theme.palette.info.main, 0.1),
+                                  color: "info.main",
+                                  borderColor: alpha(
+                                    theme.palette.info.main,
+                                    0.3
+                                  ),
+                                  "& .MuiChip-icon": { color: "info.main" },
+                                }}
+                              />
+                            </Box>
                           )}
                         </Box>
                       );
@@ -710,15 +777,15 @@ export function MonthlyProjections() {
                 </Card>
 
                 {/* Lista dos gastos fixos individuais */}
-                <Stack spacing={3}>
+                <Stack spacing={2}>
                   <Typography
-                    variant="subtitle1"
+                    variant="subtitle2"
                     fontWeight="medium"
                     color="info.main"
                   >
-                    Detalhamento dos Gastos Fixos:
+                    Detalhamento:
                   </Typography>
-                  <Stack spacing={3}>
+                  <Stack spacing={1.5}>
                     {(() => {
                       const uniqueFixedCommitments = new Map();
                       fixedProjections.forEach((projection) => {
@@ -753,7 +820,9 @@ export function MonthlyProjections() {
                                 ),
                               }}
                             >
-                              <CardContent sx={{ p: 2 }}>
+                              <CardContent
+                                sx={{ p: 1.5, "&:last-child": { pb: 1.5 } }}
+                              >
                                 <Box
                                   sx={{
                                     display: "flex",
@@ -765,32 +834,35 @@ export function MonthlyProjections() {
                                     sx={{
                                       display: "flex",
                                       alignItems: "center",
-                                      gap: 2,
+                                      gap: 1.5,
                                       flex: 1,
+                                      minWidth: 0,
                                     }}
                                   >
                                     <Box
                                       sx={{
-                                        p: 1,
+                                        p: 0.75,
                                         bgcolor: alpha(
                                           theme.palette.info.main,
                                           0.1
                                         ),
                                         borderRadius: 1,
+                                        flexShrink: 0,
                                       }}
                                     >
                                       <Repeat
                                         style={{
-                                          width: "1rem",
-                                          height: "1rem",
+                                          width: "0.875rem",
+                                          height: "0.875rem",
                                           color: theme.palette.info.main,
                                         }}
                                       />
                                     </Box>
-                                    <Box sx={{ flex: 1 }}>
+                                    <Box sx={{ flex: 1, minWidth: 0 }}>
                                       <Typography
-                                        variant="subtitle2"
+                                        variant="body2"
                                         fontWeight="medium"
+                                        noWrap
                                       >
                                         {commitment.name}
                                       </Typography>
@@ -802,9 +874,11 @@ export function MonthlyProjections() {
                                       </Typography>
                                     </Box>
                                   </Box>
-                                  <Box sx={{ textAlign: "right" }}>
+                                  <Box
+                                    sx={{ textAlign: "right", flexShrink: 0 }}
+                                  >
                                     <Typography
-                                      variant="h6"
+                                      variant="subtitle2"
                                       fontWeight="bold"
                                       color="info.main"
                                     >
@@ -813,11 +887,12 @@ export function MonthlyProjections() {
                                     <Typography
                                       variant="caption"
                                       color="text.secondary"
+                                      sx={{ fontSize: "0.65rem" }}
                                     >
                                       por mês
                                     </Typography>
                                     {salaryPercentage !== null && (
-                                      <Box sx={{ mt: 0.5 }}>
+                                      <Box sx={{ mt: 0.25 }}>
                                         <Chip
                                           label={formatPercentage(
                                             salaryPercentage
@@ -825,8 +900,8 @@ export function MonthlyProjections() {
                                           variant="outlined"
                                           size="small"
                                           sx={{
-                                            fontSize: "0.75rem",
-                                            height: 20,
+                                            fontSize: "0.65rem",
+                                            height: 18,
                                             bgcolor: `${status}.lighter`,
                                             color: `${status}.main`,
                                             borderColor: `${status}.light`,
@@ -850,25 +925,32 @@ export function MonthlyProjections() {
         )}
 
         {activeTab === "variable" && (
-          <Stack spacing={4}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 4 }}>
+          <Stack spacing={{ xs: 2, md: 4 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1.5,
+                mb: { xs: 1, md: 2 },
+              }}
+            >
               <CreditCard
                 style={{
-                  width: "1.25rem",
-                  height: "1.25rem",
+                  width: "1rem",
+                  height: "1rem",
                   color: theme.palette.success.main,
                 }}
               />
               <Box>
                 <Typography
-                  variant="subtitle1"
+                  variant="subtitle2"
                   fontWeight="medium"
                   color="success.main"
                 >
                   Compromissos Variáveis
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  Empréstimos, financiamentos e parcelamentos com prazo definido
+                <Typography variant="caption" color="text.secondary">
+                  Parcelamentos com prazo definido
                 </Typography>
               </Box>
             </Box>
@@ -882,23 +964,31 @@ export function MonthlyProjections() {
                     flexDirection: "column",
                     alignItems: "center",
                     justifyContent: "center",
-                    py: 8,
+                    py: { xs: 4, md: 8 },
                   }}
                 >
                   <CreditCard
                     style={{
-                      width: "3rem",
-                      height: "3rem",
+                      width: "2.5rem",
+                      height: "2.5rem",
                       color: theme.palette.text.secondary,
-                      marginBottom: "1rem",
+                      marginBottom: "0.75rem",
                     }}
                   />
-                  <Typography variant="h6" fontWeight="semibold" sx={{ mb: 1 }}>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight="semibold"
+                    sx={{ mb: 0.5 }}
+                  >
                     Nenhum compromisso variável
                   </Typography>
-                  <Typography color="text.secondary" align="center">
-                    Não há parcelamentos com prazo definido previstos para o
-                    período selecionado.
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    align="center"
+                    sx={{ px: 2 }}
+                  >
+                    Não há parcelamentos com prazo definido.
                   </Typography>
                 </CardContent>
               </Card>

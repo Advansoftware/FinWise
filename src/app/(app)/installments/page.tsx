@@ -65,25 +65,30 @@ export default function InstallmentsPage() {
 
   if (isLoading) {
     return (
-      <Stack spacing={4} p={4}>
+      <Stack spacing={3} sx={{ p: { xs: 2, md: 4 } }}>
         <Stack spacing={2}>
           <Skeleton variant="text" width={200} height={40} />
-          <Skeleton variant="text" width={400} height={24} />
+          <Skeleton
+            variant="text"
+            width="100%"
+            height={24}
+            sx={{ maxWidth: 400 }}
+          />
         </Stack>
 
-        <Grid container spacing={4}>
+        <Grid container spacing={2}>
           {Array.from({ length: 4 }).map((_, i) => (
-            <Grid key={i} size={{ xs: 12, sm: 6, lg: 3 }}>
+            <Grid key={i} size={{ xs: 6, lg: 3 }}>
               <Skeleton
                 variant="rectangular"
-                height={128}
+                height={100}
                 sx={{ borderRadius: 2 }}
               />
             </Grid>
           ))}
         </Grid>
 
-        <Skeleton variant="rectangular" height={400} sx={{ borderRadius: 2 }} />
+        <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 2 }} />
       </Stack>
     );
   }
@@ -94,28 +99,36 @@ export default function InstallmentsPage() {
   const completedInstallments = installments.filter((i) => i.isCompleted);
 
   return (
-    <Stack spacing={4}>
+    <Stack spacing={{ xs: 2, md: 4 }} sx={{ p: { xs: 2, md: 0 } }}>
       {/* Header */}
-      <Stack spacing={4}>
+      <Stack spacing={2}>
         <Stack
-          direction={{ xs: "column", md: "row" }}
+          direction={{ xs: "column", sm: "row" }}
           justifyContent="space-between"
-          alignItems={{ xs: "flex-start", md: "center" }}
+          alignItems={{ xs: "stretch", sm: "center" }}
           spacing={2}
         >
           <Box>
-            <Typography variant="h4" fontWeight="bold">
+            <Typography
+              variant="h5"
+              fontWeight="bold"
+              sx={{ fontSize: { xs: "1.25rem", md: "1.5rem" } }}
+            >
               Parcelamentos
             </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Gerencie suas prestações, acompanhe pagamentos e projete
-              compromissos futuros.
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ display: { xs: "none", sm: "block" } }}
+            >
+              Gerencie suas prestações e acompanhe pagamentos.
             </Typography>
           </Box>
           <Stack
-            direction={{ xs: "column", md: "row" }}
-            spacing={2}
+            direction="row"
+            spacing={1}
             alignItems="center"
+            sx={{ width: { xs: "100%", sm: "auto" } }}
           >
             <GamificationGuide
               currentPoints={gamificationData?.points}
@@ -126,6 +139,7 @@ export default function InstallmentsPage() {
               variant="contained"
               onClick={() => setIsCreateOpen(true)}
               startIcon={<Plus size={18} />}
+              sx={{ flex: { xs: 1, sm: "none" } }}
             >
               Novo Parcelamento
             </Button>
@@ -144,8 +158,14 @@ export default function InstallmentsPage() {
           <CardHeader
             title={
               <Box display="flex" alignItems="center" gap={1}>
-                <AlertTriangle size={20} color="#f87171" />
-                <Typography variant="h6" sx={{ color: "#f87171" }}>
+                <AlertTriangle size={18} color="#f87171" />
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    color: "#f87171",
+                    fontSize: { xs: "0.9rem", md: "1rem" },
+                  }}
+                >
                   {summary.overduePayments.length} Parcela
                   {summary.overduePayments.length > 1 ? "s" : ""} em Atraso
                 </Typography>
@@ -153,16 +173,21 @@ export default function InstallmentsPage() {
             }
             subheader={
               <Typography
-                variant="body2"
-                sx={{ color: "rgba(248, 113, 113, 0.8)", mt: 0.5 }}
+                variant="caption"
+                sx={{
+                  color: "rgba(248, 113, 113, 0.8)",
+                  mt: 0.5,
+                  display: { xs: "none", sm: "block" },
+                }}
               >
-                Você tem pagamentos vencidos que precisam de atenção imediata.
+                Pagamentos vencidos que precisam de atenção.
               </Typography>
             }
+            sx={{ pb: 0 }}
           />
-          <CardContent>
-            <Stack spacing={2}>
-              {summary.overduePayments.slice(0, 3).map((payment) => {
+          <CardContent sx={{ pt: 2 }}>
+            <Stack spacing={1.5}>
+              {summary.overduePayments.slice(0, 2).map((payment) => {
                 const installment = installments.find((inst) =>
                   inst.payments.some((p) => p.id === payment.id)
                 );
@@ -175,78 +200,58 @@ export default function InstallmentsPage() {
                   <Box
                     key={payment.id}
                     display="flex"
-                    alignItems={{ xs: "flex-start", sm: "center" }}
-                    flexDirection={{ xs: "column", sm: "row" }}
+                    alignItems="center"
                     justifyContent="space-between"
                     gap={1}
-                    p={2}
+                    p={1.5}
                     bgcolor="background.paper"
                     borderRadius={1}
                     border="1px solid"
                     borderColor="rgba(239, 68, 68, 0.3)"
                   >
-                    <Box flex={1}>
+                    <Box flex={1} minWidth={0}>
                       <Typography
-                        variant="subtitle2"
+                        variant="body2"
                         fontWeight="bold"
                         color="text.primary"
+                        noWrap
                       >
-                        {installment?.name || "Parcelamento"} - Parcela{" "}
+                        {installment?.name || "Parcelamento"} - P
                         {payment.installmentNumber}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        Venceu em{" "}
-                        {new Date(payment.dueDate).toLocaleDateString("pt-BR")}{" "}
-                        • {daysOverdue} dias de atraso
+                        {daysOverdue}d atraso
                       </Typography>
                     </Box>
-                    <Box
-                      textAlign={{ xs: "left", sm: "right" }}
-                      display="flex"
-                      alignItems="center"
-                      gap={1}
+                    <Typography
+                      variant="body2"
+                      fontWeight="bold"
+                      color="error.main"
+                      sx={{ whiteSpace: "nowrap" }}
                     >
-                      <Typography
-                        variant="subtitle2"
-                        fontWeight="bold"
-                        color="text.primary"
-                      >
-                        {formatCurrency(payment.scheduledAmount)}
-                      </Typography>
-                      <Chip
-                        label="Em Atraso"
-                        size="small"
-                        sx={{
-                          bgcolor: "rgba(239, 68, 68, 0.15)",
-                          color: "#f87171",
-                          border: "1px solid rgba(239, 68, 68, 0.3)",
-                        }}
-                      />
-                    </Box>
+                      {formatCurrency(payment.scheduledAmount)}
+                    </Typography>
                   </Box>
                 );
               })}
 
-              {summary.overduePayments.length > 3 && (
+              {summary.overduePayments.length > 2 && (
                 <Typography
                   variant="caption"
                   textAlign="center"
                   display="block"
                   sx={{ color: "#f87171" }}
                 >
-                  E mais {summary.overduePayments.length - 3} parcela
-                  {summary.overduePayments.length - 3 > 1 ? "s" : ""} em atraso
+                  +{summary.overduePayments.length - 2} parcela(s) em atraso
                 </Typography>
               )}
 
-              <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+              <Stack direction="row" spacing={1}>
                 <Button
                   variant="outlined"
                   fullWidth
-                  onClick={() => {
-                    // TODO: Implementar funcionalidade de quitar múltiplas pendências
-                    setActiveTab("active");
-                  }}
+                  size="small"
+                  onClick={() => setActiveTab("active")}
                   sx={{
                     borderColor: "#f87171",
                     color: "#f87171",
@@ -256,11 +261,12 @@ export default function InstallmentsPage() {
                     },
                   }}
                 >
-                  Quitar Pendências
+                  Quitar
                 </Button>
                 <Button
                   variant="outlined"
                   fullWidth
+                  size="small"
                   onClick={() => setActiveTab("schedule")}
                   sx={{
                     borderColor: "text.secondary",
@@ -271,7 +277,7 @@ export default function InstallmentsPage() {
                     },
                   }}
                 >
-                  Ver Cronograma
+                  Cronograma
                 </Button>
               </Stack>
             </Stack>
@@ -280,47 +286,87 @@ export default function InstallmentsPage() {
       )}
 
       {/* Summary Cards */}
-      <Grid container spacing={4}>
+      <Grid container spacing={{ xs: 1.5, md: 2 }}>
         <Grid size={{ xs: 6, lg: 3 }}>
           <Card sx={{ height: "100%" }}>
-            <CardHeader
-              title={
-                <Typography variant="subtitle2" color="text.secondary">
-                  Parcelamentos Ativos
+            <CardContent
+              sx={{
+                p: { xs: 1.5, md: 2 },
+                "&:last-child": { pb: { xs: 1.5, md: 2 } },
+              }}
+            >
+              <Stack spacing={0.5}>
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="space-between"
+                >
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ fontSize: { xs: "0.65rem", md: "0.75rem" } }}
+                  >
+                    Ativos
+                  </Typography>
+                  <CreditCard size={14} style={{ opacity: 0.5 }} />
+                </Box>
+                <Typography
+                  variant="h6"
+                  fontWeight="bold"
+                  sx={{ fontSize: { xs: "1.1rem", md: "1.25rem" } }}
+                >
+                  {summary?.totalActiveInstallments || 0}
                 </Typography>
-              }
-              action={<CreditCard size={16} style={{ opacity: 0.5 }} />}
-              sx={{ pb: 1 }}
-            />
-            <CardContent>
-              <Typography variant="h5" fontWeight="bold">
-                {summary?.totalActiveInstallments || 0}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                {activeInstallments.length} em andamento
-              </Typography>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ fontSize: { xs: "0.6rem", md: "0.7rem" } }}
+                >
+                  {activeInstallments.length} em andamento
+                </Typography>
+              </Stack>
             </CardContent>
           </Card>
         </Grid>
 
         <Grid size={{ xs: 6, lg: 3 }}>
           <Card sx={{ height: "100%" }}>
-            <CardHeader
-              title={
-                <Typography variant="subtitle2" color="text.secondary">
-                  Compromisso Mensal
+            <CardContent
+              sx={{
+                p: { xs: 1.5, md: 2 },
+                "&:last-child": { pb: { xs: 1.5, md: 2 } },
+              }}
+            >
+              <Stack spacing={0.5}>
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="space-between"
+                >
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ fontSize: { xs: "0.65rem", md: "0.75rem" } }}
+                  >
+                    Mensal
+                  </Typography>
+                  <DollarSign size={14} style={{ opacity: 0.5 }} />
+                </Box>
+                <Typography
+                  variant="h6"
+                  fontWeight="bold"
+                  sx={{ fontSize: { xs: "1rem", md: "1.25rem" } }}
+                >
+                  {formatCurrency(summary?.totalMonthlyCommitment || 0)}
                 </Typography>
-              }
-              action={<DollarSign size={16} style={{ opacity: 0.5 }} />}
-              sx={{ pb: 1 }}
-            />
-            <CardContent>
-              <Typography variant="h5" fontWeight="bold">
-                {formatCurrency(summary?.totalMonthlyCommitment || 0)}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Total das parcelas mensais
-              </Typography>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ fontSize: { xs: "0.6rem", md: "0.7rem" } }}
+                >
+                  Total parcelas
+                </Typography>
+              </Stack>
             </CardContent>
           </Card>
         </Grid>
@@ -334,10 +380,58 @@ export default function InstallmentsPage() {
                 : {}),
             }}
           >
-            <CardHeader
-              title={
+            <CardContent
+              sx={{
+                p: { xs: 1.5, md: 2 },
+                "&:last-child": { pb: { xs: 1.5, md: 2 } },
+              }}
+            >
+              <Stack spacing={0.5}>
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="space-between"
+                >
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontSize: { xs: "0.65rem", md: "0.75rem" },
+                      color:
+                        summary && summary.overduePayments.length > 0
+                          ? "error.main"
+                          : "text.secondary",
+                    }}
+                  >
+                    {summary && summary.overduePayments.length > 0
+                      ? "Atrasadas"
+                      : "Próximos"}
+                  </Typography>
+                  {summary && summary.overduePayments.length > 0 ? (
+                    <AlertTriangle
+                      size={14}
+                      color="var(--mui-palette-error-main)"
+                    />
+                  ) : (
+                    <Clock size={14} style={{ opacity: 0.5 }} />
+                  )}
+                </Box>
                 <Typography
-                  variant="subtitle2"
+                  variant="h6"
+                  fontWeight="bold"
+                  sx={{ fontSize: { xs: "1.1rem", md: "1.25rem" } }}
+                  color={
+                    summary && summary.overduePayments.length > 0
+                      ? "error.main"
+                      : "text.primary"
+                  }
+                >
+                  {summary && summary.overduePayments.length > 0
+                    ? summary.overduePayments.length
+                    : summary?.upcomingPayments.length || 0}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{ fontSize: { xs: "0.6rem", md: "0.7rem" } }}
                   color={
                     summary && summary.overduePayments.length > 0
                       ? "error.main"
@@ -345,75 +439,56 @@ export default function InstallmentsPage() {
                   }
                 >
                   {summary && summary.overduePayments.length > 0
-                    ? "Parcelas em Atraso"
-                    : "Próximos Vencimentos"}
+                    ? "Atenção"
+                    : "30 dias"}
                 </Typography>
-              }
-              action={
-                summary && summary.overduePayments.length > 0 ? (
-                  <AlertTriangle
-                    size={16}
-                    color="var(--mui-palette-error-main)"
-                  />
-                ) : (
-                  <Clock size={16} style={{ opacity: 0.5 }} />
-                )
-              }
-              sx={{ pb: 1 }}
-            />
-            <CardContent>
-              <Typography
-                variant="h5"
-                fontWeight="bold"
-                color={
-                  summary && summary.overduePayments.length > 0
-                    ? "error.main"
-                    : "text.primary"
-                }
-              >
-                {summary && summary.overduePayments.length > 0
-                  ? summary.overduePayments.length
-                  : summary?.upcomingPayments.length || 0}
-              </Typography>
-              <Typography
-                variant="caption"
-                color={
-                  summary && summary.overduePayments.length > 0
-                    ? "error.main"
-                    : "text.secondary"
-                }
-              >
-                {summary && summary.overduePayments.length > 0
-                  ? "Precisam de atenção"
-                  : "Próximos 30 dias"}
-              </Typography>
+              </Stack>
             </CardContent>
           </Card>
         </Grid>
 
         <Grid size={{ xs: 6, lg: 3 }}>
           <Card sx={{ height: "100%" }}>
-            <CardHeader
-              title={
-                <Typography variant="subtitle2" color="text.secondary">
-                  Parcelamentos Quitados
+            <CardContent
+              sx={{
+                p: { xs: 1.5, md: 2 },
+                "&:last-child": { pb: { xs: 1.5, md: 2 } },
+              }}
+            >
+              <Stack spacing={0.5}>
+                <Box
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="space-between"
+                >
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ fontSize: { xs: "0.65rem", md: "0.75rem" } }}
+                  >
+                    Quitados
+                  </Typography>
+                  <CheckCircle2
+                    size={14}
+                    color="var(--mui-palette-success-main)"
+                  />
+                </Box>
+                <Typography
+                  variant="h6"
+                  fontWeight="bold"
+                  color="success.main"
+                  sx={{ fontSize: { xs: "1.1rem", md: "1.25rem" } }}
+                >
+                  {completedInstallments.length}
                 </Typography>
-              }
-              action={
-                <CheckCircle2
-                  size={16}
-                  color="var(--mui-palette-success-main)"
-                />
-              }
-              sx={{ pb: 1 }}
-            />
-            <CardContent>
-              <Typography variant="h5" fontWeight="bold" color="success.main">
-                {completedInstallments.length}
-              </Typography>
-              <Typography variant="caption" color="text.secondary">
-                Finalizados com sucesso
-              </Typography>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ fontSize: { xs: "0.6rem", md: "0.7rem" } }}
+                >
+                  Finalizados
+                </Typography>
+              </Stack>
             </CardContent>
           </Card>
         </Grid>
@@ -421,12 +496,29 @@ export default function InstallmentsPage() {
 
       {/* Main Content */}
       <Box>
-        <Box sx={{ borderBottom: 1, borderColor: "divider", mb: 3 }}>
+        <Box
+          sx={{
+            borderBottom: 1,
+            borderColor: "divider",
+            mb: 2,
+            mx: { xs: -2, md: 0 },
+            px: { xs: 2, md: 0 },
+          }}
+        >
           <Tabs
             value={activeTab}
             onChange={handleTabChange}
             variant="scrollable"
             scrollButtons="auto"
+            sx={{
+              minHeight: 40,
+              "& .MuiTab-root": {
+                minHeight: 40,
+                py: 1,
+                px: { xs: 1.5, md: 2 },
+                fontSize: { xs: "0.75rem", md: "0.875rem" },
+              },
+            }}
           >
             <Tab label="Progresso" value="gamification" />
             <Tab label="Ativos" value="active" />
@@ -445,38 +537,38 @@ export default function InstallmentsPage() {
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
-                    py: 8,
+                    py: { xs: 4, md: 8 },
                   }}
                 >
                   <CreditCard
-                    size={48}
-                    style={{ opacity: 0.5, marginBottom: 16 }}
+                    size={40}
+                    style={{ opacity: 0.5, marginBottom: 12 }}
                   />
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="subtitle1" gutterBottom>
                     Nenhum parcelamento ativo
                   </Typography>
                   <Typography
                     variant="body2"
                     color="text.secondary"
                     align="center"
-                    sx={{ mb: 2 }}
+                    sx={{ mb: 2, px: 2 }}
                   >
-                    Comece criando seu primeiro parcelamento para acompanhar
-                    suas prestações.
+                    Comece criando seu primeiro parcelamento.
                   </Typography>
                   <Button
                     variant="contained"
+                    size="small"
                     onClick={() => setIsCreateOpen(true)}
-                    startIcon={<Plus size={18} />}
+                    startIcon={<Plus size={16} />}
                   >
                     Criar Parcelamento
                   </Button>
                 </CardContent>
               </Card>
             ) : (
-              <Grid container spacing={4}>
+              <Grid container spacing={{ xs: 2, md: 3 }}>
                 {activeInstallments.map((installment) => (
-                  <Grid key={installment.id} size={{ xs: 12, lg: 6 }}>
+                  <Grid key={installment.id} size={{ xs: 12, md: 6 }}>
                     <InstallmentCard installment={installment} showActions />
                   </Grid>
                 ))}
@@ -486,45 +578,40 @@ export default function InstallmentsPage() {
         )}
 
         {activeTab === "gamification" && (
-          <Stack spacing={4}>
+          <Stack spacing={{ xs: 2, md: 4 }}>
             {isGamificationLoading ? (
               <Stack spacing={2}>
                 <Skeleton
                   variant="rectangular"
-                  height={160}
+                  height={120}
                   sx={{ borderRadius: 2 }}
                 />
                 <Skeleton
                   variant="rectangular"
-                  height={100}
-                  sx={{ borderRadius: 2 }}
-                />
-                <Skeleton
-                  variant="rectangular"
-                  height={250}
+                  height={80}
                   sx={{ borderRadius: 2 }}
                 />
               </Stack>
             ) : gamificationData ? (
-              <Stack spacing={4}>
-                {/* Header da Gamificação com Guia */}
+              <Stack spacing={{ xs: 2, md: 4 }}>
+                {/* Header da Gamificação */}
                 <Card
                   sx={{
                     background: "linear-gradient(to right, #1e293b, #0f172a)",
                     color: "white",
                   }}
                 >
-                  <CardHeader
-                    title={
+                  <CardContent sx={{ p: { xs: 2, md: 3 } }}>
+                    <Stack spacing={2}>
                       <Box
                         display="flex"
                         alignItems="center"
                         justifyContent="space-between"
                       >
-                        <Box display="flex" alignItems="center" gap={2}>
+                        <Box display="flex" alignItems="center" gap={1.5}>
                           <Box
-                            width={48}
-                            height={48}
+                            width={{ xs: 40, md: 48 }}
+                            height={{ xs: 40, md: 48 }}
                             borderRadius="50%"
                             display="flex"
                             alignItems="center"
@@ -534,73 +621,75 @@ export default function InstallmentsPage() {
                                 "linear-gradient(to bottom right, #a855f7, #3b82f6)",
                             }}
                           >
-                            <Trophy size={24} color="white" />
+                            <Trophy size={20} color="white" />
                           </Box>
                           <Box>
-                            <Typography variant="h6">
+                            <Typography
+                              variant="subtitle1"
+                              fontWeight="bold"
+                              sx={{ fontSize: { xs: "0.9rem", md: "1rem" } }}
+                            >
                               Nível {gamificationData.level.level} -{" "}
                               {gamificationData.level.name}
                             </Typography>
-                            <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                              {gamificationData.points} pontos acumulados
+                            <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                              {gamificationData.points} pontos
                             </Typography>
                           </Box>
                         </Box>
-                        <Box display={{ xs: "none", md: "block" }}>
+                        <Box display={{ xs: "none", sm: "block" }}>
                           <GamificationGuide />
                         </Box>
                       </Box>
-                    }
-                  />
-                  <CardContent>
-                    <Stack spacing={2}>
-                      <Box
-                        display="flex"
-                        justifyContent="space-between"
-                        fontSize="0.875rem"
-                      >
-                        <Typography variant="body2">
-                          Progresso para o próximo nível
-                        </Typography>
-                        <Typography variant="body2">
-                          {gamificationData.level.pointsToNext} pontos restantes
-                        </Typography>
+
+                      <Box>
+                        <Box
+                          display="flex"
+                          justifyContent="space-between"
+                          mb={0.5}
+                        >
+                          <Typography variant="caption">
+                            Próximo nível
+                          </Typography>
+                          <Typography variant="caption">
+                            {gamificationData.level.pointsToNext} pts restantes
+                          </Typography>
+                        </Box>
+                        <LinearProgress
+                          variant="determinate"
+                          value={
+                            (gamificationData.points /
+                              (gamificationData.level.pointsRequired +
+                                gamificationData.level.pointsToNext)) *
+                            100
+                          }
+                          sx={{
+                            height: 6,
+                            borderRadius: 3,
+                            bgcolor: "rgba(255,255,255,0.2)",
+                            "& .MuiLinearProgress-bar": { bgcolor: "#3b82f6" },
+                          }}
+                        />
                       </Box>
-                      <LinearProgress
-                        variant="determinate"
-                        value={
-                          (gamificationData.points /
-                            (gamificationData.level.pointsRequired +
-                              gamificationData.level.pointsToNext)) *
-                          100
-                        }
-                        sx={{
-                          height: 8,
-                          borderRadius: 4,
-                          bgcolor: "rgba(255,255,255,0.2)",
-                          "& .MuiLinearProgress-bar": { bgcolor: "#3b82f6" },
-                        }}
-                      />
 
                       {gamificationData.streak > 0 && (
                         <Box
                           display="flex"
                           alignItems="center"
                           gap={1}
-                          p={1.5}
+                          p={1}
                           bgcolor="rgba(249, 115, 22, 0.1)"
                           border={1}
                           borderColor="rgba(249, 115, 22, 0.3)"
                           borderRadius={1}
                         >
-                          <Flame size={20} color="#f97316" />
+                          <Flame size={16} color="#f97316" />
                           <Typography
-                            variant="body2"
+                            variant="caption"
                             color="#fb923c"
                             fontWeight="medium"
                           >
-                            Sequência de {gamificationData.streak} meses pagando
-                            tudo em dia! 🔥
+                            🔥 {gamificationData.streak} meses em dia!
                           </Typography>
                         </Box>
                       )}
@@ -614,52 +703,50 @@ export default function InstallmentsPage() {
                     <CardHeader
                       title={
                         <Box display="flex" alignItems="center" gap={1}>
-                          <Award size={20} />
-                          <Typography variant="h6">
-                            Badges Conquistadas
+                          <Award size={18} />
+                          <Typography variant="subtitle1" fontWeight="bold">
+                            Badges
                           </Typography>
                         </Box>
                       }
+                      sx={{ pb: 0 }}
                     />
                     <CardContent>
-                      <Grid container spacing={2}>
+                      <Grid container spacing={1.5}>
                         {gamificationData.badges.map((badge) => (
-                          <Grid key={badge.id} size={{ xs: 6, md: 4, lg: 3 }}>
+                          <Grid key={badge.id} size={{ xs: 6, sm: 4, md: 3 }}>
                             <motion.div
                               initial={{ scale: 0, rotate: -180 }}
                               animate={{ scale: 1, rotate: 0 }}
                             >
                               <Box
                                 textAlign="center"
-                                p={2}
+                                p={1.5}
                                 border={1}
                                 borderColor="divider"
                                 borderRadius={2}
                                 bgcolor="background.paper"
                                 height="100%"
                               >
-                                <Typography variant="h3" mb={1}>
+                                <Typography variant="h5" mb={0.5}>
                                   {badge.icon}
                                 </Typography>
                                 <Typography
-                                  variant="subtitle2"
+                                  variant="caption"
                                   fontWeight="bold"
+                                  display="block"
+                                  noWrap
                                 >
                                   {badge.name}
-                                </Typography>
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                  display="block"
-                                  mb={1}
-                                >
-                                  {badge.description}
                                 </Typography>
                                 <Chip
                                   label={translateRarity(badge.rarity)}
                                   variant="outlined"
                                   size="small"
                                   sx={{
+                                    mt: 0.5,
+                                    height: 20,
+                                    fontSize: "0.6rem",
                                     borderColor:
                                       badge.rarity === "legendary"
                                         ? "warning.main"
@@ -692,58 +779,78 @@ export default function InstallmentsPage() {
                   <CardHeader
                     title={
                       <Box display="flex" alignItems="center" gap={1}>
-                        <Target size={20} />
-                        <Typography variant="h6">
-                          Conquistas em Progresso
+                        <Target size={18} />
+                        <Typography variant="subtitle1" fontWeight="bold">
+                          Conquistas
                         </Typography>
                       </Box>
                     }
+                    sx={{ pb: 0 }}
                   />
                   <CardContent>
-                    <Stack spacing={2}>
+                    <Stack spacing={1.5}>
                       {gamificationData.achievements.map((achievement) => (
                         <Box
                           key={achievement.id}
                           border={1}
                           borderColor="divider"
                           borderRadius={2}
-                          p={2}
+                          p={1.5}
                         >
                           <Box
                             display="flex"
                             alignItems="center"
-                            gap={2}
-                            mb={2}
+                            gap={1.5}
+                            mb={1}
                           >
-                            <Typography variant="h5">
+                            <Typography variant="h6">
                               {achievement.icon}
                             </Typography>
-                            <Box flex={1}>
-                              <Typography variant="subtitle1" fontWeight="bold">
+                            <Box flex={1} minWidth={0}>
+                              <Typography
+                                variant="body2"
+                                fontWeight="bold"
+                                noWrap
+                              >
                                 {achievement.name}
                               </Typography>
                               <Typography
-                                variant="body2"
+                                variant="caption"
                                 color="text.secondary"
+                                noWrap
                               >
                                 {achievement.description}
                               </Typography>
                             </Box>
                             <Chip
-                              label={`${achievement.points} pts`}
+                              label={`${achievement.points}pts`}
                               variant="outlined"
                               size="small"
+                              sx={{ height: 22, fontSize: "0.65rem" }}
                             />
                           </Box>
 
-                          <Stack spacing={1}>
+                          <Stack spacing={0.5}>
                             <Box display="flex" justifyContent="space-between">
-                              <Typography variant="caption">
-                                Progresso
-                              </Typography>
                               <Typography variant="caption">
                                 {achievement.progress}/{achievement.target}
                               </Typography>
+                              {achievement.isCompleted && (
+                                <Box
+                                  display="flex"
+                                  alignItems="center"
+                                  gap={0.5}
+                                  color="success.main"
+                                >
+                                  <CheckCircle2 size={12} />
+                                  <Typography
+                                    variant="caption"
+                                    fontWeight="bold"
+                                  >
+                                    Completo!
+                                  </Typography>
+                                </Box>
+                              )}
                             </Box>
                             <LinearProgress
                               variant="determinate"
@@ -751,20 +858,8 @@ export default function InstallmentsPage() {
                                 (achievement.progress / achievement.target) *
                                 100
                               }
+                              sx={{ height: 4, borderRadius: 2 }}
                             />
-                            {achievement.isCompleted && (
-                              <Box
-                                display="flex"
-                                alignItems="center"
-                                gap={0.5}
-                                color="success.main"
-                              >
-                                <CheckCircle2 size={16} />
-                                <Typography variant="caption" fontWeight="bold">
-                                  Conquista completada!
-                                </Typography>
-                              </Box>
-                            )}
                           </Stack>
                         </Box>
                       ))}
@@ -779,31 +874,31 @@ export default function InstallmentsPage() {
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
-                    py: 8,
+                    py: { xs: 4, md: 8 },
                   }}
                 >
                   <Trophy
-                    size={48}
-                    style={{ opacity: 0.5, marginBottom: 16 }}
+                    size={40}
+                    style={{ opacity: 0.5, marginBottom: 12 }}
                   />
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="subtitle1" gutterBottom>
                     Jornada de Progresso
                   </Typography>
                   <Typography
                     variant="body2"
                     color="text.secondary"
                     align="center"
-                    sx={{ mb: 2 }}
+                    sx={{ mb: 2, px: 2 }}
                   >
-                    Crie e pague seus parcelamentos em dia para ganhar pontos,
-                    subir de nível e desbloquear conquistas!
+                    Pague em dia para ganhar pontos e subir de nível!
                   </Typography>
                   <Button
                     variant="contained"
+                    size="small"
                     onClick={() => setActiveTab("active")}
-                    startIcon={<CreditCard size={18} />}
+                    startIcon={<CreditCard size={16} />}
                   >
-                    Ver Meus Parcelamentos
+                    Ver Parcelamentos
                   </Button>
                 </CardContent>
               </Card>
@@ -824,14 +919,15 @@ export default function InstallmentsPage() {
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",
-                    py: 8,
+                    py: { xs: 4, md: 8 },
+                    px: 2,
                   }}
                 >
                   <CheckCircle2
-                    size={48}
-                    style={{ opacity: 0.5, marginBottom: 16 }}
+                    size={40}
+                    style={{ opacity: 0.5, marginBottom: 12 }}
                   />
-                  <Typography variant="h6" gutterBottom>
+                  <Typography variant="subtitle1" gutterBottom>
                     Nenhum parcelamento concluído
                   </Typography>
                   <Typography
@@ -839,14 +935,14 @@ export default function InstallmentsPage() {
                     color="text.secondary"
                     align="center"
                   >
-                    Parcelamentos que você finalizar aparecerão aqui.
+                    Parcelamentos finalizados aparecerão aqui.
                   </Typography>
                 </CardContent>
               </Card>
             ) : (
-              <Grid container spacing={4}>
+              <Grid container spacing={{ xs: 1.5, md: 2 }}>
                 {completedInstallments.map((installment) => (
-                  <Grid key={installment.id} size={{ xs: 12, lg: 6 }}>
+                  <Grid key={installment.id} size={{ xs: 12, md: 6, lg: 4 }}>
                     <InstallmentCard
                       installment={installment}
                       showActions={false}
