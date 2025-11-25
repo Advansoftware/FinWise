@@ -240,7 +240,13 @@ export function AddTransactionSheet({
 
   return (
     <>
-      <Box onClick={toggleDrawer(true)} sx={{ display: "inline-block" }}>
+      <Box
+        onClick={toggleDrawer(true)}
+        sx={{
+          display: { xs: "block", sm: "inline-block" },
+          width: { xs: "100%", sm: "auto" },
+        }}
+      >
         {children}
       </Box>
       <Drawer
