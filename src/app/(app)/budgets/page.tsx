@@ -45,6 +45,7 @@ import { Budget } from "@/lib/types";
 import { AutomaticBudgetCard } from "@/components/budgets/automatic-budget-card";
 import { BudgetGuidance } from "@/components/budgets/budget-guidance";
 import { SpendingAnalysis } from "@/components/budgets/spending-analysis";
+import { GamificationGuide } from "@/components/gamification";
 import { usePlan } from "@/hooks/use-plan";
 import { useGamification } from "@/hooks/use-gamification";
 import { useToast } from "@/hooks/use-toast";
@@ -133,11 +134,14 @@ export default function BudgetsPage() {
             surpresas no final do mês.
           </Typography>
         </Box>
-        <CreateBudgetDialog>
-          <Button variant="contained" startIcon={<PlusCircle size={18} />}>
-            Novo Orçamento
-          </Button>
-        </CreateBudgetDialog>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <GamificationGuide />
+          <CreateBudgetDialog>
+            <Button variant="contained" startIcon={<PlusCircle size={18} />}>
+              Novo Orçamento
+            </Button>
+          </CreateBudgetDialog>
+        </Stack>
       </Stack>
 
       <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
@@ -271,7 +275,8 @@ export default function BudgetsPage() {
                         justifyContent="center"
                         gap={0.5}
                       >
-                        <Flame size={20} /> {gamificationData.streak || 0}
+                        <Flame size={20} />{" "}
+                        {gamificationData.streaks?.payments?.current || 0}
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         Meses no Controle

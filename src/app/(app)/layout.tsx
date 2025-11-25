@@ -34,6 +34,7 @@ import { GamificationProvider } from "@/hooks/use-gamification";
 import { PlanExpirationAlert } from "@/components/billing/plan-expiration-alert";
 import { BankPaymentProvider } from "@/hooks/use-bank-payment";
 import { PaymentConfirmationProvider } from "@/components/bank-payment/payment-confirmation-provider";
+import { GamificationGlobalUI } from "@/components/gamification";
 
 const drawerWidth = 280;
 
@@ -77,6 +78,9 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh" }}>
+      {/* Componentes globais de gamificação */}
+      <GamificationGlobalUI />
+
       {completedGoal && (
         <GoalCompletionCelebration
           goal={completedGoal}

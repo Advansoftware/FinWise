@@ -38,6 +38,7 @@ import {
 } from "lucide-react";
 import { useWallets } from "@/hooks/use-wallets";
 import { CreateWalletDialog } from "@/components/wallets/create-wallet-dialog";
+import { GamificationGuide } from "@/components/gamification";
 import { Wallet, WalletType } from "@/lib/types";
 
 const WalletIcon = ({ type }: { type: WalletType }) => {
@@ -114,13 +115,16 @@ export default function WalletsPage() {
             transação precisa estar associada a uma carteira.
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<PlusCircle size={18} />}
-          onClick={handleCreateWallet}
-        >
-          Nova Carteira
-        </Button>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <GamificationGuide />
+          <Button
+            variant="contained"
+            startIcon={<PlusCircle size={18} />}
+            onClick={handleCreateWallet}
+          >
+            Nova Carteira
+          </Button>
+        </Stack>
       </Stack>
 
       {/* Cards de Totais - Separados visualmente das carteiras individuais */}

@@ -46,6 +46,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ProjectGoalCompletionOutput } from "@/ai/ai-types";
 import { useGamification } from "@/hooks/use-gamification";
+import { GamificationGuide } from "@/components/gamification";
 import { formatCurrency } from "@/lib/utils";
 
 export default function GoalsPage() {
@@ -104,13 +105,16 @@ export default function GoalsPage() {
             acompanhe seu progresso a cada depósito.
           </Typography>
         </Box>
-        <Button
-          variant="contained"
-          startIcon={<PlusCircle size={18} />}
-          onClick={handleCreateGoal}
-        >
-          Nova Meta
-        </Button>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <GamificationGuide />
+          <Button
+            variant="contained"
+            startIcon={<PlusCircle size={18} />}
+            onClick={handleCreateGoal}
+          >
+            Nova Meta
+          </Button>
+        </Stack>
       </Stack>
 
       {/* Gamification Summary for Goals */}

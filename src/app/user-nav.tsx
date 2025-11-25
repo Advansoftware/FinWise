@@ -15,6 +15,7 @@ import {
   ListItemIcon,
   ListItemText,
   alpha,
+  Tooltip,
 } from "@mui/material";
 import {
   Settings,
@@ -23,6 +24,7 @@ import {
   LogOut,
   Trophy,
   ExternalLink,
+  Flame,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
@@ -32,8 +34,12 @@ import { usePlan } from "@/hooks/use-plan";
 
 export function UserNav() {
   const { user, logout, loading } = useAuth();
-  const { gamificationData, isLoading: isGamificationLoading } =
-    useGamification();
+  const {
+    gamificationData,
+    isLoading: isGamificationLoading,
+    calculateProgress,
+    getLevelInfo,
+  } = useGamification();
   const { plan } = usePlan();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
@@ -60,36 +66,44 @@ export function UserNav() {
   };
 
   const levelProgress = gamificationData
-    ? (gamificationData.points /
-        (gamificationData.level.pointsRequired +
-          gamificationData.level.pointsToNext)) *
-      100
-    : 0;
+    ? calculateProgress()
+    : { progress: 0, current: 0, next: 100 };
+  const levelInfo = gamificationData
+    ? getLevelInfo(gamificationData.level.level)
+    : null;
 
   return (
     <>
-      <Button
-        onClick={handleClick}
-        sx={{
-          minWidth: 0,
-          p: 0.5,
-          borderRadius: "50%",
-        }}
+      <Tooltip
+        title={
+          gamificationData
+            ? `Nível ${gamificationData.level.level} - ${levelInfo?.name}`
+            : "Carregando..."
+        }
       >
-        <Avatar
+        <Button
+          onClick={handleClick}
           sx={{
-            width: 36,
-            height: 36,
-            bgcolor: "primary.main",
-            fontSize: "0.875rem",
-            fontWeight: 600,
+            minWidth: 0,
+            p: 0.5,
+            borderRadius: "50%",
           }}
-          src={user?.image || undefined}
-          alt={user?.displayName || "User"}
         >
-          {getInitials(user?.displayName)}
-        </Avatar>
-      </Button>
+          <Avatar
+            sx={{
+              width: 36,
+              height: 36,
+              bgcolor: "primary.main",
+              fontSize: "0.875rem",
+              fontWeight: 600,
+            }}
+            src={user?.image || undefined}
+            alt={user?.displayName || "User"}
+          >
+            {getInitials(user?.displayName)}
+          </Avatar>
+        </Button>
+      </Tooltip>
 
       <Menu
         anchorEl={anchorEl}
@@ -101,7 +115,7 @@ export function UserNav() {
         slotProps={{
           paper: {
             sx: {
-              width: 260,
+              width: 280,
               mt: 1,
               borderRadius: 2,
               boxShadow: (theme) =>
@@ -120,17 +134,19 @@ export function UserNav() {
           </Typography>
         </Box>
 
-        {/* Gamification Section */}
+        {/* Gamification Section - Melhorado */}
         {isGamificationLoading ? (
           <Box sx={{ px: 2, py: 1.5 }}>
             <Skeleton variant="text" width="100%" />
             <Skeleton variant="rectangular" height={4} sx={{ mt: 1 }} />
           </Box>
         ) : (
-          gamificationData && (
+          gamificationData &&
+          levelInfo && (
             <>
               <Divider />
               <Box sx={{ px: 2, py: 1.5 }}>
+                {/* Nível com ícone e título */}
                 <Box
                   sx={{
                     display: "flex",
@@ -143,30 +159,163 @@ export function UserNav() {
                     sx={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 0.75,
+                      gap: 1,
                     }}
                   >
-                    <Trophy size={16} style={{ color: "#f59e0b" }} />
-                    <Typography variant="caption" fontWeight={600}>
-                      Nível {gamificationData.level.level}
+                    <Box
+                      sx={{
+                        width: 32,
+                        height: 32,
+                        borderRadius: "50%",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: "1rem",
+                        background: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "linear-gradient(135deg, rgba(245, 158, 11, 0.3) 0%, rgba(234, 88, 12, 0.3) 100%)"
+                            : "linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%)",
+                        border: 1,
+                        borderColor: (theme) =>
+                          theme.palette.mode === "dark"
+                            ? "rgba(245, 158, 11, 0.5)"
+                            : "rgba(245, 158, 11, 0.3)",
+                      }}
+                    >
+                      {levelInfo.icon}
+                    </Box>
+                    <Box>
+                      <Typography
+                        variant="caption"
+                        fontWeight={600}
+                        sx={{ display: "block", lineHeight: 1.2 }}
+                      >
+                        Nível {gamificationData.level.level}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ fontSize: "0.65rem" }}
+                      >
+                        {levelInfo.name}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Box sx={{ textAlign: "right" }}>
+                    <Typography
+                      variant="caption"
+                      fontWeight={600}
+                      color="primary.main"
+                    >
+                      {gamificationData.points} XP
                     </Typography>
                   </Box>
-                  <Typography variant="caption" color="text.secondary">
-                    {gamificationData.points} pts
-                  </Typography>
                 </Box>
-                <LinearProgress
-                  variant="determinate"
-                  value={levelProgress}
-                  sx={{
-                    height: 4,
-                    borderRadius: 2,
-                    bgcolor: "action.hover",
-                    "& .MuiLinearProgress-bar": {
+
+                {/* Barra de progresso */}
+                <Box sx={{ mb: 1 }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      mb: 0.5,
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontSize: "0.65rem" }}
+                    >
+                      Próximo nível
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontSize: "0.65rem" }}
+                    >
+                      {levelProgress.current}/{levelProgress.next}
+                    </Typography>
+                  </Box>
+                  <LinearProgress
+                    variant="determinate"
+                    value={levelProgress.progress}
+                    sx={{
+                      height: 4,
                       borderRadius: 2,
-                    },
-                  }}
-                />
+                      bgcolor: "action.hover",
+                      "& .MuiLinearProgress-bar": {
+                        borderRadius: 2,
+                        background:
+                          "linear-gradient(90deg, #f59e0b 0%, #ea580c 100%)",
+                      },
+                    }}
+                  />
+                </Box>
+
+                {/* Streak de pagamentos */}
+                {gamificationData.streaks.payments.current > 0 && (
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 0.75,
+                      p: 0.75,
+                      borderRadius: 1,
+                      bgcolor: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "rgba(249, 115, 22, 0.1)"
+                          : "rgba(249, 115, 22, 0.08)",
+                      border: 1,
+                      borderColor: (theme) =>
+                        theme.palette.mode === "dark"
+                          ? "rgba(249, 115, 22, 0.3)"
+                          : "rgba(249, 115, 22, 0.2)",
+                    }}
+                  >
+                    <Flame size={14} style={{ color: "#f97316" }} />
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "#f97316", fontWeight: 500 }}
+                    >
+                      {gamificationData.streaks.payments.current} meses em dia!
+                    </Typography>
+                  </Box>
+                )}
+
+                {/* Badges recentes */}
+                {gamificationData.badges.length > 0 && (
+                  <Box
+                    sx={{ mt: 1, display: "flex", gap: 0.5, flexWrap: "wrap" }}
+                  >
+                    {gamificationData.badges.slice(0, 5).map((badge) => (
+                      <Tooltip key={badge.id} title={badge.name}>
+                        <Box
+                          sx={{
+                            width: 24,
+                            height: 24,
+                            borderRadius: "50%",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: "0.75rem",
+                            bgcolor: "action.hover",
+                          }}
+                        >
+                          {badge.icon}
+                        </Box>
+                      </Tooltip>
+                    ))}
+                    {gamificationData.badges.length > 5 && (
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ alignSelf: "center", ml: 0.5 }}
+                      >
+                        +{gamificationData.badges.length - 5}
+                      </Typography>
+                    )}
+                  </Box>
+                )}
               </Box>
             </>
           )

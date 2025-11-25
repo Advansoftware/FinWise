@@ -1,8 +1,8 @@
 // src/core/adapters/mongodb/mongodb-installments.adapter.ts
 
-import {Db, ObjectId} from 'mongodb';
-import {IInstallmentsRepository, Installment, InstallmentPayment, CreateInstallmentInput, UpdateInstallmentInput, PayInstallmentInput, AdjustRecurringInstallmentInput, InstallmentSummary, GamificationData} from '@/core/ports/installments.port';
-import {addMonths, addYears, isAfter, isBefore, parseISO, format} from 'date-fns';
+import { Db, ObjectId } from 'mongodb';
+import { IInstallmentsRepository, Installment, InstallmentPayment, CreateInstallmentInput, UpdateInstallmentInput, PayInstallmentInput, AdjustRecurringInstallmentInput, InstallmentSummary, GamificationData } from '@/core/ports/installments.port';
+import { addMonths, addYears, isAfter, isBefore, parseISO, format } from 'date-fns';
 
 export class MongoInstallmentsRepository implements IInstallmentsRepository {
   constructor(private db: Db) { }
@@ -539,12 +539,18 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
   }
 
   private calculateLevel(points: number) {
+    // Níveis expandidos de 1 a 10 com progressão exponencial
     const levels = [
-      { level: 1, name: 'Iniciante', pointsRequired: 0, benefits: [] },
-      { level: 2, name: 'Organizador', pointsRequired: 100, benefits: [] },
-      { level: 3, name: 'Planejador', pointsRequired: 300, benefits: [] },
-      { level: 4, name: 'Estrategista', pointsRequired: 600, benefits: [] },
-      { level: 5, name: 'Mestre', pointsRequired: 1000, benefits: [] },
+      { level: 1, name: 'Iniciante', pointsRequired: 0, benefits: ['Acesso ao sistema básico', 'Controle de transações'] },
+      { level: 2, name: 'Organizador', pointsRequired: 100, benefits: ['Relatórios mensais', 'Notificações de vencimento'] },
+      { level: 3, name: 'Disciplinado', pointsRequired: 300, benefits: ['Insights de gastos', 'Dashboard expandido'] },
+      { level: 4, name: 'Estrategista', pointsRequired: 600, benefits: ['Projeções financeiras', 'Metas avançadas'] },
+      { level: 5, name: 'Expert', pointsRequired: 1000, benefits: ['Análise por IA', 'Recomendações personalizadas'] },
+      { level: 6, name: 'Veterano', pointsRequired: 1500, benefits: ['Relatórios detalhados', 'Exportação de dados'] },
+      { level: 7, name: 'Elite', pointsRequired: 2200, benefits: ['Acesso antecipado', 'Recursos beta'] },
+      { level: 8, name: 'Mestre', pointsRequired: 3000, benefits: ['Suporte prioritário', 'Consultoria IA'] },
+      { level: 9, name: 'Grão-Mestre', pointsRequired: 4000, benefits: ['Funcionalidades exclusivas', 'Badge especial'] },
+      { level: 10, name: 'Lenda', pointsRequired: 5500, benefits: ['Status Lenda', 'Todas as funcionalidades'] },
     ];
 
     let currentLevel = levels[0];
@@ -559,7 +565,7 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
     return {
       level: currentLevel.level,
       name: currentLevel.name,
-      description: `Nível ${currentLevel.level}`,
+      description: `Nível ${currentLevel.level} - ${currentLevel.name}`,
       pointsRequired: currentLevel.pointsRequired,
       pointsToNext: Math.max(0, pointsToNext),
       benefits: currentLevel.benefits,
@@ -570,23 +576,74 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
     const badges = [];
     const now = new Date().toISOString();
 
-    // Badges de Parcelamentos
+    // Contadores para badges
+    const paidInstallmentsCount = installments.reduce((sum, inst) => sum + inst.paidInstallments, 0);
+    const completedInstallmentsCount = installments.filter(i => i.isCompleted).length;
+    const completedGoalsCount = goals.filter(g => g.currentAmount >= g.targetAmount).length;
+    const totalSaved = goals.reduce((sum, g) => sum + (g.currentAmount || 0), 0);
+
+    // === Badges de Onboarding ===
     if (installments.some(inst => inst.paidInstallments > 0)) {
-      badges.push({ id: 'first-payment', name: 'Primeiro Passo', description: 'Realizou seu primeiro pagamento de parcela', icon: '🎯', earnedAt: now, rarity: 'common' as const });
-    }
-    if (installments.filter(i => i.isCompleted).length >= 3) {
-      badges.push({ id: 'finisher', name: 'Finalizador', description: 'Completou 3 parcelamentos', icon: '🏆', earnedAt: now, rarity: 'epic' as const });
+      badges.push({ id: 'first-payment', name: 'Pagador', description: 'Pagou sua primeira parcela', icon: '💳', earnedAt: now, rarity: 'common' as const });
     }
 
-    // Badges de Metas
+    // === Badges de Pagamentos ===
+    if (paidInstallmentsCount >= 10) {
+      badges.push({ id: 'punctual-10', name: 'Pontual', description: '10 pagamentos em dia', icon: '⏰', earnedAt: now, rarity: 'rare' as const });
+    }
+    if (paidInstallmentsCount >= 50) {
+      badges.push({ id: 'punctual-50', name: 'Super Pontual', description: '50 pagamentos em dia', icon: '⏱️', earnedAt: now, rarity: 'epic' as const });
+    }
+    if (paidInstallmentsCount >= 100) {
+      badges.push({ id: 'punctual-100', name: 'Mestre da Pontualidade', description: '100 pagamentos em dia', icon: '🕐', earnedAt: now, rarity: 'legendary' as const });
+    }
+
+    // === Badges de Parcelamentos ===
+    if (completedInstallmentsCount >= 1) {
+      badges.push({ id: 'installment-complete-1', name: 'Finalizador', description: 'Completou 1 parcelamento', icon: '🏁', earnedAt: now, rarity: 'common' as const });
+    }
+    if (completedInstallmentsCount >= 5) {
+      badges.push({ id: 'installment-complete-5', name: 'Quitador', description: 'Completou 5 parcelamentos', icon: '🎖️', earnedAt: now, rarity: 'rare' as const });
+    }
+    if (completedInstallmentsCount >= 15) {
+      badges.push({ id: 'installment-complete-15', name: 'Livre de Dívidas', description: 'Completou 15 parcelamentos', icon: '🏆', earnedAt: now, rarity: 'epic' as const });
+    }
+    if (completedInstallmentsCount >= 30) {
+      badges.push({ id: 'installment-complete-30', name: 'Destruidor de Dívidas', description: 'Completou 30 parcelamentos', icon: '💪', earnedAt: now, rarity: 'legendary' as const });
+    }
+
+    // === Badges de Metas ===
     if (goals.length > 0) {
-      badges.push({ id: 'goal-setter', name: 'Sonhador', description: 'Criou sua primeira meta', icon: '✨', earnedAt: now, rarity: 'common' as const });
+      badges.push({ id: 'goal-setter', name: 'Sonhador', description: 'Definiu sua primeira meta', icon: '🎯', earnedAt: now, rarity: 'common' as const });
     }
-    if (goals.some(g => g.currentAmount >= g.targetAmount)) {
-      badges.push({ id: 'dream-achiever', name: 'Realizador de Sonhos', description: 'Alcançou sua primeira meta', icon: '🚀', earnedAt: now, rarity: 'rare' as const });
+    if (completedGoalsCount >= 1) {
+      badges.push({ id: 'goal-complete-1', name: 'Realizador', description: 'Completou 1 meta', icon: '🌟', earnedAt: now, rarity: 'common' as const });
+    }
+    if (completedGoalsCount >= 5) {
+      badges.push({ id: 'goal-complete-5', name: 'Conquistador', description: 'Completou 5 metas', icon: '⭐', earnedAt: now, rarity: 'rare' as const });
+    }
+    if (completedGoalsCount >= 10) {
+      badges.push({ id: 'goal-complete-10', name: 'Campeão de Metas', description: 'Completou 10 metas', icon: '🏅', earnedAt: now, rarity: 'epic' as const });
     }
 
-    // Badges de Orçamentos
+    // === Badges de Economia ===
+    if (totalSaved >= 1000) {
+      badges.push({ id: 'goal-1000', name: 'Poupador Bronze', description: 'Economizou R$ 1.000', icon: '🥉', earnedAt: now, rarity: 'common' as const });
+    }
+    if (totalSaved >= 5000) {
+      badges.push({ id: 'goal-5000', name: 'Poupador Prata', description: 'Economizou R$ 5.000', icon: '🥈', earnedAt: now, rarity: 'rare' as const });
+    }
+    if (totalSaved >= 10000) {
+      badges.push({ id: 'goal-10000', name: 'Poupador Ouro', description: 'Economizou R$ 10.000', icon: '🥇', earnedAt: now, rarity: 'epic' as const });
+    }
+    if (totalSaved >= 50000) {
+      badges.push({ id: 'goal-50000', name: 'Poupador Diamante', description: 'Economizou R$ 50.000', icon: '💎', earnedAt: now, rarity: 'legendary' as const });
+    }
+
+    // === Badges de Orçamentos ===
+    if (budgets.length >= 1) {
+      badges.push({ id: 'budget-starter', name: 'Planejador Iniciante', description: 'Criou seu primeiro orçamento', icon: '📋', earnedAt: now, rarity: 'common' as const });
+    }
     if (budgets.length >= 3) {
       badges.push({ id: 'budget-master', name: 'Mestre dos Orçamentos', description: 'Criou 3 ou mais orçamentos', icon: '📊', earnedAt: now, rarity: 'rare' as const });
     }

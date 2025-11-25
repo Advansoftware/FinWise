@@ -17,6 +17,7 @@ import {
   Box,
   IconButton,
   Grid,
+  Tooltip,
 } from "@mui/material";
 import {
   CreditCard,
@@ -35,7 +36,7 @@ import { CreateInstallmentDialog } from "@/components/installments/create-instal
 import { InstallmentCard } from "@/components/installments/installment-card";
 import { PaymentSchedule } from "@/components/installments/payment-schedule";
 import { MonthlyProjections } from "@/components/installments/monthly-projections";
-import { GamificationGuide } from "@/components/installments/gamification-guide";
+import { GamificationGuide } from "@/components/gamification";
 import { formatCurrency } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useGamification } from "@/hooks/use-gamification";
@@ -44,23 +45,17 @@ export default function InstallmentsPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("gamification"); // Progresso é a aba padrão
   const { installments, summary, isLoading } = useInstallments();
-  const { gamificationData, isLoading: isGamificationLoading } =
-    useGamification();
+  const {
+    gamificationData,
+    isLoading: isGamificationLoading,
+    calculateProgress,
+    getLevelInfo,
+    getRarityLabel,
+    getRarityColors,
+  } = useGamification();
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
     setActiveTab(newValue);
-  };
-
-  // Função para traduzir raridade dos badges
-  const translateRarity = (rarity: string) => {
-    const translations: Record<string, string> = {
-      common: "Comum",
-      rare: "Raro",
-      epic: "Épico",
-      legendary: "Lendário",
-      mythic: "Mítico",
-    };
-    return translations[rarity] || rarity;
   };
 
   if (isLoading) {
@@ -130,11 +125,7 @@ export default function InstallmentsPage() {
             alignItems="center"
             sx={{ width: { xs: "100%", sm: "auto" } }}
           >
-            <GamificationGuide
-              currentPoints={gamificationData?.points}
-              currentLevel={gamificationData?.level}
-              badges={gamificationData?.badges}
-            />
+            <GamificationGuide />
             <Button
               variant="contained"
               onClick={() => setIsCreateOpen(true)}
@@ -681,7 +672,7 @@ export default function InstallmentsPage() {
                         />
                       </Box>
 
-                      {gamificationData.streak > 0 && (
+                      {gamificationData.streaks.payments.current > 0 && (
                         <Box
                           display="flex"
                           alignItems="center"
@@ -698,7 +689,8 @@ export default function InstallmentsPage() {
                             color="#fb923c"
                             fontWeight="medium"
                           >
-                            🔥 {gamificationData.streak} meses em dia!
+                            🔥 {gamificationData.streaks.payments.current} meses
+                            em dia!
                           </Typography>
                         </Box>
                       )}
@@ -722,62 +714,75 @@ export default function InstallmentsPage() {
                     />
                     <CardContent>
                       <Grid container spacing={1.5}>
-                        {gamificationData.badges.map((badge) => (
-                          <Grid key={badge.id} size={{ xs: 6, sm: 4, md: 3 }}>
-                            <motion.div
-                              initial={{ scale: 0, rotate: -180 }}
-                              animate={{ scale: 1, rotate: 0 }}
-                            >
-                              <Box
-                                textAlign="center"
-                                p={1.5}
-                                border={1}
-                                borderColor="divider"
-                                borderRadius={2}
-                                bgcolor="background.paper"
-                                height="100%"
-                              >
-                                <Typography variant="h5" mb={0.5}>
-                                  {badge.icon}
-                                </Typography>
-                                <Typography
-                                  variant="caption"
-                                  fontWeight="bold"
-                                  display="block"
-                                  noWrap
+                        {gamificationData.badges.map((badge) => {
+                          const rarityColors = getRarityColors(badge.rarity);
+                          return (
+                            <Grid key={badge.id} size={{ xs: 6, sm: 4, md: 3 }}>
+                              <Tooltip title={badge.description}>
+                                <motion.div
+                                  initial={{ scale: 0, rotate: -180 }}
+                                  animate={{ scale: 1, rotate: 0 }}
                                 >
-                                  {badge.name}
-                                </Typography>
-                                <Chip
-                                  label={translateRarity(badge.rarity)}
-                                  variant="outlined"
-                                  size="small"
-                                  sx={{
-                                    mt: 0.5,
-                                    height: 20,
-                                    fontSize: "0.6rem",
-                                    borderColor:
-                                      badge.rarity === "legendary"
-                                        ? "warning.main"
-                                        : badge.rarity === "epic"
-                                        ? "secondary.main"
-                                        : badge.rarity === "rare"
-                                        ? "info.main"
-                                        : "grey.400",
-                                    color:
-                                      badge.rarity === "legendary"
-                                        ? "warning.main"
-                                        : badge.rarity === "epic"
-                                        ? "secondary.main"
-                                        : badge.rarity === "rare"
-                                        ? "info.main"
-                                        : "text.secondary",
-                                  }}
-                                />
-                              </Box>
-                            </motion.div>
-                          </Grid>
-                        ))}
+                                  <Box
+                                    textAlign="center"
+                                    p={1.5}
+                                    border={1}
+                                    borderColor={rarityColors.border}
+                                    borderRadius={2}
+                                    bgcolor="background.paper"
+                                    height="100%"
+                                    sx={{
+                                      background: rarityColors.bg,
+                                      transition: "transform 0.2s",
+                                      "&:hover": {
+                                        transform: "scale(1.05)",
+                                      },
+                                    }}
+                                  >
+                                    <Box
+                                      sx={{
+                                        width: 48,
+                                        height: 48,
+                                        borderRadius: "50%",
+                                        display: "flex",
+                                        alignItems: "center",
+                                        justifyContent: "center",
+                                        margin: "0 auto",
+                                        mb: 0.5,
+                                        background: rarityColors.gradient,
+                                        boxShadow: `0 0 12px ${rarityColors.border}`,
+                                      }}
+                                    >
+                                      <Typography sx={{ fontSize: "1.25rem" }}>
+                                        {badge.icon}
+                                      </Typography>
+                                    </Box>
+                                    <Typography
+                                      variant="caption"
+                                      fontWeight="bold"
+                                      display="block"
+                                      noWrap
+                                    >
+                                      {badge.name}
+                                    </Typography>
+                                    <Chip
+                                      label={getRarityLabel(badge.rarity)}
+                                      size="small"
+                                      sx={{
+                                        mt: 0.5,
+                                        height: 20,
+                                        fontSize: "0.6rem",
+                                        bgcolor: rarityColors.bg,
+                                        color: rarityColors.text,
+                                        borderColor: rarityColors.border,
+                                      }}
+                                    />
+                                  </Box>
+                                </motion.div>
+                              </Tooltip>
+                            </Grid>
+                          );
+                        })}
                       </Grid>
                     </CardContent>
                   </Card>

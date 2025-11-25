@@ -17,6 +17,7 @@ import { DateRangePicker } from "@/components/dashboard/date-range-picker";
 import { ItemFilter } from "@/components/dashboard/item-filter";
 import { TransactionCardList } from "@/components/transactions/transaction-card-list";
 import { AddTransactionSheet } from "@/components/dashboard/add-transaction-sheet";
+import { GamificationGuide } from "@/components/gamification";
 import { PlusCircle } from "lucide-react";
 
 export default function TransactionsPage() {
@@ -55,15 +56,18 @@ export default function TransactionsPage() {
         </Box>
 
         {/* Add Transaction Button */}
-        <AddTransactionSheet>
-          <Button
-            variant="contained"
-            fullWidth={isMobile}
-            startIcon={<PlusCircle size={18} />}
-          >
-            Adicionar Transação
-          </Button>
-        </AddTransactionSheet>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <GamificationGuide />
+          <AddTransactionSheet>
+            <Button
+              variant="contained"
+              fullWidth={isMobile}
+              startIcon={<PlusCircle size={18} />}
+            >
+              Adicionar Transação
+            </Button>
+          </AddTransactionSheet>
+        </Stack>
       </Stack>
 
       {/* Filters */}

@@ -15,6 +15,7 @@ import { ScanQRCodeDialog } from "@/components/dashboard/scan-qr-code-dialog";
 import { WalletCard } from "@/components/dashboard/wallet-card";
 import { GoalHighlightCard } from "@/components/goals/goal-highlight-card";
 import { FutureBalanceCard } from "@/components/dashboard/future-balance-card";
+import { GamificationGuide } from "@/components/gamification";
 import { usePlan } from "@/hooks/use-plan";
 
 export default function DashboardPage() {
@@ -65,6 +66,7 @@ export default function DashboardPage() {
 
           {/* Action Buttons - Alinhados à direita */}
           <Stack direction="row" spacing={1.5}>
+            <GamificationGuide />
             {isPro && (
               <ScanQRCodeDialog>
                 <Button variant="outlined" startIcon={<ScanLine size={18} />}>
