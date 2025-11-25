@@ -67,34 +67,25 @@ export default function TransactionsPage() {
       </Stack>
 
       {/* Filters */}
-      <Stack direction={{ xs: "column", md: "row" }} spacing={2}>
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        spacing={2}
+        alignItems={{ xs: "stretch", sm: "flex-start" }}
+      >
         <DateRangePicker initialDate={dateRange} onUpdate={setDateRange} />
-        <Box
-          sx={{
-            flex: 1,
-            display: "flex",
-            gap: 2,
-            flexDirection: { xs: "column", sm: "row" },
-          }}
-        >
-          <Box sx={{ width: { xs: "100%", sm: "auto" }, flex: { sm: 1 } }}>
-            <ItemFilter
-              placeholder="Todas as Categorias"
-              items={["all", ...categories]}
-              selectedItem={selectedCategory}
-              onItemSelected={handleCategoryChange}
-            />
-          </Box>
-          <Box sx={{ width: { xs: "100%", sm: "auto" }, flex: { sm: 1 } }}>
-            <ItemFilter
-              placeholder="Todas as Subcategorias"
-              items={["all", ...availableSubcategories]}
-              selectedItem={selectedSubcategory}
-              onItemSelected={setSelectedSubcategory}
-              disabled={selectedCategory === "all"}
-            />
-          </Box>
-        </Box>
+        <ItemFilter
+          placeholder="Todas as Categorias"
+          items={["all", ...categories]}
+          selectedItem={selectedCategory}
+          onItemSelected={handleCategoryChange}
+        />
+        <ItemFilter
+          placeholder="Todas as Subcategorias"
+          items={["all", ...availableSubcategories]}
+          selectedItem={selectedSubcategory}
+          onItemSelected={setSelectedSubcategory}
+          disabled={selectedCategory === "all"}
+        />
       </Stack>
 
       {/* Content */}

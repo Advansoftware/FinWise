@@ -1197,105 +1197,97 @@ const createComponents = (): Components<Omit<Theme, 'components'>> => {
         variant: 'outlined',
       },
       styleOverrides: {
-        root: {
+        root: ({ ownerState }) => ({
           borderRadius: radius.md,
           fontSize: typographyTokens.fontSize.sm,
-        },
-        filled: {
-          fontWeight: typographyTokens.fontWeight.medium,
-        },
-        filledSuccess: {
-          backgroundColor: '#10b981 !important',
-          color: '#ffffff !important',
-          '& *': {
-            color: '#ffffff !important',
-          },
-        },
-        filledError: {
-          backgroundColor: '#ef4444 !important',
-          color: '#ffffff !important',
-          '& *': {
-            color: '#ffffff !important',
-          },
-        },
-        filledWarning: {
-          backgroundColor: '#f59e0b !important',
-          color: '#000000 !important',
-          '& *': {
-            color: '#000000 !important',
-          },
-        },
-        filledInfo: {
-          backgroundColor: '#3b82f6 !important',
-          color: '#ffffff !important',
-          '& *': {
-            color: '#ffffff !important',
-          },
-        },
-        outlined: {
-          borderWidth: '1px',
-          backgroundColor: alpha(colors.card, 0.5),
-        },
-        outlinedSuccess: {
-          borderColor: '#10b981',
-          color: '#10b981',
-          '& .MuiAlert-icon, & .MuiAlert-message, & .MuiAlertTitle-root': {
-            color: '#10b981',
-          },
-        },
-        outlinedError: {
-          borderColor: '#ef4444',
-          color: '#ef4444',
-          '& .MuiAlert-icon, & .MuiAlert-message, & .MuiAlertTitle-root': {
-            color: '#ef4444',
-          },
-        },
-        outlinedWarning: {
-          borderColor: '#f59e0b',
-          color: '#f59e0b',
-          '& .MuiAlert-icon, & .MuiAlert-message, & .MuiAlertTitle-root': {
-            color: '#f59e0b',
-          },
-        },
-        outlinedInfo: {
-          borderColor: '#3b82f6',
-          color: '#3b82f6',
-          '& .MuiAlert-icon, & .MuiAlert-message, & .MuiAlertTitle-root': {
-            color: '#3b82f6',
-          },
-        },
-        standard: {
-          backgroundColor: alpha(colors.muted, 0.15),
-          color: colors.foreground,
-        },
-        standardSuccess: {
-          backgroundColor: alpha('#10b981', 0.15),
-          color: '#10b981',
-          '& .MuiAlert-icon, & .MuiAlert-message, & .MuiAlertTitle-root': {
-            color: '#10b981',
-          },
-        },
-        standardError: {
-          backgroundColor: alpha('#ef4444', 0.15),
-          color: '#ef4444',
-          '& .MuiAlert-icon, & .MuiAlert-message, & .MuiAlertTitle-root': {
-            color: '#ef4444',
-          },
-        },
-        standardWarning: {
-          backgroundColor: alpha('#f59e0b', 0.15),
-          color: '#f59e0b',
-          '& .MuiAlert-icon, & .MuiAlert-message, & .MuiAlertTitle-root': {
-            color: '#f59e0b',
-          },
-        },
-        standardInfo: {
-          backgroundColor: alpha('#3b82f6', 0.15),
-          color: '#3b82f6',
-          '& .MuiAlert-icon, & .MuiAlert-message, & .MuiAlertTitle-root': {
-            color: '#3b82f6',
-          },
-        },
+          // Filled variants
+          ...(ownerState.variant === 'filled' && ownerState.severity === 'success' && {
+            backgroundColor: '#10b981',
+            color: '#ffffff',
+            '& .MuiAlert-icon': { color: '#ffffff' },
+            '& .MuiAlert-message': { color: '#ffffff' },
+            '& .MuiAlertTitle-root': { color: '#ffffff' },
+            '& .MuiTypography-root': { color: '#ffffff' },
+          }),
+          ...(ownerState.variant === 'filled' && ownerState.severity === 'error' && {
+            backgroundColor: '#ef4444',
+            color: '#ffffff',
+            '& .MuiAlert-icon': { color: '#ffffff' },
+            '& .MuiAlert-message': { color: '#ffffff' },
+            '& .MuiAlertTitle-root': { color: '#ffffff' },
+            '& .MuiTypography-root': { color: '#ffffff' },
+          }),
+          ...(ownerState.variant === 'filled' && ownerState.severity === 'warning' && {
+            backgroundColor: '#f59e0b',
+            color: '#000000',
+            '& .MuiAlert-icon': { color: '#000000' },
+            '& .MuiAlert-message': { color: '#000000' },
+            '& .MuiAlertTitle-root': { color: '#000000' },
+            '& .MuiTypography-root': { color: '#000000' },
+          }),
+          ...(ownerState.variant === 'filled' && ownerState.severity === 'info' && {
+            backgroundColor: '#3b82f6',
+            color: '#ffffff',
+            '& .MuiAlert-icon': { color: '#ffffff' },
+            '& .MuiAlert-message': { color: '#ffffff' },
+            '& .MuiAlertTitle-root': { color: '#ffffff' },
+            '& .MuiTypography-root': { color: '#ffffff' },
+          }),
+          // Outlined variants
+          ...(ownerState.variant === 'outlined' && {
+            borderWidth: '1px',
+            backgroundColor: alpha(colors.card, 0.5),
+          }),
+          ...(ownerState.variant === 'outlined' && ownerState.severity === 'success' && {
+            borderColor: '#10b981',
+            '& .MuiAlert-icon': { color: '#10b981' },
+            '& .MuiAlert-message': { color: '#10b981' },
+            '& .MuiAlertTitle-root': { color: '#10b981' },
+          }),
+          ...(ownerState.variant === 'outlined' && ownerState.severity === 'error' && {
+            borderColor: '#ef4444',
+            '& .MuiAlert-icon': { color: '#ef4444' },
+            '& .MuiAlert-message': { color: '#ef4444' },
+            '& .MuiAlertTitle-root': { color: '#ef4444' },
+          }),
+          ...(ownerState.variant === 'outlined' && ownerState.severity === 'warning' && {
+            borderColor: '#f59e0b',
+            '& .MuiAlert-icon': { color: '#f59e0b' },
+            '& .MuiAlert-message': { color: '#f59e0b' },
+            '& .MuiAlertTitle-root': { color: '#f59e0b' },
+          }),
+          ...(ownerState.variant === 'outlined' && ownerState.severity === 'info' && {
+            borderColor: '#3b82f6',
+            '& .MuiAlert-icon': { color: '#3b82f6' },
+            '& .MuiAlert-message': { color: '#3b82f6' },
+            '& .MuiAlertTitle-root': { color: '#3b82f6' },
+          }),
+          // Standard variants
+          ...(ownerState.variant === 'standard' && ownerState.severity === 'success' && {
+            backgroundColor: alpha('#10b981', 0.15),
+            '& .MuiAlert-icon': { color: '#10b981' },
+            '& .MuiAlert-message': { color: '#10b981' },
+            '& .MuiAlertTitle-root': { color: '#10b981' },
+          }),
+          ...(ownerState.variant === 'standard' && ownerState.severity === 'error' && {
+            backgroundColor: alpha('#ef4444', 0.15),
+            '& .MuiAlert-icon': { color: '#ef4444' },
+            '& .MuiAlert-message': { color: '#ef4444' },
+            '& .MuiAlertTitle-root': { color: '#ef4444' },
+          }),
+          ...(ownerState.variant === 'standard' && ownerState.severity === 'warning' && {
+            backgroundColor: alpha('#f59e0b', 0.15),
+            '& .MuiAlert-icon': { color: '#f59e0b' },
+            '& .MuiAlert-message': { color: '#f59e0b' },
+            '& .MuiAlertTitle-root': { color: '#f59e0b' },
+          }),
+          ...(ownerState.variant === 'standard' && ownerState.severity === 'info' && {
+            backgroundColor: alpha('#3b82f6', 0.15),
+            '& .MuiAlert-icon': { color: '#3b82f6' },
+            '& .MuiAlert-message': { color: '#3b82f6' },
+            '& .MuiAlertTitle-root': { color: '#3b82f6' },
+          }),
+        }),
         icon: {
           opacity: 1,
         },
