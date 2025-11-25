@@ -1,6 +1,6 @@
 // src/core/ports/payment.port.ts
 
-import {UserPlan} from '@/lib/types';
+import { UserPlan } from '@/lib/types';
 
 export interface CreateCheckoutSessionInput {
   userId: string;
@@ -53,4 +53,5 @@ export interface IPaymentRepository {
   getUserByStripeCustomerId(customerId: string): Promise<{ uid: string; stripeCustomerId: string } | null>;
   getUserByUserId(userId: string): Promise<{ uid: string; stripeCustomerId?: string } | null>;
   updateUserPlan(userId: string, plan: UserPlan, credits: number): Promise<void>;
+  addUserCredits(userId: string, credits: number): Promise<void>;
 }

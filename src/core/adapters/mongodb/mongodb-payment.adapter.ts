@@ -1,8 +1,8 @@
 // src/core/adapters/mongodb/mongodb-payment.adapter.ts
 
-import {IPaymentRepository, SubscriptionData} from '@/core/ports/payment.port';
-import {UserPlan} from '@/lib/types';
-import {Db, ObjectId} from 'mongodb';
+import { IPaymentRepository, SubscriptionData } from '@/core/ports/payment.port';
+import { UserPlan } from '@/lib/types';
+import { Db, ObjectId } from 'mongodb';
 
 export class MongoPaymentRepository implements IPaymentRepository {
   constructor(private db: Db) { }
@@ -82,6 +82,19 @@ export class MongoPaymentRepository implements IPaymentRepository {
           aiCredits: credits,
           updatedAt: new Date()
         }
+      }
+    );
+  }
+
+  async addUserCredits(userId: string, credits: number): Promise<void> {
+    const usersCollection = this.db.collection('users');
+    const userObjectId = new ObjectId(userId);
+
+    await usersCollection.updateOne(
+      { _id: userObjectId },
+      {
+        $inc: { aiCredits: credits },
+        $set: { updatedAt: new Date() }
       }
     );
   }

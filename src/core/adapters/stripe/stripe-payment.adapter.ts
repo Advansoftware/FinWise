@@ -1,7 +1,7 @@
 // src/core/adapters/stripe/stripe-payment.adapter.ts
 
-import {IPaymentService, CreateCheckoutSessionInput, CreateCheckoutSessionOutput, CreatePortalSessionInput, CreatePortalSessionOutput, WebhookEvent, SubscriptionData, IPaymentRepository} from '@/core/ports/payment.port';
-import {UserPlan} from '@/lib/types';
+import { IPaymentService, CreateCheckoutSessionInput, CreateCheckoutSessionOutput, CreatePortalSessionInput, CreatePortalSessionOutput, WebhookEvent, SubscriptionData, IPaymentRepository } from '@/core/ports/payment.port';
+import { UserPlan } from '@/lib/types';
 import Stripe from 'stripe';
 
 export class StripePaymentAdapter implements IPaymentService {
@@ -141,6 +141,10 @@ export class StripePaymentAdapter implements IPaymentService {
           await this.handleSubscriptionDeleted(stripeEvent.data.object as Stripe.Subscription);
           break;
 
+        case 'invoice.paid':
+          await this.handleInvoicePaid(stripeEvent.data.object as Stripe.Invoice);
+          break;
+
         default:
           console.log(`[StripePaymentAdapter] Unhandled event type: ${stripeEvent.type}`);
       }
@@ -252,5 +256,50 @@ export class StripePaymentAdapter implements IPaymentService {
     await this.paymentRepository.updateUserPlan(userId, 'Básico', 0);
 
     console.log(`[StripePaymentAdapter] Successfully downgraded user ${userId} to Básico plan upon subscription cancellation`);
+  }
+
+  private async handleInvoicePaid(invoice: Stripe.Invoice): Promise<void> {
+    // Only process subscription invoices
+    if (!invoice.subscription) {
+      console.log(`[StripePaymentAdapter] Skipped invoice ${invoice.id} as it's not a subscription invoice`);
+      return;
+    }
+
+    const subscriptionId = invoice.subscription as string;
+    const subscription = await this.stripe.subscriptions.retrieve(subscriptionId);
+    const userId = subscription.metadata.userId;
+    const plan = subscription.metadata.plan as UserPlan;
+
+    if (!userId) {
+      console.error(`[StripePaymentAdapter] userId missing from subscription metadata. Subscription ID: ${subscriptionId}`);
+      return;
+    }
+
+    // Update the current period end date (this is the key for renewals!)
+    await this.paymentRepository.updateUserSubscription(userId, {
+      status: 'active',
+      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      cancelAtPeriodEnd: false
+    });
+
+    // If it's a renewal (not the first payment), add monthly credits
+    if (invoice.billing_reason === 'subscription_cycle') {
+      const creditsMap: Record<UserPlan, number> = {
+        'Básico': 0,
+        'Pro': 100,
+        'Plus': 300,
+        'Infinity': 500,
+      };
+
+      const monthlyCredits = plan ? creditsMap[plan] : 0;
+
+      if (monthlyCredits > 0) {
+        // Add credits for the new billing cycle
+        await this.paymentRepository.addUserCredits(userId, monthlyCredits);
+        console.log(`[StripePaymentAdapter] Added ${monthlyCredits} renewal credits for user ${userId}`);
+      }
+    }
+
+    console.log(`[StripePaymentAdapter] Successfully processed invoice ${invoice.id} for user ${userId}. New period end: ${new Date(subscription.current_period_end * 1000).toISOString()}`);
   }
 }
