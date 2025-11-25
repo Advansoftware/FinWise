@@ -748,29 +748,14 @@ const createComponents = (): Components<Omit<Theme, 'components'>> => {
 
     // ==================== DIALOGS & MODALS ====================
     MuiDialog: {
-      defaultProps: {
-        scroll: 'body',
-        maxWidth: 'sm',
-        fullWidth: true,
-      },
       styleOverrides: {
-        root: {
-          '& .MuiDialog-container': {
-            alignItems: 'flex-start',
-            paddingTop: '32px',
-            paddingBottom: '32px',
-          },
-        },
         paper: {
           borderRadius: radius.lg,
-          margin: '0 16px',
+          margin: '16px',
           backgroundColor: colors.card,
           backgroundImage: 'none',
           border: `1px solid ${colors.border}`,
           boxShadow: shadowTokens.xl,
-        },
-        paperScrollBody: {
-          maxHeight: 'none',
         },
       },
     },

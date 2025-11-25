@@ -13,7 +13,6 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 interface DatePickerButtonProps {
   value: Date | null;
   onChange: (date: Date | null) => void;
-  label?: string;
   placeholder?: string;
   minDate?: Date;
   maxDate?: Date;
@@ -32,7 +31,6 @@ interface DatePickerButtonProps {
 export function DatePickerButton({
   value,
   onChange,
-  label,
   placeholder = "Selecione uma data",
   minDate,
   maxDate,
@@ -44,32 +42,17 @@ export function DatePickerButton({
 }: DatePickerButtonProps) {
   const [open, setOpen] = React.useState(false);
 
-  const handleOpen = () => {
-    if (!disabled) {
-      setOpen(true);
-    }
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-  };
-
-  const handleChange = (newValue: Date | null) => {
-    onChange(newValue);
-    handleClose();
-  };
-
   const displayText = value
     ? format(value, formatString, { locale: ptBR })
     : placeholder;
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
-      <Box sx={{ width: fullWidth ? "100%" : "auto", ...sx }}>
+      <Box sx={{ position: "relative", width: fullWidth ? "100%" : "auto" }}>
         {/* Botão visível que o usuário clica */}
         <Button
           variant="outlined"
-          onClick={handleOpen}
+          onClick={() => setOpen(true)}
           disabled={disabled}
           fullWidth={fullWidth}
           size={size}
@@ -81,6 +64,7 @@ export function DatePickerButton({
             ...(!value && {
               color: (theme) => (theme.palette as any).custom?.mutedForeground,
             }),
+            ...sx,
           }}
         >
           <CalendarIcon
@@ -93,26 +77,27 @@ export function DatePickerButton({
           {displayText}
         </Button>
 
-        {/* MobileDatePicker oculto - só abre quando o botão é clicado */}
+        {/* MobileDatePicker controlado */}
         <MobileDatePicker
           open={open}
-          onOpen={handleOpen}
-          onClose={handleClose}
+          onOpen={() => setOpen(true)}
+          onClose={() => setOpen(false)}
           value={value}
-          onChange={handleChange}
+          onChange={(newValue) => {
+            onChange(newValue);
+          }}
+          onAccept={() => setOpen(false)}
           minDate={minDate}
           maxDate={maxDate}
           disabled={disabled}
-          label={label}
           slotProps={{
             textField: {
-              sx: { display: "none" }, // Esconde o TextField padrão
-            },
-            dialog: {
               sx: {
-                "& .MuiPickersLayout-root": {
-                  backgroundColor: (theme) => theme.palette.background.paper,
-                },
+                position: "absolute",
+                opacity: 0,
+                pointerEvents: "none",
+                width: 0,
+                height: 0,
               },
             },
           }}

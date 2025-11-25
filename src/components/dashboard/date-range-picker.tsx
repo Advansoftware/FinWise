@@ -140,8 +140,12 @@ export function DateRangePicker({
         open={dialogOpen}
         onClose={handleCloseDialog}
         fullScreen={isMobile}
-        maxWidth="xs"
-        fullWidth
+        PaperProps={{
+          sx: {
+            overflow: "visible",
+            minWidth: isMobile ? undefined : 400,
+          },
+        }}
       >
         <DialogTitle>
           <Stack
@@ -156,7 +160,7 @@ export function DateRangePicker({
           </Stack>
         </DialogTitle>
 
-        <DialogContent>
+        <DialogContent sx={{ overflow: "visible" }}>
           <Stack spacing={3}>
             {/* Quick Select Buttons */}
             <Box>
