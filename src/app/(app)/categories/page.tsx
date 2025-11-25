@@ -264,7 +264,9 @@ export default function CategoriesPage() {
           />
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setCreateDialogOpen(false)}>Cancelar</Button>
+          <Button variant="outlined" onClick={() => setCreateDialogOpen(false)}>
+            Cancelar
+          </Button>
           <Button
             onClick={handleAddCategory}
             disabled={!newCategoryName.trim()}
@@ -492,7 +494,9 @@ function CategoryCard({
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancelar</Button>
+          <Button variant="outlined" onClick={() => setDeleteDialogOpen(false)}>
+            Cancelar
+          </Button>
           <Button
             onClick={handleConfirmDelete}
             color="error"

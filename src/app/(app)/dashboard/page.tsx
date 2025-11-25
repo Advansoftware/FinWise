@@ -20,7 +20,7 @@ import {
   DailyQuestsCard,
   GamificationProgressWidget,
 } from "@/components/gamification";
-import { usePlan } from "@/hooks/use-plan";
+import { ProUpgradeButton } from "@/components/pro-upgrade-button";
 
 export default function DashboardPage() {
   const {
@@ -36,7 +36,6 @@ export default function DashboardPage() {
     selectedSubcategory,
     setSelectedSubcategory,
   } = useTransactions();
-  const { isPro, isPlus } = usePlan();
 
   return (
     <Box sx={{ flexGrow: 1 }}>
@@ -74,27 +73,33 @@ export default function DashboardPage() {
               </Box>
             </Grid>
 
-            {/* Action Buttons - Alinhados à direita */}
-            <Grid size={{ xs: 4, sm: 3, md: 6 }}>
+            {/* Action Buttons - Desktop */}
+            <Grid
+              size={{ xs: 4, sm: 3, md: 6 }}
+              sx={{ display: { xs: "none", sm: "block" } }}
+            >
               <Box
                 sx={{
                   display: "flex",
                   flexDirection: "row",
                   gap: 1.5,
-                  justifyContent: { xs: "flex-start", sm: "flex-end" },
+                  justifyContent: "flex-end",
                 }}
               >
                 <GamificationGuide />
-                {isPro && (
+                <ProUpgradeButton
+                  requiredPlan="Pro"
+                  tooltipContent="Escanear notas fiscais com IA é um recurso Pro. Clique para fazer upgrade."
+                >
                   <ScanQRCodeDialog>
                     <Button
                       variant="outlined"
                       startIcon={<ScanLine size={18} />}
                     >
-                      Escanear QRCode
+                      Escanear Nota
                     </Button>
                   </ScanQRCodeDialog>
-                )}
+                </ProUpgradeButton>
                 <AddTransactionSheet>
                   <Button
                     variant="contained"
@@ -108,7 +113,47 @@ export default function DashboardPage() {
           </Grid>
         </Grid>
 
-        {/* Filters - Todos com mesmo estilo */}
+        {/* Mobile Action Buttons - Full Width */}
+        <Grid
+          size={{ xs: 4, sm: 8, md: 12 }}
+          sx={{ display: { xs: "block", sm: "none" } }}
+        >
+          <Grid
+            container
+            spacing={{ xs: 1.5, sm: 2 }}
+            columns={{ xs: 4, sm: 8, md: 12 }}
+          >
+            <Grid size={{ xs: 4 }}>
+              <AddTransactionSheet>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  startIcon={<PlusCircle size={18} />}
+                >
+                  Nova Transação
+                </Button>
+              </AddTransactionSheet>
+            </Grid>
+            <Grid size={{ xs: 4 }}>
+              <ProUpgradeButton
+                requiredPlan="Pro"
+                tooltipContent="Escanear notas fiscais com IA é um recurso Pro. Clique para fazer upgrade."
+              >
+                <ScanQRCodeDialog>
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    startIcon={<ScanLine size={18} />}
+                  >
+                    Escanear Nota
+                  </Button>
+                </ScanQRCodeDialog>
+              </ProUpgradeButton>
+            </Grid>
+          </Grid>
+        </Grid>
+
+        {/* Filters */}
         <Grid size={{ xs: 4, sm: 8, md: 12 }}>
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
             <DateRangePicker initialDate={dateRange} onUpdate={setDateRange} />
@@ -182,11 +227,14 @@ export default function DashboardPage() {
                 </Grid>
 
                 {/* AI Tip */}
-                {isPro && (
-                  <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+                <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+                  <ProUpgradeButton
+                    requiredPlan="Pro"
+                    tooltipContent="Dicas de IA personalizadas são um recurso Pro. Clique para fazer upgrade."
+                  >
                     <AITipCard transactions={filteredTransactions} />
-                  </Grid>
-                )}
+                  </ProUpgradeButton>
+                </Grid>
 
                 {/* Goal Highlight Card */}
                 <Grid size={{ xs: 4, sm: 8, md: 12 }}>
@@ -194,11 +242,14 @@ export default function DashboardPage() {
                 </Grid>
 
                 {/* Future Balance Card */}
-                {isPlus && (
-                  <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+                <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+                  <ProUpgradeButton
+                    requiredPlan="Plus"
+                    tooltipContent="Projeção de saldo futuro é um recurso Plus. Clique para fazer upgrade."
+                  >
                     <FutureBalanceCard />
-                  </Grid>
-                )}
+                  </ProUpgradeButton>
+                </Grid>
               </Grid>
             </Grid>
           </>

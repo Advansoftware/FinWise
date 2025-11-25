@@ -576,7 +576,12 @@ export function InstallmentCard({
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setIsDeleteDialogOpen(false)}>Cancelar</Button>
+          <Button
+            variant="outlined"
+            onClick={() => setIsDeleteDialogOpen(false)}
+          >
+            Cancelar
+          </Button>
           <Button
             color="error"
             variant="contained"

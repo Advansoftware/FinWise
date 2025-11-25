@@ -295,7 +295,9 @@ function CredentialItem({
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setDeleteDialogOpen(false)}>Cancelar</Button>
+          <Button variant="outlined" onClick={() => setDeleteDialogOpen(false)}>
+            Cancelar
+          </Button>
           <Button
             onClick={handleConfirmDelete}
             color="error"

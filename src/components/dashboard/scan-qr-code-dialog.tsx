@@ -736,14 +736,14 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                   <Paperclip
                     style={{ marginRight: 8, width: 16, height: 16 }}
                   />{" "}
-                  Enviar da Galeria
+                  Escolher da Galeria
                 </Button>
-                <Box
-                  component="input"
+                {/* Input que abre galeria/câmera no mobile */}
+                <input
                   ref={fileInputRef}
                   type="file"
-                  accept="image/*,application/pdf"
-                  sx={{ display: "none" }}
+                  accept="image/*"
+                  style={{ display: "none" }}
                   onChange={handleFileChange}
                 />
               </Stack>

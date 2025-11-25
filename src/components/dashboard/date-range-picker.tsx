@@ -278,7 +278,9 @@ export function DateRangePicker({
             Limpar
           </Button>
           <Box sx={{ flex: 1 }} />
-          <Button onClick={handleCloseDialog}>Cancelar</Button>
+          <Button variant="outlined" onClick={handleCloseDialog}>
+            Cancelar
+          </Button>
           <Button onClick={handleConfirm} variant="contained">
             Aplicar
           </Button>
