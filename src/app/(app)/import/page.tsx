@@ -69,6 +69,10 @@ const MAPPABLE_FIELDS: Record<keyof Omit<Transaction, "id">, string> = {
   type: "Tipo",
   walletId: "Carteira",
   toWalletId: "Carteira Destino",
+  parentId: "ID da Transação Pai",
+  hasChildren: "Tem Subitens",
+  childrenCount: "Quantidade de Subitens",
+  groupName: "Nome do Grupo",
 };
 
 const spin = keyframes`
@@ -99,6 +103,10 @@ export default function ImportPage() {
     type: "expense",
     walletId: "",
     toWalletId: "",
+    parentId: "",
+    hasChildren: "",
+    childrenCount: "",
+    groupName: "",
   });
   const [transactionsToImport, setTransactionsToImport] = useState<
     ParsedTransaction[]
@@ -408,6 +416,10 @@ export default function ImportPage() {
       type: "expense",
       walletId: "",
       toWalletId: "",
+      parentId: "",
+      hasChildren: "",
+      childrenCount: "",
+      groupName: "",
     });
     setTransactionsToImport([]);
     setIsParsing(false);
