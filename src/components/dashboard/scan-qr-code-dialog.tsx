@@ -364,20 +364,21 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
   // Reset everything when dialog closes
   const handleClose = useCallback(() => {
     setIsOpen(false);
-    camera.stop();
-    scanner.reset();
     if (fileInputRef.current) fileInputRef.current.value = "";
-  }, [camera, scanner]);
+  }, []);
 
   // Start camera when mobile dialog opens
   useEffect(() => {
     if (isMobile && isOpen && !scanner.receiptImage) {
       camera.start();
     }
-    return () => {
-      if (!isOpen) camera.stop();
-    };
-  }, [isMobile, isOpen, scanner.receiptImage, camera]);
+
+    // Cleanup: stop camera when dialog closes
+    if (!isOpen) {
+      camera.stop();
+      scanner.reset();
+    }
+  }, [isMobile, isOpen, scanner.receiptImage]);
 
   // Handle file selection
   const handleFileChange = useCallback(

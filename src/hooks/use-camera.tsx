@@ -54,42 +54,31 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
     const setupVideo = () => {
       const video = videoRef.current;
       if (!video) {
-        console.log("[useCamera] videoRef not ready yet, will retry");
         return false;
       }
 
       if (video.srcObject === stream) {
-        console.log("[useCamera] Stream already assigned");
         return true;
       }
 
-      console.log("[useCamera] Assigning stream to video element");
       video.srcObject = stream;
 
       const handleVideoReady = () => {
-        console.log(
-          "[useCamera] handleVideoReady called, readyState:",
-          video.readyState
-        );
-        if (isReady) return; // Avoid duplicate calls
+        if (isReady) return;
 
         video
           .play()
           .then(() => {
-            console.log("[useCamera] Video playing successfully");
             setIsReady(true);
           })
-          .catch((err) => {
-            console.error("[useCamera] Error playing video:", err);
-            // Try muted playback as fallback
+          .catch(() => {
             video.muted = true;
             video
               .play()
               .then(() => {
-                console.log("[useCamera] Video playing muted");
                 setIsReady(true);
               })
-              .catch(console.error);
+              .catch(() => {});
           });
       };
 
@@ -99,25 +88,12 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
       video.oncanplay = null;
 
       // Set up multiple event listeners for compatibility
-      video.onloadedmetadata = () => {
-        console.log("[useCamera] onloadedmetadata fired");
-        handleVideoReady();
-      };
-      video.onloadeddata = () => {
-        console.log("[useCamera] onloadeddata fired");
-        handleVideoReady();
-      };
-      video.oncanplay = () => {
-        console.log("[useCamera] oncanplay fired");
-        handleVideoReady();
-      };
+      video.onloadedmetadata = handleVideoReady;
+      video.onloadeddata = handleVideoReady;
+      video.oncanplay = handleVideoReady;
 
       // Check if video already has data
       if (video.readyState >= 2) {
-        console.log(
-          "[useCamera] Video already has data, readyState:",
-          video.readyState
-        );
         handleVideoReady();
       }
 
@@ -161,11 +137,9 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
           },
         };
 
-        console.log("[useCamera] Requesting camera access...");
         const newStream = await navigator.mediaDevices.getUserMedia(
           constraints
         );
-        console.log("[useCamera] Camera access granted, stream obtained");
 
         setStream(newStream);
         setHasPermission(true);
@@ -178,7 +152,6 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
         const capabilities = videoTrack.getCapabilities?.() || {};
         setHasFlash((capabilities as any).torch === true);
       } catch (error) {
-        console.error("[useCamera] Error accessing camera:", error);
         setHasPermission(false);
         toast({
           variant: "error",
