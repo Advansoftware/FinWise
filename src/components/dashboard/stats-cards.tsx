@@ -3,7 +3,6 @@ import {
   CardContent,
   CardHeader,
   Typography,
-  Skeleton,
   Box,
   Stack,
   useTheme,
@@ -14,11 +13,10 @@ import {
   TrendingUp,
   TrendingDown,
   PieChart,
-  Trophy,
+  Wallet,
 } from "lucide-react";
 import { Transaction } from "@/lib/types";
 import { Area, AreaChart, ResponsiveContainer, Tooltip } from "recharts";
-import { useGamification } from "@/hooks/use-gamification";
 
 interface StatsCardsProps {
   transactions: Transaction[];
@@ -119,8 +117,10 @@ export function StatsCards({ transactions }: StatsCardsProps) {
   const incomeSparklineData = generateSparklineData(incomeTransactions);
   const expenseSparklineData = generateSparklineData(expenseTransactions);
 
-  const { gamificationData, isLoading: isGamificationLoading } =
-    useGamification();
+  // Calcular taxa de economia
+  const savingsRate =
+    totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome) * 100 : 0;
+  const isPositiveSavings = savingsRate >= 0;
 
   return (
     <Grid container spacing={2}>
@@ -257,9 +257,9 @@ export function StatsCards({ transactions }: StatsCardsProps) {
                 justifyContent="space-between"
               >
                 <Typography variant="subtitle2" fontWeight="medium">
-                  Nível de Gamificação
+                  Taxa de Economia
                 </Typography>
-                <Trophy
+                <Wallet
                   style={{
                     width: 14,
                     height: 14,
@@ -271,32 +271,34 @@ export function StatsCards({ transactions }: StatsCardsProps) {
             sx={{ pb: 1 }}
           />
           <CardContent sx={{ pt: 0 }}>
-            {isGamificationLoading ? (
-              <Stack spacing={2}>
-                <Skeleton variant="text" width="50%" height={32} />
-                <Skeleton variant="text" width="75%" height={24} />
-              </Stack>
-            ) : (
-              <>
-                <Typography variant="h5" fontWeight="bold">
-                  Nível {gamificationData?.level?.level || 1}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  display="block"
-                >
-                  {gamificationData?.level?.name || "Iniciante"}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ mt: 2, display: "block" }}
-                >
-                  {gamificationData?.points || 0} pontos
-                </Typography>
-              </>
-            )}
+            <Typography
+              variant="h5"
+              fontWeight="bold"
+              color={isPositiveSavings ? "success.main" : "error.main"}
+            >
+              {isPositiveSavings ? "+" : ""}
+              {savingsRate.toFixed(1)}%
+            </Typography>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              display="block"
+            >
+              {isPositiveSavings
+                ? "Você está economizando!"
+                : "Gastos excedem receitas"}
+            </Typography>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ mt: 1, display: "block" }}
+            >
+              {isPositiveSavings
+                ? `R$ ${(totalIncome - totalExpense).toFixed(2)} guardados`
+                : `R$ ${Math.abs(totalIncome - totalExpense).toFixed(
+                    2
+                  )} em déficit`}
+            </Typography>
           </CardContent>
         </Card>
       </Grid>

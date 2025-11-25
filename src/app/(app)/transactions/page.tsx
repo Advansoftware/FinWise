@@ -92,6 +92,9 @@ export default function TransactionsPage() {
         />
       </Stack>
 
+      {/* Missões de Transações */}
+      <DailyQuestsCard pageContext="transactions" compact />
+
       {/* Content */}
       {isLoading ? (
         <Stack spacing={2}>
@@ -111,9 +114,6 @@ export default function TransactionsPage() {
       ) : (
         <DataTable columns={columns} data={filteredTransactions} />
       )}
-
-      {/* Missões de Transações */}
-      <DailyQuestsCard pageContext="transactions" />
     </Stack>
   );
 }

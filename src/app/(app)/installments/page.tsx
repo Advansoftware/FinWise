@@ -8,16 +8,12 @@ import {
   CardHeader,
   Typography,
   Button,
-  Chip,
-  LinearProgress,
   Tabs,
   Tab,
   Skeleton,
   Stack,
   Box,
-  IconButton,
   Grid,
-  Tooltip,
 } from "@mui/material";
 import {
   CreditCard,
@@ -26,10 +22,6 @@ import {
   CheckCircle2,
   Clock,
   Plus,
-  Trophy,
-  Award,
-  Flame,
-  Target,
 } from "lucide-react";
 import { useInstallments } from "@/hooks/use-installments";
 import { CreateInstallmentDialog } from "@/components/installments/create-installment-dialog";
@@ -38,21 +30,11 @@ import { PaymentSchedule } from "@/components/installments/payment-schedule";
 import { MonthlyProjections } from "@/components/installments/monthly-projections";
 import { GamificationGuide, DailyQuestsCard } from "@/components/gamification";
 import { formatCurrency } from "@/lib/utils";
-import { motion } from "framer-motion";
-import { useGamification } from "@/hooks/use-gamification";
 
 export default function InstallmentsPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState("gamification"); // Progresso é a aba padrão
+  const [activeTab, setActiveTab] = useState("active"); // Ativos é a aba padrão agora
   const { installments, summary, isLoading } = useInstallments();
-  const {
-    gamificationData,
-    isLoading: isGamificationLoading,
-    calculateProgress,
-    getLevelInfo,
-    getRarityLabel,
-    getRarityColors,
-  } = useGamification();
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
     setActiveTab(newValue);
@@ -137,6 +119,9 @@ export default function InstallmentsPage() {
           </Stack>
         </Stack>
       </Stack>
+
+      {/* Missões de Parcelamentos */}
+      <DailyQuestsCard pageContext="installments" compact />
 
       {/* Alerta de Atraso */}
       {summary && summary.overduePayments.length > 0 && (
@@ -520,7 +505,6 @@ export default function InstallmentsPage() {
               },
             }}
           >
-            <Tab label="Progresso" value="gamification" />
             <Tab label="Ativos" value="active" />
             <Tab label="Cronograma" value="schedule" />
             <Tab label="Projeções" value="projections" />
@@ -577,349 +561,6 @@ export default function InstallmentsPage() {
           </Box>
         )}
 
-        {activeTab === "gamification" && (
-          <Stack spacing={{ xs: 2, md: 4 }}>
-            {isGamificationLoading ? (
-              <Stack spacing={2}>
-                <Skeleton
-                  variant="rectangular"
-                  height={120}
-                  sx={{ borderRadius: 2 }}
-                />
-                <Skeleton
-                  variant="rectangular"
-                  height={80}
-                  sx={{ borderRadius: 2 }}
-                />
-              </Stack>
-            ) : gamificationData ? (
-              <Stack spacing={{ xs: 2, md: 4 }}>
-                {/* Header da Gamificação */}
-                <Card
-                  sx={{
-                    background: "linear-gradient(to right, #1e293b, #0f172a)",
-                    color: "white",
-                  }}
-                >
-                  <CardContent sx={{ p: { xs: 2, md: 3 } }}>
-                    <Stack spacing={2}>
-                      <Box
-                        display="flex"
-                        alignItems="center"
-                        justifyContent="space-between"
-                      >
-                        <Box display="flex" alignItems="center" gap={1.5}>
-                          <Box
-                            width={{ xs: 40, md: 48 }}
-                            height={{ xs: 40, md: 48 }}
-                            borderRadius="50%"
-                            display="flex"
-                            alignItems="center"
-                            justifyContent="center"
-                            sx={{
-                              background:
-                                "linear-gradient(to bottom right, #a855f7, #3b82f6)",
-                            }}
-                          >
-                            <Trophy size={20} color="white" />
-                          </Box>
-                          <Box>
-                            <Typography
-                              variant="subtitle1"
-                              fontWeight="bold"
-                              sx={{ fontSize: { xs: "0.9rem", md: "1rem" } }}
-                            >
-                              Nível {gamificationData.level.level} -{" "}
-                              {gamificationData.level.name}
-                            </Typography>
-                            <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                              {gamificationData.points} pontos
-                            </Typography>
-                          </Box>
-                        </Box>
-                        <Box display={{ xs: "none", sm: "block" }}>
-                          <GamificationGuide />
-                        </Box>
-                      </Box>
-
-                      <Box>
-                        <Box
-                          display="flex"
-                          justifyContent="space-between"
-                          mb={0.5}
-                        >
-                          <Typography variant="caption">
-                            Próximo nível
-                          </Typography>
-                          <Typography variant="caption">
-                            {gamificationData.level.pointsToNext} pts restantes
-                          </Typography>
-                        </Box>
-                        <LinearProgress
-                          variant="determinate"
-                          value={
-                            (gamificationData.points /
-                              (gamificationData.level.pointsRequired +
-                                gamificationData.level.pointsToNext)) *
-                            100
-                          }
-                          sx={{
-                            height: 6,
-                            borderRadius: 3,
-                            bgcolor: "rgba(255,255,255,0.2)",
-                            "& .MuiLinearProgress-bar": { bgcolor: "#3b82f6" },
-                          }}
-                        />
-                      </Box>
-
-                      {gamificationData.streaks.payments.current > 0 && (
-                        <Box
-                          display="flex"
-                          alignItems="center"
-                          gap={1}
-                          p={1}
-                          bgcolor="rgba(249, 115, 22, 0.1)"
-                          border={1}
-                          borderColor="rgba(249, 115, 22, 0.3)"
-                          borderRadius={1}
-                        >
-                          <Flame size={16} color="#f97316" />
-                          <Typography
-                            variant="caption"
-                            color="#fb923c"
-                            fontWeight="medium"
-                          >
-                            🔥 {gamificationData.streaks.payments.current} meses
-                            em dia!
-                          </Typography>
-                        </Box>
-                      )}
-                    </Stack>
-                  </CardContent>
-                </Card>
-
-                {/* Badges Conquistadas */}
-                {gamificationData.badges.length > 0 && (
-                  <Card>
-                    <CardHeader
-                      title={
-                        <Box display="flex" alignItems="center" gap={1}>
-                          <Award size={18} />
-                          <Typography variant="subtitle1" fontWeight="bold">
-                            Badges
-                          </Typography>
-                        </Box>
-                      }
-                      sx={{ pb: 0 }}
-                    />
-                    <CardContent>
-                      <Grid container spacing={1.5}>
-                        {gamificationData.badges.map((badge) => {
-                          const rarityColors = getRarityColors(badge.rarity);
-                          return (
-                            <Grid key={badge.id} size={{ xs: 6, sm: 4, md: 3 }}>
-                              <Tooltip title={badge.description}>
-                                <motion.div
-                                  initial={{ scale: 0, rotate: -180 }}
-                                  animate={{ scale: 1, rotate: 0 }}
-                                >
-                                  <Box
-                                    textAlign="center"
-                                    p={1.5}
-                                    border={1}
-                                    borderColor={rarityColors.border}
-                                    borderRadius={2}
-                                    bgcolor="background.paper"
-                                    height="100%"
-                                    sx={{
-                                      background: rarityColors.bg,
-                                      transition: "transform 0.2s",
-                                      "&:hover": {
-                                        transform: "scale(1.05)",
-                                      },
-                                    }}
-                                  >
-                                    <Box
-                                      sx={{
-                                        width: 48,
-                                        height: 48,
-                                        borderRadius: "50%",
-                                        display: "flex",
-                                        alignItems: "center",
-                                        justifyContent: "center",
-                                        margin: "0 auto",
-                                        mb: 0.5,
-                                        background: rarityColors.gradient,
-                                        boxShadow: `0 0 12px ${rarityColors.border}`,
-                                      }}
-                                    >
-                                      <Typography sx={{ fontSize: "1.25rem" }}>
-                                        {badge.icon}
-                                      </Typography>
-                                    </Box>
-                                    <Typography
-                                      variant="caption"
-                                      fontWeight="bold"
-                                      display="block"
-                                      noWrap
-                                    >
-                                      {badge.name}
-                                    </Typography>
-                                    <Chip
-                                      label={getRarityLabel(badge.rarity)}
-                                      size="small"
-                                      sx={{
-                                        mt: 0.5,
-                                        height: 20,
-                                        fontSize: "0.6rem",
-                                        bgcolor: rarityColors.bg,
-                                        color: rarityColors.text,
-                                        borderColor: rarityColors.border,
-                                      }}
-                                    />
-                                  </Box>
-                                </motion.div>
-                              </Tooltip>
-                            </Grid>
-                          );
-                        })}
-                      </Grid>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Conquistas em Progresso */}
-                <Card>
-                  <CardHeader
-                    title={
-                      <Box display="flex" alignItems="center" gap={1}>
-                        <Target size={18} />
-                        <Typography variant="subtitle1" fontWeight="bold">
-                          Conquistas
-                        </Typography>
-                      </Box>
-                    }
-                    sx={{ pb: 0 }}
-                  />
-                  <CardContent>
-                    <Stack spacing={1.5}>
-                      {gamificationData.achievements.map((achievement) => (
-                        <Box
-                          key={achievement.id}
-                          border={1}
-                          borderColor="divider"
-                          borderRadius={2}
-                          p={1.5}
-                        >
-                          <Box
-                            display="flex"
-                            alignItems="center"
-                            gap={1.5}
-                            mb={1}
-                          >
-                            <Typography variant="h6">
-                              {achievement.icon}
-                            </Typography>
-                            <Box flex={1} minWidth={0}>
-                              <Typography
-                                variant="body2"
-                                fontWeight="bold"
-                                noWrap
-                              >
-                                {achievement.name}
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                noWrap
-                              >
-                                {achievement.description}
-                              </Typography>
-                            </Box>
-                            <Chip
-                              label={`${achievement.points}pts`}
-                              variant="outlined"
-                              size="small"
-                              sx={{ height: 22, fontSize: "0.65rem" }}
-                            />
-                          </Box>
-
-                          <Stack spacing={0.5}>
-                            <Box display="flex" justifyContent="space-between">
-                              <Typography variant="caption">
-                                {achievement.progress}/{achievement.target}
-                              </Typography>
-                              {achievement.isCompleted && (
-                                <Box
-                                  display="flex"
-                                  alignItems="center"
-                                  gap={0.5}
-                                  color="success.main"
-                                >
-                                  <CheckCircle2 size={12} />
-                                  <Typography
-                                    variant="caption"
-                                    fontWeight="bold"
-                                  >
-                                    Completo!
-                                  </Typography>
-                                </Box>
-                              )}
-                            </Box>
-                            <LinearProgress
-                              variant="determinate"
-                              value={
-                                (achievement.progress / achievement.target) *
-                                100
-                              }
-                              sx={{ height: 4, borderRadius: 2 }}
-                            />
-                          </Stack>
-                        </Box>
-                      ))}
-                    </Stack>
-                  </CardContent>
-                </Card>
-              </Stack>
-            ) : (
-              <Card>
-                <CardContent
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    py: { xs: 4, md: 8 },
-                  }}
-                >
-                  <Trophy
-                    size={40}
-                    style={{ opacity: 0.5, marginBottom: 12 }}
-                  />
-                  <Typography variant="subtitle1" gutterBottom>
-                    Jornada de Progresso
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    align="center"
-                    sx={{ mb: 2, px: 2 }}
-                  >
-                    Pague em dia para ganhar pontos e subir de nível!
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    size="small"
-                    onClick={() => setActiveTab("active")}
-                    startIcon={<CreditCard size={16} />}
-                  >
-                    Ver Parcelamentos
-                  </Button>
-                </CardContent>
-              </Card>
-            )}
-          </Stack>
-        )}
-
         {activeTab === "schedule" && <PaymentSchedule />}
 
         {activeTab === "projections" && <MonthlyProjections />}
@@ -968,9 +609,6 @@ export default function InstallmentsPage() {
           </Box>
         )}
       </Box>
-
-      {/* Missões de Parcelamentos */}
-      <DailyQuestsCard pageContext="installments" />
 
       {/* Create Dialog */}
       <CreateInstallmentDialog
