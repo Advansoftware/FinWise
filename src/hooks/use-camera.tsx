@@ -1,7 +1,7 @@
 // src/hooks/use-camera.tsx
 "use client";
 
-import { useRef, useState, useCallback } from "react";
+import { useRef, useState, useCallback, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 interface UseCameraOptions {
@@ -34,8 +34,8 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
   } = options;
   const { toast } = useToast();
 
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null!);
+  const canvasRef = useRef<HTMLCanvasElement>(null!);
 
   const [stream, setStream] = useState<MediaStream | null>(null);
   const [isReady, setIsReady] = useState(false);
@@ -45,6 +45,92 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
   const [facingMode, setFacingMode] = useState<"user" | "environment">(
     initialFacing
   );
+
+  // Setup video element when stream is available
+  // This useEffect ensures video is configured even if videoRef wasn't ready during start()
+  useEffect(() => {
+    if (!stream) return;
+
+    const setupVideo = () => {
+      const video = videoRef.current;
+      if (!video) {
+        console.log("[useCamera] videoRef not ready yet, will retry");
+        return false;
+      }
+
+      if (video.srcObject === stream) {
+        console.log("[useCamera] Stream already assigned");
+        return true;
+      }
+
+      console.log("[useCamera] Assigning stream to video element");
+      video.srcObject = stream;
+
+      const handleVideoReady = () => {
+        console.log(
+          "[useCamera] handleVideoReady called, readyState:",
+          video.readyState
+        );
+        if (isReady) return; // Avoid duplicate calls
+
+        video
+          .play()
+          .then(() => {
+            console.log("[useCamera] Video playing successfully");
+            setIsReady(true);
+          })
+          .catch((err) => {
+            console.error("[useCamera] Error playing video:", err);
+            // Try muted playback as fallback
+            video.muted = true;
+            video
+              .play()
+              .then(() => {
+                console.log("[useCamera] Video playing muted");
+                setIsReady(true);
+              })
+              .catch(console.error);
+          });
+      };
+
+      // Clear old handlers
+      video.onloadedmetadata = null;
+      video.onloadeddata = null;
+      video.oncanplay = null;
+
+      // Set up multiple event listeners for compatibility
+      video.onloadedmetadata = () => {
+        console.log("[useCamera] onloadedmetadata fired");
+        handleVideoReady();
+      };
+      video.onloadeddata = () => {
+        console.log("[useCamera] onloadeddata fired");
+        handleVideoReady();
+      };
+      video.oncanplay = () => {
+        console.log("[useCamera] oncanplay fired");
+        handleVideoReady();
+      };
+
+      // Check if video already has data
+      if (video.readyState >= 2) {
+        console.log(
+          "[useCamera] Video already has data, readyState:",
+          video.readyState
+        );
+        handleVideoReady();
+      }
+
+      return true;
+    };
+
+    // Try immediately
+    if (!setupVideo()) {
+      // If videoRef not ready, retry with a small delay
+      const retryTimeout = setTimeout(setupVideo, 100);
+      return () => clearTimeout(retryTimeout);
+    }
+  }, [stream, isReady]);
 
   const stop = useCallback(() => {
     if (stream) {
@@ -75,28 +161,24 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
           },
         };
 
+        console.log("[useCamera] Requesting camera access...");
         const newStream = await navigator.mediaDevices.getUserMedia(
           constraints
         );
+        console.log("[useCamera] Camera access granted, stream obtained");
+
         setStream(newStream);
         setHasPermission(true);
 
-        if (videoRef.current) {
-          videoRef.current.srcObject = newStream;
-          videoRef.current.onloadedmetadata = () => {
-            videoRef.current
-              ?.play()
-              .then(() => setIsReady(true))
-              .catch(console.error);
-          };
-        }
+        // The useEffect will handle setting up the video element
+        // This ensures it works even if videoRef isn't ready yet
 
         // Check for flash/torch capability
         const videoTrack = newStream.getVideoTracks()[0];
-        const capabilities = videoTrack.getCapabilities();
+        const capabilities = videoTrack.getCapabilities?.() || {};
         setHasFlash((capabilities as any).torch === true);
       } catch (error) {
-        console.error("Error accessing camera:", error);
+        console.error("[useCamera] Error accessing camera:", error);
         setHasPermission(false);
         toast({
           variant: "error",
