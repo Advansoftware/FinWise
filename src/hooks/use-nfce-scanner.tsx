@@ -1,4 +1,4 @@
-// src/hooks/use-receipt-scanner.tsx
+// src/hooks/use-nfce-scanner.tsx
 "use client";
 
 import { useState, useCallback, useTransition, useEffect } from "react";
@@ -6,55 +6,44 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useWallets } from "@/hooks/use-wallets";
 import { useTransactions } from "@/hooks/use-transactions";
-import { useAISettings } from "@/hooks/use-ai-settings";
-import { usePlan } from "@/hooks/use-plan";
-import { extractReceiptInfoAction } from "@/services/ai-actions";
 import {
-  getVisionCapableModels,
-  DEFAULT_AI_CREDENTIAL,
-} from "@/lib/ai-settings";
+  extractNFCeData,
+  convertDateToISO,
+  NFCeExtractionResult,
+  NFCeItem,
+} from "@/services/nfce-service";
 import { TransactionCategory } from "@/lib/types";
 
-export interface ExtractedReceiptData {
-  isValid: boolean;
-  establishment?: string;
-  suggestedCategory?: string;
-  items: Array<{ item: string; amount: number }>;
-  totalAmount?: number;
-  date?: string;
-}
-
-// Formulário editável para cada item da nota
-export interface ReceiptItemForm {
-  item: string;
-  amount: number;
-  quantity: number;
-  selected: boolean; // Se o item será salvo ou não
-  category?: TransactionCategory; // Categoria específica do item
-  subcategory?: string; // Subcategoria específica do item
+// Formulário editável para cada item (casa com Transaction)
+export interface NFCeItemForm {
+  item: string; // Transaction.item
+  amount: number; // Transaction.amount
+  quantity: number; // Transaction.quantity
+  selected: boolean; // UI: se está selecionado para salvar
+  category: TransactionCategory; // Transaction.category
+  subcategory: string; // Transaction.subcategory
 }
 
 // Formulário geral da nota
-export interface ReceiptForm {
-  establishment: string;
-  category: TransactionCategory;
+export interface NFCeForm {
+  establishment: string; // Transaction.establishment
+  category: TransactionCategory; // Categoria padrão
   subcategory: string;
-  walletId: string;
-  date: string;
-  type: "income" | "expense";
-  items: ReceiptItemForm[];
+  walletId: string; // Transaction.walletId
+  date: string; // ISO date -> Transaction.date
+  type: "income" | "expense"; // Transaction.type
+  items: NFCeItemForm[];
+  totalAmount: number;
 }
 
-interface UseReceiptScannerReturn {
+interface UseNFCeScannerReturn {
   // State
-  receiptImage: string | null;
-  extractedData: ExtractedReceiptData | null;
-  form: ReceiptForm | null;
+  qrcodeUrl: string | null;
+  extractedData: NFCeExtractionResult | null;
+  form: NFCeForm | null;
   isProcessing: boolean;
   isSaving: boolean;
-  selectedAI: string;
-  canSelectProvider: boolean;
-  visionCapableCredentials: ReturnType<typeof getVisionCapableModels>;
+  error: string | null;
 
   // Data helpers
   wallets: ReturnType<typeof useWallets>["wallets"];
@@ -62,100 +51,64 @@ interface UseReceiptScannerReturn {
   subcategories: ReturnType<typeof useTransactions>["subcategories"];
 
   // Actions
-  setSelectedAI: (id: string) => void;
-  processImage: (imageData: string) => Promise<void>;
+  processQRCode: (url: string) => Promise<void>;
   saveTransactions: () => Promise<boolean>;
   reset: () => void;
-  setReceiptImage: (image: string | null) => void;
-  updateForm: (updates: Partial<ReceiptForm>) => void;
-  updateItem: (index: number, updates: Partial<ReceiptItemForm>) => void;
+  updateForm: (updates: Partial<NFCeForm>) => void;
+  updateItem: (index: number, updates: Partial<NFCeItemForm>) => void;
   toggleItemSelection: (index: number) => void;
   selectAllItems: (selected: boolean) => void;
 }
 
-export function useReceiptScanner(): UseReceiptScannerReturn {
+export function useNFCeScanner(): UseNFCeScannerReturn {
   const { toast } = useToast();
   const { user } = useAuth();
   const { wallets } = useWallets();
   const { addTransaction, addGroupedTransaction, categories, subcategories } =
     useTransactions();
-  const { displayedCredentials, activeCredentialId } = useAISettings();
-  const { isPlus } = usePlan();
 
-  const [receiptImage, setReceiptImage] = useState<string | null>(null);
+  const [qrcodeUrl, setQrcodeUrl] = useState<string | null>(null);
   const [extractedData, setExtractedData] =
-    useState<ExtractedReceiptData | null>(null);
-  const [form, setForm] = useState<ReceiptForm | null>(null);
+    useState<NFCeExtractionResult | null>(null);
+  const [form, setForm] = useState<NFCeForm | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isProcessing, startProcessing] = useTransition();
   const [isSaving, startSaving] = useTransition();
 
-  const visionCapableCredentials = getVisionCapableModels(displayedCredentials);
-  const [selectedAI, setSelectedAI] = useState(
-    activeCredentialId || DEFAULT_AI_CREDENTIAL.id
-  );
-  const canSelectProvider = isPlus;
-
   // Quando extractedData mudar, inicializa o formulário
   useEffect(() => {
-    if (extractedData && extractedData.isValid) {
+    if (extractedData && extractedData.success) {
       const defaultWalletId = wallets[0]?.id || "";
 
-      // Validar se a categoria sugerida existe nas categorias do usuário
-      let suggestedCategory: TransactionCategory = "Outros";
-      if (extractedData.suggestedCategory) {
-        const normalizedSuggestion = extractedData.suggestedCategory
-          .toLowerCase()
-          .normalize("NFD")
-          .replace(/[\u0300-\u036f]/g, "");
-
-        // Procurar correspondência nas categorias do usuário
-        const matchedCategory = categories.find((cat) => {
-          const normalizedCat = cat
-            .toLowerCase()
-            .normalize("NFD")
-            .replace(/[\u0300-\u036f]/g, "");
-          return (
-            normalizedCat === normalizedSuggestion ||
-            normalizedCat.includes(normalizedSuggestion) ||
-            normalizedSuggestion.includes(normalizedCat)
-          );
-        });
-
-        suggestedCategory =
-          matchedCategory ||
-          categories.find((c) => c.toLowerCase() === "outros") ||
-          categories[0] ||
-          "Outros";
-      }
-
       setForm({
-        establishment: extractedData.establishment || "",
-        category: suggestedCategory,
+        establishment: extractedData.establishment,
+        category: extractedData.suggestedCategory,
         subcategory: "",
         walletId: defaultWalletId,
-        date: extractedData.date || new Date().toISOString().split("T")[0],
+        date: convertDateToISO(extractedData.date),
         type: "expense",
-        items: extractedData.items.map((item) => ({
+        totalAmount: extractedData.totalAmount,
+        items: extractedData.items.map((item: NFCeItem) => ({
           item: item.item,
           amount: item.amount,
-          quantity: 1,
+          quantity: item.quantity,
           selected: true,
-          category: suggestedCategory, // Herda categoria sugerida
-          subcategory: "", // Subcategoria começa vazia
+          category: item.category,
+          subcategory: "", // Subcategoria começa vazia, usuário pode definir
         })),
       });
     }
-  }, [extractedData, wallets, categories]);
+  }, [extractedData, wallets]);
 
   const reset = useCallback(() => {
-    setReceiptImage(null);
+    setQrcodeUrl(null);
     setExtractedData(null);
     setForm(null);
-    setSelectedAI(activeCredentialId || DEFAULT_AI_CREDENTIAL.id);
-  }, [activeCredentialId]);
+    setError(null);
+  }, []);
 
-  const processImage = useCallback(
-    async (imageData: string) => {
+  const processQRCode = useCallback(
+    async (url: string) => {
       if (!user) {
         toast({
           variant: "error",
@@ -165,48 +118,61 @@ export function useReceiptScanner(): UseReceiptScannerReturn {
         return;
       }
 
-      setReceiptImage(imageData);
+      setQrcodeUrl(url);
       setExtractedData(null);
       setForm(null);
+      setError(null);
 
       startProcessing(async () => {
         try {
-          const result = await extractReceiptInfoAction(
-            { photoDataUri: imageData },
-            user.uid,
-            selectedAI
-          );
-          setExtractedData(result);
+          toast({
+            title: "QR Code Detectado!",
+            description: "Acessando portal da NFCe...",
+          });
 
-          if (!result.isValid) {
+          // Passa as categorias do usuário para sugestão inteligente
+          const result = await extractNFCeData(url, categories);
+
+          if (!result.success) {
+            setError(
+              result.error || "Não foi possível extrair os dados da nota fiscal"
+            );
             toast({
               variant: "error",
-              title: "Nota Inválida",
-              description: "A imagem não parece ser uma nota fiscal válida.",
+              title: "Erro ao Processar",
+              description:
+                result.error ||
+                "Não foi possível acessar os dados da nota fiscal.",
             });
+            return;
           }
-        } catch (error: any) {
+
+          setExtractedData(result);
+
+          toast({
+            title: "Sucesso!",
+            description: `${result.items.length} itens encontrados de "${result.establishment}"`,
+          });
+        } catch (err: any) {
+          const errorMessage = err.message || "Erro ao processar QR Code";
+          setError(errorMessage);
           toast({
             variant: "error",
             title: "Erro ao Processar",
-            description: error.message || "Erro ao processar imagem.",
+            description: errorMessage,
           });
-
-          if (!error.message?.includes("limite")) {
-            reset();
-          }
         }
       });
     },
-    [user, selectedAI, toast, reset]
+    [user, toast, categories]
   );
 
-  const updateForm = useCallback((updates: Partial<ReceiptForm>) => {
+  const updateForm = useCallback((updates: Partial<NFCeForm>) => {
     setForm((prev) => (prev ? { ...prev, ...updates } : null));
   }, []);
 
   const updateItem = useCallback(
-    (index: number, updates: Partial<ReceiptItemForm>) => {
+    (index: number, updates: Partial<NFCeItemForm>) => {
       setForm((prev) => {
         if (!prev) return null;
         const newItems = [...prev.items];
@@ -275,7 +241,7 @@ export function useReceiptScanner(): UseReceiptScannerReturn {
             // Transação pai
             const parentTransaction = {
               item: groupName,
-              amount: 0, // Será calculado automaticamente pela soma dos filhos
+              amount: 0, // Será calculado automaticamente
               date: transactionDate,
               category: form.category,
               subcategory: form.subcategory,
@@ -317,9 +283,7 @@ export function useReceiptScanner(): UseReceiptScannerReturn {
 
           toast({
             title: "Sucesso!",
-            description: `${selectedItems.length} transação(ões) de "${
-              form.establishment || "Nota"
-            }" salva(s).`,
+            description: `${selectedItems.length} transação(ões) de "${form.establishment}" salva(s).`,
           });
           resolve(true);
         } catch {
@@ -335,22 +299,18 @@ export function useReceiptScanner(): UseReceiptScannerReturn {
   }, [form, user, addTransaction, addGroupedTransaction, toast]);
 
   return {
-    receiptImage,
+    qrcodeUrl,
     extractedData,
     form,
     isProcessing,
     isSaving,
-    selectedAI,
-    canSelectProvider,
-    visionCapableCredentials,
+    error,
     wallets,
     categories,
     subcategories,
-    setSelectedAI,
-    processImage,
+    processQRCode,
     saveTransactions,
     reset,
-    setReceiptImage,
     updateForm,
     updateItem,
     toggleItemSelection,

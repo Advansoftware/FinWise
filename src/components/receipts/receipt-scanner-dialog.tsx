@@ -9,11 +9,12 @@ import {
   Drawer,
   Box,
   Typography,
-  Button,
+  IconButton,
 } from "@mui/material";
 import { useState, cloneElement } from "react";
+import { X } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ReceiptScanner } from "./receipt-scanner";
+import { SmartReceiptScanner } from "./smart-receipt-scanner";
 
 interface ReceiptScannerDialogProps {
   children: React.ReactElement;
@@ -27,7 +28,9 @@ export function ReceiptScannerDialog({ children }: ReceiptScannerDialogProps) {
     setIsOpen(false);
   };
 
-  const renderContent = () => <ReceiptScanner onComplete={handleComplete} />;
+  const renderContent = () => (
+    <SmartReceiptScanner onComplete={handleComplete} />
+  );
 
   const trigger = cloneElement(children, {
     onClick: () => setIsOpen(true),
@@ -45,13 +48,26 @@ export function ReceiptScannerDialog({ children }: ReceiptScannerDialogProps) {
             sx: { height: "95vh", display: "flex", flexDirection: "column" },
           }}
         >
-          <Box sx={{ p: 3, textAlign: "left" }}>
-            <Typography variant="h6" component="h2" sx={{ mb: 1 }}>
-              Escanear Nota Fiscal
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Aponte a câmera para a nota fiscal ou envie uma imagem da galeria.
-            </Typography>
+          <Box
+            sx={{
+              p: 3,
+              textAlign: "left",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "flex-start",
+            }}
+          >
+            <Box>
+              <Typography variant="h6" component="h2" sx={{ mb: 0.5 }}>
+                Escanear Nota Fiscal
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                QR Code de NFCe ou foto da nota fiscal
+              </Typography>
+            </Box>
+            <IconButton onClick={() => setIsOpen(false)} size="small">
+              <X size={20} />
+            </IconButton>
           </Box>
 
           <Box sx={{ flex: 1, overflowY: "auto", p: 3, pt: 0 }}>
@@ -71,10 +87,21 @@ export function ReceiptScannerDialog({ children }: ReceiptScannerDialogProps) {
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>Escanear Nota Fiscal</DialogTitle>
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          Escanear Nota Fiscal
+          <IconButton onClick={() => setIsOpen(false)} size="small">
+            <X size={20} />
+          </IconButton>
+        </DialogTitle>
         <DialogContentText sx={{ px: 3, pb: 2 }}>
-          Faça upload da imagem (PDF, PNG, JPG) da nota fiscal para adicionar as
-          transações.
+          Escaneie o QR Code da NFCe ou faça upload da imagem da nota fiscal. Os
+          dados serão extraídos automaticamente.
         </DialogContentText>
         <DialogContent>{renderContent()}</DialogContent>
       </Dialog>
