@@ -136,16 +136,14 @@ export function CreditStatementDialog({
       onClose={() => onOpenChange(false)}
       maxWidth="md"
       fullWidth
+      scroll="body"
     >
-      <DialogContent sx={{ maxWidth: "42rem" }}>
-        <DialogTitle
-          sx={{ display: "flex", alignItems: "center", gap: 2, p: 0, mb: 4 }}
-        >
-          <BarChart3 style={{ width: "1.25rem", height: "1.25rem" }} />
-          Extrato de Créditos IA
-        </DialogTitle>
-
-        <Stack spacing={6}>
+      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        <BarChart3 style={{ width: "1.25rem", height: "1.25rem" }} />
+        Extrato de Créditos IA
+      </DialogTitle>
+      <DialogContent>
+        <Stack spacing={{ xs: 3, md: 4 }}>
           {/* Resumo Geral */}
           <Grid container spacing={4}>
             <Grid size={{ xs: 12, md: 4 }}>
@@ -334,8 +332,8 @@ export function CreditStatementDialog({
           {/* Ações */}
           <Stack
             direction={{ xs: "column", sm: "row" }}
-            spacing={3}
-            sx={{ pt: 4 }}
+            spacing={2}
+            sx={{ pt: 2 }}
           >
             <Button
               variant="outlined"
@@ -345,16 +343,14 @@ export function CreditStatementDialog({
               Fechar
             </Button>
             <Button
+              variant="contained"
               sx={{ flex: 1 }}
               onClick={() => {
-                // Navegar para configurações de IA
                 onOpenChange(false);
                 router.push("/settings");
               }}
+              startIcon={<Settings style={{ width: "1rem", height: "1rem" }} />}
             >
-              <Settings
-                style={{ width: "1rem", height: "1rem", marginRight: "0.5rem" }}
-              />
               Configurar IA
             </Button>
           </Stack>

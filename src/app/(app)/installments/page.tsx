@@ -285,214 +285,223 @@ export default function InstallmentsPage() {
         </Card>
       )}
 
-      {/* Summary Cards */}
-      <Grid container spacing={{ xs: 1.5, md: 2 }}>
-        <Grid size={{ xs: 6, lg: 3 }}>
-          <Card sx={{ height: "100%" }}>
-            <CardContent
-              sx={{
-                p: { xs: 1.5, md: 2 },
-                "&:last-child": { pb: { xs: 1.5, md: 2 } },
-              }}
-            >
-              <Stack spacing={0.5}>
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="space-between"
-                >
+      {/* Summary Cards com Gradient */}
+      <Card
+        sx={{
+          background:
+            "linear-gradient(to right, rgba(23, 37, 84, 0.3), rgba(6, 78, 59, 0.3))",
+        }}
+      >
+        <CardContent sx={{ p: { xs: 1.5, md: 2 } }}>
+          <Grid container spacing={{ xs: 1, md: 2 }}>
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <Box
+                p={{ xs: 1.5, md: 2 }}
+                borderRadius={2}
+                sx={{
+                  bgcolor: "rgba(0, 0, 0, 0.4)",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                  height: "100%",
+                }}
+              >
+                <Stack spacing={0.25}>
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="space-between"
+                  >
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontSize: { xs: "0.65rem", md: "0.75rem" } }}
+                    >
+                      Ativos
+                    </Typography>
+                    <CreditCard size={14} style={{ opacity: 0.5 }} />
+                  </Box>
+                  <Typography
+                    variant="h6"
+                    fontWeight="bold"
+                    sx={{ fontSize: { xs: "1.1rem", md: "1.25rem" } }}
+                  >
+                    {summary?.totalActiveInstallments || 0}
+                  </Typography>
                   <Typography
                     variant="caption"
                     color="text.secondary"
-                    sx={{ fontSize: { xs: "0.65rem", md: "0.75rem" } }}
+                    sx={{ fontSize: { xs: "0.6rem", md: "0.7rem" } }}
                   >
-                    Ativos
+                    {activeInstallments.length} em andamento
                   </Typography>
-                  <CreditCard size={14} style={{ opacity: 0.5 }} />
-                </Box>
-                <Typography
-                  variant="h6"
-                  fontWeight="bold"
-                  sx={{ fontSize: { xs: "1.1rem", md: "1.25rem" } }}
-                >
-                  {summary?.totalActiveInstallments || 0}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ fontSize: { xs: "0.6rem", md: "0.7rem" } }}
-                >
-                  {activeInstallments.length} em andamento
-                </Typography>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
+                </Stack>
+              </Box>
+            </Grid>
 
-        <Grid size={{ xs: 6, lg: 3 }}>
-          <Card sx={{ height: "100%" }}>
-            <CardContent
-              sx={{
-                p: { xs: 1.5, md: 2 },
-                "&:last-child": { pb: { xs: 1.5, md: 2 } },
-              }}
-            >
-              <Stack spacing={0.5}>
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="space-between"
-                >
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <Box
+                p={{ xs: 1.5, md: 2 }}
+                borderRadius={2}
+                sx={{
+                  bgcolor: "rgba(0, 0, 0, 0.4)",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                  height: "100%",
+                }}
+              >
+                <Stack spacing={0.25}>
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="space-between"
+                  >
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontSize: { xs: "0.65rem", md: "0.75rem" } }}
+                    >
+                      Mensal
+                    </Typography>
+                    <DollarSign size={14} style={{ opacity: 0.5 }} />
+                  </Box>
+                  <Typography
+                    variant="h6"
+                    fontWeight="bold"
+                    sx={{ fontSize: { xs: "0.95rem", md: "1.25rem" } }}
+                  >
+                    {formatCurrency(summary?.totalMonthlyCommitment || 0)}
+                  </Typography>
                   <Typography
                     variant="caption"
                     color="text.secondary"
-                    sx={{ fontSize: { xs: "0.65rem", md: "0.75rem" } }}
+                    sx={{ fontSize: { xs: "0.6rem", md: "0.7rem" } }}
                   >
-                    Mensal
+                    Total parcelas
                   </Typography>
-                  <DollarSign size={14} style={{ opacity: 0.5 }} />
-                </Box>
-                <Typography
-                  variant="h6"
-                  fontWeight="bold"
-                  sx={{ fontSize: { xs: "1rem", md: "1.25rem" } }}
-                >
-                  {formatCurrency(summary?.totalMonthlyCommitment || 0)}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ fontSize: { xs: "0.6rem", md: "0.7rem" } }}
-                >
-                  Total parcelas
-                </Typography>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
+                </Stack>
+              </Box>
+            </Grid>
 
-        <Grid size={{ xs: 6, lg: 3 }}>
-          <Card
-            sx={{
-              height: "100%",
-              ...(summary && summary.overduePayments.length > 0
-                ? { borderColor: "error.main" }
-                : {}),
-            }}
-          >
-            <CardContent
-              sx={{
-                p: { xs: 1.5, md: 2 },
-                "&:last-child": { pb: { xs: 1.5, md: 2 } },
-              }}
-            >
-              <Stack spacing={0.5}>
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="space-between"
-                >
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <Box
+                p={{ xs: 1.5, md: 2 }}
+                borderRadius={2}
+                sx={{
+                  bgcolor: "rgba(0, 0, 0, 0.4)",
+                  border:
+                    summary && summary.overduePayments.length > 0
+                      ? "1px solid rgba(239, 68, 68, 0.5)"
+                      : "1px solid rgba(255, 255, 255, 0.15)",
+                  height: "100%",
+                }}
+              >
+                <Stack spacing={0.25}>
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="space-between"
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontSize: { xs: "0.65rem", md: "0.75rem" },
+                        color:
+                          summary && summary.overduePayments.length > 0
+                            ? "error.main"
+                            : "text.secondary",
+                      }}
+                    >
+                      {summary && summary.overduePayments.length > 0
+                        ? "Atrasadas"
+                        : "Próximos"}
+                    </Typography>
+                    {summary && summary.overduePayments.length > 0 ? (
+                      <AlertTriangle
+                        size={14}
+                        color="var(--mui-palette-error-main)"
+                      />
+                    ) : (
+                      <Clock size={14} style={{ opacity: 0.5 }} />
+                    )}
+                  </Box>
                   <Typography
-                    variant="caption"
-                    sx={{
-                      fontSize: { xs: "0.65rem", md: "0.75rem" },
-                      color:
-                        summary && summary.overduePayments.length > 0
-                          ? "error.main"
-                          : "text.secondary",
-                    }}
+                    variant="h6"
+                    fontWeight="bold"
+                    sx={{ fontSize: { xs: "1.1rem", md: "1.25rem" } }}
+                    color={
+                      summary && summary.overduePayments.length > 0
+                        ? "error.main"
+                        : "text.primary"
+                    }
                   >
                     {summary && summary.overduePayments.length > 0
-                      ? "Atrasadas"
-                      : "Próximos"}
+                      ? summary.overduePayments.length
+                      : summary?.upcomingPayments.length || 0}
                   </Typography>
-                  {summary && summary.overduePayments.length > 0 ? (
-                    <AlertTriangle
-                      size={14}
-                      color="var(--mui-palette-error-main)"
-                    />
-                  ) : (
-                    <Clock size={14} style={{ opacity: 0.5 }} />
-                  )}
-                </Box>
-                <Typography
-                  variant="h6"
-                  fontWeight="bold"
-                  sx={{ fontSize: { xs: "1.1rem", md: "1.25rem" } }}
-                  color={
-                    summary && summary.overduePayments.length > 0
-                      ? "error.main"
-                      : "text.primary"
-                  }
-                >
-                  {summary && summary.overduePayments.length > 0
-                    ? summary.overduePayments.length
-                    : summary?.upcomingPayments.length || 0}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ fontSize: { xs: "0.6rem", md: "0.7rem" } }}
-                  color={
-                    summary && summary.overduePayments.length > 0
-                      ? "error.main"
-                      : "text.secondary"
-                  }
-                >
-                  {summary && summary.overduePayments.length > 0
-                    ? "Atenção"
-                    : "30 dias"}
-                </Typography>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
+                  <Typography
+                    variant="caption"
+                    sx={{ fontSize: { xs: "0.6rem", md: "0.7rem" } }}
+                    color={
+                      summary && summary.overduePayments.length > 0
+                        ? "error.main"
+                        : "text.secondary"
+                    }
+                  >
+                    {summary && summary.overduePayments.length > 0
+                      ? "Atenção"
+                      : "30 dias"}
+                  </Typography>
+                </Stack>
+              </Box>
+            </Grid>
 
-        <Grid size={{ xs: 6, lg: 3 }}>
-          <Card sx={{ height: "100%" }}>
-            <CardContent
-              sx={{
-                p: { xs: 1.5, md: 2 },
-                "&:last-child": { pb: { xs: 1.5, md: 2 } },
-              }}
-            >
-              <Stack spacing={0.5}>
-                <Box
-                  display="flex"
-                  alignItems="center"
-                  justifyContent="space-between"
-                >
+            <Grid size={{ xs: 6, sm: 3 }}>
+              <Box
+                p={{ xs: 1.5, md: 2 }}
+                borderRadius={2}
+                sx={{
+                  bgcolor: "rgba(0, 0, 0, 0.4)",
+                  border: "1px solid rgba(255, 255, 255, 0.15)",
+                  height: "100%",
+                }}
+              >
+                <Stack spacing={0.25}>
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="space-between"
+                  >
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ fontSize: { xs: "0.65rem", md: "0.75rem" } }}
+                    >
+                      Quitados
+                    </Typography>
+                    <CheckCircle2
+                      size={14}
+                      color="var(--mui-palette-success-main)"
+                    />
+                  </Box>
+                  <Typography
+                    variant="h6"
+                    fontWeight="bold"
+                    color="success.main"
+                    sx={{ fontSize: { xs: "1.1rem", md: "1.25rem" } }}
+                  >
+                    {completedInstallments.length}
+                  </Typography>
                   <Typography
                     variant="caption"
                     color="text.secondary"
-                    sx={{ fontSize: { xs: "0.65rem", md: "0.75rem" } }}
+                    sx={{ fontSize: { xs: "0.6rem", md: "0.7rem" } }}
                   >
-                    Quitados
+                    Finalizados
                   </Typography>
-                  <CheckCircle2
-                    size={14}
-                    color="var(--mui-palette-success-main)"
-                  />
-                </Box>
-                <Typography
-                  variant="h6"
-                  fontWeight="bold"
-                  color="success.main"
-                  sx={{ fontSize: { xs: "1.1rem", md: "1.25rem" } }}
-                >
-                  {completedInstallments.length}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ fontSize: { xs: "0.6rem", md: "0.7rem" } }}
-                >
-                  Finalizados
-                </Typography>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+                </Stack>
+              </Box>
+            </Grid>
+          </Grid>
+        </CardContent>
+      </Card>
 
       {/* Main Content */}
       <Box>

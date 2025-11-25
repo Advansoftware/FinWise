@@ -39,9 +39,6 @@ const navItems = [
   { href: "/payments", label: "Pagamentos", icon: Smartphone },
   { href: "/tools", label: "Ferramentas", icon: Calculator },
   { href: "/import", label: "Importar", icon: Upload },
-  { href: "/settings", label: "Configurações", icon: Settings },
-  { href: "/billing", label: "Assinatura", icon: Gem },
-  { href: "/profile", label: "Perfil", icon: UserCircle },
 ];
 
 interface AppNavProps {
