@@ -16,6 +16,7 @@ import {
   ListItemText,
   alpha,
   Tooltip,
+  IconButton,
 } from "@mui/material";
 import {
   Settings,
@@ -32,7 +33,12 @@ import { useGamification } from "@/hooks/use-gamification";
 import { BillingPortalButton } from "@/components/billing/billing-portal-button";
 import { usePlan } from "@/hooks/use-plan";
 
-export function UserNav() {
+interface UserNavProps {
+  /** Modo compacto para uso em headers mobile */
+  compact?: boolean;
+}
+
+export function UserNav({ compact = false }: UserNavProps) {
   const { user, logout, loading } = useAuth();
   const {
     gamificationData,
@@ -53,7 +59,7 @@ export function UserNav() {
   };
 
   if (loading) {
-    return <Skeleton variant="circular" width={36} height={36} />;
+    return <Skeleton variant="circular" width={compact ? 32 : 36} height={compact ? 32 : 36} />;
   }
 
   const getInitials = (name?: string | null) => {
@@ -72,6 +78,8 @@ export function UserNav() {
     ? getLevelInfo(gamificationData.level.level)
     : null;
 
+  const avatarSize = compact ? 32 : 36;
+
   return (
     <>
       <Tooltip
@@ -81,20 +89,18 @@ export function UserNav() {
             : "Carregando..."
         }
       >
-        <Button
+        <IconButton
           onClick={handleClick}
           sx={{
-            minWidth: 0,
-            p: 0.5,
-            borderRadius: "50%",
+            p: compact ? 0.25 : 0.5,
           }}
         >
           <Avatar
             sx={{
-              width: 36,
-              height: 36,
+              width: avatarSize,
+              height: avatarSize,
               bgcolor: "primary.main",
-              fontSize: "0.875rem",
+              fontSize: compact ? "0.75rem" : "0.875rem",
               fontWeight: 600,
             }}
             src={user?.image || undefined}
@@ -102,7 +108,7 @@ export function UserNav() {
           >
             {getInitials(user?.displayName)}
           </Avatar>
-        </Button>
+        </IconButton>
       </Tooltip>
 
       <Menu
