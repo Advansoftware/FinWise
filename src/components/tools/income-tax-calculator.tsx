@@ -407,169 +407,188 @@ export function IncomeTaxCalculator({ payrollData }: IncomeTaxCalculatorProps) {
                   Resultados do Imposto de Renda
                 </Typography>
 
-                <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" },
-                    gap: 2,
-                  }}
-                >
-                  <Paper sx={{ p: 2, bgcolor: "action.hover" }}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        mb: 1,
-                      }}
+                <Grid container spacing={{ xs: 2, md: 3 }}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Paper
+                      sx={{ p: 2, bgcolor: "action.hover", height: "100%" }}
                     >
-                      <Receipt
-                        style={{
-                          width: "1rem",
-                          height: "1rem",
-                          color: theme.palette.primary.main,
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          mb: 1,
                         }}
-                      />
-                      <Typography variant="subtitle2">IR Mensal</Typography>
-                    </Box>
-                    <Typography variant="h5" fontWeight="bold" color="primary">
-                      {formatCurrency(calculation.monthlyIR)}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Faixa: {calculation.bracket}
-                    </Typography>
-                  </Paper>
-
-                  <Paper sx={{ p: 2, bgcolor: "action.hover" }}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        mb: 1,
-                      }}
-                    >
-                      <TrendingUp
-                        style={{
-                          width: "1rem",
-                          height: "1rem",
-                          color: theme.palette.primary.main,
-                        }}
-                      />
-                      <Typography variant="subtitle2">IR Anual</Typography>
-                    </Box>
-                    <Typography variant="h5" fontWeight="bold" color="primary">
-                      {formatCurrency(calculation.yearlyIR)}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      {formatPercentage(calculation.effectiveRate)} do salário
-                    </Typography>
-                  </Paper>
-
-                  <Paper
-                    sx={{ p: 2, bgcolor: alpha(theme.palette.info.main, 0.1) }}
-                  >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        mb: 1,
-                      }}
-                    >
-                      <Calculator
-                        style={{
-                          width: "1rem",
-                          height: "1rem",
-                          color: theme.palette.info.main,
-                        }}
-                      />
-                      <Typography variant="subtitle2">
-                        Base de Cálculo
-                      </Typography>
-                    </Box>
-                    <Typography
-                      variant="h5"
-                      fontWeight="bold"
-                      color="info.main"
-                    >
-                      {formatCurrency(calculation.taxableIncome)}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      color="info.main"
-                      sx={{ opacity: 0.8 }}
-                    >
-                      Renda tributável anual
-                    </Typography>
-                  </Paper>
-
-                  <Paper
-                    sx={{
-                      p: 2,
-                      bgcolor:
-                        calculation.estimatedRefund > 0
-                          ? alpha(theme.palette.success.main, 0.1)
-                          : alpha(theme.palette.error.main, 0.1),
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        mb: 1,
-                      }}
-                    >
-                      {calculation.estimatedRefund > 0 ? (
-                        <TrendingDown
+                      >
+                        <Receipt
                           style={{
                             width: "1rem",
                             height: "1rem",
-                            color: theme.palette.success.main,
+                            color: theme.palette.primary.main,
                           }}
                         />
-                      ) : (
+                        <Typography variant="subtitle2">IR Mensal</Typography>
+                      </Box>
+                      <Typography
+                        variant="h5"
+                        fontWeight="bold"
+                        color="primary"
+                      >
+                        {formatCurrency(calculation.monthlyIR)}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Faixa: {calculation.bracket}
+                      </Typography>
+                    </Paper>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Paper
+                      sx={{ p: 2, bgcolor: "action.hover", height: "100%" }}
+                    >
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          mb: 1,
+                        }}
+                      >
                         <TrendingUp
                           style={{
                             width: "1rem",
                             height: "1rem",
-                            color: theme.palette.error.main,
+                            color: theme.palette.primary.main,
                           }}
                         />
-                      )}
-                      <Typography variant="subtitle2">
-                        {calculation.estimatedRefund > 0
-                          ? "Restituição Estimada"
-                          : "Imposto a Pagar"}
+                        <Typography variant="subtitle2">IR Anual</Typography>
+                      </Box>
+                      <Typography
+                        variant="h5"
+                        fontWeight="bold"
+                        color="primary"
+                      >
+                        {formatCurrency(calculation.yearlyIR)}
                       </Typography>
-                    </Box>
-                    <Typography
-                      variant="h5"
-                      fontWeight="bold"
-                      color={
-                        calculation.estimatedRefund > 0
-                          ? "success.main"
-                          : "error.main"
-                      }
+                      <Typography variant="caption" color="text.secondary">
+                        {formatPercentage(calculation.effectiveRate)} do salário
+                      </Typography>
+                    </Paper>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Paper
+                      sx={{
+                        p: 2,
+                        bgcolor: alpha(theme.palette.info.main, 0.1),
+                        height: "100%",
+                      }}
                     >
-                      {formatCurrency(Math.abs(calculation.estimatedRefund))}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      color={
-                        calculation.estimatedRefund > 0
-                          ? "success.main"
-                          : "error.main"
-                      }
-                      sx={{ opacity: 0.8 }}
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          mb: 1,
+                        }}
+                      >
+                        <Calculator
+                          style={{
+                            width: "1rem",
+                            height: "1rem",
+                            color: theme.palette.info.main,
+                          }}
+                        />
+                        <Typography variant="subtitle2">
+                          Base de Cálculo
+                        </Typography>
+                      </Box>
+                      <Typography
+                        variant="h5"
+                        fontWeight="bold"
+                        color="info.main"
+                      >
+                        {formatCurrency(calculation.taxableIncome)}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        color="info.main"
+                        sx={{ opacity: 0.8 }}
+                      >
+                        Renda tributável anual
+                      </Typography>
+                    </Paper>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Paper
+                      sx={{
+                        p: 2,
+                        height: "100%",
+                        bgcolor:
+                          calculation.estimatedRefund > 0
+                            ? alpha(theme.palette.success.main, 0.1)
+                            : alpha(theme.palette.error.main, 0.1),
+                      }}
                     >
-                      {calculation.estimatedRefund > 0
-                        ? "A receber"
-                        : "A complementar"}
-                    </Typography>
-                  </Paper>
-                </Box>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          mb: 1,
+                        }}
+                      >
+                        {calculation.estimatedRefund > 0 ? (
+                          <TrendingDown
+                            style={{
+                              width: "1rem",
+                              height: "1rem",
+                              color: theme.palette.success.main,
+                            }}
+                          />
+                        ) : (
+                          <TrendingUp
+                            style={{
+                              width: "1rem",
+                              height: "1rem",
+                              color: theme.palette.error.main,
+                            }}
+                          />
+                        )}
+                        <Typography variant="subtitle2">
+                          {calculation.estimatedRefund > 0
+                            ? "Restituição Estimada"
+                            : "Imposto a Pagar"}
+                        </Typography>
+                      </Box>
+                      <Typography
+                        variant="h5"
+                        fontWeight="bold"
+                        color={
+                          calculation.estimatedRefund > 0
+                            ? "success.main"
+                            : "error.main"
+                        }
+                      >
+                        {formatCurrency(Math.abs(calculation.estimatedRefund))}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        color={
+                          calculation.estimatedRefund > 0
+                            ? "success.main"
+                            : "error.main"
+                        }
+                        sx={{ opacity: 0.8 }}
+                      >
+                        {calculation.estimatedRefund > 0
+                          ? "A receber"
+                          : "A complementar"}
+                      </Typography>
+                    </Paper>
+                  </Grid>
+                </Grid>
               </Stack>
 
               {/* Resumo das deduções */}
@@ -577,123 +596,88 @@ export function IncomeTaxCalculator({ payrollData }: IncomeTaxCalculatorProps) {
                 <Typography variant="subtitle2" sx={{ mb: 2 }}>
                   📊 Resumo das Deduções
                 </Typography>
-                <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: { xs: "1fr", md: "repeat(2, 1fr)" },
-                    gap: 1.5,
-                  }}
-                >
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      component="span"
+                <Grid container spacing={1.5}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Box
+                      sx={{ display: "flex", justifyContent: "space-between" }}
                     >
-                      Renda Bruta Anual:
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight="medium"
-                      component="span"
-                      sx={{ float: "right" }}
+                      <Typography variant="body2" color="text.secondary">
+                        Renda Bruta Anual:
+                      </Typography>
+                      <Typography variant="body2" fontWeight="medium">
+                        {formatCurrency(calculation.grossAnnualIncome)}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Box
+                      sx={{ display: "flex", justifyContent: "space-between" }}
                     >
-                      {formatCurrency(calculation.grossAnnualIncome)}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      component="span"
+                      <Typography variant="body2" color="text.secondary">
+                        INSS (12 meses):
+                      </Typography>
+                      <Typography variant="body2" fontWeight="medium">
+                        {formatCurrency(inssContribution * 12)}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Box
+                      sx={{ display: "flex", justifyContent: "space-between" }}
                     >
-                      INSS (12 meses):
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight="medium"
-                      component="span"
-                      sx={{ float: "right" }}
+                      <Typography variant="body2" color="text.secondary">
+                        Dependentes ({dependents}):
+                      </Typography>
+                      <Typography variant="body2" fontWeight="medium">
+                        {formatCurrency(dependents * 189.59 * 12)}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Box
+                      sx={{ display: "flex", justifyContent: "space-between" }}
                     >
-                      {formatCurrency(inssContribution * 12)}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      component="span"
+                      <Typography variant="body2" color="text.secondary">
+                        Gastos Médicos:
+                      </Typography>
+                      <Typography variant="body2" fontWeight="medium">
+                        {formatCurrency(medicalExpenses)}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Box
+                      sx={{ display: "flex", justifyContent: "space-between" }}
                     >
-                      Dependentes ({dependents}):
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight="medium"
-                      component="span"
-                      sx={{ float: "right" }}
+                      <Typography variant="body2" color="text.secondary">
+                        Gastos Educação:
+                      </Typography>
+                      <Typography variant="body2" fontWeight="medium">
+                        {formatCurrency(
+                          Math.min(educationExpenses, 3561.5 * 12)
+                        )}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        borderTop: 1,
+                        borderColor: "divider",
+                        pt: 1,
+                      }}
                     >
-                      {formatCurrency(dependents * 189.59 * 12)}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      component="span"
-                    >
-                      Gastos Médicos:
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight="medium"
-                      component="span"
-                      sx={{ float: "right" }}
-                    >
-                      {formatCurrency(medicalExpenses)}
-                    </Typography>
-                  </Box>
-                  <Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      component="span"
-                    >
-                      Gastos Educação:
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight="medium"
-                      component="span"
-                      sx={{ float: "right" }}
-                    >
-                      {formatCurrency(Math.min(educationExpenses, 3561.5 * 12))}
-                    </Typography>
-                  </Box>
-                  <Box
-                    sx={{
-                      borderTop: 1,
-                      borderColor: "divider",
-                      pt: 1,
-                      mt: 0.5,
-                    }}
-                  >
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      component="span"
-                    >
-                      Total Deduções:
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      fontWeight="bold"
-                      component="span"
-                      sx={{ float: "right" }}
-                    >
-                      {formatCurrency(calculation.deductions)}
-                    </Typography>
-                  </Box>
-                </Box>
+                      <Typography variant="body2" color="text.secondary">
+                        Total Deduções:
+                      </Typography>
+                      <Typography variant="body2" fontWeight="bold">
+                        {formatCurrency(calculation.deductions)}
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
               </Paper>
 
               {/* Tabela IR */}
