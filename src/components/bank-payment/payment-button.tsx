@@ -22,6 +22,7 @@ import {
 } from "@mui/icons-material";
 import { useBankPayment } from "@/hooks/use-bank-payment";
 import { SupportedBank } from "@/core/ports/bank-payment.port";
+import { usePaymentConfirmation } from "./payment-confirmation-dialog";
 
 interface PaymentButtonProps {
   amount: number;
@@ -54,6 +55,7 @@ export function PaymentButton({
 }: PaymentButtonProps) {
   const { initiatePayment, isMobile, hasMobileDevice, loading } =
     useBankPayment();
+  const { setPendingPaymentBeforeRedirect } = usePaymentConfirmation();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
@@ -113,9 +115,27 @@ export function PaymentButton({
       if (isMobile) {
         // No mobile, o deep link foi aberto
         if (result.deepLinkOpened) {
+          // Salvar pagamento pendente para confirmação ao retornar
+          if (result.requestId) {
+            setPendingPaymentBeforeRedirect({
+              requestId: result.requestId,
+              amount,
+              description,
+              bankName: bank.toUpperCase(),
+            });
+          }
           onSuccess?.();
           setDialogOpen(false);
         } else if (result.fallbackUrl) {
+          // Salvar pagamento pendente antes de abrir fallback
+          if (result.requestId) {
+            setPendingPaymentBeforeRedirect({
+              requestId: result.requestId,
+              amount,
+              description,
+              bankName: bank.toUpperCase(),
+            });
+          }
           window.open(result.fallbackUrl, "_blank");
           onSuccess?.();
           setDialogOpen(false);

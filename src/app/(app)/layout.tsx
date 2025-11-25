@@ -33,6 +33,7 @@ import { AICreditIndicator } from "@/components/credits/ai-credit-indicator";
 import { GamificationProvider } from "@/hooks/use-gamification";
 import { PlanExpirationAlert } from "@/components/billing/plan-expiration-alert";
 import { BankPaymentProvider } from "@/hooks/use-bank-payment";
+import { PaymentConfirmationProvider } from "@/components/bank-payment/payment-confirmation-provider";
 
 const drawerWidth = 280;
 
@@ -198,6 +199,7 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
                   <BudgetsProvider>
                     <GoalsProvider>
                       <BankPaymentProvider>
+                        <PaymentConfirmationProvider />
                         <AppLayoutContent>{children}</AppLayoutContent>
                       </BankPaymentProvider>
                     </GoalsProvider>

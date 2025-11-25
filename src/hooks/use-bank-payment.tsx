@@ -85,6 +85,7 @@ interface BankPaymentContextType {
     deepLinkOpened: boolean;
     pushSent: boolean;
     fallbackUrl?: string;
+    requestId?: string;
   }>;
   processPayment: (
     requestId: string
@@ -1074,6 +1075,7 @@ export function BankPaymentProvider({
       deepLinkOpened: boolean;
       pushSent: boolean;
       fallbackUrl?: string;
+      requestId?: string;
     }> => {
       const paymentData: PaymentData = {
         type: "pix",
@@ -1093,6 +1095,7 @@ export function BankPaymentProvider({
           deepLinkOpened: true,
           pushSent: false,
           fallbackUrl: result.deepLink.fallbackUrl,
+          requestId: result.paymentRequest?.id,
         };
       }
 
@@ -1100,6 +1103,7 @@ export function BankPaymentProvider({
         deepLinkOpened: false,
         pushSent: result?.pushSent || false,
         fallbackUrl: undefined,
+        requestId: result?.paymentRequest?.id,
       };
     },
     [requestPayment, isMobile]
