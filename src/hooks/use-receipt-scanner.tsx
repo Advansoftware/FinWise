@@ -1,7 +1,7 @@
 // src/hooks/use-receipt-scanner.tsx
 "use client";
 
-import { useState, useCallback, useTransition } from "react";
+import { useState, useCallback, useTransition, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
 import { useWallets } from "@/hooks/use-wallets";
@@ -17,20 +17,47 @@ import { TransactionCategory } from "@/lib/types";
 
 export interface ExtractedReceiptData {
   isValid: boolean;
+  establishment?: string;
+  suggestedCategory?: string;
   items: Array<{ item: string; amount: number }>;
   totalAmount?: number;
   date?: string;
+}
+
+// Formulário editável para cada item da nota
+export interface ReceiptItemForm {
+  item: string;
+  amount: number;
+  quantity: number;
+  selected: boolean; // Se o item será salvo ou não
+}
+
+// Formulário geral da nota
+export interface ReceiptForm {
+  establishment: string;
+  category: TransactionCategory;
+  subcategory: string;
+  walletId: string;
+  date: string;
+  type: "income" | "expense";
+  items: ReceiptItemForm[];
 }
 
 interface UseReceiptScannerReturn {
   // State
   receiptImage: string | null;
   extractedData: ExtractedReceiptData | null;
+  form: ReceiptForm | null;
   isProcessing: boolean;
   isSaving: boolean;
   selectedAI: string;
   canSelectProvider: boolean;
   visionCapableCredentials: ReturnType<typeof getVisionCapableModels>;
+
+  // Data helpers
+  wallets: ReturnType<typeof useWallets>["wallets"];
+  categories: ReturnType<typeof useTransactions>["categories"];
+  subcategories: ReturnType<typeof useTransactions>["subcategories"];
 
   // Actions
   setSelectedAI: (id: string) => void;
@@ -38,19 +65,24 @@ interface UseReceiptScannerReturn {
   saveTransactions: () => Promise<boolean>;
   reset: () => void;
   setReceiptImage: (image: string | null) => void;
+  updateForm: (updates: Partial<ReceiptForm>) => void;
+  updateItem: (index: number, updates: Partial<ReceiptItemForm>) => void;
+  toggleItemSelection: (index: number) => void;
+  selectAllItems: (selected: boolean) => void;
 }
 
 export function useReceiptScanner(): UseReceiptScannerReturn {
   const { toast } = useToast();
   const { user } = useAuth();
   const { wallets } = useWallets();
-  const { addTransaction } = useTransactions();
+  const { addTransaction, categories, subcategories } = useTransactions();
   const { displayedCredentials, activeCredentialId } = useAISettings();
   const { isPlus } = usePlan();
 
   const [receiptImage, setReceiptImage] = useState<string | null>(null);
   const [extractedData, setExtractedData] =
     useState<ExtractedReceiptData | null>(null);
+  const [form, setForm] = useState<ReceiptForm | null>(null);
   const [isProcessing, startProcessing] = useTransition();
   const [isSaving, startSaving] = useTransition();
 
@@ -60,9 +92,34 @@ export function useReceiptScanner(): UseReceiptScannerReturn {
   );
   const canSelectProvider = isPlus;
 
+  // Quando extractedData mudar, inicializa o formulário
+  useEffect(() => {
+    if (extractedData && extractedData.isValid) {
+      const defaultWalletId = wallets[0]?.id || "";
+      const suggestedCategory =
+        (extractedData.suggestedCategory as TransactionCategory) || "Outros";
+
+      setForm({
+        establishment: extractedData.establishment || "",
+        category: suggestedCategory,
+        subcategory: "",
+        walletId: defaultWalletId,
+        date: extractedData.date || new Date().toISOString().split("T")[0],
+        type: "expense",
+        items: extractedData.items.map((item) => ({
+          item: item.item,
+          amount: item.amount,
+          quantity: 1,
+          selected: true,
+        })),
+      });
+    }
+  }, [extractedData, wallets]);
+
   const reset = useCallback(() => {
     setReceiptImage(null);
     setExtractedData(null);
+    setForm(null);
     setSelectedAI(activeCredentialId || DEFAULT_AI_CREDENTIAL.id);
   }, [activeCredentialId]);
 
@@ -79,6 +136,7 @@ export function useReceiptScanner(): UseReceiptScannerReturn {
 
       setReceiptImage(imageData);
       setExtractedData(null);
+      setForm(null);
 
       startProcessing(async () => {
         try {
@@ -112,33 +170,92 @@ export function useReceiptScanner(): UseReceiptScannerReturn {
     [user, selectedAI, toast, reset]
   );
 
+  const updateForm = useCallback((updates: Partial<ReceiptForm>) => {
+    setForm((prev) => (prev ? { ...prev, ...updates } : null));
+  }, []);
+
+  const updateItem = useCallback(
+    (index: number, updates: Partial<ReceiptItemForm>) => {
+      setForm((prev) => {
+        if (!prev) return null;
+        const newItems = [...prev.items];
+        newItems[index] = { ...newItems[index], ...updates };
+        return { ...prev, items: newItems };
+      });
+    },
+    []
+  );
+
+  const toggleItemSelection = useCallback((index: number) => {
+    setForm((prev) => {
+      if (!prev) return null;
+      const newItems = [...prev.items];
+      newItems[index] = {
+        ...newItems[index],
+        selected: !newItems[index].selected,
+      };
+      return { ...prev, items: newItems };
+    });
+  }, []);
+
+  const selectAllItems = useCallback((selected: boolean) => {
+    setForm((prev) => {
+      if (!prev) return null;
+      return {
+        ...prev,
+        items: prev.items.map((item) => ({ ...item, selected })),
+      };
+    });
+  }, []);
+
   const saveTransactions = useCallback(async (): Promise<boolean> => {
-    if (!extractedData?.items?.length || !user) return false;
+    if (!form || !user) return false;
+
+    const selectedItems = form.items.filter((item) => item.selected);
+    if (selectedItems.length === 0) {
+      toast({
+        variant: "error",
+        title: "Nenhum item selecionado",
+        description: "Selecione pelo menos um item para salvar.",
+      });
+      return false;
+    }
+
+    if (!form.walletId) {
+      toast({
+        variant: "error",
+        title: "Carteira não selecionada",
+        description: "Selecione uma carteira para salvar as transações.",
+      });
+      return false;
+    }
 
     return new Promise((resolve) => {
       startSaving(async () => {
         try {
+          const transactionDate = new Date(form.date).toISOString();
+
           await Promise.all(
-            extractedData.items.map((item) =>
+            selectedItems.map((item) =>
               addTransaction({
                 item: item.item,
                 amount: parseFloat(String(item.amount)),
-                date: extractedData.date
-                  ? new Date(extractedData.date).toISOString()
-                  : new Date().toISOString(),
-                category: "Supermercado" as TransactionCategory,
-                type: "expense",
-                walletId: wallets[0]?.id || "",
-                quantity: 1,
-                establishment: "",
-                subcategory: "",
+                date: transactionDate,
+                category: form.category,
+                subcategory: form.subcategory,
+                type: form.type,
+                walletId: form.walletId,
+                quantity: item.quantity,
+                establishment: form.establishment,
               })
             )
           );
 
           toast({
             title: "Sucesso!",
-            description: `${extractedData.items.length} transações salvas.`,
+            description: `${selectedItems.length} transação(ões) de "${
+              form.establishment || "Nota"
+            }" salva(s).`,
           });
           resolve(true);
         } catch {
@@ -151,20 +268,28 @@ export function useReceiptScanner(): UseReceiptScannerReturn {
         }
       });
     });
-  }, [extractedData, user, wallets, addTransaction, toast]);
+  }, [form, user, addTransaction, toast]);
 
   return {
     receiptImage,
     extractedData,
+    form,
     isProcessing,
     isSaving,
     selectedAI,
     canSelectProvider,
     visionCapableCredentials,
+    wallets,
+    categories,
+    subcategories,
     setSelectedAI,
     processImage,
     saveTransactions,
     reset,
     setReceiptImage,
+    updateForm,
+    updateItem,
+    toggleItemSelection,
+    selectAllItems,
   };
 }

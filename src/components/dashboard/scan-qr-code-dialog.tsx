@@ -25,6 +25,11 @@ import {
   IconButton,
   Fade,
   Paper,
+  FormControl,
+  Checkbox,
+  FormControlLabel,
+  InputAdornment,
+  Divider,
 } from "@mui/material";
 import {
   Upload,
@@ -36,6 +41,7 @@ import {
   X,
   Check,
   ImageIcon,
+  Trash2,
 } from "lucide-react";
 import {
   useRef,
@@ -51,8 +57,11 @@ import { useCamera } from "@/hooks/use-camera";
 import {
   useReceiptScanner,
   ExtractedReceiptData,
+  ReceiptForm,
+  ReceiptItemForm,
 } from "@/hooks/use-receipt-scanner";
 import { DEFAULT_AI_CREDENTIAL } from "@/lib/ai-settings";
+import { TransactionCategory } from "@/lib/types";
 
 // ============ SUB-COMPONENTS ============
 
@@ -194,97 +203,284 @@ interface ExtractedDataViewProps {
 function ExtractedDataView({ data }: ExtractedDataViewProps) {
   return (
     <Stack spacing={2}>
+      <Alert severity="info" variant="outlined">
+        <AlertTitle>Dados Extraídos</AlertTitle>A IA identificou{" "}
+        {data.items?.length || 0} itens. Preencha os campos abaixo para salvar.
+      </Alert>
+    </Stack>
+  );
+}
+
+// Formulário editável completo para revisar/completar dados da nota
+interface ReceiptFormViewProps {
+  form: ReceiptForm;
+  wallets: Array<{ id: string; name: string }>;
+  categories: TransactionCategory[];
+  subcategories: Record<string, string[]>;
+  onUpdateForm: (updates: Partial<ReceiptForm>) => void;
+  onUpdateItem: (index: number, updates: Partial<ReceiptItemForm>) => void;
+  onToggleItem: (index: number) => void;
+  onSelectAll: (selected: boolean) => void;
+  disabled?: boolean;
+}
+
+function ReceiptFormView({
+  form,
+  wallets,
+  categories,
+  subcategories,
+  onUpdateForm,
+  onUpdateItem,
+  onToggleItem,
+  onSelectAll,
+  disabled = false,
+}: ReceiptFormViewProps) {
+  const theme = useTheme();
+  const selectedCount = form.items.filter((i) => i.selected).length;
+  const totalAmount = form.items
+    .filter((i) => i.selected)
+    .reduce((sum, i) => sum + i.amount * i.quantity, 0);
+  const currentSubcategories = subcategories[form.category] || [];
+
+  return (
+    <Stack spacing={2}>
+      {/* Cabeçalho com info */}
       <Stack direction="row" justifyContent="space-between" alignItems="center">
         <Typography variant="subtitle2" fontWeight={600}>
-          Itens Extraídos
+          Revisar Transações
         </Typography>
         <Chip
           size="small"
-          color={data.isValid ? "success" : "error"}
-          label={data.isValid ? "Válida" : "Inválida"}
+          color="primary"
+          label={`${selectedCount} de ${form.items.length} selecionados`}
         />
       </Stack>
 
-      {data.items?.length > 0 ? (
-        <Stack spacing={1.5}>
-          {data.items.map((item, i) => (
+      {/* Dados gerais da nota */}
+      <Paper variant="outlined" sx={{ p: 2 }}>
+        <Typography
+          variant="caption"
+          color="text.secondary"
+          fontWeight={500}
+          gutterBottom
+          display="block"
+        >
+          Dados Gerais (aplicados a todos os itens)
+        </Typography>
+
+        <Stack spacing={2} sx={{ mt: 1 }}>
+          {/* Estabelecimento e Data */}
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+            <TextField
+              label="Estabelecimento"
+              size="small"
+              fullWidth
+              value={form.establishment}
+              onChange={(e) => onUpdateForm({ establishment: e.target.value })}
+              disabled={disabled}
+              placeholder="Nome da loja/mercado"
+            />
+            <TextField
+              label="Data"
+              type="date"
+              size="small"
+              fullWidth
+              value={form.date}
+              onChange={(e) => onUpdateForm({ date: e.target.value })}
+              disabled={disabled}
+              InputLabelProps={{ shrink: true }}
+            />
+          </Stack>
+
+          {/* Carteira e Tipo */}
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+            <FormControl size="small" fullWidth>
+              <InputLabel>Carteira *</InputLabel>
+              <Select
+                value={form.walletId}
+                label="Carteira *"
+                onChange={(e) => onUpdateForm({ walletId: e.target.value })}
+                disabled={disabled}
+              >
+                {wallets.map((w) => (
+                  <MenuItem key={w.id} value={w.id}>
+                    {w.name}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" fullWidth>
+              <InputLabel>Tipo</InputLabel>
+              <Select
+                value={form.type}
+                label="Tipo"
+                onChange={(e) =>
+                  onUpdateForm({ type: e.target.value as "income" | "expense" })
+                }
+                disabled={disabled}
+              >
+                <MenuItem value="expense">Despesa</MenuItem>
+                <MenuItem value="income">Receita</MenuItem>
+              </Select>
+            </FormControl>
+          </Stack>
+
+          {/* Categoria e Subcategoria */}
+          <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+            <FormControl size="small" fullWidth>
+              <InputLabel>Categoria</InputLabel>
+              <Select
+                value={form.category}
+                label="Categoria"
+                onChange={(e) =>
+                  onUpdateForm({
+                    category: e.target.value as TransactionCategory,
+                    subcategory: "", // Reset subcategory when category changes
+                  })
+                }
+                disabled={disabled}
+              >
+                {categories.map((cat) => (
+                  <MenuItem key={cat} value={cat}>
+                    {cat}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <FormControl size="small" fullWidth>
+              <InputLabel>Subcategoria</InputLabel>
+              <Select
+                value={form.subcategory}
+                label="Subcategoria"
+                onChange={(e) => onUpdateForm({ subcategory: e.target.value })}
+                disabled={disabled || currentSubcategories.length === 0}
+              >
+                <MenuItem value="">Nenhuma</MenuItem>
+                {currentSubcategories.map((sub) => (
+                  <MenuItem key={sub} value={sub}>
+                    {sub}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Stack>
+        </Stack>
+      </Paper>
+
+      {/* Lista de Itens */}
+      <Box>
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ mb: 1 }}
+        >
+          <Typography variant="caption" color="text.secondary" fontWeight={500}>
+            Itens ({form.items.length})
+          </Typography>
+          <Stack direction="row" spacing={1}>
+            <Button
+              size="small"
+              onClick={() => onSelectAll(true)}
+              disabled={disabled}
+            >
+              Selecionar todos
+            </Button>
+            <Button
+              size="small"
+              onClick={() => onSelectAll(false)}
+              disabled={disabled}
+            >
+              Limpar
+            </Button>
+          </Stack>
+        </Stack>
+
+        <Stack spacing={1} sx={{ maxHeight: 250, overflow: "auto" }}>
+          {form.items.map((item, index) => (
             <Paper
-              key={i}
+              key={index}
               variant="outlined"
               sx={{
                 p: 1.5,
-                display: "grid",
-                gridTemplateColumns: "2fr 1fr",
-                gap: 1.5,
+                opacity: item.selected ? 1 : 0.5,
+                bgcolor: item.selected
+                  ? "transparent"
+                  : alpha(theme.palette.action.disabled, 0.05),
               }}
             >
-              <TextField
-                size="small"
-                defaultValue={item.item}
-                InputProps={{ readOnly: true }}
-              />
-              <TextField
-                size="small"
-                type="number"
-                defaultValue={item.amount}
-                InputProps={{
-                  readOnly: true,
-                  startAdornment: <Typography sx={{ mr: 0.5 }}>R$</Typography>,
-                }}
-              />
+              <Stack spacing={1}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Checkbox
+                    checked={item.selected}
+                    onChange={() => onToggleItem(index)}
+                    disabled={disabled}
+                    size="small"
+                  />
+                  <TextField
+                    size="small"
+                    fullWidth
+                    value={item.item}
+                    onChange={(e) =>
+                      onUpdateItem(index, { item: e.target.value })
+                    }
+                    disabled={disabled || !item.selected}
+                    placeholder="Nome do item"
+                  />
+                </Stack>
+
+                <Stack direction="row" spacing={1} sx={{ pl: 4 }}>
+                  <TextField
+                    size="small"
+                    label="Valor"
+                    type="number"
+                    value={item.amount}
+                    onChange={(e) =>
+                      onUpdateItem(index, {
+                        amount: parseFloat(e.target.value) || 0,
+                      })
+                    }
+                    disabled={disabled || !item.selected}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">R$</InputAdornment>
+                      ),
+                    }}
+                    sx={{ flex: 2 }}
+                  />
+                  <TextField
+                    size="small"
+                    label="Qtd"
+                    type="number"
+                    value={item.quantity}
+                    onChange={(e) =>
+                      onUpdateItem(index, {
+                        quantity: parseInt(e.target.value) || 1,
+                      })
+                    }
+                    disabled={disabled || !item.selected}
+                    inputProps={{ min: 1 }}
+                    sx={{ flex: 1 }}
+                  />
+                </Stack>
+              </Stack>
             </Paper>
           ))}
         </Stack>
-      ) : (
-        <Typography color="text.secondary" textAlign="center" py={2}>
-          Nenhum item encontrado.
+      </Box>
+
+      {/* Total */}
+      <Divider />
+      <Stack direction="row" justifyContent="space-between" alignItems="center">
+        <Typography variant="body2" color="text.secondary">
+          Total ({selectedCount} itens):
         </Typography>
-      )}
-
-      <Paper
-        variant="outlined"
-        sx={{
-          p: 1.5,
-          display: "grid",
-          gridTemplateColumns: "1fr 1fr",
-          gap: 1.5,
-        }}
-      >
-        <Box>
-          <Typography variant="caption" color="text.secondary">
-            Total
-          </Typography>
-          <TextField
-            size="small"
-            fullWidth
-            type="number"
-            defaultValue={data.totalAmount || 0}
-            InputProps={{
-              readOnly: true,
-              startAdornment: <Typography sx={{ mr: 0.5 }}>R$</Typography>,
-            }}
-          />
-        </Box>
-        <Box>
-          <Typography variant="caption" color="text.secondary">
-            Data
-          </Typography>
-          <TextField
-            size="small"
-            fullWidth
-            type="date"
-            defaultValue={data.date}
-            InputProps={{ readOnly: true }}
-          />
-        </Box>
-      </Paper>
-
-      {!data.isValid && (
-        <Alert severity="warning" variant="outlined">
-          <AlertTitle>Não Reconhecida</AlertTitle>A IA não identificou como nota
-          fiscal válida.
-        </Alert>
-      )}
+        <Typography variant="h6" fontWeight={600} color="primary">
+          R$ {totalAmount.toFixed(2)}
+        </Typography>
+      </Stack>
     </Stack>
   );
 }
@@ -687,8 +883,24 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
               <Box sx={{ flex: 1, overflow: "auto", p: 2 }}>
                 {scanner.isProcessing ? (
                   <LoadingSkeleton />
-                ) : scanner.extractedData ? (
-                  <ExtractedDataView data={scanner.extractedData} />
+                ) : scanner.form ? (
+                  <ReceiptFormView
+                    form={scanner.form}
+                    wallets={scanner.wallets}
+                    categories={scanner.categories}
+                    subcategories={scanner.subcategories}
+                    onUpdateForm={scanner.updateForm}
+                    onUpdateItem={scanner.updateItem}
+                    onToggleItem={scanner.toggleItemSelection}
+                    onSelectAll={scanner.selectAllItems}
+                    disabled={scanner.isSaving}
+                  />
+                ) : scanner.extractedData && !scanner.extractedData.isValid ? (
+                  <Alert severity="warning" variant="outlined">
+                    <AlertTitle>Nota Não Reconhecida</AlertTitle>A IA não
+                    conseguiu identificar esta imagem como uma nota fiscal
+                    válida. Tente tirar outra foto com melhor iluminação.
+                  </Alert>
                 ) : null}
               </Box>
 
@@ -712,11 +924,11 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                 >
                   Nova Foto
                 </Button>
-                {scanner.extractedData?.isValid && (
+                {scanner.form && scanner.form.items.some((i) => i.selected) && (
                   <Button
                     variant="contained"
                     onClick={handleSave}
-                    disabled={scanner.isSaving}
+                    disabled={scanner.isSaving || !scanner.form.walletId}
                     sx={{ flex: 2 }}
                     startIcon={
                       scanner.isSaving ? (
@@ -726,7 +938,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                       )
                     }
                   >
-                    Salvar {scanner.extractedData.items?.length || 0}
+                    Salvar {scanner.form.items.filter((i) => i.selected).length}
                   </Button>
                 )}
               </Paper>
@@ -832,7 +1044,7 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                     alt="Nota"
                     sx={{
                       borderRadius: 2,
-                      maxHeight: 180,
+                      maxHeight: 140,
                       width: "100%",
                       objectFit: "cover",
                     }}
@@ -854,8 +1066,24 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                 </Box>
                 {scanner.isProcessing ? (
                   <LoadingSkeleton />
-                ) : scanner.extractedData ? (
-                  <ExtractedDataView data={scanner.extractedData} />
+                ) : scanner.form ? (
+                  <ReceiptFormView
+                    form={scanner.form}
+                    wallets={scanner.wallets}
+                    categories={scanner.categories}
+                    subcategories={scanner.subcategories}
+                    onUpdateForm={scanner.updateForm}
+                    onUpdateItem={scanner.updateItem}
+                    onToggleItem={scanner.toggleItemSelection}
+                    onSelectAll={scanner.selectAllItems}
+                    disabled={scanner.isSaving}
+                  />
+                ) : scanner.extractedData && !scanner.extractedData.isValid ? (
+                  <Alert severity="warning" variant="outlined">
+                    <AlertTitle>Nota Não Reconhecida</AlertTitle>A IA não
+                    conseguiu identificar esta imagem como uma nota fiscal
+                    válida.
+                  </Alert>
                 ) : null}
               </Stack>
             )}
@@ -878,11 +1106,11 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
             <Button variant="outlined" onClick={handleClose}>
               Cancelar
             </Button>
-            {scanner.extractedData?.isValid && (
+            {scanner.form && scanner.form.items.some((i) => i.selected) && (
               <Button
                 variant="contained"
                 onClick={handleSave}
-                disabled={scanner.isSaving}
+                disabled={scanner.isSaving || !scanner.form.walletId}
                 startIcon={
                   scanner.isSaving ? (
                     <CircularProgress size={16} />
@@ -891,7 +1119,8 @@ export function ScanQRCodeDialog({ children }: { children: React.ReactNode }) {
                   )
                 }
               >
-                Salvar Transações
+                Salvar {scanner.form.items.filter((i) => i.selected).length}{" "}
+                Transações
               </Button>
             )}
           </Stack>

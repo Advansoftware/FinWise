@@ -1,6 +1,6 @@
 // src/ai/ai-types.ts
 
-import {z} from 'zod';
+import { z } from 'zod';
 
 // Schema for generating spending tips
 export const SpendingTipInputSchema = z.object({
@@ -79,6 +79,8 @@ export type ReceiptInfoInput = z.infer<typeof ReceiptInfoInputSchema>;
 
 export const ReceiptInfoOutputSchema = z.object({
   isValid: z.boolean().describe('Whether the image appears to be a valid receipt.'),
+  establishment: z.string().optional().describe('The name of the store/establishment where the purchase was made (e.g., "Supermercado Extra", "Farmácia São João").'),
+  suggestedCategory: z.string().optional().describe('The suggested category for this receipt based on the establishment type. Must be one of: Alimentação, Supermercado, Transporte, Moradia, Saúde, Educação, Lazer, Vestuário, Beleza, Assinaturas, Investimentos, Presentes, Viagem, Animais, Outros.'),
   items: z.array(ReceiptItemSchema).describe('An array of items found on the receipt.'),
   totalAmount: z.number().optional().describe('The total amount of the receipt.'),
   date: z.string().optional().describe('The date of the receipt in YYYY-MM-DD format.'),

@@ -11,13 +11,25 @@ import { createConfiguredAI, getModelReference } from '../genkit';
 import { AICredential } from '@/lib/types';
 
 
-const promptTemplate = `You are an expert OCR system specializing in extracting information from receipts.
+const promptTemplate = `You are an expert OCR system specializing in extracting information from Brazilian receipts (cupons fiscais, notas fiscais).
 You MUST reply in Brazilian Portuguese.
 Analyze the provided image and extract the following information:
-1. Determine if the image is a valid receipt.
-2. List all individual items with their corresponding prices.
-3. Find the total amount of the receipt.
-4. Find the date of the receipt and format it as YYYY-MM-DD.
+
+1. **isValid**: Determine if the image is a valid receipt/cupom fiscal.
+2. **establishment**: Extract the store/establishment name. Look for "RAZÃO SOCIAL", store name at the top, or CNPJ description. Clean the name to be readable (e.g., "SUPERMERCADO EXTRA" not "EXTRA HIPERMERCADOS LTDA").
+3. **suggestedCategory**: Based on the establishment type, suggest ONE category from this list:
+   - Supermercado (for supermarkets, grocery stores)
+   - Alimentação (for restaurants, fast food, bakeries, cafés)
+   - Transporte (for gas stations, parking, toll)
+   - Saúde (for pharmacies, hospitals, clinics)
+   - Vestuário (for clothing stores)
+   - Beleza (for beauty salons, cosmetics stores)
+   - Lazer (for entertainment, movies, games)
+   - Educação (for bookstores, courses)
+   - Outros (for anything else)
+4. **items**: List ALL individual items with their names and prices. Format item names clearly (e.g., "Arroz 5kg" not "ARROZ TP1 5KG").
+5. **totalAmount**: Find the TOTAL value (look for "TOTAL", "VALOR TOTAL", "TOTAL A PAGAR").
+6. **date**: Find the date and format as YYYY-MM-DD.
 
 If the image is not a receipt, set isValid to false and leave other fields empty.
 
