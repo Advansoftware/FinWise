@@ -29,8 +29,9 @@ interface UseCameraReturn {
 export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
   const {
     facingMode: initialFacing = "environment",
-    width = 1920,
-    height = 1080,
+    // Alta resolução para captura de documentos
+    width = 3840,  // 4K
+    height = 2160,
   } = options;
   const { toast } = useToast();
 
@@ -132,8 +133,20 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
         const constraints: MediaStreamConstraints = {
           video: {
             facingMode: facing,
-            width: { ideal: width, min: 640 },
-            height: { ideal: height, min: 480 },
+            // Resolução máxima disponível
+            width: { ideal: width, min: 1280 },
+            height: { ideal: height, min: 720 },
+            // Otimizações para captura de documentos
+            aspectRatio: { ideal: 4 / 3 }, // Melhor para documentos
+            frameRate: { ideal: 30, max: 60 },
+            // Configurações avançadas para qualidade
+            ...({
+              focusMode: { ideal: "continuous" }, // Foco automático contínuo
+              exposureMode: { ideal: "continuous" }, // Exposição automática
+              whiteBalanceMode: { ideal: "continuous" }, // Balanço de branco automático
+              zoom: { ideal: 1 }, // Sem zoom para evitar distorção
+              resizeMode: "none", // Sem redimensionamento pelo navegador
+            } as any),
           },
         };
 
@@ -165,17 +178,49 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
   );
 
   const capture = useCallback(
-    (quality: number = 0.9): string | null => {
+    (quality: number = 1.0): string | null => {
       if (!videoRef.current || !isReady) return null;
 
+      const video = videoRef.current;
       const canvas = canvasRef.current || document.createElement("canvas");
-      canvas.width = videoRef.current.videoWidth;
-      canvas.height = videoRef.current.videoHeight;
+      
+      // Usa a resolução real do vídeo para máxima qualidade
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
 
-      const context = canvas.getContext("2d");
+      const context = canvas.getContext("2d", {
+        alpha: false, // Sem transparência = melhor performance
+        desynchronized: true, // Melhor performance em alguns navegadores
+      });
       if (!context) return null;
 
-      context.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+      // Configurações para melhor qualidade de renderização
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = "high";
+
+      // Desenha o frame atual
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      // Aplica leve aumento de contraste para melhorar legibilidade de texto
+      // Isso ajuda com notas fiscais desbotadas ou com baixo contraste
+      try {
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        const data = imageData.data;
+        const contrast = 1.1; // Leve aumento de contraste (10%)
+        const factor = (259 * (contrast * 255 + 255)) / (255 * (259 - contrast * 255));
+        
+        for (let i = 0; i < data.length; i += 4) {
+          data[i] = Math.min(255, Math.max(0, factor * (data[i] - 128) + 128));     // R
+          data[i + 1] = Math.min(255, Math.max(0, factor * (data[i + 1] - 128) + 128)); // G
+          data[i + 2] = Math.min(255, Math.max(0, factor * (data[i + 2] - 128) + 128)); // B
+        }
+        context.putImageData(imageData, 0, 0);
+      } catch {
+        // Se falhar o processamento de contraste, continua com a imagem original
+      }
+
+      // Retorna em PNG para melhor qualidade (sem compressão com perda)
+      // ou JPEG com qualidade máxima para tamanho menor
       return canvas.toDataURL("image/jpeg", quality);
     },
     [isReady]
