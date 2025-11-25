@@ -124,11 +124,34 @@ function BillingPageContent() {
   useEffect(() => {
     if (searchParams.get("success")) {
       setShowCelebration(true);
+      // Atualizar sessão após o pagamento - tentar múltiplas vezes
+      // pois o webhook pode demorar um pouco para processar
+      const refreshSession = async () => {
+        console.log("[Billing] Payment success detected, refreshing session...");
+        
+        // Tentar atualizar a sessão algumas vezes
+        for (let i = 0; i < 5; i++) {
+          console.log(`[Billing] Refresh attempt ${i + 1}/5`);
+          const updatedUser = await refreshUser();
+          
+          if (updatedUser && updatedUser.plan !== 'Básico') {
+            console.log(`[Billing] Session updated successfully! Plan: ${updatedUser.plan}`);
+            break;
+          }
+          
+          // Aguardar antes da próxima tentativa
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      };
+      
+      // Dar um delay inicial para garantir que o webhook processou
+      const timer = setTimeout(refreshSession, 1500);
+      return () => clearTimeout(timer);
     }
     if (searchParams.get("canceled")) {
       setShowCancelFeedback(true);
     }
-  }, [searchParams]);
+  }, [searchParams, refreshUser]);
 
   const handleUpgrade = async (newPlan: Exclude<UserPlan, "Básico">) => {
     if (!user || !user.email) return;

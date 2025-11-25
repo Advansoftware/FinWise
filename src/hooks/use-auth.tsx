@@ -40,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         plan: (session.user as any).plan || "Básico",
         aiCredits: (session.user as any).aiCredits || 0,
         stripeCustomerId: (session.user as any).stripeCustomerId,
+        stripeCurrentPeriodEnd: (session.user as any).stripeCurrentPeriodEnd,
         createdAt: new Date().toISOString(), // Será carregado do banco posteriormente se necessário
         image: session.user.image,
       }
@@ -47,13 +48,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refreshUser = useCallback(async () => {
     try {
-      await update(); // Atualiza a sessão do NextAuth
-      return user;
+      console.log("[useAuth] Starting session refresh...");
+      
+      // Forçar atualização da sessão - o trigger "update" no callback jwt
+      // vai buscar dados frescos do banco de dados
+      await update();
+      
+      // Aguardar um momento para o NextAuth processar
+      await new Promise(resolve => setTimeout(resolve, 500));
+      
+      // Buscar a sessão atualizada diretamente da API
+      const sessionResponse = await fetch("/api/auth/session", {
+        cache: 'no-store',
+        headers: {
+          'Cache-Control': 'no-cache',
+        }
+      });
+      const sessionData = await sessionResponse.json();
+      
+      if (sessionData?.user) {
+        console.log("[useAuth] Session refreshed successfully!");
+        console.log("[useAuth] New plan:", sessionData.user.plan);
+        console.log("[useAuth] New credits:", sessionData.user.aiCredits);
+        
+        return {
+          uid: sessionData.user.id,
+          email: sessionData.user.email,
+          displayName: sessionData.user.name || "",
+          plan: sessionData.user.plan || "Básico",
+          aiCredits: sessionData.user.aiCredits || 0,
+          stripeCustomerId: sessionData.user.stripeCustomerId,
+          stripeCurrentPeriodEnd: sessionData.user.stripeCurrentPeriodEnd,
+          createdAt: new Date().toISOString(),
+          image: sessionData.user.image,
+        };
+      }
+      return null;
     } catch (error) {
-      console.error("Error refreshing user:", error);
+      console.error("[useAuth] Error refreshing user:", error);
       return null;
     }
-  }, [update, user]);
+  }, [update]);
 
   const login = useCallback(
     async (email: string, password: string): Promise<UserProfile> => {

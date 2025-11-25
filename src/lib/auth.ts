@@ -117,11 +117,36 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.plan = (user as any).plan;
         token.aiCredits = (user as any).aiCredits;
         token.stripeCustomerId = (user as any).stripeCustomerId;
+        token.stripeCurrentPeriodEnd = (user as any).stripeCurrentPeriodEnd;
       }
 
-      // Atualizar token se houver mudanças na sessão
-      if (trigger === "update" && session) {
-        token = { ...token, ...session };
+      // Atualizar token se houver mudanças na sessão (trigger manual)
+      if (trigger === "update") {
+        // Se session tem dados, usar esses dados
+        if (session) {
+          token = { ...token, ...session };
+        }
+
+        // Sempre buscar dados frescos do banco quando update é chamado
+        try {
+          const db = client.db(process.env.MONGODB_DB || 'gastometria');
+          const usersCollection = db.collection('users');
+          const { ObjectId } = require('mongodb');
+
+          const freshUser = await usersCollection.findOne({
+            _id: new ObjectId(token.id)
+          });
+
+          if (freshUser) {
+            token.plan = freshUser.plan || 'Básico';
+            token.aiCredits = freshUser.aiCredits || 0;
+            token.stripeCustomerId = freshUser.stripeCustomerId;
+            token.stripeCurrentPeriodEnd = freshUser.stripeCurrentPeriodEnd;
+            console.log(`[Auth] Session refreshed for user ${token.id}, plan: ${token.plan}`);
+          }
+        } catch (error) {
+          console.error('[Auth] Error refreshing user data:', error);
+        }
       }
 
       return token;
@@ -135,6 +160,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         (session.user as any).plan = token.plan;
         (session.user as any).aiCredits = token.aiCredits;
         (session.user as any).stripeCustomerId = token.stripeCustomerId;
+        (session.user as any).stripeCurrentPeriodEnd = token.stripeCurrentPeriodEnd;
       }
       return session;
     },
