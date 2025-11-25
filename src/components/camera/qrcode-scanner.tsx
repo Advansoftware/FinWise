@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import { Box, Stack } from "@mui/material";
 import { SwitchCamera, RefreshCw, QrCode, CheckCircle } from "lucide-react";
-import { isNFCeUrl } from "@/services/nfce-service";
+import { isNFCeUrl } from "@/lib/nfce-utils";
 
 type CameraFacing = "user" | "environment";
 

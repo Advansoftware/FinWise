@@ -8,10 +8,10 @@ import { useWallets } from "@/hooks/use-wallets";
 import { useTransactions } from "@/hooks/use-transactions";
 import {
   extractNFCeData,
-  convertDateToISO,
   NFCeExtractionResult,
   NFCeItem,
 } from "@/services/nfce-service";
+import { convertDateToISO } from "@/lib/nfce-utils";
 import { TransactionCategory } from "@/lib/types";
 
 // Formulário editável para cada item (casa com Transaction)

@@ -11,7 +11,7 @@ import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 import { SpendingChart } from "@/components/dashboard/spending-chart";
 import { AITipCard } from "@/components/dashboard/ai-tip-card";
 import { AddTransactionSheet } from "@/components/dashboard/add-transaction-sheet";
-import { ScanQRCodeDialog } from "@/components/dashboard/scan-qr-code-dialog";
+import { ReceiptScannerDialog } from "@/components/receipts/receipt-scanner-dialog";
 import { WalletCard } from "@/components/dashboard/wallet-card";
 import { GoalHighlightCard } from "@/components/goals/goal-highlight-card";
 import { FutureBalanceCard } from "@/components/dashboard/future-balance-card";
@@ -91,14 +91,14 @@ export default function DashboardPage() {
                   requiredPlan="Pro"
                   tooltipContent="Escanear notas fiscais com IA é um recurso Pro. Clique para fazer upgrade."
                 >
-                  <ScanQRCodeDialog>
+                  <ReceiptScannerDialog>
                     <Button
                       variant="outlined"
                       startIcon={<ScanLine size={18} />}
                     >
                       Escanear Nota
                     </Button>
-                  </ScanQRCodeDialog>
+                  </ReceiptScannerDialog>
                 </ProUpgradeButton>
                 <AddTransactionSheet>
                   <Button
@@ -139,7 +139,7 @@ export default function DashboardPage() {
                 requiredPlan="Pro"
                 tooltipContent="Escanear notas fiscais com IA é um recurso Pro. Clique para fazer upgrade."
               >
-                <ScanQRCodeDialog>
+                <ReceiptScannerDialog>
                   <Button
                     variant="outlined"
                     fullWidth
@@ -147,7 +147,7 @@ export default function DashboardPage() {
                   >
                     Escanear Nota
                   </Button>
-                </ScanQRCodeDialog>
+                </ReceiptScannerDialog>
               </ProUpgradeButton>
             </Grid>
           </Grid>

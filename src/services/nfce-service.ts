@@ -91,13 +91,6 @@ const NFCE_URL_PATTERNS = [
 ];
 
 /**
- * Verifica se a URL é de um portal de NFCe
- */
-export function isNFCeUrl(url: string): boolean {
-  return NFCE_URL_PATTERNS.some((pattern) => pattern.test(url));
-}
-
-/**
  * Normaliza texto para comparação
  */
 function normalizeText(text: string): string {
@@ -236,17 +229,6 @@ function getMostFrequentCategory(items: NFCeItem[]): TransactionCategory {
     }
   }
   return maxCategory;
-}
-
-/**
- * Converte data DD/MM/YYYY para ISO YYYY-MM-DD
- */
-export function convertDateToISO(dateStr: string): string {
-  const parts = dateStr.split("/");
-  if (parts.length === 3) {
-    return `${parts[2]}-${parts[1].padStart(2, "0")}-${parts[0].padStart(2, "0")}`;
-  }
-  return new Date().toISOString().split("T")[0];
 }
 
 // Tipo interno para parsing
