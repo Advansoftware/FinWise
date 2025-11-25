@@ -428,7 +428,10 @@ const createComponents = (): Components<Omit<Theme, 'components'>> => {
           transition: 'border-color 0.2s ease-in-out',
         },
         input: {
-          padding: '10px 14px',
+          padding: '12px 14px',
+          height: '1.4375em',
+          display: 'flex',
+          alignItems: 'center',
           '&::placeholder': {
             color: colors.mutedForeground,
             opacity: 0.7,
@@ -474,8 +477,21 @@ const createComponents = (): Components<Omit<Theme, 'components'>> => {
             color: colors.destructive,
           },
         },
+        outlined: {
+          // Ajuste para centralizar verticalmente no input medium
+          transform: 'translate(14px, 12px) scale(1)',
+          '&.MuiInputLabel-shrink': {
+            transform: 'translate(14px, -9px) scale(0.75)',
+          },
+        },
         sizeSmall: {
           fontSize: typographyTokens.fontSize.sm,
+          '&.MuiInputLabel-outlined': {
+            transform: 'translate(14px, 8px) scale(1)',
+            '&.MuiInputLabel-shrink': {
+              transform: 'translate(14px, -9px) scale(0.75)',
+            },
+          },
         },
       },
     },
@@ -523,7 +539,11 @@ const createComponents = (): Components<Omit<Theme, 'components'>> => {
           borderRadius: radius.md,
         },
         select: {
-          padding: '8px 12px',
+          // Padding ajustado para centralizar verticalmente
+          padding: '12px 14px',
+          display: 'flex',
+          alignItems: 'center',
+          minHeight: '1.4375em',
         },
         icon: {
           color: colors.mutedForeground,
