@@ -27,6 +27,12 @@ export class ApiClient {
       return this.getTransactions(userId, id);
     }
 
+    // Rota para buscar filhos de uma transação
+    if (collection.startsWith('transactions/') && collection.endsWith('/children')) {
+      const parentId = collection.replace('transactions/', '').replace('/children', '');
+      return this.getTransactionChildren(userId, parentId);
+    }
+
     const params = new URLSearchParams({
       collection,
       userId,
@@ -51,7 +57,28 @@ export class ApiClient {
     return response.json();
   }
 
+  private async getTransactionChildren(userId: string, parentId: string) {
+    const params = new URLSearchParams({ userId });
+    const response = await fetch(`${this.transactionsUrl}/${parentId}/children?${params}`);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch transaction children: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
   async create(collection: string, data: any) {
+    // Use specific API for grouped transactions
+    if (collection === 'transactions/grouped') {
+      return this.createGroupedTransaction(data);
+    }
+
+    // Use specific API for child transactions
+    if (collection.startsWith('transactions/') && collection.endsWith('/children')) {
+      const parentId = collection.replace('transactions/', '').replace('/children', '');
+      return this.createChildTransaction(parentId, data);
+    }
+
     // Use specific API for transactions
     if (collection === 'transactions') {
       return this.createTransaction(data);
@@ -94,7 +121,51 @@ export class ApiClient {
     return response.json();
   }
 
+  private async createGroupedTransaction(data: any) {
+    const { parent, children } = data;
+    const userId = parent.userId;
+
+    const params = new URLSearchParams({ userId });
+    const response = await fetch(`${this.transactionsUrl}/grouped?${params}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ parent, children }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to create grouped transaction: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  private async createChildTransaction(parentId: string, data: any) {
+    const { id, ...dataWithoutTempId } = data;
+    const userId = data.userId;
+
+    const params = new URLSearchParams({ userId });
+    const response = await fetch(`${this.transactionsUrl}/${parentId}/children?${params}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(dataWithoutTempId),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to create child transaction: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
   async update(collection: string, id: string, data: any) {
+    // Use specific API for child transactions
+    if (collection.startsWith('transactions/') && collection.endsWith('/children')) {
+      const parentId = collection.replace('transactions/', '').replace('/children', '');
+      return this.updateChildTransaction(parentId, id, data);
+    }
+
     // Use specific API for transactions
     if (collection === 'transactions') {
       return this.updateTransaction(id, data);
@@ -137,7 +208,34 @@ export class ApiClient {
     return response.json();
   }
 
+  private async updateChildTransaction(parentId: string, childId: string, data: any) {
+    const userId = data.userId;
+    if (!userId) {
+      throw new Error('User ID is required for child transaction update');
+    }
+
+    const params = new URLSearchParams({ userId });
+    const response = await fetch(`${this.transactionsUrl}/${parentId}/children?${params}`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ ...data, childId }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to update child transaction: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
   async delete(collection: string, id: string, data?: any) {
+    // Use specific API for child transactions
+    if (collection.startsWith('transactions/') && collection.endsWith('/children')) {
+      const parentId = collection.replace('transactions/', '').replace('/children', '');
+      return this.deleteChildTransaction(parentId, id, data);
+    }
+
     // Use specific API for transactions
     if (collection === 'transactions') {
       return this.deleteTransaction(id, data);
@@ -176,6 +274,31 @@ export class ApiClient {
 
     if (!response.ok) {
       throw new Error(`Failed to delete transaction: ${response.statusText}`);
+    }
+    return response.json();
+  }
+
+  private async deleteChildTransaction(parentId: string, childId: string, data?: any) {
+    const userId = data?.userId;
+    if (!userId) {
+      throw new Error('User ID is required for child transaction deletion');
+    }
+
+    const params = new URLSearchParams({ userId });
+    const response = await fetch(`${this.transactionsUrl}/${parentId}/children?${params}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ childId }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete child transaction: ${response.statusText}`);
+    }
+    // 204 No Content doesn't return JSON
+    if (response.status === 204) {
+      return { success: true };
     }
     return response.json();
   }

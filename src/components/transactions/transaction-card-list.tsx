@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Transaction } from "@/lib/types";
 import {
   Card,
@@ -14,11 +14,19 @@ import {
   Stack,
   useTheme,
   alpha,
+  Badge,
 } from "@mui/material";
 import { CategoryIcon } from "../icons";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { MoreVertical, Pen, Trash2, ArrowDown } from "lucide-react";
+import {
+  MoreVertical,
+  Pen,
+  Trash2,
+  ArrowDown,
+  Layers,
+  Package,
+} from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +44,7 @@ import {
   AlertDialogTitle,
 } from "@/components/mui-wrappers/alert-dialog";
 import { EditTransactionSheet } from "./edit-transaction-sheet";
+import { ChildTransactionsDialog } from "./child-transactions-dialog";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useToast } from "@/hooks/use-toast";
 
@@ -77,6 +86,7 @@ export function TransactionCardList({
 function TransactionCard({ transaction }: { transaction: Transaction }) {
   const [isEditSheetOpen, setIsEditSheetOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isChildrenDialogOpen, setIsChildrenDialogOpen] = useState(false);
   const { deleteTransaction } = useTransactions();
   const { toast } = useToast();
   const theme = useTheme();
@@ -89,6 +99,31 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
       toast({ variant: "error", title: "Erro ao excluir transação." });
     }
   };
+
+  // Abrir modal de subitens ao clicar no card (se tiver filhos) ou botão do menu
+  const handleOpenSubitems = useCallback(() => {
+    setIsChildrenDialogOpen(true);
+  }, []);
+
+  const handleCardClick = () => {
+    // Só abre ao clicar no card se já tiver filhos
+    if (transaction.hasChildren && (transaction.childrenCount || 0) > 0) {
+      handleOpenSubitems();
+    }
+  };
+
+  // Callback quando o pai é atualizado (filhos adicionados/removidos)
+  const handleParentUpdated = useCallback(() => {
+    // O refresh já é feito pelo hook, mas podemos usar isso para UI local se necessário
+  }, []);
+
+  const isGrouped =
+    transaction.hasChildren && (transaction.childrenCount || 0) > 0;
+
+  // Não mostra transações filhas na lista principal
+  if (transaction.parentId) {
+    return null;
+  }
 
   return (
     <>
@@ -107,7 +142,8 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
             <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta ação não pode ser desfeita. Isso excluirá permanentemente a
-              transação "{transaction.item}".
+              transação "{transaction.item}"
+              {isGrouped && ` e seus ${transaction.childrenCount} itens`}.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -125,8 +161,27 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
         </AlertDialogContent>
       </AlertDialog>
 
+      {/* Modal sempre disponível para qualquer transação */}
+      <ChildTransactionsDialog
+        open={isChildrenDialogOpen}
+        onClose={() => setIsChildrenDialogOpen(false)}
+        parentTransaction={transaction}
+        onParentUpdated={handleParentUpdated}
+      />
+
       <Card
-        sx={{ transition: "colors", "&:hover": { bgcolor: "action.hover" } }}
+        sx={{
+          transition: "all 0.2s",
+          cursor: isGrouped ? "pointer" : "default",
+          "&:hover": {
+            bgcolor: "action.hover",
+            ...(isGrouped && {
+              transform: "translateY(-2px)",
+              boxShadow: theme.shadows[4],
+            }),
+          },
+        }}
+        onClick={handleCardClick}
       >
         <CardHeader sx={{ p: { xs: 3, sm: 4 } }}>
           <Stack
@@ -140,32 +195,53 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
               spacing={{ xs: 2, sm: 3 }}
               sx={{ flex: 1, minWidth: 0 }}
             >
-              <Box
+              <Badge
+                badgeContent={isGrouped ? transaction.childrenCount : 0}
+                color="primary"
                 sx={{
-                  p: { xs: 1.5, sm: 2 },
-                  borderRadius: "50%",
-                  flexShrink: 0,
-                  bgcolor:
-                    transaction.type === "income"
-                      ? alpha(theme.palette.success.main, 0.2)
-                      : "action.selected",
+                  "& .MuiBadge-badge": {
+                    fontSize: "0.65rem",
+                    height: 18,
+                    minWidth: 18,
+                  },
                 }}
               >
-                {transaction.type === "income" ? (
-                  <ArrowDown
-                    style={{
-                      width: 16,
-                      height: 16,
-                      color: theme.palette.success.main,
-                    }}
-                  />
-                ) : (
-                  <CategoryIcon
-                    category={transaction.category}
-                    style={{ width: 16, height: 16 }}
-                  />
-                )}
-              </Box>
+                <Box
+                  sx={{
+                    p: { xs: 1.5, sm: 2 },
+                    borderRadius: "50%",
+                    flexShrink: 0,
+                    bgcolor: isGrouped
+                      ? alpha(theme.palette.primary.main, 0.2)
+                      : transaction.type === "income"
+                      ? alpha(theme.palette.success.main, 0.2)
+                      : "action.selected",
+                  }}
+                >
+                  {isGrouped ? (
+                    <Layers
+                      style={{
+                        width: 16,
+                        height: 16,
+                        color: theme.palette.primary.main,
+                      }}
+                    />
+                  ) : transaction.type === "income" ? (
+                    <ArrowDown
+                      style={{
+                        width: 16,
+                        height: 16,
+                        color: theme.palette.success.main,
+                      }}
+                    />
+                  ) : (
+                    <CategoryIcon
+                      category={transaction.category}
+                      style={{ width: 16, height: 16 }}
+                    />
+                  )}
+                </Box>
+              </Badge>
               <Box sx={{ flex: 1, minWidth: 0 }}>
                 <Typography
                   variant="body1"
@@ -177,7 +253,7 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
                     whiteSpace: "nowrap",
                   }}
                 >
-                  {transaction.item}
+                  {transaction.groupName || transaction.item}
                 </Typography>
                 {transaction.establishment && (
                   <Typography
@@ -193,6 +269,19 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
                     {transaction.establishment}
                   </Typography>
                 )}
+                {isGrouped && (
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontSize: "0.7rem",
+                      color: "primary.main",
+                      mt: 0.5,
+                    }}
+                  >
+                    Clique para ver {transaction.childrenCount}{" "}
+                    {transaction.childrenCount === 1 ? "item" : "itens"}
+                  </Typography>
+                )}
               </Box>
             </Stack>
             <DropdownMenu>
@@ -200,6 +289,7 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
                 <Button
                   variant="text"
                   size="small"
+                  onClick={(e) => e.stopPropagation()}
                   sx={{
                     height: 32,
                     width: 32,
@@ -215,6 +305,10 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
                 <DropdownMenuItem onClick={() => setIsEditSheetOpen(true)}>
                   <Pen style={{ marginRight: 8, width: 16, height: 16 }} />{" "}
                   Editar
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleOpenSubitems}>
+                  <Package style={{ marginRight: 8, width: 16, height: 16 }} />{" "}
+                  Subitens {isGrouped && `(${transaction.childrenCount})`}
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={() => setIsDeleteDialogOpen(true)}

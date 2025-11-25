@@ -1,10 +1,10 @@
 // src/app/api/transactions/[id]/route.ts
 
-import {NextRequest, NextResponse} from 'next/server';
-import {connectToDatabase} from '@/lib/mongodb';
-import {ObjectId} from 'mongodb';
-import {WalletBalanceService} from '@/services/wallet-balance-service';
-import {Transaction} from '@/lib/types';
+import { NextRequest, NextResponse } from 'next/server';
+import { connectToDatabase } from '@/lib/mongodb';
+import { ObjectId } from 'mongodb';
+import { WalletBalanceService } from '@/services/wallet-balance-service';
+import { Transaction } from '@/lib/types';
 
 async function getUserIdFromRequest(request: NextRequest): Promise<string | null> {
   const { searchParams } = new URL(request.url);
@@ -127,7 +127,7 @@ export async function PUT(
   }
 }
 
-// DELETE - Remover transação com reversão do saldo
+// DELETE - Remover transação com reversão do saldo (e filhos se houver)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string } }
@@ -170,6 +170,14 @@ export async function DELETE(
       } as Pick<Transaction, 'walletId' | 'toWalletId' | 'type' | 'amount' | 'userId'>;
 
       await WalletBalanceService.revertBalanceForTransaction(transactionForBalance as Transaction, authenticatedUserId);
+    }
+
+    // Se a transação tem filhos, deletar os filhos primeiro
+    if (existingTransaction.hasChildren) {
+      await db.collection('transactions').deleteMany({
+        parentId: params.id,
+        userId: authenticatedUserId
+      });
     }
 
     // Deletar a transação

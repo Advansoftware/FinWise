@@ -75,7 +75,8 @@ export function useReceiptScanner(): UseReceiptScannerReturn {
   const { toast } = useToast();
   const { user } = useAuth();
   const { wallets } = useWallets();
-  const { addTransaction, categories, subcategories } = useTransactions();
+  const { addTransaction, addGroupedTransaction, categories, subcategories } =
+    useTransactions();
   const { displayedCredentials, activeCredentialId } = useAISettings();
   const { isPlus } = usePlan();
 
@@ -235,21 +236,54 @@ export function useReceiptScanner(): UseReceiptScannerReturn {
         try {
           const transactionDate = new Date(form.date).toISOString();
 
-          await Promise.all(
-            selectedItems.map((item) =>
-              addTransaction({
-                item: item.item,
-                amount: parseFloat(String(item.amount)),
-                date: transactionDate,
-                category: form.category,
-                subcategory: form.subcategory,
-                type: form.type,
-                walletId: form.walletId,
-                quantity: item.quantity,
-                establishment: form.establishment,
-              })
-            )
-          );
+          // Se tiver mais de 1 item, criar como transação agrupada
+          if (selectedItems.length > 1) {
+            const groupName =
+              form.establishment ||
+              `Compra ${new Date(form.date).toLocaleDateString("pt-BR")}`;
+
+            // Transação pai
+            const parentTransaction = {
+              item: groupName,
+              amount: 0, // Será calculado automaticamente pela soma dos filhos
+              date: transactionDate,
+              category: form.category,
+              subcategory: form.subcategory,
+              type: form.type,
+              walletId: form.walletId,
+              establishment: form.establishment,
+              groupName,
+            };
+
+            // Transações filhas
+            const childTransactions = selectedItems.map((item) => ({
+              item: item.item,
+              amount: parseFloat(String(item.amount)),
+              date: transactionDate,
+              category: form.category,
+              subcategory: form.subcategory,
+              type: form.type,
+              walletId: form.walletId,
+              quantity: item.quantity,
+              establishment: form.establishment,
+            }));
+
+            await addGroupedTransaction(parentTransaction, childTransactions);
+          } else {
+            // Se for apenas 1 item, criar transação simples
+            const item = selectedItems[0];
+            await addTransaction({
+              item: item.item,
+              amount: parseFloat(String(item.amount)),
+              date: transactionDate,
+              category: form.category,
+              subcategory: form.subcategory,
+              type: form.type,
+              walletId: form.walletId,
+              quantity: item.quantity,
+              establishment: form.establishment,
+            });
+          }
 
           toast({
             title: "Sucesso!",
@@ -268,7 +302,7 @@ export function useReceiptScanner(): UseReceiptScannerReturn {
         }
       });
     });
-  }, [form, user, addTransaction, toast]);
+  }, [form, user, addTransaction, addGroupedTransaction, toast]);
 
   return {
     receiptImage,

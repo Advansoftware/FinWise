@@ -1,15 +1,15 @@
 // src/core/adapters/mongodb/mongodb.adapter.ts
 
-import {MongoClient, Db, ObjectId, ClientSession} from 'mongodb';
-import {IDatabaseAdapter, IUserRepository, ITransactionRepository, IWalletRepository, IBudgetRepository, IGoalRepository, IAICreditLogRepository, ISettingsRepository, IAIGeneratedDataRepository} from '@/core/ports/database.port';
-import {IPaymentRepository} from '@/core/ports/payment.port';
-import {IReportsRepository} from '@/core/ports/reports.port';
-import {IInstallmentsRepository} from '@/core/ports/installments.port';
-import {MongoPaymentRepository} from './mongodb-payment.adapter';
-import {MongoReportsRepository} from './mongodb-reports.adapter';
-import {MongoInstallmentsRepository} from './mongodb-installments.adapter';
-import {Transaction, Wallet, Budget, Goal, UserProfile} from '@/lib/types';
-import {AICreditLog} from '@/ai/ai-types';
+import { MongoClient, Db, ObjectId, ClientSession } from 'mongodb';
+import { IDatabaseAdapter, IUserRepository, ITransactionRepository, IWalletRepository, IBudgetRepository, IGoalRepository, IAICreditLogRepository, ISettingsRepository, IAIGeneratedDataRepository } from '@/core/ports/database.port';
+import { IPaymentRepository } from '@/core/ports/payment.port';
+import { IReportsRepository } from '@/core/ports/reports.port';
+import { IInstallmentsRepository } from '@/core/ports/installments.port';
+import { MongoPaymentRepository } from './mongodb-payment.adapter';
+import { MongoReportsRepository } from './mongodb-reports.adapter';
+import { MongoInstallmentsRepository } from './mongodb-installments.adapter';
+import { Transaction, Wallet, Budget, Goal, UserProfile } from '@/lib/types';
+import { AICreditLog } from '@/ai/ai-types';
 
 class MongoUserRepository implements IUserRepository {
   constructor(private db: Db) { }
@@ -88,13 +88,8 @@ class MongoUserRepository implements IUserRepository {
 class MongoTransactionRepository implements ITransactionRepository {
   constructor(private db: Db) { }
 
-  async findByUserId(userId: string): Promise<Transaction[]> {
-    const transactions = await this.db.collection('transactions')
-      .find({ userId })
-      .sort({ date: -1 })
-      .toArray();
-
-    return transactions.map(t => ({
+  private mapTransaction(t: any): Transaction {
+    return {
       id: t._id.toString(),
       userId: t.userId,
       date: t.date,
@@ -106,28 +101,48 @@ class MongoTransactionRepository implements ITransactionRepository {
       establishment: t.establishment,
       type: t.type,
       walletId: t.walletId,
-      toWalletId: t.toWalletId
-    }));
+      toWalletId: t.toWalletId,
+      parentId: t.parentId,
+      hasChildren: t.hasChildren,
+      childrenCount: t.childrenCount,
+      groupName: t.groupName,
+    };
+  }
+
+  async findByUserId(userId: string): Promise<Transaction[]> {
+    const transactions = await this.db.collection('transactions')
+      .find({ userId })
+      .sort({ date: -1 })
+      .toArray();
+
+    return transactions.map(t => this.mapTransaction(t));
+  }
+
+  // Retorna apenas transações raiz (sem parentId) para listagem principal
+  async findRootByUserId(userId: string): Promise<Transaction[]> {
+    const transactions = await this.db.collection('transactions')
+      .find({ userId, parentId: { $exists: false } })
+      .sort({ date: -1 })
+      .toArray();
+
+    return transactions.map(t => this.mapTransaction(t));
+  }
+
+  // Busca transações filhas de uma transação pai
+  async findChildren(parentId: string): Promise<Transaction[]> {
+    const transactions = await this.db.collection('transactions')
+      .find({ parentId })
+      .sort({ item: 1 })
+      .toArray();
+
+    return transactions.map(t => this.mapTransaction(t));
   }
 
   async findById(id: string): Promise<Transaction | null> {
     const transaction = await this.db.collection('transactions').findOne({ _id: new ObjectId(id) });
     if (!transaction) return null;
 
-    return {
-      id: transaction._id.toString(),
-      userId: transaction.userId,
-      date: transaction.date,
-      item: transaction.item,
-      category: transaction.category,
-      subcategory: transaction.subcategory,
-      amount: transaction.amount,
-      quantity: transaction.quantity,
-      establishment: transaction.establishment,
-      type: transaction.type,
-      walletId: transaction.walletId,
-      toWalletId: transaction.toWalletId
-    };
+    return this.mapTransaction(transaction);
   }
 
   async create(transactionData: Omit<Transaction, 'id'>): Promise<Transaction> {
@@ -136,6 +151,40 @@ class MongoTransactionRepository implements ITransactionRepository {
     return {
       id: result.insertedId.toString(),
       ...transactionData
+    };
+  }
+
+  // Cria uma transação pai com seus filhos de uma só vez
+  async createGrouped(
+    parentData: Omit<Transaction, 'id'>,
+    childrenData: Omit<Transaction, 'id' | 'parentId'>[]
+  ): Promise<Transaction> {
+    // Calcula o total dos filhos
+    const totalAmount = childrenData.reduce((sum, child) => sum + child.amount * (child.quantity || 1), 0);
+
+    // Cria a transação pai com metadados
+    const parentWithMeta = {
+      ...parentData,
+      amount: totalAmount,
+      hasChildren: true,
+      childrenCount: childrenData.length,
+    };
+
+    const parentResult = await this.db.collection('transactions').insertOne(parentWithMeta);
+    const parentId = parentResult.insertedId.toString();
+
+    // Cria as transações filhas vinculadas ao pai
+    if (childrenData.length > 0) {
+      const childrenWithParent = childrenData.map(child => ({
+        ...child,
+        parentId,
+      }));
+      await this.db.collection('transactions').insertMany(childrenWithParent);
+    }
+
+    return {
+      id: parentId,
+      ...parentWithMeta
     };
   }
 
@@ -151,29 +200,26 @@ class MongoTransactionRepository implements ITransactionRepository {
     await this.db.collection('transactions').deleteOne({ _id: new ObjectId(id) });
   }
 
+  // Deleta uma transação e todos os seus filhos
+  async deleteWithChildren(id: string): Promise<void> {
+    // Primeiro deleta os filhos
+    await this.db.collection('transactions').deleteMany({ parentId: id });
+    // Depois deleta o pai
+    await this.db.collection('transactions').deleteOne({ _id: new ObjectId(id) });
+  }
+
   async findByUserIdAndDateRange(userId: string, startDate: string, endDate: string): Promise<Transaction[]> {
+    // Retorna apenas transações raiz no range de data
     const transactions = await this.db.collection('transactions')
       .find({
         userId,
+        parentId: { $exists: false },
         date: { $gte: startDate, $lte: endDate }
       })
       .sort({ date: -1 })
       .toArray();
 
-    return transactions.map(t => ({
-      id: t._id.toString(),
-      userId: t.userId,
-      date: t.date,
-      item: t.item,
-      category: t.category,
-      subcategory: t.subcategory,
-      amount: t.amount,
-      quantity: t.quantity,
-      establishment: t.establishment,
-      type: t.type,
-      walletId: t.walletId,
-      toWalletId: t.toWalletId
-    }));
+    return transactions.map(t => this.mapTransaction(t));
   }
 }
 

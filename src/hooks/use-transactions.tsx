@@ -43,6 +43,21 @@ interface TransactionsContextType {
   addTransaction: (
     transaction: Omit<Transaction, "id" | "userId">
   ) => Promise<void>;
+  addGroupedTransaction: (
+    parent: Omit<Transaction, "id" | "userId">,
+    children: Omit<Transaction, "id" | "userId" | "parentId">[]
+  ) => Promise<void>;
+  getChildTransactions: (parentId: string) => Promise<Transaction[]>;
+  addChildTransaction: (
+    parentId: string,
+    child: Omit<Transaction, "id" | "userId" | "parentId">
+  ) => Promise<void>;
+  updateChildTransaction: (
+    parentId: string,
+    childId: string,
+    updates: Partial<Transaction>
+  ) => Promise<void>;
+  deleteChildTransaction: (parentId: string, childId: string) => Promise<void>;
   updateTransaction: (
     transactionId: string,
     updates: Partial<Transaction>,
@@ -221,6 +236,201 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
         title: "Erro ao adicionar transação",
         description: "Tente novamente",
       });
+    }
+  };
+
+  // Adiciona uma transação agrupada (pai + filhos)
+  const addGroupedTransaction = async (
+    parent: Omit<Transaction, "id" | "userId">,
+    children: Omit<Transaction, "id" | "userId" | "parentId">[]
+  ) => {
+    if (!user) throw new Error("User not authenticated");
+
+    try {
+      if (navigator.onLine) {
+        // Online: create on server
+        const created = await apiClient.create("transactions/grouped", {
+          parent: { ...parent, userId: user.uid },
+          children: children.map((c) => ({ ...c, userId: user.uid })),
+        });
+        await offlineStorage.saveTransaction(created, true);
+      } else {
+        // Offline: save parent locally with temp IDs
+        const tempParentId = `temp-${Date.now()}-${Math.random()}`;
+        const parentWithUser = {
+          ...parent,
+          userId: user.uid,
+          id: tempParentId,
+          hasChildren: true,
+          childrenCount: children.length,
+        };
+
+        await offlineStorage.saveTransaction(parentWithUser, false);
+
+        // Save children with parent reference
+        for (const child of children) {
+          const childWithUser = {
+            ...child,
+            userId: user.uid,
+            id: `temp-${Date.now()}-${Math.random()}`,
+            parentId: tempParentId,
+          };
+          await offlineStorage.saveTransaction(childWithUser, false);
+        }
+
+        await offlineStorage.addPendingAction({
+          type: "create",
+          collection: "transactions/grouped",
+          data: {
+            parent: { ...parent, userId: user.uid },
+            children: children.map((c) => ({ ...c, userId: user.uid })),
+          },
+        });
+
+        toast({
+          title: "💾 Transação agrupada salva offline",
+          description: "Será sincronizada quando você estiver online",
+        });
+      }
+
+      await refreshData();
+      setTimeout(() => {
+        refreshWallets();
+      }, 500);
+
+      setTimeout(() => {
+        triggerRefresh("all");
+      }, 1000);
+    } catch (error) {
+      console.error("Erro ao adicionar transação agrupada:", error);
+      toast({
+        variant: "error",
+        title: "Erro ao adicionar transação",
+        description: "Tente novamente",
+      });
+    }
+  };
+
+  // Busca transações filhas de uma transação pai
+  const getChildTransactions = async (
+    parentId: string
+  ): Promise<Transaction[]> => {
+    if (!user) throw new Error("User not authenticated");
+
+    try {
+      if (navigator.onLine) {
+        const children = await apiClient.get(
+          `transactions/${parentId}/children`,
+          user.uid
+        );
+        return children || [];
+      } else {
+        // Offline: busca do storage local
+        const allTx = await offlineStorage.getTransactions(user.uid);
+        return allTx.filter((t) => t.parentId === parentId);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar transações filhas:", error);
+      return [];
+    }
+  };
+
+  // Adiciona uma transação filha a um pai existente
+  const addChildTransaction = async (
+    parentId: string,
+    child: Omit<Transaction, "id" | "userId" | "parentId">
+  ) => {
+    if (!user) throw new Error("User not authenticated");
+
+    try {
+      if (navigator.onLine) {
+        await apiClient.create(`transactions/${parentId}/children`, {
+          ...child,
+          userId: user.uid,
+          parentId,
+        });
+      } else {
+        const childWithUser = {
+          ...child,
+          userId: user.uid,
+          id: `temp-${Date.now()}-${Math.random()}`,
+          parentId,
+        };
+        await offlineStorage.saveTransaction(childWithUser, false);
+        await offlineStorage.addPendingAction({
+          type: "create",
+          collection: `transactions/${parentId}/children`,
+          data: childWithUser,
+        });
+
+        toast({
+          title: "💾 Item salvo offline",
+          description: "Será sincronizado quando você estiver online",
+        });
+      }
+
+      await refreshData();
+      setTimeout(() => refreshWallets(), 500);
+      setTimeout(() => triggerRefresh("all"), 1000);
+    } catch (error) {
+      console.error("Erro ao adicionar item:", error);
+      throw error;
+    }
+  };
+
+  // Atualiza uma transação filha
+  const updateChildTransaction = async (
+    parentId: string,
+    childId: string,
+    updates: Partial<Transaction>
+  ) => {
+    if (!user) throw new Error("User not authenticated");
+
+    try {
+      if (navigator.onLine) {
+        await apiClient.update(`transactions/${parentId}/children`, childId, {
+          updates,
+          userId: user.uid,
+        });
+      } else {
+        toast({
+          title: "💾 Item atualizado offline",
+          description: "Será sincronizado quando você estiver online",
+        });
+      }
+
+      await refreshData();
+      setTimeout(() => refreshWallets(), 500);
+      setTimeout(() => triggerRefresh("all"), 1000);
+    } catch (error) {
+      console.error("Erro ao atualizar item:", error);
+      throw error;
+    }
+  };
+
+  // Remove uma transação filha
+  const deleteChildTransaction = async (parentId: string, childId: string) => {
+    if (!user) throw new Error("User not authenticated");
+
+    try {
+      if (navigator.onLine) {
+        await apiClient.delete(`transactions/${parentId}/children`, childId, {
+          userId: user.uid,
+        });
+      } else {
+        await offlineStorage.deleteItem("transactions", childId, user.uid);
+        toast({
+          title: "💾 Item removido offline",
+          description: "Será sincronizado quando você estiver online",
+        });
+      }
+
+      await refreshData();
+      setTimeout(() => refreshWallets(), 500);
+      setTimeout(() => triggerRefresh("all"), 1000);
+    } catch (error) {
+      console.error("Erro ao remover item:", error);
+      throw error;
     }
   };
 
@@ -484,6 +694,11 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
     selectedSubcategory,
     setSelectedSubcategory,
     addTransaction,
+    addGroupedTransaction,
+    getChildTransactions,
+    addChildTransaction,
+    updateChildTransaction,
+    deleteChildTransaction,
     updateTransaction,
     deleteTransaction,
     addCategory,

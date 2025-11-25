@@ -29,6 +29,12 @@ export interface Transaction {
   type: 'income' | 'expense' | 'transfer';
   walletId: string;
   toWalletId?: string; // Only for transfers
+
+  // Campos para transações agrupadas (pai/filhos)
+  parentId?: string; // ID da transação pai (se for uma transação filha)
+  hasChildren?: boolean; // Indica que esta transação tem subitens
+  childrenCount?: number; // Quantidade de subitens
+  groupName?: string; // Nome do grupo/nota (ex: "Compra Supermercado Extra")
 }
 
 export interface Budget {

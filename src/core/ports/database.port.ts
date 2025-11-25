@@ -1,10 +1,10 @@
 // src/core/ports/database.port.ts
 
-import {Transaction, Wallet, Budget, Goal, UserProfile} from '@/lib/types';
-import {AICreditLog} from '@/ai/ai-types';
-import {IPaymentRepository} from './payment.port';
-import {IReportsRepository} from './reports.port';
-import {IInstallmentsRepository} from './installments.port';
+import { Transaction, Wallet, Budget, Goal, UserProfile } from '@/lib/types';
+import { AICreditLog } from '@/ai/ai-types';
+import { IPaymentRepository } from './payment.port';
+import { IReportsRepository } from './reports.port';
+import { IInstallmentsRepository } from './installments.port';
 
 export interface IUserRepository {
   findById(id: string): Promise<UserProfile | null>;
@@ -21,6 +21,12 @@ export interface ITransactionRepository {
   update(id: string, updates: Partial<Transaction>): Promise<void>;
   delete(id: string): Promise<void>;
   findByUserIdAndDateRange(userId: string, startDate: string, endDate: string): Promise<Transaction[]>;
+
+  // Métodos para transações agrupadas
+  findRootByUserId(userId: string): Promise<Transaction[]>; // Apenas transações sem parentId
+  findChildren(parentId: string): Promise<Transaction[]>; // Busca subitens de uma transação
+  createGrouped(parent: Omit<Transaction, 'id'>, children: Omit<Transaction, 'id' | 'parentId'>[]): Promise<Transaction>; // Cria transação pai com filhos
+  deleteWithChildren(id: string): Promise<void>; // Deleta transação e seus filhos
 }
 
 export interface IWalletRepository {
