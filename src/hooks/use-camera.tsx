@@ -30,7 +30,7 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
   const {
     facingMode: initialFacing = "environment",
     // Alta resolução para captura de documentos
-    width = 3840,  // 4K
+    width = 3840, // 4K
     height = 2160,
   } = options;
   const { toast } = useToast();
@@ -183,7 +183,7 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
 
       const video = videoRef.current;
       const canvas = canvasRef.current || document.createElement("canvas");
-      
+
       // Usa a resolução real do vídeo para máxima qualidade
       canvas.width = video.videoWidth;
       canvas.height = video.videoHeight;
@@ -204,15 +204,27 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
       // Aplica leve aumento de contraste para melhorar legibilidade de texto
       // Isso ajuda com notas fiscais desbotadas ou com baixo contraste
       try {
-        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        const imageData = context.getImageData(
+          0,
+          0,
+          canvas.width,
+          canvas.height
+        );
         const data = imageData.data;
         const contrast = 1.1; // Leve aumento de contraste (10%)
-        const factor = (259 * (contrast * 255 + 255)) / (255 * (259 - contrast * 255));
-        
+        const factor =
+          (259 * (contrast * 255 + 255)) / (255 * (259 - contrast * 255));
+
         for (let i = 0; i < data.length; i += 4) {
-          data[i] = Math.min(255, Math.max(0, factor * (data[i] - 128) + 128));     // R
-          data[i + 1] = Math.min(255, Math.max(0, factor * (data[i + 1] - 128) + 128)); // G
-          data[i + 2] = Math.min(255, Math.max(0, factor * (data[i + 2] - 128) + 128)); // B
+          data[i] = Math.min(255, Math.max(0, factor * (data[i] - 128) + 128)); // R
+          data[i + 1] = Math.min(
+            255,
+            Math.max(0, factor * (data[i + 1] - 128) + 128)
+          ); // G
+          data[i + 2] = Math.min(
+            255,
+            Math.max(0, factor * (data[i + 2] - 128) + 128)
+          ); // B
         }
         context.putImageData(imageData, 0, 0);
       } catch {
