@@ -134,10 +134,22 @@ export default function BudgetsPage() {
             surpresas no final do mês.
           </Typography>
         </Box>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <GamificationGuide />
+        <Stack 
+          direction="row" 
+          spacing={1} 
+          alignItems="center"
+          sx={{ width: { xs: "100%", md: "auto" } }}
+        >
+          <Box sx={{ flex: { xs: 1, md: "none" } }}>
+            <GamificationGuide />
+          </Box>
           <CreateBudgetDialog>
-            <Button variant="contained" startIcon={<PlusCircle size={18} />}>
+            <Button 
+              variant="contained" 
+              startIcon={<PlusCircle size={18} />}
+              fullWidth
+              sx={{ flex: { xs: 1, md: "none" } }}
+            >
               Novo Orçamento
             </Button>
           </CreateBudgetDialog>

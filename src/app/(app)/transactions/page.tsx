@@ -56,13 +56,21 @@ export default function TransactionsPage() {
         </Box>
 
         {/* Add Transaction Button */}
-        <Stack direction="row" spacing={1} alignItems="center">
-          <GamificationGuide />
+        <Stack 
+          direction="row" 
+          spacing={1} 
+          alignItems="center"
+          sx={{ width: { xs: "100%", sm: "auto" } }}
+        >
+          <Box sx={{ flex: { xs: 1, sm: "none" } }}>
+            <GamificationGuide />
+          </Box>
           <AddTransactionSheet>
             <Button
               variant="contained"
-              fullWidth={isMobile}
+              fullWidth
               startIcon={<PlusCircle size={18} />}
+              sx={{ flex: { xs: 1, sm: "none" } }}
             >
               Adicionar Transação
             </Button>

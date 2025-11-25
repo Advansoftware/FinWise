@@ -129,8 +129,9 @@ export default function CategoriesPage() {
         </Box>
         <Stack
           direction={{ xs: "column", sm: "row" }}
-          spacing={2}
+          spacing={1}
           alignItems={{ xs: "stretch", sm: "center" }}
+          sx={{ width: { xs: "100%", sm: "auto" } }}
         >
           <Button
             variant="outlined"
@@ -138,6 +139,7 @@ export default function CategoriesPage() {
             component={Link}
             href="/categories/default"
             startIcon={<Settings size={16} />}
+            fullWidth
           >
             Ver Padrão
           </Button>
@@ -147,6 +149,7 @@ export default function CategoriesPage() {
             disabled={!user}
             onClick={() => setSuggestDialogOpen(true)}
             startIcon={<Wand2 size={16} />}
+            fullWidth
           >
             Sugerir por IA
           </Button>
@@ -156,6 +159,7 @@ export default function CategoriesPage() {
             disabled={!user}
             onClick={() => setCreateDialogOpen(true)}
             startIcon={<PlusCircle size={16} />}
+            fullWidth
           >
             Nova Categoria
           </Button>

@@ -40,6 +40,9 @@ export function MobileLayout({ children }: MobileLayoutProps) {
           overflow: "auto",
           overscrollBehavior: "contain", // Previne bounce no iOS
           WebkitOverflowScrolling: "touch", // Scroll suave no iOS
+          // Garante que o conteúdo fique abaixo do bottom nav no z-index
+          position: "relative",
+          zIndex: 1,
         }}
       >
         <Box
@@ -50,8 +53,8 @@ export function MobileLayout({ children }: MobileLayoutProps) {
           sx={{
             px: 2,
             pt: 2,
-            // Padding bottom para compensar bottom nav + safe area
-            pb: "calc(80px + env(safe-area-inset-bottom))",
+            // Padding bottom para compensar bottom nav + safe area + margem extra
+            pb: "calc(90px + env(safe-area-inset-bottom))",
           }}
         >
           <PlanExpirationAlert />
@@ -63,13 +66,18 @@ export function MobileLayout({ children }: MobileLayoutProps) {
       <Box
         sx={{
           position: "fixed",
-          bottom: "calc(72px + env(safe-area-inset-bottom))",
+          bottom: "calc(80px + env(safe-area-inset-bottom))",
           right: 16,
-          zIndex: 1100,
+          zIndex: 1000, // Abaixo do drawer (1200) mas acima do conteúdo
           display: "flex",
           flexDirection: "column",
           alignItems: "flex-end",
           gap: 1,
+          // Permite cliques passarem através de áreas vazias
+          pointerEvents: "none",
+          "& > *": {
+            pointerEvents: "auto", // Habilita cliques nos filhos diretos
+          },
         }}
       >
         <ChatAssistant />
