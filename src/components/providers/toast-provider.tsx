@@ -4,47 +4,59 @@ import { SnackbarProvider, MaterialDesignContent } from "notistack";
 import { ReactNode } from "react";
 import { styled, alpha } from "@mui/material/styles";
 
-// Custom styled snackbar content with MUI theme
+// Custom styled snackbar content with MUI theme - Dark mode only
 const StyledMaterialDesignContent = styled(MaterialDesignContent)(
   ({ theme }) => ({
     "&.notistack-MuiContent-success": {
-      backgroundColor: theme.palette.success.main,
-      color: theme.palette.success.contrastText,
+      backgroundColor: "#10b981", // Verde esmeralda vibrante
+      color: "#ffffff",
       borderRadius: Number(theme.shape.borderRadius) * 2,
-      boxShadow: `0 4px 20px ${alpha(theme.palette.success.main, 0.3)}`,
+      boxShadow: `0 4px 20px ${alpha("#10b981", 0.4)}`,
       fontFamily: theme.typography.fontFamily,
       "& .MuiSvgIcon-root": {
-        color: theme.palette.success.contrastText,
+        color: "#ffffff",
+      },
+      "& .MuiIconButton-root": {
+        color: "#ffffff",
       },
     },
     "&.notistack-MuiContent-error": {
-      backgroundColor: theme.palette.error.main,
-      color: theme.palette.error.contrastText,
+      backgroundColor: "#ef4444", // Vermelho vibrante
+      color: "#ffffff",
       borderRadius: Number(theme.shape.borderRadius) * 2,
-      boxShadow: `0 4px 20px ${alpha(theme.palette.error.main, 0.3)}`,
+      boxShadow: `0 4px 20px ${alpha("#ef4444", 0.4)}`,
       fontFamily: theme.typography.fontFamily,
       "& .MuiSvgIcon-root": {
-        color: theme.palette.error.contrastText,
+        color: "#ffffff",
+      },
+      "& .MuiIconButton-root": {
+        color: "#ffffff",
       },
     },
     "&.notistack-MuiContent-warning": {
-      backgroundColor: theme.palette.warning.main,
-      color: theme.palette.warning.contrastText,
+      backgroundColor: "#f59e0b", // Laranja/Âmbar vibrante
+      color: "#000000",
       borderRadius: Number(theme.shape.borderRadius) * 2,
-      boxShadow: `0 4px 20px ${alpha(theme.palette.warning.main, 0.3)}`,
+      boxShadow: `0 4px 20px ${alpha("#f59e0b", 0.4)}`,
       fontFamily: theme.typography.fontFamily,
       "& .MuiSvgIcon-root": {
-        color: theme.palette.warning.contrastText,
+        color: "#000000",
+      },
+      "& .MuiIconButton-root": {
+        color: "#000000",
       },
     },
     "&.notistack-MuiContent-info": {
       backgroundColor: theme.palette.primary.main,
-      color: theme.palette.primary.contrastText,
+      color: "#ffffff",
       borderRadius: Number(theme.shape.borderRadius) * 2,
-      boxShadow: `0 4px 20px ${alpha(theme.palette.primary.main, 0.3)}`,
+      boxShadow: `0 4px 20px ${alpha(theme.palette.primary.main, 0.4)}`,
       fontFamily: theme.typography.fontFamily,
       "& .MuiSvgIcon-root": {
-        color: theme.palette.primary.contrastText,
+        color: "#ffffff",
+      },
+      "& .MuiIconButton-root": {
+        color: "#ffffff",
       },
     },
     "&.notistack-MuiContent-default": {
@@ -52,8 +64,11 @@ const StyledMaterialDesignContent = styled(MaterialDesignContent)(
       color: theme.palette.text.primary,
       borderRadius: Number(theme.shape.borderRadius) * 2,
       border: `1px solid ${theme.palette.divider}`,
-      boxShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.15)}`,
+      boxShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.3)}`,
       fontFamily: theme.typography.fontFamily,
+      "& .MuiIconButton-root": {
+        color: theme.palette.text.primary,
+      },
     },
   })
 );

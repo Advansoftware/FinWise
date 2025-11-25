@@ -490,21 +490,29 @@ export function ChatAssistant() {
           PaperProps={{
             sx: {
               bgcolor: "background.default",
+              display: "flex",
+              flexDirection: "column",
+              height: "100dvh", // Dynamic viewport height para mobile
+              maxHeight: "100dvh",
+              overflow: "hidden",
             },
           }}
         >
-          {/* Mobile Header */}
+          {/* Mobile Header - Fixed at top */}
           <AppBar
-            position="sticky"
+            position="fixed"
             elevation={0}
             sx={{
-              bgcolor: (theme) => alpha(theme.palette.background.paper, 0.9),
+              bgcolor: (theme) => alpha(theme.palette.background.paper, 0.95),
               backdropFilter: "blur(20px)",
               borderBottom: 1,
               borderColor: "divider",
+              top: 0,
+              left: 0,
+              right: 0,
             }}
           >
-            <Toolbar>
+            <Toolbar sx={{ minHeight: 64 }}>
               <Box
                 sx={{
                   width: 40,
@@ -534,27 +542,100 @@ export function ChatAssistant() {
               <IconButton
                 edge="end"
                 onClick={() => setIsOpen(false)}
-                sx={{ color: "text.primary" }}
+                sx={{
+                  color: "text.primary",
+                  bgcolor: (theme) => alpha(theme.palette.action.active, 0.1),
+                  "&:hover": {
+                    bgcolor: (theme) => alpha(theme.palette.action.active, 0.2),
+                  },
+                }}
               >
                 <CloseIcon />
               </IconButton>
             </Toolbar>
           </AppBar>
 
-          {/* Chat Content */}
+          {/* Main Content Container - Takes remaining space */}
           <Box
-            ref={scrollAreaRef}
             sx={{
+              display: "flex",
+              flexDirection: "column",
               flex: 1,
-              overflow: "auto",
-              height: "calc(100vh - 128px)",
+              mt: "64px", // Height of AppBar
+              height: "calc(100dvh - 64px)",
+              overflow: "hidden",
             }}
           >
-            <ChatContent />
-          </Box>
+            {/* Chat Content - Scrollable area */}
+            <Box
+              ref={scrollAreaRef}
+              sx={{
+                flex: 1,
+                overflow: "auto",
+                overscrollBehavior: "contain",
+                WebkitOverflowScrolling: "touch",
+              }}
+            >
+              <ChatContent />
+            </Box>
 
-          {/* Mobile Input */}
-          <ChatInput />
+            {/* Mobile Input - Fixed at bottom */}
+            <Box
+              sx={{
+                flexShrink: 0,
+                p: 2,
+                borderTop: 1,
+                borderColor: "divider",
+                bgcolor: (theme) => alpha(theme.palette.background.paper, 0.95),
+                backdropFilter: "blur(8px)",
+              }}
+            >
+              <Box sx={{ display: "flex", gap: 1, alignItems: "flex-end" }}>
+                <TextField
+                  placeholder={
+                    isPro
+                      ? "Pergunte sobre seus gastos..."
+                      : "Faça upgrade para usar o chat"
+                  }
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  disabled={isPending || !isPro}
+                  fullWidth
+                  size="small"
+                  multiline
+                  maxRows={3}
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: 3,
+                      bgcolor: "background.default",
+                    },
+                  }}
+                />
+                <IconButton
+                  onClick={() => handleSubmit()}
+                  disabled={!input.trim() || isPending || !isPro}
+                  color="primary"
+                  sx={{
+                    bgcolor: "primary.main",
+                    color: "primary.contrastText",
+                    width: 40,
+                    height: 40,
+                    flexShrink: 0,
+                    "&:hover": {
+                      bgcolor: "primary.dark",
+                    },
+                    "&.Mui-disabled": {
+                      bgcolor: "action.disabledBackground",
+                      color: "action.disabled",
+                    },
+                  }}
+                >
+                  <SendIcon sx={{ fontSize: 20 }} />
+                </IconButton>
+              </Box>
+            </Box>
+          </Box>
         </Dialog>
 
         {/* FAB Button */}
@@ -605,7 +686,8 @@ export function ChatAssistant() {
               display: "flex",
               alignItems: "center",
               justifyContent: "space-between",
-              p: 2,
+              px: 3,
+              py: 2,
               borderBottom: 1,
               borderColor: "divider",
               background: (theme) =>
@@ -615,19 +697,20 @@ export function ChatAssistant() {
                 )} 0%, ${alpha(theme.palette.secondary.main, 0.05)} 100%)`,
             }}
           >
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
               <Box
                 sx={{
-                  width: 36,
-                  height: 36,
+                  width: 40,
+                  height: 40,
                   borderRadius: 2,
                   bgcolor: (theme) => alpha(theme.palette.primary.main, 0.15),
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
+                  flexShrink: 0,
                 }}
               >
-                <BotIcon sx={{ color: "primary.main" }} />
+                <BotIcon sx={{ color: "primary.main", fontSize: 24 }} />
               </Box>
               <Box>
                 <Typography variant="subtitle2" fontWeight={600}>
