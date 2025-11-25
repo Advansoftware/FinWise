@@ -52,16 +52,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       // Forçar atualização da sessão - o trigger "update" no callback jwt
       // vai buscar dados frescos do banco de dados
-      await update();
+      await update({});
       
       // Aguardar um momento para o NextAuth processar
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      // Buscar a sessão atualizada diretamente da API
-      const sessionResponse = await fetch("/api/auth/session", {
+      // Buscar a sessão atualizada diretamente da API com cache busting
+      const timestamp = Date.now();
+      const sessionResponse = await fetch(`/api/auth/session?t=${timestamp}`, {
+        method: 'GET',
         cache: 'no-store',
         headers: {
-          'Cache-Control': 'no-cache',
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
         }
       });
       const sessionData = await sessionResponse.json();
@@ -70,6 +73,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         console.log("[useAuth] Session refreshed successfully!");
         console.log("[useAuth] New plan:", sessionData.user.plan);
         console.log("[useAuth] New credits:", sessionData.user.aiCredits);
+        
+        // Forçar outra chamada update para sincronizar o estado do useSession
+        await update({
+          plan: sessionData.user.plan,
+          aiCredits: sessionData.user.aiCredits,
+          stripeCustomerId: sessionData.user.stripeCustomerId,
+          stripeCurrentPeriodEnd: sessionData.user.stripeCurrentPeriodEnd,
+        });
         
         return {
           uid: sessionData.user.id,

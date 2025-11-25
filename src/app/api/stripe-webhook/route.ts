@@ -1,11 +1,11 @@
 
 // src/app/api/stripe-webhook/route.ts
-import {NextRequest, NextResponse} from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
-import {headers} from 'next/headers';
-import {connectToDatabase} from '@/lib/mongodb';
-import {UserPlan} from '@/lib/types';
-import {ObjectId} from 'mongodb';
+import { headers } from 'next/headers';
+import { connectToDatabase } from '@/lib/mongodb';
+import { UserPlan } from '@/lib/types';
+import { ObjectId } from 'mongodb';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string);
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET as string;
@@ -98,14 +98,16 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     }
 
     try {
-        console.log(`[Webhook] Updating user ${userId} to plan ${plan} with ${creditsMap[plan]} credits`);
+        const periodEndDate = new Date(subscription.current_period_end * 1000);
+        console.log(`[Webhook] Updating user ${userId} to plan ${plan} with ${creditsMap[plan]} credits, period end: ${periodEndDate.toISOString()}`);
 
         await updateUserPlanInDb(userId, {
             plan: plan,
             aiCredits: creditsMap[plan] || 0,
             stripeCustomerId: customerId,
             stripeSubscriptionId: subscription.id,
-            stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+            stripeCurrentPeriodEnd: periodEndDate,
+            subscriptionStatus: subscription.status || 'active',
         });
 
         console.log(`[Webhook] ✅ Successfully processed subscription ${subscription.id} for user ${userId} on plan ${plan}.`);
@@ -168,19 +170,30 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 
     // If 'cancel_at_period_end' is true, we don't downgrade them immediately.
     // The 'customer.subscription.deleted' event will handle the final downgrade.
-    if (subscription.cancel_at_period_end) {
+    if (expandedSubscription.cancel_at_period_end) {
         console.log(`[Webhook] Subscription for user ${userId} is set to cancel at period end. No immediate action taken.`);
         return;
     }
 
     try {
-        console.log(`[Webhook] Updating user ${userId} to plan ${newPlan} with ${creditsMap[newPlan]} credits`);
+        // Use expandedSubscription para garantir que temos todos os dados
+        const periodEnd = expandedSubscription.current_period_end;
+        const periodEndDate = periodEnd ? new Date(periodEnd * 1000) : null;
 
-        await updateUserPlanInDb(userId, {
+        console.log(`[Webhook] Updating user ${userId} to plan ${newPlan} with ${creditsMap[newPlan]} credits, period end: ${periodEndDate?.toISOString()}`);
+
+        const updates: Record<string, any> = {
             plan: newPlan,
             aiCredits: creditsMap[newPlan] || 0,
-            stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
-        });
+            subscriptionStatus: expandedSubscription.status,
+        };
+
+        // Só atualiza a data se for válida
+        if (periodEndDate && !isNaN(periodEndDate.getTime())) {
+            updates.stripeCurrentPeriodEnd = periodEndDate;
+        }
+
+        await updateUserPlanInDb(userId, updates);
 
         console.log(`[Webhook] ✅ Successfully updated plan for user ${userId} to ${newPlan}.`);
     } catch (error) {
@@ -191,7 +204,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 
 export async function POST(req: NextRequest) {
     console.log(`[Webhook] 🎯 Received webhook request at ${new Date().toISOString()}`);
-    
+
     const buf = await req.text();
     const sig = headers().get('stripe-signature') as string;
 
@@ -214,13 +227,13 @@ export async function POST(req: NextRequest) {
 
     try {
         console.log(`[Webhook] Processing event: ${event.type}`);
-        
+
         switch (event.type) {
-             case 'checkout.session.completed':
+            case 'checkout.session.completed':
                 console.log(`[Webhook] Handling checkout.session.completed`);
                 await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session);
                 break;
-            
+
             case 'customer.subscription.updated':
                 console.log(`[Webhook] Handling customer.subscription.updated`);
                 await handleSubscriptionUpdated(event.data.object as Stripe.Subscription);
@@ -230,14 +243,14 @@ export async function POST(req: NextRequest) {
                 console.log(`[Webhook] Handling customer.subscription.deleted`);
                 await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
                 break;
-            
+
             default:
                 console.log(`[Webhook] ⚠️  Unhandled event type: ${event.type}`);
         }
-        
+
         console.log(`[Webhook] ✅ Successfully processed event ${event.type} (${event.id})`);
     } catch (error) {
         console.error("[Webhook Error] Error processing webhook:", error);
         return NextResponse.json({ error: 'Internal server error while processing webhook.' }, { status: 500 });
-    }    return NextResponse.json({ received: true });
+    } return NextResponse.json({ received: true });
 }

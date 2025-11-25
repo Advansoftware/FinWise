@@ -105,6 +105,7 @@ function BillingPageContent() {
     usePayment();
   const [showCelebration, setShowCelebration] = useState(false);
   const [showCancelFeedback, setShowCancelFeedback] = useState(false);
+  const [hasProcessedSuccess, setHasProcessedSuccess] = useState(false);
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -113,7 +114,7 @@ function BillingPageContent() {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("success");
     params.delete("canceled");
-    const newUrl = `${pathname}?${params.toString()}`;
+    const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
     window.history.replaceState(
       { ...window.history.state, as: newUrl, url: newUrl },
       "",
@@ -122,12 +123,26 @@ function BillingPageContent() {
   };
 
   useEffect(() => {
-    if (searchParams.get("success")) {
+    const successParam = searchParams.get("success");
+    const canceledParam = searchParams.get("canceled");
+    
+    // Evitar processamento duplicado
+    if (hasProcessedSuccess) return;
+    
+    if (successParam) {
+      console.log("[Billing] Payment success detected!");
+      setHasProcessedSuccess(true);
       setShowCelebration(true);
-      // Atualizar sessão após o pagamento - tentar múltiplas vezes
-      // pois o webhook pode demorar um pouco para processar
+      
+      // Limpar URL imediatamente para evitar loops
+      cleanUpUrl();
+      
+      // Atualizar sessão após o pagamento
       const refreshSession = async () => {
-        console.log("[Billing] Payment success detected, refreshing session...");
+        console.log("[Billing] Starting session refresh...");
+        
+        // Aguardar um pouco para garantir que o webhook processou
+        await new Promise(resolve => setTimeout(resolve, 2000));
         
         // Tentar atualizar a sessão algumas vezes
         for (let i = 0; i < 5; i++) {
@@ -136,22 +151,33 @@ function BillingPageContent() {
           
           if (updatedUser && updatedUser.plan !== 'Básico') {
             console.log(`[Billing] Session updated successfully! Plan: ${updatedUser.plan}`);
-            break;
+            toast({
+              title: "Plano atualizado!",
+              description: `Seu plano foi atualizado para ${updatedUser.plan}`,
+            });
+            return;
           }
           
           // Aguardar antes da próxima tentativa
           await new Promise(resolve => setTimeout(resolve, 2000));
         }
+        
+        console.log("[Billing] Session refresh attempts completed");
+        toast({
+          title: "Pagamento confirmado!",
+          description: "Faça logout e login novamente para ver seu novo plano.",
+          variant: "default",
+        });
       };
       
-      // Dar um delay inicial para garantir que o webhook processou
-      const timer = setTimeout(refreshSession, 1500);
-      return () => clearTimeout(timer);
+      refreshSession();
     }
-    if (searchParams.get("canceled")) {
+    
+    if (canceledParam && !hasProcessedSuccess) {
       setShowCancelFeedback(true);
+      cleanUpUrl();
     }
-  }, [searchParams, refreshUser]);
+  }, [searchParams, hasProcessedSuccess]); // Removido refreshUser das dependências para evitar loops
 
   const handleUpgrade = async (newPlan: Exclude<UserPlan, "Básico">) => {
     if (!user || !user.email) return;
