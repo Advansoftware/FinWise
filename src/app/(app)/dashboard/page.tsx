@@ -144,23 +144,19 @@ export default function DashboardPage() {
 
 function DashboardSkeleton() {
   return (
-    <Box
-      display="grid"
-      gridTemplateColumns={{ xs: "1fr", lg: "repeat(12, 1fr)" }}
-      gap={{ xs: 2, sm: 3 }}
-    >
-      <Box sx={{ gridColumn: { xs: "1", lg: "span 8" } }}>
+    <Grid container spacing={{ xs: 2, sm: 3 }}>
+      <Grid size={{ xs: 12, lg: 8 }}>
         <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
-      </Box>
-      <Box sx={{ gridColumn: { xs: "1", lg: "span 4" } }}>
+      </Grid>
+      <Grid size={{ xs: 12, lg: 4 }}>
         <Skeleton variant="rectangular" height={180} sx={{ borderRadius: 2 }} />
-      </Box>
-      <Box sx={{ gridColumn: { xs: "1", lg: "span 8" } }}>
+      </Grid>
+      <Grid size={{ xs: 12, lg: 8 }}>
         <Skeleton variant="rectangular" height={350} sx={{ borderRadius: 2 }} />
-      </Box>
-      <Box sx={{ gridColumn: { xs: "1", lg: "span 4" } }}>
+      </Grid>
+      <Grid size={{ xs: 12, lg: 4 }}>
         <Skeleton variant="rectangular" height={350} sx={{ borderRadius: 2 }} />
-      </Box>
-    </Box>
+      </Grid>
+    </Grid>
   );
 }

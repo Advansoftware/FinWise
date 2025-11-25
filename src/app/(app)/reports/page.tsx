@@ -13,6 +13,7 @@ import {
   Button,
   Skeleton,
   CircularProgress,
+  Grid,
 } from "@mui/material";
 import { keyframes } from "@mui/material/styles";
 import { getYear } from "date-fns";
@@ -269,22 +270,13 @@ function MonthlyReportsGrid({ year }: { year: number }) {
   const availableMonths = Array.from({ length: 12 }, (_, i) => i + 1);
 
   return (
-    <Box
-      sx={{
-        display: "grid",
-        gridTemplateColumns: {
-          xs: "repeat(2, 1fr)",
-          md: "repeat(3, 1fr)",
-          lg: "repeat(4, 1fr)",
-          xl: "repeat(6, 1fr)",
-        },
-        gap: { xs: 1.5, md: 2 },
-      }}
-    >
+    <Grid container spacing={{ xs: 1.5, md: 2 }}>
       {availableMonths.map((month) => (
-        <MonthlyReportCard key={month} year={year} month={month} />
+        <Grid key={month} size={{ xs: 6, md: 4, lg: 3, xl: 2 }}>
+          <MonthlyReportCard year={year} month={month} />
+        </Grid>
       ))}
-    </Box>
+    </Grid>
   );
 }
 
@@ -480,167 +472,165 @@ function AnnualReportDisplay({ report }: { report: Report }) {
   return (
     <Stack spacing={{ xs: 2, md: 3 }}>
       {/* Stats Cards */}
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
-          gap: { xs: 1.5, md: 2 },
-        }}
-      >
-        <StatCard
-          icon={TrendingUp}
-          title="Total Receitas"
-          value={report.data.totalIncome}
-          color="success.main"
-        />
-        <StatCard
-          icon={TrendingDown}
-          title="Total Despesas"
-          value={report.data.totalExpense}
-          color="error.main"
-        />
-        <StatCard
-          icon={DollarSign}
-          title="Balanço Final"
-          value={report.data.balance}
-          color={report.data.balance >= 0 ? "success.main" : "error.main"}
-        />
-      </Box>
+      <Grid container spacing={{ xs: 1.5, md: 2 }}>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <StatCard
+            icon={TrendingUp}
+            title="Total Receitas"
+            value={report.data.totalIncome}
+            color="success.main"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <StatCard
+            icon={TrendingDown}
+            title="Total Despesas"
+            value={report.data.totalExpense}
+            color="error.main"
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <StatCard
+            icon={DollarSign}
+            title="Balanço Final"
+            value={report.data.balance}
+            color={report.data.balance >= 0 ? "success.main" : "error.main"}
+          />
+        </Grid>
+      </Grid>
 
       {/* Charts Row */}
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", lg: "repeat(2, 1fr)" },
-          gap: { xs: 2, md: 3 },
-        }}
-      >
+      <Grid container spacing={{ xs: 2, md: 3 }}>
         {/* Pie Chart */}
-        <Card>
-          <CardHeader
-            sx={{ pb: 1.5, p: { xs: 2, md: 3 } }}
-            title={
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <Box
-                  component={BarChart2}
-                  sx={{
-                    color: "primary.main",
-                    height: { xs: 16, md: 20 },
-                    width: { xs: 16, md: 20 },
-                  }}
-                />
-                <Typography
-                  variant="h6"
-                  sx={{ fontSize: { xs: "1rem", md: "1.125rem" } }}
-                >
-                  Top 5 Categorias
-                </Typography>
-              </Stack>
-            }
-            subheader={
-              <Typography
-                variant="body2"
-                sx={{
-                  fontSize: { xs: "0.75rem", md: "0.875rem" },
-                  color: "text.secondary",
-                }}
-              >
-                Maiores gastos do ano
-              </Typography>
-            }
-          />
-          <CardContent sx={{ p: { xs: 2, md: 3 }, pt: 0 }}>
-            <Box sx={{ height: { xs: 192, md: 256 } }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={chartData}
-                    dataKey="value"
-                    nameKey="name"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius="60%"
-                    fill="#8884d8"
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <Card>
+            <CardHeader
+              sx={{ pb: 1.5, p: { xs: 2, md: 3 } }}
+              title={
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Box
+                    component={BarChart2}
+                    sx={{
+                      color: "primary.main",
+                      height: { xs: 16, md: 20 },
+                      width: { xs: 16, md: 20 },
+                    }}
+                  />
+                  <Typography
+                    variant="h6"
+                    sx={{ fontSize: { xs: "1rem", md: "1.125rem" } }}
                   >
-                    {chartData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={COLORS[index % COLORS.length]}
-                      />
-                    ))}
-                  </Pie>
-                  <Legend iconSize={6} wrapperStyle={{ fontSize: "11px" }} />
-                </PieChart>
-              </ResponsiveContainer>
-            </Box>
-          </CardContent>
-        </Card>
+                    Top 5 Categorias
+                  </Typography>
+                </Stack>
+              }
+              subheader={
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontSize: { xs: "0.75rem", md: "0.875rem" },
+                    color: "text.secondary",
+                  }}
+                >
+                  Maiores gastos do ano
+                </Typography>
+              }
+            />
+            <CardContent sx={{ p: { xs: 2, md: 3 }, pt: 0 }}>
+              <Box sx={{ height: { xs: 192, md: 256 } }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={chartData}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius="60%"
+                      fill="#8884d8"
+                    >
+                      {chartData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={COLORS[index % COLORS.length]}
+                        />
+                      ))}
+                    </Pie>
+                    <Legend iconSize={6} wrapperStyle={{ fontSize: "11px" }} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
 
         {/* Category Breakdown */}
-        <Card>
-          <CardHeader
-            sx={{ pb: 1.5, p: { xs: 2, md: 3 } }}
-            title={
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <Box
-                  component={BarChart2}
-                  sx={{
-                    color: "primary.main",
-                    height: { xs: 16, md: 20 },
-                    width: { xs: 16, md: 20 },
-                  }}
-                />
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <Card>
+            <CardHeader
+              sx={{ pb: 1.5, p: { xs: 2, md: 3 } }}
+              title={
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <Box
+                    component={BarChart2}
+                    sx={{
+                      color: "primary.main",
+                      height: { xs: 16, md: 20 },
+                      width: { xs: 16, md: 20 },
+                    }}
+                  />
+                  <Typography
+                    variant="h6"
+                    sx={{ fontSize: { xs: "1rem", md: "1.125rem" } }}
+                  >
+                    Breakdown por Categoria
+                  </Typography>
+                </Stack>
+              }
+              subheader={
                 <Typography
-                  variant="h6"
-                  sx={{ fontSize: { xs: "1rem", md: "1.125rem" } }}
+                  variant="body2"
+                  sx={{
+                    fontSize: { xs: "0.75rem", md: "0.875rem" },
+                    color: "text.secondary",
+                  }}
                 >
-                  Breakdown por Categoria
+                  Distribuição de gastos
                 </Typography>
-              </Stack>
-            }
-            subheader={
-              <Typography
-                variant="body2"
-                sx={{
-                  fontSize: { xs: "0.75rem", md: "0.875rem" },
-                  color: "text.secondary",
-                }}
-              >
-                Distribuição de gastos
-              </Typography>
-            }
-          />
-          <CardContent sx={{ p: { xs: 2, md: 3 }, pt: 0 }}>
-            <Box sx={{ height: { xs: 192, md: 256 } }}>
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={chartData}
-                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                >
-                  <XAxis
-                    dataKey="name"
-                    tick={{ fontSize: 10 }}
-                    angle={-45}
-                    textAnchor="end"
-                    height={60}
-                  />
-                  <YAxis tick={{ fontSize: 10 }} />
-                  <Tooltip
-                    formatter={(value: number) => [
-                      value.toLocaleString("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                      }),
-                      "Valor",
-                    ]}
-                  />
-                  <Bar dataKey="value" fill="hsl(var(--primary))" />
-                </BarChart>
-              </ResponsiveContainer>
-            </Box>
-          </CardContent>
-        </Card>
-      </Box>
+              }
+            />
+            <CardContent sx={{ p: { xs: 2, md: 3 }, pt: 0 }}>
+              <Box sx={{ height: { xs: 192, md: 256 } }}>
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart
+                    data={chartData}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <XAxis
+                      dataKey="name"
+                      tick={{ fontSize: 10 }}
+                      angle={-45}
+                      textAnchor="end"
+                      height={60}
+                    />
+                    <YAxis tick={{ fontSize: 10 }} />
+                    <Tooltip
+                      formatter={(value: number) => [
+                        value.toLocaleString("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        }),
+                        "Valor",
+                      ]}
+                    />
+                    <Bar dataKey="value" fill="hsl(var(--primary))" />
+                  </BarChart>
+                </ResponsiveContainer>
+              </Box>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
       {/* AI Summary */}
       <Card>
@@ -742,44 +732,42 @@ function ReportsSkeleton() {
   return (
     <Stack spacing={{ xs: 2, md: 3 }}>
       {/* Stats Cards Skeleton */}
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
-          gap: { xs: 1.5, md: 2 },
-        }}
-      >
-        <Skeleton
-          variant="rectangular"
-          sx={{ borderRadius: 2, height: { xs: 80, md: 112 } }}
-        />
-        <Skeleton
-          variant="rectangular"
-          sx={{ borderRadius: 2, height: { xs: 80, md: 112 } }}
-        />
-        <Skeleton
-          variant="rectangular"
-          sx={{ borderRadius: 2, height: { xs: 80, md: 112 } }}
-        />
-      </Box>
+      <Grid container spacing={{ xs: 1.5, md: 2 }}>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Skeleton
+            variant="rectangular"
+            sx={{ borderRadius: 2, height: { xs: 80, md: 112 } }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Skeleton
+            variant="rectangular"
+            sx={{ borderRadius: 2, height: { xs: 80, md: 112 } }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Skeleton
+            variant="rectangular"
+            sx={{ borderRadius: 2, height: { xs: 80, md: 112 } }}
+          />
+        </Grid>
+      </Grid>
 
       {/* Charts Skeleton */}
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", lg: "repeat(2, 1fr)" },
-          gap: { xs: 2, md: 3 },
-        }}
-      >
-        <Skeleton
-          variant="rectangular"
-          sx={{ borderRadius: 2, height: { xs: 192, md: 256 } }}
-        />
-        <Skeleton
-          variant="rectangular"
-          sx={{ borderRadius: 2, height: { xs: 192, md: 256 } }}
-        />
-      </Box>
+      <Grid container spacing={{ xs: 2, md: 3 }}>
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <Skeleton
+            variant="rectangular"
+            sx={{ borderRadius: 2, height: { xs: 192, md: 256 } }}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <Skeleton
+            variant="rectangular"
+            sx={{ borderRadius: 2, height: { xs: 192, md: 256 } }}
+          />
+        </Grid>
+      </Grid>
 
       {/* Summary Skeleton */}
       <Skeleton

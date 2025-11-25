@@ -12,6 +12,7 @@ import {
   Stack,
   Container,
   TextField,
+  Grid,
 } from "@mui/material";
 import { CalendarDays, Clock, ArrowRight } from "lucide-react";
 
@@ -186,21 +187,123 @@ export default function BlogPage() {
             <Typography variant="h5" fontWeight="bold" sx={{ mb: 3 }}>
               Artigos em Destaque
             </Typography>
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-                gap: 4,
-              }}
-            >
+            <Grid container spacing={4}>
               {featuredPosts.map((post) => (
+                <Grid key={post.id} size={{ xs: 12, md: 6 }}>
+                  <Card
+                    sx={{
+                      overflow: "hidden",
+                      transition: "box-shadow 0.2s",
+                      "&:hover": { boxShadow: 4 },
+                      "& .post-title:hover": { color: "primary.main" },
+                    }}
+                  >
+                    <CardHeader
+                      title={
+                        <>
+                          <Stack
+                            direction="row"
+                            justifyContent="space-between"
+                            alignItems="center"
+                            sx={{ mb: 1 }}
+                          >
+                            <Chip
+                              label={post.category}
+                              color={getCategoryColor(post.category)}
+                              size="small"
+                            />
+                            <Stack
+                              direction="row"
+                              alignItems="center"
+                              sx={{
+                                fontSize: "0.875rem",
+                                color: "text.secondary",
+                              }}
+                            >
+                              <Box
+                                component={Clock}
+                                sx={{ height: 16, width: 16, mr: 0.5 }}
+                              />
+                              {post.readTime} min
+                            </Stack>
+                          </Stack>
+                          <Typography
+                            variant="h6"
+                            component={Link}
+                            href={`/blog/${post.slug}`}
+                            sx={{
+                              textDecoration: "none",
+                              color: "text.primary",
+                              transition: "color 0.2s",
+                              "&:hover": { color: "primary.main" },
+                            }}
+                          >
+                            {post.title}
+                          </Typography>
+                        </>
+                      }
+                      subheader={
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ mt: 1 }}
+                        >
+                          {post.description}
+                        </Typography>
+                      }
+                    />
+                    <CardContent>
+                      <Stack
+                        direction="row"
+                        justifyContent="space-between"
+                        alignItems="center"
+                      >
+                        <Stack
+                          direction="row"
+                          alignItems="center"
+                          sx={{ fontSize: "0.875rem", color: "text.secondary" }}
+                        >
+                          <Box
+                            component={CalendarDays}
+                            sx={{ height: 16, width: 16, mr: 0.5 }}
+                          />
+                          {formatDate(post.publishedAt)}
+                        </Stack>
+                        <Button
+                          component={Link}
+                          href={`/blog/${post.slug}`}
+                          variant="text"
+                          size="small"
+                          endIcon={
+                            <Box
+                              component={ArrowRight}
+                              sx={{ height: 16, width: 16 }}
+                            />
+                          }
+                        >
+                          Ler mais
+                        </Button>
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+        )}
+
+        {/* Regular Posts */}
+        <Box component="section">
+          <Typography variant="h5" fontWeight="bold" sx={{ mb: 3 }}>
+            Todos os Artigos
+          </Typography>
+          <Grid container spacing={3}>
+            {regularPosts.map((post) => (
+              <Grid key={post.id} size={{ xs: 12, md: 6, lg: 4 }}>
                 <Card
-                  key={post.id}
                   sx={{
-                    overflow: "hidden",
                     transition: "box-shadow 0.2s",
-                    "&:hover": { boxShadow: 4 },
-                    "& .post-title:hover": { color: "primary.main" },
+                    "&:hover": { boxShadow: 3 },
                   }}
                 >
                   <CardHeader
@@ -214,6 +317,7 @@ export default function BlogPage() {
                         >
                           <Chip
                             label={post.category}
+                            variant="outlined"
                             color={getCategoryColor(post.category)}
                             size="small"
                           />
@@ -237,6 +341,7 @@ export default function BlogPage() {
                           component={Link}
                           href={`/blog/${post.slug}`}
                           sx={{
+                            fontSize: "1rem",
                             textDecoration: "none",
                             color: "text.primary",
                             transition: "color 0.2s",
@@ -279,133 +384,18 @@ export default function BlogPage() {
                         href={`/blog/${post.slug}`}
                         variant="text"
                         size="small"
-                        endIcon={
-                          <Box
-                            component={ArrowRight}
-                            sx={{ height: 16, width: 16 }}
-                          />
-                        }
                       >
-                        Ler mais
+                        <Box
+                          component={ArrowRight}
+                          sx={{ height: 16, width: 16 }}
+                        />
                       </Button>
                     </Stack>
                   </CardContent>
                 </Card>
-              ))}
-            </Box>
-          </Box>
-        )}
-
-        {/* Regular Posts */}
-        <Box component="section">
-          <Typography variant="h5" fontWeight="bold" sx={{ mb: 3 }}>
-            Todos os Artigos
-          </Typography>
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "1fr",
-                md: "1fr 1fr",
-                lg: "repeat(3, 1fr)",
-              },
-              gap: 3,
-            }}
-          >
-            {regularPosts.map((post) => (
-              <Card
-                key={post.id}
-                sx={{
-                  transition: "box-shadow 0.2s",
-                  "&:hover": { boxShadow: 3 },
-                }}
-              >
-                <CardHeader
-                  title={
-                    <>
-                      <Stack
-                        direction="row"
-                        justifyContent="space-between"
-                        alignItems="center"
-                        sx={{ mb: 1 }}
-                      >
-                        <Chip
-                          label={post.category}
-                          variant="outlined"
-                          color={getCategoryColor(post.category)}
-                          size="small"
-                        />
-                        <Stack
-                          direction="row"
-                          alignItems="center"
-                          sx={{ fontSize: "0.875rem", color: "text.secondary" }}
-                        >
-                          <Box
-                            component={Clock}
-                            sx={{ height: 16, width: 16, mr: 0.5 }}
-                          />
-                          {post.readTime} min
-                        </Stack>
-                      </Stack>
-                      <Typography
-                        variant="h6"
-                        component={Link}
-                        href={`/blog/${post.slug}`}
-                        sx={{
-                          fontSize: "1rem",
-                          textDecoration: "none",
-                          color: "text.primary",
-                          transition: "color 0.2s",
-                          "&:hover": { color: "primary.main" },
-                        }}
-                      >
-                        {post.title}
-                      </Typography>
-                    </>
-                  }
-                  subheader={
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mt: 1 }}
-                    >
-                      {post.description}
-                    </Typography>
-                  }
-                />
-                <CardContent>
-                  <Stack
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                  >
-                    <Stack
-                      direction="row"
-                      alignItems="center"
-                      sx={{ fontSize: "0.875rem", color: "text.secondary" }}
-                    >
-                      <Box
-                        component={CalendarDays}
-                        sx={{ height: 16, width: 16, mr: 0.5 }}
-                      />
-                      {formatDate(post.publishedAt)}
-                    </Stack>
-                    <Button
-                      component={Link}
-                      href={`/blog/${post.slug}`}
-                      variant="text"
-                      size="small"
-                    >
-                      <Box
-                        component={ArrowRight}
-                        sx={{ height: 16, width: 16 }}
-                      />
-                    </Button>
-                  </Stack>
-                </CardContent>
-              </Card>
+              </Grid>
             ))}
-          </Box>
+          </Grid>
         </Box>
 
         {/* Newsletter CTA */}

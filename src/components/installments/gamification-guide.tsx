@@ -21,6 +21,7 @@ import {
   LinearProgress,
   Tabs,
   Tab,
+  Grid,
 } from "@mui/material";
 import {
   Trophy,
@@ -633,104 +634,103 @@ export function GamificationGuide({
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
                 >
-                  <Box
-                    sx={{
-                      display: "grid",
-                      gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-                      gap: 2,
-                    }}
-                  >
+                  <Grid container spacing={2}>
                     {badgeTypes.map((badge) => {
                       const isEarned = badges.some((b) => b.id === badge.id);
                       const rarityColors = getRarityColor(badge.rarity);
 
                       return (
-                        <Card
-                          key={badge.id}
-                          sx={{
-                            border: isEarned ? 2 : 1,
-                            borderColor: isEarned ? "warning.main" : "divider",
-                          }}
-                        >
-                          <CardContent sx={{ p: 2, "&:last-child": { pb: 2 } }}>
-                            <Box sx={{ display: "flex", gap: 2 }}>
-                              <Box
-                                sx={{
-                                  width: 48,
-                                  height: 48,
-                                  borderRadius: "50%",
-                                  display: "flex",
-                                  alignItems: "center",
-                                  justifyContent: "center",
-                                  fontSize: "1.5rem",
-                                  bgcolor: isEarned
-                                    ? alpha(theme.palette.warning.main, 0.1)
-                                    : "action.disabledBackground",
-                                  border: isEarned ? 1 : 0,
-                                  borderColor: "warning.main",
-                                  opacity: isEarned ? 1 : 0.5,
-                                }}
-                              >
-                                {badge.icon}
-                              </Box>
-                              <Box sx={{ flex: 1 }}>
+                        <Grid key={badge.id} size={{ xs: 12, md: 6 }}>
+                          <Card
+                            sx={{
+                              border: isEarned ? 2 : 1,
+                              borderColor: isEarned
+                                ? "warning.main"
+                                : "divider",
+                            }}
+                          >
+                            <CardContent
+                              sx={{ p: 2, "&:last-child": { pb: 2 } }}
+                            >
+                              <Box sx={{ display: "flex", gap: 2 }}>
                                 <Box
                                   sx={{
+                                    width: 48,
+                                    height: 48,
+                                    borderRadius: "50%",
                                     display: "flex",
                                     alignItems: "center",
-                                    gap: 1,
-                                    mb: 0.5,
+                                    justifyContent: "center",
+                                    fontSize: "1.5rem",
+                                    bgcolor: isEarned
+                                      ? alpha(theme.palette.warning.main, 0.1)
+                                      : "action.disabledBackground",
+                                    border: isEarned ? 1 : 0,
+                                    borderColor: "warning.main",
+                                    opacity: isEarned ? 1 : 0.5,
                                   }}
                                 >
-                                  <Typography
-                                    variant="subtitle2"
-                                    fontWeight="bold"
-                                  >
-                                    {badge.name}
-                                  </Typography>
-                                  {isEarned && (
-                                    <CheckCircle2
-                                      size={16}
-                                      color={theme.palette.success.main}
-                                    />
-                                  )}
+                                  {badge.icon}
                                 </Box>
-                                <Typography
-                                  variant="body2"
-                                  color="text.secondary"
-                                  sx={{ mb: 1, lineHeight: 1.2 }}
-                                >
-                                  {badge.description}
-                                </Typography>
-                                <Chip
-                                  label={badge.rarity}
-                                  size="small"
-                                  sx={{
-                                    bgcolor: rarityColors.bgcolor,
-                                    color: rarityColors.color,
-                                    border: 1,
-                                    borderColor: rarityColors.borderColor,
-                                    height: 20,
-                                    fontSize: "0.625rem",
-                                    textTransform: "uppercase",
-                                  }}
-                                />
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                  display="block"
-                                  sx={{ mt: 1 }}
-                                >
-                                  <strong>Como obter:</strong>{" "}
-                                  {badge.requirement}
-                                </Typography>
+                                <Box sx={{ flex: 1 }}>
+                                  <Box
+                                    sx={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      gap: 1,
+                                      mb: 0.5,
+                                    }}
+                                  >
+                                    <Typography
+                                      variant="subtitle2"
+                                      fontWeight="bold"
+                                    >
+                                      {badge.name}
+                                    </Typography>
+                                    {isEarned && (
+                                      <CheckCircle2
+                                        size={16}
+                                        color={theme.palette.success.main}
+                                      />
+                                    )}
+                                  </Box>
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                    sx={{ mb: 1, lineHeight: 1.2 }}
+                                  >
+                                    {badge.description}
+                                  </Typography>
+                                  <Chip
+                                    label={badge.rarity}
+                                    size="small"
+                                    sx={{
+                                      bgcolor: rarityColors.bgcolor,
+                                      color: rarityColors.color,
+                                      border: 1,
+                                      borderColor: rarityColors.borderColor,
+                                      height: 20,
+                                      fontSize: "0.625rem",
+                                      textTransform: "uppercase",
+                                    }}
+                                  />
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    display="block"
+                                    sx={{ mt: 1 }}
+                                  >
+                                    <strong>Como obter:</strong>{" "}
+                                    {badge.requirement}
+                                  </Typography>
+                                </Box>
                               </Box>
-                            </Box>
-                          </CardContent>
-                        </Card>
+                            </CardContent>
+                          </Card>
+                        </Grid>
                       );
                     })}
-                  </Box>
+                  </Grid>
                 </motion.div>
               )}
 

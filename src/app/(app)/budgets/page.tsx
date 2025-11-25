@@ -24,6 +24,7 @@ import {
   DialogActions,
   Chip,
   useTheme,
+  Grid,
 } from "@mui/material";
 import {
   PlusCircle,
@@ -171,11 +172,8 @@ export default function BudgetsPage() {
           {gamificationData && (
             <Card
               sx={{
-                background: "linear-gradient(to right, #eff6ff, #f0fdf4)",
-                ".dark &": {
-                  background:
-                    "linear-gradient(to right, rgba(23, 37, 84, 0.2), rgba(20, 83, 45, 0.2))",
-                },
+                background:
+                  "linear-gradient(to right, rgba(23, 37, 84, 0.3), rgba(20, 83, 45, 0.3))",
               }}
             >
               <CardHeader
@@ -190,66 +188,97 @@ export default function BudgetsPage() {
                 titleTypographyProps={{ color: "primary.main" }}
               />
               <CardContent>
-                <Box
-                  display="grid"
-                  gridTemplateColumns={{ xs: "1fr 1fr", md: "1fr 1fr 1fr 1fr" }}
-                  gap={2}
-                  textAlign="center"
-                >
-                  <Box p={2} bgcolor="background.paper" borderRadius={1}>
-                    <Typography variant="h5" fontWeight="bold">
-                      {budgets.length}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Orçamentos Ativos
-                    </Typography>
-                  </Box>
-                  <Box p={2} bgcolor="background.paper" borderRadius={1}>
-                    <Typography
-                      variant="h5"
-                      fontWeight="bold"
-                      color="success.main"
+                <Grid container spacing={2} textAlign="center">
+                  <Grid size={{ xs: 6, md: 3 }}>
+                    <Box
+                      p={2}
+                      borderRadius={2}
+                      sx={{
+                        bgcolor: "rgba(0, 0, 0, 0.4)",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                      }}
                     >
-                      {gamificationData.achievements.find(
-                        (a) => a.id === "budget-master"
-                      )?.progress || 0}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Orçamentos Cumpridos
-                    </Typography>
-                  </Box>
-                  <Box p={2} bgcolor="background.paper" borderRadius={1}>
-                    <Typography
-                      variant="h5"
-                      fontWeight="bold"
-                      color="error.main"
+                      <Typography variant="h5" fontWeight="bold">
+                        {budgets.length}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Orçamentos Ativos
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 6, md: 3 }}>
+                    <Box
+                      p={2}
+                      borderRadius={2}
+                      sx={{
+                        bgcolor: "rgba(0, 0, 0, 0.4)",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                      }}
                     >
-                      {gamificationData.achievements.find(
-                        (a) => a.id === "overspending-avoider"
-                      )?.progress || 0}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Orçamentos Estourados
-                    </Typography>
-                  </Box>
-                  <Box p={2} bgcolor="background.paper" borderRadius={1}>
-                    <Typography
-                      variant="h5"
-                      fontWeight="bold"
-                      color="warning.main"
-                      display="flex"
-                      alignItems="center"
-                      justifyItems="center"
-                      justifyContent="center"
-                      gap={0.5}
+                      <Typography
+                        variant="h5"
+                        fontWeight="bold"
+                        color="success.main"
+                      >
+                        {gamificationData.achievements.find(
+                          (a) => a.id === "budget-master"
+                        )?.progress || 0}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Orçamentos Cumpridos
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 6, md: 3 }}>
+                    <Box
+                      p={2}
+                      borderRadius={2}
+                      sx={{
+                        bgcolor: "rgba(0, 0, 0, 0.4)",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                      }}
                     >
-                      <Flame size={20} /> {gamificationData.streak || 0}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Meses no Controle
-                    </Typography>
-                  </Box>
-                </Box>
+                      <Typography
+                        variant="h5"
+                        fontWeight="bold"
+                        color="error.main"
+                      >
+                        {gamificationData.achievements.find(
+                          (a) => a.id === "overspending-avoider"
+                        )?.progress || 0}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Orçamentos Estourados
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 6, md: 3 }}>
+                    <Box
+                      p={2}
+                      borderRadius={2}
+                      sx={{
+                        bgcolor: "rgba(0, 0, 0, 0.4)",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                      }}
+                    >
+                      <Typography
+                        variant="h5"
+                        fontWeight="bold"
+                        color="warning.main"
+                        display="flex"
+                        alignItems="center"
+                        justifyItems="center"
+                        justifyContent="center"
+                        gap={0.5}
+                      >
+                        <Flame size={20} /> {gamificationData.streak || 0}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Meses no Controle
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
               </CardContent>
             </Card>
           )}
@@ -257,23 +286,16 @@ export default function BudgetsPage() {
           {isPlus && <AutomaticBudgetCard />}
 
           {budgets.length > 0 ? (
-            <Box
-              display="grid"
-              gridTemplateColumns={{
-                xs: "1fr",
-                md: "1fr 1fr",
-                lg: "1fr 1fr 1fr",
-              }}
-              gap={3}
-            >
+            <Grid container spacing={3}>
               {budgets.map((budget) => (
-                <BudgetCard
-                  key={budget.id}
-                  budget={budget}
-                  onDelete={() => deleteBudget(budget.id)}
-                />
+                <Grid key={budget.id} size={{ xs: 12, md: 6, lg: 4 }}>
+                  <BudgetCard
+                    budget={budget}
+                    onDelete={() => deleteBudget(budget.id)}
+                  />
+                </Grid>
               ))}
-            </Box>
+            </Grid>
           ) : (
             <Card variant="outlined" sx={{ borderStyle: "dashed" }}>
               <CardContent>
@@ -483,15 +505,17 @@ function BudgetsSkeleton() {
         <Skeleton width={150} height={40} />
       </Stack>
       <Skeleton variant="rectangular" height={100} />
-      <Box
-        display="grid"
-        gridTemplateColumns={{ xs: "1fr", md: "1fr 1fr 1fr" }}
-        gap={3}
-      >
-        <Skeleton variant="rectangular" height={200} />
-        <Skeleton variant="rectangular" height={200} />
-        <Skeleton variant="rectangular" height={200} />
-      </Box>
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Skeleton variant="rectangular" height={200} />
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Skeleton variant="rectangular" height={200} />
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Skeleton variant="rectangular" height={200} />
+        </Grid>
+      </Grid>
     </Stack>
   );
 }

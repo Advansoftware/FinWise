@@ -101,14 +101,70 @@ const createComponents = (): Components<Omit<Theme, 'components'>> => {
     // ==================== BASE ====================
     MuiCssBaseline: {
       styleOverrides: {
+        // Reset básico
+        '*, *::before, *::after': {
+          boxSizing: 'border-box',
+          margin: 0,
+          padding: 0,
+        },
+        html: {
+          height: '100%',
+          width: '100%',
+          WebkitTextSizeAdjust: '100%',
+          // Previne overflow horizontal
+          overflowX: 'hidden',
+        },
         body: {
+          height: '100%',
+          width: '100%',
+          fontFamily: "'Inter', 'Roboto', 'Helvetica', 'Arial', sans-serif",
+          WebkitFontSmoothing: 'antialiased',
+          MozOsxFontSmoothing: 'grayscale',
+          backgroundColor: colors.background,
+          color: colors.foreground,
           backgroundImage: 'radial-gradient(ellipse 80% 80% at 50% -20%, rgba(120, 119, 198, 0.3), hsla(0, 0%, 100%, 0))',
           backgroundAttachment: 'fixed',
+          // PWA Native App Experience
           WebkitUserSelect: 'none',
           userSelect: 'none',
           WebkitTouchCallout: 'none',
           WebkitTapHighlightColor: 'transparent',
           overscrollBehavior: 'none',
+          // Previne overflow horizontal
+          overflowX: 'hidden',
+          // Mobile touch handling
+          touchAction: 'manipulation',
+        },
+        // PWA Standalone Mode
+        '@media (display-mode: standalone)': {
+          body: {
+            // Dynamic viewport height - fallback para browsers mais antigos
+            minHeight: '100dvh',
+          },
+          // Hide scrollbars in PWA for cleaner look
+          '*': {
+            scrollbarWidth: 'none',
+            msOverflowStyle: 'none',
+          },
+          '*::-webkit-scrollbar': {
+            display: 'none',
+          },
+        },
+        // Mobile specific optimizations
+        '@media (max-width: 768px)': {
+          // Previne zoom em inputs
+          'input, select, textarea': {
+            fontSize: '16px !important',
+          },
+          // Better button touch targets
+          'button, [role="button"]': {
+            minHeight: '44px',
+            minWidth: '44px',
+          },
+        },
+        // Custom Scrollbars (quando não em PWA)
+        '*': {
+          scrollbarWidth: 'thin',
         },
         '*::-webkit-scrollbar': {
           width: '6px',
@@ -125,6 +181,14 @@ const createComponents = (): Components<Omit<Theme, 'components'>> => {
         },
         '*::-webkit-scrollbar-thumb:hover': {
           background: alpha(colors.mutedForeground, 0.5),
+        },
+        '*::-webkit-scrollbar-corner': {
+          background: 'transparent',
+        },
+        // Root element
+        '#__next': {
+          height: '100%',
+          width: '100%',
         },
       },
     },

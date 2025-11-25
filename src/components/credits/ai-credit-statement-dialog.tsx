@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Dialog, DialogContent, DialogTitle } from "@mui/material";
 import { Chip } from "@mui/material";
-import { Card, CardContent, CardHeader } from "@mui/material";
+import { Card, CardContent, CardHeader, Grid } from "@mui/material";
 import {
   AlertTriangle,
   BarChart3,
@@ -147,88 +147,88 @@ export function CreditStatementDialog({
 
         <Stack spacing={6}>
           {/* Resumo Geral */}
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
-              gap: 4,
-            }}
-          >
-            <Card>
-              <CardHeader sx={{ pb: 2 }}>
-                <Box
-                  component="h3"
-                  sx={{ fontSize: "0.875rem", fontWeight: 500, m: 0 }}
-                >
-                  Saldo Atual
-                </Box>
-              </CardHeader>
-              <CardContent>
-                <Typography
-                  variant="h4"
-                  sx={{ fontWeight: "bold", color: "#2563eb" }}
-                >
-                  {formatBalance(currentCredits)}
-                </Typography>
-                <Chip
-                  variant="filled"
-                  color={currentCredits > 10 ? "secondary" : "error"}
-                  label={plan}
-                  sx={{ mt: 1 }}
-                />
-              </CardContent>
-            </Card>
+          <Grid container spacing={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Card>
+                <CardHeader sx={{ pb: 2 }}>
+                  <Box
+                    component="h3"
+                    sx={{ fontSize: "0.875rem", fontWeight: 500, m: 0 }}
+                  >
+                    Saldo Atual
+                  </Box>
+                </CardHeader>
+                <CardContent>
+                  <Typography
+                    variant="h4"
+                    sx={{ fontWeight: "bold", color: "#2563eb" }}
+                  >
+                    {formatBalance(currentCredits)}
+                  </Typography>
+                  <Chip
+                    variant="filled"
+                    color={currentCredits > 10 ? "secondary" : "error"}
+                    label={plan}
+                    sx={{ mt: 1 }}
+                  />
+                </CardContent>
+              </Card>
+            </Grid>
 
-            <Card>
-              <CardHeader sx={{ pb: 2 }}>
-                <Box
-                  component="h3"
-                  sx={{ fontSize: "0.875rem", fontWeight: 500, m: 0 }}
-                >
-                  Total Gasto
-                </Box>
-              </CardHeader>
-              <CardContent>
-                <Typography
-                  variant="h4"
-                  sx={{ fontWeight: "bold", color: "#64748b" }}
-                >
-                  {formatCreditCost(totalSpent)}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ color: "text.secondary", mt: 1, display: "block" }}
-                >
-                  Este mês
-                </Typography>
-              </CardContent>
-            </Card>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Card>
+                <CardHeader sx={{ pb: 2 }}>
+                  <Box
+                    component="h3"
+                    sx={{ fontSize: "0.875rem", fontWeight: 500, m: 0 }}
+                  >
+                    Total Gasto
+                  </Box>
+                </CardHeader>
+                <CardContent>
+                  <Typography
+                    variant="h4"
+                    sx={{ fontWeight: "bold", color: "#64748b" }}
+                  >
+                    {formatCreditCost(totalSpent)}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary", mt: 1, display: "block" }}
+                  >
+                    Este mês
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
 
-            <Card>
-              <CardHeader sx={{ pb: 2 }}>
-                <Box
-                  component="h3"
-                  sx={{ fontSize: "0.875rem", fontWeight: 500, m: 0 }}
-                >
-                  Média por Ação
-                </Box>
-              </CardHeader>
-              <CardContent>
-                <Typography
-                  variant="h4"
-                  sx={{ fontWeight: "bold", color: "#64748b" }}
-                >
-                  {formatCreditCost(Math.round(averagePerAction))}
-                </Typography>
-                <Typography
-                  variant="caption"
-                  sx={{ color: "text.secondary", mt: 1, display: "block" }}
-                >
-                  {totalActionsUsed} ações realizadas
-                </Typography>
-              </CardContent>
-            </Card>
-          </Box>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Card>
+                <CardHeader sx={{ pb: 2 }}>
+                  <Box
+                    component="h3"
+                    sx={{ fontSize: "0.875rem", fontWeight: 500, m: 0 }}
+                  >
+                    Média por Ação
+                  </Box>
+                </CardHeader>
+                <CardContent>
+                  <Typography
+                    variant="h4"
+                    sx={{ fontWeight: "bold", color: "#64748b" }}
+                  >
+                    {formatCreditCost(Math.round(averagePerAction))}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary", mt: 1, display: "block" }}
+                  >
+                    {totalActionsUsed} ações realizadas
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
 
           {/* Aviso sobre Transparência */}
           <Alert

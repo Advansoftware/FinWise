@@ -19,6 +19,7 @@ import {
   Box,
   Typography,
   CircularProgress,
+  Grid,
 } from "@mui/material";
 import { keyframes } from "@mui/material/styles";
 import {
@@ -496,17 +497,11 @@ export default function ImportPage() {
           com * são obrigatórios.
         </Typography>
       </Box>
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
-          gap: 2,
-        }}
-      >
+      <Grid container spacing={2}>
         {Object.entries(MAPPABLE_FIELDS).map(([key, label]) => {
           const typedField = key as keyof typeof MAPPABLE_FIELDS;
           return (
-            <Box key={key}>
+            <Grid key={key} size={{ xs: 12, md: 6 }}>
               <Typography
                 variant="caption"
                 fontWeight="medium"
@@ -533,10 +528,10 @@ export default function ImportPage() {
                   </MenuItem>
                 ))}
               </TextField>
-            </Box>
+            </Grid>
           );
         })}
-      </Box>
+      </Grid>
       <Button
         variant="contained"
         onClick={handleProceedToCategorize}

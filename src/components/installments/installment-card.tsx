@@ -291,30 +291,24 @@ export function InstallmentCard({
             />
           </Stack>
 
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: "repeat(2, 1fr)",
-              gap: 2,
-            }}
-          >
-            <Box>
+          <Grid container spacing={2}>
+            <Grid size={6}>
               <Typography variant="caption" color="text.secondary">
                 Valor Total
               </Typography>
               <Typography variant="body2" fontWeight="semibold">
                 {formatCurrency(installment.totalAmount)}
               </Typography>
-            </Box>
-            <Box>
+            </Grid>
+            <Grid size={6}>
               <Typography variant="caption" color="text.secondary">
                 Valor da Parcela
               </Typography>
               <Typography variant="body2" fontWeight="semibold">
                 {formatCurrency(installment.installmentAmount)}
               </Typography>
-            </Box>
-            <Box>
+            </Grid>
+            <Grid size={6}>
               <Typography variant="caption" color="text.secondary">
                 Total Pago
               </Typography>
@@ -325,8 +319,8 @@ export function InstallmentCard({
               >
                 {formatCurrency(installment.totalPaid)}
               </Typography>
-            </Box>
-            <Box>
+            </Grid>
+            <Grid size={6}>
               <Typography variant="caption" color="text.secondary">
                 Restante
               </Typography>
@@ -337,8 +331,8 @@ export function InstallmentCard({
               >
                 {formatCurrency(installment.remainingAmount)}
               </Typography>
-            </Box>
-          </Box>
+            </Grid>
+          </Grid>
 
           {nextPayment && !installment.isCompleted && (
             <Box

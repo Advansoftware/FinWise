@@ -25,6 +25,7 @@ import {
   useTheme,
   CircularProgress,
   keyframes,
+  Grid,
 } from "@mui/material";
 import { TransactionCategory } from "@/lib/types";
 import { CategoryIcon } from "@/components/icons";
@@ -274,35 +275,34 @@ export default function CategoriesPage() {
         </DialogActions>
       </Dialog>
 
-      <Box
-        display="grid"
-        gridTemplateColumns={{ xs: "1fr", sm: "1fr 1fr", lg: "1fr 1fr 1fr" }}
-        gap={3}
-      >
+      <Grid container spacing={3}>
         {categories.map((category) => (
-          <CategoryCard
-            key={category}
-            category={category}
-            subcategories={subcategories[category] || []}
-            total={getCategoryTotal(category)}
-            onAddSubcategory={addSubcategory}
-            onDeleteCategory={deleteCategory}
-            onDeleteSubcategory={deleteSubcategory}
-          />
+          <Grid key={category} size={{ xs: 12, sm: 6, lg: 4 }}>
+            <CategoryCard
+              category={category}
+              subcategories={subcategories[category] || []}
+              total={getCategoryTotal(category)}
+              onAddSubcategory={addSubcategory}
+              onDeleteCategory={deleteCategory}
+              onDeleteSubcategory={deleteSubcategory}
+            />
+          </Grid>
         ))}
         {categories.length === 0 && !isLoading && (
-          <Card sx={{ gridColumn: "1 / -1", textAlign: "center", py: 4 }}>
-            <CardContent>
-              <Typography variant="h6" color="text.secondary" gutterBottom>
-                Nenhuma categoria encontrada.
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                Adicione uma categoria para começar a organizar.
-              </Typography>
-            </CardContent>
-          </Card>
+          <Grid size={12}>
+            <Card sx={{ textAlign: "center", py: 4 }}>
+              <CardContent>
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  Nenhuma categoria encontrada.
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Adicione uma categoria para começar a organizar.
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
         )}
-      </Box>
+      </Grid>
     </Stack>
   );
 }
@@ -514,20 +514,17 @@ function CategoriesSkeleton() {
         <Skeleton variant="text" width={200} height={40} />
         <Skeleton variant="text" width={300} height={24} />
       </Box>
-      <Box
-        display="grid"
-        gridTemplateColumns={{ xs: "1fr", sm: "1fr 1fr", lg: "1fr 1fr 1fr" }}
-        gap={3}
-      >
+      <Grid container spacing={3}>
         {[1, 2, 3, 4, 5, 6].map((i) => (
-          <Skeleton
-            key={i}
-            variant="rectangular"
-            height={200}
-            sx={{ borderRadius: 2 }}
-          />
+          <Grid key={i} size={{ xs: 12, sm: 6, lg: 4 }}>
+            <Skeleton
+              variant="rectangular"
+              height={200}
+              sx={{ borderRadius: 2 }}
+            />
+          </Grid>
         ))}
-      </Box>
+      </Grid>
     </Stack>
   );
 }

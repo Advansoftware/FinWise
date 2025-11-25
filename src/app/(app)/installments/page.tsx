@@ -16,6 +16,7 @@ import {
   Stack,
   Box,
   IconButton,
+  Grid,
 } from "@mui/material";
 import {
   CreditCard,
@@ -70,24 +71,17 @@ export default function InstallmentsPage() {
           <Skeleton variant="text" width={400} height={24} />
         </Stack>
 
-        <Box
-          display="grid"
-          gridTemplateColumns={{
-            xs: "1fr",
-            sm: "1fr 1fr",
-            lg: "1fr 1fr 1fr 1fr",
-          }}
-          gap={4}
-        >
+        <Grid container spacing={4}>
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton
-              key={i}
-              variant="rectangular"
-              height={128}
-              sx={{ borderRadius: 2 }}
-            />
+            <Grid key={i} size={{ xs: 12, sm: 6, lg: 3 }}>
+              <Skeleton
+                variant="rectangular"
+                height={128}
+                sx={{ borderRadius: 2 }}
+              />
+            </Grid>
           ))}
-        </Box>
+        </Grid>
 
         <Skeleton variant="rectangular" height={400} sx={{ borderRadius: 2 }} />
       </Stack>
@@ -286,62 +280,103 @@ export default function InstallmentsPage() {
       )}
 
       {/* Summary Cards */}
-      <Box
-        display="grid"
-        gridTemplateColumns={{ xs: "1fr 1fr", lg: "1fr 1fr 1fr 1fr" }}
-        gap={4}
-      >
-        <Card>
-          <CardHeader
-            title={
-              <Typography variant="subtitle2" color="text.secondary">
-                Parcelamentos Ativos
+      <Grid container spacing={4}>
+        <Grid size={{ xs: 6, lg: 3 }}>
+          <Card sx={{ height: "100%" }}>
+            <CardHeader
+              title={
+                <Typography variant="subtitle2" color="text.secondary">
+                  Parcelamentos Ativos
+                </Typography>
+              }
+              action={<CreditCard size={16} style={{ opacity: 0.5 }} />}
+              sx={{ pb: 1 }}
+            />
+            <CardContent>
+              <Typography variant="h5" fontWeight="bold">
+                {summary?.totalActiveInstallments || 0}
               </Typography>
-            }
-            action={<CreditCard size={16} style={{ opacity: 0.5 }} />}
-            sx={{ pb: 1 }}
-          />
-          <CardContent>
-            <Typography variant="h5" fontWeight="bold">
-              {summary?.totalActiveInstallments || 0}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {activeInstallments.length} em andamento
-            </Typography>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader
-            title={
-              <Typography variant="subtitle2" color="text.secondary">
-                Compromisso Mensal
+              <Typography variant="caption" color="text.secondary">
+                {activeInstallments.length} em andamento
               </Typography>
-            }
-            action={<DollarSign size={16} style={{ opacity: 0.5 }} />}
-            sx={{ pb: 1 }}
-          />
-          <CardContent>
-            <Typography variant="h5" fontWeight="bold">
-              {formatCurrency(summary?.totalMonthlyCommitment || 0)}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Total das parcelas mensais
-            </Typography>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </Grid>
 
-        <Card
-          sx={
-            summary && summary.overduePayments.length > 0
-              ? { borderColor: "error.main" }
-              : {}
-          }
-        >
-          <CardHeader
-            title={
+        <Grid size={{ xs: 6, lg: 3 }}>
+          <Card sx={{ height: "100%" }}>
+            <CardHeader
+              title={
+                <Typography variant="subtitle2" color="text.secondary">
+                  Compromisso Mensal
+                </Typography>
+              }
+              action={<DollarSign size={16} style={{ opacity: 0.5 }} />}
+              sx={{ pb: 1 }}
+            />
+            <CardContent>
+              <Typography variant="h5" fontWeight="bold">
+                {formatCurrency(summary?.totalMonthlyCommitment || 0)}
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                Total das parcelas mensais
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid size={{ xs: 6, lg: 3 }}>
+          <Card
+            sx={{
+              height: "100%",
+              ...(summary && summary.overduePayments.length > 0
+                ? { borderColor: "error.main" }
+                : {}),
+            }}
+          >
+            <CardHeader
+              title={
+                <Typography
+                  variant="subtitle2"
+                  color={
+                    summary && summary.overduePayments.length > 0
+                      ? "error.main"
+                      : "text.secondary"
+                  }
+                >
+                  {summary && summary.overduePayments.length > 0
+                    ? "Parcelas em Atraso"
+                    : "Próximos Vencimentos"}
+                </Typography>
+              }
+              action={
+                summary && summary.overduePayments.length > 0 ? (
+                  <AlertTriangle
+                    size={16}
+                    color="var(--mui-palette-error-main)"
+                  />
+                ) : (
+                  <Clock size={16} style={{ opacity: 0.5 }} />
+                )
+              }
+              sx={{ pb: 1 }}
+            />
+            <CardContent>
               <Typography
-                variant="subtitle2"
+                variant="h5"
+                fontWeight="bold"
+                color={
+                  summary && summary.overduePayments.length > 0
+                    ? "error.main"
+                    : "text.primary"
+                }
+              >
+                {summary && summary.overduePayments.length > 0
+                  ? summary.overduePayments.length
+                  : summary?.upcomingPayments.length || 0}
+              </Typography>
+              <Typography
+                variant="caption"
                 color={
                   summary && summary.overduePayments.length > 0
                     ? "error.main"
@@ -349,73 +384,40 @@ export default function InstallmentsPage() {
                 }
               >
                 {summary && summary.overduePayments.length > 0
-                  ? "Parcelas em Atraso"
-                  : "Próximos Vencimentos"}
+                  ? "Precisam de atenção"
+                  : "Próximos 30 dias"}
               </Typography>
-            }
-            action={
-              summary && summary.overduePayments.length > 0 ? (
-                <AlertTriangle
-                  size={16}
-                  color="var(--mui-palette-error-main)"
-                />
-              ) : (
-                <Clock size={16} style={{ opacity: 0.5 }} />
-              )
-            }
-            sx={{ pb: 1 }}
-          />
-          <CardContent>
-            <Typography
-              variant="h5"
-              fontWeight="bold"
-              color={
-                summary && summary.overduePayments.length > 0
-                  ? "error.main"
-                  : "text.primary"
-              }
-            >
-              {summary && summary.overduePayments.length > 0
-                ? summary.overduePayments.length
-                : summary?.upcomingPayments.length || 0}
-            </Typography>
-            <Typography
-              variant="caption"
-              color={
-                summary && summary.overduePayments.length > 0
-                  ? "error.main"
-                  : "text.secondary"
-              }
-            >
-              {summary && summary.overduePayments.length > 0
-                ? "Precisam de atenção"
-                : "Próximos 30 dias"}
-            </Typography>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </Grid>
 
-        <Card>
-          <CardHeader
-            title={
-              <Typography variant="subtitle2" color="text.secondary">
-                Parcelamentos Quitados
+        <Grid size={{ xs: 6, lg: 3 }}>
+          <Card sx={{ height: "100%" }}>
+            <CardHeader
+              title={
+                <Typography variant="subtitle2" color="text.secondary">
+                  Parcelamentos Quitados
+                </Typography>
+              }
+              action={
+                <CheckCircle2
+                  size={16}
+                  color="var(--mui-palette-success-main)"
+                />
+              }
+              sx={{ pb: 1 }}
+            />
+            <CardContent>
+              <Typography variant="h5" fontWeight="bold" color="success.main">
+                {completedInstallments.length}
               </Typography>
-            }
-            action={
-              <CheckCircle2 size={16} color="var(--mui-palette-success-main)" />
-            }
-            sx={{ pb: 1 }}
-          />
-          <CardContent>
-            <Typography variant="h5" fontWeight="bold" color="success.main">
-              {completedInstallments.length}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Finalizados com sucesso
-            </Typography>
-          </CardContent>
-        </Card>
-      </Box>
+              <Typography variant="caption" color="text.secondary">
+                Finalizados com sucesso
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
 
       {/* Main Content */}
       <Box>
@@ -472,19 +474,13 @@ export default function InstallmentsPage() {
                 </CardContent>
               </Card>
             ) : (
-              <Box
-                display="grid"
-                gridTemplateColumns={{ xs: "1fr", lg: "1fr 1fr" }}
-                gap={4}
-              >
+              <Grid container spacing={4}>
                 {activeInstallments.map((installment) => (
-                  <InstallmentCard
-                    key={installment.id}
-                    installment={installment}
-                    showActions
-                  />
+                  <Grid key={installment.id} size={{ xs: 12, lg: 6 }}>
+                    <InstallmentCard installment={installment} showActions />
+                  </Grid>
                 ))}
-              </Box>
+              </Grid>
             )}
           </Box>
         )}
@@ -626,70 +622,67 @@ export default function InstallmentsPage() {
                       }
                     />
                     <CardContent>
-                      <Box
-                        display="grid"
-                        gridTemplateColumns={{
-                          xs: "1fr 1fr",
-                          md: "1fr 1fr 1fr",
-                          lg: "1fr 1fr 1fr 1fr",
-                        }}
-                        gap={2}
-                      >
+                      <Grid container spacing={2}>
                         {gamificationData.badges.map((badge) => (
-                          <motion.div
-                            key={badge.id}
-                            initial={{ scale: 0, rotate: -180 }}
-                            animate={{ scale: 1, rotate: 0 }}
-                          >
-                            <Box
-                              textAlign="center"
-                              p={2}
-                              border={1}
-                              borderColor="divider"
-                              borderRadius={2}
-                              bgcolor="background.paper"
+                          <Grid key={badge.id} size={{ xs: 6, md: 4, lg: 3 }}>
+                            <motion.div
+                              initial={{ scale: 0, rotate: -180 }}
+                              animate={{ scale: 1, rotate: 0 }}
                             >
-                              <Typography variant="h3" mb={1}>
-                                {badge.icon}
-                              </Typography>
-                              <Typography variant="subtitle2" fontWeight="bold">
-                                {badge.name}
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                display="block"
-                                mb={1}
+                              <Box
+                                textAlign="center"
+                                p={2}
+                                border={1}
+                                borderColor="divider"
+                                borderRadius={2}
+                                bgcolor="background.paper"
+                                height="100%"
                               >
-                                {badge.description}
-                              </Typography>
-                              <Chip
-                                label={translateRarity(badge.rarity)}
-                                variant="outlined"
-                                size="small"
-                                sx={{
-                                  borderColor:
-                                    badge.rarity === "legendary"
-                                      ? "warning.main"
-                                      : badge.rarity === "epic"
-                                      ? "secondary.main"
-                                      : badge.rarity === "rare"
-                                      ? "info.main"
-                                      : "grey.400",
-                                  color:
-                                    badge.rarity === "legendary"
-                                      ? "warning.main"
-                                      : badge.rarity === "epic"
-                                      ? "secondary.main"
-                                      : badge.rarity === "rare"
-                                      ? "info.main"
-                                      : "text.secondary",
-                                }}
-                              />
-                            </Box>
-                          </motion.div>
+                                <Typography variant="h3" mb={1}>
+                                  {badge.icon}
+                                </Typography>
+                                <Typography
+                                  variant="subtitle2"
+                                  fontWeight="bold"
+                                >
+                                  {badge.name}
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  display="block"
+                                  mb={1}
+                                >
+                                  {badge.description}
+                                </Typography>
+                                <Chip
+                                  label={translateRarity(badge.rarity)}
+                                  variant="outlined"
+                                  size="small"
+                                  sx={{
+                                    borderColor:
+                                      badge.rarity === "legendary"
+                                        ? "warning.main"
+                                        : badge.rarity === "epic"
+                                        ? "secondary.main"
+                                        : badge.rarity === "rare"
+                                        ? "info.main"
+                                        : "grey.400",
+                                    color:
+                                      badge.rarity === "legendary"
+                                        ? "warning.main"
+                                        : badge.rarity === "epic"
+                                        ? "secondary.main"
+                                        : badge.rarity === "rare"
+                                        ? "info.main"
+                                        : "text.secondary",
+                                  }}
+                                />
+                              </Box>
+                            </motion.div>
+                          </Grid>
                         ))}
-                      </Box>
+                      </Grid>
                     </CardContent>
                   </Card>
                 )}
@@ -851,19 +844,16 @@ export default function InstallmentsPage() {
                 </CardContent>
               </Card>
             ) : (
-              <Box
-                display="grid"
-                gridTemplateColumns={{ xs: "1fr", lg: "1fr 1fr" }}
-                gap={4}
-              >
+              <Grid container spacing={4}>
                 {completedInstallments.map((installment) => (
-                  <InstallmentCard
-                    key={installment.id}
-                    installment={installment}
-                    showActions={false}
-                  />
+                  <Grid key={installment.id} size={{ xs: 12, lg: 6 }}>
+                    <InstallmentCard
+                      installment={installment}
+                      showActions={false}
+                    />
+                  </Grid>
                 ))}
-              </Box>
+              </Grid>
             )}
           </Box>
         )}
