@@ -5,10 +5,10 @@
  *
  * - extractReceiptInfo - A function that handles the receipt information extraction process.
  */
-import {ReceiptInfoInputSchema, ReceiptInfoOutputSchema} from '../ai-types';
+import { ReceiptInfoInputSchema, ReceiptInfoOutputSchema } from '../ai-types';
 import type { ReceiptInfoInput } from '../ai-types';
-import {createConfiguredAI, getModelReference} from '../genkit';
-import {AICredential} from '@/lib/types';
+import { createConfiguredAI, getModelReference } from '../genkit';
+import { AICredential } from '@/lib/types';
 
 
 const promptTemplate = `You are an expert OCR system specializing in extracting information from receipts.
@@ -27,7 +27,17 @@ Receipt Image: {{media url=photoDataUri}}`;
 export async function extractReceiptInfo(input: ReceiptInfoInput, credential: AICredential) {
     const configuredAI = createConfiguredAI(credential);
     // Para extração de imagem, sempre usar um modelo com capacidade de visão.
-    const model = credential.provider === 'openai' ? 'openai/gpt-4-vision-preview' : 'googleai/gemini-1.5-flash-latest';
+    // gpt-4o e gpt-4o-mini suportam visão. O antigo gpt-4-vision-preview foi descontinuado.
+    let model: string;
+    if (credential.provider === 'openai') {
+        // Usar gpt-4o para melhor qualidade em OCR de notas fiscais
+        model = 'openai/gpt-4o';
+    } else if (credential.provider === 'googleai') {
+        model = 'googleai/gemini-1.5-flash-latest';
+    } else {
+        // Fallback para outros providers
+        model = 'openai/gpt-4o';
+    }
 
     const extractReceiptInfoPrompt = configuredAI.definePrompt({
         name: 'extractReceiptInfoPrompt',

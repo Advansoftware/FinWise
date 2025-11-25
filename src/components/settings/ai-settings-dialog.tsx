@@ -37,14 +37,7 @@ const credentialSchema = z
     ollamaServerAddress: z.string().optional(),
     googleAIApiKey: z.string().optional(),
     openAIModel: z
-      .enum([
-        "gpt-3.5-turbo",
-        "gpt-4",
-        "gpt-4-vision-preview",
-        "gpt-4o",
-        "gpt-4o-mini",
-        "gpt-4-turbo",
-      ])
+      .enum(["gpt-3.5-turbo", "gpt-4", "gpt-4o", "gpt-4o-mini", "gpt-4-turbo"])
       .optional(),
     openAIApiKey: z.string().optional(),
   })
@@ -370,10 +363,9 @@ export function AISettingsDialog({
                         label="Modelo OpenAI"
                         value={field.value || ""}
                       >
-                        <MenuItem value="gpt-4o">GPT-4o</MenuItem>
-                        <MenuItem value="gpt-4-vision-preview">
-                          GPT-4 Vision
-                        </MenuItem>
+                        <MenuItem value="gpt-4o">GPT-4o (Recomendado)</MenuItem>
+                        <MenuItem value="gpt-4o-mini">GPT-4o Mini</MenuItem>
+                        <MenuItem value="gpt-4-turbo">GPT-4 Turbo</MenuItem>
                         <MenuItem value="gpt-4">GPT-4</MenuItem>
                         <MenuItem value="gpt-3.5-turbo">GPT-3.5 Turbo</MenuItem>
                       </Select>
