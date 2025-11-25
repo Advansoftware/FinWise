@@ -111,27 +111,23 @@ export default function DefaultCategoriesPreview() {
     switch (type) {
       case "Receitas":
         return {
-          bgcolor: "success.light",
-          color: "success.dark",
+          color: "success.main",
           borderColor: "success.main",
         };
       case "Essenciais":
         return {
-          bgcolor: "error.light",
-          color: "error.dark",
+          color: "error.main",
           borderColor: "error.main",
         };
       case "Pessoais":
         return {
-          bgcolor: "info.light",
-          color: "info.dark",
+          color: "info.main",
           borderColor: "info.main",
         };
       default:
         return {
-          bgcolor: "grey.100",
-          color: "grey.800",
-          borderColor: "grey.300",
+          color: "text.secondary",
+          borderColor: "divider",
         };
     }
   };
@@ -314,7 +310,7 @@ export default function DefaultCategoriesPreview() {
                           <Chip
                             key={subcategory}
                             label={subcategory}
-                            variant="filled"
+                            variant="outlined"
                             color="secondary"
                             size="small"
                           />

@@ -417,7 +417,7 @@ function CategoryCard({
                   onDelete={() => onDeleteSubcategory(category, sub)}
                   color="secondary"
                   size="small"
-                  variant="filled"
+                  variant="outlined"
                 />
               ))
             ) : (

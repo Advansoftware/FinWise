@@ -597,6 +597,14 @@ const createComponents = (): Components<Omit<Theme, 'components'>> => {
       defaultProps: {
         size: 'medium',
         variant: 'outlined',
+        MenuProps: {
+          // Remove backdrop visual para Select
+          slotProps: {
+            backdrop: {
+              invisible: true,
+            },
+          },
+        },
       },
       styleOverrides: {
         root: {
@@ -912,6 +920,11 @@ const createComponents = (): Components<Omit<Theme, 'components'>> => {
           backdropFilter: 'blur(8px)',
           WebkitBackdropFilter: 'blur(8px)',
         },
+        invisible: {
+          backgroundColor: 'transparent',
+          backdropFilter: 'none',
+          WebkitBackdropFilter: 'none',
+        },
       },
     },
 
@@ -1034,6 +1047,7 @@ const createComponents = (): Components<Omit<Theme, 'components'>> => {
     MuiChip: {
       defaultProps: {
         size: 'medium',
+        variant: 'outlined', // Padrão do projeto: sempre outlined
       },
       styleOverrides: {
         root: {
@@ -1041,49 +1055,51 @@ const createComponents = (): Components<Omit<Theme, 'components'>> => {
           fontWeight: typographyTokens.fontWeight.medium,
           fontSize: typographyTokens.fontSize.xs,
         },
-        filled: {
-          backgroundColor: alpha(colors.muted, 0.2),
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-          color: colors.foreground,
-        },
-        filledPrimary: {
-          backgroundColor: alpha(colors.primary, 0.15),
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-          color: colors.primary,
-        },
-        filledSecondary: {
-          backgroundColor: alpha(colors.secondary, 0.15),
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-          color: colors.foreground,
-        },
-        colorSuccess: {
-          backgroundColor: alpha('#10b981', 0.15),
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-          color: '#10b981',
-        },
-        colorError: {
-          backgroundColor: alpha('#ef4444', 0.15),
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-          color: '#ef4444',
-        },
-        colorWarning: {
-          backgroundColor: alpha('#f59e0b', 0.15),
-          backdropFilter: 'blur(8px)',
-          WebkitBackdropFilter: 'blur(8px)',
-          color: '#f59e0b',
-        },
         outlined: {
           borderColor: colors.border,
           color: colors.foreground,
+          backgroundColor: 'transparent',
         },
         outlinedPrimary: {
           borderColor: colors.primary,
           color: colors.primary,
+        },
+        outlinedSecondary: {
+          borderColor: colors.secondary,
+          color: colors.foreground,
+        },
+        colorSuccess: {
+          borderColor: '#10b981',
+          color: '#10b981',
+          backgroundColor: 'transparent',
+        },
+        colorError: {
+          borderColor: '#ef4444',
+          color: '#ef4444',
+          backgroundColor: 'transparent',
+        },
+        colorWarning: {
+          borderColor: '#f59e0b',
+          color: '#f59e0b',
+          backgroundColor: 'transparent',
+        },
+        colorInfo: {
+          borderColor: '#3b82f6',
+          color: '#3b82f6',
+          backgroundColor: 'transparent',
+        },
+        // Mantém filled para casos específicos onde for explicitamente usado
+        filled: {
+          backgroundColor: alpha(colors.muted, 0.2),
+          color: colors.foreground,
+        },
+        filledPrimary: {
+          backgroundColor: alpha(colors.primary, 0.15),
+          color: colors.primary,
+        },
+        filledSecondary: {
+          backgroundColor: alpha(colors.secondary, 0.15),
+          color: colors.foreground,
         },
         deleteIcon: {
           color: colors.mutedForeground,
