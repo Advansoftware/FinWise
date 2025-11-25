@@ -10,6 +10,9 @@ const nextConfig = {
     },
     transpilePackages: ['tr46', 'whatwg-url'],
     experimental: {
+        serverActions: {
+            bodySizeLimit: '4mb', // Para upload de imagens de notas fiscais
+        },
         serverComponentsExternalPackages: [
             '@genkit-ai/core',
             'genkit',

@@ -29,9 +29,9 @@ interface UseCameraReturn {
 export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
   const {
     facingMode: initialFacing = "environment",
-    // Alta resolução para captura de documentos
-    width = 3840, // 4K
-    height = 2160,
+    // Full HD é suficiente para OCR e mantém arquivo menor
+    width = 1920,
+    height = 1440, // 4:3 aspect ratio para documentos
   } = options;
   const { toast } = useToast();
 
@@ -177,6 +177,120 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
     [facingMode, stream, width, height, toast]
   );
 
+  // Funções auxiliares para processamento de imagem otimizado para OCR
+  const enhanceImageForOCR = useCallback(
+    (
+      context: CanvasRenderingContext2D,
+      width: number,
+      height: number
+    ): void => {
+      const imageData = context.getImageData(0, 0, width, height);
+      const data = imageData.data;
+
+      // 1. Converter para escala de cinza com pesos otimizados para texto
+      // Usa pesos ITU-R BT.601 que preservam melhor o contraste de texto
+      const grayscale = new Uint8ClampedArray(width * height);
+      for (let i = 0, j = 0; i < data.length; i += 4, j++) {
+        grayscale[j] =
+          data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
+      }
+
+      // 2. Calcular histograma para ajuste automático de níveis
+      const histogram = new Array(256).fill(0);
+      for (let i = 0; i < grayscale.length; i++) {
+        histogram[Math.floor(grayscale[i])]++;
+      }
+
+      // 3. Encontrar limites para stretching de contraste (ignora 1% extremos)
+      const totalPixels = width * height;
+      const clipLimit = totalPixels * 0.01;
+      let minLevel = 0,
+        maxLevel = 255;
+      let cumSum = 0;
+
+      for (let i = 0; i < 256; i++) {
+        cumSum += histogram[i];
+        if (cumSum > clipLimit) {
+          minLevel = i;
+          break;
+        }
+      }
+      cumSum = 0;
+      for (let i = 255; i >= 0; i--) {
+        cumSum += histogram[i];
+        if (cumSum > clipLimit) {
+          maxLevel = i;
+          break;
+        }
+      }
+
+      // 4. Aplicar stretching de contraste e aumento de nitidez
+      const range = maxLevel - minLevel || 1;
+      const contrast = 1.15; // 15% de aumento de contraste
+      const brightness = 5; // Leve aumento de brilho
+
+      for (let i = 0, j = 0; i < data.length; i += 4, j++) {
+        // Normaliza o valor de cinza
+        let value = grayscale[j];
+
+        // Stretching de contraste (auto-levels)
+        value = ((value - minLevel) * 255) / range;
+
+        // Aplica contraste adicional
+        value = (value - 128) * contrast + 128 + brightness;
+
+        // Aplica curva S suave para melhorar separação texto/fundo
+        // Isso escurece os escuros e clareia os claros
+        value = value / 255;
+        value = value * value * (3 - 2 * value); // Smoothstep
+        value = value * 255;
+
+        // Clamp e aplica de volta (mantém cor original levemente para contexto)
+        value = Math.min(255, Math.max(0, value));
+
+        // Mistura 85% processado + 15% original para manter alguma informação de cor
+        data[i] = value * 0.85 + data[i] * 0.15;
+        data[i + 1] = value * 0.85 + data[i + 1] * 0.15;
+        data[i + 2] = value * 0.85 + data[i + 2] * 0.15;
+      }
+
+      // 5. Aplica sharpening (unsharp mask simplificado)
+      // Cria cópia para o kernel de sharpening
+      const sharpened = new Uint8ClampedArray(data);
+      const sharpenAmount = 0.3; // Intensidade do sharpening
+
+      for (let y = 1; y < height - 1; y++) {
+        for (let x = 1; x < width - 1; x++) {
+          const idx = (y * width + x) * 4;
+
+          for (let c = 0; c < 3; c++) {
+            // Kernel de sharpening 3x3
+            const center = data[idx + c] * 5;
+            const neighbors =
+              data[idx - width * 4 + c] + // top
+              data[idx + width * 4 + c] + // bottom
+              data[idx - 4 + c] + // left
+              data[idx + 4 + c]; // right
+
+            const sharpValue = center - neighbors;
+            sharpened[idx + c] = Math.min(
+              255,
+              Math.max(0, data[idx + c] + sharpValue * sharpenAmount)
+            );
+          }
+        }
+      }
+
+      // Copia resultado de volta
+      for (let i = 0; i < data.length; i++) {
+        data[i] = sharpened[i];
+      }
+
+      context.putImageData(imageData, 0, 0);
+    },
+    []
+  );
+
   const capture = useCallback(
     (quality: number = 1.0): string | null => {
       if (!videoRef.current || !isReady) return null;
@@ -189,53 +303,29 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
       canvas.height = video.videoHeight;
 
       const context = canvas.getContext("2d", {
-        alpha: false, // Sem transparência = melhor performance
-        desynchronized: true, // Melhor performance em alguns navegadores
+        alpha: false,
+        willReadFrequently: true, // Otimiza para leitura frequente de pixels
       });
       if (!context) return null;
 
-      // Configurações para melhor qualidade de renderização
-      context.imageSmoothingEnabled = true;
-      context.imageSmoothingQuality = "high";
+      // Desabilita smoothing para manter nitidez do texto
+      context.imageSmoothingEnabled = false;
 
       // Desenha o frame atual
       context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-      // Aplica leve aumento de contraste para melhorar legibilidade de texto
-      // Isso ajuda com notas fiscais desbotadas ou com baixo contraste
+      // Aplica processamento otimizado para OCR de texto
       try {
-        const imageData = context.getImageData(
-          0,
-          0,
-          canvas.width,
-          canvas.height
-        );
-        const data = imageData.data;
-        const contrast = 1.1; // Leve aumento de contraste (10%)
-        const factor =
-          (259 * (contrast * 255 + 255)) / (255 * (259 - contrast * 255));
-
-        for (let i = 0; i < data.length; i += 4) {
-          data[i] = Math.min(255, Math.max(0, factor * (data[i] - 128) + 128)); // R
-          data[i + 1] = Math.min(
-            255,
-            Math.max(0, factor * (data[i + 1] - 128) + 128)
-          ); // G
-          data[i + 2] = Math.min(
-            255,
-            Math.max(0, factor * (data[i + 2] - 128) + 128)
-          ); // B
-        }
-        context.putImageData(imageData, 0, 0);
+        enhanceImageForOCR(context, canvas.width, canvas.height);
       } catch {
-        // Se falhar o processamento de contraste, continua com a imagem original
+        // Se falhar, continua com a imagem original
       }
 
-      // Retorna em PNG para melhor qualidade (sem compressão com perda)
-      // ou JPEG com qualidade máxima para tamanho menor
+      // JPEG com qualidade 92% - bom equilíbrio entre qualidade e tamanho
+      // Para OCR, a qualidade ainda é excelente e o arquivo fica ~10x menor que PNG
       return canvas.toDataURL("image/jpeg", quality);
     },
-    [isReady]
+    [isReady, enhanceImageForOCR]
   );
 
   const toggleFlash = useCallback(async () => {
