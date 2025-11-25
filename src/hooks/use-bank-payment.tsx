@@ -560,10 +560,14 @@ export function BankPaymentProvider({
 
   const removeDevice = useCallback(
     async (id: string): Promise<boolean> => {
+      if (!user?.uid) return false;
       try {
-        const response = await fetch(`/api/bank-payment/devices/${id}`, {
-          method: "DELETE",
-        });
+        const response = await fetch(
+          `/api/bank-payment/devices/${id}?userId=${user.uid}`,
+          {
+            method: "DELETE",
+          }
+        );
 
         if (response.ok) {
           setDevices((prev) => prev.filter((d) => d.id !== id));
@@ -577,7 +581,7 @@ export function BankPaymentProvider({
         return false;
       }
     },
-    [currentDevice]
+    [user?.uid, currentDevice]
   );
 
   // ==================== PAGAMENTOS ====================
@@ -1033,9 +1037,10 @@ export function BankPaymentProvider({
   // Set primary device por ID
   const setPrimaryDevice = useCallback(
     async (deviceId: string): Promise<boolean> => {
+      if (!user?.uid) return false;
       try {
         const response = await fetch(
-          `/api/bank-payment/devices/${deviceId}/set-primary`,
+          `/api/bank-payment/devices/${deviceId}/set-primary?userId=${user.uid}`,
           {
             method: "POST",
           }
@@ -1060,18 +1065,22 @@ export function BankPaymentProvider({
         return false;
       }
     },
-    [toast]
+    [user?.uid, toast]
   );
 
   // Update device
   const updateDevice = useCallback(
     async (id: string, data: Partial<UserDevice>): Promise<boolean> => {
+      if (!user?.uid) return false;
       try {
-        const response = await fetch(`/api/bank-payment/devices/${id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
+        const response = await fetch(
+          `/api/bank-payment/devices/${id}?userId=${user.uid}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          }
+        );
 
         if (response.ok) {
           const { device } = await response.json();
@@ -1083,7 +1092,7 @@ export function BankPaymentProvider({
         return false;
       }
     },
-    []
+    [user?.uid]
   );
 
   // Initiate payment (para PaymentButton)
