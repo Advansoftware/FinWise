@@ -8,54 +8,88 @@ import { styled, alpha } from "@mui/material/styles";
 const StyledMaterialDesignContent = styled(MaterialDesignContent)(
   ({ theme }) => ({
     "&.notistack-MuiContent-success": {
-      backgroundColor: "#10b981",
-      color: "#ffffff !important",
-      borderRadius: Number(theme.shape.borderRadius) * 2,
-      boxShadow: `0 4px 20px ${alpha("#10b981", 0.4)}`,
+      backgroundColor: "rgba(16, 185, 129, 0.15)",
+      border: "1px solid rgba(16, 185, 129, 0.3)",
+      color: "#10b981 !important",
+      borderRadius: 8,
+      padding: "4px 16px",
+      minWidth: "auto",
+      boxShadow: "none",
       fontFamily: theme.typography.fontFamily,
+      fontSize: "0.875rem",
       "& *": {
-        color: "#ffffff !important",
+        color: "#10b981 !important",
+      },
+      "& .SnackbarItem-message": {
+        padding: 0,
       },
     },
     "&.notistack-MuiContent-error": {
-      backgroundColor: "#ef4444",
-      color: "#ffffff !important",
-      borderRadius: Number(theme.shape.borderRadius) * 2,
-      boxShadow: `0 4px 20px ${alpha("#ef4444", 0.4)}`,
+      backgroundColor: "rgba(239, 68, 68, 0.15)",
+      border: "1px solid rgba(239, 68, 68, 0.3)",
+      color: "#f87171 !important",
+      borderRadius: 8,
+      padding: "4px 16px",
+      minWidth: "auto",
+      boxShadow: "none",
       fontFamily: theme.typography.fontFamily,
+      fontSize: "0.875rem",
       "& *": {
-        color: "#ffffff !important",
+        color: "#f87171 !important",
+      },
+      "& .SnackbarItem-message": {
+        padding: 0,
       },
     },
     "&.notistack-MuiContent-warning": {
-      backgroundColor: "#f59e0b",
-      color: "#000000 !important",
-      borderRadius: Number(theme.shape.borderRadius) * 2,
-      boxShadow: `0 4px 20px ${alpha("#f59e0b", 0.4)}`,
+      backgroundColor: "rgba(245, 158, 11, 0.15)",
+      border: "1px solid rgba(245, 158, 11, 0.3)",
+      color: "#f59e0b !important",
+      borderRadius: 8,
+      padding: "4px 16px",
+      minWidth: "auto",
+      boxShadow: "none",
       fontFamily: theme.typography.fontFamily,
+      fontSize: "0.875rem",
       "& *": {
-        color: "#000000 !important",
+        color: "#f59e0b !important",
+      },
+      "& .SnackbarItem-message": {
+        padding: 0,
       },
     },
     "&.notistack-MuiContent-info": {
-      backgroundColor: theme.palette.primary.main,
-      color: "#ffffff !important",
-      borderRadius: Number(theme.shape.borderRadius) * 2,
-      boxShadow: `0 4px 20px ${alpha(theme.palette.primary.main, 0.4)}`,
+      backgroundColor: "rgba(59, 130, 246, 0.15)",
+      border: "1px solid rgba(59, 130, 246, 0.3)",
+      color: "#3b82f6 !important",
+      borderRadius: 8,
+      padding: "4px 16px",
+      minWidth: "auto",
+      boxShadow: "none",
       fontFamily: theme.typography.fontFamily,
+      fontSize: "0.875rem",
       "& *": {
-        color: "#ffffff !important",
+        color: "#3b82f6 !important",
+      },
+      "& .SnackbarItem-message": {
+        padding: 0,
       },
     },
     "&.notistack-MuiContent-default": {
-      backgroundColor: theme.palette.background.paper,
-      color: `${theme.palette.text.primary} !important`,
-      borderRadius: Number(theme.shape.borderRadius) * 2,
+      backgroundColor: "rgba(255, 255, 255, 0.1)",
       border: `1px solid ${theme.palette.divider}`,
-      boxShadow: `0 4px 20px ${alpha(theme.palette.common.black, 0.3)}`,
+      color: `${theme.palette.text.primary} !important`,
+      borderRadius: 8,
+      padding: "4px 16px",
+      minWidth: "auto",
+      boxShadow: "none",
       fontFamily: theme.typography.fontFamily,
+      fontSize: "0.875rem",
       "& *": {
         color: `${theme.palette.text.primary} !important`,
+      },
+      "& .SnackbarItem-message": {
+        padding: 0,
       },
     },
   })
@@ -64,9 +98,10 @@ const StyledMaterialDesignContent = styled(MaterialDesignContent)(
 export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <SnackbarProvider
-      maxSnack={3}
-      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-      autoHideDuration={5000}
+      maxSnack={2}
+      anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      autoHideDuration={3000}
+      dense
       Components={{
         success: StyledMaterialDesignContent,
         error: StyledMaterialDesignContent,

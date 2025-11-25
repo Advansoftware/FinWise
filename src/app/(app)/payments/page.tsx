@@ -45,10 +45,19 @@ export default function PaymentsPage() {
     <Stack spacing={4}>
       {/* Header */}
       <Box>
-        <Typography variant="h4" fontWeight="bold" gutterBottom>
+        <Typography
+          variant="h4"
+          fontWeight="bold"
+          gutterBottom
+          sx={{ fontSize: { xs: "1.5rem", sm: "2rem" } }}
+        >
           Pagamentos
         </Typography>
-        <Typography variant="body1" color="text.secondary">
+        <Typography
+          variant="body1"
+          color="text.secondary"
+          sx={{ fontSize: { xs: "0.875rem", sm: "1rem" } }}
+        >
           Gerencie seus contatos favoritos, dispositivos e histórico de
           pagamentos.
         </Typography>
@@ -60,7 +69,10 @@ export default function PaymentsPage() {
           value={tabValue}
           onChange={handleTabChange}
           aria-label="payments tabs"
-          sx={{ borderBottom: 1, borderColor: "divider", px: 2 }}
+          variant="scrollable"
+          scrollButtons="auto"
+          allowScrollButtonsMobile
+          sx={{ borderBottom: 1, borderColor: "divider", px: { xs: 1, sm: 2 } }}
         >
           <Tab
             icon={<Users size={18} />}
@@ -68,6 +80,7 @@ export default function PaymentsPage() {
             label="Contatos"
             id="payments-tab-0"
             aria-controls="payments-tabpanel-0"
+            sx={{ minWidth: "auto", px: { xs: 1.5, sm: 2 } }}
           />
           <Tab
             icon={<Smartphone size={18} />}
@@ -75,6 +88,7 @@ export default function PaymentsPage() {
             label="Dispositivos"
             id="payments-tab-1"
             aria-controls="payments-tabpanel-1"
+            sx={{ minWidth: "auto", px: { xs: 1.5, sm: 2 } }}
           />
           <Tab
             icon={<History size={18} />}
@@ -82,6 +96,7 @@ export default function PaymentsPage() {
             label="Histórico"
             id="payments-tab-2"
             aria-controls="payments-tabpanel-2"
+            sx={{ minWidth: "auto", px: { xs: 1.5, sm: 2 } }}
           />
         </Tabs>
 

@@ -120,49 +120,60 @@ export function OfflineStorageInitializer() {
 
   return (
     <>
-      {/* Indicador de Status de Sync */}
+      {/* Indicador de Status de Sync - Sutil */}
       {syncStatus.isSyncing && (
         <Box
           sx={{
             position: "fixed",
-            bottom: 80,
-            right: 16,
-            zIndex: 1000,
-            bgcolor: "background.paper",
-            borderRadius: 2,
-            p: 1.5,
-            boxShadow: 3,
+            bottom: 16,
+            left: 16,
+            zIndex: 900,
+            bgcolor: "rgba(0,0,0,0.6)",
+            borderRadius: 1,
+            px: 1.5,
+            py: 0.5,
             display: "flex",
             alignItems: "center",
-            gap: 1,
+            gap: 0.5,
+            backdropFilter: "blur(4px)",
           }}
         >
-          <CircularProgress size={16} />
-          <Typography variant="caption">Sincronizando...</Typography>
+          <CircularProgress size={12} sx={{ color: "grey.400" }} />
+          <Typography
+            variant="caption"
+            sx={{ fontSize: "0.7rem", color: "grey.400" }}
+          >
+            Sync
+          </Typography>
         </Box>
       )}
 
-      {/* Indicador de Operações Pendentes */}
+      {/* Indicador de Operações Pendentes - Sutil */}
       {syncStatus.pendingOperations > 0 && !syncStatus.isSyncing && (
         <Box
           sx={{
             position: "fixed",
-            bottom: 80,
-            right: 16,
-            zIndex: 1000,
-            bgcolor: "warning.main",
-            color: "warning.contrastText",
-            borderRadius: 2,
-            p: 1.5,
-            boxShadow: 3,
+            bottom: 16,
+            left: 16,
+            zIndex: 900,
+            bgcolor: "rgba(245, 158, 11, 0.2)",
+            borderRadius: 1,
+            px: 1.5,
+            py: 0.5,
             display: "flex",
             alignItems: "center",
-            gap: 1,
+            gap: 0.5,
+            backdropFilter: "blur(4px)",
+            border: "1px solid rgba(245, 158, 11, 0.3)",
           }}
         >
-          <RefreshCw size={16} />
-          <Typography variant="caption">
-            {syncStatus.pendingOperations} alteração(ões) pendente(s)
+          <RefreshCw size={12} style={{ color: "#f59e0b" }} />
+          <Typography
+            variant="caption"
+            sx={{ fontSize: "0.7rem", color: "#f59e0b" }}
+          >
+            {syncStatus.pendingOperations} pendente
+            {syncStatus.pendingOperations > 1 ? "s" : ""}
           </Typography>
         </Box>
       )}
@@ -186,20 +197,35 @@ export function OfflineStorageInitializer() {
         </Alert>
       </Snackbar>
 
-      {/* Snackbar de Sincronização Completa */}
+      {/* Indicador de Sincronização Completa - Muito Sutil */}
       <Snackbar
         open={showSyncMessage}
-        autoHideDuration={3000}
+        autoHideDuration={1500}
         onClose={() => setShowSyncMessage(false)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        sx={{ bottom: { xs: 8, sm: 16 }, left: { xs: 8, sm: 16 } }}
       >
-        <Alert
-          severity="success"
-          icon={<Cloud size={20} />}
-          onClose={() => setShowSyncMessage(false)}
+        <Box
+          sx={{
+            bgcolor: "rgba(16, 185, 129, 0.15)",
+            border: "1px solid rgba(16, 185, 129, 0.3)",
+            borderRadius: 1,
+            px: 1.5,
+            py: 0.5,
+            display: "flex",
+            alignItems: "center",
+            gap: 0.5,
+            backdropFilter: "blur(4px)",
+          }}
         >
-          Dados sincronizados com sucesso!
-        </Alert>
+          <Cloud size={12} style={{ color: "#10b981" }} />
+          <Typography
+            variant="caption"
+            sx={{ fontSize: "0.7rem", color: "#10b981" }}
+          >
+            Sincronizado
+          </Typography>
+        </Box>
       </Snackbar>
     </>
   );

@@ -261,7 +261,9 @@ export function BankPaymentProvider({
     if (!user?.uid) return;
 
     try {
-      const response = await fetch("/api/bank-payment/contacts");
+      const response = await fetch(
+        `/api/bank-payment/contacts?userId=${user.uid}`
+      );
       if (response.ok) {
         const data = await response.json();
         setContacts(data.contacts || []);
@@ -275,7 +277,9 @@ export function BankPaymentProvider({
     if (!user?.uid) return;
 
     try {
-      const response = await fetch("/api/bank-payment/devices");
+      const response = await fetch(
+        `/api/bank-payment/devices?userId=${user.uid}`
+      );
       if (response.ok) {
         const data = await response.json();
         setDevices(data.devices || []);
@@ -296,7 +300,9 @@ export function BankPaymentProvider({
     if (!user?.uid) return;
 
     try {
-      const response = await fetch("/api/bank-payment/requests");
+      const response = await fetch(
+        `/api/bank-payment/requests?userId=${user.uid}`
+      );
       if (response.ok) {
         const data = await response.json();
         setPaymentRequests(data.requests || []);
@@ -347,11 +353,14 @@ export function BankPaymentProvider({
       if (!user?.uid) return null;
 
       try {
-        const response = await fetch("/api/bank-payment/contacts", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
+        const response = await fetch(
+          `/api/bank-payment/contacts?userId=${user.uid}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          }
+        );
 
         if (response.ok) {
           const { contact } = await response.json();
@@ -379,12 +388,16 @@ export function BankPaymentProvider({
 
   const updateContact = useCallback(
     async (id: string, data: UpdateContactInput): Promise<boolean> => {
+      if (!user?.uid) return false;
       try {
-        const response = await fetch(`/api/bank-payment/contacts/${id}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data),
-        });
+        const response = await fetch(
+          `/api/bank-payment/contacts/${id}?userId=${user.uid}`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          }
+        );
 
         if (response.ok) {
           const { contact } = await response.json();
@@ -404,15 +417,19 @@ export function BankPaymentProvider({
         return false;
       }
     },
-    [toast]
+    [user?.uid, toast]
   );
 
   const deleteContact = useCallback(
     async (id: string): Promise<boolean> => {
+      if (!user?.uid) return false;
       try {
-        const response = await fetch(`/api/bank-payment/contacts/${id}`, {
-          method: "DELETE",
-        });
+        const response = await fetch(
+          `/api/bank-payment/contacts/${id}?userId=${user.uid}`,
+          {
+            method: "DELETE",
+          }
+        );
 
         if (response.ok) {
           setContacts((prev) => prev.filter((c) => c.id !== id));
@@ -430,7 +447,7 @@ export function BankPaymentProvider({
         return false;
       }
     },
-    [toast]
+    [user?.uid, toast]
   );
 
   const searchContacts = useCallback(
@@ -975,15 +992,22 @@ export function BankPaymentProvider({
           }
         }
 
-        const response = await fetch("/api/bank-payment/devices", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(deviceData),
-        });
+        const response = await fetch(
+          `/api/bank-payment/devices?userId=${user.uid}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(deviceData),
+          }
+        );
 
         if (response.ok) {
           const { device } = await response.json();
           setCurrentDevice(device);
+          toast({
+            title: "Dispositivo cadastrado!",
+            description: `${name} foi adicionado com sucesso.`,
+          });
           setDevices((prev) => {
             const existing = prev.findIndex(
               (d) => d.deviceId === device.deviceId

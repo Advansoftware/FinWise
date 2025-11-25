@@ -273,9 +273,10 @@ export function DeviceManager() {
     <Box>
       {/* Header */}
       <Stack
-        direction="row"
+        direction={{ xs: "column", sm: "row" }}
         justifyContent="space-between"
-        alignItems="center"
+        alignItems={{ xs: "stretch", sm: "center" }}
+        spacing={2}
         mb={2}
       >
         <Typography variant="h6">Meus Dispositivos</Typography>
@@ -284,6 +285,17 @@ export function DeviceManager() {
           startIcon={<AddIcon />}
           onClick={handleAddClick}
           size="small"
+          fullWidth
+          sx={{ display: { sm: "none" } }}
+        >
+          Cadastrar Este Dispositivo
+        </Button>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={handleAddClick}
+          size="small"
+          sx={{ display: { xs: "none", sm: "inline-flex" } }}
         >
           Cadastrar Este Dispositivo
         </Button>
