@@ -17,7 +17,7 @@ import { DateRangePicker } from "@/components/dashboard/date-range-picker";
 import { ItemFilter } from "@/components/dashboard/item-filter";
 import { TransactionCardList } from "@/components/transactions/transaction-card-list";
 import { AddTransactionSheet } from "@/components/dashboard/add-transaction-sheet";
-import { GamificationGuide } from "@/components/gamification";
+import { GamificationGuide, DailyQuestsCard } from "@/components/gamification";
 import { PlusCircle } from "lucide-react";
 
 export default function TransactionsPage() {
@@ -111,6 +111,9 @@ export default function TransactionsPage() {
       ) : (
         <DataTable columns={columns} data={filteredTransactions} />
       )}
+
+      {/* Missões de Transações */}
+      <DailyQuestsCard pageContext="transactions" />
     </Stack>
   );
 }

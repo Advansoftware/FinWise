@@ -36,7 +36,7 @@ import { CreateInstallmentDialog } from "@/components/installments/create-instal
 import { InstallmentCard } from "@/components/installments/installment-card";
 import { PaymentSchedule } from "@/components/installments/payment-schedule";
 import { MonthlyProjections } from "@/components/installments/monthly-projections";
-import { GamificationGuide } from "@/components/gamification";
+import { GamificationGuide, DailyQuestsCard } from "@/components/gamification";
 import { formatCurrency } from "@/lib/utils";
 import { motion } from "framer-motion";
 import { useGamification } from "@/hooks/use-gamification";
@@ -968,6 +968,9 @@ export default function InstallmentsPage() {
           </Box>
         )}
       </Box>
+
+      {/* Missões de Parcelamentos */}
+      <DailyQuestsCard pageContext="installments" />
 
       {/* Create Dialog */}
       <CreateInstallmentDialog

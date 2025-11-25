@@ -12,7 +12,7 @@ import {
 import Grid from "@mui/material/Grid";
 import { FinancialProfileCard } from "@/components/profile/financial-profile-card";
 import { GamificationSummary } from "@/components/profile/gamification-summary";
-import { GamificationGuide } from "@/components/gamification";
+import { GamificationGuide, DailyQuestsCard } from "@/components/gamification";
 import { PayrollCard } from "@/components/profile/payroll-card";
 import { UpdateNameForm } from "@/components/profile/update-name-form";
 import { UpdatePasswordForm } from "@/components/profile/update-password-form";
@@ -89,9 +89,14 @@ export default function ProfilePage() {
 
         {/* Terceira linha - Gamificação (se Pro) */}
         {isPro && (
-          <Grid size={{ xs: 12 }}>
-            <GamificationSummary />
-          </Grid>
+          <>
+            <Grid size={{ xs: 12, lg: 8 }}>
+              <GamificationSummary />
+            </Grid>
+            <Grid size={{ xs: 12, lg: 4 }}>
+              <DailyQuestsCard pageContext="profile" />
+            </Grid>
+          </>
         )}
 
         {/* Gamificação como upgrade para não-Pro */}

@@ -46,7 +46,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { ProjectGoalCompletionOutput } from "@/ai/ai-types";
 import { useGamification } from "@/hooks/use-gamification";
-import { GamificationGuide } from "@/components/gamification";
+import { GamificationGuide, DailyQuestsCard } from "@/components/gamification";
 import { formatCurrency } from "@/lib/utils";
 
 export default function GoalsPage() {
@@ -223,6 +223,9 @@ export default function GoalsPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Missões relacionadas a Metas */}
+      <DailyQuestsCard pageContext="goals" compact />
 
       {goals.length > 0 ? (
         <Grid container spacing={3}>

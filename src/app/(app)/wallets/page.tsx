@@ -38,7 +38,7 @@ import {
 } from "lucide-react";
 import { useWallets } from "@/hooks/use-wallets";
 import { CreateWalletDialog } from "@/components/wallets/create-wallet-dialog";
-import { GamificationGuide } from "@/components/gamification";
+import { GamificationGuide, DailyQuestsCard } from "@/components/gamification";
 import { Wallet, WalletType } from "@/lib/types";
 
 const WalletIcon = ({ type }: { type: WalletType }) => {
@@ -424,6 +424,9 @@ export default function WalletsPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Missões de Carteiras */}
+      <DailyQuestsCard pageContext="wallets" />
 
       {/* Dialog */}
       <CreateWalletDialog

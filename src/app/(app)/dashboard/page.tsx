@@ -15,7 +15,11 @@ import { ScanQRCodeDialog } from "@/components/dashboard/scan-qr-code-dialog";
 import { WalletCard } from "@/components/dashboard/wallet-card";
 import { GoalHighlightCard } from "@/components/goals/goal-highlight-card";
 import { FutureBalanceCard } from "@/components/dashboard/future-balance-card";
-import { GamificationGuide } from "@/components/gamification";
+import {
+  GamificationGuide,
+  DailyQuestsCard,
+  GamificationProgressWidget,
+} from "@/components/gamification";
 import { usePlan } from "@/hooks/use-plan";
 
 export default function DashboardPage() {
@@ -124,8 +128,14 @@ export default function DashboardPage() {
             {/* Coluna Lateral - 4 colunas no desktop */}
             <Grid size={{ xs: 12, lg: 4 }}>
               <Stack spacing={{ xs: 2, sm: 3 }}>
+                {/* Gamification Progress */}
+                <GamificationProgressWidget variant="expanded" showBadges />
+
                 {/* Wallet Summary */}
                 <WalletCard transactions={filteredTransactions} />
+
+                {/* Daily Quests */}
+                <DailyQuestsCard pageContext="dashboard" compact />
 
                 {/* AI Tip */}
                 {isPro && <AITipCard transactions={filteredTransactions} />}

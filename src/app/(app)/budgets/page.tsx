@@ -45,7 +45,7 @@ import { Budget } from "@/lib/types";
 import { AutomaticBudgetCard } from "@/components/budgets/automatic-budget-card";
 import { BudgetGuidance } from "@/components/budgets/budget-guidance";
 import { SpendingAnalysis } from "@/components/budgets/spending-analysis";
-import { GamificationGuide } from "@/components/gamification";
+import { GamificationGuide, DailyQuestsCard } from "@/components/gamification";
 import { usePlan } from "@/hooks/use-plan";
 import { useGamification } from "@/hooks/use-gamification";
 import { useToast } from "@/hooks/use-toast";
@@ -287,6 +287,9 @@ export default function BudgetsPage() {
               </CardContent>
             </Card>
           )}
+
+          {/* Missões de Orçamento */}
+          <DailyQuestsCard pageContext="budgets" />
 
           {isPlus && <AutomaticBudgetCard />}
 
