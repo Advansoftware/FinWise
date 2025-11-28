@@ -3,12 +3,12 @@
 
 import {
   Skeleton,
-  Stack,
   Box,
   Typography,
   Button,
   useTheme,
   useMediaQuery,
+  Grid,
 } from "@mui/material";
 import { useTransactions } from "@/hooks/use-transactions";
 import { columns } from "@/components/transactions/columns";
@@ -38,90 +38,113 @@ export default function TransactionsPage() {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   return (
-    <Stack spacing={{ xs: 2, sm: 3 }}>
-      {/* Header */}
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        spacing={2}
-        justifyContent="space-between"
-        alignItems={{ xs: "stretch", sm: "flex-start" }}
+    <Box sx={{ flexGrow: 1 }}>
+      <Grid
+        container
+        spacing={{ xs: 2, sm: 3 }}
+        columns={{ xs: 4, sm: 8, md: 12 }}
       >
-        <Box>
-          <Typography variant="h4" fontWeight="bold" gutterBottom>
-            Transações
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Visualize e gerencie suas transações com filtros e paginação.
-          </Typography>
-        </Box>
+        {/* Header */}
+        <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              justifyContent: "space-between",
+              alignItems: { xs: "stretch", sm: "flex-start" },
+              gap: 2,
+            }}
+          >
+            <Box>
+              <Typography variant="h4" fontWeight="bold" gutterBottom>
+                Transações
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                Visualize e gerencie suas transações com filtros e paginação.
+              </Typography>
+            </Box>
 
-        {/* Add Transaction Button */}
-        <Stack 
-          direction="row" 
-          spacing={1} 
-          alignItems="center"
-          sx={{ width: { xs: "100%", sm: "auto" } }}
-        >
-          <Box sx={{ flex: { xs: 1, sm: "none" } }}>
-            <GamificationGuide />
-          </Box>
-          <AddTransactionSheet>
-            <Button
-              variant="contained"
-              fullWidth
-              startIcon={<PlusCircle size={18} />}
-              sx={{ flex: { xs: 1, sm: "none" } }}
+            {/* Add Transaction Button */}
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "row",
+                gap: 1,
+                alignItems: "center",
+                width: { xs: "100%", sm: "auto" },
+              }}
             >
-              Adicionar Transação
-            </Button>
-          </AddTransactionSheet>
-        </Stack>
-      </Stack>
+              <Box sx={{ flex: { xs: 1, sm: "none" } }}>
+                <GamificationGuide />
+              </Box>
+              <AddTransactionSheet>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  startIcon={<PlusCircle size={18} />}
+                  sx={{ flex: { xs: 1, sm: "none" } }}
+                >
+                  Adicionar Transação
+                </Button>
+              </AddTransactionSheet>
+            </Box>
+          </Box>
+        </Grid>
 
-      {/* Filters */}
-      <Stack
-        direction={{ xs: "column", sm: "row" }}
-        spacing={2}
-        alignItems={{ xs: "stretch", sm: "flex-start" }}
-      >
-        <DateRangePicker initialDate={dateRange} onUpdate={setDateRange} />
-        <ItemFilter
-          placeholder="Todas as Categorias"
-          items={["all", ...categories]}
-          selectedItem={selectedCategory}
-          onItemSelected={handleCategoryChange}
-        />
-        <ItemFilter
-          placeholder="Todas as Subcategorias"
-          items={["all", ...availableSubcategories]}
-          selectedItem={selectedSubcategory}
-          onItemSelected={setSelectedSubcategory}
-          disabled={selectedCategory === "all"}
-        />
-      </Stack>
+        {/* Filters */}
+        <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              gap: 2,
+              alignItems: { xs: "stretch", sm: "flex-start" },
+            }}
+          >
+            <DateRangePicker initialDate={dateRange} onUpdate={setDateRange} />
+            <ItemFilter
+              placeholder="Todas as Categorias"
+              items={["all", ...categories]}
+              selectedItem={selectedCategory}
+              onItemSelected={handleCategoryChange}
+            />
+            <ItemFilter
+              placeholder="Todas as Subcategorias"
+              items={["all", ...availableSubcategories]}
+              selectedItem={selectedSubcategory}
+              onItemSelected={setSelectedSubcategory}
+              disabled={selectedCategory === "all"}
+            />
+          </Box>
+        </Grid>
 
-      {/* Missões de Transações */}
-      <DailyQuestsCard pageContext="transactions" compact />
+        {/* Missões de Transações */}
+        <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+          <DailyQuestsCard pageContext="transactions" compact />
+        </Grid>
 
-      {/* Content */}
-      {isLoading ? (
-        <Stack spacing={2}>
-          <Skeleton
-            variant="rectangular"
-            height={48}
-            sx={{ borderRadius: 1 }}
-          />
-          <Skeleton
-            variant="rectangular"
-            height={400}
-            sx={{ borderRadius: 2 }}
-          />
-        </Stack>
-      ) : isMobile ? (
-        <TransactionCardList transactions={filteredTransactions} />
-      ) : (
-        <DataTable columns={columns} data={filteredTransactions} />
-      )}
-    </Stack>
+        {/* Content */}
+        <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+          {isLoading ? (
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              <Skeleton
+                variant="rectangular"
+                height={48}
+                sx={{ borderRadius: 1 }}
+              />
+              <Skeleton
+                variant="rectangular"
+                height={400}
+                sx={{ borderRadius: 2 }}
+              />
+            </Box>
+          ) : isMobile ? (
+            <TransactionCardList transactions={filteredTransactions} />
+          ) : (
+            <DataTable columns={columns} data={filteredTransactions} />
+          )}
+        </Grid>
+      </Grid>
+    </Box>
   );
 }

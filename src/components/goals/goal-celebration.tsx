@@ -1,124 +1,135 @@
 // src/components/goals/goal-celebration.tsx
 'use client';
 
-import {motion, AnimatePresence} from 'framer-motion';
-import {useEffect, useState} from 'react';
-import {Trophy, Sparkles} from 'lucide-react';
-import {Goal} from '@/lib/types';
-import {Box, Typography, Button} from '@mui/material';
-
-const ConfettiPiece = ({ x, y, rotate, color } : { x: number, y: number, rotate: number, color: string }) => (
-    <motion.div
-        style={{
-            position: 'absolute',
-            left: `${x}%`,
-            top: `${y}%`,
-            backgroundColor: color,
-            width: '10px',
-            height: '10px',
-            borderRadius: '50%',
-            pointerEvents: 'none',
-        }}
-        initial={{ opacity: 1, y: 0, rotate: 0 }}
-        animate={{
-            opacity: 0,
-            y: 500, // fall distance
-            rotate: rotate + 360,
-        }}
-        transition={{ duration: 2 + Math.random() * 2, ease: 'linear' }}
-    />
-);
+import { useEffect, useState } from 'react';
+import { Trophy, Sparkles } from 'lucide-react';
+import { Goal } from '@/lib/types';
+import { Box, Typography, Button, Dialog, DialogContent, useTheme } from '@mui/material';
+import { motion, AnimatePresence } from 'framer-motion';
+import confetti from 'canvas-confetti';
 
 export const GoalCompletionCelebration = ({ goal, onComplete }: { goal: Goal, onComplete: () => void }) => {
-    const [confetti, setConfetti] = useState<any[]>([]);
-    const [isVisible, setIsVisible] = useState(true);
+    const [open, setOpen] = useState(true);
+    const theme = useTheme();
 
     useEffect(() => {
-        const generateConfetti = () => {
-            const newConfetti = Array.from({ length: 150 }).map((_, i) => ({
-                id: i,
-                x: Math.random() * 100,
-                y: -10 - Math.random() * 20, // Start from above the screen
-                rotate: Math.random() * 360,
-                color: ['#a855f7', '#ec4899', '#facc15', '#4ade80'][Math.floor(Math.random() * 4)],
-            }));
-            setConfetti(newConfetti);
-        };
+        if (open) {
+            const duration = 3000;
+            const end = Date.now() + duration;
 
-        generateConfetti();
-        const timer = setTimeout(() => {
-            setIsVisible(false);
-            onComplete();
-        }, 4000); // Animation duration
-        return () => clearTimeout(timer);
-    }, [onComplete]);
+            const frame = () => {
+                confetti({
+                    particleCount: 3,
+                    angle: 60,
+                    spread: 55,
+                    origin: { x: 0, y: 0.8 },
+                    colors: ['#a855f7', '#ec4899', '#facc15', '#4ade80']
+                });
+                confetti({
+                    particleCount: 3,
+                    angle: 120,
+                    spread: 55,
+                    origin: { x: 1, y: 0.8 },
+                    colors: ['#a855f7', '#ec4899', '#facc15', '#4ade80']
+                });
+
+                if (Date.now() < end) {
+                    requestAnimationFrame(frame);
+                }
+            };
+            frame();
+        }
+    }, [open]);
 
     const handleClose = () => {
-        setIsVisible(false);
-        onComplete();
+        setOpen(false);
+        setTimeout(onComplete, 300); // Wait for animation
     };
 
-    if (!isVisible) return null;
-
     return (
-        <AnimatePresence>
-            <Box
-                component={motion.div}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={handleClose}
-                sx={{
-                    position: 'fixed',
-                    inset: 0,
-                    zIndex: 9998,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    bgcolor: 'rgba(0, 0, 0, 0.5)',
-                    backdropFilter: 'blur(4px)',
-                    cursor: 'pointer',
-                }}
-            >
-                <Box sx={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
-                    {confetti.map(c => <ConfettiPiece key={c.id} {...c} />)}
-                </Box>
-                 <Box
-                    component={motion.div}
-                    initial={{ scale: 0.5, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ delay: 0.2, type: 'spring', stiffness: 260, damping: 20 }}
-                    onClick={(e) => e.stopPropagation()}
-                    sx={{
-                        textAlign: 'center',
-                        p: 4,
-                        bgcolor: 'background.paper',
-                        borderRadius: '0.75rem',
-                        boxShadow: 24,
-                        border: theme => `1px solid ${theme.palette.primary.main}80`,
-                        maxWidth: '24rem',
-                        mx: 'auto',
-                        cursor: 'default',
-                    }}
-                 >
-                    <Box sx={{ position: 'relative', display: 'inline-block' }}>
-                        <Sparkles style={{ position: 'absolute', top: '-1rem', left: '-1rem', width: '2rem', height: '2rem', color: '#facc15', animation: 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite' }} />
-                         <Sparkles style={{ position: 'absolute', bottom: '-1rem', right: '-1rem', width: '2rem', height: '2rem', color: '#ec4899', animation: 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite', animationDelay: '0.2s' }}/>
-                        <Trophy style={{ width: '6rem', height: '6rem', color: '#facc15' }} fill="currentColor" />
-                    </Box>
-                    <Typography variant="h4" sx={{ mt: 3, fontWeight: 'bold', letterSpacing: '-0.025em' }}>Meta Concluída!</Typography>
-                    <Typography sx={{ mt: 1, color: theme => (theme.palette as any).custom?.mutedForeground }}>
-                        Parabéns por alcançar sua meta de <Box component="strong" sx={{ color: theme => `${theme.palette.primary.main}e6` }}>"{goal.name}"</Box>!
-                    </Typography>
-                    <Button
-                        variant="contained"
-                        onClick={handleClose}
-                        sx={{ mt: 3 }}
+        <Dialog
+            open={open}
+            onClose={handleClose}
+            maxWidth="sm"
+            fullWidth
+            PaperProps={{
+                sx: {
+                    borderRadius: 4,
+                    overflow: 'visible',
+                    background: theme.palette.mode === 'dark' 
+                        ? 'linear-gradient(135deg, #1a1a2e 0%, #16213e 100%)'
+                        : 'linear-gradient(135deg, #fff 0%, #f3f4f6 100%)',
+                    border: `1px solid ${theme.palette.primary.main}40`,
+                    boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
+                }
+            }}
+        >
+            <DialogContent sx={{ p: 4, textAlign: 'center', position: 'relative', overflow: 'visible' }}>
+                <Box sx={{ position: 'relative', display: 'inline-block', mb: 2 }}>
+                    <motion.div
+                        initial={{ scale: 0, rotate: -180 }}
+                        animate={{ scale: 1, rotate: 0 }}
+                        transition={{ type: "spring", stiffness: 260, damping: 20 }}
                     >
-                        Continuar 🎉
-                    </Button>
+                        <Box
+                            sx={{
+                                width: 100,
+                                height: 100,
+                                borderRadius: '50%',
+                                bgcolor: 'rgba(250, 204, 21, 0.1)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                mx: 'auto'
+                            }}
+                        >
+                            <Trophy size={64} color="#facc15" />
+                        </Box>
+                    </motion.div>
+                    
+                    <Box component={motion.div} 
+                        animate={{ scale: [1, 1.2, 1] }} 
+                        transition={{ repeat: Infinity, duration: 2 }}
+                        sx={{ position: 'absolute', top: -10, right: -10 }}
+                    >
+                        <Sparkles size={24} color="#ec4899" />
+                    </Box>
+                    <Box component={motion.div} 
+                        animate={{ scale: [1, 1.2, 1] }} 
+                        transition={{ repeat: Infinity, duration: 2, delay: 1 }}
+                        sx={{ position: 'absolute', bottom: -10, left: -10 }}
+                    >
+                        <Sparkles size={24} color="#a855f7" />
+                    </Box>
                 </Box>
-            </Box>
-        </AnimatePresence>
+
+                <Typography variant="h4" sx={{ fontWeight: 800, mb: 1, background: 'linear-gradient(to right, #a855f7, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                    Meta Concluída!
+                </Typography>
+                
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
+                    Parabéns! Você alcançou sua meta <Box component="span" fontWeight="bold" color="text.primary">"{goal.name}"</Box>.
+                </Typography>
+
+                <Button
+                    variant="contained"
+                    size="large"
+                    onClick={handleClose}
+                    fullWidth
+                    sx={{
+                        borderRadius: 3,
+                        py: 1.5,
+                        fontWeight: 'bold',
+                        background: 'linear-gradient(to right, #a855f7, #ec4899)',
+                        boxShadow: '0 10px 15px -3px rgba(168, 85, 247, 0.3)',
+                        '&:hover': {
+                            background: 'linear-gradient(to right, #9333ea, #db2777)',
+                        }
+                    }}
+                >
+                    Continuar 🎉
+                </Button>
+            </DialogContent>
+        </Dialog>
     );
 };

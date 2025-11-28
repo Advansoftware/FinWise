@@ -9,7 +9,6 @@ import {
   CardActions,
   Typography,
   Button,
-  Stack,
   Box,
   LinearProgress,
   Menu,
@@ -90,203 +89,238 @@ export default function GoalsPage() {
   }
 
   return (
-    <Stack spacing={3}>
-      <Stack
-        direction={{ xs: "column", md: "row" }}
-        justifyContent="space-between"
-        alignItems={{ xs: "flex-start", md: "center" }}
-        spacing={2}
+    <Box sx={{ flexGrow: 1 }}>
+      <Grid
+        container
+        spacing={{ xs: 2, sm: 3 }}
+        columns={{ xs: 4, sm: 8, md: 12 }}
       >
-        <Box>
-          <Typography variant="h4" fontWeight="bold">
-            Metas de Economia
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Transforme seus sonhos em realidade. Crie metas financeiras e
-            acompanhe seu progresso a cada depósito.
-          </Typography>
-        </Box>
-        <Stack 
-          direction="row" 
-          spacing={1} 
-          alignItems="center"
-          sx={{ width: { xs: "100%", md: "auto" } }}
-        >
-          <Box sx={{ flex: { xs: 1, md: "none" } }}>
-            <GamificationGuide />
-          </Box>
-          <Button
-            variant="contained"
-            startIcon={<PlusCircle size={18} />}
-            onClick={handleCreateGoal}
-            sx={{ flex: { xs: 1, md: "none" } }}
-            fullWidth
+        {/* Header */}
+        <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: { xs: "column", md: "row" },
+              justifyContent: "space-between",
+              alignItems: { xs: "flex-start", md: "center" },
+              gap: 2,
+            }}
           >
-            Nova Meta
-          </Button>
-        </Stack>
-      </Stack>
-
-      {/* Gamification Summary for Goals */}
-      {gamificationData && (
-        <Card
-          sx={{
-            background:
-              "linear-gradient(to right, rgba(66, 32, 6, 0.3), rgba(67, 20, 7, 0.3))",
-          }}
-        >
-          <CardHeader
-            title={
-              <Box display="flex" alignItems="center" gap={1}>
-                <Trophy size={20} color={theme.palette.warning.main} />
-                <Typography variant="h6" color="warning.light">
-                  Jornada das Metas
-                </Typography>
-              </Box>
-            }
-          />
-          <CardContent>
-            <Grid container spacing={2} textAlign="center">
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <Box
-                  p={2}
-                  borderRadius={2}
-                  sx={{
-                    bgcolor: "rgba(0, 0, 0, 0.4)",
-                    border: "1px solid rgba(255, 255, 255, 0.15)",
-                  }}
-                >
-                  <Typography variant="h5" fontWeight="bold">
-                    {goals.length}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Metas Ativas
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <Box
-                  p={2}
-                  borderRadius={2}
-                  sx={{
-                    bgcolor: "rgba(0, 0, 0, 0.4)",
-                    border: "1px solid rgba(255, 255, 255, 0.15)",
-                  }}
-                >
-                  <Typography
-                    variant="h5"
-                    fontWeight="bold"
-                    color="success.main"
-                  >
-                    {completedGoalsCount}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Metas Concluídas
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <Box
-                  p={2}
-                  borderRadius={2}
-                  sx={{
-                    bgcolor: "rgba(0, 0, 0, 0.4)",
-                    border: "1px solid rgba(255, 255, 255, 0.15)",
-                  }}
-                >
-                  <Typography variant="h5" fontWeight="bold" color="info.main">
-                    {formatCurrency(
-                      goals.reduce((sum, g) => sum + g.currentAmount, 0)
-                    )}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Total Economizado
-                  </Typography>
-                </Box>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-                <Box
-                  p={2}
-                  borderRadius={2}
-                  sx={{
-                    bgcolor: "rgba(0, 0, 0, 0.4)",
-                    border: "1px solid rgba(255, 255, 255, 0.15)",
-                  }}
-                >
-                  <Typography
-                    variant="h5"
-                    fontWeight="bold"
-                    color="secondary.main"
-                  >
-                    {
-                      gamificationData.badges.filter(
-                        (b) => b.id === "finisher" || b.id === "goal-setter"
-                      ).length
-                    }
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Conquistas de Metas
-                  </Typography>
-                </Box>
-              </Grid>
-            </Grid>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Missões relacionadas a Metas */}
-      <DailyQuestsCard pageContext="goals" compact />
-
-      {goals.length > 0 ? (
-        <Grid container spacing={3}>
-          {goals.map((goal) => (
-            <Grid key={goal.id} size={{ xs: 12, md: 6, lg: 4 }}>
-              <GoalCard
-                goal={goal}
-                onDelete={() => deleteGoal(goal.id)}
-                onEdit={() => handleEditGoal(goal)}
-                onDeposit={() => handleDeposit(goal)}
-              />
-            </Grid>
-          ))}
-        </Grid>
-      ) : (
-        <Card>
-          <CardContent sx={{ p: 4, textAlign: "center" }}>
-            <Stack alignItems="center" spacing={2}>
-              <PiggyBank size={48} style={{ opacity: 0.5 }} />
-              <Typography variant="h6">Nenhuma meta encontrada.</Typography>
-              <Typography variant="body2" color="text.secondary" maxWidth="sm">
-                Crie sua primeira meta para começar a economizar. Que tal
-                "Viagem de Férias" ou "Entrada do Apartamento"?
+            <Box>
+              <Typography variant="h4" fontWeight="bold">
+                Metas de Economia
               </Typography>
+              <Typography variant="body1" color="text.secondary">
+                Transforme seus sonhos em realidade. Crie metas financeiras e
+                acompanhe seu progresso a cada depósito.
+              </Typography>
+            </Box>
+            <Box
+              sx={{
+                display: "flex",
+                gap: 1,
+                alignItems: "center",
+                width: { xs: "100%", md: "auto" },
+              }}
+            >
+              <Box sx={{ flex: { xs: 1, md: "none" } }}>
+                <GamificationGuide />
+              </Box>
               <Button
                 variant="contained"
-                startIcon={<PlusCircle size={16} />}
+                startIcon={<PlusCircle size={18} />}
                 onClick={handleCreateGoal}
+                sx={{ flex: { xs: 1, md: "none" } }}
+                fullWidth
               >
-                Criar Meta
+                Nova Meta
               </Button>
-            </Stack>
-          </CardContent>
-        </Card>
-      )}
+            </Box>
+          </Box>
+        </Grid>
 
-      {/* Dialogs */}
-      <CreateGoalDialog
-        open={createDialogOpen}
-        onClose={handleCloseDialogs}
-        initialData={selectedGoal}
-      />
+        {/* Gamification Summary for Goals */}
+        {gamificationData && (
+          <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+            <Card
+              sx={{
+                background:
+                  "linear-gradient(to right, rgba(66, 32, 6, 0.3), rgba(67, 20, 7, 0.3))",
+              }}
+            >
+              <CardHeader
+                title={
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Trophy size={20} color={theme.palette.warning.main} />
+                    <Typography variant="h6" color="warning.light">
+                      Jornada das Metas
+                    </Typography>
+                  </Box>
+                }
+              />
+              <CardContent>
+                <Grid container spacing={2} textAlign="center">
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <Box
+                      p={2}
+                      borderRadius={2}
+                      sx={{
+                        bgcolor: "rgba(0, 0, 0, 0.4)",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                      }}
+                    >
+                      <Typography variant="h5" fontWeight="bold">
+                        {goals.length}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Metas Ativas
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <Box
+                      p={2}
+                      borderRadius={2}
+                      sx={{
+                        bgcolor: "rgba(0, 0, 0, 0.4)",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                      }}
+                    >
+                      <Typography
+                        variant="h5"
+                        fontWeight="bold"
+                        color="success.main"
+                      >
+                        {completedGoalsCount}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Metas Concluídas
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <Box
+                      p={2}
+                      borderRadius={2}
+                      sx={{
+                        bgcolor: "rgba(0, 0, 0, 0.4)",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                      }}
+                    >
+                      <Typography
+                        variant="h5"
+                        fontWeight="bold"
+                        color="info.main"
+                      >
+                        {formatCurrency(
+                          goals.reduce((sum, g) => sum + g.currentAmount, 0)
+                        )}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Total Economizado
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                    <Box
+                      p={2}
+                      borderRadius={2}
+                      sx={{
+                        bgcolor: "rgba(0, 0, 0, 0.4)",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                      }}
+                    >
+                      <Typography
+                        variant="h5"
+                        fontWeight="bold"
+                        color="secondary.main"
+                      >
+                        {
+                          gamificationData.badges.filter(
+                            (b) => b.id === "finisher" || b.id === "goal-setter"
+                          ).length
+                        }
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Conquistas de Metas
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          </Grid>
+        )}
 
-      {selectedGoal && (
-        <AddDepositDialog
-          open={depositDialogOpen}
+        {/* Missões relacionadas a Metas */}
+        <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+          <DailyQuestsCard pageContext="goals" compact />
+        </Grid>
+
+        <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+          {goals.length > 0 ? (
+            <Grid container spacing={3}>
+              {goals.map((goal) => (
+                <Grid key={goal.id} size={{ xs: 12, md: 6, lg: 4 }}>
+                  <GoalCard
+                    goal={goal}
+                    onDelete={() => deleteGoal(goal.id)}
+                    onEdit={() => handleEditGoal(goal)}
+                    onDeposit={() => handleDeposit(goal)}
+                  />
+                </Grid>
+              ))}
+            </Grid>
+          ) : (
+            <Card>
+              <CardContent sx={{ p: 4, textAlign: "center" }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: 2,
+                  }}
+                >
+                  <PiggyBank size={48} style={{ opacity: 0.5 }} />
+                  <Typography variant="h6">Nenhuma meta encontrada.</Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    maxWidth="sm"
+                  >
+                    Crie sua primeira meta para começar a economizar. Que tal
+                    "Viagem de Férias" ou "Entrada do Apartamento"?
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    startIcon={<PlusCircle size={16} />}
+                    onClick={handleCreateGoal}
+                  >
+                    Criar Meta
+                  </Button>
+                </Box>
+              </CardContent>
+            </Card>
+          )}
+        </Grid>
+
+        {/* Dialogs */}
+        <CreateGoalDialog
+          open={createDialogOpen}
           onClose={handleCloseDialogs}
-          goal={selectedGoal}
+          initialData={selectedGoal}
         />
-      )}
-    </Stack>
+
+        {selectedGoal && (
+          <AddDepositDialog
+            open={depositDialogOpen}
+            onClose={handleCloseDialogs}
+            goal={selectedGoal}
+          />
+        )}
+      </Grid>
+    </Box>
   );
 }
 
@@ -535,33 +569,53 @@ function GoalCard({ goal, onDelete, onEdit, onDeposit }: GoalCardProps) {
 
 function GoalsSkeleton() {
   return (
-    <Stack spacing={3}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <Box>
-          <Skeleton variant="text" width={200} height={40} />
-          <Skeleton variant="text" width={300} height={24} />
-        </Box>
-        <Skeleton
-          variant="rectangular"
-          width={120}
-          height={36}
-          sx={{ borderRadius: 1 }}
-        />
-      </Stack>
-      <Box
-        display="grid"
-        gridTemplateColumns={{ xs: "1fr", md: "1fr 1fr", lg: "1fr 1fr 1fr" }}
-        gap={3}
+    <Box sx={{ flexGrow: 1 }}>
+      <Grid
+        container
+        spacing={{ xs: 2, sm: 3 }}
+        columns={{ xs: 4, sm: 8, md: 12 }}
       >
-        {[1, 2, 3].map((i) => (
-          <Skeleton
-            key={i}
-            variant="rectangular"
-            height={250}
-            sx={{ borderRadius: 2 }}
-          />
-        ))}
-      </Box>
-    </Stack>
+        <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Box>
+              <Skeleton variant="text" width={200} height={40} />
+              <Skeleton variant="text" width={300} height={24} />
+            </Box>
+            <Skeleton
+              variant="rectangular"
+              width={120}
+              height={36}
+              sx={{ borderRadius: 1 }}
+            />
+          </Box>
+        </Grid>
+        <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+          <Box
+            display="grid"
+            gridTemplateColumns={{
+              xs: "1fr",
+              md: "1fr 1fr",
+              lg: "1fr 1fr 1fr",
+            }}
+            gap={3}
+          >
+            {[1, 2, 3].map((i) => (
+              <Skeleton
+                key={i}
+                variant="rectangular"
+                height={250}
+                sx={{ borderRadius: 2 }}
+              />
+            ))}
+          </Box>
+        </Grid>
+      </Grid>
+    </Box>
   );
 }
