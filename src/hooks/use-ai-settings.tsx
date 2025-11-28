@@ -10,6 +10,7 @@ import {v4 as uuidv4} from 'uuid';
 import { usePlan } from "./use-plan";
 import { useMemo } from "react";
 import { useDataRefresh } from "./use-data-refresh";
+import { clearModelCache } from "@/services/webllm-service";
 
 const GASTOMETRIA_AI_CREDENTIAL_ID = 'gastometria-ai-default';
 
@@ -188,6 +189,9 @@ export function useAISettings() {
     };
 
     const handleDelete = async (id: string) => {
+        // Encontra a credencial antes de deletar para verificar se é WebLLM
+        const credentialToDelete = credentials.find(c => c.id === id);
+        
         const newCredentials = credentials.filter(c => c.id !== id);
         let newActiveId = activeCredentialId;
         if (activeCredentialId === id) {
@@ -196,6 +200,19 @@ export function useAISettings() {
         
         try {
             await saveSettings({ credentials: newCredentials, activeCredentialId: newActiveId });
+            
+            // Se for WebLLM, limpar o cache do modelo
+            if (credentialToDelete?.provider === 'webllm' && credentialToDelete.webLLMModel) {
+                try {
+                    const cleared = await clearModelCache(credentialToDelete.webLLMModel);
+                    if (cleared) {
+                        toast({ title: "Cache do modelo WebLLM removido com sucesso!" });
+                    }
+                } catch (cacheError) {
+                    console.warn("Erro ao limpar cache do WebLLM:", cacheError);
+                    // Não falha a operação principal, apenas loga o erro
+                }
+            }
             
             // Trigger global refresh to update other components
             setTimeout(() => {

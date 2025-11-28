@@ -209,6 +209,112 @@ export async function resetChat() {
   }
 }
 
+/**
+ * Limpa o cache de um modelo específico do navegador
+ * O WebLLM armazena modelos no Cache Storage
+ */
+export async function clearModelCache(modelId?: WebLLMModelId): Promise<boolean> {
+  if (typeof window === 'undefined' || !('caches' in window)) {
+    console.warn('Cache API não disponível');
+    return false;
+  }
+
+  try {
+    // Se o modelo está carregado, descarrega primeiro
+    if (engine && (!modelId || currentModelId === modelId)) {
+      await unloadModel();
+    }
+
+    // WebLLM usa cache names baseados no modelo
+    const cacheNames = await caches.keys();
+
+    let deletedAny = false;
+    for (const cacheName of cacheNames) {
+      // WebLLM geralmente usa nomes como "webllm/model" ou contém o nome do modelo
+      const isWebLLMCache =
+        cacheName.includes('webllm') ||
+        cacheName.includes('mlc') ||
+        cacheName.includes('wasm') ||
+        (modelId && cacheName.toLowerCase().includes(modelId.toLowerCase().split('-')[0]));
+
+      if (isWebLLMCache) {
+        const deleted = await caches.delete(cacheName);
+        if (deleted) {
+          console.log(`[WebLLM] Cache "${cacheName}" removido`);
+          deletedAny = true;
+        }
+      }
+    }
+
+    // Também limpa IndexedDB onde WebLLM pode armazenar dados
+    if (typeof indexedDB !== 'undefined') {
+      const databases = await indexedDB.databases?.() || [];
+      for (const db of databases) {
+        if (db.name && (
+          db.name.includes('webllm') ||
+          db.name.includes('mlc') ||
+          db.name.includes('tvmjs')
+        )) {
+          indexedDB.deleteDatabase(db.name);
+          console.log(`[WebLLM] IndexedDB "${db.name}" removido`);
+          deletedAny = true;
+        }
+      }
+    }
+
+    return deletedAny;
+  } catch (error) {
+    console.error('Erro ao limpar cache do WebLLM:', error);
+    return false;
+  }
+}
+
+/**
+ * Retorna o tamanho estimado do cache de modelos WebLLM
+ */
+export async function getModelCacheSize(): Promise<{ totalBytes: number; formatted: string }> {
+  if (typeof window === 'undefined' || !('caches' in window)) {
+    return { totalBytes: 0, formatted: '0 B' };
+  }
+
+  try {
+    let totalBytes = 0;
+    const cacheNames = await caches.keys();
+
+    for (const cacheName of cacheNames) {
+      if (cacheName.includes('webllm') || cacheName.includes('mlc') || cacheName.includes('wasm')) {
+        const cache = await caches.open(cacheName);
+        const requests = await cache.keys();
+
+        for (const request of requests) {
+          const response = await cache.match(request);
+          if (response) {
+            const blob = await response.blob();
+            totalBytes += blob.size;
+          }
+        }
+      }
+    }
+
+    // Formatar tamanho
+    const units = ['B', 'KB', 'MB', 'GB'];
+    let size = totalBytes;
+    let unitIndex = 0;
+    while (size >= 1024 && unitIndex < units.length - 1) {
+      size /= 1024;
+      unitIndex++;
+    }
+
+    return {
+      totalBytes,
+      formatted: `${size.toFixed(1)} ${units[unitIndex]}`
+    };
+  } catch (error) {
+    console.error('Erro ao calcular tamanho do cache:', error);
+    return { totalBytes: 0, formatted: '0 B' };
+  }
+}
+
 export default {
   isWebGPUSupported,
   isModelLoaded,
@@ -220,4 +326,6 @@ export default {
   generateText,
   generateTextStream,
   resetChat,
+  clearModelCache,
+  getModelCacheSize,
 };
