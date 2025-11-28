@@ -120,7 +120,15 @@ class ServiceFactory {
       }
 
       if (!this.mongoClient) {
-        this.mongoClient = new MongoClient(uri);
+        const isAtlas = uri.includes('mongodb.net') || uri.includes('mongodb+srv');
+        const options = isAtlas ? {
+          tls: true,
+          maxPoolSize: 10,
+          serverSelectionTimeoutMS: 10000,
+          socketTimeoutMS: 45000,
+        } : {};
+
+        this.mongoClient = new MongoClient(uri, options);
         await this.mongoClient.connect();
       }
 

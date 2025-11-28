@@ -1,9 +1,9 @@
 // src/core/services/service-factory.ts
 
-import {IDatabaseAdapter} from '@/core/ports/database.port';
-import {IAuthService} from '@/core/ports/auth.port';
-import {IPaymentService} from '@/core/ports/payment.port';
-import {MongoClient} from 'mongodb';
+import { IDatabaseAdapter } from '@/core/ports/database.port';
+import { IAuthService } from '@/core/ports/auth.port';
+import { IPaymentService } from '@/core/ports/payment.port';
+import { MongoClient } from 'mongodb';
 
 // Singleton factory class
 class ServiceFactory {
@@ -90,7 +90,15 @@ class ServiceFactory {
       }
 
       if (!this.mongoClient) {
-        this.mongoClient = new MongoClient(uri);
+        const isAtlas = uri.includes('mongodb.net') || uri.includes('mongodb+srv');
+        const options = isAtlas ? {
+          tls: true,
+          maxPoolSize: 10,
+          serverSelectionTimeoutMS: 10000,
+          socketTimeoutMS: 45000,
+        } : {};
+
+        this.mongoClient = new MongoClient(uri, options);
         await this.mongoClient.connect();
       }
 

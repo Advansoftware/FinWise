@@ -2,7 +2,7 @@
 import NextAuth from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
-import { MongoClient } from "mongodb";
+import { MongoClient, MongoClientOptions } from "mongodb";
 import bcrypt from "bcryptjs";
 
 if (!process.env.MONGODB_URI) {
@@ -13,7 +13,17 @@ if (!process.env.NEXTAUTH_SECRET) {
   throw new Error('NEXTAUTH_SECRET environment variable is required for production');
 }
 
-const client = new MongoClient(process.env.MONGODB_URI);
+// Opções de conexão para MongoDB Atlas
+const uri = process.env.MONGODB_URI;
+const isAtlas = uri.includes('mongodb.net') || uri.includes('mongodb+srv');
+const mongoOptions: MongoClientOptions = isAtlas ? {
+  tls: true,
+  maxPoolSize: 10,
+  serverSelectionTimeoutMS: 10000,
+  socketTimeoutMS: 45000,
+} : {};
+
+const client = new MongoClient(uri, mongoOptions);
 const clientPromise = client.connect();
 
 export const { handlers, auth, signIn, signOut } = NextAuth({

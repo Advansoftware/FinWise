@@ -1,13 +1,23 @@
 // src/app/api/users/update/route.ts
-import {NextRequest, NextResponse} from 'next/server';
-import {auth} from '@/lib/auth';
-import {MongoClient, ObjectId} from 'mongodb';
+import { NextRequest, NextResponse } from 'next/server';
+import { auth } from '@/lib/auth';
+import { MongoClient, ObjectId, MongoClientOptions } from 'mongodb';
 
 if (!process.env.MONGODB_URI) {
   throw new Error('MONGODB_URI environment variable is required');
 }
 
-const client = new MongoClient(process.env.MONGODB_URI);
+// Opções de conexão para MongoDB Atlas
+const uri = process.env.MONGODB_URI;
+const isAtlas = uri.includes('mongodb.net') || uri.includes('mongodb+srv');
+const mongoOptions: MongoClientOptions = isAtlas ? {
+  tls: true,
+  maxPoolSize: 10,
+  serverSelectionTimeoutMS: 10000,
+  socketTimeoutMS: 45000,
+} : {};
+
+const client = new MongoClient(uri, mongoOptions);
 
 export async function POST(request: NextRequest) {
   try {

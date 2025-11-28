@@ -601,8 +601,17 @@ export class MongoDBAdapter implements IDatabaseAdapter {
       throw new Error('MONGODB_URI environment variable is not set');
     }
 
+    // Opções de conexão para MongoDB Atlas
+    const isAtlas = uri.includes('mongodb.net') || uri.includes('mongodb+srv');
+    const options = isAtlas ? {
+      tls: true,
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 10000,
+      socketTimeoutMS: 45000,
+    } : {};
+
     console.log('🔧 Connecting to MongoDB...');
-    this.client = new MongoClient(uri);
+    this.client = new MongoClient(uri, options);
     await this.client.connect();
     this.db = this.client.db(dbName);
 
