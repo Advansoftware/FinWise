@@ -50,6 +50,7 @@ import { useReasoningChat } from "@/hooks/use-reasoning-chat";
 import { useAISettings } from "@/hooks/use-ai-settings";
 import { useWebLLM } from "@/hooks/use-webllm";
 import { chatWithWebLLM } from "@/services/webllm-ai-actions";
+import { WebLLMProgressIndicator } from "@/components/settings/webllm-progress-indicator";
 
 // Componente de input isolado para evitar re-renders
 interface ChatInputFieldProps {
@@ -168,7 +169,7 @@ export function ChatAssistant() {
     streamReasoningResponse,
     clearReasoning,
   } = useReasoningChat();
-  const { isWebLLMActive, isReady: isWebLLMReady, isLoading: isWebLLMLoading, progress: webllmProgress } = useWebLLM();
+  const { isWebLLMActive, isReady: isWebLLMReady, isLoading: isWebLLMLoading, progress: webllmProgress, currentModelId } = useWebLLM();
 
   // Determinar se deve usar raciocínio
   const activeCredential = displayedCredentials.find(
@@ -350,40 +351,17 @@ export function ChatAssistant() {
     if (messages.length === 0) {
       return (
         <Box sx={{ textAlign: "center", p: 3 }}>
-          {/* WebLLM Loading Status */}
-          {isWebLLMActive && isWebLLMLoading && (
-            <Box
-              sx={{
-                mb: 3,
-                p: 2,
-                borderRadius: 2,
-                bgcolor: (theme) => alpha(theme.palette.info.main, 0.1),
-                border: 1,
-                borderColor: (theme) => alpha(theme.palette.info.main, 0.3),
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
-                <CircularProgress size={16} color="info" />
-                <Typography variant="body2" color="info.main" fontWeight={600}>
-                  Carregando modelo local...
-                </Typography>
-              </Box>
-              {webllmProgress && (
-                <Typography variant="caption" color="text.secondary">
-                  {webllmProgress.text}
-                </Typography>
-              )}
+          {/* WebLLM Progress Indicator */}
+          {isWebLLMActive && (isWebLLMLoading || isWebLLMReady) && (
+            <Box sx={{ mb: 3 }}>
+              <WebLLMProgressIndicator
+                progress={webllmProgress}
+                isLoading={isWebLLMLoading}
+                isReady={isWebLLMReady}
+                modelId={currentModelId}
+                variant="compact"
+              />
             </Box>
-          )}
-
-          {/* WebLLM Ready Indicator */}
-          {isWebLLMActive && isWebLLMReady && (
-            <Chip
-              label="IA Local Ativa (WebLLM)"
-              color="success"
-              size="small"
-              sx={{ mb: 2 }}
-            />
           )}
 
           <Typography color="text.secondary" sx={{ mb: 3 }}>

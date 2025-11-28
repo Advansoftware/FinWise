@@ -28,6 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AICredential, WebLLMModel } from "@/lib/types";
 import { useAISettings } from "@/hooks/use-ai-settings";
 import { useWebLLM } from "@/hooks/use-webllm";
+import { WebLLMProgressIndicator } from "./webllm-progress-indicator";
 import { useEffect, useState, useTransition } from "react";
 import { usePlan } from "@/hooks/use-plan";
 
@@ -585,33 +586,17 @@ export function AISettingsDialog({
                             {model.description}
                           </Typography>
 
-                          {/* Status de carregamento */}
-                          {isWebLLMLoading && (
-                            <Box sx={{ mt: 1 }}>
-                              <Stack direction="row" alignItems="center" spacing={1}>
-                                <CircularProgress size={16} />
-                                <Typography variant="caption" color="text.secondary">
-                                  Carregando modelo...
-                                </Typography>
-                              </Stack>
-                              {webllmProgress && (
-                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                                  {webllmProgress.text}
-                                </Typography>
-                              )}
+                          {/* Indicador de progresso melhorado */}
+                          {(isWebLLMLoading || (currentModelId === webLLMModel && isWebLLMReady)) && (
+                            <Box sx={{ mt: 2 }}>
+                              <WebLLMProgressIndicator
+                                progress={webllmProgress}
+                                isLoading={isWebLLMLoading}
+                                isReady={currentModelId === webLLMModel && isWebLLMReady}
+                                modelId={currentModelId}
+                                variant="full"
+                              />
                             </Box>
-                          )}
-
-                          {/* Modelo já carregado */}
-                          {currentModelId === webLLMModel && isWebLLMReady && (
-                            <Alert severity="success" sx={{ mt: 1 }}>
-                              <Stack direction="row" alignItems="center" spacing={1}>
-                                <CheckCircleIcon fontSize="small" />
-                                <Typography variant="caption">
-                                  Modelo carregado e pronto para uso!
-                                </Typography>
-                              </Stack>
-                            </Alert>
                           )}
 
                           {/* Botão para pré-carregar */}
