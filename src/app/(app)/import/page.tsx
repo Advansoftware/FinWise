@@ -37,8 +37,9 @@ import { useTransactions } from "@/hooks/use-transactions";
 import Papa from "papaparse";
 import { default as toJs } from "ofx-js";
 import { format } from "date-fns";
-import { suggestCategoryForItemAction } from "@/services/ai-actions";
+import { suggestCategory } from "@/services/ai-service-router";
 import { useAuth } from "@/hooks/use-auth";
+import { useWebLLM } from "@/hooks/use-webllm";
 import { usePlan } from "@/hooks/use-plan";
 import { ProUpgradeCard } from "@/components/pro-upgrade-card";
 import { ProUpgradeButton } from "@/components/pro-upgrade-button";
@@ -124,6 +125,7 @@ export default function ImportPage() {
   } = useTransactions();
   const { wallets } = useWallets();
   const { isPro, isPlus, isLoading: isPlanLoading } = usePlan();
+  const { isWebLLMActive } = useWebLLM();
 
   const canUseAICategorization = isPlus;
 
@@ -337,7 +339,7 @@ export default function ImportPage() {
         transactions.map(async (t) => {
           if (t.category && t.category !== "Outros") return t;
 
-          const suggestion = await suggestCategoryForItemAction(
+          const suggestion = await suggestCategory(
             {
               itemName: t.item,
               existingCategories: categoryStrings,

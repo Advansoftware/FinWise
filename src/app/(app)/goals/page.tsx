@@ -39,8 +39,9 @@ import { useGoals } from "@/hooks/use-goals";
 import { CreateGoalDialog } from "@/components/goals/create-goal-dialog";
 import { AddDepositDialog } from "@/components/goals/add-deposit-dialog";
 import { Goal } from "@/lib/types";
-import { projectGoalCompletionAction } from "@/services/ai-actions";
+import { projectGoalCompletion } from "@/services/ai-service-router";
 import { useAuth } from "@/hooks/use-auth";
+import { useWebLLM } from "@/hooks/use-webllm";
 import { useTransactions } from "@/hooks/use-transactions";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -305,6 +306,7 @@ function GoalCard({ goal, onDelete, onEdit, onDeposit }: GoalCardProps) {
     useState<ProjectGoalCompletionOutput | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const { isWebLLMActive } = useWebLLM();
 
   const transactionsJson = useMemo(
     () => JSON.stringify(allTransactions, null, 2),
@@ -319,12 +321,12 @@ function GoalCard({ goal, onDelete, onEdit, onDeposit }: GoalCardProps) {
     ) {
       startProjecting(async () => {
         try {
-          const result = await projectGoalCompletionAction(
+          const result = await projectGoalCompletion(
             {
               goalName: goal.name,
               targetAmount: goal.targetAmount,
               currentAmount: goal.currentAmount,
-              monthlyDeposit: goal.monthlyDeposit,
+              monthlyDeposit: goal.monthlyDeposit ?? 0,
               targetDate: goal.targetDate,
               transactions: transactionsJson,
             },

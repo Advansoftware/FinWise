@@ -7,8 +7,9 @@ import { useAuth } from "@/hooks/use-auth";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useBudgets } from "@/hooks/use-budgets";
 import { subMonths, startOfMonth, endOfMonth } from "date-fns";
-import { generateAutomaticBudgetsAction } from "@/services/ai-actions";
+import { generateAutomaticBudgets } from "@/services/ai-service-router";
 import { useToast } from "@/hooks/use-toast";
+import { useWebLLM } from "@/hooks/use-webllm";
 import { AutomaticBudgetDialog } from "./automatic-budget-dialog";
 import { BudgetItemSchema } from "@/ai/ai-types";
 import { z } from "zod";
@@ -23,6 +24,7 @@ export function AutomaticBudgetCard() {
   const [isGenerating, startGenerating] = useTransition();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [suggestedBudgets, setSuggestedBudgets] = useState<SuggestedBudget[]>([]);
+  const { isWebLLMActive } = useWebLLM();
   
   const lastMonthTransactions = useMemo(() => {
     const lastMonthStart = startOfMonth(subMonths(new Date(), 1));
@@ -48,7 +50,7 @@ export function AutomaticBudgetCard() {
     startGenerating(async () => {
       try {
         const existingBudgetCategories = budgets.map(b => b.category);
-        const result = await generateAutomaticBudgetsAction({
+        const result = await generateAutomaticBudgets({
           lastMonthTransactions: JSON.stringify(lastMonthTransactions, null, 2),
           existingBudgets: JSON.stringify(existingBudgetCategories),
         }, user.uid);

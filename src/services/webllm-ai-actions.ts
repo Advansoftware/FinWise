@@ -274,6 +274,181 @@ RECOMENDAÇÕES:
 }
 
 /**
+ * Gera perfil financeiro usando WebLLM
+ */
+export async function getFinancialProfileWithWebLLM(
+  transactions: Transaction[],
+  monthlyReports?: any[],
+  annualReports?: any[]
+): Promise<{ profileName: string; profileDescription: string }> {
+  if (!webllmService.isModelLoaded()) {
+    throw new Error('Modelo WebLLM não está carregado.');
+  }
+
+  const financialContext = formatTransactionsForPrompt(transactions);
+
+  const reportsContext = monthlyReports?.length
+    ? `\n\nRelatórios mensais anteriores:\n${monthlyReports.map(r => JSON.stringify(r)).join('\n')}`
+    : '';
+
+  const prompt = `${financialContext}${reportsContext}
+
+Com base nos dados financeiros acima, crie um perfil financeiro para o usuário.
+
+Responda EXATAMENTE neste formato:
+PERFIL: [nome criativo do perfil em português, ex: "O Estrategista Cauteloso"]
+DESCRIÇÃO: [descrição de 2-3 frases explicando o perfil baseado nos padrões de gastos]`;
+
+  const response = await webllmService.generateText(prompt, `Você é um analista de perfis financeiros. Crie perfis criativos e personalizados baseados nos dados. Responda sempre em Português do Brasil.`);
+
+  const profileMatch = response.match(/PERFIL:\s*(.+?)(?=\n|DESCRIÇÃO:|$)/i);
+  const descriptionMatch = response.match(/DESCRIÇÃO:\s*([\s\S]+?)$/i);
+
+  return {
+    profileName: profileMatch?.[1]?.trim() || 'Explorador Financeiro',
+    profileDescription: descriptionMatch?.[1]?.trim() || response,
+  };
+}
+
+/**
+ * Projeta conclusão de meta usando WebLLM
+ */
+export async function projectGoalCompletionWithWebLLM(
+  goal: { name: string; targetAmount: number; currentAmount: number; targetDate?: string; monthlyDeposit?: number },
+  transactions: Transaction[]
+): Promise<{ projection: string; completionDate?: string; requiredMonthlyDeposit?: number }> {
+  if (!webllmService.isModelLoaded()) {
+    throw new Error('Modelo WebLLM não está carregado.');
+  }
+
+  const remaining = goal.targetAmount - goal.currentAmount;
+  const monthlyIncome = transactions
+    .filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+  const monthlyExpenses = transactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+  const availableMonthly = monthlyIncome - monthlyExpenses;
+
+  const prompt = `Meta: ${goal.name}
+Valor alvo: R$ ${goal.targetAmount.toFixed(2)}
+Valor atual: R$ ${goal.currentAmount.toFixed(2)}
+Falta: R$ ${remaining.toFixed(2)}
+${goal.targetDate ? `Data limite: ${goal.targetDate}` : ''}
+${goal.monthlyDeposit ? `Depósito mensal planejado: R$ ${goal.monthlyDeposit.toFixed(2)}` : ''}
+
+Renda mensal estimada: R$ ${monthlyIncome.toFixed(2)}
+Despesas mensais estimadas: R$ ${monthlyExpenses.toFixed(2)}
+Disponível por mês: R$ ${availableMonthly.toFixed(2)}
+
+Faça uma projeção de quando essa meta será alcançada.
+Responda de forma concisa em português.`;
+
+  const response = await webllmService.generateText(prompt, `Você é um consultor de metas financeiras. Analise os dados e faça projeções realistas. Responda sempre em Português do Brasil de forma concisa.`);
+
+  // Calcula estimativa simples
+  let completionDate: string | undefined;
+  let requiredMonthlyDeposit: number | undefined;
+
+  if (goal.monthlyDeposit && goal.monthlyDeposit > 0) {
+    const monthsNeeded = Math.ceil(remaining / goal.monthlyDeposit);
+    const estimatedDate = new Date();
+    estimatedDate.setMonth(estimatedDate.getMonth() + monthsNeeded);
+    completionDate = estimatedDate.toISOString().split('T')[0];
+  }
+
+  if (goal.targetDate) {
+    const targetDate = new Date(goal.targetDate);
+    const now = new Date();
+    const monthsUntilTarget = Math.max(1, Math.ceil((targetDate.getTime() - now.getTime()) / (30 * 24 * 60 * 60 * 1000)));
+    requiredMonthlyDeposit = Math.ceil(remaining / monthsUntilTarget);
+  }
+
+  return {
+    projection: response,
+    completionDate,
+    requiredMonthlyDeposit,
+  };
+}
+
+/**
+ * Gera orçamentos automáticos usando WebLLM
+ */
+export async function generateAutomaticBudgetsWithWebLLM(
+  transactions: Transaction[],
+  existingBudgets: { category: string; amount: number }[]
+): Promise<{ suggestedBudgets: { category: string; name: string; amount: number }[] }> {
+  if (!webllmService.isModelLoaded()) {
+    throw new Error('Modelo WebLLM não está carregado.');
+  }
+
+  // Agrupa gastos por categoria
+  const categoryTotals: Record<string, number> = {};
+  transactions
+    .filter(t => t.type === 'expense')
+    .forEach(t => {
+      categoryTotals[t.category] = (categoryTotals[t.category] || 0) + Math.abs(t.amount);
+    });
+
+  const existingCategories = existingBudgets.map(b => b.category.toLowerCase());
+  const newCategories = Object.entries(categoryTotals)
+    .filter(([cat]) => !existingCategories.includes(cat.toLowerCase()))
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5);
+
+  if (newCategories.length === 0) {
+    return { suggestedBudgets: [] };
+  }
+
+  const suggestedBudgets = newCategories.map(([category, total]) => ({
+    category,
+    name: `Orçamento de ${category}`,
+    amount: Math.ceil(total * 1.1 / 10) * 10, // Arredonda para cima e para múltiplo de 10
+  }));
+
+  return { suggestedBudgets };
+}
+
+/**
+ * Prevê saldo futuro usando WebLLM
+ */
+export async function predictFutureBalanceWithWebLLM(
+  currentBalance: number,
+  transactions: Transaction[],
+  monthsAhead: number = 1
+): Promise<{ projectedEndOfMonthBalance: number; isRiskOfNegativeBalance: boolean; summary: string }> {
+  if (!webllmService.isModelLoaded()) {
+    throw new Error('Modelo WebLLM não está carregado.');
+  }
+
+  // Calcula médias mensais
+  const monthlyIncome = transactions
+    .filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+  const monthlyExpenses = transactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+
+  const projectedBalance = currentBalance + (monthlyIncome - monthlyExpenses) * monthsAhead;
+  const isRisk = projectedBalance < 0;
+
+  const prompt = `Saldo atual: R$ ${currentBalance.toFixed(2)}
+Receita mensal estimada: R$ ${monthlyIncome.toFixed(2)}
+Despesas mensais estimadas: R$ ${monthlyExpenses.toFixed(2)}
+Projeção para ${monthsAhead} mês(es): R$ ${projectedBalance.toFixed(2)}
+
+Forneça um resumo de UMA frase sobre a situação financeira projetada.`;
+
+  const response = await webllmService.generateText(prompt, `Você é um consultor financeiro. Analise a projeção e dê um resumo breve. Responda sempre em Português do Brasil.`);
+
+  return {
+    projectedEndOfMonthBalance: projectedBalance,
+    isRiskOfNegativeBalance: isRisk,
+    summary: response.slice(0, 200), // Limita tamanho
+  };
+}
+
+/**
  * Stream de chat para resposta em tempo real
  */
 export async function* chatWithWebLLMStream(
@@ -324,6 +499,10 @@ export default {
   suggestCategoryWithWebLLM,
   suggestBudgetWithWebLLM,
   generateMonthlyReportWithWebLLM,
+  getFinancialProfileWithWebLLM,
+  projectGoalCompletionWithWebLLM,
+  generateAutomaticBudgetsWithWebLLM,
+  predictFutureBalanceWithWebLLM,
   getTransactionsFromOfflineStorage,
   getAllAvailableTransactions,
 };

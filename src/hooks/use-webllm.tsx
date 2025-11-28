@@ -4,8 +4,11 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 import type { InitProgressReport } from '@mlc-ai/web-llm';
 import { useAISettings } from './use-ai-settings';
+import { useAuth } from './use-auth';
 import { useToast } from './use-toast';
 import type { WebLLMModelId } from '@/services/webllm-service';
+import { setActiveCredential } from '@/services/ai-service-router';
+import { AICredential } from '@/lib/types';
 
 export interface WebLLMState {
   isSupported: boolean;
@@ -27,6 +30,7 @@ export interface UseWebLLMReturn extends WebLLMState {
 
 export function useWebLLM(): UseWebLLMReturn {
   const { displayedCredentials, activeCredentialId } = useAISettings();
+  const { user } = useAuth();
   const { toast } = useToast();
   const [state, setState] = useState<WebLLMState>({
     isSupported: false,
@@ -42,6 +46,13 @@ export function useWebLLM(): UseWebLLMReturn {
   // Verifica se a credencial ativa é WebLLM
   const activeCredential = displayedCredentials.find(c => c.id === activeCredentialId);
   const isWebLLMActive = activeCredential?.provider === 'webllm';
+
+  // Sincroniza a credencial ativa com o router de IA
+  useEffect(() => {
+    if (user && activeCredential) {
+      setActiveCredential(activeCredential as AICredential, user.uid);
+    }
+  }, [user, activeCredential, activeCredentialId]);
 
   // Verifica suporte WebGPU ao montar
   useEffect(() => {

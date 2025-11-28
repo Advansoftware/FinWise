@@ -11,8 +11,9 @@ import { useTransactions } from "@/hooks/use-transactions";
 import { useBudgets } from "@/hooks/use-budgets";
 import { Budget, TransactionCategory } from "@/lib/types";
 import { Sparkles } from "lucide-react";
-import { suggestBudgetAmountAction } from "@/services/ai-actions";
+import { suggestBudget } from "@/services/ai-service-router";
 import { useAuth } from "@/hooks/use-auth";
+import { useWebLLM } from "@/hooks/use-webllm";
 import { subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { usePlan } from "@/hooks/use-plan";
 import { ProUpgradeButton } from "../pro-upgrade-button";
@@ -42,6 +43,7 @@ export function CreateBudgetDialog({ children, initialData }: CreateBudgetDialog
   const { isPlus } = usePlan();
 
   const expenseCategories = categories.filter(c => c !== "Salário" && c !== "Vendas" && c !== "Investimentos");
+  const { isWebLLMActive } = useWebLLM();
 
   const form = useForm<BudgetFormValues>({
     resolver: zodResolver(budgetSchema),
@@ -95,7 +97,7 @@ export function CreateBudgetDialog({ children, initialData }: CreateBudgetDialog
       }
 
       try {
-        const result = await suggestBudgetAmountAction({
+        const result = await suggestBudget({
           category: selectedCategory,
           transactions: JSON.stringify(transactionsFromLastMonth, null, 2),
         }, user.uid);

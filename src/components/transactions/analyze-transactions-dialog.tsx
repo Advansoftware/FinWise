@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 import { Wand2, Loader2 } from "lucide-react";
 import { Transaction } from "@/lib/types";
-import { analyzeTransactionsAction } from "@/services/ai-actions";
+import { analyzeTransactions } from "@/services/ai-service-router";
 import { useToast } from "@/hooks/use-toast";
 import { ScrollArea } from "@/components/mui-wrappers/scroll-area";
 import ReactMarkdown from 'react-markdown';
@@ -40,7 +40,7 @@ export function AnalyzeTransactionsDialog({ transactions }: AnalyzeTransactionsD
         
         startAnalyzing(async () => {
             try {
-                const result = await analyzeTransactionsAction(transactions, user.uid);
+                const result = await analyzeTransactions(transactions, user.uid);
                 setAnalysis(result);
             } catch (error: any) {
                 console.error("Analysis error:", error);
