@@ -138,7 +138,7 @@ export function useAISettings() {
     const handleSaveCredential = async (credentialData: Omit<AICredential, 'id'> & { id?: string }) => {
         const isEditing = !!credentialData.id;
         
-        const finalCredential: Partial<AICredential> & { id?: string, name: string, provider: 'ollama' | 'googleai' | 'openai' | 'gastometria' } = {
+        const finalCredential: Partial<AICredential> & { id?: string, name: string, provider: 'ollama' | 'googleai' | 'openai' | 'gastometria' | 'webllm' } = {
             id: credentialData.id,
             name: credentialData.name,
             provider: credentialData.provider,
@@ -153,6 +153,8 @@ export function useAISettings() {
         } else if (credentialData.provider === 'openai') {
             finalCredential.openAIApiKey = credentialData.openAIApiKey;
             finalCredential.openAIModel = credentialData.openAIModel;
+        } else if (credentialData.provider === 'webllm') {
+            finalCredential.webLLMModel = credentialData.webLLMModel;
         }
 
         let newCredentials;
