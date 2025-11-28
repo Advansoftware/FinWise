@@ -17,11 +17,18 @@ import * as webllmService from './webllm-service';
 
 // System prompts para diferentes contextos
 const SYSTEM_PROMPTS = {
-  chat: `Você é o Assistente Financeiro Gastometria, especializado em finanças pessoais.
-Responda sempre em Português do Brasil, de forma clara e amigável.
-Use os dados financeiros fornecidos para dar respostas personalizadas.
-Forneça dicas práticas e acionáveis.
-Seja conciso mas completo.`,
+  chat: `Você é o Assistente Financeiro Gastometria, um assistente amigável e prestativo especializado em finanças pessoais.
+
+INSTRUÇÕES IMPORTANTES:
+1. Responda SEMPRE em Português do Brasil, de forma clara, amigável e natural.
+2. Se o usuário cumprimentar você (oi, olá, bom dia, etc.), responda de forma calorosa e pergunte como pode ajudar.
+3. Use os dados financeiros fornecidos para dar respostas personalizadas quando relevante.
+4. Forneça dicas práticas e acionáveis sobre finanças.
+5. Seja conversacional - você é um assistente, não um robô.
+6. Se não houver dados financeiros, ainda assim seja útil e conversacional.
+7. Você pode ajudar com: análise de gastos, dicas de economia, planejamento financeiro, orçamentos, metas, etc.
+
+Lembre-se: mesmo que não haja muitas transações, você ainda pode conversar e ajudar o usuário!`,
 
   tip: `Você é um consultor financeiro especializado em dicas práticas.
 Analise as transações fornecidas e forneça UMA dica de economia específica e acionável.
@@ -58,7 +65,13 @@ Responda APENAS com o valor numérico sugerido (sem R$, apenas o número).`,
  * Formata transações para incluir no prompt
  */
 function formatTransactionsForPrompt(transactions: Transaction[]): string {
-  if (!transactions.length) return 'Nenhuma transação disponível.';
+  if (!transactions || transactions.length === 0) {
+    return `
+DADOS FINANCEIROS DO USUÁRIO:
+Não há transações registradas no período atual.
+O usuário pode estar começando a usar o app ou não registrou gastos ainda.
+`;
+  }
 
   const summary = transactions.slice(0, 50).map(t =>
     `- ${t.item}: R$ ${Math.abs(t.amount).toFixed(2)} (${t.type === 'expense' ? 'Despesa' : 'Receita'}) - ${t.category} - ${new Date(t.date).toLocaleDateString('pt-BR')}`
@@ -72,15 +85,54 @@ function formatTransactionsForPrompt(transactions: Transaction[]): string {
     .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
+  // Agrupar por categoria
+  const byCategory: Record<string, number> = {};
+  transactions.filter(t => t.type === 'expense').forEach(t => {
+    byCategory[t.category] = (byCategory[t.category] || 0) + Math.abs(t.amount);
+  });
+
+  const categoryBreakdown = Object.entries(byCategory)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 5)
+    .map(([cat, amount]) => `  - ${cat}: R$ ${amount.toFixed(2)}`)
+    .join('\n');
+
   return `
-Resumo Financeiro:
+DADOS FINANCEIROS DO USUÁRIO (Mês Atual):
 - Total de Receitas: R$ ${totalIncome.toFixed(2)}
 - Total de Despesas: R$ ${totalExpenses.toFixed(2)}
-- Saldo: R$ ${(totalIncome - totalExpenses).toFixed(2)}
+- Saldo do Mês: R$ ${(totalIncome - totalExpenses).toFixed(2)}
+- Número de Transações: ${transactions.length}
+
+Principais Categorias de Gastos:
+${categoryBreakdown || '  Nenhum gasto registrado'}
 
 Últimas Transações:
 ${summary}
 `;
+}
+
+/**
+ * Formata relatórios mensais para contexto
+ */
+function formatReportsForPrompt(monthlyReports?: any[], annualReports?: any[]): string {
+  let context = '';
+
+  if (monthlyReports && monthlyReports.length > 0) {
+    context += '\nRELATÓRIOS MENSAIS ANTERIORES:\n';
+    monthlyReports.slice(0, 6).forEach(r => {
+      context += `- ${r.period || r.monthName}: Receitas R$ ${r.totalIncome?.toFixed(2) || '0.00'}, Despesas R$ ${r.totalExpense?.toFixed(2) || '0.00'}\n`;
+    });
+  }
+
+  if (annualReports && annualReports.length > 0) {
+    context += '\nRELATÓRIOS ANUAIS:\n';
+    annualReports.slice(0, 3).forEach(r => {
+      context += `- Ano ${r.period || r.year}: Total Receitas R$ ${r.totalIncome?.toFixed(2) || '0.00'}, Total Despesas R$ ${r.totalExpense?.toFixed(2) || '0.00'}\n`;
+    });
+  }
+
+  return context;
 }
 
 /**
@@ -99,16 +151,21 @@ export async function chatWithWebLLM(
 
   // Constrói contexto com dados financeiros
   const financialContext = formatTransactionsForPrompt(transactions);
+  const reportsContext = formatReportsForPrompt(monthlyReports, annualReports);
 
   // Inclui histórico de conversa
   let conversationContext = '';
   if (history.length > 0) {
-    conversationContext = '\n\nHistórico da conversa:\n' +
+    conversationContext = '\n\nHISTÓRICO DA CONVERSA:\n' +
       history.slice(-6).map(m => `${m.role === 'user' ? 'Usuário' : 'Assistente'}: ${m.content}`).join('\n');
   }
 
   // Monta o prompt completo
-  const fullPrompt = `${financialContext}${conversationContext}\n\nPergunta do usuário: ${prompt}`;
+  const fullPrompt = `${financialContext}${reportsContext}${conversationContext}
+
+MENSAGEM DO USUÁRIO: ${prompt}
+
+Responda de forma natural e amigável:`;
 
   const response = await webllmService.generateText(fullPrompt, SYSTEM_PROMPTS.chat);
   return response;
