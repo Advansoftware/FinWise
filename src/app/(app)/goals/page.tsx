@@ -147,7 +147,7 @@ export default function GoalsPage() {
           />
           <CardContent>
             <Grid container spacing={2} textAlign="center">
-              <Grid size={{ xs: 6, md: 3 }}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <Box
                   p={2}
                   borderRadius={2}
@@ -164,7 +164,7 @@ export default function GoalsPage() {
                   </Typography>
                 </Box>
               </Grid>
-              <Grid size={{ xs: 6, md: 3 }}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <Box
                   p={2}
                   borderRadius={2}
@@ -185,7 +185,7 @@ export default function GoalsPage() {
                   </Typography>
                 </Box>
               </Grid>
-              <Grid size={{ xs: 6, md: 3 }}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <Box
                   p={2}
                   borderRadius={2}
@@ -204,7 +204,7 @@ export default function GoalsPage() {
                   </Typography>
                 </Box>
               </Grid>
-              <Grid size={{ xs: 6, md: 3 }}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
                 <Box
                   p={2}
                   borderRadius={2}
