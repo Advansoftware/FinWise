@@ -35,10 +35,10 @@ export function useAISettings() {
     const [editingCredential, setEditingCredential] = useState<AICredential | null>(null);
 
     // Function to load settings
-    const loadSettings = useCallback(async () => {
+    const loadSettings = useCallback(async (background = false) => {
         if (!user) return;
         
-        setIsLoading(true);
+        if (!background) setIsLoading(true);
         try {
             const aiSettings = await apiClient.get('settings', user.uid);
             const aiData = aiSettings?.ai_settings;
@@ -50,9 +50,9 @@ export function useAISettings() {
             }
         } catch (error) {
             console.error('Erro ao carregar configurações de IA:', error);
-            setSettings({ credentials: [], activeCredentialId: GASTOMETRIA_AI_CREDENTIAL_ID });
+            if (!background) setSettings({ credentials: [], activeCredentialId: GASTOMETRIA_AI_CREDENTIAL_ID });
         } finally {
-            setIsLoading(false);
+            if (!background) setIsLoading(false);
         }
     }, [user]);
 
@@ -66,7 +66,8 @@ export function useAISettings() {
         loadSettings();
         
         // Register this hook's refresh function with the global system
-        registerRefreshHandler('ai-settings', loadSettings);
+        // Use background refresh to avoid flashing skeleton
+        registerRefreshHandler('ai-settings', () => loadSettings(true));
         
         return () => {
             unregisterRefreshHandler('ai-settings');
@@ -174,10 +175,11 @@ export function useAISettings() {
         try {
             await saveSettings({ credentials: newCredentials, activeCredentialId: newActiveId });
             
-            // Trigger global refresh to update other components
-            setTimeout(() => {
-                triggerRefresh('all');
-            }, 500);
+            // Await background refresh to ensure list is updated before closing modal
+            await loadSettings(true);
+            
+            // Trigger global refresh for other components
+            triggerRefresh('all');
             
         } catch (error) {
             console.error("Failed to save credential", error);

@@ -89,11 +89,12 @@ export default function GoalsPage() {
   }
 
   return (
-    <Box sx={{ flexGrow: 1 }}>
+    <Box sx={{ flexGrow: 1, position: "relative", zIndex: 0, width: "100%" }}>
       <Grid
         container
         spacing={{ xs: 2, sm: 3 }}
         columns={{ xs: 4, sm: 8, md: 12 }}
+        sx={{ width: "100%", m: 0 }}
       >
         {/* Header */}
         <Grid size={{ xs: 4, sm: 8, md: 12 }}>
@@ -115,23 +116,12 @@ export default function GoalsPage() {
                 acompanhe seu progresso a cada depósito.
               </Typography>
             </Box>
-            <Box
-              sx={{
-                display: "flex",
-                gap: 1,
-                alignItems: "center",
-                width: { xs: "100%", md: "auto" },
-              }}
-            >
-              <Box sx={{ flex: { xs: 1, md: "none" } }}>
-                <GamificationGuide />
-              </Box>
+            <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
+              <GamificationGuide />
               <Button
                 variant="contained"
                 startIcon={<PlusCircle size={18} />}
                 onClick={handleCreateGoal}
-                sx={{ flex: { xs: 1, md: "none" } }}
-                fullWidth
               >
                 Nova Meta
               </Button>
