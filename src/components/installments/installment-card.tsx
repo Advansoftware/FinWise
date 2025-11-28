@@ -33,7 +33,6 @@ import {
   AlertTriangle,
   Edit3,
   Trash2,
-  Smartphone,
 } from "lucide-react";
 import { Installment } from "@/core/ports/installments.port";
 import { formatCurrency } from "@/lib/utils";
@@ -43,7 +42,6 @@ import { useInstallments } from "@/hooks/use-installments";
 import { PayInstallmentDialog } from "./pay-installment-dialog";
 import { EditInstallmentDialog } from "./edit-installment-dialog";
 import { MarkAsPaidDialog } from "./mark-as-paid-dialog";
-import { PaymentButton } from "@/components/bank-payment";
 
 interface InstallmentCardProps {
   installment: Installment;
@@ -482,19 +480,6 @@ export function InstallmentCard({
                       />
                       Registrar
                     </Button>
-
-                    <PaymentButton
-                      amount={nextPayment.scheduledAmount}
-                      description={`${installment.name} - Parcela ${nextPayment.installmentNumber}/${installment.totalInstallments}`}
-                      receiverName={
-                        installment.establishment || installment.name
-                      }
-                      installmentId={installment.id}
-                      bank="nubank"
-                      variant="contained"
-                      size="small"
-                      fullWidth
-                    />
                   </Stack>
 
                   {nextPayment.status === "overdue" && (

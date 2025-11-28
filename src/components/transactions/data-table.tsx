@@ -15,7 +15,8 @@ import {
   TextField,
   Box,
   Stack,
-  Typography
+  Typography,
+  alpha
 } from '@mui/material';
 import {useState} from 'react';
 import {AnalyzeTransactionsDialog} from './analyze-transactions-dialog';
@@ -60,8 +61,30 @@ export function DataTable<TData, TValue>({
   const selectedRows = table.getFilteredSelectedRowModel().rows.map(row => row.original);
 
   return (
-    <Paper variant="outlined" sx={{ width: '100%', overflow: 'hidden' }}>
-      <Stack direction={{ xs: 'column', sm: 'row' }} alignItems="center" justifyContent="space-between" spacing={2} sx={{ p: 2 }}>
+    <Paper 
+      variant="outlined" 
+      sx={{ 
+        width: '100%', 
+        overflow: 'hidden',
+        bgcolor: (theme) => alpha(theme.palette.background.paper, 0.6),
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        border: (theme) => `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+      }}
+    >
+      <Stack 
+        direction={{ xs: 'column', sm: 'row' }} 
+        alignItems="center" 
+        justifyContent="space-between" 
+        spacing={2} 
+        sx={{ 
+          p: 2,
+          bgcolor: (theme) => alpha(theme.palette.background.paper, 0.8),
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderBottom: (theme) => `1px solid ${alpha(theme.palette.divider, 0.15)}`,
+        }}
+      >
         <TextField
           placeholder="Filtrar por item..."
           value={(table.getColumn("item")?.getFilterValue() as string) ?? ""}
@@ -69,7 +92,13 @@ export function DataTable<TData, TValue>({
             table.getColumn("item")?.setFilterValue(event.target.value)
           }
           size="small"
-          sx={{ maxWidth: '24rem', width: '100%' }}
+          sx={{ 
+            maxWidth: '24rem', 
+            width: '100%',
+            '& .MuiOutlinedInput-root': {
+              bgcolor: (theme) => alpha(theme.palette.background.default, 0.5),
+            }
+          }}
         />
         {selectedRows.length > 0 && (
           <AnalyzeTransactionsDialog transactions={selectedRows as any} />
@@ -86,7 +115,11 @@ export function DataTable<TData, TValue>({
                         key={header.id} 
                         sx={{ 
                             fontWeight: 'bold',
-                            width: header.getSize() !== 150 ? `${header.getSize()}px` : undefined
+                            width: header.getSize() !== 150 ? `${header.getSize()}px` : undefined,
+                            bgcolor: (theme) => alpha(theme.palette.background.paper, 0.95),
+                            backdropFilter: 'blur(12px)',
+                            WebkitBackdropFilter: 'blur(12px)',
+                            borderBottom: (theme) => `2px solid ${alpha(theme.palette.primary.main, 0.2)}`,
                         }}
                     >
                         {header.isPlaceholder
@@ -126,7 +159,20 @@ export function DataTable<TData, TValue>({
             </TableBody>
         </Table>
       </TableContainer>
-       <Stack direction="row" alignItems="center" justifyContent="flex-end" spacing={2} sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
+       <Stack 
+        direction="row" 
+        alignItems="center" 
+        justifyContent="flex-end" 
+        spacing={2} 
+        sx={{ 
+          p: 2, 
+          borderTop: 1, 
+          borderColor: (theme) => alpha(theme.palette.divider, 0.15),
+          bgcolor: (theme) => alpha(theme.palette.background.paper, 0.8),
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+        }}
+      >
         <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
           {table.getFilteredSelectedRowModel().rows.length} de{" "}
           {table.getFilteredRowModel().rows.length} linha(s) selecionadas.

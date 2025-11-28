@@ -24,7 +24,6 @@ import {
   FileText,
   CreditCard,
   Calculator,
-  Smartphone,
 } from "lucide-react";
 
 const navItems = [
@@ -36,7 +35,6 @@ const navItems = [
   { href: "/goals", label: "Metas", icon: Goal },
   { href: "/installments", label: "Parcelamentos", icon: CreditCard },
   { href: "/reports", label: "Relatórios", icon: FileText },
-  { href: "/payments", label: "Pagamentos", icon: Smartphone },
   { href: "/tools", label: "Ferramentas", icon: Calculator },
   { href: "/import", label: "Importar", icon: Upload },
 ];

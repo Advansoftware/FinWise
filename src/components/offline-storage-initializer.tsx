@@ -1,7 +1,7 @@
 // src/components/offline-storage-initializer.tsx
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { offlineStorage } from "@/lib/offline-storage";
 import { useAuth } from "@/hooks/use-auth";
 import {
@@ -22,7 +22,10 @@ export function OfflineStorageInitializer() {
     isSyncing: boolean;
     pendingOperations: number;
   }>({ isOnline: true, isSyncing: false, pendingOperations: 0 });
-  const [showSyncMessage, setShowSyncMessage] = useState(false);
+  // Mostrar mensagem de sincronização apenas quando recuperar conexão
+  const [showReconnectSync, setShowReconnectSync] = useState(false);
+  // Rastrear se estava offline antes
+  const wasOfflineRef = useRef(false);
 
   // Inicializa o storage
   useEffect(() => {
@@ -43,27 +46,18 @@ export function OfflineStorageInitializer() {
     initializeOfflineStorage();
   }, []);
 
-  // Sincroniza quando usuário loga e quando volta online
+  // Sincroniza quando usuário loga (em background, sem mostrar indicador)
   useEffect(() => {
     if (!isInitialized || !user) return;
 
     const syncData = async () => {
-      setSyncStatus((prev) => ({ ...prev, isSyncing: true }));
-
+      // Sincroniza silenciosamente em background
       try {
-        // Pull inicial do servidor
         await offlineStorage.forcePullFromServer(user.uid);
-
         const status = await offlineStorage.getSyncStatus();
         setSyncStatus(status);
-
-        if (status.pendingOperations === 0) {
-          setShowSyncMessage(true);
-        }
       } catch (error) {
         console.error("Erro na sincronização inicial:", error);
-      } finally {
-        setSyncStatus((prev) => ({ ...prev, isSyncing: false }));
       }
     };
 
@@ -77,15 +71,27 @@ export function OfflineStorageInitializer() {
     const handleOnline = async () => {
       setSyncStatus((prev) => ({ ...prev, isOnline: true }));
 
-      if (user) {
+      // Só mostra indicador de sincronização se estava offline antes
+      if (wasOfflineRef.current && user) {
+        setShowReconnectSync(true);
         setSyncStatus((prev) => ({ ...prev, isSyncing: true }));
-        await offlineStorage.syncAll();
-        const status = await offlineStorage.getSyncStatus();
-        setSyncStatus(status);
+        
+        try {
+          await offlineStorage.syncAll();
+          const status = await offlineStorage.getSyncStatus();
+          setSyncStatus(status);
+        } finally {
+          setSyncStatus((prev) => ({ ...prev, isSyncing: false }));
+          // Esconde mensagem após 2 segundos
+          setTimeout(() => setShowReconnectSync(false), 2000);
+        }
       }
+      
+      wasOfflineRef.current = false;
     };
 
     const handleOffline = () => {
+      wasOfflineRef.current = true;
       setSyncStatus((prev) => ({ ...prev, isOnline: false }));
     };
 
@@ -93,7 +99,9 @@ export function OfflineStorageInitializer() {
     window.addEventListener("offline", handleOffline);
 
     // Status inicial
-    setSyncStatus((prev) => ({ ...prev, isOnline: navigator.onLine }));
+    const initialOnline = navigator.onLine;
+    setSyncStatus((prev) => ({ ...prev, isOnline: initialOnline }));
+    wasOfflineRef.current = !initialOnline;
 
     return () => {
       window.removeEventListener("online", handleOnline);
@@ -120,8 +128,8 @@ export function OfflineStorageInitializer() {
 
   return (
     <>
-      {/* Indicador de Status de Sync - Sutil */}
-      {syncStatus.isSyncing && (
+      {/* Indicador de Sincronização - Apenas ao reconectar */}
+      {showReconnectSync && syncStatus.isSyncing && (
         <Box
           sx={{
             position: "fixed",
@@ -143,13 +151,13 @@ export function OfflineStorageInitializer() {
             variant="caption"
             sx={{ fontSize: "0.7rem", color: "grey.400" }}
           >
-            Sync
+            Sincronizando...
           </Typography>
         </Box>
       )}
 
-      {/* Indicador de Operações Pendentes - Sutil */}
-      {syncStatus.pendingOperations > 0 && !syncStatus.isSyncing && (
+      {/* Indicador de Operações Pendentes - Sutil, só quando offline */}
+      {!syncStatus.isOnline && syncStatus.pendingOperations > 0 && (
         <Box
           sx={{
             position: "fixed",
@@ -197,11 +205,11 @@ export function OfflineStorageInitializer() {
         </Alert>
       </Snackbar>
 
-      {/* Indicador de Sincronização Completa - Muito Sutil */}
+      {/* Indicador de Sincronização Completa - Apenas ao reconectar */}
       <Snackbar
-        open={showSyncMessage}
+        open={showReconnectSync && !syncStatus.isSyncing}
         autoHideDuration={1500}
-        onClose={() => setShowSyncMessage(false)}
+        onClose={() => setShowReconnectSync(false)}
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
         sx={{ bottom: { xs: 8, sm: 16 }, left: { xs: 8, sm: 16 } }}
       >

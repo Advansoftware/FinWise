@@ -16,6 +16,7 @@
     "@emotion/styled": "^11.14.1",
     "@genkit-ai/googleai": "^1.14.1",
     "@hookform/resolvers": "^3.9.0",
+    "@mlc-ai/web-llm": "^0.2.80",
     "@mui/icons-material": "^7.3.5",
     "@mui/material": "^7.3.5",
     "@mui/material-nextjs": "^7.3.5",

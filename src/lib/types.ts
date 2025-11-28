@@ -65,8 +65,9 @@ export interface Category {
   subcategories: string[];
 }
 
-export type AIProvider = 'ollama' | 'googleai' | 'openai' | 'gastometria';
+export type AIProvider = 'ollama' | 'googleai' | 'openai' | 'gastometria' | 'webllm';
 export type OpenAIModel = 'gpt-3.5-turbo' | 'gpt-4' | 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo';
+export type WebLLMModel = 'Llama-3.2-3B-Instruct-q4f16_1-MLC' | 'Llama-3.1-8B-Instruct-q4f16_1-MLC' | 'Qwen2.5-7B-Instruct-q4f16_1-MLC' | 'Phi-3.5-mini-instruct-q4f16_1-MLC' | 'gemma-2-2b-it-q4f16_1-MLC';
 
 export interface AICredential {
   id: string;
@@ -78,6 +79,7 @@ export interface AICredential {
   googleAIApiKey?: string;
   openAIModel?: OpenAIModel;
   openAIApiKey?: string;
+  webLLMModel?: WebLLMModel;
 }
 
 // This is the shape of the entire settings object stored in Firestore

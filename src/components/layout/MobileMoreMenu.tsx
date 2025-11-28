@@ -22,19 +22,16 @@ import {
   Target,
   CreditCard,
   FileText,
-  Smartphone,
   Calculator,
   Upload,
   X,
 } from "lucide-react";
-import { motion } from "framer-motion";
 
 const menuItems = [
   { href: "/categories", label: "Categorias", icon: FolderKanban },
   { href: "/budgets", label: "Orçamentos", icon: Target },
   { href: "/installments", label: "Parcelamentos", icon: CreditCard },
   { href: "/reports", label: "Relatórios", icon: FileText },
-  { href: "/payments", label: "Pagamentos", icon: Smartphone },
   { href: "/tools", label: "Ferramentas", icon: Calculator },
   { href: "/import", label: "Importar", icon: Upload },
 ];
@@ -128,10 +125,6 @@ export function MobileMoreMenu({ open, onClose }: MobileMoreMenuProps) {
             return (
               <ListItem key={item.href} disablePadding>
                 <ListItemButton
-                  component={motion.div}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.05 }}
                   onClick={() => handleNavClick(item.href)}
                   sx={{
                     mx: 1,

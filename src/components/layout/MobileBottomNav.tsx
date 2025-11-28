@@ -4,7 +4,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { Box, alpha, Badge } from "@mui/material";
+import { Box, alpha, Badge, ButtonBase } from "@mui/material";
 import {
   Home,
   History,
@@ -96,10 +96,8 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
           const IconComponent = item.icon;
 
           return (
-            <Box
+            <ButtonBase
               key={item.href}
-              component={motion.button}
-              whileTap={{ scale: 0.9 }}
               onClick={() => handleNavClick(item.href)}
               sx={{
                 display: "flex",
@@ -113,8 +111,11 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
                 bgcolor: "transparent",
                 cursor: "pointer",
                 color: isActive ? "primary.main" : "text.secondary",
-                transition: "color 0.2s ease",
+                transition: "color 0.2s ease, transform 0.1s ease",
                 position: "relative",
+                "&:active": {
+                  transform: "scale(0.9)",
+                },
                 "&:focus": {
                   outline: "none",
                 },
@@ -166,7 +167,7 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
               >
                 {item.label}
               </Box>
-            </Box>
+            </ButtonBase>
           );
         })}
       </Box>

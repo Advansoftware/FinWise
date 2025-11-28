@@ -1,45 +1,19 @@
 "use client";
 
-import { useState } from "react";
 import {
   Box,
   Typography,
   Stack,
-  Tabs,
-  Tab,
   Card,
   CardContent,
+  Alert,
+  Button,
 } from "@mui/material";
-import { Smartphone, Users, History } from "lucide-react";
-import { ContactManager } from "@/components/bank-payment/contact-manager";
-import { DeviceManager } from "@/components/bank-payment/device-manager";
-import { PaymentHistory } from "@/components/bank-payment/payment-history";
-
-interface TabPanelProps {
-  children?: React.ReactNode;
-  index: number;
-  value: number;
-}
-
-function TabPanel({ children, value, index }: TabPanelProps) {
-  return (
-    <Box
-      role="tabpanel"
-      hidden={value !== index}
-      id={`payments-tabpanel-${index}`}
-      aria-labelledby={`payments-tab-${index}`}
-    >
-      {value === index && <Box sx={{ py: 3 }}>{children}</Box>}
-    </Box>
-  );
-}
+import { Construction, ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
 
 export default function PaymentsPage() {
-  const [tabValue, setTabValue] = useState(0);
-
-  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setTabValue(newValue);
-  };
+  const router = useRouter();
 
   return (
     <Stack spacing={4}>
@@ -58,60 +32,60 @@ export default function PaymentsPage() {
           color="text.secondary"
           sx={{ fontSize: { xs: "0.875rem", sm: "1rem" } }}
         >
-          Gerencie seus contatos favoritos, dispositivos e histórico de
-          pagamentos.
+          Integração com bancos para pagamentos diretos.
         </Typography>
       </Box>
 
-      {/* Tabs */}
+      {/* Aviso de recurso em desenvolvimento */}
       <Card>
-        <Tabs
-          value={tabValue}
-          onChange={handleTabChange}
-          aria-label="payments tabs"
-          variant="scrollable"
-          scrollButtons="auto"
-          allowScrollButtonsMobile
-          sx={{ borderBottom: 1, borderColor: "divider", px: { xs: 1, sm: 2 } }}
-        >
-          <Tab
-            icon={<Users size={18} />}
-            iconPosition="start"
-            label="Contatos"
-            id="payments-tab-0"
-            aria-controls="payments-tabpanel-0"
-            sx={{ minWidth: "auto", px: { xs: 1.5, sm: 2 } }}
-          />
-          <Tab
-            icon={<Smartphone size={18} />}
-            iconPosition="start"
-            label="Dispositivos"
-            id="payments-tab-1"
-            aria-controls="payments-tabpanel-1"
-            sx={{ minWidth: "auto", px: { xs: 1.5, sm: 2 } }}
-          />
-          <Tab
-            icon={<History size={18} />}
-            iconPosition="start"
-            label="Histórico"
-            id="payments-tab-2"
-            aria-controls="payments-tabpanel-2"
-            sx={{ minWidth: "auto", px: { xs: 1.5, sm: 2 } }}
-          />
-        </Tabs>
+        <CardContent sx={{ textAlign: "center", py: 6 }}>
+          <Stack spacing={3} alignItems="center">
+            <Box
+              sx={{
+                width: 80,
+                height: 80,
+                borderRadius: "50%",
+                bgcolor: "warning.light",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Construction size={40} color="inherit" />
+            </Box>
+            
+            <Typography variant="h5" fontWeight="bold">
+              Recurso em Desenvolvimento
+            </Typography>
+            
+            <Typography 
+              variant="body1" 
+              color="text.secondary" 
+              maxWidth="sm"
+            >
+              A funcionalidade de pagamentos diretos pelo aplicativo será 
+              implementada futuramente. Estamos trabalhando para integrar com 
+              Open Finance e permitir pagamentos seguros diretamente para suas 
+              contas e boletos.
+            </Typography>
 
-        <CardContent>
-          <TabPanel value={tabValue} index={0}>
-            <ContactManager />
-          </TabPanel>
+            <Alert severity="info" sx={{ maxWidth: "sm" }}>
+              <Typography variant="body2">
+                <strong>Em breve:</strong> Com a integração do Open Finance, você poderá 
+                realizar pagamentos de forma segura diretamente pelo Gastometria. 
+                Enquanto isso, registre seus pagamentos manualmente na seção de 
+                Transações ou Parcelamentos.
+              </Typography>
+            </Alert>
 
-          <TabPanel value={tabValue} index={1}>
-            <DeviceManager />
-          </TabPanel>
-
-          <TabPanel value={tabValue} index={2}>
-            <PaymentHistory />
-          </TabPanel>
+            <Button
+              variant="contained"
+              startIcon={<ArrowLeft size={18} />}
+              onClick={() => router.push("/dashboard")}
+            >
+              Voltar ao Painel
+            </Button>
+          </Stack>
         </CardContent>
       </Card>
     </Stack>
