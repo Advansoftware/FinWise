@@ -54,7 +54,9 @@ import {
   MONTHLY_CHALLENGES,
 } from "@/lib/gamification-constants";
 
-export function GamificationGuide() {
+import { SxProps, Theme } from "@mui/material";
+
+export function GamificationGuide({ sx }: { sx?: SxProps<Theme> }) {
   const [open, setOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<
     "overview" | "levels" | "badges" | "achievements" | "quests"
@@ -175,7 +177,7 @@ export function GamificationGuide() {
         size="small"
         onClick={() => setOpen(true)}
         startIcon={<HelpCircle style={{ width: "1rem", height: "1rem" }} />}
-        sx={{ minWidth: 0, whiteSpace: "nowrap" }}
+        sx={{ minWidth: 0, whiteSpace: "nowrap", ...sx }}
       >
         Como Funciona?
       </Button>

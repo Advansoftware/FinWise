@@ -116,12 +116,21 @@ export default function GoalsPage() {
                 acompanhe seu progresso a cada depósito.
               </Typography>
             </Box>
-            <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-              <GamificationGuide />
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", md: "row" },
+                gap: 1,
+                width: { xs: "100%", md: "auto" },
+              }}
+            >
+              <GamificationGuide sx={{ width: { xs: "100%", md: "auto" } }} />
               <Button
                 variant="contained"
                 startIcon={<PlusCircle size={18} />}
                 onClick={handleCreateGoal}
+                fullWidth
+                sx={{ width: { xs: "100%", md: "auto" } }}
               >
                 Nova Meta
               </Button>
