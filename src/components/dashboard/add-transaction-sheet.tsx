@@ -253,6 +253,10 @@ export function AddTransactionSheet({
         anchor={isMobile ? "bottom" : "right"}
         open={isOpen}
         onClose={toggleDrawer(false)}
+        sx={{
+          // Garantir que o drawer fique acima do bottom nav
+          zIndex: 1300,
+        }}
         PaperProps={{
           sx: {
             width: isMobile ? "100%" : 450,

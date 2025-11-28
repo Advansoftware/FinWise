@@ -727,7 +727,7 @@ export function ReceiptScannerDialog({ children }: ReceiptScannerDialogProps) {
           sx={{
             position: "fixed",
             inset: 0,
-            zIndex: 1300,
+            zIndex: 1400, // Acima do bottom nav (1200) e outros modais
             bgcolor: "black",
             display: isOpen ? "flex" : "none",
             flexDirection: "column",

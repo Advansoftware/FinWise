@@ -140,6 +140,10 @@ export function DateRangePicker({
         open={dialogOpen}
         onClose={handleCloseDialog}
         fullScreen={isMobile}
+        sx={{
+          // Garantir que o dialog fique acima do bottom nav
+          zIndex: isMobile ? 1300 : undefined,
+        }}
         PaperProps={{
           sx: {
             overflow: "visible",

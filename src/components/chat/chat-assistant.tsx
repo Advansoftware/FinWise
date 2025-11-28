@@ -542,6 +542,10 @@ export function ChatAssistant() {
           open={isOpen}
           onClose={() => setIsOpen(false)}
           TransitionComponent={SlideTransition}
+          sx={{
+            // Garantir que o dialog fique acima do bottom nav
+            zIndex: 1300,
+          }}
           PaperProps={{
             sx: {
               bgcolor: "background.default",
@@ -645,6 +649,8 @@ export function ChatAssistant() {
               sx={{
                 flexShrink: 0,
                 p: 2,
+                // Safe area para dispositivos com home indicator
+                pb: "calc(16px + env(safe-area-inset-bottom))",
                 borderTop: 1,
                 borderColor: "divider",
                 bgcolor: (theme) => alpha(theme.palette.background.paper, 0.95),

@@ -192,6 +192,10 @@ export function CreateInstallmentDialog({
       maxWidth="md"
       fullWidth
       fullScreen={isMobile}
+      sx={{
+        // Garantir que o dialog fique acima do bottom nav
+        zIndex: isMobile ? 1300 : undefined,
+      }}
     >
       <DialogTitle
         sx={{
