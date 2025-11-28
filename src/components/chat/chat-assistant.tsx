@@ -172,11 +172,14 @@ export function ChatAssistant() {
   const { isWebLLMActive, isReady: isWebLLMReady, isLoading: isWebLLMLoading, progress: webllmProgress, currentModelId } = useWebLLM();
 
   // Determinar se deve usar raciocínio
+  // Só usa reasoning para modelos Ollama específicos que suportam
   const activeCredential = displayedCredentials.find(
     (c) => c.id === activeCredentialId
   );
   const shouldUseReasoning =
     activeCredential?.provider === "ollama" &&
+    activeCredential?.ollamaModel &&
+    activeCredential?.ollamaServerAddress &&
     isReasoningModel(activeCredential?.ollamaModel);
 
   useEffect(() => {
@@ -231,14 +234,29 @@ export function ChatAssistant() {
               pastAnnualReports
             );
           } else if (shouldUseReasoning) {
-            response = await streamReasoningResponse(
-              messages,
-              messageToSend,
-              user!.uid,
-              currentMonthTransactions,
-              currentYearMonthlyReports,
-              pastAnnualReports
-            );
+            try {
+              response = await streamReasoningResponse(
+                messages,
+                messageToSend,
+                user!.uid,
+                currentMonthTransactions,
+                currentYearMonthlyReports,
+                pastAnnualReports
+              );
+            } catch (reasoningError: any) {
+              // Fallback para chat normal se reasoning falhar
+              console.warn("Reasoning chat failed, falling back to normal chat:", reasoningError);
+              response = await getChatbotResponse(
+                {
+                  history: messages,
+                  prompt: messageToSend,
+                  transactions: currentMonthTransactions,
+                  monthlyReports: currentYearMonthlyReports,
+                  annualReports: pastAnnualReports,
+                },
+                user!.uid
+              );
+            }
           } else {
             response = await getChatbotResponse(
               {
