@@ -174,10 +174,6 @@ export function useAISettings() {
         try {
             await saveSettings({ credentials: newCredentials, activeCredentialId: newActiveId });
             
-            // Close modal and clear editing state
-            setIsDialogOpen(false);
-            setEditingCredential(null);
-            
             // Trigger global refresh to update other components
             setTimeout(() => {
                 triggerRefresh('all');
@@ -185,6 +181,7 @@ export function useAISettings() {
             
         } catch (error) {
             console.error("Failed to save credential", error);
+            throw error;
         }
     };
 

@@ -277,8 +277,15 @@ export function AISettingsDialog({
     });
   };
 
-  const onSubmit = (data: CredentialFormValues) => {
-    handleSaveCredential(data);
+  const onSubmit = async (data: CredentialFormValues) => {
+    try {
+      await handleSaveCredential(data);
+      setIsOpen(false);
+      reset();
+    } catch (error) {
+      // Error is already handled/logged in the hook, but we keep the dialog open
+      // We could add specific error handling here if needed
+    }
   };
 
   return (
