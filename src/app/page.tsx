@@ -1,84 +1,355 @@
-
-'use client';
+// src/app/page.tsx
+"use client";
 
 import React from 'react';
-import { useEffect } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from "@/components/ui/button";
-import { ArrowRight, BarChart, Bot, LayoutDashboard, Wallet, Check, Goal, FolderKanban, Upload, KeyRound, CheckCircle, XCircle, HelpCircle, BookOpen, ChevronRight } from "lucide-react";
+import {useEffect} from 'react';
+import {useRouter} from 'next/navigation';
+import { 
+  Button, 
+  Container, 
+  Box, 
+  Stack, 
+  Typography, 
+  Grid,
+  Card, 
+  CardContent, 
+  CardHeader,
+  Chip,
+  AppBar,
+  Toolbar,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Paper,
+  TableContainer
+} from "@mui/material";
+import { ArrowRight, BarChart, Bot, LayoutDashboard, Wallet, Check, Goal, Upload, CheckCircle, XCircle, HelpCircle, ChevronRight, Sparkles, TrendingUp, Shield, Zap } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { useAuth } from "@/hooks/use-auth";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from '@/components/ui/skeleton';
-import { AuthGuard } from '@/components/auth/auth-guard';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { cn } from '@/lib/utils';
-import { structuredData, organizationData, websiteData, breadcrumbData, faqData } from '@/lib/structured-data';
+import {Skeleton} from '@/components/mui-wrappers/skeleton';
+import {AuthGuard} from '@/components/auth/auth-guard';
+import {structuredData, organizationData, websiteData, breadcrumbData, faqData} from '@/lib/structured-data';
 import Head from 'next/head';
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.6, ease: "easeInOut" }
-};
-
-const featureVariants = {
-  initial: { opacity: 0, scale: 0.9 },
-  animate: { opacity: 1, scale: 1 },
   transition: { duration: 0.5 }
 };
 
-const featureComparison = {
-    "Funcionalidades Principais": [
-        { feature: "Dashboard interativo", Básico: true, Pro: true, Plus: true, Infinity: true },
-        { feature: "Transações ilimitadas", Básico: true, Pro: true, Plus: true, Infinity: true },
-        { feature: "Múltiplas carteiras e contas", Básico: true, Pro: true, Plus: true, Infinity: true },
-        { feature: "Orçamentos manuais", Básico: true, Pro: true, Plus: true, Infinity: true },
-        { feature: "Metas de economia", Básico: true, Pro: true, Plus: true, Infinity: true },
+const plans = [
+  {
+    name: "Básico",
+    price: "R$ 0",
+    period: "/mês",
+    description: "Perfeito para começar sua jornada financeira",
+    features: [
+      "Até 3 carteiras",
+      "Transações ilimitadas",
+      "Categorização manual",
+      "Relatórios básicos",
+      "Suporte por email"
     ],
-    "Produtividade e IA": [
-        { feature: "Gestão de Parcelamentos com gamificação", Básico: false, Pro: true, Plus: true, Infinity: true },
-        { feature: "Importação de extratos (CSV/OFX)", Básico: false, Pro: true, Plus: true, Infinity: true },
-        { feature: "Escanear notas fiscais (OCR)", Básico: false, Pro: true, Plus: true, Infinity: true },
-        { feature: "Relatórios inteligentes com IA", Básico: false, Pro: true, Plus: true, Infinity: true },
-        { feature: "Assistente de Chat com IA", Básico: false, Pro: true, Plus: true, Infinity: true },
-        { feature: "Créditos de IA / mês", Básico: "Até 10", Pro: "100", Plus: "300", Infinity: "500" },
+    cta: "Começar Grátis",
+    variant: "outlined",
+    popular: false,
+    credits: "0 créditos IA"
+  },
+  {
+    name: "Pro",
+    price: "R$ 14,90",
+    period: "/mês",
+    description: "Recursos essenciais com IA",
+    features: [
+      "Tudo do Básico",
+      "Carteiras ilimitadas",
+      "100 créditos IA/mês",
+      "IA para dicas rápidas",
+      "Chat básico com IA",
+      "Relatórios avançados"
     ],
-    "Automação e Análise Avançada": [
-        { feature: "Orçamentos automáticos com IA", Básico: false, Pro: false, Plus: true, Infinity: true },
-        { feature: "Previsão de saldos futuros", Básico: false, Pro: false, Plus: true, Infinity: true },
-        { feature: "Projeção de metas com IA", Básico: false, Pro: false, Plus: true, Infinity: true },
-        { feature: "Uso de IA Local (Ollama)", Básico: false, Pro: false, Plus: true, Infinity: true },
+    cta: "Assinar Pro",
+    variant: "outlined",
+    popular: false,
+    credits: "100 créditos IA/mês"
+  },
+  {
+    name: "Plus",
+    price: "R$ 29,90",
+    period: "/mês",
+    description: "Poder completo da IA + Ollama",
+    features: [
+      "Tudo do Pro",
+      "300 créditos IA/mês",
+      "OCR de notas fiscais",
+      "Importação CSV/OFX",
+      "Ollama local (ilimitado)",
+      "Metas financeiras",
+      "Análises preditivas",
+      "Suporte prioritário"
     ],
-    "Controle Total": [
-        { feature: "Uso de qualquer provedor (OpenAI, Google)", Básico: false, Pro: false, Plus: false, Infinity: true },
-        { feature: "Credenciais de IA ilimitadas", Básico: false, Pro: false, Plus: false, Infinity: true },
-        { feature: "Acesso a recursos beta", Básico: false, Pro: false, Plus: false, Infinity: true },
-        { feature: "Suporte prioritário", Básico: false, Pro: false, Plus: false, Infinity: true },
+    cta: "Assinar Plus",
+    variant: "contained",
+    popular: true,
+    credits: "300 créditos IA/mês"
+  },
+  {
+    name: "Infinity",
+    price: "R$ 49,90",
+    period: "/mês",
+    description: "Liberdade total com qualquer IA",
+    features: [
+      "Tudo do Plus",
+      "500 créditos IA/mês",
+      "OpenAI (sua chave)",
+      "Google AI (sua chave)",
+      "Qualquer provedor IA",
+      "Uso ilimitado c/ suas chaves",
+      "API access",
+      "Suporte 24/7"
     ],
-};
+    cta: "Assinar Infinity",
+    variant: "contained",
+    popular: false,
+    credits: "500 créditos IA/mês"
+  }
+];
 
+const features = [
+  {
+    icon: Wallet,
+    title: "Múltiplas Carteiras",
+    description: "Organize seu dinheiro em carteiras separadas: pessoal, trabalho, investimentos e muito mais.",
+    color: "#2196f3"
+  },
+  {
+    icon: Bot,
+    title: "IA Inteligente",
+    description: "Categorização automática de transações com IA. Economize tempo e tenha insights precisos.",
+    color: "#9c27b0"
+  },
+  {
+    icon: BarChart,
+    title: "Relatórios Detalhados",
+    description: "Visualize seus gastos com gráficos interativos e relatórios personalizáveis.",
+    color: "#ff9800"
+  },
+  {
+    icon: Goal,
+    title: "Metas Financeiras",
+    description: "Defina objetivos e acompanhe seu progresso rumo à independência financeira.",
+    color: "#4caf50"
+  },
+  {
+    icon: Upload,
+    title: "Importação Fácil",
+    description: "Importe extratos bancários (CSV/OFX) e digitalize notas fiscais com OCR.",
+    color: "#f44336"
+  },
+  {
+    icon: LayoutDashboard,
+    title: "Dashboard Intuitivo",
+    description: "Interface moderna e fácil de usar. Acesse tudo que precisa em um só lugar.",
+    color: "#00bcd4"
+  }
+];
+
+const faqs = [
+  {
+    question: "O Gastometria é gratuito?",
+    answer: "Sim! Oferecemos um plano Básico completo com recursos essenciais. Você pode fazer upgrade para Pro, Plus ou Infinity quando quiser mais funcionalidades."
+  },
+  {
+    question: "Meus dados estão seguros?",
+    answer: "Absolutamente. Usamos criptografia de ponta a ponta e seguimos as melhores práticas de segurança. Seus dados financeiros são privados e protegidos."
+  },
+  {
+    question: "Posso usar offline?",
+    answer: "Sim! O Gastometria é um PWA (Progressive Web App) que funciona offline. Suas transações são sincronizadas quando você volta online."
+  },
+  {
+    question: "Como funcionam os créditos de IA?",
+    answer: "Cada plano oferece créditos mensais para usar a Gastometria IA. Ações simples custam 1-2 créditos, complexas 5-10. Você pode usar Ollama (Plus) ou suas próprias chaves de IA (Infinity) ilimitadamente."
+  }
+];
+
+const blogPosts = [
+  {
+    title: "Como Economizar R$ 1000 por Mês",
+    description: "Descubra estratégias práticas para reduzir gastos e aumentar sua poupança mensal.",
+    category: "Economia",
+    slug: "como-economizar-1000-por-mes",
+    color: "#4caf50"
+  },
+  {
+    title: "Guia Completo de Investimentos para Iniciantes",
+    description: "Tudo que você precisa saber para começar a investir com segurança.",
+    category: "Investimentos",
+    slug: "guia-investimentos-iniciantes",
+    color: "#2196f3"
+  },
+  {
+    title: "Planejamento Financeiro Familiar",
+    description: "Organize as finanças da família e alcance seus objetivos juntos.",
+    category: "Planejamento",
+    slug: "planejamento-financeiro-familiar",
+    color: "#ff9800"
+  }
+];
+
+// Tabela de comparação completa com recursos reais
+const comparisonFeatures = [
+  {
+    category: "Carteiras & Transações",
+    features: [
+      { name: "Número de Carteiras", basico: "3", pro: "Ilimitadas", plus: "Ilimitadas", infinity: "Ilimitadas" },
+      { name: "Transações", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Categorização Manual", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Transferências entre Carteiras", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Categorias Personalizadas", basico: true, pro: true, plus: true, infinity: true },
+    ]
+  },
+  {
+    category: "Parcelamentos & Gestão",
+    features: [
+      { name: "Criar Parcelamentos", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Acompanhar Pagamentos", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Cronograma de Vencimentos", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Projeções Mensais", basico: true, pro: true, plus: true, infinity: true },
+    ]
+  },
+  {
+    category: "Calculadoras Financeiras",
+    features: [
+      { name: "Calculadora de Férias", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Calculadora 13º Salário", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Projeção Salarial", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Calculadora FGTS", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Calculadora INSS", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Calculadora Rescisão", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Calculadora IR", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Empréstimo Consignado", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Pós-Férias", basico: true, pro: true, plus: true, infinity: true },
+    ]
+  },
+  {
+    category: "Folha de Pagamento",
+    features: [
+      { name: "Configurar Dados do Holerite", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Salário Bruto e Descontos", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Ajuda de Custo", basico: true, pro: true, plus: true, infinity: true },
+    ]
+  },
+  {
+    category: "Inteligência Artificial",
+    features: [
+      { name: "Créditos IA/mês", basico: "0", pro: "100", plus: "300", infinity: "500" },
+      { name: "Dicas Rápidas (1 crédito)", basico: false, pro: true, plus: true, infinity: true },
+      { name: "Chat com IA", basico: false, pro: "Básico", plus: "Avançado", infinity: "Avançado" },
+      { name: "Categorização Automática", basico: false, pro: true, plus: true, infinity: true },
+      { name: "Análise de Transações (5 créditos)", basico: false, pro: true, plus: true, infinity: true },
+      { name: "Gastometria IA (padrão)", basico: false, pro: true, plus: true, infinity: true },
+      { name: "Ollama Local (ilimitado)", basico: false, pro: false, plus: true, infinity: true },
+      { name: "OpenAI (sua chave)", basico: false, pro: false, plus: false, infinity: true },
+      { name: "Google AI (sua chave)", basico: false, pro: false, plus: false, infinity: true },
+    ]
+  },
+  {
+    category: "Importação & Digitalização",
+    features: [
+      { name: "Importação CSV", basico: false, pro: false, plus: true, infinity: true },
+      { name: "Importação OFX", basico: false, pro: false, plus: true, infinity: true },
+      { name: "OCR Notas Fiscais (10 créditos)", basico: false, pro: false, plus: true, infinity: true },
+    ]
+  },
+  {
+    category: "Metas & Planejamento",
+    features: [
+      { name: "Metas Financeiras", basico: false, pro: false, plus: true, infinity: true },
+      { name: "Depósitos em Metas", basico: false, pro: false, plus: true, infinity: true },
+      { name: "Projeção de Metas (2 créditos)", basico: false, pro: false, plus: true, infinity: true },
+      { name: "Orçamentos", basico: false, pro: false, plus: true, infinity: true },
+      { name: "Sugestão de Orçamento IA (2 créditos)", basico: false, pro: false, plus: true, infinity: true },
+    ]
+  },
+  {
+    category: "Relatórios & Análises",
+    features: [
+      { name: "Dashboard Básico", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Relatórios Avançados", basico: false, pro: true, plus: true, infinity: true },
+      { name: "Análises Preditivas (5 créditos)", basico: false, pro: false, plus: true, infinity: true },
+      { name: "Previsão de Saldo (5 créditos)", basico: false, pro: false, plus: true, infinity: true },
+      { name: "Exportação de Dados", basico: false, pro: false, plus: true, infinity: true },
+    ]
+  },
+  {
+    category: "Offline & Sincronização",
+    features: [
+      { name: "Modo Offline (PWA)", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Sincronização Automática", basico: true, pro: true, plus: true, infinity: true },
+      { name: "Cache Local (IndexedDB)", basico: true, pro: true, plus: true, infinity: true },
+    ]
+  },
+  {
+    category: "Suporte",
+    features: [
+      { name: "Tipo de Suporte", basico: "Email", pro: "Email", plus: "Prioritário", infinity: "24/7" },
+      { name: "Tempo de Resposta", basico: "48h", pro: "24h", plus: "12h", infinity: "4h" },
+    ]
+  }
+];
 
 export default function Page() {
   const { user, loading } = useAuth();
-  
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!loading && user) {
+      router.push('/dashboard');
+    }
+  }, [user, loading, router]);
+
   if (loading) {
     return (
-      <div className="flex flex-col min-h-screen items-center justify-center">
-         <div className="container mx-auto px-3 sm:px-4 py-12 sm:py-20 md:py-32 flex flex-col items-center">
-            <Skeleton className="h-12 sm:h-16 w-full max-w-lg mb-4 sm:mb-6" />
-            <Skeleton className="h-6 sm:h-8 w-3/4 max-w-md mb-6 sm:mb-8" />
-            <Skeleton className="h-10 sm:h-12 w-full max-w-48 mb-8 sm:mb-16" />
-            <Skeleton className="h-48 sm:h-64 md:h-[400px] w-full max-w-5xl rounded-lg" />
-        </div>
-      </div>
-    )
+      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <Skeleton variant="rectangular" width="100%" height="100vh" />
+      </Box>
+    );
   }
-  
+
+  const renderCellValue = (value: any) => {
+    if (typeof value === 'boolean') {
+      return value ? (
+        <CheckCircle size={24} style={{ color: '#4caf50' }} />
+      ) : (
+        <XCircle size={24} style={{ color: '#f44336' }} />
+      );
+    }
+    if (typeof value === 'string') {
+      // Se for número de créditos, renderizar com chip
+      if (value.includes('crédito') || !isNaN(Number(value))) {
+        return (
+          <Chip 
+            label={value} 
+            size="small"
+            sx={{ 
+              bgcolor: value === '0' || value === 'Email' || value === '48h' ? 'grey.200' : 'primary.light',
+              color: value === '0' || value === 'Email' || value === '48h' ? 'text.secondary' : 'primary.contrastText',
+              fontWeight: 600
+            }}
+          />
+        );
+      }
+      return <Typography variant="body2">{value}</Typography>;
+    }
+    return value;
+  };
+
   return (
     <AuthGuard>
       <Head>
@@ -103,561 +374,599 @@ export default function Page() {
           dangerouslySetInnerHTML={{ __html: JSON.stringify(faqData) }}
         />
       </Head>
-      <div className="flex flex-col min-h-screen bg-background text-foreground overflow-x-hidden">
-        <header className="sticky top-0 z-50 px-3 sm:px-4 md:px-6 h-14 sm:h-16 flex items-center justify-between bg-background/50 backdrop-blur-lg border-b border-border/50">
-            <motion.div 
-              initial={{ opacity: 0, x: -20 }} 
-              animate={{ opacity: 1, x: 0 }} 
+      
+      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        {/* Header */}
+        <AppBar 
+          position="sticky" 
+          elevation={0}
+          sx={{ 
+            bgcolor: 'background.default',
+            backdropFilter: 'blur(12px)',
+            borderBottom: 1,
+            borderColor: 'divider'
+          }}
+        >
+          <Toolbar sx={{ justifyContent: 'space-between' }}>
+            <Box
+              component={motion.div}
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <Link href="/" className="flex items-center gap-2">
-                  <Logo className="w-6 h-6 sm:w-8 sm:h-8"/>
-                  <span className="text-lg sm:text-xl font-bold">Gastometria</span>
+              <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', textDecoration: 'none', color: 'inherit' }}>
+                <Logo sx={{ width: { xs: 24, sm: 32 }, height: { xs: 24, sm: 32 } }} />
+                <Typography variant="h6" sx={{ fontWeight: 700, fontSize: { xs: '1.125rem', sm: '1.25rem' } }}>
+                  Gastometria
+                </Typography>
               </Link>
-            </motion.div>
-            <motion.div 
-              initial={{ opacity: 0, x: 20 }} 
-              animate={{ opacity: 1, x: 0 }} 
-              transition={{ duration: 0.5, delay: 0.2 }} 
-              className="flex items-center gap-2 sm:gap-4"
+            </Box>
+            
+            <Box
+              component={motion.div}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
-                  <Link href="/docs">
-                      Documentação
-                  </Link>
-              </Button>
-              <Button asChild size="sm" className="text-xs sm:text-sm">
-                  <Link href={user ? "/dashboard" : "/login"}>
-                      {user ? "Painel" : "Entrar"}
-                  </Link>
-              </Button>
-            </motion.div>
-        </header>
+              <Stack direction="row" spacing={2}>
+                <Button 
+                  variant="text" 
+                  component={Link} 
+                  href="/docs"
+                  sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+                >
+                  Documentação
+                </Button>
+                <Button 
+                  variant="contained" 
+                  component={Link} 
+                  href={user ? "/dashboard" : "/login"}
+                >
+                  {user ? "Painel" : "Entrar"}
+                </Button>
+              </Stack>
+            </Box>
+          </Toolbar>
+        </AppBar>
 
-        <main className="flex-1">
+        {/* Main Content */}
+        <Box component="main" sx={{ flex: 1 }}>
           {/* Hero Section */}
-          <section className="container mx-auto flex flex-col items-center text-center px-3 sm:px-4 py-12 sm:py-20 md:py-32">
-            <motion.h1 
-              {...fadeIn}
-              className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold tracking-tighter bg-clip-text text-transparent bg-gradient-to-r from-primary via-primary/80 to-primary/60 leading-tight"
-            >
-              Sua vida financeira, sob seu controle.
-            </motion.h1>
-            <motion.p 
-              {...fadeIn}
-              transition={{ ...fadeIn.transition, delay: 0.2 }}
-              className="mt-4 sm:mt-6 text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed"
-            >
-              Gastometria une um design intuitivo com o poder da Inteligência Artificial para transformar a forma como você gerencia seu dinheiro.
-            </motion.p>
-            <motion.div 
-              {...fadeIn}
-              transition={{ ...fadeIn.transition, delay: 0.4 }}
-              className="mt-6 sm:mt-8 flex justify-center"
-            >
-              <Button asChild size="lg" className="shadow-lg shadow-primary/20 hover:shadow-primary/30 transition-shadow w-full sm:w-auto px-6 sm:px-8">
-                <Link href={user ? "/dashboard" : "/login"} className="text-sm sm:text-base">
+          <Container maxWidth="xl" sx={{ py: { xs: 8, sm: 12, md: 16 } }}>
+            <Stack spacing={4} alignItems="center" textAlign="center">
+              <Typography
+                component={motion.h1}
+                variant="h1"
+                {...fadeIn}
+                sx={{
+                  fontSize: { xs: '2rem', sm: '2.5rem', md: '3.5rem', lg: '4rem' },
+                  fontWeight: 700,
+                  letterSpacing: '-0.02em',
+                  background: (theme) => `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.main}CC, ${theme.palette.primary.main}99)`,
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  lineHeight: 1.2
+                }}
+              >
+                Sua vida financeira, sob seu controle.
+              </Typography>
+
+              <Typography
+                component={motion.p}
+                variant="h6"
+                {...fadeIn}
+                transition={{ ...fadeIn.transition, delay: 0.2 }}
+                sx={{
+                  color: 'text.secondary',
+                  maxWidth: '42rem',
+                  fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' },
+                  lineHeight: 1.6
+                }}
+              >
+                Gastometria une um design intuitivo com o poder da Inteligência Artificial para transformar a forma como você gerencia seu dinheiro.
+              </Typography>
+
+              <Box
+                component={motion.div}
+                {...fadeIn}
+                transition={{ ...fadeIn.transition, delay: 0.4 }}
+              >
+                <Button
+                  variant="contained"
+                  size="large"
+                  component={Link}
+                  href={user ? "/dashboard" : "/login"}
+                  endIcon={<ArrowRight />}
+                  sx={{ 
+                    px: 4, 
+                    py: 1.5,
+                    fontSize: { xs: '0.875rem', sm: '1rem' },
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: 8
+                    }
+                  }}
+                >
                   Comece Agora Gratuitamente
-                  <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
-                </Link>
-              </Button>
-            </motion.div>
-            <motion.div 
-              {...fadeIn}
-              transition={{...fadeIn.transition, delay: 0.6}}
-              className="mt-8 sm:mt-12 md:mt-16 w-full max-w-5xl"
-            >
-              <div className="relative rounded-lg sm:rounded-xl shadow-2xl shadow-primary/10 border border-border/20 bg-card/50">
-                <Image
-                  src="https://picsum.photos/1200/700"
-                  alt="Dashboard Gastometria"
-                  width={1200}
-                  height={700}
-                  data-ai-hint="dashboard finance"
-                  className="rounded-lg sm:rounded-xl opacity-80 w-full h-auto"
-                  priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-background via-background/50 to-transparent rounded-lg sm:rounded-xl"></div>
-              </div>
-            </motion.div>
-          </section>
+                </Button>
+              </Box>
+
+              <Box
+                component={motion.div}
+                {...fadeIn}
+                transition={{ ...fadeIn.transition, delay: 0.6 }}
+                sx={{ width: '100%', maxWidth: '80rem', mt: { xs: 4, sm: 6, md: 8 } }}
+              >
+                <Paper 
+                  elevation={8}
+                  sx={{ 
+                    borderRadius: 2,
+                    overflow: 'hidden',
+                    position: 'relative',
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'scale(1.02)',
+                      boxShadow: 12
+                    }
+                  }}
+                >
+                  <Image
+                    src="https://picsum.photos/1200/700"
+                    alt="Dashboard Gastometria"
+                    width={1200}
+                    height={700}
+                    data-ai-hint="dashboard finance"
+                    style={{ width: '100%', height: 'auto', display: 'block' }}
+                    priority
+                  />
+                  <Box 
+                    sx={{ 
+                      position: 'absolute',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      height: '50%',
+                      background: (theme) => `linear-gradient(to top, ${theme.palette.background.default}, transparent)`
+                    }}
+                  />
+                </Paper>
+              </Box>
+            </Stack>
+          </Container>
 
           {/* Why Section */}
-          <section className="py-12 sm:py-16 md:py-20 lg:py-24 bg-card/20 border-y border-border/20">
-            <motion.div 
+          <Box sx={{ py: { xs: 8, sm: 12, md: 16 }, bgcolor: 'background.paper' }}>
+            <Container maxWidth="xl">
+              <Box
+                component={motion.div}
                 {...fadeIn}
-                viewport={{ once: true, amount: 0.5 }}
-                className="container mx-auto px-3 sm:px-4 text-center"
-            >
-                <div className="inline-block rounded-full bg-primary/10 p-2 sm:p-3 text-primary mb-3 sm:mb-4">
-                    <KeyRound className="h-6 w-6 sm:h-8 sm:w-8"/>
-                </div>
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight leading-tight">
-                    O Controle Financeiro é a Chave para a sua Liberdade
-                </h2>
-                <p className="mt-3 sm:mt-4 text-base sm:text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-                    Não se trata apenas de números e planilhas. Trata-se de trocar a ansiedade pela confiança. De saber exatamente para onde seu dinheiro vai, você ganha o poder de direcioná-lo para o que realmente importa: suas metas, seus sonhos e sua tranquilidade. O Gastometria foi criado para ser essa chave.
-                </p>
-            </motion.div>
-          </section>
+                sx={{ textAlign: 'center', mb: { xs: 6, sm: 8 } }}
+              >
+                <Typography variant="h2" sx={{ fontSize: { xs: '1.875rem', sm: '2.25rem', md: '3rem' }, fontWeight: 700, mb: 2 }}>
+                  Por que Gastometria?
+                </Typography>
+                <Typography variant="body1" sx={{ color: 'text.secondary', maxWidth: '48rem', mx: 'auto', fontSize: { xs: '1rem', sm: '1.125rem' } }}>
+                  Não se trata apenas de números e planilhas. Trata-se de trocar a ansiedade pela confiança. De saber exatamente para onde seu dinheiro vai, você ganha o poder de direcioná-lo para o que realmente importa: suas metas, seus sonhos e sua tranquilidade. O Gastometria foi criado para ser essa chave.
+                </Typography>
+              </Box>
 
-
-          {/* Features Section */}
-          <section className="py-12 sm:py-16 md:py-20 lg:py-32">
-              <div className="container mx-auto px-3 sm:px-4">
-                  <motion.div {...fadeIn}>
-                      <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-center leading-tight">
-                          Ferramentas poderosas para sua vida financeira
-                      </h2>
-                      <p className="mt-3 sm:mt-4 text-base sm:text-lg text-muted-foreground text-center max-w-2xl mx-auto leading-relaxed">
-                        Cada recurso do Gastometria foi projetado para te dar clareza e controle. Deixe de adivinhar e comece a tomar decisões financeiras com confiança.
-                      </p>
-                  </motion.div>
-
-                  <div className="mt-8 sm:mt-12 md:mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-                      {[
-                          { 
-                            icon: LayoutDashboard, 
-                            title: "Dashboard Centralizado", 
-                            description: "Tenha uma visão completa de suas finanças em um só lugar. Acompanhe seu patrimônio líquido, receitas, despesas e transações recentes sem esforço."
-                          },
-                          { 
-                            icon: FolderKanban, 
-                            title: "Gestão de Parcelamentos", 
-                            description: "Controle total de compras parceladas com gamificação. Acompanhe parcelas pagas, pendentes, ganhe pontos e badges por manter os pagamentos em dia!"
-                          },
-                          { 
-                            icon: Wallet, 
-                            title: "Orçamentos Inteligentes", 
-                            description: "Defina limites de gastos para categorias e evite surpresas. Nossa IA pode até sugerir orçamentos com base nos seus hábitos para te ajudar a economizar." 
-                          },
-                          { 
-                            icon: Goal, 
-                            title: "Metas de Economia", 
-                            description: "Transforme sonhos em planos. Crie metas, acompanhe seu progresso e veja a IA projetar quando você alcançará seus objetivos. Comemoramos com você a cada meta atingida!" 
-                          },
-                          { 
-                            icon: Bot, 
-                            title: "Assistente com IA", 
-                            description: "Converse com nosso assistente para obter insights valiosos. Pergunte sobre seus gastos, peça análises e receba dicas personalizadas para otimizar suas finanças." 
-                          },
-                          { 
-                            icon: Upload, 
-                            title: "Importação e OCR", 
-                            description: "Economize tempo importando extratos do seu banco (CSV/OFX). Tire uma foto de uma nota fiscal e deixe nossa IA extrair e categorizar os itens para você." 
-                          },
-                          { 
-                            icon: BarChart, 
-                            title: "Relatórios Detalhados", 
-                            description: "Gere relatórios mensais e anuais com análises automáticas da IA. Entenda seus padrões de consumo e meça sua evolução financeira ao longo do tempo."
+              <Grid container spacing={4}>
+                {features.map((feature, index) => (
+                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
+                    <Box
+                      component={motion.div}
+                      {...fadeIn}
+                      transition={{ ...fadeIn.transition, delay: index * 0.1 }}
+                    >
+                      <Card 
+                        sx={{ 
+                          height: '100%', 
+                          display: 'flex', 
+                          flexDirection: 'column',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            transform: 'translateY(-8px)',
+                            boxShadow: 12,
+                            outline: '2px solid',
+                            outlineColor: 'primary.main',
+                            outlineOffset: '-2px'
                           }
-                      ].map((feature, index) => (
-                          <motion.div 
-                            key={feature.title}
-                            variants={featureVariants}
-                            initial="initial"
-                            whileInView="animate"
-                            viewport={{ once: true, amount: 0.5 }}
-                            transition={{ ...featureVariants.transition, delay: index * 0.1 }}
-                            className="flex flex-col items-start text-left p-4 sm:p-6 rounded-lg bg-card/50 border border-border/20 transition-all duration-300 hover:border-primary/50 hover:shadow-lg hover:-translate-y-1"
-                          >
-                              <div className="flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-primary/10 text-primary">
-                                  <feature.icon className="h-5 w-5 sm:h-6 sm:w-6"/>
-                              </div>
-                              <h3 className="mt-3 sm:mt-4 text-lg sm:text-xl font-semibold leading-tight">{feature.title}</h3>
-                              <p className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed">{feature.description}</p>
-                          </motion.div>
-                      ))}
-                  </div>
-              </div>
-          </section>
+                        }}
+                      >
+                        <CardContent sx={{ flexGrow: 1 }}>
+                          <Box sx={{ mb: 2, color: feature.color }}>
+                            <feature.icon size={40} />
+                          </Box>
+                          <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                            {feature.title}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                            {feature.description}
+                          </Typography>
+                        </CardContent>
+                      </Card>
+                    </Box>
+                  </Grid>
+                ))}
+              </Grid>
+            </Container>
+          </Box>
 
           {/* Pricing Section */}
-          <section id="pricing" className="py-12 sm:py-16 md:py-20 lg:py-32 bg-card/20 border-y border-border/20">
-              <div className="container mx-auto px-3 sm:px-4">
-                  <motion.div {...fadeIn}>
-                      <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-center leading-tight">
-                          Um plano para cada jornada financeira
-                      </h2>
-                      <p className="mt-3 sm:mt-4 text-base sm:text-lg text-muted-foreground text-center max-w-xl mx-auto leading-relaxed">
-                        Comece gratuitamente com todas as ferramentas essenciais e evolua seu controle com o poder da IA.
-                      </p>
-                  </motion.div>
+          <Container maxWidth="xl" sx={{ py: { xs: 8, sm: 12, md: 16 } }}>
+            <Box
+              component={motion.div}
+              {...fadeIn}
+              sx={{ textAlign: 'center', mb: { xs: 6, sm: 8 } }}
+            >
+              <Typography variant="h2" sx={{ fontSize: { xs: '1.875rem', sm: '2.25rem', md: '3rem' }, fontWeight: 700, mb: 2 }}>
+                Planos e Preços
+              </Typography>
+              <Typography variant="body1" sx={{ color: 'text.secondary', maxWidth: '48rem', mx: 'auto', fontSize: { xs: '1rem', sm: '1.125rem' } }}>
+                Escolha o plano ideal para suas necessidades. Comece grátis e faça upgrade quando quiser.
+              </Typography>
+            </Box>
 
-                  <div className="mt-8 sm:mt-12 md:mt-16 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8 items-start">
-                      {[
-                          {
-                              name: "Básico",
-                              price: "Grátis",
-                              priceDetail: " para sempre",
-                              description: "Controle financeiro manual completo.",
-                              features: [
-                                  "Dashboard interativo",
-                                  "Transações e contas ilimitadas",
-                                  "Orçamentos manuais",
-                                  "Metas de economia",
-                                  "Uso limitado da Gastometria AI",
-                              ],
-                              cta: "Começar Agora",
-                              variant: "outline"
-                          },
-                          {
-                              name: "Pro",
-                              price: "R$ 19,90",
-                              priceDetail: "/mês",
-                              description: "Eficiência e insights para otimizar seu tempo.",
-                              features: [
-                                  "Tudo do plano Básico",
-                                  "**100 Créditos de IA** /mês",
-                                  "Assistente de Chat com IA",
-                                  "Relatórios inteligentes",
-                                  "Escanear notas fiscais (OCR)",
-                                  "Importação de extratos",
-                              ],
-                              cta: "Fazer Upgrade",
-                              variant: "default",
-                              highlight: true
-                          },
-                          {
-                              name: "Plus",
-                              price: "R$ 39,90",
-                              priceDetail: "/mês",
-                              description: "Automação e flexibilidade com IA local.",
-                              features: [
-                                  "Tudo do plano Pro",
-                                  "**300 Créditos de IA** /mês",
-                                  "**Uso de IA Local (Ollama) ilimitado**",
-                                  "Orçamentos automáticos",
-                                  "Previsão de saldos futuros",
-                                  "Projeção de metas com IA",
-                              ],
-                              cta: "Assinar o Plus",
-                              variant: "outline"
-                          },
-                           {
-                              name: "Infinity",
-                              price: "R$ 59,90",
-                              priceDetail: "/mês",
-                              description: "Controle total e ilimitado para entusiastas de IA.",
-                              features: [
-                                  "Tudo do plano Plus",
-                                  "**500 Créditos de IA** /mês",
-                                  "**Uso de qualquer provedor de IA**",
-                                  "Credenciais de IA ilimitadas",
-                                  "Acesso a recursos beta",
-                                  "Suporte prioritário",
-                              ],
-                              cta: "Seja Infinity",
-                              variant: "outline"
-                          }
-                      ].map((plan, index) => (
-                          <motion.div
-                              key={plan.name}
-                              variants={featureVariants}
-                              initial="initial"
-                              whileInView="animate"
-                              viewport={{ once: true, amount: 0.3 }}
-                              transition={{ ...featureVariants.transition, delay: index * 0.1 }}
-                              className={`flex flex-col rounded-lg border p-4 sm:p-6 h-full transition-all duration-300 hover:shadow-xl hover:-translate-y-2 ${plan.highlight ? 'border-primary shadow-primary/20 shadow-lg' : 'border-border bg-card/30'}`}
-                          >
-                              {plan.highlight && <Badge className="w-fit mb-3 sm:mb-4 -mt-1 sm:-mt-2 text-xs">Mais Popular</Badge>}
-                              <h3 className="text-xl sm:text-2xl font-bold">{plan.name}</h3>
-                              <p className="mt-2 text-sm sm:text-base text-muted-foreground leading-relaxed">{plan.description}</p>
-                              <div className="mt-4 sm:mt-6">
-                                  <span className="text-2xl sm:text-3xl lg:text-4xl font-extrabold">{plan.price}</span>
-                                  {plan.priceDetail && <span className="text-sm sm:text-base text-muted-foreground">{plan.priceDetail}</span>}
-                              </div>
-                              <ul className="mt-6 sm:mt-8 space-y-3 sm:space-y-4 flex-1">
-                                  {plan.features.map(feature => (
-                                      <li key={feature} className="flex items-start gap-2 sm:gap-3">
-                                          <Check className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 mt-0.5 shrink-0" />
-                                          <span dangerouslySetInnerHTML={{ __html: feature.replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-foreground/90">$1</strong>') }} className="text-sm sm:text-base text-muted-foreground leading-relaxed"></span>
-                                      </li>
-                                  ))}
-                              </ul>
-                              <Button asChild size="lg" className="w-full mt-6 sm:mt-8 text-sm sm:text-base" variant={plan.variant as any}>
-                                  <Link href="/login">{plan.cta}</Link>
-                              </Button>
-                          </motion.div>
-                      ))}
-                  </div>
-              </div>
-          </section>
+            <Grid container spacing={3}>
+              {plans.map((plan, index) => (
+                <Grid size={{ xs: 12, sm: 6, lg: 3 }} key={index}>
+                  <Box
+                    component={motion.div}
+                    {...fadeIn}
+                    transition={{ ...fadeIn.transition, delay: index * 0.1 }}
+                    sx={{ height: '100%' }}
+                  >
+                    <Card 
+                      sx={{ 
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        position: 'relative',
+                        border: 2,
+                        borderColor: plan.popular ? 'primary.main' : 'divider',
+                        transition: 'all 0.3s ease',
+                        '&:hover': {
+                          borderColor: 'primary.main',
+                          transform: 'scale(1.02)',
+                          boxShadow: 12
+                        }
+                      }}
+                    >
+                      {plan.popular && (
+                        <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+                          <Chip 
+                            label="Mais Popular" 
+                            color="primary" 
+                            size="small"
+                            icon={<Sparkles size={16} />}
+                          />
+                        </Box>
+                      )}
+                      
+                      <CardHeader
+                        title={plan.name}
+                        subheader={plan.description}
+                        titleTypographyProps={{ variant: 'h5', fontWeight: 700 }}
+                        subheaderTypographyProps={{ variant: 'body2' }}
+                      />
+                      
+                      <CardContent sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column' }}>
+                        <Box sx={{ mb: 2 }}>
+                          <Typography variant="h3" component="span" sx={{ fontWeight: 700 }}>
+                            {plan.price}
+                          </Typography>
+                          <Typography variant="body2" component="span" sx={{ color: 'text.secondary' }}>
+                            {plan.period}
+                          </Typography>
+                        </Box>
 
-           {/* Feature Comparison Section */}
-          <section className="py-12 sm:py-16 md:py-20 lg:py-32">
-            <div className="container mx-auto px-3 sm:px-4">
-              <motion.div {...fadeIn}>
-                <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-center leading-tight">
-                  Compare os Planos em Detalhes
-                </h2>
-                <p className="mt-3 sm:mt-4 text-base sm:text-lg text-muted-foreground text-center max-w-2xl mx-auto leading-relaxed">
-                  Encontre o conjunto de ferramentas perfeito para sua necessidade, desde o controle essencial até a automação completa com IA.
-                </p>
-              </motion.div>
+                        <Chip 
+                          label={plan.credits} 
+                          size="small" 
+                          sx={{ mb: 3, width: 'fit-content' }}
+                          color={plan.name === 'Básico' ? 'default' : 'secondary'}
+                        />
 
-              {/* Desktop Table */}
-              <motion.div
-                variants={featureVariants}
-                initial="initial"
-                whileInView="animate"
-                viewport={{ once: true, amount: 0.2 }}
-                className="mt-8 sm:mt-12 md:mt-16 hidden lg:block overflow-x-auto"
+                        <Stack spacing={1.5} sx={{ mb: 3, flexGrow: 1 }}>
+                          {plan.features.map((feature, idx) => (
+                            <Stack direction="row" spacing={1} key={idx}>
+                              <Check size={20} style={{ flexShrink: 0, marginTop: 2, color: '#4caf50' }} />
+                              <Typography variant="body2">{feature}</Typography>
+                            </Stack>
+                          ))}
+                        </Stack>
+
+                        <Button
+                          variant={plan.variant as any}
+                          size="large"
+                          component={Link}
+                          href={user ? "/dashboard" : "/login"}
+                          fullWidth
+                          sx={{
+                            transition: 'all 0.3s ease',
+                            '&:hover': {
+                              transform: 'translateY(-2px)',
+                              boxShadow: 4
+                            }
+                          }}
+                        >
+                          {plan.cta}
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  </Box>
+                </Grid>
+              ))}
+            </Grid>
+          </Container>
+
+          {/* Feature Comparison Table */}
+          <Box sx={{ py: { xs: 8, sm: 12, md: 16 }, bgcolor: 'background.paper' }}>
+            <Container maxWidth="xl">
+              <Box
+                component={motion.div}
+                {...fadeIn}
+                sx={{ textAlign: 'center', mb: { xs: 6, sm: 8 } }}
               >
-                <Table className="[&_td]:text-center [&_th]:text-center">
-                  <TableHeader>
-                    <TableRow className="[&_th]:text-sm lg:[&_th]:text-base">
-                      <TableHead className="text-left w-1/3">Funcionalidade</TableHead>
-                      <TableHead>Básico</TableHead>
-                      <TableHead className="text-primary">Pro</TableHead>
-                      <TableHead>Plus</TableHead>
-                      <TableHead>Infinity</TableHead>
+                <Typography variant="h2" sx={{ fontSize: { xs: '1.875rem', sm: '2.25rem', md: '3rem' }, fontWeight: 700, mb: 2 }}>
+                  Comparação Completa de Recursos
+                </Typography>
+                <Typography variant="body1" sx={{ color: 'text.secondary', maxWidth: '48rem', mx: 'auto' }}>
+                  Veja todos os recursos disponíveis em cada plano
+                </Typography>
+              </Box>
+
+              <TableContainer 
+                component={Paper} 
+                sx={{ 
+                  overflow: 'auto',
+                  '&::-webkit-scrollbar': {
+                    height: 8
+                  },
+                  '&::-webkit-scrollbar-track': {
+                    bgcolor: 'background.default'
+                  },
+                  '&::-webkit-scrollbar-thumb': {
+                    bgcolor: 'primary.main',
+                    borderRadius: 1
+                  }
+                }}
+              >
+                <Table sx={{ minWidth: 650 }}>
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: 'primary.main' }}>
+                      <TableCell sx={{ color: 'primary.contrastText', fontWeight: 700 }}>Recurso</TableCell>
+                      <TableCell align="center" sx={{ color: 'primary.contrastText', fontWeight: 700 }}>Básico</TableCell>
+                      <TableCell align="center" sx={{ color: 'primary.contrastText', fontWeight: 700 }}>Pro</TableCell>
+                      <TableCell align="center" sx={{ color: 'primary.contrastText', fontWeight: 700 }}>Plus</TableCell>
+                      <TableCell align="center" sx={{ color: 'primary.contrastText', fontWeight: 700 }}>Infinity</TableCell>
                     </TableRow>
-                  </TableHeader>
+                  </TableHead>
                   <TableBody>
-                    {Object.entries(featureComparison).map(([category, features]) => (
-                      <React.Fragment key={category}>
-                        <TableRow className="bg-muted/30">
-                          <TableCell colSpan={5} className="text-left font-bold text-sm lg:text-base py-3">
-                            {category}
+                    {comparisonFeatures.map((category, catIndex) => (
+                      <React.Fragment key={catIndex}>
+                        <TableRow sx={{ bgcolor: 'action.hover' }}>
+                          <TableCell colSpan={5} sx={{ fontWeight: 700, fontSize: '1rem', py: 2 }}>
+                            {category.category}
                           </TableCell>
                         </TableRow>
-                        {features.map((item) => (
-                          <TableRow key={item.feature}>
-                            <TableCell className="text-left text-muted-foreground text-sm lg:text-base">{item.feature}</TableCell>
-                            {['Básico', 'Pro', 'Plus', 'Infinity'].map((plan) => {
-                              const value = item[plan as keyof typeof item];
-                              return (
-                                <TableCell key={plan}>
-                                  {typeof value === 'boolean' ? (
-                                    value ? <CheckCircle className="h-4 w-4 lg:h-5 lg:w-5 text-green-500 mx-auto" /> : <XCircle className="h-4 w-4 lg:h-5 lg:w-5 text-muted-foreground/50 mx-auto" />
-                                  ) : (
-                                    <span className="font-semibold text-sm lg:text-base">{value}</span>
-                                  )}
-                                </TableCell>
-                              );
-                            })}
+                        {category.features.map((feature, featIndex) => (
+                          <TableRow 
+                            key={featIndex}
+                            sx={{ 
+                              '&:nth-of-type(even)': { bgcolor: 'action.hover' },
+                              '&:hover': { bgcolor: 'action.selected' },
+                              transition: 'background-color 0.2s ease'
+                            }}
+                          >
+                            <TableCell>{feature.name}</TableCell>
+                            <TableCell align="center">{renderCellValue(feature.basico)}</TableCell>
+                            <TableCell align="center">{renderCellValue(feature.pro)}</TableCell>
+                            <TableCell align="center">{renderCellValue(feature.plus)}</TableCell>
+                            <TableCell align="center">{renderCellValue(feature.infinity)}</TableCell>
                           </TableRow>
                         ))}
                       </React.Fragment>
                     ))}
                   </TableBody>
                 </Table>
-              </motion.div>
+              </TableContainer>
+            </Container>
+          </Box>
 
-              {/* Mobile Cards */}
-              <div className="mt-8 sm:mt-12 grid grid-cols-1 gap-4 sm:gap-6 lg:hidden">
-                {['Básico', 'Pro', 'Plus', 'Infinity'].map((plan, index) => (
-                    <motion.div 
-                      key={plan}
-                      variants={featureVariants}
-                      initial="initial"
-                      whileInView="animate"
-                      viewport={{ once: true, amount: 0.3 }}
-                      transition={{ ...featureVariants.transition, delay: index * 0.1 }}
-                    >
-                      <Card className={cn(plan === 'Pro' && 'border-primary')}>
-                        <CardHeader className="pb-3 sm:pb-4">
-                            <CardTitle className={cn("text-lg sm:text-xl", plan === 'Pro' && 'text-primary')}>{plan}</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3 sm:space-y-4">
-                            {Object.entries(featureComparison).map(([category, features]) => (
-                               <div key={category}>
-                                   <h4 className="font-semibold text-sm sm:text-base mb-2">{category}</h4>
-                                   <ul className="space-y-2">
-                                       {features.map(item => {
-                                           const value = item[plan as keyof typeof item];
-                                           if (value === false) return null;
-                                           return (
-                                               <li key={item.feature} className="flex items-start gap-2 sm:gap-3">
-                                                    <Check className="h-4 w-4 sm:h-5 sm:w-5 text-green-500 mt-0.5 shrink-0" />
-                                                    <span className="text-sm sm:text-base text-muted-foreground leading-relaxed">
-                                                        {item.feature}
-                                                        {typeof value !== 'boolean' && <strong className="ml-1 text-foreground/90">({value})</strong>}
-                                                    </span>
-                                               </li>
-                                           )
-                                       })}
-                                   </ul>
-                               </div>
-                            ))}
-                        </CardContent>
-                      </Card>
-                    </motion.div>
-                ))}
-              </div>
-            </div>
-          </section>
+          {/* FAQ Section */}
+          <Container maxWidth="xl" sx={{ py: { xs: 8, sm: 12, md: 16 } }}>
+            <Box
+              component={motion.div}
+              {...fadeIn}
+              sx={{ textAlign: 'center', mb: { xs: 6, sm: 8 } }}
+            >
+              <Typography variant="h2" sx={{ fontSize: { xs: '1.875rem', sm: '2.25rem', md: '3rem' }, fontWeight: 700, mb: 2 }}>
+                Perguntas Frequentes
+              </Typography>
+            </Box>
 
-          {/* FAQ Preview Section */}
-          <section className="py-12 sm:py-16 md:py-20 lg:py-32 bg-card/20 border-y border-border/20">
-            <div className="container mx-auto px-3 sm:px-4">
-              <motion.div {...fadeIn}>
-                <div className="text-center mb-8 sm:mb-12">
-                  <div className="inline-block rounded-full bg-primary/10 p-2 sm:p-3 text-primary mb-3 sm:mb-4">
-                    <HelpCircle className="h-6 w-6 sm:h-8 sm:w-8"/>
-                  </div>
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight leading-tight">
-                    Dúvidas Frequentes
-                  </h2>
-                  <p className="mt-3 sm:mt-4 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                    Respostas para as perguntas mais comuns sobre o Gastometria
-                  </p>
-                </div>
-              </motion.div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto">
-                {[
-                  {
-                    question: "O Gastometria é gratuito?",
-                    answer: "Sim! Oferecemos um plano Básico gratuito com funcionalidades essenciais. Para recursos avançados com IA, temos planos a partir de R$ 19,90/mês."
-                  },
-                  {
-                    question: "Como funciona a inteligência artificial?",
-                    answer: "Nossa IA analisa seus padrões de gastos para gerar relatórios automáticos, sugerir orçamentos personalizados e fornecer insights através do assistente de chat."
-                  },
-                  {
-                    question: "Meus dados estão seguros?",
-                    answer: "Absolutamente! Utilizamos criptografia de ponta e seguimos as melhores práticas de segurança. Não compartilhamos suas informações com terceiros."
-                  },
-                  {
-                    question: "Posso importar dados do meu banco?",
-                    answer: "Sim! Suportamos importação de extratos bancários nos formatos CSV e OFX, além de OCR para digitalizar notas fiscais nos planos pagos."
-                  }
-                ].map((faq, index) => (
-                  <motion.div
-                    key={index}
-                    variants={featureVariants}
-                    initial="initial"
-                    whileInView="animate"
-                    viewport={{ once: true, amount: 0.3 }}
-                    transition={{ ...featureVariants.transition, delay: index * 0.1 }}
-                    className="p-4 sm:p-6 rounded-lg bg-card/50 border border-border/20 transition-all duration-300 hover:border-primary/50"
+            <Stack spacing={3} sx={{ maxWidth: '48rem', mx: 'auto' }}>
+              {faqs.map((faq, index) => (
+                <Box
+                  component={motion.div}
+                  {...fadeIn}
+                  transition={{ ...fadeIn.transition, delay: index * 0.1 }}
+                  key={index}
+                >
+                  <Card
+                    sx={{
+                      transition: 'all 0.3s ease',
+                      '&:hover': {
+                        bgcolor: 'action.hover',
+                        boxShadow: 4
+                      }
+                    }}
                   >
-                    <h3 className="font-semibold text-sm sm:text-base mb-2 sm:mb-3 leading-tight">{faq.question}</h3>
-                    <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{faq.answer}</p>
-                  </motion.div>
-                ))}
-              </div>
+                    <CardContent>
+                      <Stack direction="row" spacing={2} alignItems="flex-start">
+                        <HelpCircle size={24} style={{ flexShrink: 0, marginTop: 2, color: '#2196f3' }} />
+                        <Box>
+                          <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                            {faq.question}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                            {faq.answer}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                </Box>
+              ))}
+            </Stack>
 
-              <motion.div 
-                {...fadeIn}
-                transition={{ ...fadeIn.transition, delay: 0.6 }}
-                className="text-center mt-8 sm:mt-12"
+            <Box
+              component={motion.div}
+              {...fadeIn}
+              transition={{ ...fadeIn.transition, delay: 0.6 }}
+              sx={{ textAlign: 'center', mt: 6 }}
+            >
+              <Button
+                variant="outlined"
+                size="large"
+                component={Link}
+                href="/faq"
+                endIcon={<ChevronRight />}
+                sx={{
+                  transition: 'all 0.3s ease',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: 4
+                  }
+                }}
               >
-                <Button asChild variant="outline" size="lg">
-                  <Link href="/faq" className="text-sm sm:text-base">
-                    Ver Todas as Perguntas
-                    <ChevronRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
-                  </Link>
-                </Button>
-              </motion.div>
-            </div>
-          </section>
+                Ver Todas as Perguntas
+              </Button>
+            </Box>
+          </Container>
 
           {/* Blog Preview Section */}
-          <section className="py-12 sm:py-16 md:py-20 lg:py-32">
-            <div className="container mx-auto px-3 sm:px-4">
-              <motion.div {...fadeIn}>
-                <div className="text-center mb-8 sm:mb-12">
-                  <div className="inline-block rounded-full bg-primary/10 p-2 sm:p-3 text-primary mb-3 sm:mb-4">
-                    <BookOpen className="h-6 w-6 sm:h-8 sm:w-8"/>
-                  </div>
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight leading-tight">
-                    Educação Financeira
-                  </h2>
-                  <p className="mt-3 sm:mt-4 text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-                    Artigos e dicas para melhorar sua relação com o dinheiro
-                  </p>
-                </div>
-              </motion.div>
+          <Box sx={{ py: { xs: 8, sm: 12, md: 16 }, bgcolor: 'background.paper' }}>
+            <Container maxWidth="xl">
+              <Box
+                component={motion.div}
+                {...fadeIn}
+                sx={{ textAlign: 'center', mb: { xs: 6, sm: 8 } }}
+              >
+                <Typography variant="h2" sx={{ fontSize: { xs: '1.875rem', sm: '2.25rem', md: '3rem' }, fontWeight: 700, mb: 2 }}>
+                  Aprenda Mais
+                </Typography>
+                <Typography variant="body1" sx={{ color: 'text.secondary', maxWidth: '48rem', mx: 'auto', fontSize: { xs: '1rem', sm: '1.125rem' } }}>
+                  Dicas, guias e insights para melhorar sua saúde financeira.
+                </Typography>
+              </Box>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 max-w-6xl mx-auto">
-                {[
-                  {
-                    title: "10 Dicas Essenciais para Controlar seus Gastos em 2025",
-                    description: "Estratégias práticas para manter suas finanças organizadas e alcançar seus objetivos.",
-                    category: "Educação Financeira",
-                    readTime: 8,
-                    slug: "controlar-gastos-2025"
-                  },
-                  {
-                    title: "Como a IA Pode Revolucionar suas Finanças",
-                    description: "Entenda como a inteligência artificial pode ajudar no controle financeiro e análise de gastos.",
-                    category: "Tecnologia",
-                    readTime: 12,
-                    slug: "ia-revoluciona-financas"
-                  },
-                  {
-                    title: "Orçamento 50/30/20: O Método que Funciona",
-                    description: "Aprenda a aplicar a regra 50/30/20 na prática e organize suas finanças de forma simples.",
-                    category: "Planejamento",
-                    readTime: 6,
-                    slug: "orcamento-50-30-20"
-                  }
-                ].map((post, index) => (
-                  <motion.div
-                    key={index}
-                    variants={featureVariants}
-                    initial="initial"
-                    whileInView="animate"
-                    viewport={{ once: true, amount: 0.3 }}
-                    transition={{ ...featureVariants.transition, delay: index * 0.1 }}
-                    className="group"
-                  >
-                    <Card className="h-full hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                      <CardHeader className="pb-3 sm:pb-4">
-                        <div className="flex items-center justify-between mb-2">
-                          <Badge variant="outline" className="text-xs">
-                            {post.category}
-                          </Badge>
-                          <span className="text-xs text-muted-foreground">
-                            {post.readTime} min
-                          </span>
-                        </div>
-                        <CardTitle className="text-base sm:text-lg leading-tight group-hover:text-primary transition-colors">
-                          {post.title}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-4">
-                          {post.description}
-                        </p>
-                        <Button asChild variant="ghost" size="sm" className="p-0 h-auto text-xs sm:text-sm">
-                          <Link href={`/blog/${post.slug}`} className="flex items-center">
+              <Grid container spacing={4}>
+                {blogPosts.map((post, index) => (
+                  <Grid size={{ xs: 12, md: 4 }} key={index}>
+                    <Box
+                      component={motion.div}
+                      {...fadeIn}
+                      transition={{ ...fadeIn.transition, delay: index * 0.1 }}
+                    >
+                      <Card 
+                        sx={{ 
+                          height: '100%', 
+                          display: 'flex', 
+                          flexDirection: 'column',
+                          transition: 'all 0.3s ease',
+                          '&:hover': {
+                            transform: 'translateY(-8px)',
+                            boxShadow: 8
+                          }
+                        }}
+                      >
+                        <CardContent sx={{ flexGrow: 1 }}>
+                          <Chip 
+                            label={post.category} 
+                            size="small" 
+                            sx={{ 
+                              mb: 2,
+                              bgcolor: post.color,
+                              color: 'white'
+                            }} 
+                          />
+                          <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                            {post.title}
+                          </Typography>
+                          <Typography variant="body2" sx={{ color: 'text.secondary', mb: 2 }}>
+                            {post.description}
+                          </Typography>
+                          <Button
+                            variant="text"
+                            size="small"
+                            component={Link}
+                            href={`/blog/${post.slug}`}
+                            endIcon={<ArrowRight size={16} />}
+                            sx={{ 
+                              p: 0,
+                              transition: 'all 0.3s ease',
+                              '&:hover': {
+                                transform: 'translateX(4px)'
+                              }
+                            }}
+                          >
                             Ler artigo
-                            <ArrowRight className="ml-1 h-3 w-3 sm:h-4 sm:w-4" />
-                          </Link>
-                        </Button>
-                      </CardContent>
-                    </Card>
-                  </motion.div>
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    </Box>
+                  </Grid>
                 ))}
-              </div>
+              </Grid>
 
-              <motion.div 
+              <Box
+                component={motion.div}
                 {...fadeIn}
                 transition={{ ...fadeIn.transition, delay: 0.6 }}
-                className="text-center mt-8 sm:mt-12"
+                sx={{ textAlign: 'center', mt: 6 }}
               >
-                <Button asChild variant="outline" size="lg">
-                  <Link href="/blog" className="text-sm sm:text-base">
-                    Ver Todos os Artigos
-                    <ChevronRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
-                  </Link>
+                <Button
+                  variant="outlined"
+                  size="large"
+                  component={Link}
+                  href="/blog"
+                  endIcon={<ChevronRight />}
+                  sx={{
+                    transition: 'all 0.3s ease',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: 4
+                    }
+                  }}
+                >
+                  Ver Todos os Artigos
                 </Button>
-              </motion.div>
-            </div>
-          </section>
+              </Box>
+            </Container>
+          </Box>
+        </Box>
 
-        </main>
-
-        <footer className="p-3 sm:p-4 md:p-6 border-t border-border/20">
-            <div className="container mx-auto text-center text-xs sm:text-sm text-muted-foreground">
-                  © {new Date().getFullYear()} Gastometria. Todos os direitos reservados.
-            </div>
-        </footer>
-      </div>
+        {/* Footer */}
+        <Box 
+          component="footer" 
+          sx={{ 
+            py: 3,
+            borderTop: 1,
+            borderColor: 'divider',
+            bgcolor: 'background.paper'
+          }}
+        >
+          <Container maxWidth="xl">
+            <Typography variant="body2" align="center" sx={{ color: 'text.secondary' }}>
+              © {new Date().getFullYear()} Gastometria. Todos os direitos reservados.
+            </Typography>
+          </Container>
+        </Box>
+      </Box>
     </AuthGuard>
   );
 }

@@ -5,10 +5,10 @@
  *
  * - generateMonthlyReport - A function that analyzes transactions for a given month and produces a structured report.
  */
-import { GenerateReportInputSchema, GenerateReportOutputSchema } from '../ai-types';
+import {GenerateReportInputSchema, GenerateReportOutputSchema} from '../ai-types';
 import type { GenerateReportInput } from '../ai-types';
-import { createConfiguredAI, getModelReference } from '../genkit';
-import { AICredential } from '@/lib/types';
+import {createConfiguredAI, getModelReference} from '../genkit';
+import {AICredential} from '@/lib/types';
 
 
 const promptTemplate = `Você é um analista financeiro especializado em criar relatórios mensais claros e objetivos para usuários de um aplicativo de finanças pessoais.

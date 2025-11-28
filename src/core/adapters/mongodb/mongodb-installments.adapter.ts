@@ -1,16 +1,8 @@
 // src/core/adapters/mongodb/mongodb-installments.adapter.ts
 
 import { Db, ObjectId } from 'mongodb';
-import {
-  IInstallmentsRepository,
-  Installment,
-  InstallmentPayment,
-  CreateInstallmentInput,
-  UpdateInstallmentInput,
-  PayInstallmentInput,
-  InstallmentSummary
-} from '@/core/ports/installments.port';
-import { addMonths, isAfter, isBefore, parseISO, format } from 'date-fns';
+import { IInstallmentsRepository, Installment, InstallmentPayment, CreateInstallmentInput, UpdateInstallmentInput, PayInstallmentInput, AdjustRecurringInstallmentInput, InstallmentSummary, GamificationData } from '@/core/ports/installments.port';
+import { addMonths, addYears, isAfter, isBefore, parseISO, format } from 'date-fns';
 
 export class MongoInstallmentsRepository implements IInstallmentsRepository {
   constructor(private db: Db) { }
@@ -37,7 +29,7 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
     const remainingInstallments = installment.totalInstallments - paidInstallments;
     const totalPaid = paidPayments.reduce((sum: number, p: InstallmentPayment) => sum + (p.paidAmount || 0), 0);
     const remainingAmount = installment.totalAmount - totalPaid;
-    const isCompleted = remainingInstallments === 0;
+    const isCompleted = remainingInstallments <= 0;
 
     // Encontrar próxima data de vencimento
     let nextDueDate: string | undefined;
@@ -76,10 +68,30 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
   private generateInstallmentPayments(installment: CreateInstallmentInput & { _id: ObjectId }): InstallmentPayment[] {
     const payments: InstallmentPayment[] = [];
     const startDate = parseISO(installment.startDate);
-    const installmentAmount = installment.totalAmount / installment.totalInstallments;
 
-    for (let i = 0; i < installment.totalInstallments; i++) {
-      const dueDate = addMonths(startDate, i);
+    // Para parcelamentos recorrentes, usar o valor total como valor de cada parcela
+    // Para normais, dividir pelo número de parcelas
+    const installmentAmount = installment.isRecurring
+      ? installment.totalAmount
+      : installment.totalAmount / installment.totalInstallments;
+
+    // Se é recorrente, gerar apenas alguns pagamentos futuros (próximos 24 meses para mensal, 5 anos para anual)
+    const totalToGenerate = installment.isRecurring
+      ? (installment.recurringType === 'yearly' ? 5 : 24)
+      : installment.totalInstallments;
+
+    const intervalUnit = installment.isRecurring && installment.recurringType === 'yearly' ? 'year' : 'month';
+
+    for (let i = 0; i < totalToGenerate; i++) {
+      const dueDate = intervalUnit === 'year'
+        ? addYears(startDate, i)
+        : addMonths(startDate, i);
+
+      // Se há data de fim definida para recorrente, não gerar após essa data
+      if (installment.isRecurring && installment.endDate) {
+        const endDate = parseISO(installment.endDate);
+        if (dueDate > endDate) break;
+      }
 
       payments.push({
         id: new ObjectId().toString(),
@@ -97,7 +109,12 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
   async create(userId: string, data: CreateInstallmentInput): Promise<Installment> {
     const collection = this.db.collection('installments');
 
-    const installmentAmount = data.totalAmount / data.totalInstallments;
+    // Para parcelamentos recorrentes, o installmentAmount é o valor total
+    // Para normais, é o valor total dividido pelo número de parcelas
+    const installmentAmount = data.isRecurring
+      ? data.totalAmount
+      : data.totalAmount / data.totalInstallments;
+
     const now = new Date().toISOString();
 
     const installmentDoc: any = {
@@ -107,7 +124,9 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
       installmentAmount,
       isActive: true,
       createdAt: now,
-      updatedAt: now
+      updatedAt: now,
+      // Inicializar histórico de ajustes para recorrentes
+      adjustmentHistory: data.isRecurring ? [] : undefined
     };
 
     // Gerar pagamentos automaticamente
@@ -158,113 +177,164 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
   }
 
   async payInstallment(data: PayInstallmentInput): Promise<InstallmentPayment | null> {
-    // Obter o client MongoDB a partir da conexão atual
-    const client = (this.db as any).client;
-    if (!client) {
-      throw new Error('MongoDB client não disponível');
-    }
-
-    const session = client.startSession();
-
     try {
-      return await session.withTransaction(async () => {
-        const installmentsCollection = this.db.collection('installments');
-        const transactionsCollection = this.db.collection('transactions');
-        const walletsCollection = this.db.collection('wallets');
+      const installmentsCollection = this.db.collection('installments');
+      const transactionsCollection = this.db.collection('transactions');
+      const walletsCollection = this.db.collection('wallets');
 
-        // 1. Buscar o parcelamento
-        const installment = await installmentsCollection.findOne({
-          _id: new ObjectId(data.installmentId)
-        }, { session });
-
-        if (!installment) {
-          throw new Error('Parcelamento não encontrado');
-        }
-
-        // 2. Buscar o pagamento específico
-        const paymentIndex = installment.payments.findIndex((p: InstallmentPayment) =>
-          p.installmentNumber === data.installmentNumber && p.status === 'pending'
-        );
-
-        if (paymentIndex === -1) {
-          throw new Error('Parcela não encontrada ou já paga');
-        }
-
-        const payment = installment.payments[paymentIndex];
-
-        // 3. Verificar se a carteira existe e tem saldo suficiente
-        const wallet = await walletsCollection.findOne({
-          _id: new ObjectId(installment.sourceWalletId)
-        }, { session });
-
-        if (!wallet) {
-          throw new Error('Carteira não encontrada');
-        }
-
-        if (wallet.balance < data.paidAmount) {
-          throw new Error('Saldo insuficiente na carteira');
-        }
-
-        // 4. Criar a transação
-        let transactionId = data.transactionId;
-        if (!transactionId) {
-          const transactionData = {
-            userId: installment.userId,
-            date: data.paidDate,
-            item: `${installment.name} - Parcela ${data.installmentNumber}/${installment.totalInstallments}`,
-            category: installment.category as any,
-            subcategory: installment.subcategory,
-            amount: data.paidAmount,
-            quantity: 1,
-            establishment: installment.establishment,
-            type: 'expense' as const,
-            walletId: installment.sourceWalletId
-          };
-
-          const transactionResult = await transactionsCollection.insertOne(transactionData, { session });
-          transactionId = transactionResult.insertedId.toString();
-        }
-
-        // 5. Debitar da carteira
-        await walletsCollection.updateOne(
-          { _id: new ObjectId(installment.sourceWalletId) },
-          { $inc: { balance: -data.paidAmount } },
-          { session }
-        );
-
-        // 6. Atualizar o pagamento no parcelamento
-        const updateResult = await installmentsCollection.findOneAndUpdate(
-          {
-            _id: new ObjectId(data.installmentId),
-            'payments.installmentNumber': data.installmentNumber
-          },
-          {
-            $set: {
-              'payments.$.paidAmount': data.paidAmount,
-              'payments.$.paidDate': data.paidDate,
-              'payments.$.status': 'paid',
-              'payments.$.transactionId': transactionId,
-              updatedAt: new Date().toISOString()
-            }
-          },
-          { returnDocument: 'after', session }
-        );
-
-        if (!updateResult) {
-          throw new Error('Falha ao atualizar o pagamento');
-        }
-
-        const updatedPayment = updateResult.payments.find((p: InstallmentPayment) =>
-          p.installmentNumber === data.installmentNumber
-        );
-
-        return updatedPayment ? {
-          ...updatedPayment,
-          id: updatedPayment.id || updatedPayment._id?.toString()
-        } : null;
+      // 1. Buscar o parcelamento
+      const installment = await installmentsCollection.findOne({
+        _id: new ObjectId(data.installmentId)
       });
-    } finally {
-      await session.endSession();
+
+      if (!installment) {
+        throw new Error('Parcelamento não encontrado');
+      }
+
+      console.log('📦 Parcelamento encontrado:', {
+        id: installment._id.toString(),
+        sourceWalletId: installment.sourceWalletId,
+        userId: installment.userId,
+        name: installment.name
+      });
+
+      // 2. Buscar o pagamento específico
+      const paymentIndex = installment.payments.findIndex((p: InstallmentPayment) =>
+        p.installmentNumber === data.installmentNumber && p.status === 'pending'
+      );
+
+      if (paymentIndex === -1) {
+        throw new Error('Parcela não encontrada ou já paga');
+      }
+
+      const payment = installment.payments[paymentIndex];
+
+      // Debug: Listar TODAS as carteiras do usuário, incluindo possíveis duplicatas
+      const allUserWallets = await walletsCollection.find({ userId: installment.userId }).toArray();
+      console.log('💳 TODAS as carteiras do usuário no MongoDB:');
+      allUserWallets.forEach((w, index) => {
+        console.log(`  ${index + 1}. ID: ${w._id.toString()} | Nome: "${w.name}" | Saldo: R$ ${w.balance}`);
+      });
+
+      // Verificar se há carteiras com nome similar
+      const nubankWallets = allUserWallets.filter(w =>
+        w.name.toLowerCase().includes('nubank') ||
+        w.name.toLowerCase().includes('nu bank')
+      );
+      console.log('🏦 Carteiras "Nubank" encontradas:', nubankWallets.length);
+      nubankWallets.forEach((w, index) => {
+        console.log(`  Nubank ${index + 1}: ID: ${w._id.toString()} | Nome exato: "${w.name}"`);
+      });
+
+      // 3. Verificar se a carteira existe e tem saldo suficiente
+      console.log('🔍 Buscando carteira do parcelamento ID:', installment.sourceWalletId);
+      let wallet = await walletsCollection.findOne({
+        _id: new ObjectId(installment.sourceWalletId)
+      });
+
+      // Se a carteira original não existe, buscar uma carteira disponível do usuário
+      if (!wallet) {
+        console.log('🔄 Carteira original não encontrada, buscando carteira disponível para o usuário');
+        wallet = await walletsCollection.findOne({ userId: installment.userId });
+
+        if (wallet) {
+          console.log('✅ Usando carteira disponível:', wallet.name, 'ID:', wallet._id.toString());
+          console.log('🔧 Atualizando parcelamento para corrigir referência órfã...');
+
+          // Atualizar o parcelamento para usar a carteira correta
+          await installmentsCollection.updateOne(
+            { _id: new ObjectId(data.installmentId) },
+            { $set: { sourceWalletId: wallet._id.toString() } }
+          );
+
+          console.log('✅ Parcelamento corrigido com sucesso!');
+
+          // IMPORTANTE: Também atualizar todas as outras transações que possam estar com a carteira órfã
+          const orphanedTransactions = await transactionsCollection.countDocuments({
+            userId: installment.userId,
+            walletId: installment.sourceWalletId
+          });
+
+          if (orphanedTransactions > 0) {
+            console.log(`🔧 Encontradas ${orphanedTransactions} transações órfãs, corrigindo...`);
+            await transactionsCollection.updateMany(
+              {
+                userId: installment.userId,
+                walletId: installment.sourceWalletId
+              },
+              { $set: { walletId: wallet._id.toString() } }
+            );
+            console.log('✅ Transações órfãs corrigidas!');
+          }
+        }
+      } if (!wallet) {
+        throw new Error('Carteira não encontrada');
+      }
+
+      if (wallet.balance < data.paidAmount) {
+        throw new Error('Saldo insuficiente na carteira');
+      }
+
+      // 4. Criar a transação se não foi fornecida
+      let transactionId = data.transactionId;
+      if (!transactionId) {
+        const transactionData = {
+          userId: installment.userId,
+          date: data.paidDate,
+          item: `${installment.name} - Parcela ${data.installmentNumber}/${installment.totalInstallments}`,
+          category: installment.category as any,
+          subcategory: installment.subcategory,
+          amount: data.paidAmount,
+          quantity: 1,
+          establishment: installment.establishment,
+          type: 'expense' as const,
+          walletId: installment.sourceWalletId
+        };
+
+        const transactionResult = await transactionsCollection.insertOne(transactionData);
+        transactionId = transactionResult.insertedId.toString();
+      }
+
+      // 5. Debitar da carteira
+      await walletsCollection.updateOne(
+        { _id: new ObjectId(installment.sourceWalletId) },
+        { $inc: { balance: -data.paidAmount } }
+      );
+
+      // 6. Atualizar o pagamento no parcelamento
+      const updateResult = await installmentsCollection.findOneAndUpdate(
+        {
+          _id: new ObjectId(data.installmentId),
+          'payments.installmentNumber': data.installmentNumber
+        },
+        {
+          $set: {
+            'payments.$.paidAmount': data.paidAmount,
+            'payments.$.paidDate': data.paidDate,
+            'payments.$.status': 'paid',
+            'payments.$.transactionId': transactionId,
+            updatedAt: new Date().toISOString()
+          }
+        },
+        { returnDocument: 'after' }
+      );
+
+      if (!updateResult) {
+        throw new Error('Falha ao atualizar o pagamento');
+      }
+
+      const updatedPayment = updateResult.payments.find((p: InstallmentPayment) =>
+        p.installmentNumber === data.installmentNumber
+      );
+
+      return updatedPayment ? {
+        ...updatedPayment,
+        id: updatedPayment.id || updatedPayment._id?.toString()
+      } : null;
+
+    } catch (error) {
+      console.error('Error in payInstallment:', error);
+      throw error;
     }
   }
 
@@ -326,10 +396,13 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
     );
   }
 
-  async getInstallmentSummary(userId: string): Promise<InstallmentSummary> {
-    const activeInstallments = await this.findActiveInstallments(userId);
+  async getInstallmentSummary(userId: string): Promise<InstallmentSummary | null> {
+    const installments = await this.findByUserId(userId);
+    const activeInstallments = installments.filter(i => i.isActive && !i.isCompleted);
     const upcomingPayments = await this.findUpcomingPayments(userId, 30);
     const overduePayments = await this.findOverduePayments(userId);
+
+    if (installments.length === 0) return null;
 
     const totalMonthlyCommitment = activeInstallments.reduce((sum, installment) =>
       sum + installment.installmentAmount, 0
@@ -363,8 +436,7 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
       };
     });
 
-    // Calcular gamificação real
-    const gamification = await this.calculateGamification(userId, activeInstallments);
+    const gamification = await this.calculateGamification(userId, installments);
 
     return {
       totalActiveInstallments: activeInstallments.length,
@@ -377,200 +449,108 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
     };
   }
 
-  private async calculateGamification(userId: string, installments: Installment[]) {
-    // Calcular estatísticas gerais
-    const totalPayments = installments.reduce((sum, inst) => sum + inst.totalInstallments, 0);
-    const paidPayments = installments.reduce((sum, inst) => sum + inst.paidInstallments, 0);
-    const completionRate = totalPayments > 0 ? (paidPayments / totalPayments) * 100 : 0;
+  private async calculateGamification(userId: string, allUserInstallments: Installment[]): Promise<GamificationData> {
+    const goals = await this.db.collection('goals').find({ userId }).toArray();
+    const budgets = await this.db.collection('budgets').find({ userId }).toArray();
 
-    // Calcular streak (sequência de pagamentos em dia)
+    // --- Pontos ---
+    let points = 0;
+    // Pontos de Parcelamentos
+    const paidInstallmentsCount = allUserInstallments.reduce((sum, inst) => sum + inst.paidInstallments, 0);
+    points += paidInstallmentsCount * 10;
+    const completedInstallmentsCount = allUserInstallments.filter(i => i.isCompleted).length;
+    points += completedInstallmentsCount * 50;
+
+    // Pontos de Metas
+    const completedGoalsCount = goals.filter(g => g.currentAmount >= g.targetAmount).length;
+    points += goals.length * 5; // por criar
+    points += completedGoalsCount * 100; // por completar
+
+    // Pontos de Orçamentos
+    points += budgets.length * 10; // por criar
+
+    // --- Streak ---
     const streak = await this.calculatePaymentStreak(userId);
 
-    // Calcular pontos baseados em atividade
-    const points = await this.calculatePoints(userId, installments);
+    // --- Badges ---
+    const badges = await this.calculateBadges(userId, allUserInstallments, goals, budgets);
 
-    // Determinar nível baseado em pontos
+    // --- Nível ---
     const level = this.calculateLevel(points);
 
-    // Buscar badges conquistados
-    const badges = await this.calculateBadges(userId, installments);
+    // --- Conquistas ---
+    const achievements = await this.calculateAchievements(userId, allUserInstallments, goals, budgets);
 
-    // Calcular achievements
-    const achievements = await this.calculateAchievements(userId, installments);
+    // --- Taxa de conclusão ---
+    const totalPayments = allUserInstallments.reduce((sum, inst) => sum + inst.totalInstallments, 0);
+    const paidPayments = allUserInstallments.reduce((sum, inst) => sum + inst.paidInstallments, 0);
+    const completionRate = totalPayments > 0 ? Math.round((paidPayments / totalPayments) * 100) : 0;
 
     return {
-      completionRate,
+      points: Math.max(0, points),
       streak,
       badges,
-      points,
       level,
-      achievements
+      achievements,
+      completionRate,
+      financialHealthScore: 0,
+      motivationalInsights: []
     };
   }
 
   private async calculatePaymentStreak(userId: string): Promise<number> {
-    const collection = this.db.collection('installments');
-    const installments = await collection.find({ userId, isActive: true }).toArray();
-
+    const now = new Date();
     let streak = 0;
-    let currentDate = new Date();
+    let currentDate = new Date(now.getFullYear(), now.getMonth(), 1); // Início do mês atual
 
-    // Verificar quantos meses consecutivos o usuário pagou todas as parcelas em dia
-    for (let i = 0; i < 12; i++) { // Verificar últimos 12 meses
-      const monthStart = new Date(currentDate.getFullYear(), currentDate.getMonth() - i, 1);
-      const monthEnd = new Date(currentDate.getFullYear(), currentDate.getMonth() - i + 1, 0);
+    // Verifica os últimos 12 meses
+    for (let i = 0; i < 12; i++) {
+      const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+      const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
 
-      let allPaidOnTime = true;
-
-      for (const installment of installments) {
-        const monthPayments = installment.payments.filter((p: any) => {
-          const dueDate = parseISO(p.dueDate);
-          return dueDate >= monthStart && dueDate <= monthEnd;
-        });
-
-        for (const payment of monthPayments) {
-          if (payment.status === 'paid' && payment.paidDate) {
-            const paidDate = parseISO(payment.paidDate);
-            const dueDate = parseISO(payment.dueDate);
-            if (paidDate > dueDate) {
-              allPaidOnTime = false;
-              break;
+      const monthlyPayments = await this.db.collection('installments').aggregate([
+        { $match: { userId } },
+        { $unwind: '$payments' },
+        {
+          $match: {
+            'payments.status': 'paid',
+            'payments.paidDate': {
+              $gte: startOfMonth.toISOString(),
+              $lte: endOfMonth.toISOString()
             }
-          } else if (payment.status !== 'paid' && parseISO(payment.dueDate) < new Date()) {
-            allPaidOnTime = false;
-            break;
           }
-        }
+        },
+        { $count: 'totalPayments' }
+      ]).toArray();
 
-        if (!allPaidOnTime) break;
-      }
+      const hasPaymentsThisMonth = monthlyPayments.length > 0 && monthlyPayments[0].totalPayments > 0;
 
-      if (allPaidOnTime && installments.some(inst =>
-        inst.payments.some((p: any) => {
-          const dueDate = parseISO(p.dueDate);
-          return dueDate >= monthStart && dueDate <= monthEnd;
-        })
-      )) {
+      if (hasPaymentsThisMonth) {
         streak++;
       } else {
-        break;
+        break; // Quebra a sequência se não houve pagamentos no mês
       }
+
+      // Volta um mês
+      currentDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
     }
 
     return streak;
   }
 
-  private async calculatePoints(userId: string, installments: Installment[]): Promise<number> {
-    let points = 0;
-
-    // Pontos por parcelas pagas
-    const paidPayments = installments.reduce((sum, inst) => sum + inst.paidInstallments, 0);
-    points += paidPayments * 10;
-
-    // Bonificação por pagamentos em dia e penalidades por atraso
-    for (const installment of installments) {
-      for (const payment of installment.payments) {
-        if (payment.status === 'paid' && payment.paidDate) {
-          const paidDate = parseISO(payment.paidDate);
-          const dueDate = parseISO(payment.dueDate);
-          if (paidDate <= dueDate) {
-            points += 5; // Bonus por pagar em dia
-          } else {
-            // Penalidade por pagar com atraso
-            const daysLate = Math.floor((paidDate.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
-            points -= Math.min(daysLate * 2, 20); // Máximo de 20 pontos de penalidade
-          }
-        } else if (payment.status === 'overdue') {
-          // Penalidade por parcelas ainda em atraso
-          const dueDate = parseISO(payment.dueDate);
-          const daysOverdue = Math.floor((new Date().getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
-          points -= Math.min(daysOverdue * 1, 30); // Máximo de 30 pontos de penalidade por parcela
-        }
-      }
-    }
-
-    // Bonificação por completar parcelamentos
-    const completedInstallments = installments.filter(inst => inst.isCompleted);
-    points += completedInstallments.length * 50;
-
-    // Garantir que pontos não sejam negativos
-    return Math.max(0, points);
-  }
-
   private calculateLevel(points: number) {
+    // Níveis expandidos de 1 a 10 com progressão exponencial
     const levels = [
-      {
-        level: 1,
-        name: 'Iniciante',
-        pointsRequired: 0,
-        benefits: [
-          'Controle básico de parcelamentos',
-          'Criação de até 5 parcelamentos',
-          'Lembretes de vencimento'
-        ]
-      },
-      {
-        level: 2,
-        name: 'Organizador',
-        pointsRequired: 100,
-        benefits: [
-          'Criação de até 15 parcelamentos',
-          'Relatórios mensais básicos',
-          'Notificações avançadas',
-          'Categorização automática'
-        ]
-      },
-      {
-        level: 3,
-        name: 'Disciplinado',
-        pointsRequired: 300,
-        benefits: [
-          'Parcelamentos ilimitados',
-          'Projeções automáticas de conclusão',
-          'Análise de tendências de pagamento',
-          'Exportação de relatórios',
-          'Metas de quitação personalizadas'
-        ]
-      },
-      {
-        level: 4,
-        name: 'Expert',
-        pointsRequired: 600,
-        benefits: [
-          'Otimização automática de pagamentos',
-          'Consultoria IA avançada',
-          'Simulações de cenários',
-          'Alertas preditivos',
-          'Integração com bancos',
-          'Suporte prioritário'
-        ]
-      },
-      {
-        level: 5,
-        name: 'Mestre',
-        pointsRequired: 1000,
-        benefits: [
-          'Acesso a recursos beta',
-          'Consultoria financeira personalizada',
-          'API de integração',
-          'Relatórios executivos',
-          'Análise comportamental avançada',
-          'Badge de usuário VIP'
-        ]
-      },
-      {
-        level: 6,
-        name: 'Lenda',
-        pointsRequired: 1500,
-        benefits: [
-          'Status de usuário Lenda',
-          'Influência em novas funcionalidades',
-          'Acesso antecipado a atualizações',
-          'Programa de embaixadores',
-          'Consultoria ilimitada',
-          'Certificado digital de excelência'
-        ]
-      }
+      { level: 1, name: 'Iniciante', pointsRequired: 0, benefits: ['Acesso ao sistema básico', 'Controle de transações'] },
+      { level: 2, name: 'Organizador', pointsRequired: 100, benefits: ['Relatórios mensais', 'Notificações de vencimento'] },
+      { level: 3, name: 'Disciplinado', pointsRequired: 300, benefits: ['Insights de gastos', 'Dashboard expandido'] },
+      { level: 4, name: 'Estrategista', pointsRequired: 600, benefits: ['Projeções financeiras', 'Metas avançadas'] },
+      { level: 5, name: 'Expert', pointsRequired: 1000, benefits: ['Análise por IA', 'Recomendações personalizadas'] },
+      { level: 6, name: 'Veterano', pointsRequired: 1500, benefits: ['Relatórios detalhados', 'Exportação de dados'] },
+      { level: 7, name: 'Elite', pointsRequired: 2200, benefits: ['Acesso antecipado', 'Recursos beta'] },
+      { level: 8, name: 'Mestre', pointsRequired: 3000, benefits: ['Suporte prioritário', 'Consultoria IA'] },
+      { level: 9, name: 'Grão-Mestre', pointsRequired: 4000, benefits: ['Funcionalidades exclusivas', 'Badge especial'] },
+      { level: 10, name: 'Lenda', pointsRequired: 5500, benefits: ['Status Lenda', 'Todas as funcionalidades'] },
     ];
 
     let currentLevel = levels[0];
@@ -579,7 +559,6 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
         currentLevel = level;
       }
     }
-
     const nextLevel = levels.find(l => l.level === currentLevel.level + 1);
     const pointsToNext = nextLevel ? nextLevel.pointsRequired - points : 0;
 
@@ -589,164 +568,122 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
       description: `Nível ${currentLevel.level} - ${currentLevel.name}`,
       pointsRequired: currentLevel.pointsRequired,
       pointsToNext: Math.max(0, pointsToNext),
-      benefits: currentLevel.benefits
+      benefits: currentLevel.benefits,
     };
   }
 
-  private async calculateBadges(userId: string, installments: Installment[]) {
+  private async calculateBadges(userId: string, installments: Installment[], goals: any[], budgets: any[]) {
     const badges = [];
-    const now = new Date();
+    const now = new Date().toISOString();
 
-    // Badge: Primeiro pagamento
-    const hasAnyPayment = installments.some(inst => inst.paidInstallments > 0);
-    if (hasAnyPayment) {
-      badges.push({
-        id: 'first-payment',
-        name: 'Primeiro Passo',
-        description: 'Realizou seu primeiro pagamento de parcela',
-        icon: '🎯',
-        earnedAt: now.toISOString(),
-        rarity: 'common' as const
-      });
+    // Contadores para badges
+    const paidInstallmentsCount = installments.reduce((sum, inst) => sum + inst.paidInstallments, 0);
+    const completedInstallmentsCount = installments.filter(i => i.isCompleted).length;
+    const completedGoalsCount = goals.filter(g => g.currentAmount >= g.targetAmount).length;
+    const totalSaved = goals.reduce((sum, g) => sum + (g.currentAmount || 0), 0);
+
+    // === Badges de Onboarding ===
+    if (installments.some(inst => inst.paidInstallments > 0)) {
+      badges.push({ id: 'first-payment', name: 'Pagador', description: 'Pagou sua primeira parcela', icon: '💳', earnedAt: now, rarity: 'common' as const });
     }
 
-    // Badge: Pagador pontual
-    const onTimePayments = installments.reduce((count, inst) => {
-      return count + inst.payments.filter(p => {
-        if (p.status === 'paid' && p.paidDate) {
-          const paidDate = parseISO(p.paidDate);
-          const dueDate = parseISO(p.dueDate);
-          return paidDate <= dueDate;
-        }
-        return false;
-      }).length;
-    }, 0);
-
-    if (onTimePayments >= 10) {
-      badges.push({
-        id: 'punctual-payer',
-        name: 'Pagador Pontual',
-        description: 'Pagou 10 parcelas em dia',
-        icon: '⏰',
-        earnedAt: now.toISOString(),
-        rarity: 'rare' as const
-      });
+    // === Badges de Pagamentos ===
+    if (paidInstallmentsCount >= 10) {
+      badges.push({ id: 'punctual-10', name: 'Pontual', description: '10 pagamentos em dia', icon: '⏰', earnedAt: now, rarity: 'rare' as const });
+    }
+    if (paidInstallmentsCount >= 50) {
+      badges.push({ id: 'punctual-50', name: 'Super Pontual', description: '50 pagamentos em dia', icon: '⏱️', earnedAt: now, rarity: 'epic' as const });
+    }
+    if (paidInstallmentsCount >= 100) {
+      badges.push({ id: 'punctual-100', name: 'Mestre da Pontualidade', description: '100 pagamentos em dia', icon: '🕐', earnedAt: now, rarity: 'legendary' as const });
     }
 
-    // Badge: Recuperação (específico para quem se recuperou de atrasos)
-    const lateButPaidPayments = installments.reduce((count, inst) => {
-      return count + inst.payments.filter(p => {
-        if (p.status === 'paid' && p.paidDate) {
-          const paidDate = parseISO(p.paidDate);
-          const dueDate = parseISO(p.dueDate);
-          return paidDate > dueDate; // Pago com atraso mas pago
-        }
-        return false;
-      }).length;
-    }, 0);
-
-    if (lateButPaidPayments >= 3) {
-      badges.push({
-        id: 'recovery-master',
-        name: 'Mestre da Recuperação',
-        description: 'Se recuperou de atrasos e quitou débitos',
-        icon: '💪',
-        earnedAt: now.toISOString(),
-        rarity: 'rare' as const
-      });
+    // === Badges de Parcelamentos ===
+    if (completedInstallmentsCount >= 1) {
+      badges.push({ id: 'installment-complete-1', name: 'Finalizador', description: 'Completou 1 parcelamento', icon: '🏁', earnedAt: now, rarity: 'common' as const });
+    }
+    if (completedInstallmentsCount >= 5) {
+      badges.push({ id: 'installment-complete-5', name: 'Quitador', description: 'Completou 5 parcelamentos', icon: '🎖️', earnedAt: now, rarity: 'rare' as const });
+    }
+    if (completedInstallmentsCount >= 15) {
+      badges.push({ id: 'installment-complete-15', name: 'Livre de Dívidas', description: 'Completou 15 parcelamentos', icon: '🏆', earnedAt: now, rarity: 'epic' as const });
+    }
+    if (completedInstallmentsCount >= 30) {
+      badges.push({ id: 'installment-complete-30', name: 'Destruidor de Dívidas', description: 'Completou 30 parcelamentos', icon: '💪', earnedAt: now, rarity: 'legendary' as const });
     }
 
-    // Badge: Finalizador
-    const completedInstallments = installments.filter(inst => inst.isCompleted);
-    if (completedInstallments.length >= 3) {
-      badges.push({
-        id: 'finisher',
-        name: 'Finalizador',
-        description: 'Completou 3 parcelamentos',
-        icon: '🏆',
-        earnedAt: now.toISOString(),
-        rarity: 'epic' as const
-      });
+    // === Badges de Metas ===
+    if (goals.length > 0) {
+      badges.push({ id: 'goal-setter', name: 'Sonhador', description: 'Definiu sua primeira meta', icon: '🎯', earnedAt: now, rarity: 'common' as const });
+    }
+    if (completedGoalsCount >= 1) {
+      badges.push({ id: 'goal-complete-1', name: 'Realizador', description: 'Completou 1 meta', icon: '🌟', earnedAt: now, rarity: 'common' as const });
+    }
+    if (completedGoalsCount >= 5) {
+      badges.push({ id: 'goal-complete-5', name: 'Conquistador', description: 'Completou 5 metas', icon: '⭐', earnedAt: now, rarity: 'rare' as const });
+    }
+    if (completedGoalsCount >= 10) {
+      badges.push({ id: 'goal-complete-10', name: 'Campeão de Metas', description: 'Completou 10 metas', icon: '🏅', earnedAt: now, rarity: 'epic' as const });
     }
 
-    // Badge: Zero Atraso (nunca teve atraso)
-    const hasOverduePayments = installments.some(inst =>
-      inst.payments.some(p => p.status === 'overdue' ||
-        (p.status === 'paid' && p.paidDate && parseISO(p.paidDate) > parseISO(p.dueDate))
-      )
-    );
+    // === Badges de Economia ===
+    if (totalSaved >= 1000) {
+      badges.push({ id: 'goal-1000', name: 'Poupador Bronze', description: 'Economizou R$ 1.000', icon: '🥉', earnedAt: now, rarity: 'common' as const });
+    }
+    if (totalSaved >= 5000) {
+      badges.push({ id: 'goal-5000', name: 'Poupador Prata', description: 'Economizou R$ 5.000', icon: '🥈', earnedAt: now, rarity: 'rare' as const });
+    }
+    if (totalSaved >= 10000) {
+      badges.push({ id: 'goal-10000', name: 'Poupador Ouro', description: 'Economizou R$ 10.000', icon: '🥇', earnedAt: now, rarity: 'epic' as const });
+    }
+    if (totalSaved >= 50000) {
+      badges.push({ id: 'goal-50000', name: 'Poupador Diamante', description: 'Economizou R$ 50.000', icon: '💎', earnedAt: now, rarity: 'legendary' as const });
+    }
 
-    if (!hasOverduePayments && onTimePayments >= 5) {
-      badges.push({
-        id: 'zero-delay',
-        name: 'Zero Atraso',
-        description: 'Nunca atrasou um pagamento',
-        icon: '🌟',
-        earnedAt: now.toISOString(),
-        rarity: 'legendary' as const
-      });
+    // === Badges de Orçamentos ===
+    if (budgets.length >= 1) {
+      badges.push({ id: 'budget-starter', name: 'Planejador Iniciante', description: 'Criou seu primeiro orçamento', icon: '📋', earnedAt: now, rarity: 'common' as const });
+    }
+    if (budgets.length >= 3) {
+      badges.push({ id: 'budget-master', name: 'Mestre dos Orçamentos', description: 'Criou 3 ou mais orçamentos', icon: '📊', earnedAt: now, rarity: 'rare' as const });
     }
 
     return badges;
-  } private async calculateAchievements(userId: string, installments: Installment[]) {
+  }
+
+  private async calculateAchievements(userId: string, installments: Installment[], goals: any[], budgets: any[]) {
     const achievements = [];
+    const now = new Date().toISOString();
 
-    // Achievement: Organização total
-    const totalPayments = installments.reduce((sum, inst) => sum + inst.totalInstallments, 0);
-    const paidPayments = installments.reduce((sum, inst) => sum + inst.paidInstallments, 0);
-
+    // Conquistas de Parcelamentos
+    const paidInstallments = installments.reduce((sum, inst) => sum + inst.paidInstallments, 0);
     achievements.push({
-      id: 'total-organization',
-      name: 'Organização Total',
-      description: 'Pague todas as suas parcelas ativas',
-      icon: '📊',
-      progress: paidPayments,
-      target: totalPayments,
-      isCompleted: totalPayments > 0 && paidPayments === totalPayments,
-      completedAt: totalPayments > 0 && paidPayments === totalPayments ? new Date().toISOString() : undefined,
-      points: 100
+      id: 'punctuality-master', name: 'Mestre da Pontualidade', description: 'Pague 50 parcelas em dia',
+      icon: '⚡', progress: paidInstallments, target: 50, isCompleted: paidInstallments >= 50, points: 200, completedAt: paidInstallments >= 50 ? now : undefined
     });
 
-    // Achievement: Mestre da pontualidade
-    const onTimePayments = installments.reduce((count, inst) => {
-      return count + inst.payments.filter(p => {
-        if (p.status === 'paid' && p.paidDate) {
-          const paidDate = parseISO(p.paidDate);
-          const dueDate = parseISO(p.dueDate);
-          return paidDate <= dueDate;
-        }
-        return false;
-      }).length;
-    }, 0);
-
+    // Conquistas de Metas
+    const completedGoalsCount = goals.filter(g => g.currentAmount >= g.targetAmount).length;
     achievements.push({
-      id: 'punctuality-master',
-      name: 'Mestre da Pontualidade',
-      description: 'Pague 50 parcelas em dia',
-      icon: '⚡',
-      progress: onTimePayments,
-      target: 50,
-      isCompleted: onTimePayments >= 50,
-      completedAt: onTimePayments >= 50 ? new Date().toISOString() : undefined,
-      points: 200
+      id: 'serial-achiever', name: 'Conquistador em Série', description: 'Complete 5 metas financeiras',
+      icon: '👑', progress: completedGoalsCount, target: 5, isCompleted: completedGoalsCount >= 5, points: 300, completedAt: completedGoalsCount >= 5 ? now : undefined
     });
 
-    // Achievement: Caçador de Atrasos
-    const overduePayments = installments.reduce((count, inst) => {
-      return count + inst.payments.filter(p => p.status === 'overdue').length;
-    }, 0);
-
+    // Conquistas de Orçamentos
+    const totalBudgets = budgets.length;
     achievements.push({
-      id: 'overdue-hunter',
-      name: 'Caçador de Atrasos',
-      description: 'Quite todas as parcelas em atraso',
-      icon: '🎯',
-      progress: Math.max(0, 10 - overduePayments), // Progresso invertido (menos atrasos = mais progresso)
-      target: 10,
-      isCompleted: overduePayments === 0 && installments.some(inst => inst.payments.length > 0),
-      completedAt: overduePayments === 0 && installments.some(inst => inst.payments.length > 0) ? new Date().toISOString() : undefined,
-      points: 150
-    }); return achievements;
+      id: 'budget-expert', name: 'Expert em Orçamentos', description: 'Crie 10 orçamentos diferentes',
+      icon: '📈', progress: totalBudgets, target: 10, isCompleted: totalBudgets >= 10, points: 150, completedAt: totalBudgets >= 10 ? now : undefined
+    });
+
+    // Placeholder para conquistas que precisam de mais lógica
+    achievements.push({
+      id: 'overspending-avoider', name: 'Mestre do Controle', description: 'Passe um mês inteiro sem estourar nenhum orçamento',
+      icon: '🛡️', progress: 0, target: 1, isCompleted: false, points: 100
+    });
+
+
+    return achievements;
   }
 
   async projectMonthlyCommitments(userId: string, months: number): Promise<Array<{
@@ -756,6 +693,7 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
       installmentId: string;
       name: string;
       amount: number;
+      isRecurring?: boolean;
     }>;
   }>> {
     const activeInstallments = await this.findActiveInstallments(userId);
@@ -772,6 +710,7 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
         installmentId: string;
         name: string;
         amount: number;
+        isRecurring?: boolean;
       }> = [];
 
       activeInstallments.forEach(installment => {
@@ -783,7 +722,8 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
               installmentsInMonth.push({
                 installmentId: installment.id,
                 name: installment.name,
-                amount: payment.scheduledAmount
+                amount: payment.scheduledAmount,
+                isRecurring: installment.isRecurring || false
               });
             }
           }
@@ -798,5 +738,154 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
     }
 
     return projections;
+  }
+
+  /**
+   * Migra todos os parcelamentos e transações órfãos para usar carteiras válidas
+   */
+  async migrateOrphanedWalletReferences(userId: string): Promise<{
+    installmentsMigrated: number,
+    transactionsMigrated: number
+  }> {
+    const installmentsCollection = this.db.collection('installments');
+    const transactionsCollection = this.db.collection('transactions');
+    const walletsCollection = this.db.collection('wallets');
+
+    console.log('🔧 Iniciando migração de dados órfãos para usuário:', userId);
+
+    // Buscar carteira válida do usuário
+    const validWallet = await walletsCollection.findOne({ userId });
+    if (!validWallet) {
+      throw new Error('Nenhuma carteira válida encontrada para o usuário');
+    }
+
+    console.log('✅ Carteira válida encontrada:', validWallet.name, 'ID:', validWallet._id.toString());
+
+    // Buscar todos os IDs de carteiras válidas do usuário
+    const validWalletIds = await walletsCollection
+      .find({ userId })
+      .project({ _id: 1 })
+      .toArray()
+      .then(wallets => wallets.map(w => w._id.toString()));
+
+    console.log('📝 IDs de carteiras válidas:', validWalletIds);
+
+    // Migrar parcelamentos órfãos
+    const orphanedInstallments = await installmentsCollection.find({
+      userId,
+      sourceWalletId: { $nin: validWalletIds }
+    }).toArray();
+
+    let installmentsMigrated = 0;
+    for (const installment of orphanedInstallments) {
+      await installmentsCollection.updateOne(
+        { _id: installment._id },
+        { $set: { sourceWalletId: validWallet._id.toString() } }
+      );
+      installmentsMigrated++;
+    }
+
+    // Migrar transações órfãs
+    const orphanedTransactionsResult = await transactionsCollection.updateMany(
+      {
+        userId,
+        walletId: { $nin: validWalletIds }
+      },
+      { $set: { walletId: validWallet._id.toString() } }
+    );
+
+    const transactionsMigrated = orphanedTransactionsResult.modifiedCount;
+
+    console.log(`✅ Migração concluída: ${installmentsMigrated} parcelamentos e ${transactionsMigrated} transações migradas`);
+
+    return { installmentsMigrated, transactionsMigrated };
+  }
+
+  // Métodos para parcelamentos recorrentes
+  async adjustRecurringInstallment(data: AdjustRecurringInstallmentInput): Promise<boolean> {
+    const collection = this.db.collection('installments');
+
+    try {
+      const installment = await collection.findOne({ _id: new ObjectId(data.installmentId) });
+      if (!installment || !installment.isRecurring) {
+        return false;
+      }
+
+      const now = new Date().toISOString();
+
+      // Adicionar à história de ajustes
+      const adjustmentRecord = {
+        date: now,
+        previousAmount: installment.installmentAmount,
+        newAmount: data.newAmount,
+        reason: data.reason || 'Ajuste de valor'
+      };
+
+      const currentHistory = installment.adjustmentHistory || [];
+
+      // Atualizar o parcelamento
+      await collection.updateOne(
+        { _id: new ObjectId(data.installmentId) },
+        {
+          $set: {
+            installmentAmount: data.newAmount,
+            totalAmount: data.newAmount, // Para recorrentes, totalAmount = installmentAmount
+            updatedAt: now,
+            adjustmentHistory: [...currentHistory, adjustmentRecord]
+          }
+        }
+      );
+
+      // Atualizar pagamentos futuros com o novo valor
+      const effectiveDate = parseISO(data.effectiveDate);
+      await collection.updateMany(
+        {
+          'payments.installmentId': data.installmentId,
+          'payments.dueDate': { $gte: effectiveDate.toISOString() },
+          'payments.status': 'pending'
+        },
+        {
+          $set: {
+            'payments.$.scheduledAmount': data.newAmount
+          }
+        }
+      );
+
+      return true;
+    } catch (error) {
+      console.error('Error adjusting recurring installment:', error);
+      return false;
+    }
+  }
+
+  async findRecurringInstallments(userId: string): Promise<Installment[]> {
+    const collection = this.db.collection('installments');
+    const installments = await collection
+      .find({
+        userId,
+        isRecurring: true,
+        isActive: true
+      })
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    return installments.map(installment => this.calculateInstallmentFields(installment));
+  }
+
+  async findFixedInstallments(userId: string): Promise<Installment[]> {
+    const collection = this.db.collection('installments');
+    const installments = await collection
+      .find({
+        userId,
+        $or: [
+          { isRecurring: { $ne: true } },
+          { isRecurring: { $exists: false } }
+        ],
+        isActive: true
+      })
+      .sort({ createdAt: -1 })
+      .toArray();
+
+    return installments.map(installment => this.calculateInstallmentFields(installment));
   }
 }

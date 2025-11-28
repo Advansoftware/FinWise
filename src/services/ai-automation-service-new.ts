@@ -17,9 +17,9 @@
  * 5. Se não existir dados salvos, gera na primeira consulta sem consumir créditos
  */
 
-import { getDatabaseAdapter } from '@/core/services/service-factory';
-import { Transaction } from '@/lib/types';
-import { getSpendingTip, getFinancialProfile, generateMonthlyReportAction, generateAnnualReportAction, predictFutureBalanceAction } from './ai-actions';
+import {getDatabaseAdapter} from '@/core/services/service-factory';
+import {Transaction} from '@/lib/types';
+import {getSpendingTip, getFinancialProfile, generateMonthlyReportAction, generateAnnualReportAction, predictFutureBalanceAction} from './ai-actions';
 
 /**
  * Salva dado gerado automaticamente

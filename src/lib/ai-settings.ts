@@ -20,7 +20,6 @@ export const VISION_SUPPORTED_MODELS = {
   openai: [
     'gpt-4o',
     'gpt-4o-mini',
-    'gpt-4-vision-preview',
     'gpt-4-turbo'
   ] as const,
   googleai: [

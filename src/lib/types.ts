@@ -1,3 +1,4 @@
+
 // src/lib/types.ts
 
 export type UserPlan = 'Básico' | 'Pro' | 'Plus' | 'Infinity';
@@ -28,6 +29,12 @@ export interface Transaction {
   type: 'income' | 'expense' | 'transfer';
   walletId: string;
   toWalletId?: string; // Only for transfers
+
+  // Campos para transações agrupadas (pai/filhos)
+  parentId?: string; // ID da transação pai (se for uma transação filha)
+  hasChildren?: boolean; // Indica que esta transação tem subitens
+  childrenCount?: number; // Quantidade de subitens
+  groupName?: string; // Nome do grupo/nota (ex: "Compra Supermercado Extra")
 }
 
 export interface Budget {
@@ -59,7 +66,7 @@ export interface Category {
 }
 
 export type AIProvider = 'ollama' | 'googleai' | 'openai' | 'gastometria';
-export type OpenAIModel = 'gpt-3.5-turbo' | 'gpt-4' | 'gpt-4-vision-preview' | 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo';
+export type OpenAIModel = 'gpt-3.5-turbo' | 'gpt-4' | 'gpt-4o' | 'gpt-4o-mini' | 'gpt-4-turbo';
 
 export interface AICredential {
   id: string;
@@ -112,7 +119,10 @@ export interface UserProfile {
   plan: UserPlan;
   aiCredits: number;
   stripeCustomerId?: string;
+  stripeCurrentPeriodEnd?: string; // Data de término do período atual da assinatura
+  subscriptionStatus?: string; // Status da assinatura (active, canceled, past_due, etc)
   createdAt: string;
+  image?: string | null;
 }
 
 export type AICreditLogAction =
@@ -138,3 +148,64 @@ export interface AICreditLog {
   timestamp: string; // ISO 8601 format string
   isFreeAction: boolean; // True when it's an automatic generation that doesn't consume credits
 }
+
+// Payroll/Salary slip types
+export interface PayrollDiscount {
+  id: string;
+  name: string;
+  amount: number;
+  type: 'discount' | 'allowance'; // Para distinguir descontos de ajudas de custo
+}
+
+export interface PayrollData {
+  id: string;
+  userId: string;
+  grossSalary: number; // Salário bruto
+  allowances: number; // Ajuda de custo (calculado automaticamente)
+  discounts: PayrollDiscount[]; // Descontos (INSS, IR, etc.)
+  netSalary: number; // Salário líquido (calculado)
+  updatedAt: string; // ISO 8601 format string
+}
+
+// Tipos padronizados de descontos
+export const STANDARD_DISCOUNT_TYPES = [
+  'INSS',
+  'Imposto de Renda',
+  'Vale Transporte',
+  'Vale Alimentação',
+  'Vale Refeição',
+  'Plano de Saúde',
+  'Plano Odontológico',
+  'Seguro de Vida',
+  'Contribuição Sindical',
+  'Contribuição Confederativa',
+  'Empréstimo Consignado',
+  'Financiamento Consignado',
+  'Pensão Alimentícia',
+  'Adiantamento Salarial',
+  'Desconto Uniforme',
+  'Desconto Farmácia',
+  'Outros'
+] as const;
+
+// Tipos padronizados de ajudas de custo
+export const STANDARD_ALLOWANCE_TYPES = [
+  'Horas Extras',
+  'Adicional Noturno',
+  'Adicional de Periculosidade',
+  'Adicional de Insalubridade',
+  'Comissões',
+  'Gratificação',
+  'Ajuda de Custo',
+  'Auxílio Alimentação',
+  'Auxílio Transporte',
+  'Bonus',
+  'Participação nos Lucros',
+  'Abono',
+  'Quinquênio',
+  'Anuênio',
+  'Outros'
+] as const;
+
+export type StandardDiscountType = typeof STANDARD_DISCOUNT_TYPES[number];
+export type StandardAllowanceType = typeof STANDARD_ALLOWANCE_TYPES[number];

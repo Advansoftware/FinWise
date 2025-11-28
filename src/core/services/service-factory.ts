@@ -13,6 +13,11 @@ class ServiceFactory {
   private paymentService: IPaymentService | null = null;
   private mongoClient: MongoClient | null = null;
 
+  // Promises para evitar race conditions na inicialização
+  private databaseAdapterPromise: Promise<IDatabaseAdapter> | null = null;
+  private authServicePromise: Promise<IAuthService> | null = null;
+  private paymentServicePromise: Promise<IPaymentService> | null = null;
+
   private constructor() { }
 
   static getInstance(): ServiceFactory {
@@ -23,18 +28,31 @@ class ServiceFactory {
   }
 
   async getDatabaseAdapter(): Promise<IDatabaseAdapter> {
+    // Retorna o adapter já inicializado
     if (this.databaseAdapter) {
       return this.databaseAdapter;
     }
 
-    console.log('🔧 Initializing MongoDB database adapter...');
-    await this.initializeMongoDBAdapter();
-
-    if (!this.databaseAdapter) {
-      throw new Error('Failed to initialize database adapter');
+    // Se já existe uma promise de inicialização em andamento, aguarda ela
+    if (this.databaseAdapterPromise) {
+      return this.databaseAdapterPromise;
     }
 
-    return this.databaseAdapter;
+    console.log('🔧 Initializing MongoDB database adapter...');
+
+    // Cria a promise de inicialização e guarda para evitar race conditions
+    this.databaseAdapterPromise = this.initializeMongoDBAdapter().then(() => {
+      if (!this.databaseAdapter) {
+        this.databaseAdapterPromise = null; // Reset on failure
+        throw new Error('Failed to initialize database adapter');
+      }
+      return this.databaseAdapter;
+    }).catch((error) => {
+      this.databaseAdapterPromise = null; // Reset on failure to allow retry
+      throw error;
+    });
+
+    return this.databaseAdapterPromise;
   }
 
   async getAuthService(): Promise<IAuthService> {
@@ -42,14 +60,20 @@ class ServiceFactory {
       return this.authService;
     }
 
-    console.log('🔧 Initializing MongoDB auth service...');
-    await this.initializeMongoDBAuth();
-
-    if (!this.authService) {
-      throw new Error('Failed to initialize auth service');
+    // Se já existe uma promise de inicialização em andamento, aguarda ela
+    if (this.authServicePromise) {
+      return this.authServicePromise;
     }
 
-    return this.authService;
+    this.authServicePromise = this.initializeMongoDBAuth().then(() => {
+      if (!this.authService) {
+        throw new Error('Failed to initialize auth service');
+      }
+      return this.authService;
+    });
+
+    console.log('🔧 Initializing MongoDB auth service...');
+    return this.authServicePromise;
   }
 
   async getPaymentService(): Promise<IPaymentService> {
@@ -57,14 +81,20 @@ class ServiceFactory {
       return this.paymentService;
     }
 
-    console.log('🔧 Initializing payment service...');
-    await this.initializePaymentService();
-
-    if (!this.paymentService) {
-      throw new Error('Failed to initialize payment service');
+    // Se já existe uma promise de inicialização em andamento, aguarda ela
+    if (this.paymentServicePromise) {
+      return this.paymentServicePromise;
     }
 
-    return this.paymentService;
+    this.paymentServicePromise = this.initializePaymentService().then(() => {
+      if (!this.paymentService) {
+        throw new Error('Failed to initialize payment service');
+      }
+      return this.paymentService;
+    });
+
+    console.log('🔧 Initializing payment service...');
+    return this.paymentServicePromise;
   }
 
   private async initializeMongoDBAdapter(): Promise<void> {

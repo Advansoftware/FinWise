@@ -1,27 +1,47 @@
 // src/app/(docs)/layout.tsx
+'use client';
 
 import { Logo } from "@/components/logo";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button, Box, Container, AppBar, Toolbar, Typography, Stack } from "@mui/material";
 import { AuthGuard } from "@/components/auth/auth-guard";
 
 export default function DocsLayout({ children }: { children: React.ReactNode }) {
   return (
     <AuthGuard>
-      <div className="flex min-h-screen flex-col">
-          <header className="sticky top-0 z-40 w-full border-b bg-background">
-              <div className="container mx-auto flex h-14 items-center justify-between">
-                  <Link href="/" className="flex items-center gap-2">
-                    <Logo className="w-8 h-8"/>
-                    <span className="text-xl font-bold">Gastometria</span>
-                  </Link>
-                  <Button asChild>
-                      <Link href="/login">Acessar Painel</Link>
-                  </Button>
-              </div>
-          </header>
-          <main className="flex-1">{children}</main>
-      </div>
+      <Box sx={{ display: 'flex', minHeight: '100vh', flexDirection: 'column' }}>
+          <AppBar 
+            position="sticky" 
+            elevation={0}
+            sx={{ 
+              bgcolor: 'background.default', 
+              borderBottom: 1, 
+              borderColor: 'divider' 
+            }}
+          >
+              <Container maxWidth="xl">
+                <Toolbar disableGutters sx={{ justifyContent: 'space-between', height: 56 }}>
+                    <Link href="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex', alignItems: 'center', gap: 8 }}>
+                      <Logo sx={{ width: 32, height: 32 }} />
+                      <Typography variant="h6" fontWeight="bold" color="text.primary">
+                        Gastometria
+                      </Typography>
+                    </Link>
+                    <Button 
+                      variant="contained" 
+                      component={Link} 
+                      href="/login"
+                      size="small"
+                    >
+                        Acessar Painel
+                    </Button>
+                </Toolbar>
+              </Container>
+          </AppBar>
+          <Box component="main" sx={{ flex: 1 }}>
+            {children}
+          </Box>
+      </Box>
     </AuthGuard>
   );
 }

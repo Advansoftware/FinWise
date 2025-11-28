@@ -1,25 +1,27 @@
 // src/components/budgets/automatic-budget-dialog.tsx
-'use client';
+"use client";
 
 import { useState, useEffect } from "react";
 import { z } from "zod";
 import { TransactionCategory } from "@/lib/types";
+
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+  DialogActions,
+  Button,
+  Box,
+  Stack,
+  Typography,
+  CircularProgress,
+  useTheme,
+  alpha,
+} from "@mui/material";
 import { useToast } from "@/hooks/use-toast";
 import { useBudgets } from "@/hooks/use-budgets";
-import { Loader2, Sparkles, CheckCircle, Circle } from "lucide-react";
+import { Sparkles, CheckCircle, Circle } from "lucide-react";
 import { BudgetItemSchema } from "@/ai/ai-types";
-import { ScrollArea } from "../ui/scroll-area";
-import { cn } from "@/lib/utils";
-import { Input } from "../ui/input";
 
 type SuggestedBudget = z.infer<typeof BudgetItemSchema>;
 
@@ -29,7 +31,11 @@ interface AutomaticBudgetDialogProps {
   suggestedBudgets: SuggestedBudget[];
 }
 
-export function AutomaticBudgetDialog({ isOpen, setIsOpen, suggestedBudgets }: AutomaticBudgetDialogProps) {
+export function AutomaticBudgetDialog({
+  isOpen,
+  setIsOpen,
+  suggestedBudgets,
+}: AutomaticBudgetDialogProps) {
   const { toast } = useToast();
   const { addBudget, isLoading: isSaving } = useBudgets();
   const [selectedBudgets, setSelectedBudgets] = useState<SuggestedBudget[]>([]);
@@ -37,85 +43,156 @@ export function AutomaticBudgetDialog({ isOpen, setIsOpen, suggestedBudgets }: A
   // Sync state when suggestions change and dialog opens
   useEffect(() => {
     if (isOpen) {
-        setSelectedBudgets(suggestedBudgets);
+      setSelectedBudgets(suggestedBudgets);
     }
   }, [isOpen, suggestedBudgets]);
 
   const handleToggleSelection = (budget: SuggestedBudget) => {
-    setSelectedBudgets(prev => 
-        prev.some(b => b.category === budget.category)
-            ? prev.filter(b => b.category !== budget.category)
-            : [...prev, budget]
+    setSelectedBudgets((prev) =>
+      prev.some((b) => b.category === budget.category)
+        ? prev.filter((b) => b.category !== budget.category)
+        : [...prev, budget]
     );
-  }
+  };
 
   const handleCreateBudgets = async () => {
     if (selectedBudgets.length === 0) {
-        toast({ variant: 'destructive', title: 'Nenhum orçamento selecionado'});
-        return;
+      toast({ variant: "error", title: "Nenhum orçamento selecionado" });
+      return;
     }
 
     try {
-        const creationPromises = selectedBudgets.map(b => 
-            addBudget({
-                name: b.name,
-                category: b.category as TransactionCategory,
-                amount: b.amount,
-                period: 'monthly'
-            })
-        );
-        await Promise.all(creationPromises);
-        toast({ title: `${selectedBudgets.length} orçamentos criados com sucesso!`});
-        setIsOpen(false);
-    } catch(e) {
-        console.error("Error creating budgets in batch", e);
-        toast({ variant: 'destructive', title: 'Erro ao criar orçamentos.'});
+      const creationPromises = selectedBudgets.map((b) =>
+        addBudget({
+          name: b.name,
+          category: b.category as TransactionCategory,
+          amount: b.amount,
+          period: "monthly",
+        })
+      );
+      await Promise.all(creationPromises);
+      toast({
+        title: `${selectedBudgets.length} orçamentos criados com sucesso!`,
+      });
+      setIsOpen(false);
+    } catch (e) {
+      console.error("Error creating budgets in batch", e);
+      toast({ variant: "error", title: "Erro ao criar orçamentos." });
     }
-  }
+  };
+
+  const theme = useTheme();
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Sparkles className="text-primary"/> Orçamentos Sugeridos
-          </DialogTitle>
-          <DialogDescription>
-            A IA analisou seus gastos e sugere os seguintes orçamentos. Selecione quais você quer criar.
-          </DialogDescription>
-        </DialogHeader>
-        
-        <ScrollArea className="max-h-80 my-4">
-          <div className="space-y-3 pr-4">
-             {suggestedBudgets.map((budget, index) => {
-                const isSelected = selectedBudgets.some(b => b.category === budget.category);
-                return (
-                    <div key={index} onClick={() => handleToggleSelection(budget)}
-                      className={cn(
-                        "flex items-center gap-4 p-3 rounded-lg border cursor-pointer transition-colors",
-                        isSelected ? "bg-primary/10 border-primary/50" : "bg-muted/50 hover:bg-muted"
-                      )}
-                    >
-                      {isSelected ? <CheckCircle className="h-5 w-5 text-primary"/> : <Circle className="h-5 w-5 text-muted-foreground"/>}
-                      <div className="flex-1">
-                        <p className="font-semibold">{budget.name}</p>
-                        <p className="text-sm text-muted-foreground">{budget.category}</p>
-                      </div>
-                      <p className="font-bold text-lg">R$ {budget.amount.toFixed(2)}</p>
-                    </div>
-                )
-             })}
-          </div>
-        </ScrollArea>
-       
-        <DialogFooter>
-            <Button variant="ghost" onClick={() => setIsOpen(false)} disabled={isSaving}>Cancelar</Button>
-            <Button onClick={handleCreateBudgets} disabled={isSaving || selectedBudgets.length === 0}>
-                {isSaving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Criar {selectedBudgets.length} Orçamentos
-            </Button>
-        </DialogFooter>
+    <Dialog
+      open={isOpen}
+      onClose={() => setIsOpen(false)}
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogTitle>
+        <Stack direction="row" alignItems="center" spacing={1.5}>
+          <Sparkles
+            style={{
+              width: "1.25rem",
+              height: "1.25rem",
+              color: theme.palette.primary.main,
+            }}
+          />
+          Orçamentos Sugeridos
+        </Stack>
+      </DialogTitle>
+      <DialogContent>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          A IA analisou seus gastos e sugere os seguintes orçamentos. Selecione
+          quais você quer criar.
+        </Typography>
+
+        <Box>
+          <Stack spacing={2}>
+            {suggestedBudgets.map((budget, index) => {
+              const isSelected = selectedBudgets.some(
+                (b) => b.category === budget.category
+              );
+              return (
+                <Stack
+                  key={index}
+                  onClick={() => handleToggleSelection(budget)}
+                  direction="row"
+                  alignItems="center"
+                  spacing={2}
+                  sx={{
+                    p: 2,
+                    borderRadius: 1,
+                    border: 1,
+                    cursor: "pointer",
+                    transition: "all 0.2s",
+                    borderColor: isSelected
+                      ? alpha(theme.palette.primary.main, 0.5)
+                      : "divider",
+                    bgcolor: isSelected
+                      ? alpha(theme.palette.primary.main, 0.05)
+                      : "transparent",
+                    "&:hover": {
+                      bgcolor: isSelected
+                        ? alpha(theme.palette.primary.main, 0.1)
+                        : "action.hover",
+                    },
+                  }}
+                >
+                  {isSelected ? (
+                    <CheckCircle
+                      style={{
+                        width: "1.25rem",
+                        height: "1.25rem",
+                        color: theme.palette.primary.main,
+                      }}
+                    />
+                  ) : (
+                    <Circle
+                      style={{
+                        width: "1.25rem",
+                        height: "1.25rem",
+                        color: theme.palette.text.secondary,
+                      }}
+                    />
+                  )}
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="subtitle2">{budget.name}</Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      {budget.category}
+                    </Typography>
+                  </Box>
+                  <Typography variant="subtitle1" fontWeight="bold">
+                    R$ {budget.amount.toFixed(2)}
+                  </Typography>
+                </Stack>
+              );
+            })}
+          </Stack>
+        </Box>
       </DialogContent>
+      <DialogActions sx={{ p: 3, pt: 0 }}>
+        <Button
+          onClick={() => setIsOpen(false)}
+          disabled={isSaving}
+          color="inherit"
+        >
+          Cancelar
+        </Button>
+        <Button
+          variant="contained"
+          onClick={handleCreateBudgets}
+          disabled={isSaving || selectedBudgets.length === 0}
+          startIcon={
+            isSaving ? <CircularProgress size={16} color="inherit" /> : null
+          }
+        >
+          {isSaving
+            ? "Criando..."
+            : `Criar ${selectedBudgets.length} Orçamentos`}
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 }

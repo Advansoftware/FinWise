@@ -1,31 +1,24 @@
-
+// src/components/transactions/data-table.tsx
 'use client';
 
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  getFilteredRowModel,
-  useReactTable,
-  SortingState,
-  ColumnFiltersState,
-  RowSelectionState,
-} from '@tanstack/react-table';
+import {ColumnDef, flexRender, getCoreRowModel, getPaginationRowModel, getSortedRowModel, getFilteredRowModel, useReactTable, SortingState, ColumnFiltersState, RowSelectionState} from '@tanstack/react-table';
 
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { useState } from 'react';
-import { AnalyzeTransactionsDialog } from './analyze-transactions-dialog';
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableRow, 
+  TableContainer, 
+  Paper,
+  Button,
+  TextField,
+  Box,
+  Stack,
+  Typography
+} from '@mui/material';
+import {useState} from 'react';
+import {AnalyzeTransactionsDialog} from './analyze-transactions-dialog';
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -36,7 +29,9 @@ export function DataTable<TData, TValue>({
   columns,
   data,
 }: DataTableProps<TData, TValue>) {
-    const [sorting, setSorting] = useState<SortingState>([]);
+    const [sorting, setSorting] = useState<SortingState>([
+      { id: 'date', desc: true } // Ordenação inicial por data decrescente
+    ]);
     const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
     const [rowSelection, setRowSelection] = useState({});
 
@@ -65,50 +60,57 @@ export function DataTable<TData, TValue>({
   const selectedRows = table.getFilteredSelectedRowModel().rows.map(row => row.original);
 
   return (
-    <div className="border rounded-lg">
-      <div className="flex items-center justify-between p-4">
-        <Input
+    <Paper variant="outlined" sx={{ width: '100%', overflow: 'hidden' }}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} alignItems="center" justifyContent="space-between" spacing={2} sx={{ p: 2 }}>
+        <TextField
           placeholder="Filtrar por item..."
           value={(table.getColumn("item")?.getFilterValue() as string) ?? ""}
           onChange={(event) =>
             table.getColumn("item")?.setFilterValue(event.target.value)
           }
-          className="max-w-sm"
+          size="small"
+          sx={{ maxWidth: '24rem', width: '100%' }}
         />
         {selectedRows.length > 0 && (
           <AnalyzeTransactionsDialog transactions={selectedRows as any} />
         )}
-      </div>
-      <div className="overflow-x-auto">
-        <Table>
-            <TableHeader>
+      </Stack>
+      <TableContainer sx={{ maxHeight: 600 }}>
+        <Table stickyHeader>
+            <TableHead>
             {table.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
                     return (
-                    <TableHead key={header.id} className="p-2" style={{width: header.getSize() !== 150 ? `${header.getSize()}px` : undefined}}>
+                    <TableCell 
+                        key={header.id} 
+                        sx={{ 
+                            fontWeight: 'bold',
+                            width: header.getSize() !== 150 ? `${header.getSize()}px` : undefined
+                        }}
+                    >
                         {header.isPlaceholder
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
                             header.getContext()
                             )}
-                    </TableHead>
+                    </TableCell>
                     );
                 })}
                 </TableRow>
             ))}
-            </TableHeader>
+            </TableHead>
             <TableBody>
             {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => (
                 <TableRow
                     key={row.id}
-                    data-state={row.getIsSelected() && 'selected'}
-                    className="h-12"
+                    selected={row.getIsSelected()}
+                    hover
                 >
                     {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="p-2">
+                    <TableCell key={cell.id}>
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                     ))}
@@ -116,36 +118,36 @@ export function DataTable<TData, TValue>({
                 ))
             ) : (
                 <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
-                    Nenhum resultado encontrado.
+                <TableCell colSpan={columns.length} align="center" sx={{ py: 6 }}>
+                    <Typography color="text.secondary">Nenhum resultado encontrado.</Typography>
                 </TableCell>
                 </TableRow>
             )}
             </TableBody>
         </Table>
-      </div>
-       <div className="flex items-center justify-end space-x-2 p-2 border-t">
-        <div className="flex-1 text-sm text-muted-foreground px-2">
+      </TableContainer>
+       <Stack direction="row" alignItems="center" justifyContent="flex-end" spacing={2} sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
+        <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
           {table.getFilteredSelectedRowModel().rows.length} de{" "}
           {table.getFilteredRowModel().rows.length} linha(s) selecionadas.
-        </div>
+        </Typography>
         <Button
-          variant="outline"
-          size="sm"
+          variant="outlined"
+          size="small"
           onClick={() => table.previousPage()}
           disabled={!table.getCanPreviousPage()}
         >
           Anterior
         </Button>
         <Button
-          variant="outline"
-          size="sm"
+          variant="outlined"
+          size="small"
           onClick={() => table.nextPage()}
           disabled={!table.getCanNextPage()}
         >
           Próximo
         </Button>
-      </div>
-    </div>
+      </Stack>
+    </Paper>
   );
 }

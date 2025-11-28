@@ -1,10 +1,11 @@
 // src/components/pro-upgrade-card.tsx
 'use client';
 
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@mui/material";
+import { Button } from "@mui/material";
 import { Gem } from "lucide-react";
 import Link from "next/link";
+import {Box, Stack, Typography} from '@mui/material';
 
 interface ProUpgradeCardProps {
     featureName: string;
@@ -12,17 +13,17 @@ interface ProUpgradeCardProps {
 
 export function ProUpgradeCard({ featureName }: ProUpgradeCardProps) {
     return (
-        <Card className="col-span-full">
-            <CardContent className="p-8 text-center text-muted-foreground flex flex-col items-center">
-                <Gem className="h-12 w-12 mb-4 text-primary/50" />
-                <h3 className="text-lg font-semibold text-foreground">
+        <Card sx={{ gridColumn: '1 / -1' }}>
+            <CardContent sx={{ p: 8, textAlign: 'center', color: 'text.secondary', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <Gem style={{ width: '3rem', height: '3rem', marginBottom: '1rem', color: 'rgba(var(--primary-rgb), 0.5)' }} />
+                <Typography variant="h6" component="h3" sx={{ fontSize: '1.125rem', fontWeight: 600, color: 'text.primary' }}>
                     Recurso Exclusivo para Assinantes
-                </h3>
-                <p className="text-sm max-w-md mx-auto mt-2">
+                </Typography>
+                <Typography variant="body2" sx={{ fontSize: '0.875rem', maxWidth: '28rem', mx: 'auto', mt: 2 }}>
                    A funcionalidade de **{featureName}** está disponível apenas em nossos planos de assinatura. Faça o upgrade para desbloquear este e outros recursos inteligentes.
-                </p>
-                <Button className="mt-6" asChild>
-                    <Link href="/billing">Ver Planos</Link>
+                </Typography>
+                <Button component={Link} href="/billing" sx={{ mt: 6 }} variant="contained">
+                    Ver Planos
                 </Button>
             </CardContent>
         </Card>

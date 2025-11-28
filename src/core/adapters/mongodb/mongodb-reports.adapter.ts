@@ -1,7 +1,7 @@
 // src/core/adapters/mongodb/mongodb-reports.adapter.ts
 
-import { Db, ObjectId } from 'mongodb';
-import { IReportsRepository, Report } from '@/core/ports/reports.port';
+import {Db, ObjectId} from 'mongodb';
+import {IReportsRepository, Report} from '@/core/ports/reports.port';
 
 export class MongoReportsRepository implements IReportsRepository {
   constructor(private db: Db) { }

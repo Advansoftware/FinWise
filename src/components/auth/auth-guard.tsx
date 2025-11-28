@@ -1,17 +1,23 @@
 // src/components/auth/auth-guard.tsx
-'use client';
+"use client";
 
-import { useAuth } from '@/hooks/use-auth';
-import { useRouter, usePathname } from 'next/navigation';
-import { useEffect, useState } from 'react';
-import { Loader2 } from 'lucide-react';
-import { Logo } from '../logo';
+import { Box, CircularProgress } from "@mui/material";
+import { useAuth } from "@/hooks/use-auth";
+import { useRouter, usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { Logo } from "../logo";
 
-const PROTECTED_ROOT = '/dashboard';
-const PUBLIC_ROOT = '/';
-const LOGIN_ROOT = '/login';
+const PROTECTED_ROOT = "/dashboard";
+const PUBLIC_ROOT = "/";
+const LOGIN_ROOT = "/login";
 
-export function AuthGuard({ children, isProtected = false }: { children: React.ReactNode, isProtected?: boolean }) {
+export function AuthGuard({
+  children,
+  isProtected = false,
+}: {
+  children: React.ReactNode;
+  isProtected?: boolean;
+}) {
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -22,7 +28,8 @@ export function AuthGuard({ children, isProtected = false }: { children: React.R
       return; // Still waiting for auth state to resolve.
     }
 
-    const isAuthRoute = pathname.startsWith(LOGIN_ROOT) || pathname.startsWith('/signup');
+    const isAuthRoute =
+      pathname.startsWith(LOGIN_ROOT) || pathname.startsWith("/signup");
 
     // User is not logged in
     if (!user) {
@@ -38,7 +45,7 @@ export function AuthGuard({ children, isProtected = false }: { children: React.R
 
     // User is logged in
     if (user) {
-       // If on an auth page (login/signup) or the landing page, redirect to the main dashboard.
+      // If on an auth page (login/signup) or the landing page, redirect to the main dashboard.
       if (isAuthRoute || pathname === PUBLIC_ROOT) {
         router.replace(PROTECTED_ROOT);
       } else {
@@ -50,10 +57,25 @@ export function AuthGuard({ children, isProtected = false }: { children: React.R
 
   if (isChecking) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center gap-4">
-        <Logo className="h-12 w-12 animate-pulse" />
-        <Loader2 className="h-6 w-6 animate-spin" />
-      </div>
+      <Box
+        sx={{
+          display: "flex",
+          height: "100vh",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          gap: 4,
+        }}
+      >
+        <Logo
+          sx={{
+            height: "3rem",
+            width: "3rem",
+            animation: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
+          }}
+        />
+        <CircularProgress size={24} />
+      </Box>
     );
   }
 

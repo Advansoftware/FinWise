@@ -5,13 +5,9 @@
  *
  * - suggestBudgetAmount - A function that handles the budget suggestion process.
  */
-import { AICredential } from '@/lib/types';
-import { createConfiguredAI, getModelReference } from '../genkit';
-import {
-  SuggestBudgetInput,
-  SuggestBudgetInputSchema,
-  SuggestBudgetOutputSchema
-} from '../ai-types';
+import {AICredential} from '@/lib/types';
+import {createConfiguredAI, getModelReference} from '../genkit';
+import {SuggestBudgetInput, SuggestBudgetInputSchema, SuggestBudgetOutputSchema} from '../ai-types';
 
 
 const promptTemplate = `You are a pragmatic financial advisor. Your goal is to suggest a reasonable monthly budget for a specific category based on the user's spending history from the previous month.

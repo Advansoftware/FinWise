@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   app:
     container_name: gastometria-app
@@ -17,6 +15,12 @@ services:
       - MONGODB_DB=gastometria
       - NEXT_PUBLIC_DATABASE_TYPE=mongodb
       - NEXT_PUBLIC_AUTH_PROVIDER=mongodb
+      - NEXT_PUBLIC_APP_URL=https://gastometria.com.br
+      - NEXTAUTH_SECRET=C6CsLT3XoqMGNi4TP88Kv5Dfdi404QUdGMCqHnPd1Kc=
+      - NEXTAUTH_URL=https://gastometria.com.br
+      - VAPID_PUBLIC_KEY=BL9EK6RYOWMt-x-5FZ8nDcUYflb2r8gzDOhCbdoLPl3j_oTJiNILHdtCbL_mc1apgI5fZTC8af_LUWoYqEHyYyc
+      - VAPID_PRIVATE_KEY=nGgzIj89nG5i3-P3GsoC2iYWVT3U4tArXVWBuZDLc60
+      - AUTH_TRUST_HOST=true
 
   mongo:
     container_name: gastometria-mongo

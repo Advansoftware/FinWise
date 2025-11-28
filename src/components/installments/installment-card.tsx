@@ -1,83 +1,145 @@
 // src/components/installments/installment-card.tsx
 
-import { useState } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
-import { 
-  CreditCard, 
-  Calendar, 
-  DollarSign, 
+import { useState } from "react";
+import {
+  Box,
+  Stack,
+  Typography,
+  Grid,
+  useTheme,
+  alpha,
+  IconButton,
+  Menu,
+  MenuItem,
+  Card,
+  CardContent,
+  CardHeader,
+  Chip,
+  LinearProgress,
+  Button,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogActions,
+  DialogContentText,
+} from "@mui/material";
+import {
+  CreditCard,
+  Calendar,
+  DollarSign,
   MoreVertical,
   CheckCircle2,
   Clock,
   AlertTriangle,
   Edit3,
-  Trash2
-} from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import { Installment } from '@/core/ports/installments.port';
-import { formatCurrency } from '@/lib/utils';
-import { format, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { useInstallments } from '@/hooks/use-installments';
-import { PayInstallmentDialog } from './pay-installment-dialog';
-import { EditInstallmentDialog } from './edit-installment-dialog';
-import { MarkAsPaidDialog } from './mark-as-paid-dialog';
+  Trash2,
+  Smartphone,
+} from "lucide-react";
+import { Installment } from "@/core/ports/installments.port";
+import { formatCurrency } from "@/lib/utils";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { useInstallments } from "@/hooks/use-installments";
+import { PayInstallmentDialog } from "./pay-installment-dialog";
+import { EditInstallmentDialog } from "./edit-installment-dialog";
+import { MarkAsPaidDialog } from "./mark-as-paid-dialog";
+import { PaymentButton } from "@/components/bank-payment";
 
 interface InstallmentCardProps {
   installment: Installment;
   showActions?: boolean;
 }
 
-export function InstallmentCard({ installment, showActions = true }: InstallmentCardProps) {
+export function InstallmentCard({
+  installment,
+  showActions = true,
+}: InstallmentCardProps) {
   const [isPayDialogOpen, setIsPayDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isMarkAsPaidOpen, setIsMarkAsPaidOpen] = useState(false);
   const { deleteInstallment } = useInstallments();
+  const [editingInstallment, setEditingInstallment] =
+    useState<Installment | null>(null);
+  const theme = useTheme();
 
-  const progressPercentage = (installment.paidInstallments / installment.totalInstallments) * 100;
-  
-  // Buscar próximo pagamento (incluindo em atraso)
+  // Menu state
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const openMenu = Boolean(anchorEl);
+  const handleMenuClick = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const progressPercentage =
+    (installment.paidInstallments / installment.totalInstallments) * 100;
+
   const nextPayment = installment.payments
-    .filter(p => p.status === 'pending' || p.status === 'overdue')
-    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())[0];
+    .filter((p) => p.status === "pending" || p.status === "overdue")
+    .sort(
+      (a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+    )[0];
 
-  // Contar parcelas em atraso
-  const overduePayments = installment.payments.filter(p => p.status === 'overdue');
-  const overdueCount = overduePayments.length;
+  const overdueCount = installment.payments.filter(
+    (p) => p.status === "overdue"
+  ).length;
 
   const getStatusBadge = () => {
     if (installment.isCompleted) {
-      return <Badge variant="default" className="bg-green-500"><CheckCircle2 className="w-3 h-3 mr-1" />Concluído</Badge>;
+      return (
+        <Chip
+          label="Concluído"
+          size="small"
+          icon={
+            <CheckCircle2 style={{ width: "0.75rem", height: "0.75rem" }} />
+          }
+          sx={{
+            bgcolor: "success.lighter",
+            color: "success.main",
+            fontWeight: "bold",
+            "& .MuiChip-icon": { color: "success.main" },
+          }}
+        />
+      );
     }
-    
+
     if (overdueCount > 0) {
-      return <Badge variant="destructive"><AlertTriangle className="w-3 h-3 mr-1" />{overdueCount} Em Atraso</Badge>;
+      return (
+        <Chip
+          label={`${overdueCount} Em Atraso`}
+          size="small"
+          icon={
+            <AlertTriangle style={{ width: "0.75rem", height: "0.75rem" }} />
+          }
+          sx={{
+            bgcolor: "error.lighter",
+            color: "error.main",
+            fontWeight: "bold",
+            "& .MuiChip-icon": { color: "error.main" },
+          }}
+        />
+      );
     }
-    
+
     if (nextPayment) {
-      return <Badge variant="secondary"><Clock className="w-3 h-3 mr-1" />Em Andamento</Badge>;
+      return (
+        <Chip
+          label="Em Andamento"
+          size="small"
+          icon={<Clock style={{ width: "0.75rem", height: "0.75rem" }} />}
+          sx={{
+            bgcolor: "info.lighter",
+            color: "info.main",
+            fontWeight: "bold",
+            "& .MuiChip-icon": { color: "info.main" },
+          }}
+        />
+      );
     }
-    
-    return <Badge variant="outline">Sem Parcelas</Badge>;
+
+    return <Chip label="Sem Parcelas" variant="outlined" size="small" />;
   };
 
   const handleDelete = async () => {
@@ -85,166 +147,402 @@ export function InstallmentCard({ installment, showActions = true }: Installment
     setIsDeleteDialogOpen(false);
   };
 
+  const handleEditClick = () => {
+    setEditingInstallment(installment);
+    setIsEditDialogOpen(true);
+  };
+
   return (
     <>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-base font-semibold line-clamp-1">
-            {installment.name}
-          </CardTitle>
-          <div className="flex items-center gap-2">
-            {getStatusBadge()}
-            {showActions && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" className="h-8 w-8 p-0">
-                    <MoreVertical className="h-4 w-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  {!installment.isCompleted && nextPayment && (
-                    <DropdownMenuItem onClick={() => setIsPayDialogOpen(true)}>
-                      Registrar Pagamento
-                    </DropdownMenuItem>
-                  )}
-                  <DropdownMenuItem onClick={() => setIsEditDialogOpen(true)}>
-                    <Edit3 className="h-4 w-4 mr-2" />
-                    Editar
-                  </DropdownMenuItem>
-                  <DropdownMenuItem 
-                    onClick={() => setIsDeleteDialogOpen(true)} 
-                    className="text-destructive focus:text-destructive"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Excluir
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            )}
-          </div>
-        </CardHeader>
-        
-        <CardContent className="space-y-4">
-          {installment.description && (
-            <p className="text-sm text-muted-foreground line-clamp-2">
-              {installment.description}
-            </p>
-          )}
-          
-          {/* Progress */}
-          <div className="space-y-2">
-            <div className="flex justify-between text-sm">
-              <span>Progresso</span>
-              <span>{installment.paidInstallments}/{installment.totalInstallments} parcelas</span>
-            </div>
-            <Progress value={progressPercentage} className="h-2" />
-          </div>
-          
-          {/* Financial Info */}
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <p className="text-xs text-muted-foreground">Valor Total</p>
-              <p className="font-semibold">{formatCurrency(installment.totalAmount)}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Valor da Parcela</p>
-              <p className="font-semibold">{formatCurrency(installment.installmentAmount)}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Total Pago</p>
-              <p className="font-semibold text-green-600">{formatCurrency(installment.totalPaid)}</p>
-            </div>
-            <div>
-              <p className="text-xs text-muted-foreground">Restante</p>
-              <p className="font-semibold text-orange-600">{formatCurrency(installment.remainingAmount)}</p>
-            </div>
-          </div>
-          
-          {/* Next Payment */}
-          {nextPayment && !installment.isCompleted && (
-            <div className={`border-t pt-4 ${nextPayment.status === 'overdue' ? 'bg-destructive/5 dark:bg-destructive/5 border-destructive/20 dark:border-destructive/20 -mx-6 -mb-6 px-6 pb-6 rounded-b-lg' : ''}`}>
-              {/* Alerta de atraso */}
-              {nextPayment.status === 'overdue' && (
-                <div className="flex items-center gap-2 mb-3 text-destructive dark:text-destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <span className="text-sm font-medium">Parcela em atraso!</span>
-                </div>
-              )}
-              
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs text-muted-foreground">
-                    {nextPayment.status === 'overdue' ? 'Venceu em' : 'Próximo Vencimento'}
-                  </p>
-                  <p className={`font-semibold ${nextPayment.status === 'overdue' ? 'text-foreground dark:text-foreground' : ''}`}>
-                    {format(parseISO(nextPayment.dueDate), 'dd/MM/yyyy', { locale: ptBR })}
-                  </p>
-                  {nextPayment.status === 'overdue' && (
-                    <p className="text-xs text-muted-foreground dark:text-muted-foreground mt-1">
-                      {Math.floor((new Date().getTime() - parseISO(nextPayment.dueDate).getTime()) / (1000 * 60 * 60 * 24))} dias de atraso
-                    </p>
-                  )}
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-muted-foreground">Parcela {nextPayment.installmentNumber}</p>
-                  <p className={`font-semibold ${nextPayment.status === 'overdue' ? 'text-foreground dark:text-foreground' : ''}`}>
-                    {formatCurrency(nextPayment.scheduledAmount)}
-                  </p>
-                </div>
-              </div>
-              
-              {/* Alertas adicionais para atraso */}
-              {overdueCount > 1 && (
-                <div className="mt-3 p-2 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/50 rounded-md">
-                  <p className="text-sm text-amber-800 dark:text-amber-300">
-                    <AlertTriangle className="h-4 w-4 inline mr-1" />
-                    Você tem <strong>{overdueCount} parcelas em atraso</strong>
-                  </p>
-                </div>
-              )}
-              
-              {showActions && (
-                <div className="space-y-2 mt-3">
-                  <Button 
-                    onClick={() => setIsPayDialogOpen(true)}
-                    className={`w-full ${nextPayment.status === 'overdue' ? 'bg-destructive hover:bg-destructive/90 dark:bg-destructive dark:hover:bg-destructive/90' : ''}`}
-                    size="sm"
-                  >
-                    <DollarSign className="h-4 w-4 mr-2" />
-                    {nextPayment.status === 'overdue' ? 'Pagar Atraso' : 'Registrar Pagamento'}
-                  </Button>
-                  
-                  {/* Mostrar botão "Marcar como Pago" apenas para parcelas em atraso */}
-                  {nextPayment.status === 'overdue' && (
-                    <Button 
-                      onClick={() => setIsMarkAsPaidOpen(true)}
-                      variant="outline"
-                      className="w-full"
-                      size="sm"
+      <Card sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
+        <CardHeader
+          title={
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                width: "100%",
+              }}
+            >
+              <Typography
+                variant="subtitle1"
+                fontWeight="bold"
+                noWrap
+                sx={{ maxWidth: "60%" }}
+              >
+                {installment.name}
+              </Typography>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                {getStatusBadge()}
+                {showActions && (
+                  <>
+                    <IconButton
+                      size="small"
+                      onClick={handleMenuClick}
+                      aria-controls={openMenu ? "installment-menu" : undefined}
+                      aria-haspopup="true"
+                      aria-expanded={openMenu ? "true" : undefined}
                     >
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                      <MoreVertical style={{ width: "1rem", height: "1rem" }} />
+                    </IconButton>
+                    <Menu
+                      id="installment-menu"
+                      anchorEl={anchorEl}
+                      open={openMenu}
+                      onClose={handleMenuClose}
+                      MenuListProps={{
+                        "aria-labelledby": "basic-button",
+                      }}
+                      transformOrigin={{ horizontal: "right", vertical: "top" }}
+                      anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
+                    >
+                      {!installment.isCompleted && nextPayment && (
+                        <MenuItem
+                          onClick={() => {
+                            setIsPayDialogOpen(true);
+                            handleMenuClose();
+                          }}
+                        >
+                          <DollarSign
+                            style={{
+                              width: "1rem",
+                              height: "1rem",
+                              marginRight: "0.5rem",
+                            }}
+                          />
+                          Registrar Pagamento
+                        </MenuItem>
+                      )}
+                      <MenuItem
+                        onClick={() => {
+                          handleEditClick();
+                          handleMenuClose();
+                        }}
+                      >
+                        <Edit3
+                          style={{
+                            width: "1rem",
+                            height: "1rem",
+                            marginRight: "0.5rem",
+                          }}
+                        />
+                        Editar
+                      </MenuItem>
+                      <MenuItem
+                        onClick={() => {
+                          setIsDeleteDialogOpen(true);
+                          handleMenuClose();
+                        }}
+                        sx={{ color: "error.main" }}
+                      >
+                        <Trash2
+                          style={{
+                            width: "1rem",
+                            height: "1rem",
+                            marginRight: "0.5rem",
+                          }}
+                        />
+                        Excluir
+                      </MenuItem>
+                    </Menu>
+                  </>
+                )}
+              </Box>
+            </Box>
+          }
+          sx={{ pb: 1 }}
+        />
+
+        <CardContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {installment.description && (
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
+            >
+              {installment.description}
+            </Typography>
+          )}
+
+          <Stack spacing={1}>
+            <Box
+              sx={{
+                display: "flex",
+                justifyContent: "space-between",
+                fontSize: "0.875rem",
+              }}
+            >
+              <Typography variant="body2">Progresso</Typography>
+              <Typography variant="body2">
+                {installment.paidInstallments}/{installment.totalInstallments}{" "}
+                parcelas
+              </Typography>
+            </Box>
+            <LinearProgress
+              variant="determinate"
+              value={progressPercentage}
+              sx={{ height: 8, borderRadius: 4 }}
+            />
+          </Stack>
+
+          <Grid container spacing={2}>
+            <Grid size={6}>
+              <Typography variant="caption" color="text.secondary">
+                Valor Total
+              </Typography>
+              <Typography variant="body2" fontWeight="semibold">
+                {formatCurrency(installment.totalAmount)}
+              </Typography>
+            </Grid>
+            <Grid size={6}>
+              <Typography variant="caption" color="text.secondary">
+                Valor da Parcela
+              </Typography>
+              <Typography variant="body2" fontWeight="semibold">
+                {formatCurrency(installment.installmentAmount)}
+              </Typography>
+            </Grid>
+            <Grid size={6}>
+              <Typography variant="caption" color="text.secondary">
+                Total Pago
+              </Typography>
+              <Typography
+                variant="body2"
+                fontWeight="semibold"
+                color="success.main"
+              >
+                {formatCurrency(installment.totalPaid)}
+              </Typography>
+            </Grid>
+            <Grid size={6}>
+              <Typography variant="caption" color="text.secondary">
+                Restante
+              </Typography>
+              <Typography
+                variant="body2"
+                fontWeight="semibold"
+                color="warning.main"
+              >
+                {formatCurrency(installment.remainingAmount)}
+              </Typography>
+            </Grid>
+          </Grid>
+
+          {nextPayment && !installment.isCompleted && (
+            <Box
+              sx={{
+                borderTop: 1,
+                borderColor: "divider",
+                pt: 2,
+                mt: 1,
+                bgcolor:
+                  nextPayment.status === "overdue"
+                    ? alpha(theme.palette.error.main, 0.05)
+                    : "transparent",
+                borderBottomLeftRadius: 1,
+                borderBottomRightRadius: 1,
+                mx: -3,
+                mb: -3,
+                px: 3,
+                pb: 3,
+              }}
+            >
+              {nextPayment.status === "overdue" && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 1,
+                    mb: 1.5,
+                    color: "error.main",
+                  }}
+                >
+                  <AlertTriangle style={{ width: "1rem", height: "1rem" }} />
+                  <Typography variant="body2" fontWeight="medium">
+                    Parcela em atraso!
+                  </Typography>
+                </Box>
+              )}
+
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Box>
+                  <Typography variant="caption" color="text.secondary">
+                    {nextPayment.status === "overdue"
+                      ? "Venceu em"
+                      : "Próximo Vencimento"}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    fontWeight="semibold"
+                    color={
+                      nextPayment.status === "overdue"
+                        ? "text.primary"
+                        : "inherit"
+                    }
+                  >
+                    {format(parseISO(nextPayment.dueDate), "dd/MM/yyyy", {
+                      locale: ptBR,
+                    })}
+                  </Typography>
+                  {nextPayment.status === "overdue" && (
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      sx={{ display: "block", mt: 0.5 }}
+                    >
+                      {Math.floor(
+                        (new Date().getTime() -
+                          parseISO(nextPayment.dueDate).getTime()) /
+                          (1000 * 60 * 60 * 24)
+                      )}{" "}
+                      dias de atraso
+                    </Typography>
+                  )}
+                </Box>
+                <Box sx={{ textAlign: "right" }}>
+                  <Typography variant="caption" color="text.secondary">
+                    Parcela {nextPayment.installmentNumber}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    fontWeight="semibold"
+                    color={
+                      nextPayment.status === "overdue"
+                        ? "text.primary"
+                        : "inherit"
+                    }
+                  >
+                    {formatCurrency(nextPayment.scheduledAmount)}
+                  </Typography>
+                </Box>
+              </Box>
+
+              {overdueCount > 1 && (
+                <Box
+                  sx={{
+                    mt: 1.5,
+                    p: 1,
+                    bgcolor: alpha(theme.palette.warning.main, 0.1),
+                    border: 1,
+                    borderColor: alpha(theme.palette.warning.main, 0.2),
+                    borderRadius: 1,
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    color="warning.dark"
+                    sx={{ display: "flex", alignItems: "center" }}
+                  >
+                    <AlertTriangle
+                      style={{
+                        width: "1rem",
+                        height: "1rem",
+                        marginRight: "0.25rem",
+                      }}
+                    />
+                    Você tem{" "}
+                    <Box component="span" fontWeight="bold" sx={{ mx: 0.5 }}>
+                      {overdueCount} parcelas em atraso
+                    </Box>
+                  </Typography>
+                </Box>
+              )}
+
+              {showActions && (
+                <Stack spacing={1} sx={{ mt: 2 }}>
+                  <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
+                    <Button
+                      onClick={() => setIsPayDialogOpen(true)}
+                      variant="contained"
+                      color={
+                        nextPayment.status === "overdue" ? "error" : "primary"
+                      }
+                      size="small"
+                      sx={{ flex: { sm: 1 } }}
+                      fullWidth
+                    >
+                      <DollarSign
+                        style={{
+                          width: "1rem",
+                          height: "1rem",
+                          marginRight: "0.5rem",
+                        }}
+                      />
+                      Registrar
+                    </Button>
+
+                    <PaymentButton
+                      amount={nextPayment.scheduledAmount}
+                      description={`${installment.name} - Parcela ${nextPayment.installmentNumber}/${installment.totalInstallments}`}
+                      receiverName={
+                        installment.establishment || installment.name
+                      }
+                      installmentId={installment.id}
+                      bank="nubank"
+                      variant="contained"
+                      size="small"
+                      fullWidth
+                    />
+                  </Stack>
+
+                  {nextPayment.status === "overdue" && (
+                    <Button
+                      onClick={() => setIsMarkAsPaidOpen(true)}
+                      variant="outlined"
+                      size="small"
+                      fullWidth
+                    >
+                      <CheckCircle2
+                        style={{
+                          width: "1rem",
+                          height: "1rem",
+                          marginRight: "0.5rem",
+                        }}
+                      />
                       Marcar como Pago
                     </Button>
                   )}
-                </div>
+                </Stack>
               )}
-            </div>
+            </Box>
           )}
-          
-          {/* Category and Establishment */}
-          <div className="flex flex-wrap gap-2 text-xs">
-            <Badge variant="outline">{installment.category}</Badge>
+
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+            <Chip
+              label={installment.category}
+              size="small"
+              variant="outlined"
+            />
             {installment.subcategory && (
-              <Badge variant="outline">{installment.subcategory}</Badge>
+              <Chip
+                label={installment.subcategory}
+                size="small"
+                variant="outlined"
+              />
             )}
             {installment.establishment && (
-              <Badge variant="outline">{installment.establishment}</Badge>
+              <Chip
+                label={installment.establishment}
+                size="small"
+                variant="outlined"
+              />
             )}
-          </div>
+          </Box>
         </CardContent>
       </Card>
 
-      {/* Pay Dialog */}
       <PayInstallmentDialog
         installment={installment}
         payment={nextPayment}
@@ -252,14 +550,12 @@ export function InstallmentCard({ installment, showActions = true }: Installment
         onOpenChange={setIsPayDialogOpen}
       />
 
-      {/* Edit Dialog */}
       <EditInstallmentDialog
-        installment={installment}
+        installment={editingInstallment}
         open={isEditDialogOpen}
         onOpenChange={setIsEditDialogOpen}
       />
 
-      {/* Mark as Paid Dialog */}
       <MarkAsPaidDialog
         installment={installment}
         payment={nextPayment}
@@ -267,28 +563,35 @@ export function InstallmentCard({ installment, showActions = true }: Installment
         onOpenChange={setIsMarkAsPaidOpen}
       />
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir o parcelamento "{installment.name}"? 
-              Esta ação não pode ser desfeita e todas as informações de pagamento serão perdidas.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={handleDelete}
-              className="bg-destructive hover:bg-destructive/90 dark:bg-destructive dark:hover:bg-destructive/90"
-            >
-              <Trash2 className="h-4 w-4 mr-2" />
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      <Dialog
+        open={isDeleteDialogOpen}
+        onClose={() => setIsDeleteDialogOpen(false)}
+      >
+        <DialogTitle>Confirmar Exclusão</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Tem certeza que deseja excluir o parcelamento "{installment.name}"?
+            Esta ação não pode ser desfeita e todas as informações de pagamento
+            serão perdidas.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            variant="outlined"
+            onClick={() => setIsDeleteDialogOpen(false)}
+          >
+            Cancelar
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={handleDelete}
+            startIcon={<Trash2 style={{ width: "1rem", height: "1rem" }} />}
+          >
+            Excluir
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }

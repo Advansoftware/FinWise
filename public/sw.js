@@ -1,7 +1,7 @@
 // Gastometria PWA Service Worker
-const CACHE_NAME = 'gastometria-cache-v2';
-const RUNTIME_CACHE = 'gastometria-runtime-v2';
-const DATA_CACHE = 'gastometria-data-v2';
+const CACHE_NAME = 'gastometria-cache-v3';
+const RUNTIME_CACHE = 'gastometria-runtime-v3';
+const DATA_CACHE = 'gastometria-data-v3';
 
 // Recursos essenciais para cache
 const urlsToCache = [
@@ -152,46 +152,128 @@ self.addEventListener('sync', event => {
   }
 });
 
-// Push notifications (para futuras implementações)
+// Push notifications para pagamentos e outras atualizações
 self.addEventListener('push', event => {
   console.log('[SW] Push Received.');
 
-  const options = {
-    body: event.data ? event.data.text() : 'Nova atualização disponível!',
+  let data = {
+    title: 'Gastometria',
+    body: 'Nova atualização disponível!',
+    type: 'general',
+    url: '/dashboard'
+  };
+
+  // Tentar parsear os dados da notificação
+  if (event.data) {
+    try {
+      const payload = event.data.json();
+      data = { ...data, ...payload };
+    } catch (e) {
+      data.body = event.data.text();
+    }
+  }
+
+  // Configurar opções com base no tipo de notificação
+  let options = {
+    body: data.body,
     icon: '/icons/icon-192x192.png',
     badge: '/icons/icon-192x192.png',
-    vibrate: [100, 50, 100],
+    vibrate: [200, 100, 200, 100, 200],
+    tag: data.type === 'payment_request' ? `payment-${data.paymentRequestId}` : 'general',
+    renotify: true,
+    requireInteraction: data.type === 'payment_request',
     data: {
+      ...data,
       dateOfArrival: Date.now(),
-      primaryKey: '1'
     },
-    actions: [
+    actions: []
+  };
+
+  // Ações específicas para solicitação de pagamento
+  if (data.type === 'payment_request') {
+    options.actions = [
+      {
+        action: 'pay',
+        title: '💳 Pagar Agora',
+      },
+      {
+        action: 'later',
+        title: '⏰ Depois',
+      }
+    ];
+    options.body = data.body || `Pagamento de R$ ${data.amount?.toFixed(2)} para ${data.receiverName}`;
+  } else {
+    options.actions = [
       {
         action: 'explore',
         title: 'Ver detalhes',
-        icon: '/icons/icon-192x192.png'
       },
       {
         action: 'close',
         title: 'Fechar',
-        icon: '/icons/icon-192x192.png'
       }
-    ]
-  };
+    ];
+  }
 
   event.waitUntil(
-    self.registration.showNotification('Gastometria', options)
+    self.registration.showNotification(data.title || 'Gastometria', options)
   );
 });
 
 // Manipular cliques em notificações
 self.addEventListener('notificationclick', event => {
-  console.log('[SW] Notification click Received.');
+  console.log('[SW] Notification click Received:', event.action);
 
   event.notification.close();
 
-  if (event.action === 'explore') {
-    event.waitUntil(clients.openWindow('/dashboard'));
+  const data = event.notification.data || {};
+
+  // Se for uma notificação de pagamento
+  if (data.type === 'payment_request') {
+    if (event.action === 'pay') {
+      // Abrir página de confirmação de pagamento
+      const url = `/confirmar?id=${data.paymentRequestId}`;
+      event.waitUntil(
+        clients.matchAll({ type: 'window', includeUncontrolled: true })
+          .then(clientList => {
+            // Verificar se já existe uma janela aberta
+            for (const client of clientList) {
+              if (client.url.includes('/confirmar') && 'focus' in client) {
+                return client.focus().then(c => c.navigate(url));
+              }
+              if ('focus' in client) {
+                return client.focus().then(c => c.navigate(url));
+              }
+            }
+            // Abrir nova janela
+            return clients.openWindow(url);
+          })
+      );
+    } else if (event.action === 'later') {
+      // Apenas fechar, o usuário pode ver depois no app
+      console.log('[SW] Payment deferred');
+    } else {
+      // Clique no corpo da notificação - abrir página de confirmação
+      const url = `/confirmar?id=${data.paymentRequestId}`;
+      event.waitUntil(clients.openWindow(url));
+    }
+    return;
+  }
+
+  // Notificações gerais
+  if (event.action === 'explore' || !event.action) {
+    const url = data.url || '/dashboard';
+    event.waitUntil(
+      clients.matchAll({ type: 'window', includeUncontrolled: true })
+        .then(clientList => {
+          for (const client of clientList) {
+            if ('focus' in client) {
+              return client.focus().then(c => c.navigate(url));
+            }
+          }
+          return clients.openWindow(url);
+        })
+    );
   }
 });
 

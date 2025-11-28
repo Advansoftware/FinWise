@@ -1,48 +1,78 @@
-
-'use client';
+"use client";
 
 import { usePlan } from "@/hooks/use-plan";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Lock, Gem } from "lucide-react";
+import { Tooltip, Box, alpha, useTheme, ButtonBase } from "@mui/material";
+import { Gem } from "lucide-react";
 import Link from "next/link";
-import { Button } from "./ui/button";
-import { cn } from "@/lib/utils";
 
 interface ProUpgradeButtonProps {
-    children: React.ReactNode;
-    requiredPlan: 'Pro' | 'Plus';
-    tooltipContent?: string;
-    className?: string;
+  children: React.ReactNode;
+  requiredPlan: "Pro" | "Plus";
+  tooltipContent?: string;
 }
 
-export function ProUpgradeButton({ children, requiredPlan, tooltipContent, className }: ProUpgradeButtonProps) {
-    const { plan, isLoading } = usePlan();
-    
-    const planHierarchy = { 'Básico': 0, 'Pro': 1, 'Plus': 2, 'Infinity': 3 };
+export function ProUpgradeButton({
+  children,
+  requiredPlan,
+  tooltipContent,
+}: ProUpgradeButtonProps) {
+  const { plan, isLoading } = usePlan();
+  const theme = useTheme();
 
-    const hasAccess = !isLoading && planHierarchy[plan] >= planHierarchy[requiredPlan];
+  const planHierarchy: Record<string, number> = {
+    Básico: 0,
+    Pro: 1,
+    Plus: 2,
+    Infinity: 3,
+  };
 
-    if (hasAccess) {
-        return <>{children}</>;
-    }
+  const hasAccess =
+    !isLoading && planHierarchy[plan] >= planHierarchy[requiredPlan];
 
-    const defaultTooltip = `Este é um recurso do plano ${requiredPlan}. Clique para fazer upgrade.`;
+  if (hasAccess) {
+    return <>{children}</>;
+  }
 
-    return (
-        <Tooltip>
-            <TooltipTrigger asChild>
-                <div className={cn("relative w-full", className)}>
-                    {children}
-                    <div className="absolute inset-0 bg-background/60 backdrop-blur-sm flex items-center justify-center rounded-md cursor-pointer group">
-                        <Link href="/billing" className="w-full h-full flex items-center justify-center">
-                           <Gem className="h-5 w-5 text-primary opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all"/>
-                        </Link>
-                    </div>
-                </div>
-            </TooltipTrigger>
-            <TooltipContent>
-                <p>{tooltipContent || defaultTooltip}</p>
-            </TooltipContent>
-        </Tooltip>
-    );
+  const defaultTooltip = `Este é um recurso do plano ${requiredPlan}. Clique para fazer upgrade.`;
+
+  return (
+    <Tooltip title={tooltipContent || defaultTooltip} arrow>
+      <Box sx={{ position: "relative", width: "100%" }}>
+        {children}
+        <ButtonBase
+          component={Link}
+          href="/billing"
+          sx={{
+            position: "absolute",
+            inset: 0,
+            bgcolor: alpha(theme.palette.background.default, 0.7),
+            backdropFilter: "blur(4px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: 1,
+            cursor: "pointer",
+            transition: "all 0.2s ease",
+            "&:hover": {
+              bgcolor: alpha(theme.palette.background.default, 0.8),
+              "& .gem-icon": {
+                opacity: 1,
+                transform: "scale(1.15)",
+              },
+            },
+          }}
+        >
+          <Gem
+            className="gem-icon"
+            size={20}
+            style={{
+              color: theme.palette.primary.main,
+              opacity: 0.8,
+              transition: "all 0.2s ease",
+            }}
+          />
+        </ButtonBase>
+      </Box>
+    </Tooltip>
+  );
 }

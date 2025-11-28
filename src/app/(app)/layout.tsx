@@ -1,123 +1,71 @@
+"use client";
 
-
-'use client';
-
-import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
-import { UserNav } from "../user-nav";
-import { Logo } from "@/components/logo";
-import { AppNav } from "../app-nav";
+import { Box } from "@mui/material";
 import { PWAUpdater } from "@/components/pwa-updater";
 import { ChatAssistant } from "@/components/chat/chat-assistant";
 import { TransactionsProvider } from "@/hooks/use-transactions";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { AuthGuard } from "@/components/auth/auth-guard";
 import { BudgetsProvider } from "@/hooks/use-budgets";
 import { GoalsProvider } from "@/hooks/use-goals";
-import { WalletsProvider, useWallets } from "@/hooks/use-wallets";
+import { WalletsProvider } from "@/hooks/use-wallets";
 import { ReportsProvider } from "@/hooks/use-reports";
 import { InstallmentsProvider } from "@/hooks/use-installments";
 import { PlanProvider } from "@/hooks/use-plan";
 import { CreditsProvider } from "@/hooks/use-credits";
 import { GoalCompletionCelebration } from "@/components/goals/goal-celebration";
+import { OnlineStatusIndicator } from "@/components/online-status-indicator";
 import { useGoals } from "@/hooks/use-goals";
-import { AICreditIndicator } from "@/components/credits/ai-credit-indicator";
-import { useIsMobile } from "@/hooks/use-mobile";
+import { GamificationProvider } from "@/hooks/use-gamification";
+import { BankPaymentProvider } from "@/hooks/use-bank-payment";
+import { PaymentConfirmationProvider } from "@/components/bank-payment/payment-confirmation-provider";
+import { GamificationGlobalUI } from "@/components/gamification";
+import { ResponsiveLayout } from "@/components/layout";
 
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const { completedGoal, clearCompletedGoal } = useGoals();
-  const isMobile = useIsMobile();
 
   return (
-    <SidebarProvider defaultOpen={!isMobile}>
-       {completedGoal && <GoalCompletionCelebration goal={completedGoal} onComplete={clearCompletedGoal} />}
-      <div className="flex min-h-screen">
-          {/* Sidebar - Hidden on mobile by default */}
-          <Sidebar className="flex flex-col border-r fixed h-screen z-40 md:fixed md:inset-y-0 md:z-40">
-              <SidebarHeader className="border-b p-4">
-                  <div className="flex items-center gap-3 group-data-[state=collapsed]:justify-center">
-                      <Logo className="w-8 h-8 shrink-0"/>
-                      <span className="text-lg font-semibold group-data-[state=collapsed]:hidden">
-                        Gastometria
-                      </span>
-                  </div>
-              </SidebarHeader>
-              <SidebarContent className="flex-1 overflow-hidden">
-                <div className="h-full px-3 py-4 overflow-y-auto">
-                    <AppNav />
-                </div>
-              </SidebarContent>
-              <SidebarFooter className="border-t p-4">
-                  <UserNav />
-              </SidebarFooter>
-          </Sidebar>
+    <>
+      {/* Componentes globais */}
+      <GamificationGlobalUI />
+      {completedGoal && (
+        <GoalCompletionCelebration
+          goal={completedGoal}
+          onComplete={clearCompletedGoal}
+        />
+      )}
+      <OnlineStatusIndicator />
 
-          {/* Main Content */}
-          <main className="flex-1 flex flex-col min-w-0 md:ml-[var(--sidebar-width)]">
-              {/* Mobile Header */}
-              <header className="sticky top-0 z-40 flex h-14 items-center gap-4 border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 px-4 lg:hidden">
-                  <div className="flex items-center gap-3">
-                      <SidebarTrigger className="shrink-0" />
-                      <Logo className="w-8 h-8 shrink-0"/>
-                      <span className="text-lg font-semibold">Gastometria</span>
-                  </div>
-                  <div className="flex-1" />
-                  <div className="lg:hidden">
-                      <UserNav />
-                  </div>
-              </header>
-
-              {/* Page Content - Fixed height with own scroll */}
-              <div className="flex-1 h-[calc(100vh-3.5rem)] lg:h-screen overflow-y-auto">
-                <div className="container mx-auto px-4 py-4 lg:px-6 lg:py-6 max-w-7xl pb-24 lg:pb-6">
-                    {children}
-                </div>
-              </div>
-
-              {/* Fixed Elements */}
-              <PWAUpdater />
-              
-              {/* Floating Action Buttons - Mobile Optimized */}
-              <div className="fixed bottom-4 right-4 z-50 flex flex-col items-end gap-3">
-                <div className="flex items-center gap-2">
-                  <AICreditIndicator />
-                </div>
-                <ChatAssistant />
-              </div>
-          </main>
-      </div>
-    </SidebarProvider>
-  )
+      {/* Layout responsivo - mobile ou desktop */}
+      <ResponsiveLayout>{children}</ResponsiveLayout>
+    </>
+  );
 }
 
 function InnerLayout({ children }: { children: React.ReactNode }) {
   return (
-     <PlanProvider>
-        <CreditsProvider>
-          <WalletsProvider>
-            <TransactionsProviderWithWallets>
-              <ReportsProvider>
+    <PlanProvider>
+      <CreditsProvider>
+        <WalletsProvider>
+          <TransactionsProvider>
+            <ReportsProvider>
+              <GamificationProvider>
                 <InstallmentsProvider>
                   <BudgetsProvider>
                     <GoalsProvider>
-                      <AppLayoutContent>{children}</AppLayoutContent>
+                      <BankPaymentProvider>
+                        <PaymentConfirmationProvider />
+                        <AppLayoutContent>{children}</AppLayoutContent>
+                      </BankPaymentProvider>
                     </GoalsProvider>
                   </BudgetsProvider>
                 </InstallmentsProvider>
-              </ReportsProvider>
-            </TransactionsProviderWithWallets>
-          </WalletsProvider>
-        </CreditsProvider>
-      </PlanProvider>
-  )
-}
-
-function TransactionsProviderWithWallets({ children }: { children: React.ReactNode }) {
-  const { refreshWallets } = useWallets();
-  
-  return (
-    <TransactionsProvider refreshWallets={refreshWallets}>
-      {children}
-    </TransactionsProvider>
+              </GamificationProvider>
+            </ReportsProvider>
+          </TransactionsProvider>
+        </WalletsProvider>
+      </CreditsProvider>
+    </PlanProvider>
   );
 }
 
@@ -128,3 +76,4 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </AuthGuard>
   );
 }
+

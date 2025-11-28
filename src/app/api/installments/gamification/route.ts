@@ -1,40 +1,28 @@
 // src/app/api/installments/gamification/route.ts
 
-import { NextRequest, NextResponse } from 'next/server';
-import { getAuth } from 'firebase-admin/auth';
-import { getDatabaseAdapter } from '@/core/services/service-factory';
+import {NextRequest, NextResponse} from 'next/server';
+import {getDatabaseAdapter} from '@/core/services/service-factory';
+import {ObjectId} from 'mongodb';
+
+async function getUserIdFromRequest(request: NextRequest): Promise<string | null> {
+  const { searchParams } = new URL(request.url);
+  const userId = searchParams.get('userId');
+  // Basic validation to ensure it looks like an ObjectId to prevent some bad requests
+  if (userId && ObjectId.isValid(userId)) {
+    return userId;
+  }
+  return null;
+}
 
 export async function GET(request: NextRequest) {
   try {
-    const searchParams = request.nextUrl.searchParams;
-    const userId = searchParams.get('userId');
-
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID é obrigatório' }, { status: 400 });
-    }
-
-    // Verifica autenticação
-    const authHeader = request.headers.get('authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Token de autorização necessário' }, { status: 401 });
-    }
-
-    const token = authHeader.split('Bearer ')[1];
-
-    try {
-      const decodedToken = await getAuth().verifyIdToken(token);
-      if (decodedToken.uid !== userId) {
-        return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
-      }
-    } catch (authError) {
-      // Em desenvolvimento, pula a verificação do token
-      if (process.env.NODE_ENV !== 'development') {
-        return NextResponse.json({ error: 'Token inválido' }, { status: 401 });
-      }
+    const authenticatedUserId = await getUserIdFromRequest(request);
+    if (!authenticatedUserId) {
+      return NextResponse.json({ error: 'Unauthorized: Invalid or missing user identifier.' }, { status: 401 });
     }
 
     const db = await getDatabaseAdapter();
-    const summary = await db.installments.getInstallmentSummary(userId);
+    const summary = await db.installments.getInstallmentSummary(authenticatedUserId);
 
     if (!summary) {
       return NextResponse.json({

@@ -1,31 +1,33 @@
 // src/components/goals/create-goal-dialog.tsx
-'use client';
+"use client";
 
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+  DialogContentText,
+  DialogActions,
+  Button,
+  TextField,
+  Box,
+  Typography,
+  Stack,
+  CircularProgress,
+} from "@mui/material";
 import { useToast } from "@/hooks/use-toast";
 import { useGoals } from "@/hooks/use-goals";
 import { Goal } from "@/lib/types";
-import { Calendar, Loader2 } from "lucide-react";
 import { SingleDatePicker } from "../single-date-picker";
 
 const goalSchema = z.object({
   name: z.string().min(1, "O nome da meta é obrigatório."),
-  targetAmount: z.coerce.number().positive("O valor alvo deve ser maior que zero."),
+  targetAmount: z.coerce
+    .number()
+    .positive("O valor alvo deve ser maior que zero."),
   monthlyDeposit: z.coerce.number().optional(),
   targetDate: z.date().optional(),
 });
@@ -33,17 +35,26 @@ const goalSchema = z.object({
 type GoalFormValues = z.infer<typeof goalSchema>;
 
 interface CreateGoalDialogProps {
-  children: React.ReactNode;
+  open: boolean;
+  onClose: () => void;
   initialData?: Goal;
 }
 
-export function CreateGoalDialog({ children, initialData }: CreateGoalDialogProps) {
+export function CreateGoalDialog({
+  open,
+  onClose,
+  initialData,
+}: CreateGoalDialogProps) {
   const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { addGoal, updateGoal } = useGoals();
 
-  const form = useForm<GoalFormValues>({
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<GoalFormValues>({
     resolver: zodResolver(goalSchema),
     defaultValues: {
       name: "",
@@ -54,19 +65,26 @@ export function CreateGoalDialog({ children, initialData }: CreateGoalDialogProp
   });
 
   useEffect(() => {
-    if (isOpen) {
-        if (initialData) {
-            form.reset({
-                name: initialData.name,
-                targetAmount: initialData.targetAmount,
-                monthlyDeposit: initialData.monthlyDeposit || undefined,
-                targetDate: initialData.targetDate ? new Date(initialData.targetDate) : undefined
-            });
-        } else {
-            form.reset({ name: "", targetAmount: 0, monthlyDeposit: undefined, targetDate: undefined });
-        }
+    if (open) {
+      if (initialData) {
+        reset({
+          name: initialData.name,
+          targetAmount: initialData.targetAmount,
+          monthlyDeposit: initialData.monthlyDeposit || undefined,
+          targetDate: initialData.targetDate
+            ? new Date(initialData.targetDate)
+            : undefined,
+        });
+      } else {
+        reset({
+          name: "",
+          targetAmount: 0,
+          monthlyDeposit: undefined,
+          targetDate: undefined,
+        });
+      }
     }
-  }, [isOpen, initialData, form]);
+  }, [open, initialData, reset]);
 
   const onSubmit = async (data: GoalFormValues) => {
     setIsSubmitting(true);
@@ -74,97 +92,155 @@ export function CreateGoalDialog({ children, initialData }: CreateGoalDialogProp
       const goalData: Partial<Goal> = {
         name: data.name,
         targetAmount: Number(data.targetAmount),
-        monthlyDeposit: data.monthlyDeposit ? Number(data.monthlyDeposit) : undefined,
+        monthlyDeposit: data.monthlyDeposit
+          ? Number(data.monthlyDeposit)
+          : undefined,
         targetDate: data.targetDate ? data.targetDate.toISOString() : undefined,
       };
 
       if (initialData) {
         await updateGoal(initialData.id, goalData);
+        toast({ title: "Meta atualizada com sucesso!" });
       } else {
-        await addGoal(goalData as Omit<Goal, 'id' | 'createdAt' | 'currentAmount'>);
+        await addGoal(
+          goalData as Omit<Goal, "id" | "createdAt" | "currentAmount">
+        );
+        toast({ title: "Meta criada com sucesso!" });
       }
-      setIsOpen(false);
+      onClose();
     } catch (error) {
       console.error("Failed to save goal:", error);
-      toast({ variant: "destructive", title: "Erro ao salvar meta." });
+      toast({ variant: "error", title: "Erro ao salvar meta." });
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
+      <DialogTitle>
+        {initialData ? "Editar Meta" : "Criar Nova Meta"}
+      </DialogTitle>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{initialData ? "Editar Meta" : "Criar Nova Meta"}</DialogTitle>
-          <DialogDescription>
-            Defina um objetivo financeiro. Preencha os campos opcionais para ajudar a IA a fazer projeções mais precisas.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Nome da Meta</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Comprar um Carro" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="targetAmount"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Valor da Meta (R$)</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.01" placeholder="Ex: 30000.00" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <div className="text-sm font-medium text-muted-foreground my-4 text-center">Opcional</div>
-             <FormField
-              control={form.control}
-              name="monthlyDeposit"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Depósito Mensal Planejado (R$)</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.01" placeholder="Ex: 500.00" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-             <FormField
-              control={form.control}
-              name="targetDate"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Data Alvo para Conclusão</FormLabel>
-                  <FormControl>
-                    <SingleDatePicker date={field.value} setDate={field.onChange} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <DialogFooter>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {initialData ? "Salvar Alterações" : "Criar Meta"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+        <DialogContentText sx={{ mb: 3 }}>
+          Defina um objetivo financeiro. Preencha os campos opcionais para
+          ajudar a IA a fazer projeções mais precisas.
+        </DialogContentText>
+
+        <Box
+          component="form"
+          onSubmit={handleSubmit(onSubmit)}
+          sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+        >
+          <Controller
+            name="name"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Nome da Meta"
+                placeholder="Ex: Comprar um Carro"
+                fullWidth
+                error={!!errors.name}
+                helperText={errors.name?.message}
+              />
+            )}
+          />
+
+          <Controller
+            name="targetAmount"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Valor da Meta (R$)"
+                type="number"
+                placeholder="Ex: 30000.00"
+                fullWidth
+                error={!!errors.targetAmount}
+                helperText={errors.targetAmount?.message}
+                inputProps={{ step: "0.01" }}
+              />
+            )}
+          />
+
+          <Box position="relative" py={2}>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{
+                position: "absolute",
+                top: 0,
+                left: "50%",
+                transform: "translateX(-50%)",
+                bgcolor: "background.paper",
+                px: 1,
+              }}
+            >
+              Opcional
+            </Typography>
+            <Box sx={{ borderTop: 1, borderColor: "divider" }} />
+          </Box>
+
+          <Controller
+            name="monthlyDeposit"
+            control={control}
+            render={({ field }) => (
+              <TextField
+                {...field}
+                label="Depósito Mensal Planejado (R$)"
+                type="number"
+                placeholder="Ex: 500.00"
+                fullWidth
+                error={!!errors.monthlyDeposit}
+                helperText={errors.monthlyDeposit?.message}
+                inputProps={{ step: "0.01" }}
+                value={field.value || ""}
+              />
+            )}
+          />
+
+          <Controller
+            name="targetDate"
+            control={control}
+            render={({ field }) => (
+              <Box>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  display="block"
+                  mb={0.5}
+                >
+                  Data Alvo para Conclusão
+                </Typography>
+                <SingleDatePicker date={field.value} setDate={field.onChange} />
+                {errors.targetDate && (
+                  <Typography variant="caption" color="error">
+                    {errors.targetDate.message}
+                  </Typography>
+                )}
+              </Box>
+            )}
+          />
+
+          <DialogActions sx={{ px: 0, pt: 2 }}>
+            <Button onClick={onClose} disabled={isSubmitting}>
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              disabled={isSubmitting}
+              startIcon={
+                isSubmitting ? (
+                  <CircularProgress size={16} color="inherit" />
+                ) : null
+              }
+            >
+              {initialData ? "Salvar Alterações" : "Criar Meta"}
+            </Button>
+          </DialogActions>
+        </Box>
       </DialogContent>
     </Dialog>
   );

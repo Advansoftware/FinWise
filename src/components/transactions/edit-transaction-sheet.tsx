@@ -1,39 +1,42 @@
-
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetFooter,
-} from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+  Drawer,
+  Box,
+  Typography,
+  Button,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  Stack,
+  Switch,
+  IconButton,
+  CircularProgress,
+} from "@mui/material";
+import { X } from "lucide-react";
 import { Transaction, TransactionCategory } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
 import { SingleDatePicker } from "../single-date-picker";
 import { useTransactions } from "@/hooks/use-transactions";
-import { Switch } from "../ui/switch";
-import { cn } from "@/lib/utils";
 import { useWallets } from "@/hooks/use-wallets";
 
 interface EditTransactionSheetProps {
-    transaction: Transaction;
-    isOpen: boolean;
-    setIsOpen: (isOpen: boolean) => void;
+  transaction: Transaction;
+  isOpen: boolean;
+  setIsOpen: (isOpen: boolean) => void;
 }
 
-export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTransactionSheetProps) {
+export function EditTransactionSheet({
+  transaction,
+  isOpen,
+  setIsOpen,
+}: EditTransactionSheetProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formState, setFormState] = useState<Partial<Transaction>>({});
   const [updateAll, setUpdateAll] = useState(false);
-  
+
   const { toast } = useToast();
   const { updateTransaction, categories, subcategories } = useTransactions();
   const { wallets } = useWallets();
@@ -48,182 +51,463 @@ export function EditTransactionSheet({ transaction, isOpen, setIsOpen }: EditTra
   }, [transaction]);
 
   const handleInputChange = (field: keyof Transaction, value: any) => {
-    if(field === 'category') {
-        setFormState(prev => ({
-            ...prev, 
-            [field]: value,
-            subcategory: undefined // Reset subcategory when category changes
-        })); 
-    } else if(field === 'subcategory' && value === 'none') {
-        setFormState(prev => ({...prev, [field]: undefined}));
+    if (field === "category") {
+      setFormState((prev) => ({
+        ...prev,
+        [field]: value,
+        subcategory: undefined,
+      }));
+    } else if (field === "subcategory" && value === "none") {
+      setFormState((prev) => ({ ...prev, [field]: undefined }));
     } else {
-        setFormState(prev => ({...prev, [field]: value}));
+      setFormState((prev) => ({ ...prev, [field]: value }));
     }
-  }
-  
+  };
+
   const availableSubcategories = useMemo(() => {
-      const category = formState.category as TransactionCategory | undefined;
-      if (!category) return [];
-      return subcategories[category] || [];
+    const category = formState.category as TransactionCategory | undefined;
+    if (!category) return [];
+    return subcategories[category] || [];
   }, [formState.category, subcategories]);
 
   const handleSubmit = async () => {
     const { item, amount, date, category, walletId } = formState;
     if (!item || !amount || !date || !category || !walletId) {
-        toast({
-            variant: "destructive",
-            title: "Campos obrigatórios",
-            description: "Por favor, preencha todos os campos obrigatórios.",
-        });
-        return;
+      toast({
+        variant: "error",
+        title: "Campos obrigatórios",
+        description: "Por favor, preencha todos os campos obrigatórios.",
+      });
+      return;
     }
-    
+
     setIsSubmitting(true);
     try {
-        const updates: Partial<Transaction> = {
-            ...formState,
-            date: new Date(formState.date || new Date()).toISOString(),
-            amount: Number(formState.amount),
-            quantity: Number(formState.quantity),
-        };
-        delete updates.id; // Don't try to update the ID
+      const updates: Partial<Transaction> = {
+        ...formState,
+        date: new Date(formState.date || new Date()).toISOString(),
+        amount: Number(formState.amount),
+        quantity: Number(formState.quantity),
+      };
+      delete updates.id;
 
-        await updateTransaction(transaction.id, updates, updateAll, transaction.item);
+      await updateTransaction(transaction.id, updates, transaction);
 
-        toast({
-            title: "Sucesso!",
-            description: "Sua transação foi atualizada.",
-        });
-        
-        setIsOpen(false);
-        
+      toast({
+        title: "Sucesso!",
+        description: "Sua transação foi atualizada.",
+      });
+
+      setIsOpen(false);
     } catch (error) {
-        console.error(error);
-        toast({
-            variant: "destructive",
-            title: "Erro",
-            description: "Não foi possível atualizar a transação. Tente novamente.",
-        });
+      console.error(error);
+      toast({
+        variant: "error",
+        title: "Erro",
+        description: "Não foi possível atualizar a transação. Tente novamente.",
+      });
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
-  }
+  };
 
   if (!transaction) return null;
 
   return (
-    <Sheet open={isOpen} onOpenChange={setIsOpen}>
-      <SheetContent className="flex flex-col">
-        <SheetHeader>
-          <SheetTitle>Editar Transação</SheetTitle>
-          <SheetDescription>
-            Modifique os detalhes da sua movimentação.
-          </SheetDescription>
-        </SheetHeader>
-        <div className="flex-1 overflow-y-auto pr-6 -mr-6">
-            <div className="grid gap-4 py-4">
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label className="text-right">Tipo</Label>
-                    <div className="col-span-3 grid grid-cols-2 gap-2">
-                         <Button
-                            variant={formState.type === 'expense' ? 'destructive' : 'outline'}
-                            onClick={() => handleInputChange('type', 'expense')}
-                         >
-                            Despesa
-                        </Button>
-                         <Button
-                             variant={formState.type === 'income' ? 'default' : 'outline'}
-                              className={cn("bg-transparent border-emerald-600 text-emerald-600 hover:bg-emerald-600 hover:text-white", formState.type === 'income' && "bg-emerald-600 text-white")}
-                             onClick={() => handleInputChange('type', 'income')}
-                         >
-                            Receita
-                        </Button>
-                    </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="item" className="text-right">Item</Label>
-                    <Input id="item" className="col-span-3" value={formState.item || ''} onChange={(e) => handleInputChange('item', e.target.value)} />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="establishment" className="text-right">Estabelecimento</Label>
-                    <Input id="establishment" className="col-span-3" value={formState.establishment || ''} onChange={(e) => handleInputChange('establishment', e.target.value)} />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="quantity" className="text-right">Qtd.</Label>
-                    <Input id="quantity" type="number" className="col-span-3" value={formState.quantity || 1} onChange={(e) => handleInputChange('quantity', e.target.value)} />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="amount" className="text-right">Valor</Label>
-                    <Input id="amount" type="number" className="col-span-3" value={formState.amount || ''} onChange={(e) => handleInputChange('amount', e.target.value)} />
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="date" className="text-right">Data</Label>
-                    <div className="col-span-3">
-                        <SingleDatePicker date={new Date(formState.date || new Date())} setDate={(d) => handleInputChange('date', d?.toISOString() || new Date().toISOString())} />
-                    </div>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="wallet" className="text-right">Carteira</Label>
-                    <Select value={formState.walletId || ''} onValueChange={(value) => handleInputChange('walletId', value)}>
-                    <SelectTrigger className="col-span-3">
-                        <SelectValue placeholder="Selecione uma carteira" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {wallets.map(wallet => (
-                        <SelectItem key={wallet.id} value={wallet.id}>{wallet.name}</SelectItem>
-                        ))}
-                    </SelectContent>
-                    </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="category" className="text-right">Categoria</Label>
-                    <Select value={formState.category || ''} onValueChange={(value) => handleInputChange('category', value as TransactionCategory)}>
-                        <SelectTrigger className="col-span-3">
-                            <SelectValue placeholder="Selecione uma categoria" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            {categories.map(cat => (
-                            <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="subcategory" className="text-right">Subcategoria</Label>
-                    <Select value={formState.subcategory || 'none'} onValueChange={(v) => handleInputChange('subcategory', v)} disabled={!formState.category || availableSubcategories.length === 0}>
-                        <SelectTrigger className="col-span-3">
-                            <SelectValue placeholder={!formState.category ? "Selecione uma categoria primeiro" : availableSubcategories.length > 0 ? "Selecione uma subcategoria" : "Nenhuma subcategoria disponível"} />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="none">Nenhuma</SelectItem>
-                            {availableSubcategories.map(sub => (
-                                <SelectItem key={sub} value={sub}>{sub}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                </div>
-                 <div className="grid grid-cols-4 items-center gap-4">
-                    <Label htmlFor="update-all" className="text-right">Aplicar a todos</Label>
-                    <div className="col-span-3 flex items-center space-x-2">
-                         <Switch
-                            id="update-all"
-                            checked={updateAll}
-                            onCheckedChange={setUpdateAll}
-                        />
-                         <Label htmlFor="update-all" className="text-xs text-muted-foreground font-normal">
-                           Atualizar para todos os itens "{transaction.item}"
-                        </Label>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <SheetFooter>
-            <Button onClick={handleSubmit} disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Salvar Alterações
-            </Button>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+    <Drawer
+      anchor="right"
+      open={isOpen}
+      onClose={() => setIsOpen(false)}
+      PaperProps={{
+        sx: { width: { xs: "100%", sm: 540 }, p: 0 },
+      }}
+    >
+      <Box sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+        {/* Header */}
+        <Box
+          sx={{
+            p: 3,
+            borderBottom: 1,
+            borderColor: "divider",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+          }}
+        >
+          <Box>
+            <Typography variant="h6" fontWeight="bold">
+              Editar Transação
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Modifique os detalhes da sua movimentação.
+            </Typography>
+          </Box>
+          <IconButton onClick={() => setIsOpen(false)} size="small">
+            <X size={20} />
+          </IconButton>
+        </Box>
+
+        {/* Content */}
+        <Box sx={{ flex: 1, overflowY: "auto", p: 3 }}>
+          <Stack spacing={4}>
+            {/* Type Selection */}
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "100px 1fr",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
+              <Typography variant="body2" fontWeight="medium" align="right">
+                Tipo
+              </Typography>
+              <Box
+                sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}
+              >
+                <Button
+                  variant={
+                    formState.type === "expense" ? "contained" : "outlined"
+                  }
+                  color="error"
+                  onClick={() => handleInputChange("type", "expense")}
+                  fullWidth
+                >
+                  Despesa
+                </Button>
+                <Button
+                  variant={
+                    formState.type === "income" ? "contained" : "outlined"
+                  }
+                  color="success"
+                  onClick={() => handleInputChange("type", "income")}
+                  fullWidth
+                >
+                  Receita
+                </Button>
+              </Box>
+            </Box>
+
+            {/* Item */}
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "100px 1fr",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
+              <Typography
+                component="label"
+                htmlFor="item"
+                variant="body2"
+                fontWeight="medium"
+                align="right"
+              >
+                Item
+              </Typography>
+              <TextField
+                id="item"
+                fullWidth
+                size="small"
+                value={formState.item || ""}
+                onChange={(e) => handleInputChange("item", e.target.value)}
+              />
+            </Box>
+
+            {/* Establishment */}
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "100px 1fr",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
+              <Typography
+                component="label"
+                htmlFor="establishment"
+                variant="body2"
+                fontWeight="medium"
+                align="right"
+              >
+                Local
+              </Typography>
+              <TextField
+                id="establishment"
+                fullWidth
+                size="small"
+                value={formState.establishment || ""}
+                onChange={(e) =>
+                  handleInputChange("establishment", e.target.value)
+                }
+              />
+            </Box>
+
+            {/* Quantity */}
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "100px 1fr",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
+              <Typography
+                component="label"
+                htmlFor="quantity"
+                variant="body2"
+                fontWeight="medium"
+                align="right"
+              >
+                Qtd.
+              </Typography>
+              <TextField
+                id="quantity"
+                type="number"
+                fullWidth
+                size="small"
+                value={formState.quantity || 1}
+                onChange={(e) => handleInputChange("quantity", e.target.value)}
+              />
+            </Box>
+
+            {/* Amount */}
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "100px 1fr",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
+              <Typography
+                component="label"
+                htmlFor="amount"
+                variant="body2"
+                fontWeight="medium"
+                align="right"
+              >
+                Valor
+              </Typography>
+              <TextField
+                id="amount"
+                type="number"
+                fullWidth
+                size="small"
+                value={formState.amount || ""}
+                onChange={(e) => handleInputChange("amount", e.target.value)}
+              />
+            </Box>
+
+            {/* Date */}
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "100px 1fr",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
+              <Typography
+                component="label"
+                htmlFor="date"
+                variant="body2"
+                fontWeight="medium"
+                align="right"
+              >
+                Data
+              </Typography>
+              <Box>
+                <SingleDatePicker
+                  date={new Date(formState.date || new Date())}
+                  setDate={(d) =>
+                    handleInputChange(
+                      "date",
+                      d?.toISOString() || new Date().toISOString()
+                    )
+                  }
+                />
+              </Box>
+            </Box>
+
+            {/* Wallet */}
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "100px 1fr",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
+              <Typography
+                component="label"
+                htmlFor="wallet"
+                variant="body2"
+                fontWeight="medium"
+                align="right"
+              >
+                Carteira
+              </Typography>
+              <FormControl fullWidth size="small">
+                <Select
+                  value={formState.walletId || ""}
+                  onChange={(e) =>
+                    handleInputChange("walletId", e.target.value)
+                  }
+                  displayEmpty
+                >
+                  <MenuItem value="" disabled>
+                    Selecione uma carteira
+                  </MenuItem>
+                  {wallets.map((wallet) => (
+                    <MenuItem key={wallet.id} value={wallet.id}>
+                      {wallet.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+
+            {/* Category */}
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "100px 1fr",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
+              <Typography
+                component="label"
+                htmlFor="category"
+                variant="body2"
+                fontWeight="medium"
+                align="right"
+              >
+                Categoria
+              </Typography>
+              <FormControl fullWidth size="small">
+                <Select
+                  value={formState.category || ""}
+                  onChange={(e) =>
+                    handleInputChange(
+                      "category",
+                      e.target.value as TransactionCategory
+                    )
+                  }
+                  displayEmpty
+                >
+                  <MenuItem value="" disabled>
+                    Selecione uma categoria
+                  </MenuItem>
+                  {categories.map((cat) => (
+                    <MenuItem
+                      key={cat}
+                      value={cat}
+                      sx={{ textTransform: "capitalize" }}
+                    >
+                      {cat}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+
+            {/* Subcategory */}
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "100px 1fr",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
+              <Typography
+                component="label"
+                htmlFor="subcategory"
+                variant="body2"
+                fontWeight="medium"
+                align="right"
+              >
+                Subcategoria
+              </Typography>
+              <FormControl fullWidth size="small">
+                <Select
+                  value={formState.subcategory || "none"}
+                  onChange={(e) =>
+                    handleInputChange("subcategory", e.target.value)
+                  }
+                  disabled={
+                    !formState.category || availableSubcategories.length === 0
+                  }
+                >
+                  <MenuItem value="none">Nenhuma</MenuItem>
+                  {availableSubcategories.map((sub) => (
+                    <MenuItem key={sub} value={sub}>
+                      {sub}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+
+            {/* Update All */}
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: "100px 1fr",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
+              <Typography
+                component="label"
+                htmlFor="update-all"
+                variant="body2"
+                fontWeight="medium"
+                align="right"
+              >
+                Aplicar a todos
+              </Typography>
+              <Stack direction="row" alignItems="center" spacing={2}>
+                <Switch
+                  id="update-all"
+                  checked={updateAll}
+                  onChange={(e) => setUpdateAll(e.target.checked)}
+                />
+                <Typography variant="caption" color="text.secondary">
+                  Atualizar para todos os itens "{transaction.item}"
+                </Typography>
+              </Stack>
+            </Box>
+          </Stack>
+        </Box>
+
+        {/* Footer */}
+        <Box
+          sx={{
+            p: 3,
+            borderTop: 1,
+            borderColor: "divider",
+            display: "flex",
+            justifyContent: "flex-end",
+            gap: 2,
+          }}
+        >
+          <Button variant="outlined" onClick={() => setIsOpen(false)}>
+            Cancelar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSubmit}
+            disabled={isSubmitting}
+          >
+            {isSubmitting && <CircularProgress size={16} sx={{ mr: 1 }} />}
+            Salvar Alterações
+          </Button>
+        </Box>
+      </Box>
+    </Drawer>
   );
 }

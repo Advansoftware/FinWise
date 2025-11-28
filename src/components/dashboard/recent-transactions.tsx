@@ -1,12 +1,8 @@
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {Card, CardContent, CardHeader, Typography, Avatar, Button, Box, Stack, useTheme, alpha} from '@mui/material';
 import { CategoryIcon } from "../icons";
 import { Transaction } from "@/lib/types";
-import { ScrollArea } from "../ui/scroll-area";
 import Link from "next/link";
-import { Button } from "../ui/button";
 import { ArrowRight, ArrowDown, ArrowUp } from "lucide-react";
-import { cn } from "@/lib/utils";
 
 interface RecentTransactionsProps {
   transactions: Transaction[];
@@ -14,53 +10,77 @@ interface RecentTransactionsProps {
 
 export function RecentTransactions({ transactions }: RecentTransactionsProps) {
   const recentTransactions = transactions.slice(0, 7);
+  const theme = useTheme();
 
   return (
-    <Card className="h-full flex flex-col">
-      <CardHeader>
-        <CardTitle>Transações Recentes</CardTitle>
-        <CardDescription>Você tem {transactions.length} movimentações neste período.</CardDescription>
-      </CardHeader>
-      <CardContent className="flex-1 flex flex-col gap-4">
+    <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <CardHeader
+        title={<Typography variant="h6">Transações Recentes</Typography>}
+        subheader={<Typography variant="body2" color="text.secondary">Você tem {transactions.length} movimentações neste período.</Typography>}
+      />
+      <CardContent sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 2, overflow: 'hidden' }}>
         {transactions.length > 0 ? (
-            <ScrollArea className="flex-1">
-                <div className="space-y-4 pr-4">
+            <Box sx={{ flex: 1, overflowY: 'auto', pr: 1 }}>
+                <Stack spacing={2}>
                 {recentTransactions.map((transaction) => (
-                    <div key={transaction.id} className="flex items-start gap-3">
-                        <Avatar className="h-8 w-8 flex-shrink-0">
-                            <AvatarFallback className={cn("bg-secondary border border-border text-foreground",
-                              transaction.type === 'income' && "bg-emerald-500/20 text-emerald-400 border-emerald-500/30",
-                              transaction.type === 'expense' && "bg-red-500/20 text-red-400 border-red-500/30"
-                            )}>
-                                {transaction.type === 'income' ? <ArrowDown className="h-3 w-3"/> : <ArrowUp className="h-3 w-3"/>}
-                            </AvatarFallback>
+                    <Stack key={transaction.id} direction="row" alignItems="center" spacing={2}>
+                        <Avatar 
+                          sx={{ 
+                            width: 40, 
+                            height: 40, 
+                            bgcolor: transaction.type === 'income' ? alpha(theme.palette.success.main, 0.1) : alpha(theme.palette.error.main, 0.1),
+                            color: transaction.type === 'income' ? 'success.main' : 'error.main',
+                            border: 1,
+                            borderColor: transaction.type === 'income' ? alpha(theme.palette.success.main, 0.2) : alpha(theme.palette.error.main, 0.2)
+                          }}
+                        >
+                            {transaction.type === 'income' ? <ArrowDown size={16} /> : <ArrowUp size={16} />}
                         </Avatar>
-                    <div className="flex-1 min-w-0 space-y-1">
-                        <p className="text-sm font-medium leading-none truncate">{transaction.item}</p>
-                        <p className="text-xs text-muted-foreground truncate">
+                    <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography variant="body2" fontWeight="medium" noWrap>
+                          {transaction.item}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" noWrap>
                             {transaction.category}
                             {transaction.subcategory && ` / ${transaction.subcategory}`}
-                        </p>
-                    </div>
-                    <div className={cn("flex-shrink-0 font-medium text-right text-sm",
-                       transaction.type === 'income' ? 'text-emerald-400' : 'text-red-400'
-                    )}>
+                        </Typography>
+                    </Stack>
+                    <Typography 
+                      variant="body2"
+                      fontWeight="bold"
+                      color={transaction.type === 'income' ? 'success.main' : 'error.main'}
+                      sx={{ flexShrink: 0 }}
+                    >
                         {transaction.type === 'income' ? '+' : '-'}R$ {transaction.amount.toFixed(2)}
-                    </div>
-                    </div>
+                    </Typography>
+                    </Stack>
                 ))}
-                </div>
-            </ScrollArea>
+                </Stack>
+            </Box>
         ) : (
-            <div className="flex-1 flex flex-col items-center justify-center text-center text-muted-foreground">
-                <p>Nenhuma transação encontrada.</p>
-                <p className="text-xs">Tente selecionar outra categoria ou período.</p>
-            </div>
+            <Stack 
+              spacing={1}
+              sx={{ 
+                flex: 1, 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                textAlign: 'center', 
+                color: 'text.secondary' 
+              }}
+            >
+                <Typography variant="body1">Nenhuma transação encontrada.</Typography>
+                <Typography variant="caption">Tente selecionar outra categoria ou período.</Typography>
+            </Stack>
         )}
-        <Button asChild variant="outline" className="mt-auto w-full">
-            <Link href="/transactions">
-                Ver Todas as Transações <ArrowRight className="ml-2 h-4 w-4"/>
-            </Link>
+        <Button 
+          component={Link} 
+          href="/transactions" 
+          variant="outlined" 
+          fullWidth 
+          endIcon={<ArrowRight size={16} />}
+          sx={{ mt: 'auto' }}
+        >
+            Ver Todas as Transações
         </Button>
       </CardContent>
     </Card>

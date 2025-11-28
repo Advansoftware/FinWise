@@ -1,11 +1,8 @@
-
-// src/app/(docs)/docs/_components/docs-sidebar-nav.tsx
-
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { cn } from '@/lib/utils';
+import {usePathname} from 'next/navigation';
+import { Box, Typography, List, ListItem, ListItemButton, ListItemText, Paper } from '@mui/material';
 
 interface DocsSidebarNavProps {
     items: {
@@ -17,23 +14,52 @@ interface DocsSidebarNavProps {
 export function DocSidebarNav({ items }: DocsSidebarNavProps) {
     const pathname = usePathname();
 
-    return items.length ? (
-        <nav className="w-full">
-            <h3 className="font-semibold mb-2 px-2">Documentação</h3>
-            {items.map((item) => (
-                <Link
-                    key={item.slug}
-                    href={`/docs/${item.slug}`}
-                    className={cn(
-                        'flex w-full items-center rounded-md p-2 hover:bg-muted/50 capitalize',
-                        {
-                            'bg-muted/80 font-semibold text-primary': pathname === `/docs/${item.slug}`,
-                        }
-                    )}
-                >
-                    {item.title}
-                </Link>
-            ))}
-        </nav>
-    ) : null;
+    if (!items.length) return null;
+
+    return (
+        <Box component="nav" sx={{ width: '100%' }}>
+            <Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2, px: 2 }}>
+                Documentação
+            </Typography>
+            <List disablePadding>
+                {items.map((item) => {
+                    const isActive = pathname === `/docs/${item.slug}`;
+                    return (
+                        <ListItem key={item.slug} disablePadding sx={{ mb: 0.5 }}>
+                            <ListItemButton
+                                component={Link}
+                                href={`/docs/${item.slug}`}
+                                selected={isActive}
+                                sx={{
+                                    borderRadius: 1,
+                                    textTransform: 'capitalize',
+                                    py: 1,
+                                    px: 2,
+                                    '&.Mui-selected': {
+                                        bgcolor: 'action.selected',
+                                        color: 'primary.main',
+                                        fontWeight: 600,
+                                        '&:hover': {
+                                            bgcolor: 'action.selected',
+                                        }
+                                    },
+                                    '&:hover': {
+                                        bgcolor: 'action.hover',
+                                    }
+                                }}
+                            >
+                                <ListItemText 
+                                    primary={item.title} 
+                                    primaryTypographyProps={{ 
+                                        variant: 'body2',
+                                        fontWeight: isActive ? 600 : 400
+                                    }} 
+                                />
+                            </ListItemButton>
+                        </ListItem>
+                    );
+                })}
+            </List>
+        </Box>
+    );
 }

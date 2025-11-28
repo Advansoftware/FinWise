@@ -1,21 +1,39 @@
-'use client';
+// src/app/(app)/categories/default/page.tsx
+"use client";
 
-import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
-import { CategoryIcon } from '@/components/icons';
-import { DEFAULT_CATEGORIES } from '@/services/default-setup-service';
-import { TransactionCategory } from '@/lib/types';
-import { ChevronDown, ChevronRight, Users, Package, Settings } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
-import { useToast } from '@/hooks/use-toast';
-import { apiClient } from '@/lib/api-client';
+import { useState } from "react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  Button,
+  Chip,
+  Typography,
+  Stack,
+  Box,
+  useTheme,
+  Grid,
+} from "@mui/material";
+import { CategoryIcon } from "@/components/icons";
+import { DEFAULT_CATEGORIES } from "@/lib/default-categories";
+import { TransactionCategory } from "@/lib/types";
+import {
+  ChevronDown,
+  ChevronRight,
+  Users,
+  Package,
+  Settings,
+} from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { useToast } from "@/hooks/use-toast";
 
 export default function DefaultCategoriesPreview() {
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
+    new Set()
+  );
   const { user } = useAuth();
   const { toast } = useToast();
+  const theme = useTheme();
 
   const toggleCategory = (category: string) => {
     const newExpanded = new Set(expandedCategories);
@@ -30,219 +48,334 @@ export default function DefaultCategoriesPreview() {
   const handleApplyToUser = async () => {
     if (!user) {
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Erro",
-        description: "Usuário não autenticado"
+        description: "Usuário não autenticado",
       });
       return;
     }
 
     try {
-      // Usar API route em vez de import direto do serviço
-      const response = await fetch('/api/categories/apply-defaults', {
-        method: 'POST',
+      const response = await fetch("/api/categories/apply-defaults", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({ userId: user.uid }),
       });
 
       if (!response.ok) {
-        throw new Error('Falha ao aplicar categorias padrão');
+        throw new Error("Falha ao aplicar categorias padrão");
       }
 
       toast({
         title: "Sucesso!",
-        description: "Categorias padrão aplicadas com sucesso ao seu perfil!"
+        description: "Categorias padrão aplicadas com sucesso ao seu perfil!",
       });
 
-      // Recarrega a página após 1 segundo para mostrar as novas categorias
       setTimeout(() => {
-        window.location.href = '/categories';
+        window.location.href = "/categories";
       }, 1000);
     } catch (error) {
-      console.error('Erro ao aplicar categorias:', error);
+      console.error("Erro ao aplicar categorias:", error);
       toast({
-        variant: "destructive",
+        variant: "error",
         title: "Erro",
-        description: "Erro ao aplicar categorias padrão. Tente novamente."
+        description: "Erro ao aplicar categorias padrão. Tente novamente.",
       });
     }
   };
 
   const getCategoryType = (category: TransactionCategory): string => {
-    if (['Salário', 'Investimentos', 'Vendas'].includes(category)) {
-      return 'Receitas';
+    if (["Salário", "Investimentos", "Vendas"].includes(category)) {
+      return "Receitas";
     }
-    if (['Contas', 'Supermercado', 'Transporte', 'Saúde'].includes(category)) {
-      return 'Essenciais';
+    if (["Contas", "Supermercado", "Transporte", "Saúde"].includes(category)) {
+      return "Essenciais";
     }
-    if (['Restaurante', 'Entretenimento', 'Vestuário', 'Educação', 'Lazer'].includes(category)) {
-      return 'Pessoais';
+    if (
+      [
+        "Restaurante",
+        "Entretenimento",
+        "Vestuário",
+        "Educação",
+        "Lazer",
+      ].includes(category)
+    ) {
+      return "Pessoais";
     }
-    return 'Outros';
+    return "Outros";
   };
 
-  const getCategoryTypeColor = (type: string): string => {
+  const getCategoryTypeColor = (type: string) => {
     switch (type) {
-      case 'Receitas': return 'bg-green-100 dark:bg-green-950/50 text-green-800 dark:text-green-400 border-green-200 dark:border-green-900/50';
-      case 'Essenciais': return 'bg-red-100 dark:bg-red-950/50 text-red-800 dark:text-red-400 border-red-200 dark:border-red-900/50';
-      case 'Pessoais': return 'bg-blue-100 dark:bg-blue-950/50 text-blue-800 dark:text-blue-400 border-blue-200 dark:border-blue-900/50';
-      default: return 'bg-gray-100 dark:bg-gray-950/50 text-gray-800 dark:text-gray-400 border-gray-200 dark:border-gray-900/50';
+      case "Receitas":
+        return {
+          color: "success.main",
+          borderColor: "success.main",
+        };
+      case "Essenciais":
+        return {
+          color: "error.main",
+          borderColor: "error.main",
+        };
+      case "Pessoais":
+        return {
+          color: "info.main",
+          borderColor: "info.main",
+        };
+      default:
+        return {
+          color: "text.secondary",
+          borderColor: "divider",
+        };
     }
   };
 
   const totalCategories = Object.keys(DEFAULT_CATEGORIES).length;
   const totalSubcategories = Object.values(DEFAULT_CATEGORIES).reduce(
-    (sum, subcategories) => sum + subcategories.length, 
+    (sum, subcategories) => sum + subcategories.length,
     0
   );
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <Stack spacing={3}>
       {/* Header */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-3">
-          <Settings className="h-8 w-8 text-primary" />
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Categorias Padrão do Gastometria</h1>
-            <p className="text-muted-foreground">
-              Categorias e subcategorias que são criadas automaticamente para novos usuários
-            </p>
-          </div>
-        </div>
-        
+      <Stack spacing={2}>
+        <Stack direction="row" alignItems="center" spacing={2}>
+          <Settings size={32} color={theme.palette.primary.main} />
+          <Box>
+            <Typography variant="h4" fontWeight="bold">
+              Categorias Padrão do Gastometria
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Categorias e subcategorias que são criadas automaticamente para
+              novos usuários
+            </Typography>
+          </Box>
+        </Stack>
+
         {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Package className="h-4 w-4" />
-                Total de Categorias
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalCategories}</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium flex items-center gap-2">
-                <Users className="h-4 w-4" />
-                Total de Subcategorias
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalSubcategories}</div>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm font-medium">Ações</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Button onClick={handleApplyToUser} className="w-full">
-                <Settings className="h-4 w-4 mr-2" />
-                Aplicar ao Meu Usuário
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+        <Grid container spacing={2}>
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Card>
+              <CardHeader
+                title={
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Package size={16} />
+                    <Typography variant="subtitle2" fontWeight="medium">
+                      Total de Categorias
+                    </Typography>
+                  </Box>
+                }
+                sx={{ pb: 1 }}
+              />
+              <CardContent>
+                <Typography variant="h5" fontWeight="bold">
+                  {totalCategories}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Card>
+              <CardHeader
+                title={
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Users size={16} />
+                    <Typography variant="subtitle2" fontWeight="medium">
+                      Total de Subcategorias
+                    </Typography>
+                  </Box>
+                }
+                sx={{ pb: 1 }}
+              />
+              <CardContent>
+                <Typography variant="h5" fontWeight="bold">
+                  {totalSubcategories}
+                </Typography>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Card>
+              <CardHeader
+                title={
+                  <Typography variant="subtitle2" fontWeight="medium">
+                    Ações
+                  </Typography>
+                }
+                sx={{ pb: 1 }}
+              />
+              <CardContent>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  onClick={handleApplyToUser}
+                  startIcon={<Settings size={16} />}
+                >
+                  Aplicar ao Meu Usuário
+                </Button>
+              </CardContent>
+            </Card>
+          </Grid>
+        </Grid>
+      </Stack>
 
       {/* Categories List */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <Grid container spacing={3}>
         {Object.entries(DEFAULT_CATEGORIES).map(([category, subcategories]) => {
           const categoryKey = category as TransactionCategory;
           const isExpanded = expandedCategories.has(category);
           const categoryType = getCategoryType(categoryKey);
-          
+          const typeColor = getCategoryTypeColor(categoryType);
+
           return (
-            <Card key={category} className="hover:shadow-md transition-shadow">
-              <CardHeader 
-                className="cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => toggleCategory(category)}
+            <Grid key={category} size={{ xs: 12, lg: 6 }}>
+              <Card
+                sx={{
+                  transition: "box-shadow 0.3s",
+                  "&:hover": { boxShadow: 3 },
+                }}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <CategoryIcon category={categoryKey} className="h-6 w-6 text-primary" />
-                    <div>
-                      <CardTitle className="text-lg">{category}</CardTitle>
-                      <CardDescription className="flex items-center gap-2">
-                        <Badge 
-                          variant="outline" 
-                          className={getCategoryTypeColor(categoryType)}
-                        >
-                          {categoryType}
-                        </Badge>
-                        <span>{subcategories.length} subcategorias</span>
-                      </CardDescription>
-                    </div>
-                  </div>
-                  {isExpanded ? (
-                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                  ) : (
-                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                  )}
-                </div>
-              </CardHeader>
-              
-              {isExpanded && (
-                <CardContent className="pt-0">
-                  <div className="space-y-3">
-                    <h4 className="font-semibold text-sm text-muted-foreground">
-                      Subcategorias incluídas:
-                    </h4>
-                    <div className="flex flex-wrap gap-2">
-                      {subcategories.map((subcategory) => (
-                        <Badge 
-                          key={subcategory} 
-                          variant="secondary"
-                          className="text-xs"
-                        >
-                          {subcategory}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                </CardContent>
-              )}
-            </Card>
+                <CardHeader
+                  sx={{
+                    cursor: "pointer",
+                    "&:hover": { bgcolor: "action.hover" },
+                    transition: "background-color 0.2s",
+                  }}
+                  onClick={() => toggleCategory(category)}
+                  title={
+                    <Box
+                      display="flex"
+                      alignItems="center"
+                      justifyContent="space-between"
+                    >
+                      <Box display="flex" alignItems="center" gap={2}>
+                        <Box sx={{ color: "primary.main" }}>
+                          <CategoryIcon category={categoryKey} />
+                        </Box>
+                        <Box>
+                          <Typography variant="h6">{category}</Typography>
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            spacing={1}
+                            mt={0.5}
+                          >
+                            <Chip
+                              label={categoryType}
+                              variant="outlined"
+                              size="small"
+                              sx={{
+                                ...typeColor,
+                                fontWeight: "medium",
+                                height: 24,
+                              }}
+                            />
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              {subcategories.length} subcategorias
+                            </Typography>
+                          </Stack>
+                        </Box>
+                      </Box>
+                      {isExpanded ? (
+                        <ChevronDown
+                          size={20}
+                          color={theme.palette.text.secondary}
+                        />
+                      ) : (
+                        <ChevronRight
+                          size={20}
+                          color={theme.palette.text.secondary}
+                        />
+                      )}
+                    </Box>
+                  }
+                />
+
+                {isExpanded && (
+                  <CardContent sx={{ pt: 0 }}>
+                    <Stack spacing={1}>
+                      <Typography variant="subtitle2" color="text.secondary">
+                        Subcategorias incluídas:
+                      </Typography>
+                      <Box display="flex" flexWrap="wrap" gap={1}>
+                        {subcategories.map((subcategory) => (
+                          <Chip
+                            key={subcategory}
+                            label={subcategory}
+                            variant="outlined"
+                            color="secondary"
+                            size="small"
+                          />
+                        ))}
+                      </Box>
+                    </Stack>
+                  </CardContent>
+                )}
+              </Card>
+            </Grid>
           );
         })}
-      </div>
+      </Grid>
 
       {/* Footer Info */}
-      <Card className="border-l-4 border-l-blue-500">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Settings className="h-5 w-5" />
-            Como funciona
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <ul className="space-y-2 text-sm">
-            <li className="flex items-start gap-2">
-              <span className="font-medium text-green-600">✓</span>
-              <span>Quando um novo usuário se cadastra, essas categorias são criadas automaticamente</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="font-medium text-green-600">✓</span>
-              <span>Usuários existentes sem categorias também recebem essas configurações padrão</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="font-medium text-blue-600">ℹ</span>
-              <span>Usuários podem adicionar, editar ou remover categorias livremente após a criação</span>
-            </li>
-            <li className="flex items-start gap-2">
-              <span className="font-medium text-blue-600">ℹ</span>
-              <span>As categorias são organizadas por tipo: Receitas, Essenciais, Pessoais e Outros</span>
-            </li>
-          </ul>
+      <Card sx={{ borderLeft: 4, borderColor: "info.main" }}>
+        <CardHeader
+          title={
+            <Box display="flex" alignItems="center" gap={1}>
+              <Settings size={20} />
+              <Typography variant="h6">Como funciona</Typography>
+            </Box>
+          }
+        />
+        <CardContent>
+          <Stack spacing={1}>
+            <Box display="flex" gap={1}>
+              <Typography color="success.main" fontWeight="bold">
+                ✓
+              </Typography>
+              <Typography variant="body2">
+                Quando um novo usuário se cadastra, essas categorias são criadas
+                automaticamente
+              </Typography>
+            </Box>
+            <Box display="flex" gap={1}>
+              <Typography color="success.main" fontWeight="bold">
+                ✓
+              </Typography>
+              <Typography variant="body2">
+                Usuários existentes sem categorias também recebem essas
+                configurações padrão
+              </Typography>
+            </Box>
+            <Box display="flex" gap={1}>
+              <Typography color="info.main" fontWeight="bold">
+                ℹ
+              </Typography>
+              <Typography variant="body2">
+                Usuários podem adicionar, editar ou remover categorias
+                livremente após a criação
+              </Typography>
+            </Box>
+            <Box display="flex" gap={1}>
+              <Typography color="info.main" fontWeight="bold">
+                ℹ
+              </Typography>
+              <Typography variant="body2">
+                As categorias são organizadas por tipo: Receitas, Essenciais,
+                Pessoais e Outros
+              </Typography>
+            </Box>
+          </Stack>
         </CardContent>
       </Card>
-    </div>
+    </Stack>
   );
 }

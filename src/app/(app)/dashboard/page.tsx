@@ -1,203 +1,318 @@
+// src/app/(app)/dashboard/page.tsx
+"use client";
 
-'use client';
-
-import { Button } from "@/components/ui/button";
+import { Button, Box, Typography, Skeleton, Grid } from "@mui/material";
 import { PlusCircle, ScanLine } from "lucide-react";
 import { useTransactions } from "@/hooks/use-transactions";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { ItemFilter } from "@/components/dashboard/item-filter";
 import { DateRangePicker } from "@/components/dashboard/date-range-picker";
-import { Skeleton } from "@/components/ui/skeleton";
 import { RecentTransactions } from "@/components/dashboard/recent-transactions";
 import { SpendingChart } from "@/components/dashboard/spending-chart";
 import { AITipCard } from "@/components/dashboard/ai-tip-card";
 import { AddTransactionSheet } from "@/components/dashboard/add-transaction-sheet";
-import { ScanQRCodeDialog } from "@/components/dashboard/scan-qr-code-dialog";
+import { ReceiptScannerDialog } from "@/components/receipts/receipt-scanner-dialog";
 import { WalletCard } from "@/components/dashboard/wallet-card";
 import { GoalHighlightCard } from "@/components/goals/goal-highlight-card";
 import { FutureBalanceCard } from "@/components/dashboard/future-balance-card";
-import { usePlan } from "@/hooks/use-plan";
+import {
+  GamificationGuide,
+  DailyQuestsCard,
+  GamificationProgressWidget,
+} from "@/components/gamification";
 import { ProUpgradeButton } from "@/components/pro-upgrade-button";
-import { InstallmentsSummaryCard } from "@/components/dashboard/installments-summary-card";
 
 export default function DashboardPage() {
-    const { 
-        isLoading, 
-        filteredTransactions,
-        chartData,
-        dateRange, 
-        setDateRange,
-        categories,
-        handleCategoryChange,
-        selectedCategory,
-        availableSubcategories,
-        selectedSubcategory,
-        setSelectedSubcategory
-    } = useTransactions();
-    const { isPro, isPlus } = usePlan();
+  const {
+    isLoading,
+    filteredTransactions,
+    chartData,
+    dateRange,
+    setDateRange,
+    categories,
+    handleCategoryChange,
+    selectedCategory,
+    availableSubcategories,
+    selectedSubcategory,
+    setSelectedSubcategory,
+  } = useTransactions();
 
-    return (
-        <div className="flex flex-col gap-4 sm:gap-6">
-            {/* Header - Mobile First */}
-            <div className="flex flex-col gap-3 sm:gap-4">
-                <div className="flex flex-col gap-2">
-                    <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Painel</h1>
-                    <p className="text-sm sm:text-base text-muted-foreground">
-                        Aqui está uma visão geral das suas finanças.
-                    </p>
-                </div>
-                
-                {/* Action Buttons - Mobile Stack, Desktop Side by Side */}
-                <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 sm:justify-end">
-                    <ProUpgradeButton requiredPlan="Pro">
-                       <ScanQRCodeDialog>
-                           <Button 
-                               variant="outline" 
-                               disabled={!isPro}
-                               className="w-full sm:w-auto order-1 sm:order-1"
-                           >
-                                <ScanLine className="mr-2 h-4 w-4"/>
-                                Escanear Nota
-                            </Button>
-                        </ScanQRCodeDialog>
-                    </ProUpgradeButton>
-                    
-                    <AddTransactionSheet>
-                        <Button className="w-full sm:w-auto order-2 sm:order-2">
-                            <PlusCircle className="mr-2 h-4 w-4"/>
-                            Adicionar Transação
-                        </Button>
-                    </AddTransactionSheet>
-                </div>
-            </div>
+  return (
+    <Box sx={{ flexGrow: 1 }}>
+      <Grid
+        container
+        spacing={{ xs: 2, sm: 3 }}
+        columns={{ xs: 4, sm: 8, md: 12 }}
+      >
+        {/* Header - Mobile First */}
+        <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+          <Grid
+            container
+            spacing={{ xs: 2, sm: 3 }}
+            columns={{ xs: 4, sm: 8, md: 12 }}
+          >
+            <Grid size={{ xs: 4, sm: 5, md: 6 }}>
+              <Box>
+                <Typography
+                  variant="h4"
+                  sx={{
+                    fontSize: { xs: "1.5rem", sm: "1.875rem" },
+                    fontWeight: "bold",
+                    letterSpacing: "-0.025em",
+                  }}
+                >
+                  Painel
+                </Typography>
+                <Typography
+                  variant="body1"
+                  color="text.secondary"
+                  sx={{ fontSize: { xs: "0.875rem", sm: "1rem" } }}
+                >
+                  Aqui está uma visão geral das suas finanças.
+                </Typography>
+              </Box>
+            </Grid>
 
-            {/* Filters - Mobile Stack, Desktop Row */}
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
-               <DateRangePicker 
-                    className="w-full sm:w-auto min-w-[200px]" 
-                    initialDate={dateRange} 
-                    onUpdate={setDateRange}
-                />
-                <ItemFilter 
-                    className="w-full sm:flex-1 sm:max-w-[200px]"
-                    placeholder="Todas as Categorias"
-                    items={['all', ...categories]} 
-                    selectedItem={selectedCategory} 
-                    onItemSelected={handleCategoryChange}
-                />
-                <ItemFilter 
-                    className="w-full sm:flex-1 sm:max-w-[200px]"
-                    placeholder="Todas as Subcategorias"
-                    items={['all', ...availableSubcategories]} 
-                    selectedItem={selectedSubcategory} 
-                    onItemSelected={setSelectedSubcategory}
-                    disabled={selectedCategory === 'all'}
-                />
-            </div>
+            {/* Action Buttons - Desktop */}
+            <Grid
+              size={{ xs: 4, sm: 3, md: 6 }}
+              sx={{ display: { xs: "none", sm: "block" } }}
+            >
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "row",
+                  gap: 1.5,
+                  justifyContent: "flex-end",
+                }}
+              >
+                <GamificationGuide />
+                <ProUpgradeButton
+                  requiredPlan="Pro"
+                  tooltipContent="Escanear notas fiscais com IA é um recurso Pro. Clique para fazer upgrade."
+                >
+                  <ReceiptScannerDialog>
+                    <Button
+                      variant="outlined"
+                      startIcon={<ScanLine size={18} />}
+                    >
+                      Escanear Nota
+                    </Button>
+                  </ReceiptScannerDialog>
+                </ProUpgradeButton>
+                <AddTransactionSheet>
+                  <Button
+                    variant="contained"
+                    startIcon={<PlusCircle size={18} />}
+                  >
+                    Nova Transação
+                  </Button>
+                </AddTransactionSheet>
+              </Box>
+            </Grid>
+          </Grid>
+        </Grid>
 
-            {isLoading ? <DashboardSkeleton /> : (
-                <>
-                    {/* Main Grid - 12 column system for precise control */}
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
-                        {/* Left Side - Wallet Card - 6 columns */}
-                        <div className="lg:col-span-6">
-                           <WalletCard transactions={filteredTransactions} />
-                        </div>
-                        
-                        {/* Right Side - Goals, Installments, and Future Balance - 6 columns */}
-                        <div className="lg:col-span-6 space-y-4 sm:space-y-6">
-                            {/* Goals and Installments side by side */}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                                {/* Goals Card */}
-                                <GoalHighlightCard />
-                                
-                                {/* Installments Card */}
-                                <InstallmentsSummaryCard />
-                            </div>
-                            
-                            {/* Future Balance Card - always show, with upgrade prompt if needed */}
-                            {isPlus ? (
-                                <FutureBalanceCard />
-                            ) : (
-                                <div className="relative">
-                                    <FutureBalanceCard />
-                                    <div className="absolute inset-0 bg-background/80 backdrop-blur-sm rounded-lg flex items-center justify-center">
-                                        <div className="text-center space-y-3 p-6">
-                                            <h3 className="font-semibold text-lg">Previsão de Saldo Plus</h3>
-                                            <p className="text-sm text-muted-foreground max-w-xs">
-                                                Desbloqueie previsões inteligentes do seu saldo futuro com IA
-                                            </p>
-                                            <ProUpgradeButton requiredPlan="Plus">
-                                                <Button className="w-full">
-                                                    Fazer Upgrade para Plus
-                                                </Button>
-                                            </ProUpgradeButton>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
-                        </div>
-                    </div>
+        {/* Mobile Action Buttons - Full Width */}
+        <Grid
+          size={{ xs: 4, sm: 8, md: 12 }}
+          sx={{ display: { xs: "block", sm: "none" } }}
+        >
+          <Grid
+            container
+            spacing={{ xs: 1.5, sm: 2 }}
+            columns={{ xs: 4, sm: 8, md: 12 }}
+          >
+            <Grid size={{ xs: 4 }}>
+              <AddTransactionSheet>
+                <Button
+                  variant="contained"
+                  fullWidth
+                  startIcon={<PlusCircle size={18} />}
+                >
+                  Nova Transação
+                </Button>
+              </AddTransactionSheet>
+            </Grid>
+            <Grid size={{ xs: 4 }}>
+              <ProUpgradeButton
+                requiredPlan="Pro"
+                tooltipContent="Escanear notas fiscais com IA é um recurso Pro. Clique para fazer upgrade."
+              >
+                <ReceiptScannerDialog>
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    startIcon={<ScanLine size={18} />}
+                  >
+                    Escanear Nota
+                  </Button>
+                </ReceiptScannerDialog>
+              </ProUpgradeButton>
+            </Grid>
+          </Grid>
+        </Grid>
 
-                    {/* Stats Cards - 4 equal columns */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                        <StatsCards transactions={filteredTransactions} />
-                    </div>
+        {/* Filters */}
+        <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+            <DateRangePicker initialDate={dateRange} onUpdate={setDateRange} />
+            <ItemFilter
+              placeholder="Todas as Categorias"
+              items={["all", ...categories]}
+              selectedItem={selectedCategory}
+              onItemSelected={handleCategoryChange}
+            />
+            <ItemFilter
+              placeholder="Todas as Subcategorias"
+              items={["all", ...availableSubcategories]}
+              selectedItem={selectedSubcategory}
+              onItemSelected={setSelectedSubcategory}
+              disabled={selectedCategory === "all"}
+            />
+          </Box>
+        </Grid>
 
-                    {/* Chart and Recent Transactions - 8:4 ratio for better balance */}
-                    <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
-                       <div className="lg:col-span-8 order-2 lg:order-1">
-                         <SpendingChart data={chartData} />
-                       </div>
-                       <div className="lg:col-span-4 order-1 lg:order-2">
-                         <RecentTransactions transactions={filteredTransactions} />
-                       </div>
-                    </div>
+        {isLoading ? (
+          <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+            <DashboardSkeleton />
+          </Grid>
+        ) : (
+          <>
+            {/* Stats Cards - Sempre full width, 4 cards em linha no desktop */}
+            <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+              <StatsCards transactions={filteredTransactions} />
+            </Grid>
 
-                    {/* AI Tip Card - Full Width */}
-                    {isPro && <AITipCard transactions={filteredTransactions} />}
-                </>
-            )}
-        </div>
-    );
+            {/* Main Content Grid */}
+            {/* Coluna Principal - 8 colunas no desktop */}
+            <Grid size={{ xs: 4, sm: 8, md: 8 }}>
+              <Grid
+                container
+                spacing={{ xs: 2, sm: 3 }}
+                columns={{ xs: 4, sm: 8, md: 12 }}
+              >
+                {/* Spending Chart */}
+                <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+                  <SpendingChart data={chartData} />
+                </Grid>
+
+                {/* Recent Transactions */}
+                <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+                  <RecentTransactions transactions={filteredTransactions} />
+                </Grid>
+              </Grid>
+            </Grid>
+
+            {/* Coluna Lateral - 4 colunas no desktop */}
+            <Grid size={{ xs: 4, sm: 8, md: 4 }}>
+              <Grid
+                container
+                spacing={{ xs: 2, sm: 3 }}
+                columns={{ xs: 4, sm: 8, md: 12 }}
+              >
+                {/* Gamification Progress */}
+                <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+                  <GamificationProgressWidget variant="expanded" showBadges />
+                </Grid>
+
+                {/* Wallet Summary */}
+                <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+                  <WalletCard transactions={filteredTransactions} />
+                </Grid>
+
+                {/* Daily Quests */}
+                <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+                  <DailyQuestsCard pageContext="dashboard" compact />
+                </Grid>
+
+                {/* AI Tip */}
+                <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+                  <ProUpgradeButton
+                    requiredPlan="Pro"
+                    tooltipContent="Dicas de IA personalizadas são um recurso Pro. Clique para fazer upgrade."
+                  >
+                    <AITipCard transactions={filteredTransactions} />
+                  </ProUpgradeButton>
+                </Grid>
+
+                {/* Goal Highlight Card */}
+                <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+                  <GoalHighlightCard />
+                </Grid>
+
+                {/* Future Balance Card */}
+                <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+                  <ProUpgradeButton
+                    requiredPlan="Plus"
+                    tooltipContent="Projeção de saldo futuro é um recurso Plus. Clique para fazer upgrade."
+                  >
+                    <FutureBalanceCard />
+                  </ProUpgradeButton>
+                </Grid>
+              </Grid>
+            </Grid>
+          </>
+        )}
+      </Grid>
+    </Box>
+  );
 }
 
 function DashboardSkeleton() {
-    return (
-        <>
-             {/* Main Grid Skeleton - 12 column layout */}
-             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
-                {/* Left Side - Wallet Skeleton */}
-                <Skeleton className="lg:col-span-6 h-40 sm:h-48" />
-                
-                {/* Right Side - Goals, Installments, Future Balance Skeleton */}
-                <div className="lg:col-span-6 space-y-4 sm:space-y-6">
-                    {/* Goals and Installments side by side */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
-                        <Skeleton className="h-32 sm:h-36" />
-                        <Skeleton className="h-32 sm:h-36" />
-                    </div>
-                    {/* Future Balance full width - always show */}
-                    <Skeleton className="h-32 sm:h-36" />
-                </div>
-             </div>
+  return (
+    <Grid
+      container
+      spacing={{ xs: 2, sm: 3 }}
+      columns={{ xs: 4, sm: 8, md: 12 }}
+    >
+      {/* Coluna Principal */}
+      <Grid size={{ xs: 4, sm: 8, md: 8 }}>
+        <Grid
+          container
+          spacing={{ xs: 2, sm: 3 }}
+          columns={{ xs: 4, sm: 8, md: 12 }}
+        >
+          <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+            <Skeleton
+              variant="rectangular"
+              height={180}
+              sx={{ borderRadius: 2 }}
+            />
+          </Grid>
+          <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+            <Skeleton
+              variant="rectangular"
+              height={350}
+              sx={{ borderRadius: 2 }}
+            />
+          </Grid>
+        </Grid>
+      </Grid>
 
-             {/* Stats Cards Skeleton - 4 equal columns */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                <Skeleton className="h-32 sm:h-36" />
-                <Skeleton className="h-32 sm:h-36" />
-                <Skeleton className="h-32 sm:h-36" />
-                <Skeleton className="h-32 sm:h-36" />
-            </div>
-
-            {/* Chart and Recent Transactions Skeleton - 8:4 ratio */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
-                <Skeleton className="h-[350px] sm:h-[400px] lg:h-[450px] lg:col-span-8 order-2 lg:order-1" />
-                <Skeleton className="h-[350px] sm:h-[400px] lg:h-[450px] lg:col-span-4 order-1 lg:order-2" />
-            </div>
-
-            {/* AI Tip Skeleton */}
-            <Skeleton className="h-24 sm:h-28" />
-        </>
-    );
+      {/* Coluna Lateral */}
+      <Grid size={{ xs: 4, sm: 8, md: 4 }}>
+        <Grid
+          container
+          spacing={{ xs: 2, sm: 3 }}
+          columns={{ xs: 4, sm: 8, md: 12 }}
+        >
+          <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+            <Skeleton
+              variant="rectangular"
+              height={180}
+              sx={{ borderRadius: 2 }}
+            />
+          </Grid>
+          <Grid size={{ xs: 4, sm: 8, md: 12 }}>
+            <Skeleton
+              variant="rectangular"
+              height={350}
+              sx={{ borderRadius: 2 }}
+            />
+          </Grid>
+        </Grid>
+      </Grid>
+    </Grid>
+  );
 }

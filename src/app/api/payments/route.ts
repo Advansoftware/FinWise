@@ -1,7 +1,7 @@
 // src/app/api/payments/route.ts
 
-import { NextRequest, NextResponse } from 'next/server';
-import { createCheckoutSessionAction, createPortalSessionAction } from '@/core/actions/payment.actions';
+import {NextRequest, NextResponse} from 'next/server';
+import {createCheckoutSessionAction, createPortalSessionAction} from '@/core/actions/payment.actions';
 
 export async function POST(req: NextRequest) {
   try {

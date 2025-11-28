@@ -1,42 +1,32 @@
+"use client";
 
-'use client';
-
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Sparkles, Info, Zap } from 'lucide-react';
-import { useCredits } from '@/hooks/use-credits';
-import { usePlan } from '@/hooks/use-plan';
-import { useAISettings } from '@/hooks/use-ai-settings';
-import { Skeleton } from '../ui/skeleton';
-import { CreditStatementDialog } from './ai-credit-statement-dialog';
-import { AnimatePresence, motion } from 'framer-motion';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
-import { Badge } from '../ui/badge';
+import { useState } from "react";
+import { Button, Tooltip, Chip, Box, Stack, Typography } from "@mui/material";
+import { Sparkles, Zap } from "lucide-react";
+import { useCredits } from "@/hooks/use-credits";
+import { usePlan } from "@/hooks/use-plan";
+import { useAISettings } from "@/hooks/use-ai-settings";
+import { CreditStatementDialog } from "./ai-credit-statement-dialog";
+import { AnimatePresence, motion } from "framer-motion";
 
 export function AICreditIndicator() {
-  const { credits, isLoading: isLoadingCredits, logs } = useCredits();
+  const { credits, isLoading: isLoadingCredits } = useCredits();
   const { plan, isLoading: isLoadingPlan, isPlus, isInfinity } = usePlan();
   const { displayedCredentials, activeCredentialId } = useAISettings();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const isLoading = isLoadingCredits || isLoadingPlan;
-  const activeCredential = displayedCredentials.find(c => c.id === activeCredentialId);
-  
-  // Verifica se está usando Gastometria IA (que consome créditos)
-  const isUsingGastometriaAI = activeCredential?.id === 'gastometria-ai-default' || 
-                              activeCredential?.provider === 'gastometria' ||
-                              !activeCredential;
+  const activeCredential = displayedCredentials.find(
+    (c) => c.id === activeCredentialId
+  );
 
-  // Define a cor do indicador baseado no saldo
-  const getCreditColor = (credits: number) => {
-    if (credits >= 50) return 'text-green-600';
-    if (credits >= 20) return 'text-yellow-600';
-    return 'text-red-600';
-  };
+  const isUsingGastometriaAI =
+    activeCredential?.id === "gastometria-ai-default" ||
+    activeCredential?.provider === "gastometria" ||
+    !activeCredential;
 
-  // Mensagem sobre alternativas gratuitas
   const getAlternativeMessage = () => {
-    if (plan === 'Básico') {
+    if (plan === "Básico") {
       return "Upgrade para Plus (Ollama local) ou Infinity (qualquer IA) para uso ilimitado";
     }
     if (isPlus) {
@@ -48,99 +38,174 @@ export function AICreditIndicator() {
     return "";
   };
 
-  if (plan === 'Básico' && !isLoading) {
-    return null; // Don't show indicator for basic plan users
+  if (plan === "Básico" && !isLoading) {
+    return null;
   }
-  
+
   return (
     <>
-      <CreditStatementDialog open={isDialogOpen} onOpenChange={setIsDialogOpen} />
-       <AnimatePresence>
-         <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
-            transition={{ duration: 0.3 }}
-            className="flex items-center gap-2"
-         >
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                      variant="outline"
-                      className="rounded-full shadow-lg backdrop-blur-sm bg-background/70 hover:bg-background h-11"
-                      onClick={() => setIsDialogOpen(true)}
+      <CreditStatementDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+      />
+      <AnimatePresence>
+        <Box
+          component={motion.div}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 20 }}
+          transition={{ duration: 0.3 }}
+          sx={{ display: "flex", alignItems: "center", gap: 2 }}
+        >
+          <Tooltip
+            title={
+              <Box sx={{ p: 1 }}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                  Créditos de IA
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  Você tem {credits} créditos restantes.
+                  {isInfinity
+                    ? " (Plano Infinity)"
+                    : isPlus
+                    ? " (Plano Plus)"
+                    : " (Plano Gratuito)"}
+                </Typography>
+                <Box sx={{ display: { xs: "none", md: "block" } }}>
+                  <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                    Plano {plan} - {credits} créditos disponíveis
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary", display: "block" }}
                   >
-                      {isLoading ? (
-                          <Skeleton className="h-5 w-20" />
-                      ) : (
-                          <>
-                              <Sparkles className="h-5 w-5 mr-2 text-primary" />
-                              <span className={`font-bold text-base ${getCreditColor(credits)}`}>{credits}</span>
-                              <span className="text-muted-foreground text-sm ml-1.5">créditos</span>
-                          </>
-                      )}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent side="bottom" className="max-w-xs">
-                  <div className="space-y-2">
-                    <p className="font-medium">Plano {plan} - {credits} créditos disponíveis</p>
-                    <p className="text-xs text-muted-foreground">
-                      Clique para ver extrato detalhado de uso
-                    </p>
-                    {isUsingGastometriaAI && (
-                      <p className="text-xs text-yellow-600">
-                        💡 {getAlternativeMessage()}
-                      </p>
-                    )}
-                  </div>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-
-            {/* Badge indicando status da IA atual */}
-            {!isLoading && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Badge 
-                      variant="outline" 
-                      className={isUsingGastometriaAI 
-                        ? "bg-blue-500/10 text-blue-600 border-blue-500/20" 
-                        : "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
-                      }
+                    Clique para ver extrato detalhado de uso
+                  </Typography>
+                  {isUsingGastometriaAI && (
+                    <Typography
+                      variant="caption"
+                      sx={{ color: "#ca8a04", display: "block", mt: 0.5 }}
                     >
+                      💡 {getAlternativeMessage()}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+            }
+          >
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => setIsDialogOpen(true)}
+              color={credits < 5 ? "error" : "primary"}
+              sx={{
+                borderRadius: "9999px",
+                textTransform: "none",
+                backdropFilter: "blur(12px)",
+                backgroundColor:
+                  credits < 5
+                    ? "rgba(239, 68, 68, 0.1)"
+                    : "rgba(99, 102, 241, 0.1)",
+                borderColor:
+                  credits < 5
+                    ? "rgba(239, 68, 68, 0.3)"
+                    : "rgba(99, 102, 241, 0.3)",
+                color: credits < 5 ? "error.main" : "primary.main",
+                "&:hover": {
+                  backdropFilter: "blur(16px)",
+                  backgroundColor:
+                    credits < 5
+                      ? "rgba(239, 68, 68, 0.15)"
+                      : "rgba(99, 102, 241, 0.15)",
+                  borderColor:
+                    credits < 5
+                      ? "rgba(239, 68, 68, 0.4)"
+                      : "rgba(99, 102, 241, 0.4)",
+                },
+              }}
+            >
+              <Sparkles style={{ width: 16, height: 16, marginRight: 8 }} />
+              {credits} créditos
+            </Button>
+          </Tooltip>
+
+          {!isLoading && (
+            <Tooltip
+              title={
+                <Box sx={{ p: 1 }}>
+                  {isUsingGastometriaAI ? (
+                    <Stack spacing={1}>
+                      <Typography variant="subtitle2">
+                        Usando Gastometria IA
+                      </Typography>
+                      <Typography variant="caption" display="block">
+                        Ações consomem créditos do seu plano
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        display="block"
+                        sx={{ color: "#ca8a04" }}
+                      >
+                        {getAlternativeMessage()}
+                      </Typography>
+                    </Stack>
+                  ) : (
+                    <Stack spacing={1}>
+                      <Typography variant="subtitle2">
+                        Usando suas credenciais
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        display="block"
+                        sx={{ color: "#059669" }}
+                      >
+                        Uso ilimitado e gratuito! 🎉
+                      </Typography>
+                    </Stack>
+                  )}
+                </Box>
+              }
+            >
+              <Box sx={{ display: { xs: "none", md: "block" } }}>
+                <Chip
+                  variant="outlined"
+                  label={
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
                       {isUsingGastometriaAI ? (
                         <>
-                          <Sparkles className="h-3 w-3 mr-1" />
+                          <Sparkles
+                            style={{ width: 12, height: 12, marginRight: 4 }}
+                          />
                           Gastometria IA
                         </>
                       ) : (
                         <>
-                          <Zap className="h-3 w-3 mr-1" />
+                          <Zap
+                            style={{ width: 12, height: 12, marginRight: 4 }}
+                          />
                           IA Própria
                         </>
                       )}
-                    </Badge>
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" className="max-w-xs">
-                    {isUsingGastometriaAI ? (
-                      <div className="space-y-1">
-                        <p className="font-medium">Usando Gastometria IA</p>
-                        <p className="text-xs">Ações consomem créditos do seu plano</p>
-                        <p className="text-xs text-yellow-600">{getAlternativeMessage()}</p>
-                      </div>
-                    ) : (
-                      <div className="space-y-1">
-                        <p className="font-medium">Usando suas credenciais</p>
-                        <p className="text-xs text-emerald-600">Uso ilimitado e gratuito! 🎉</p>
-                      </div>
-                    )}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )}
-         </motion.div>
+                    </Box>
+                  }
+                  sx={
+                    isUsingGastometriaAI
+                      ? {
+                          bgcolor: "rgba(59, 130, 246, 0.1)",
+                          color: "#2563eb",
+                          borderColor: "rgba(59, 130, 246, 0.2)",
+                        }
+                      : {
+                          bgcolor: "rgba(16, 185, 129, 0.1)",
+                          color: "#059669",
+                          borderColor: "rgba(16, 185, 129, 0.2)",
+                        }
+                  }
+                />
+              </Box>
+            </Tooltip>
+          )}
+        </Box>
       </AnimatePresence>
     </>
   );

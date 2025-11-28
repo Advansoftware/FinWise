@@ -2,92 +2,207 @@
 "use client";
 
 import { useState, useEffect, useTransition, useCallback } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { RefreshCw, Sparkles } from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  Typography,
+  IconButton,
+  Skeleton,
+  Stack,
+  useTheme,
+  alpha,
+  keyframes,
+} from "@mui/material";
+import { RefreshCw, Sparkles, AlertCircle } from "lucide-react";
 import { getSmartSpendingTip } from "@/services/ai-automation-service";
-import { Skeleton } from "../ui/skeleton";
+import { validateDataSufficiency } from "@/services/ai-cache-service";
 import { Transaction } from "@/lib/types";
 import { useAuth } from "@/hooks/use-auth";
 import { usePlan } from "@/hooks/use-plan";
 
+const pulse = keyframes`
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+`;
+
+const spin = keyframes`
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+`;
+
 interface AITipCardProps {
-    transactions: Transaction[];
+  transactions: Transaction[];
 }
 
 export function AITipCard({ transactions }: AITipCardProps) {
   const [tip, setTip] = useState("");
   const [isPending, startTransition] = useTransition();
   const [hasLoaded, setHasLoaded] = useState(false);
+  const [validationResult, setValidationResult] = useState<any>(null);
   const { user } = useAuth();
   const { isPro } = usePlan();
+  const theme = useTheme();
 
-  const fetchTip = useCallback(async (forceRefresh = false) => {
-    if (!user) return;
-    if (transactions.length === 0 && !forceRefresh) {
-      setTip("Adicione transações para receber sua primeira dica.");
-      setHasLoaded(true);
-      return;
-    }
-
-    startTransition(async () => {
-        if (forceRefresh) setTip(""); // Clear previous tip only on refresh
-        try {
-            const newTip = await getSmartSpendingTip(transactions, user.uid, forceRefresh);
-            setTip(newTip);
-            setHasLoaded(true);
-        } catch (error: any) {
-            console.error("Error fetching or setting spending tip:", error);
-            setTip(error.message || "Não foi possível carregar a dica. Tente novamente.");
-            setHasLoaded(true);
-        }
-    });
-  }, [transactions, user]);
-
-  // Carrega apenas uma vez quando o componente monta
   useEffect(() => {
-    if(user && isPro && transactions.length > 0 && !hasLoaded) {
-      fetchTip(false); // Sempre false para não consumir créditos no carregamento inicial
-    } else if (transactions.length === 0 && !hasLoaded) {
-      setTip("Adicione transações para receber sua primeira dica.");
+    if (user && transactions) {
+      validateDataSufficiency(user.uid, "spending_tip", transactions).then(
+        setValidationResult
+      );
+    }
+  }, [user, transactions]);
+
+  const fetchTip = useCallback(
+    async (forceRefresh = false) => {
+      if (!user) return;
+
+      if (!forceRefresh && validationResult && !validationResult.isValid) {
+        setTip(validationResult.message);
+        setHasLoaded(true);
+        return;
+      }
+
+      if (transactions.length === 0 && !forceRefresh) {
+        setTip("Adicione transações para receber sua primeira dica.");
+        setHasLoaded(true);
+        return;
+      }
+
+      startTransition(async () => {
+        if (forceRefresh) setTip("");
+        try {
+          const newTip = await getSmartSpendingTip(
+            transactions,
+            user.uid,
+            forceRefresh
+          );
+          setTip(newTip);
+          setHasLoaded(true);
+        } catch (error: any) {
+          console.error("Error fetching or setting spending tip:", error);
+          setTip(
+            error.message ||
+              "Não foi possível carregar a dica. Tente novamente."
+          );
+          setHasLoaded(true);
+        }
+      });
+    },
+    [transactions, user, validationResult]
+  );
+
+  useEffect(() => {
+    if (user && isPro && !hasLoaded && validationResult?.isValid) {
+      fetchTip(false);
+    } else if (!hasLoaded && validationResult && !validationResult.isValid) {
+      setTip(validationResult.message);
       setHasLoaded(true);
     }
-  }, [user, isPro, hasLoaded]); // Removido transactions.length das dependências
+  }, [user, isPro, hasLoaded, validationResult, fetchTip]);
 
   if (!isPro) return null;
 
+  const showInsufficientData = validationResult && !validationResult.isValid;
+
   return (
-    <Card className="bg-card/50 backdrop-blur-sm border-primary/20">
-      <CardHeader className="flex flex-row items-start justify-between pb-2 p-4">
-        <div className="flex-1">
-            <div className="flex items-center gap-2">
-                <Sparkles className="h-4 w-4 text-primary animate-pulse" />
-                <CardTitle className="text-sm text-primary/90">Dica Financeira com IA</CardTitle>
-            </div>
-            <CardDescription className="text-xs text-primary/70 mt-1">
-                Dados salvos no banco. Atualizar manualmente custa 1 crédito.
-            </CardDescription>
-        </div>
-        <Button
-            variant="ghost"
-            size="icon"
+    <Card
+      sx={{
+        bgcolor: alpha(theme.palette.background.paper, 0.5),
+        backdropFilter: "blur(4px)",
+        borderColor: showInsufficientData
+          ? alpha(theme.palette.warning.main, 0.2)
+          : alpha(theme.palette.primary.main, 0.2),
+      }}
+    >
+      <CardHeader
+        title={
+          <Stack direction="row" alignItems="center" spacing={1}>
+            {showInsufficientData ? (
+              <AlertCircle size={16} color={theme.palette.warning.main} />
+            ) : (
+              <Sparkles
+                size={16}
+                color={theme.palette.primary.main}
+                style={{ animation: `${pulse} 2s ease-in-out infinite` }}
+              />
+            )}
+            <Typography
+              variant="subtitle2"
+              fontWeight="bold"
+              color={showInsufficientData ? "warning.main" : "primary.main"}
+            >
+              Dica Financeira com IA
+            </Typography>
+          </Stack>
+        }
+        subheader={
+          <Typography
+            variant="caption"
+            sx={{
+              mt: 1,
+              color: showInsufficientData
+                ? alpha(theme.palette.warning.main, 0.7)
+                : alpha(theme.palette.primary.main, 0.7),
+            }}
+          >
+            {showInsufficientData
+              ? `Precisa de ${
+                  validationResult?.requiredMinimum || 0
+                } transações (você tem ${validationResult?.currentCount || 0})`
+              : "Cache mensal renovado automaticamente. Atualizar custa 1 crédito."}
+          </Typography>
+        }
+        action={
+          <IconButton
             onClick={() => fetchTip(true)}
             disabled={isPending || !user}
-            className="text-primary/70 hover:bg-primary/10 hover:text-primary rounded-full h-7 w-7"
-        >
-            <RefreshCw className={`h-3.5 w-3.5 ${isPending ? "animate-spin" : ""}`} />
-        </Button>
-      </CardHeader>
-      <CardContent className="p-4 pt-0">
+            size="small"
+            title={
+              showInsufficientData
+                ? "Forçar geração (pode consumir crédito)"
+                : "Atualizar dica (1 crédito)"
+            }
+            sx={{
+              color: alpha(theme.palette.primary.main, 0.7),
+              "&:hover": {
+                bgcolor: alpha(theme.palette.primary.main, 0.1),
+                color: "primary.main",
+              },
+            }}
+          >
+            <RefreshCw
+              size={14}
+              style={{
+                animation: isPending ? `${spin} 1s linear infinite` : "none",
+              }}
+            />
+          </IconButton>
+        }
+        sx={{ pb: 1 }}
+      />
+      <CardContent sx={{ pt: 0 }}>
         {isPending ? (
-           <div className="space-y-2">
-            <Skeleton className="h-3 w-full bg-primary/10" />
-            <Skeleton className="h-3 w-4/5 bg-primary/10" />
-          </div>
+          <Stack spacing={2}>
+            <Skeleton
+              variant="text"
+              width="100%"
+              height={12}
+              sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}
+            />
+            <Skeleton
+              variant="text"
+              width="80%"
+              height={12}
+              sx={{ bgcolor: alpha(theme.palette.primary.main, 0.1) }}
+            />
+          </Stack>
         ) : (
-          <p className="text-foreground/90 text-sm">
+          <Typography
+            variant="body2"
+            color={showInsufficientData ? "warning.dark" : "text.primary"}
+          >
             {tip}
-          </p>
+          </Typography>
         )}
       </CardContent>
     </Card>

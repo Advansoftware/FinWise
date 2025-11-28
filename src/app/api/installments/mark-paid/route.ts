@@ -1,7 +1,7 @@
 // src/app/api/installments/mark-paid/route.ts
 
-import { NextRequest, NextResponse } from 'next/server';
-import { getDatabaseAdapter } from '@/core/services/service-factory';
+import {NextRequest, NextResponse} from 'next/server';
+import {getDatabaseAdapter} from '@/core/services/service-factory';
 
 export async function POST(request: NextRequest) {
   try {

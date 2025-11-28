@@ -6,9 +6,9 @@
  *
  * - predictFutureBalance - A function that handles the future balance prediction process.
  */
-import { AICredential } from '@/lib/types';
-import { createConfiguredAI, getModelReference } from '../genkit';
-import { PredictFutureBalanceInput, PredictFutureBalanceInputSchema, PredictFutureBalanceOutputSchema } from '../ai-types';
+import {AICredential} from '@/lib/types';
+import {createConfiguredAI, getModelReference} from '../genkit';
+import {PredictFutureBalanceInput, PredictFutureBalanceInputSchema, PredictFutureBalanceOutputSchema} from '../ai-types';
 
 
 const promptTemplate = `Você é um analista financeiro preditivo. Sua tarefa é prever o saldo de um usuário no final do mês corrente com base em seu histórico de gastos, saldo atual e contas recorrentes conhecidas.

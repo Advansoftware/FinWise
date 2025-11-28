@@ -1,40 +1,15 @@
 // src/components/installments/edit-installment-dialog.tsx
 
-import { useState, useEffect, useMemo } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import {useState, useEffect, useMemo} from 'react';
+import {useForm, Controller} from 'react-hook-form';
+import {zodResolver} from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
-import { Loader2, Edit3 } from 'lucide-react';
-import { Installment } from '@/core/ports/installments.port';
-import { useInstallments } from '@/hooks/use-installments';
-import { useWallets } from '@/hooks/use-wallets';
-import { useTransactions } from '@/hooks/use-transactions';
+import {Dialog, DialogContent, DialogTitle, DialogActions, Button, TextField, Select, MenuItem, FormControl, InputLabel, FormHelperText, Box, Stack, Typography, IconButton, CircularProgress} from '@mui/material';
+import {Loader2, Edit3, X} from 'lucide-react';
+import {Installment} from '@/core/ports/installments.port';
+import {useInstallments} from '@/hooks/use-installments';
+import {useWallets} from '@/hooks/use-wallets';
+import {useTransactions} from '@/hooks/use-transactions';
 
 const editInstallmentSchema = z.object({
   name: z.string().min(1, 'Nome é obrigatório'),
@@ -42,7 +17,7 @@ const editInstallmentSchema = z.object({
   category: z.string().min(1, 'Categoria é obrigatória'),
   subcategory: z.string().optional(),
   establishment: z.string().optional(),
-  sourceWalletId: z.string().optional(),
+  sourceWalletId: z.string().min(1, 'A carteira de origem é obrigatória'),
 });
 
 type EditInstallmentForm = z.infer<typeof editInstallmentSchema>;
@@ -63,8 +38,18 @@ export function EditInstallmentDialog({
   const { wallets } = useWallets();
   const { categories, subcategories } = useTransactions();
 
-  // Get available categories and subcategories
-  const availableCategories = Object.keys(categories);
+  const availableCategories = categories;
+
+  // Function to get a valid wallet ID, fallback to first available if original doesn't exist
+  const getValidWalletId = () => {
+    if (installment?.sourceWalletId) {
+      const walletExists = wallets.find(w => w.id === installment.sourceWalletId);
+      if (walletExists) {
+        return installment.sourceWalletId;
+      }
+    }
+    return wallets.length > 0 ? wallets[0].id : '';
+  };
   
   const form = useForm<EditInstallmentForm>({
     resolver: zodResolver(editInstallmentSchema),
@@ -74,7 +59,7 @@ export function EditInstallmentDialog({
       category: '',
       subcategory: '',
       establishment: '',
-      sourceWalletId: 'none',
+      sourceWalletId: '',
     },
   });
 
@@ -93,10 +78,10 @@ export function EditInstallmentDialog({
         category: installment.category,
         subcategory: installment.subcategory || '',
         establishment: installment.establishment || '',
-        sourceWalletId: installment.sourceWalletId || 'none',
+        sourceWalletId: getValidWalletId(),
       });
     }
-  }, [installment, open, form]);
+  }, [installment, open, form, wallets]);
 
   // Reset subcategory when category changes
   useEffect(() => {
@@ -119,7 +104,7 @@ export function EditInstallmentDialog({
         category: data.category,
         subcategory: data.subcategory || undefined,
         establishment: data.establishment,
-        sourceWalletId: data.sourceWalletId === 'none' ? undefined : data.sourceWalletId,
+        sourceWalletId: data.sourceWalletId,
         updatedAt: new Date().toISOString(),
       });
 
@@ -137,173 +122,185 @@ export function EditInstallmentDialog({
   if (!installment) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-h-[85vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Edit3 className="h-5 w-5" />
-            Editar Parcelamento
-          </DialogTitle>
-          <DialogDescription>
-            Atualize as informações do parcelamento {installment.name}
-          </DialogDescription>
-        </DialogHeader>
+    <Dialog 
+      open={open} 
+      onClose={() => onOpenChange(false)}
+      maxWidth="md"
+      fullWidth
+    >
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Edit3 style={{ width: '1.25rem', height: '1.25rem' }} />
+            <span>Editar Parcelamento</span>
+          </Stack>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontWeight: 'normal' }}>
+            Atualize as informações do parcelamento "{installment.name}"
+          </Typography>
+        </Box>
+        <IconButton onClick={() => onOpenChange(false)} size="small">
+          <X style={{ width: '1.25rem', height: '1.25rem' }} />
+        </IconButton>
+      </DialogTitle>
 
-        <div className="flex-1 overflow-y-auto px-1">
-
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
+      <DialogContent dividers sx={{ p: 3 }}>
+        <form onSubmit={form.handleSubmit(onSubmit)} id="edit-installment-form">
+          <Stack spacing={3}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' }, gap: 3 }}>
+              <Controller
                 name="name"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Nome do Parcelamento</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ex: Compra no Magazine Luiza" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                control={form.control}
+                render={({ field, fieldState: { error } }) => (
+                  <TextField
+                    {...field}
+                    label="Nome do Parcelamento"
+                    placeholder="Ex: Compra no Magazine Luiza"
+                    error={!!error}
+                    helperText={error?.message}
+                    fullWidth
+                    sx={{ gridColumn: { md: 'span 2' } }}
+                  />
                 )}
               />
 
-              <FormField
-                control={form.control}
+              <Controller
                 name="description"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Descrição (Opcional)</FormLabel>
-                    <FormControl>
-                      <Textarea 
-                        placeholder="Detalhes sobre o parcelamento..."
-                        className="resize-none"
-                        rows={2}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                control={form.control}
+                render={({ field, fieldState: { error } }) => (
+                  <TextField
+                    {...field}
+                    label="Descrição (Opcional)"
+                    placeholder="Detalhes sobre o parcelamento..."
+                    multiline
+                    rows={2}
+                    error={!!error}
+                    helperText={error?.message}
+                    fullWidth
+                    sx={{ gridColumn: { md: 'span 2' } }}
+                  />
                 )}
               />
+              
+              <Box sx={{ gridColumn: { md: 'span 2' }, display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 2 }}>
+                  <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
+                  <Typography variant="caption" color="text.secondary">Valor Total</Typography>
+                  <Typography variant="h6" fontWeight="semibold">
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(installment.totalAmount)}
+                  </Typography>
+                </Box>
+                <Box sx={{ p: 2, bgcolor: 'action.hover', borderRadius: 1 }}>
+                  <Typography variant="caption" color="text.secondary">Nº de Parcelas</Typography>
+                  <Typography variant="h6" fontWeight="semibold">
+                    {installment.paidInstallments}/{installment.totalInstallments}
+                  </Typography>
+                </Box>
+              </Box>
 
-              <FormField
-                control={form.control}
+              <Controller
                 name="category"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Categoria</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a categoria" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {availableCategories.map((category) => (
-                          <SelectItem key={category} value={category}>
-                            {category}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
+                control={form.control}
+                render={({ field, fieldState: { error } }) => (
+                  <FormControl fullWidth error={!!error}>
+                    <InputLabel>Categoria</InputLabel>
+                    <Select
+                      {...field}
+                      label="Categoria"
+                      value={field.value || ''}
+                    >
+                      {availableCategories.map((category) => (
+                        <MenuItem key={category} value={category}>
+                          {category}
+                        </MenuItem>
+                      ))}
                     </Select>
-                    <FormMessage />
-                  </FormItem>
+                    <FormHelperText>{error?.message}</FormHelperText>
+                  </FormControl>
                 )}
               />
 
-              <FormField
-                control={form.control}
+              <Controller
                 name="subcategory"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Subcategoria (Opcional)</FormLabel>
-                    <Select 
-                      onValueChange={field.onChange} 
-                      defaultValue={field.value}
+                control={form.control}
+                render={({ field, fieldState: { error } }) => (
+                  <FormControl fullWidth error={!!error}>
+                    <InputLabel>Subcategoria (Opcional)</InputLabel>
+                    <Select
+                      {...field}
+                      label="Subcategoria (Opcional)"
+                      value={field.value || ''}
                       disabled={!selectedCategory || availableSubcategories.length === 0}
                     >
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a subcategoria" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {availableSubcategories.map((subcategory) => (
-                          <SelectItem key={subcategory} value={subcategory}>
-                            {subcategory}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
+                      {availableSubcategories.map((subcategory) => (
+                        <MenuItem key={subcategory} value={subcategory}>
+                          {subcategory}
+                        </MenuItem>
+                      ))}
                     </Select>
-                    <FormMessage />
-                  </FormItem>
+                    <FormHelperText>{error?.message}</FormHelperText>
+                  </FormControl>
                 )}
               />
 
-              <FormField
-                control={form.control}
+              <Controller
                 name="establishment"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Estabelecimento (Opcional)</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Ex: Loja ABC, Magazine Luiza..." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
                 control={form.control}
-                name="sourceWalletId"
-                render={({ field }) => (
-                  <FormItem className="md:col-span-2">
-                    <FormLabel>Carteira de Débito (Opcional)</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione a carteira" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="none">Nenhuma</SelectItem>
-                        {wallets.map((wallet) => (
-                          <SelectItem key={wallet.id} value={wallet.id}>
-                            {wallet.name} ({wallet.type})
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
+                render={({ field, fieldState: { error } }) => (
+                  <TextField
+                    {...field}
+                    label="Estabelecimento (Opcional)"
+                    placeholder="Ex: Loja ABC, Magazine Luiza..."
+                    error={!!error}
+                    helperText={error?.message}
+                    fullWidth
+                    sx={{ gridColumn: { md: 'span 2' } }}
+                  />
                 )}
               />
-            </div>
 
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={isSubmitting}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Edit3 className="h-4 w-4 mr-2" />
+              <Controller
+                name="sourceWalletId"
+                control={form.control}
+                render={({ field, fieldState: { error } }) => (
+                  <FormControl fullWidth error={!!error} sx={{ gridColumn: { md: 'span 2' } }}>
+                    <InputLabel>Carteira de Origem</InputLabel>
+                    <Select
+                      {...field}
+                      label="Carteira de Origem"
+                      value={field.value || ''}
+                    >
+                      {wallets.map((wallet) => (
+                        <MenuItem key={wallet.id} value={wallet.id}>
+                          {wallet.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                    <FormHelperText>{error?.message}</FormHelperText>
+                  </FormControl>
                 )}
-                Salvar Alterações
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-        </div>
+              />
+            </Box>
+          </Stack>
+        </form>
       </DialogContent>
+
+      <DialogActions sx={{ p: 3, pt: 2 }}>
+        <Button
+          onClick={() => onOpenChange(false)}
+          disabled={isSubmitting}
+          variant="outlined"
+        >
+          Cancelar
+        </Button>
+        <Button 
+          type="submit"
+          form="edit-installment-form"
+          disabled={isSubmitting} 
+          variant="contained"
+          startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : null}
+        >
+          Salvar Alterações
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 }

@@ -53,4 +53,5 @@ export interface IPaymentRepository {
   getUserByStripeCustomerId(customerId: string): Promise<{ uid: string; stripeCustomerId: string } | null>;
   getUserByUserId(userId: string): Promise<{ uid: string; stripeCustomerId?: string } | null>;
   updateUserPlan(userId: string, plan: UserPlan, credits: number): Promise<void>;
+  addUserCredits(userId: string, credits: number): Promise<void>;
 }

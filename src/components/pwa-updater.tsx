@@ -1,9 +1,9 @@
 "use client"
 
-import { useEffect, useState, useCallback } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { ArrowDownToLine, Wifi, WifiOff } from 'lucide-react';
+import {useEffect, useState, useCallback} from 'react';
+import {useToast} from '@/hooks/use-toast';
+import {Button, Typography, Box, Stack} from '@mui/material';
+import {ArrowDownToLine, Wifi, WifiOff} from 'lucide-react';
 
 export function PWAUpdater() {
   const { toast } = useToast();
@@ -35,8 +35,9 @@ export function PWAUpdater() {
         title: 'Modo Offline',
         description: 'Você está offline. As alterações serão sincronizadas quando voltar online.',
         duration: 5000,
+        variant: 'info',
         action: (
-          <WifiOff className="h-4 w-4 text-muted-foreground" />
+          <WifiOff style={{ width: '1rem', height: '1rem' }} />
         ),
       });
     } else {
@@ -71,9 +72,20 @@ export function PWAUpdater() {
         title: 'Instalar Gastometria',
         description: 'Adicione o Gastometria à sua tela inicial para acesso mais rápido.',
         duration: 10000,
+        variant: 'info',
         action: (
-          <Button onClick={handleInstallClick} size="sm" className="h-8 px-3 py-1">
-            <ArrowDownToLine className="mr-2 h-3 w-3" />
+          <Button 
+            onClick={handleInstallClick} 
+            size="small" 
+            variant="contained"
+            sx={{ 
+              minWidth: 'auto',
+              px: 2,
+              py: 0.5,
+              fontSize: '0.875rem'
+            }}
+          >
+            <ArrowDownToLine style={{ marginRight: '0.5rem', width: '0.875rem', height: '0.875rem' }} />
             Instalar
           </Button>
         ),
@@ -93,6 +105,7 @@ export function PWAUpdater() {
           title: 'Instalação Concluída',
           description: 'Gastometria foi adicionado à sua tela inicial!',
           duration: 3000,
+          variant: 'success',
         });
       }
     }
@@ -171,9 +184,20 @@ export function PWAUpdater() {
         title: 'Atualização Disponível',
         description: 'Uma nova versão do Gastometria está pronta para usar.',
         duration: Infinity,
+        variant: 'info',
         action: (
-          <Button onClick={handleUpdate} size="sm" className="h-8 px-3 py-1">
-            <ArrowDownToLine className="mr-2 h-3 w-3" />
+          <Button 
+            onClick={handleUpdate} 
+            size="small"
+            variant="contained"
+            sx={{ 
+              minWidth: 'auto',
+              px: 2,
+              py: 0.5,
+              fontSize: '0.875rem'
+            }}
+          >
+            <ArrowDownToLine style={{ marginRight: '0.5rem', width: '0.875rem', height: '0.875rem' }} />
             Atualizar
           </Button>
         ),
@@ -184,12 +208,24 @@ export function PWAUpdater() {
   // Indicador de status de conexão (opcional)
   if (!isOnline) {
     return (
-      <div className="fixed bottom-4 left-4 z-50">
-        <div className="flex items-center gap-2 bg-muted/80 backdrop-blur-sm px-3 py-2 rounded-lg text-sm">
-          <WifiOff className="h-4 w-4 text-muted-foreground" />
-          <span className="text-muted-foreground">Offline</span>
-        </div>
-      </div>
+      <Box sx={{ position: 'fixed', bottom: 16, left: 16, zIndex: 50 }}>
+        <Stack 
+          direction="row" 
+          alignItems="center" 
+          spacing={2} 
+          sx={{ 
+            bgcolor: 'rgba(0, 0, 0, 0.6)',
+            backdropFilter: 'blur(4px)', 
+            px: 3, 
+            py: 2, 
+            borderRadius: 2, 
+            fontSize: '0.875rem' 
+          }}
+        >
+          <WifiOff style={{ width: '1rem', height: '1rem' }} />
+          <Typography component="span" sx={{ color: 'text.secondary' }}>Offline</Typography>
+        </Stack>
+      </Box>
     );
   }
 

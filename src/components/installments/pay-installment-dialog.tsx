@@ -1,41 +1,17 @@
 // src/components/installments/pay-installment-dialog.tsx
 
-import { useState, useEffect } from 'react';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
+import {useState, useEffect} from 'react';
+import {useForm, Controller} from 'react-hook-form';
+import {zodResolver} from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Loader2, DollarSign, Wallet as WalletIcon, AlertCircle } from 'lucide-react';
-import { Installment, InstallmentPayment } from '@/core/ports/installments.port';
-import { useInstallments } from '@/hooks/use-installments';
-import { useWallets } from '@/hooks/use-wallets';
-import { formatCurrency } from '@/lib/utils';
-import { format, parseISO } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import {Dialog, DialogContent, DialogTitle, DialogActions, Button, TextField, Select, MenuItem, FormControl, InputLabel, FormHelperText, Box, Stack, Typography, IconButton, InputAdornment, useTheme, alpha, CircularProgress} from '@mui/material';
+import {Loader2, DollarSign, Wallet as WalletIcon, AlertCircle, X} from 'lucide-react';
+import {Installment, InstallmentPayment} from '@/core/ports/installments.port';
+import {useInstallments} from '@/hooks/use-installments';
+import {useWallets} from '@/hooks/use-wallets';
+import {formatCurrency} from '@/lib/utils';
+import {format, parseISO} from 'date-fns';
+import {ptBR} from 'date-fns/locale';
 
 const paymentSchema = z.object({
   walletId: z.string().min(1, 'Selecione uma carteira'),
@@ -63,24 +39,38 @@ export function PayInstallmentDialog({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { payInstallment } = useInstallments();
   const { wallets } = useWallets();
+  const theme = useTheme();
+
+  // Encontrar carteira válida: primeira tenta a do parcelamento, depois a primeira disponível
+  const getValidWalletId = () => {
+    if (installment.sourceWalletId) {
+      const walletExists = wallets.find(w => w.id === installment.sourceWalletId);
+      if (walletExists) {
+        return installment.sourceWalletId;
+      }
+    }
+    // Se a carteira do parcelamento não existe, usar a primeira disponível
+    return wallets.length > 0 ? wallets[0].id : '';
+  };
 
   const form = useForm<PaymentForm>({
     resolver: zodResolver(paymentSchema),
     defaultValues: {
-      walletId: installment.sourceWalletId || '',
+      walletId: getValidWalletId(),
       paidAmount: payment?.scheduledAmount.toString() || '0',
     },
   });
 
-  // Reset form when payment changes
+  // Reset form when payment changes or wallets change
   useEffect(() => {
     if (payment) {
       form.setValue('paidAmount', payment.scheduledAmount.toString());
-      if (installment.sourceWalletId) {
-        form.setValue('walletId', installment.sourceWalletId);
+      const validWalletId = getValidWalletId();
+      if (validWalletId) {
+        form.setValue('walletId', validWalletId);
       }
     }
-  }, [payment, installment.sourceWalletId, form]);
+  }, [payment, installment.sourceWalletId, wallets, form]);
 
   const selectedWalletId = form.watch('walletId');
   const selectedWallet = wallets.find(w => w.id === selectedWalletId);
@@ -131,147 +121,174 @@ export function PayInstallmentDialog({
   if (!payment) return null;
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Registrar Pagamento</DialogTitle>
-          <DialogDescription>
+    <Dialog 
+      open={open} 
+      onClose={() => onOpenChange(false)}
+      maxWidth="sm"
+      fullWidth
+    >
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Box>
+          Registrar Pagamento
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontWeight: 'normal' }}>
             Registre o pagamento da parcela {payment.installmentNumber} de {installment.name}
-          </DialogDescription>
-        </DialogHeader>
+          </Typography>
+        </Box>
+        <IconButton onClick={() => onOpenChange(false)} size="small">
+          <X style={{ width: '1.25rem', height: '1.25rem' }} />
+        </IconButton>
+      </DialogTitle>
 
-        <div className="space-y-4">
+      <DialogContent dividers sx={{ p: 3 }}>
+        <Stack spacing={3}>
           {/* Payment Info */}
-          <div className="rounded-lg border p-4 space-y-2">
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Parcela</span>
-              <span className="font-medium">{payment.installmentNumber}/{installment.totalInstallments}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Vencimento</span>
-              <span className="font-medium">
-                {format(parseISO(payment.dueDate), 'dd/MM/yyyy', { locale: ptBR })}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-sm text-muted-foreground">Valor Previsto</span>
-              <span className="font-medium">{formatCurrency(payment.scheduledAmount)}</span>
-            </div>
-          </div>
+          <Box sx={{ p: 2, border: 1, borderColor: 'divider', borderRadius: 1, bgcolor: 'background.paper' }}>
+            <Stack spacing={1}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2" color="text.secondary">Parcela</Typography>
+                <Typography variant="body2" fontWeight="medium">{payment.installmentNumber}/{installment.totalInstallments}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2" color="text.secondary">Vencimento</Typography>
+                <Typography variant="body2" fontWeight="medium">
+                  {format(parseISO(payment.dueDate), 'dd/MM/yyyy', { locale: ptBR })}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2" color="text.secondary">Valor Previsto</Typography>
+                <Typography variant="body2" fontWeight="medium">{formatCurrency(payment.scheduledAmount)}</Typography>
+              </Box>
+            </Stack>
+          </Box>
 
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
+          <form onSubmit={form.handleSubmit(onSubmit)} id="pay-installment-form">
+            <Stack spacing={3}>
+              <Controller
                 name="walletId"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Carteira para Débito</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione uma carteira" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        {wallets.map((wallet) => (
-                          <SelectItem key={wallet.id} value={wallet.id}>
-                            <div className="flex items-center gap-2">
-                              <WalletIcon className="h-4 w-4" />
-                              <span>{wallet.name}</span>
-                              <span className="text-muted-foreground">
-                                ({formatCurrency(wallet.balance)})
-                              </span>
-                            </div>
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
+                control={form.control}
+                render={({ field, fieldState: { error } }) => (
+                  <FormControl fullWidth error={!!error}>
+                    <InputLabel>Carteira para Débito</InputLabel>
+                    <Select
+                      {...field}
+                      label="Carteira para Débito"
+                      value={field.value || ''}
+                    >
+                      {wallets.map((wallet) => (
+                        <MenuItem key={wallet.id} value={wallet.id}>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                            <WalletIcon style={{ width: '1rem', height: '1rem' }} />
+                            <Typography variant="body2">{wallet.name}</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              ({formatCurrency(wallet.balance)})
+                            </Typography>
+                          </Box>
+                        </MenuItem>
+                      ))}
                     </Select>
-                    <FormMessage />
-                  </FormItem>
+                    <FormHelperText>{error?.message}</FormHelperText>
+                  </FormControl>
                 )}
               />
 
               {/* Wallet Balance Warning */}
               {selectedWallet && (
-                <div className="text-sm p-2 rounded-md bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-900/50">
-                  <div className="flex items-center gap-2">
-                    <WalletIcon className="h-4 w-4" />
-                    <span>Saldo disponível: <strong>{formatCurrency(selectedWallet.balance)}</strong></span>
-                  </div>
-                </div>
+                <Box sx={{ 
+                  p: 1.5, 
+                  borderRadius: 1, 
+                  bgcolor: alpha(theme.palette.info.main, 0.1), 
+                  color: 'info.main', 
+                  border: 1, 
+                  borderColor: alpha(theme.palette.info.main, 0.2),
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}>
+                  <WalletIcon style={{ width: '1rem', height: '1rem' }} />
+                  <Typography variant="body2">
+                    Saldo disponível: <strong>{formatCurrency(selectedWallet.balance)}</strong>
+                  </Typography>
+                </Box>
               )}
 
-              <FormField
-                control={form.control}
+              <Controller
                 name="paidAmount"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Valor Pago (R$)</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        min="0"
-                        placeholder="0.00"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+                control={form.control}
+                render={({ field, fieldState: { error } }) => (
+                  <TextField
+                    {...field}
+                    label="Valor Pago"
+                    type="number"
+                    InputProps={{
+                      startAdornment: <InputAdornment position="start">R$</InputAdornment>,
+                    }}
+                    error={!!error}
+                    helperText={error?.message}
+                    fullWidth
+                  />
                 )}
               />
 
               {/* Insufficient Balance Warning */}
               {hasInsufficientBalance && (
-                <div className="text-sm p-2 rounded-md bg-destructive/5 dark:bg-destructive/5 text-destructive dark:text-destructive border border-destructive/20 dark:border-destructive/20">
-                  <div className="flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4" />
-                    <span>Saldo insuficiente na carteira selecionada</span>
-                  </div>
-                </div>
+                <Box sx={{ 
+                  p: 1.5, 
+                  borderRadius: 1, 
+                  bgcolor: alpha(theme.palette.error.main, 0.1), 
+                  color: 'error.main', 
+                  border: 1, 
+                  borderColor: alpha(theme.palette.error.main, 0.2),
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1
+                }}>
+                  <AlertCircle style={{ width: '1rem', height: '1rem' }} />
+                  <Typography variant="body2">Saldo insuficiente na carteira selecionada</Typography>
+                </Box>
               )}
 
               {/* Difference indicator */}
               {difference !== 0 && !hasInsufficientBalance && (
-                <div className={`text-sm p-2 rounded-md ${
-                  difference > 0 
-                    ? 'bg-green-50 dark:bg-green-950/50 text-green-700 dark:text-green-400 border border-green-200 dark:border-green-900/50' 
-                    : 'bg-yellow-50 dark:bg-yellow-950/50 text-yellow-700 dark:text-yellow-400 border border-yellow-200 dark:border-yellow-900/50'
-                }`}>
-                  {difference > 0 ? (
-                    <>Você está pagando <strong>{formatCurrency(difference)} a mais</strong> que o previsto.</>
-                  ) : (
-                    <>Você está pagando <strong>{formatCurrency(Math.abs(difference))} a menos</strong> que o previsto.</>
-                  )}
-                </div>
+                <Box sx={{ 
+                  p: 1.5, 
+                  borderRadius: 1, 
+                  bgcolor: difference > 0 ? alpha(theme.palette.success.main, 0.1) : alpha(theme.palette.warning.main, 0.1),
+                  color: difference > 0 ? 'success.main' : 'warning.main',
+                  border: 1,
+                  borderColor: difference > 0 ? alpha(theme.palette.success.main, 0.2) : alpha(theme.palette.warning.main, 0.2)
+                }}>
+                  <Typography variant="body2">
+                    {difference > 0 ? (
+                      <>Você está pagando <strong>{formatCurrency(difference)} a mais</strong> que o previsto.</>
+                    ) : (
+                      <>Você está pagando <strong>{formatCurrency(Math.abs(difference))} a menos</strong> que o previsto.</>
+                    )}
+                  </Typography>
+                </Box>
               )}
-
-              <DialogFooter>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => onOpenChange(false)}
-                  disabled={isSubmitting}
-                >
-                  Cancelar
-                </Button>
-                <Button 
-                  type="submit" 
-                  disabled={isSubmitting || hasInsufficientBalance}
-                >
-                  {isSubmitting ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <DollarSign className="h-4 w-4 mr-2" />
-                  )}
-                  Registrar Pagamento
-                </Button>
-              </DialogFooter>
-            </form>
-          </Form>
-        </div>
+            </Stack>
+          </form>
+        </Stack>
       </DialogContent>
+
+      <DialogActions sx={{ p: 3, pt: 2 }}>
+        <Button
+          onClick={() => onOpenChange(false)}
+          disabled={isSubmitting}
+          variant="outlined"
+        >
+          Cancelar
+        </Button>
+        <Button 
+          type="submit"
+          form="pay-installment-form"
+          disabled={isSubmitting || hasInsufficientBalance} 
+          variant="contained"
+          startIcon={isSubmitting ? <CircularProgress size={20} color="inherit" /> : <DollarSign />}
+        >
+          Registrar Pagamento
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 }

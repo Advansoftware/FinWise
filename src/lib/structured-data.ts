@@ -1,8 +1,9 @@
+
 export const structuredData = {
   "@context": "https://schema.org",
   "@type": "SoftwareApplication",
   "name": "Gastometria",
-  "description": "Dashboard financeiro inteligente com IA para controle de gastos, orçamentos, metas e análises financeiras automáticas",
+  "description": "Dashboard financeiro inteligente com IA e ferramentas de cálculo trabalhista para controle de gastos, orçamentos, metas, calculadora de férias, 13º salário e análises financeiras automáticas",
   "url": "https://gastometria.com.br",
   "applicationCategory": "FinanceApplication",
   "operatingSystem": ["Web", "PWA", "Android", "iOS"],
@@ -62,6 +63,10 @@ export const structuredData = {
     "Controle de transações ilimitado",
     "Orçamentos inteligentes com sugestões de IA",
     "Metas de economia personalizadas",
+    "Calculadora de férias trabalhista",
+    "Calculadora de 13º salário (décimo terceiro)",
+    "Simulador de projeção salarial",
+    "Ferramentas de cálculo trabalhista online",
     "Assistente de IA para consultas financeiras",
     "Importação automática de extratos bancários",
     "OCR para digitalização de notas fiscais",
@@ -130,6 +135,10 @@ export const organizationData = {
     "Gestão Financeira Pessoal",
     "Controle de Gastos",
     "Orçamentos Familiares",
+    "Calculadora de Férias",
+    "Calculadora 13º Salário",
+    "Cálculos Trabalhistas",
+    "Projeção Salarial",
     "Inteligência Artificial",
     "Análise de Dados Financeiros",
     "Educação Financeira"
@@ -157,16 +166,18 @@ export const websiteData = {
   }
 };
 
-export const breadcrumbData = (items: Array<{ name: string; url: string }>) => ({
+export const breadcrumbData = {
   "@context": "https://schema.org",
   "@type": "BreadcrumbList",
-  "itemListElement": items.map((item, index) => ({
-    "@type": "ListItem",
-    "position": index + 1,
-    "name": item.name,
-    "item": item.url
-  }))
-});
+  "itemListElement": [
+    {
+      "@type": "ListItem",
+      "position": 1,
+      "name": "Início",
+      "item": "https://gastometria.com.br"
+    }
+  ]
+};
 
 export const faqData = {
   "@context": "https://schema.org",
@@ -218,6 +229,38 @@ export const faqData = {
       "acceptedAnswer": {
         "@type": "Answer",
         "text": "Sim! O Gastometria é uma aplicação web progressiva (PWA) que funciona em qualquer dispositivo - computador, tablet ou smartphone. Seus dados ficam sincronizados em tempo real."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Como funciona a calculadora de férias do Gastometria?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Nossa calculadora de férias calcula automaticamente o valor a receber com base no seu salário bruto cadastrado. Ela considera 1/3 de férias, descontos e permite simular diferentes períodos de férias de acordo com a legislação trabalhista brasileira."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "A calculadora de 13º salário é precisa?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Sim! Nossa calculadora de 13º salário (décimo terceiro) usa os dados do seu holerite cadastrado e segue exatamente as regras da CLT. Ela calcula proporcionalmente aos meses trabalhados e considera todos os descontos aplicáveis."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Posso fazer projeções salariais futuras?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Sim! O simulador de projeção salarial permite calcular aumentos, reajustes e simular diferentes cenários para seu salário futuro. Você pode ver o impacto no seu orçamento e planejar melhor suas finanças."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "As ferramentas de cálculo estão disponíveis no plano gratuito?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Sim! Todas as ferramentas financeiras (calculadora de férias, 13º salário e projeção salarial) estão disponíveis gratuitamente para todos os usuários, desde o plano Básico."
       }
     }
   ]
@@ -335,5 +378,74 @@ export const howToData = {
     "@type": "MonetaryAmount",
     "currency": "BRL",
     "value": "0"
+  }
+};
+
+// Dados estruturados para ferramentas financeiras
+export const financialToolsData = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Ferramentas Financeiras Gastometria",
+  "description": "Calculadoras trabalhistas gratuitas: férias, 13º salário e projeção salarial online",
+  "url": "https://gastometria.com.br/tools",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": ["Web", "PWA"],
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "BRL",
+    "category": "free"
+  },
+  "featureList": [
+    "Calculadora de férias trabalhista",
+    "Calculadora de 13º salário (décimo terceiro)",
+    "Simulador de projeção salarial",
+    "Cálculos baseados na CLT",
+    "Resultados precisos e atualizados",
+    "Interface responsiva e fácil de usar"
+  ],
+  "creator": {
+    "@type": "Organization",
+    "name": "Gastometria"
+  }
+};
+
+// Schema específico para cada calculadora
+export const vacationCalculatorData = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Calculadora de Férias Online",
+  "description": "Calcule o valor das suas férias trabalhistas incluindo 1/3 constitucional e descontos",
+  "url": "https://gastometria.com.br/tools",
+  "applicationSubCategory": "Calculator",
+  "about": {
+    "@type": "Thing",
+    "name": "Cálculo de Férias Trabalhista"
+  }
+};
+
+export const thirteenthSalaryCalculatorData = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Calculadora de 13º Salário (Décimo Terceiro)",
+  "description": "Calcule o valor do seu 13º salário proporcional aos meses trabalhados",
+  "url": "https://gastometria.com.br/tools",
+  "applicationSubCategory": "Calculator",
+  "about": {
+    "@type": "Thing",
+    "name": "Cálculo de 13º Salário"
+  }
+};
+
+export const salaryProjectionCalculatorData = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Simulador de Projeção Salarial",
+  "description": "Simule aumentos salariais e calcule o impacto no seu orçamento futuro",
+  "url": "https://gastometria.com.br/tools",
+  "applicationSubCategory": "Calculator",
+  "about": {
+    "@type": "Thing",
+    "name": "Projeção e Simulação Salarial"
   }
 };

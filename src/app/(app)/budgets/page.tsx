@@ -1,166 +1,543 @@
 // src/app/(app)/budgets/page.tsx
-'use client';
+"use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { PlusCircle, MoreVertical, Trash2, Edit, PiggyBank, Sparkles } from "lucide-react";
-import { useBudgets } from "@/hooks/use-budgets";
-import { Skeleton } from "@/components/ui/skeleton";
-import { Progress } from "@/components/ui/progress";
-import { cn } from "@/lib/utils";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { CreateBudgetDialog } from "@/components/budgets/create-budget-dialog";
+import { useState, MouseEvent } from "react";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+  Card,
+  CardContent,
+  CardHeader,
+  Typography,
+  Button,
+  Stack,
+  Box,
+  Tabs,
+  Tab,
+  LinearProgress,
+  Skeleton,
+  Menu,
+  MenuItem,
+  IconButton,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Chip,
+  useTheme,
+  Grid,
+} from "@mui/material";
+import {
+  PlusCircle,
+  MoreVertical,
+  Trash2,
+  Edit,
+  PiggyBank,
+  Trophy,
+  Flame,
+  Award,
+  Calculator,
+  BarChart3,
+} from "lucide-react";
+import { useBudgets } from "@/hooks/use-budgets";
+import { formatCurrency } from "@/lib/utils";
+import { CreateBudgetDialog } from "@/components/budgets/create-budget-dialog";
 import { Budget } from "@/lib/types";
 import { AutomaticBudgetCard } from "@/components/budgets/automatic-budget-card";
+import { BudgetGuidance } from "@/components/budgets/budget-guidance";
+import { SpendingAnalysis } from "@/components/budgets/spending-analysis";
+import { GamificationGuide, DailyQuestsCard } from "@/components/gamification";
 import { usePlan } from "@/hooks/use-plan";
+import { useGamification } from "@/hooks/use-gamification";
+import { useToast } from "@/hooks/use-toast";
 
 export default function BudgetsPage() {
-    const { budgets, isLoading, deleteBudget } = useBudgets();
-    const { isPlus } = usePlan();
-    
-    if (isLoading) {
-        return <BudgetsSkeleton />
-    }
-    
-    return (
-        <div className="flex flex-col gap-6">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold tracking-tight">Orçamentos</h1>
-                    <p className="text-muted-foreground">Defina limites de gastos mensais para suas categorias e evite surpresas no final do mês. Acompanhar um orçamento é o primeiro passo para assumir o controle total de suas finanças.</p>
-                </div>
-                 <CreateBudgetDialog>
-                    <Button>
-                        <PlusCircle className="mr-2 h-4 w-4" /> Novo Orçamento
-                    </Button>
-                </CreateBudgetDialog>
-            </div>
+  const { budgets, isLoading, deleteBudget, addBudget } = useBudgets();
+  const { isPlus } = usePlan();
+  const { gamificationData } = useGamification();
+  const { toast } = useToast();
+  const [activeTab, setActiveTab] = useState("budgets");
 
-            {isPlus && <AutomaticBudgetCard />}
-            
-            {budgets.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {budgets.map(budget => (
-                       <BudgetCard key={budget.id} budget={budget} onDelete={() => deleteBudget(budget.id)} />
-                    ))}
-                </div>
-            ) : (
-                 <Card className="col-span-full border-dashed">
-                    <CardContent className="p-8 text-center text-muted-foreground flex flex-col items-center">
-                       <PiggyBank className="h-12 w-12 mb-4 text-primary/50" />
-                        <h3 className="text-lg font-semibold text-foreground">Nenhum orçamento encontrado.</h3>
-                       <p className="text-sm max-w-md mx-auto">Crie seu primeiro orçamento para começar a planejar. Que tal definir um limite para "Supermercado" ou "Restaurante"?</p>
-                        <CreateBudgetDialog>
-                            <Button className="mt-4">
-                                <PlusCircle className="mr-2 h-4 w-4" /> Criar Orçamento
-                            </Button>
-                        </CreateBudgetDialog>
-                    </CardContent>
-                </Card>
-            )}
-        </div>
-    )
+  const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
+    setActiveTab(newValue);
+  };
+
+  if (isLoading) {
+    return <BudgetsSkeleton />;
+  }
+
+  const handleBudgetCreation = async (budgetData: any) => {
+    try {
+      await addBudget({
+        ...budgetData,
+        period: "monthly" as const,
+      });
+      toast({
+        title: "Orçamento criado",
+        description: `Orçamento para ${budgetData.category} foi criado com sucesso.`,
+      });
+    } catch (error) {
+      toast({
+        variant: "error",
+        title: "Erro ao criar orçamento",
+        description: "Não foi possível criar o orçamento. Tente novamente.",
+      });
+    }
+  };
+
+  const handleMultipleBudgetCreation = async (budgetPlans: any[]) => {
+    try {
+      for (const plan of budgetPlans) {
+        await addBudget({
+          name: plan.name,
+          category: plan.category,
+          amount: plan.amount,
+          period: "monthly" as const,
+        });
+      }
+      toast({
+        title: "Orçamentos criados",
+        description: `${budgetPlans.length} orçamentos foram criados com sucesso.`,
+      });
+      setActiveTab("budgets");
+    } catch (error) {
+      toast({
+        variant: "error",
+        title: "Erro ao criar orçamentos",
+        description:
+          "Não foi possível criar alguns orçamentos. Tente novamente.",
+      });
+    }
+  };
+
+  const handleSuggestionAccepted = async (category: string, amount: number) => {
+    await handleBudgetCreation({
+      name: `Orçamento ${category}`,
+      category,
+      amount,
+    });
+  };
+
+  return (
+    <Stack spacing={3}>
+      <Stack
+        direction={{ xs: "column", md: "row" }}
+        justifyContent="space-between"
+        alignItems={{ xs: "flex-start", md: "center" }}
+        spacing={2}
+      >
+        <Box>
+          <Typography variant="h4" fontWeight="bold" gutterBottom>
+            Orçamentos
+          </Typography>
+          <Typography variant="body1" color="text.secondary">
+            Defina limites de gastos mensais para suas categorias e evite
+            surpresas no final do mês.
+          </Typography>
+        </Box>
+        <Stack 
+          direction="row" 
+          spacing={1} 
+          alignItems="center"
+          sx={{ width: { xs: "100%", md: "auto" } }}
+        >
+          <Box sx={{ flex: { xs: 1, md: "none" } }}>
+            <GamificationGuide />
+          </Box>
+          <CreateBudgetDialog>
+            <Button 
+              variant="contained" 
+              startIcon={<PlusCircle size={18} />}
+              fullWidth
+              sx={{ flex: { xs: 1, md: "none" } }}
+            >
+              Novo Orçamento
+            </Button>
+          </CreateBudgetDialog>
+        </Stack>
+      </Stack>
+
+      <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+        <Tabs
+          value={activeTab}
+          onChange={handleTabChange}
+          aria-label="budget tabs"
+        >
+          <Tab
+            label="Meus Orçamentos"
+            value="budgets"
+            icon={<PiggyBank size={18} />}
+            iconPosition="start"
+          />
+          <Tab
+            label="Como Montar"
+            value="guidance"
+            icon={<Calculator size={18} />}
+            iconPosition="start"
+          />
+          <Tab
+            label="Análise dos Gastos"
+            value="analysis"
+            icon={<BarChart3 size={18} />}
+            iconPosition="start"
+          />
+        </Tabs>
+      </Box>
+
+      {activeTab === "budgets" && (
+        <Stack spacing={3}>
+          {gamificationData && (
+            <Card
+              sx={{
+                background:
+                  "linear-gradient(to right, rgba(23, 37, 84, 0.3), rgba(20, 83, 45, 0.3))",
+              }}
+            >
+              <CardHeader
+                title={
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <Trophy size={20} />
+                    <Typography variant="h6">
+                      Desempenho dos Orçamentos
+                    </Typography>
+                  </Box>
+                }
+                titleTypographyProps={{ color: "primary.main" }}
+              />
+              <CardContent>
+                <Grid container spacing={2} textAlign="center">
+                  <Grid size={{ xs: 6, md: 3 }}>
+                    <Box
+                      p={2}
+                      borderRadius={2}
+                      sx={{
+                        bgcolor: "rgba(0, 0, 0, 0.4)",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                      }}
+                    >
+                      <Typography variant="h5" fontWeight="bold">
+                        {budgets.length}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Orçamentos Ativos
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 6, md: 3 }}>
+                    <Box
+                      p={2}
+                      borderRadius={2}
+                      sx={{
+                        bgcolor: "rgba(0, 0, 0, 0.4)",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                      }}
+                    >
+                      <Typography
+                        variant="h5"
+                        fontWeight="bold"
+                        color="success.main"
+                      >
+                        {gamificationData.achievements.find(
+                          (a) => a.id === "budget-master"
+                        )?.progress || 0}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Orçamentos Cumpridos
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 6, md: 3 }}>
+                    <Box
+                      p={2}
+                      borderRadius={2}
+                      sx={{
+                        bgcolor: "rgba(0, 0, 0, 0.4)",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                      }}
+                    >
+                      <Typography
+                        variant="h5"
+                        fontWeight="bold"
+                        color="error.main"
+                      >
+                        {gamificationData.achievements.find(
+                          (a) => a.id === "overspending-avoider"
+                        )?.progress || 0}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Orçamentos Estourados
+                      </Typography>
+                    </Box>
+                  </Grid>
+                  <Grid size={{ xs: 6, md: 3 }}>
+                    <Box
+                      p={2}
+                      borderRadius={2}
+                      sx={{
+                        bgcolor: "rgba(0, 0, 0, 0.4)",
+                        border: "1px solid rgba(255, 255, 255, 0.15)",
+                      }}
+                    >
+                      <Typography
+                        variant="h5"
+                        fontWeight="bold"
+                        color="warning.main"
+                        display="flex"
+                        alignItems="center"
+                        justifyItems="center"
+                        justifyContent="center"
+                        gap={0.5}
+                      >
+                        <Flame size={20} />{" "}
+                        {gamificationData.streaks?.payments?.current || 0}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        Meses no Controle
+                      </Typography>
+                    </Box>
+                  </Grid>
+                </Grid>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Missões de Orçamento */}
+          <DailyQuestsCard pageContext="budgets" />
+
+          {isPlus && <AutomaticBudgetCard />}
+
+          {budgets.length > 0 ? (
+            <Grid container spacing={3}>
+              {budgets.map((budget) => (
+                <Grid key={budget.id} size={{ xs: 12, md: 6, lg: 4 }}>
+                  <BudgetCard
+                    budget={budget}
+                    onDelete={() => deleteBudget(budget.id)}
+                  />
+                </Grid>
+              ))}
+            </Grid>
+          ) : (
+            <Card variant="outlined" sx={{ borderStyle: "dashed" }}>
+              <CardContent>
+                <Stack alignItems="center" spacing={2} py={4}>
+                  <PiggyBank size={48} style={{ opacity: 0.5 }} />
+                  <Typography variant="h6">
+                    Nenhum orçamento encontrado.
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    textAlign="center"
+                    maxWidth="sm"
+                  >
+                    Experimente usar nossas ferramentas inteligentes para criar
+                    orçamentos baseados na sua situação ou histórico de gastos.
+                  </Typography>
+                  <Stack direction="row" spacing={1}>
+                    <Button
+                      variant="outlined"
+                      onClick={() => setActiveTab("guidance")}
+                      startIcon={<Calculator size={16} />}
+                    >
+                      Como Montar
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      onClick={() => setActiveTab("analysis")}
+                      startIcon={<BarChart3 size={16} />}
+                    >
+                      Analisar Gastos
+                    </Button>
+                    <CreateBudgetDialog>
+                      <Button
+                        variant="contained"
+                        startIcon={<PlusCircle size={16} />}
+                      >
+                        Criar Manual
+                      </Button>
+                    </CreateBudgetDialog>
+                  </Stack>
+                </Stack>
+              </CardContent>
+            </Card>
+          )}
+        </Stack>
+      )}
+
+      {activeTab === "guidance" && (
+        <BudgetGuidance onBudgetCreated={handleMultipleBudgetCreation} />
+      )}
+
+      {activeTab === "analysis" && (
+        <SpendingAnalysis
+          onBudgetSuggestionAccepted={handleSuggestionAccepted}
+        />
+      )}
+    </Stack>
+  );
 }
 
-function BudgetCard({ budget, onDelete }: { budget: Budget, onDelete: () => void }) {
-    const percentage = Math.round((budget.currentSpending / budget.amount) * 100);
-    const progressColor = percentage > 100 ? "bg-red-600" : percentage > 80 ? "bg-yellow-500" : "bg-primary";
-    
-    return (
-        <Card>
-            <CardHeader>
-                <div className="flex items-start justify-between">
-                    <div>
-                         <CardTitle>{budget.name}</CardTitle>
-                        <CardDescription>Categoria: {budget.category}</CardDescription>
-                    </div>
-                     <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreVertical className="h-4 w-4"/>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <CreateBudgetDialog initialData={budget}>
-                                <div className="relative flex cursor-default select-none items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50">
-                                    <Edit className="mr-2 h-4 w-4"/>Editar
-                                </div>
-                            </CreateBudgetDialog>
-                           
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-red-500 focus:text-red-400 focus:bg-destructive/10">
-                                        <Trash2 className="mr-2 h-4 w-4"/>Excluir Orçamento
-                                    </DropdownMenuItem>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
-                                        <AlertDialogDescription>
-                                            Esta ação não pode ser desfeita. Isso excluirá permanentemente o orçamento "{budget.name}".
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                        <AlertDialogAction onClick={onDelete} className="bg-destructive hover:bg-destructive/90">Excluir</AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-                <div>
-                     <Progress value={Math.min(percentage, 100)} indicatorClassName={cn(progressColor)} />
-                </div>
-                <div className="flex justify-between items-baseline">
-                    <p className="text-lg font-bold text-foreground">R$ {budget.currentSpending.toFixed(2)}</p>
-                    <p className="text-sm text-muted-foreground">de R$ {budget.amount.toFixed(2)}</p>
-                </div>
-                 <div className="text-right">
-                    <p className={cn(
-                        "text-sm font-semibold",
-                        budget.amount - budget.currentSpending >= 0 ? "text-green-500" : "text-red-500"
-                    )}>
-                        {budget.amount - budget.currentSpending >= 0 
-                            ? `R$ ${(budget.amount - budget.currentSpending).toFixed(2)} restantes`
-                            : `R$ ${(Math.abs(budget.amount - budget.currentSpending)).toFixed(2)} acima`
-                        }
-                    </p>
-                </div>
-            </CardContent>
-        </Card>
-    );
+function BudgetCard({
+  budget,
+  onDelete,
+}: {
+  budget: Budget;
+  onDelete: () => void;
+}) {
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const open = Boolean(anchorEl);
+
+  const handleMenuClick = (event: MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleDeleteClick = () => {
+    handleMenuClose();
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    onDelete();
+    setDeleteDialogOpen(false);
+  };
+
+  const percentage = Math.round((budget.currentSpending / budget.amount) * 100);
+
+  let progressColor: "primary" | "secondary" | "error" | "warning" | "success" =
+    "primary";
+  if (percentage > 100) progressColor = "error";
+  else if (percentage > 80) progressColor = "warning";
+
+  const remainingAmount = budget.amount - budget.currentSpending;
+
+  return (
+    <Card>
+      <CardHeader
+        title={
+          <Box display="flex" alignItems="center" gap={1}>
+            {budget.currentSpending <= budget.amount && (
+              <Box
+                component={Award}
+                sx={{ width: 16, height: 16, color: "warning.main" }}
+              />
+            )}
+            <Typography variant="h6">{budget.name}</Typography>
+          </Box>
+        }
+        subheader={`Categoria: ${budget.category}`}
+        action={
+          <>
+            <IconButton onClick={handleMenuClick} size="small">
+              <MoreVertical size={16} />
+            </IconButton>
+            <Menu anchorEl={anchorEl} open={open} onClose={handleMenuClose}>
+              <CreateBudgetDialog initialData={budget}>
+                <MenuItem onClick={handleMenuClose}>
+                  <Edit size={16} style={{ marginRight: 8 }} /> Editar
+                </MenuItem>
+              </CreateBudgetDialog>
+              <MenuItem
+                onClick={handleDeleteClick}
+                sx={{ color: "error.main" }}
+              >
+                <Trash2 size={16} style={{ marginRight: 8 }} /> Excluir
+                Orçamento
+              </MenuItem>
+            </Menu>
+          </>
+        }
+      />
+      <CardContent>
+        <Stack spacing={2}>
+          <LinearProgress
+            variant="determinate"
+            value={Math.min(percentage, 100)}
+            color={progressColor}
+            sx={{ height: 8, borderRadius: 4 }}
+          />
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="baseline"
+          >
+            <Typography variant="h6" fontWeight="bold">
+              {formatCurrency(budget.currentSpending)}
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              de {formatCurrency(budget.amount)}
+            </Typography>
+          </Box>
+          <Box textAlign="right">
+            <Typography
+              variant="body2"
+              fontWeight="bold"
+              color={remainingAmount >= 0 ? "success.main" : "error.main"}
+            >
+              {remainingAmount >= 0
+                ? `${formatCurrency(remainingAmount)} restantes`
+                : `${formatCurrency(
+                    Math.abs(remainingAmount)
+                  )} acima do limite`}
+            </Typography>
+          </Box>
+        </Stack>
+      </CardContent>
+
+      <Dialog
+        open={deleteDialogOpen}
+        onClose={() => setDeleteDialogOpen(false)}
+      >
+        <DialogTitle>Você tem certeza?</DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Esta ação não pode ser desfeita. Isso excluirá permanentemente o
+            orçamento "{budget.name}".
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button variant="outlined" onClick={() => setDeleteDialogOpen(false)}>
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            color="error"
+            variant="contained"
+          >
+            Excluir
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </Card>
+  );
 }
 
 function BudgetsSkeleton() {
-    return (
-        <div className="flex flex-col gap-6">
-            <div className="flex justify-between items-center">
-                <div>
-                    <Skeleton className="h-10 w-48 mb-2" />
-                    <Skeleton className="h-4 w-96" />
-                </div>
-                <Skeleton className="h-10 w-36" />
-            </div>
-            <Skeleton className="h-24 w-full" />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <Skeleton className="h-56" />
-                <Skeleton className="h-56" />
-                <Skeleton className="h-56" />
-            </div>
-        </div>
-    )
+  return (
+    <Stack spacing={3}>
+      <Stack direction="row" justifyContent="space-between">
+        <Box>
+          <Skeleton width={200} height={40} />
+          <Skeleton width={300} height={20} />
+        </Box>
+        <Skeleton width={150} height={40} />
+      </Stack>
+      <Skeleton variant="rectangular" height={100} />
+      <Grid container spacing={3}>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Skeleton variant="rectangular" height={200} />
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Skeleton variant="rectangular" height={200} />
+        </Grid>
+        <Grid size={{ xs: 12, md: 4 }}>
+          <Skeleton variant="rectangular" height={200} />
+        </Grid>
+      </Grid>
+    </Stack>
+  );
 }

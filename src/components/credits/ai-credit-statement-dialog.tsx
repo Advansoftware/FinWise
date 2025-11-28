@@ -1,255 +1,361 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { AlertTriangle, BarChart3, Bot, Image, MessageCircle, Settings } from "lucide-react"
-import { useCreditTransparency } from "@/hooks/use-credit-transparency"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Dialog, DialogContent, DialogTitle } from "@mui/material";
+import { Chip } from "@mui/material";
+import { Card, CardContent, CardHeader, Grid } from "@mui/material";
+import {
+  AlertTriangle,
+  BarChart3,
+  Bot,
+  Image,
+  MessageCircle,
+  Settings,
+} from "lucide-react";
+import { useCreditTransparency } from "@/hooks/use-credit-transparency";
+import { Button } from "@mui/material";
+import { Divider } from "@mui/material";
+import { Alert } from "@mui/material";
+import { Box, Stack, Typography } from "@mui/material";
 
 interface CreditStatementDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
-export function CreditStatementDialog({ open, onOpenChange }: CreditStatementDialogProps) {
-  const router = useRouter()
-  const { 
+export function CreditStatementDialog({
+  open,
+  onOpenChange,
+}: CreditStatementDialogProps) {
+  const router = useRouter();
+  const {
     currentCredits,
     plan,
     getAlternativeMessage,
     actions,
     willConsumeCredits,
-    isUsingGastometriaAI
-  } = useCreditTransparency()
+    isUsingGastometriaAI,
+  } = useCreditTransparency();
 
-  const alternativeSuggestion = getAlternativeMessage()
+  const alternativeSuggestion = getAlternativeMessage();
 
-  const formatCreditCost = (cost: number) => `${cost} crédito${cost !== 1 ? 's' : ''}`
-  const formatBalance = (balance: number) => `${balance} crédito${balance !== 1 ? 's' : ''}`
+  const formatCreditCost = (cost: number) =>
+    `${cost} crédito${cost !== 1 ? "s" : ""}`;
+  const formatBalance = (balance: number) =>
+    `${balance} crédito${balance !== 1 ? "s" : ""}`;
 
   // Estatísticas baseadas nas ações reais disponíveis
   const getStatisticsByCategory = () => {
     const categories = {
-      simple: { actions: [] as Array<{ key: string } & typeof actions[string]>, totalCost: 0 },
-      complex: { actions: [] as Array<{ key: string } & typeof actions[string]>, totalCost: 0 },
-      image: { actions: [] as Array<{ key: string } & typeof actions[string]>, totalCost: 0 }
-    }
+      simple: {
+        actions: [] as Array<{ key: string } & (typeof actions)[string]>,
+        totalCost: 0,
+      },
+      complex: {
+        actions: [] as Array<{ key: string } & (typeof actions)[string]>,
+        totalCost: 0,
+      },
+      image: {
+        actions: [] as Array<{ key: string } & (typeof actions)[string]>,
+        totalCost: 0,
+      },
+    };
 
     Object.entries(actions).forEach(([key, action]) => {
-      categories[action.category].actions.push({ key, ...action })
-      categories[action.category].totalCost += action.cost
-    })
+      categories[action.category].actions.push({ key, ...action });
+      categories[action.category].totalCost += action.cost;
+    });
 
-    return categories
-  }
+    return categories;
+  };
 
-  const categoryStats = getStatisticsByCategory()
-  
+  const categoryStats = getStatisticsByCategory();
+
   // Simulação de uso - em produção isso viria do backend
   const mockUsageStats = {
     simple: { used: 12, spent: 15 },
     complex: { used: 3, spent: 15 },
-    image: { used: 1, spent: 10 }
-  }
+    image: { used: 1, spent: 10 },
+  };
 
-  const totalActionsUsed = Object.values(mockUsageStats).reduce((sum, stat) => sum + stat.used, 0)
-  const totalSpent = Object.values(mockUsageStats).reduce((sum, stat) => sum + stat.spent, 0)
-  const averagePerAction = totalActionsUsed > 0 ? totalSpent / totalActionsUsed : 0
+  const totalActionsUsed = Object.values(mockUsageStats).reduce(
+    (sum, stat) => sum + stat.used,
+    0
+  );
+  const totalSpent = Object.values(mockUsageStats).reduce(
+    (sum, stat) => sum + stat.spent,
+    0
+  );
+  const averagePerAction =
+    totalActionsUsed > 0 ? totalSpent / totalActionsUsed : 0;
 
-  const getCategoryIcon = (category: 'simple' | 'complex' | 'image') => {
+  const getCategoryIcon = (category: "simple" | "complex" | "image") => {
+    const iconStyle = { width: "1rem", height: "1rem" };
     switch (category) {
-      case 'simple':
-        return <MessageCircle className="h-4 w-4" />
-      case 'complex':
-        return <BarChart3 className="h-4 w-4" />
-      case 'image':
-        return <Image className="h-4 w-4" />
+      case "simple":
+        return <MessageCircle style={iconStyle} />;
+      case "complex":
+        return <BarChart3 style={iconStyle} />;
+      case "image":
+        return <Image style={iconStyle} />;
       default:
-        return <Bot className="h-4 w-4" />
+        return <Bot style={iconStyle} />;
     }
-  }
+  };
 
-  const getCategoryLabel = (category: 'simple' | 'complex' | 'image') => {
+  const getCategoryLabel = (category: "simple" | "complex" | "image") => {
     switch (category) {
-      case 'simple':
-        return 'Ações Simples'
-      case 'complex':
-        return 'Análises Complexas'
-      case 'image':
-        return 'Processamento de Imagens'
+      case "simple":
+        return "Ações Simples";
+      case "complex":
+        return "Análises Complexas";
+      case "image":
+        return "Processamento de Imagens";
       default:
-        return 'Outros'
+        return "Outros";
     }
-  }
+  };
 
-  const getCategoryDescription = (category: 'simple' | 'complex' | 'image') => {
+  const getCategoryDescription = (category: "simple" | "complex" | "image") => {
     switch (category) {
-      case 'simple':
-        return 'Conversas básicas e sugestões rápidas (1-2 créditos)'
-      case 'complex':
-        return 'Relatórios e análises detalhadas (5 créditos)'
-      case 'image':
-        return 'OCR e processamento de imagens (10 créditos)'
+      case "simple":
+        return "Conversas básicas e sugestões rápidas (1-2 créditos)";
+      case "complex":
+        return "Relatórios e análises detalhadas (5 créditos)";
+      case "image":
+        return "OCR e processamento de imagens (10 créditos)";
       default:
-        return 'Outras funcionalidades IA'
+        return "Outras funcionalidades IA";
     }
-  }
+  };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <BarChart3 className="h-5 w-5" />
-            Extrato de Créditos IA
-          </DialogTitle>
-        </DialogHeader>
-
-        <div className="space-y-6">
+    <Dialog
+      open={open}
+      onClose={() => onOpenChange(false)}
+      maxWidth="md"
+      fullWidth
+      scroll="body"
+    >
+      <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+        <BarChart3 style={{ width: "1.25rem", height: "1.25rem" }} />
+        Extrato de Créditos IA
+      </DialogTitle>
+      <DialogContent>
+        <Stack spacing={{ xs: 3, md: 4 }}>
           {/* Resumo Geral */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Saldo Atual</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-blue-600">
-                  {formatBalance(currentCredits)}
-                </div>
-                <Badge 
-                  variant={currentCredits > 10 ? "secondary" : "destructive"}
-                  className="mt-1"
-                >
-                  {plan}
-                </Badge>
-              </CardContent>
-            </Card>
+          <Grid container spacing={4}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Card>
+                <CardHeader sx={{ pb: 2 }}>
+                  <Box
+                    component="h3"
+                    sx={{ fontSize: "0.875rem", fontWeight: 500, m: 0 }}
+                  >
+                    Saldo Atual
+                  </Box>
+                </CardHeader>
+                <CardContent>
+                  <Typography
+                    variant="h4"
+                    sx={{ fontWeight: "bold", color: "#2563eb" }}
+                  >
+                    {formatBalance(currentCredits)}
+                  </Typography>
+                  <Chip
+                    variant="filled"
+                    color={currentCredits > 10 ? "secondary" : "error"}
+                    label={plan}
+                    sx={{ mt: 1 }}
+                  />
+                </CardContent>
+              </Card>
+            </Grid>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Total Gasto</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-slate-600">
-                  {formatCreditCost(totalSpent)}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Este mês
-                </p>
-              </CardContent>
-            </Card>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Card>
+                <CardHeader sx={{ pb: 2 }}>
+                  <Box
+                    component="h3"
+                    sx={{ fontSize: "0.875rem", fontWeight: 500, m: 0 }}
+                  >
+                    Total Gasto
+                  </Box>
+                </CardHeader>
+                <CardContent>
+                  <Typography
+                    variant="h4"
+                    sx={{ fontWeight: "bold", color: "#64748b" }}
+                  >
+                    {formatCreditCost(totalSpent)}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary", mt: 1, display: "block" }}
+                  >
+                    Este mês
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium">Média por Ação</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-slate-600">
-                  {formatCreditCost(Math.round(averagePerAction))}
-                </div>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {totalActionsUsed} ações realizadas
-                </p>
-              </CardContent>
-            </Card>
-          </div>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Card>
+                <CardHeader sx={{ pb: 2 }}>
+                  <Box
+                    component="h3"
+                    sx={{ fontSize: "0.875rem", fontWeight: 500, m: 0 }}
+                  >
+                    Média por Ação
+                  </Box>
+                </CardHeader>
+                <CardContent>
+                  <Typography
+                    variant="h4"
+                    sx={{ fontWeight: "bold", color: "#64748b" }}
+                  >
+                    {formatCreditCost(Math.round(averagePerAction))}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{ color: "text.secondary", mt: 1, display: "block" }}
+                  >
+                    {totalActionsUsed} ações realizadas
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
 
           {/* Aviso sobre Transparência */}
-          <Alert>
-            <AlertTriangle className="h-4 w-4" />
-            <AlertDescription>
-              <strong>Transparência Total:</strong> Mostramos exatamente quantos créditos cada ação consome. 
-              Conversas simples custam 1 crédito, análises complexas custam 5 créditos.
-            </AlertDescription>
+          <Alert
+            icon={<AlertTriangle style={{ width: "1rem", height: "1rem" }} />}
+          >
+            <Typography variant="body2">
+              <strong>Transparência Total:</strong> Mostramos exatamente quantos
+              créditos cada ação consome. Conversas simples custam 1 crédito,
+              análises complexas custam 5 créditos.
+            </Typography>
           </Alert>
 
           {/* Detalhamento por Categoria */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Uso por Categoria</h3>
-            
+          <Stack spacing={4}>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Uso por Categoria
+            </Typography>
+
             {Object.entries(categoryStats).map(([category, data]) => {
-              const usage = mockUsageStats[category as keyof typeof mockUsageStats]
-              const typedCategory = category as 'simple' | 'complex' | 'image'
-              
+              const usage =
+                mockUsageStats[category as keyof typeof mockUsageStats];
+              const typedCategory = category as "simple" | "complex" | "image";
+
               return (
-                <Card key={category} className="border-l-4 border-l-blue-500">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="flex items-center gap-2 text-base">
-                      {getCategoryIcon(typedCategory)}
-                      {getCategoryLabel(typedCategory)}
-                    </CardTitle>
-                    <CardDescription>
+                <Card key={category} sx={{ borderLeft: "4px solid #3b82f6" }}>
+                  <CardHeader sx={{ pb: 3 }}>
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                      <Typography
+                        variant="h6"
+                        component="h3"
+                        sx={{ fontSize: "1rem", fontWeight: 600, m: 0 }}
+                      >
+                        {getCategoryIcon(typedCategory)}
+                        {getCategoryLabel(typedCategory)}
+                      </Typography>
+                    </Box>
+                    <Typography variant="body2" color="text.secondary">
                       {getCategoryDescription(typedCategory)}
-                    </CardDescription>
+                    </Typography>
                   </CardHeader>
                   <CardContent>
-                    <div className="flex justify-between items-center">
-                      <div className="space-y-1">
-                        <p className="text-sm">
-                          <span className="font-medium">{usage.used}</span> ações realizadas
-                        </p>
-                        <p className="text-sm text-muted-foreground">
+                    <Stack
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                    >
+                      <Stack spacing={1}>
+                        <Typography variant="body2">
+                          <Box component="span" sx={{ fontWeight: 500 }}>
+                            {usage.used}
+                          </Box>{" "}
+                          ações realizadas
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{ color: "text.secondary" }}
+                        >
                           Consumiu {formatCreditCost(usage.spent)}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <Badge variant="outline">
-                          {usage.used > 0 ? Math.round(usage.spent / usage.used) : 0} créditos/ação
-                        </Badge>
-                      </div>
-                    </div>
+                        </Typography>
+                      </Stack>
+                      <Box sx={{ textAlign: "right" }}>
+                        <Chip
+                          variant="outlined"
+                          label={`${
+                            usage.used > 0
+                              ? Math.round(usage.spent / usage.used)
+                              : 0
+                          } créditos/ação`}
+                        />
+                      </Box>
+                    </Stack>
                   </CardContent>
                 </Card>
-              )
+              );
             })}
-          </div>
+          </Stack>
 
           {/* Alternativas Gratuitas */}
           {alternativeSuggestion && (
-            <div className="space-y-3">
-              <Separator />
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <Settings className="h-5 w-5" />
+            <Stack spacing={3}>
+              <Divider />
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 600,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2,
+                }}
+              >
+                <Settings style={{ width: "1.25rem", height: "1.25rem" }} />
                 Opções Gratuitas Disponíveis
-              </h3>
-              
-              <Alert>
-                <Bot className="h-4 w-4" />
-                <AlertDescription>
+              </Typography>
+
+              <Alert icon={<Bot style={{ width: "1rem", height: "1rem" }} />}>
+                <Typography variant="body2">
                   <strong>Economia de Créditos:</strong> {alternativeSuggestion}
-                </AlertDescription>
+                </Typography>
               </Alert>
-            </div>
+            </Stack>
           )}
 
           {/* Ações */}
-          <div className="flex flex-col sm:flex-row gap-3 pt-4">
-            <Button 
-              variant="outline" 
+          <Stack
+            direction={{ xs: "column", sm: "row" }}
+            spacing={2}
+            sx={{ pt: 2 }}
+          >
+            <Button
+              variant="outlined"
               onClick={() => onOpenChange(false)}
-              className="flex-1"
+              sx={{ flex: 1 }}
             >
               Fechar
             </Button>
-            <Button 
-              className="flex-1"
+            <Button
+              variant="contained"
+              sx={{ flex: 1 }}
               onClick={() => {
-                // Navegar para configurações de IA
-                onOpenChange(false)
-                router.push('/settings')
+                onOpenChange(false);
+                router.push("/settings");
               }}
+              startIcon={<Settings style={{ width: "1rem", height: "1rem" }} />}
             >
-              <Settings className="h-4 w-4 mr-2" />
               Configurar IA
             </Button>
-          </div>
-        </div>
+          </Stack>
+        </Stack>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

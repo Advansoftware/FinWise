@@ -85,4 +85,17 @@ export class MongoPaymentRepository implements IPaymentRepository {
       }
     );
   }
+
+  async addUserCredits(userId: string, credits: number): Promise<void> {
+    const usersCollection = this.db.collection('users');
+    const userObjectId = new ObjectId(userId);
+
+    await usersCollection.updateOne(
+      { _id: userObjectId },
+      {
+        $inc: { aiCredits: credits },
+        $set: { updatedAt: new Date() }
+      }
+    );
+  }
 }

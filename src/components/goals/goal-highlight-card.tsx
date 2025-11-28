@@ -1,13 +1,24 @@
 // src/components/goals/goal-highlight-card.tsx
-'use client';
+"use client";
 
 import { useGoals } from "@/hooks/use-goals";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "../ui/card";
-import { Skeleton } from "../ui/skeleton";
+import {
+  Card,
+  CardHeader,
+  CardContent,
+  Typography,
+  CardActions,
+  Button,
+  LinearProgress,
+  Box,
+  Stack,
+  Skeleton,
+  useTheme,
+  alpha,
+  keyframes,
+} from "@mui/material";
 import { Target, PiggyBank, Sparkles, RefreshCw } from "lucide-react";
 import Link from "next/link";
-import { Button } from "../ui/button";
-import { Progress } from "../ui/progress";
 import { AddDepositDialog } from "./add-deposit-dialog";
 import { useAuth } from "@/hooks/use-auth";
 import { useTransactions } from "@/hooks/use-transactions";
@@ -15,184 +26,337 @@ import { useState, useEffect, useTransition, useMemo } from "react";
 import { getSmartGoalPrediction } from "@/services/ai-automation-service";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { cn } from "@/lib/utils";
 import { ProjectGoalCompletionOutput } from "@/ai/ai-types";
 
+const pulse = keyframes`
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+`;
 
 export function GoalHighlightCard() {
-    const { goals, isLoading: isGoalsLoading } = useGoals();
-    const { allTransactions, isLoading: isTxLoading } = useTransactions();
-    const { user } = useAuth();
-    const [isProjecting, startProjecting] = useTransition();
-    const [projectionResult, setProjectionResult] = useState<ProjectGoalCompletionOutput | null>(null);
-    const [hasLoadedProjection, setHasLoadedProjection] = useState(false);
+  const { goals, isLoading: isGoalsLoading } = useGoals();
+  const { allTransactions, isLoading: isTxLoading } = useTransactions();
+  const { user } = useAuth();
+  const [isProjecting, startProjecting] = useTransition();
+  const [projectionResult, setProjectionResult] =
+    useState<ProjectGoalCompletionOutput | null>(null);
+  const [hasLoadedProjection, setHasLoadedProjection] = useState(false);
+  const theme = useTheme();
 
-    const isLoading = isGoalsLoading || isTxLoading;
+  const isLoading = isGoalsLoading || isTxLoading;
 
-    const firstGoal = useMemo(() => {
-        if (!goals || goals.length === 0) return null;
-        // Prioritize the goal that is not yet completed
-        return goals.find(g => g.currentAmount < g.targetAmount) || goals[0];
-    }, [goals]);
+  const firstGoal = useMemo(() => {
+    if (!goals || goals.length === 0) return null;
+    return goals.find((g) => g.currentAmount < g.targetAmount) || goals[0];
+  }, [goals]);
 
-    const transactionsJson = useMemo(() => JSON.stringify(allTransactions, null, 2), [allTransactions]);
+  const transactionsJson = useMemo(
+    () => JSON.stringify(allTransactions, null, 2),
+    [allTransactions]
+  );
 
-    // Carrega projeção usando sistema inteligente
-    useEffect(() => {
-        if (user && firstGoal && firstGoal.currentAmount < firstGoal.targetAmount && !hasLoadedProjection) {
-            startProjecting(async () => {
-                 try {
-                    const result = await getSmartGoalPrediction(firstGoal.id, {
-                        goalName: firstGoal.name,
-                        targetAmount: firstGoal.targetAmount,
-                        currentAmount: firstGoal.currentAmount,
-                        targetDate: firstGoal.targetDate,
-                        monthlyDeposit: firstGoal.monthlyDeposit,
-                        transactions: transactionsJson,
-                    }, user.uid);
-                    setProjectionResult(result);
-                    setHasLoadedProjection(true);
-                } catch (e) {
-                    console.error("Projection error:", e);
-                    setProjectionResult({ projection: "Erro ao calcular." });
-                    setHasLoadedProjection(true);
-                }
-            });
-        } else if (firstGoal && firstGoal.currentAmount >= firstGoal.targetAmount && !hasLoadedProjection) {
-            setProjectionResult({ projection: "Meta concluída!" });
-            setHasLoadedProjection(true);
+  useEffect(() => {
+    if (
+      user &&
+      firstGoal &&
+      firstGoal.currentAmount < firstGoal.targetAmount &&
+      !hasLoadedProjection
+    ) {
+      startProjecting(async () => {
+        try {
+          const result = await getSmartGoalPrediction(
+            firstGoal.id,
+            {
+              goalName: firstGoal.name,
+              targetAmount: firstGoal.targetAmount,
+              currentAmount: firstGoal.currentAmount,
+              targetDate: firstGoal.targetDate,
+              monthlyDeposit: firstGoal.monthlyDeposit,
+              transactions: transactionsJson,
+            },
+            user.uid
+          );
+          setProjectionResult(result);
+          setHasLoadedProjection(true);
+        } catch (e) {
+          console.error("Projection error:", e);
+          setProjectionResult({ projection: "Erro ao calcular." });
+          setHasLoadedProjection(true);
         }
-    }, [firstGoal, user, hasLoadedProjection, transactionsJson]);
+      });
+    } else if (
+      firstGoal &&
+      firstGoal.currentAmount >= firstGoal.targetAmount &&
+      !hasLoadedProjection
+    ) {
+      setProjectionResult({ projection: "Meta concluída!" });
+      setHasLoadedProjection(true);
+    }
+  }, [firstGoal, user, hasLoadedProjection, transactionsJson]);
 
-    // Função para refresh manual da projeção
-    const refreshProjection = () => {
-        if (!user || !firstGoal) return;
-        
-        setHasLoadedProjection(false);
-        startProjecting(async () => {
-            try {
-                const result = await getSmartGoalPrediction(firstGoal.id, {
-                    goalName: firstGoal.name,
-                    targetAmount: firstGoal.targetAmount,
-                    currentAmount: firstGoal.currentAmount,
-                    targetDate: firstGoal.targetDate,
-                    monthlyDeposit: firstGoal.monthlyDeposit,
-                    transactions: transactionsJson,
-                }, user.uid, true); // forceRefresh = true
-                setProjectionResult(result);
-                setHasLoadedProjection(true);
-            } catch (e) {
-                console.error("Projection error:", e);
-                setProjectionResult({ projection: "Erro ao calcular." });
-                setHasLoadedProjection(true);
-            }
-        });
-    };
+  const refreshProjection = () => {
+    if (!user || !firstGoal) return;
 
-
-    if (isLoading) {
-        return (
-            <Card>
-                <CardHeader className="pb-2">
-                    <CardTitle className="text-sm flex items-center gap-2">
-                        <PiggyBank className="h-4 w-4" />
-                        Metas
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="pb-3">
-                    <div className="space-y-2">
-                        <Skeleton className="h-4 w-3/4" />
-                        <Skeleton className="h-3 w-full" />
-                        <Skeleton className="h-2 w-full" />
-                    </div>
-                </CardContent>
-            </Card>
+    setHasLoadedProjection(false);
+    startProjecting(async () => {
+      try {
+        const result = await getSmartGoalPrediction(
+          firstGoal.id,
+          {
+            goalName: firstGoal.name,
+            targetAmount: firstGoal.targetAmount,
+            currentAmount: firstGoal.currentAmount,
+            targetDate: firstGoal.targetDate,
+            monthlyDeposit: firstGoal.monthlyDeposit,
+            transactions: transactionsJson,
+          },
+          user.uid,
+          true
         );
-    }
+        setProjectionResult(result);
+        setHasLoadedProjection(true);
+      } catch (e) {
+        console.error("Projection error:", e);
+        setProjectionResult({ projection: "Erro ao calcular." });
+        setHasLoadedProjection(true);
+      }
+    });
+  };
 
-    if (!firstGoal) {
-        return (
-             <Card className="flex flex-col items-center justify-center text-center p-4">
-                <Target className="h-8 w-8 text-primary/70 mb-2"/>
-                <CardTitle className="text-base">Crie sua Primeira Meta</CardTitle>
-                <CardContent className="p-0 mt-1 mb-3">
-                    <p className="text-xs text-muted-foreground">Comece a economizar para seus sonhos.</p>
-                </CardContent>
-                <Button asChild size="sm">
-                    <Link href="/goals">Criar Meta</Link>
-                </Button>
-            </Card>
-        )
-    }
-
-    const percentage = Math.round((firstGoal.currentAmount / firstGoal.targetAmount) * 100);
-    
-    const getProjectionText = () => {
-        if (!projectionResult) return null;
-        if (projectionResult.projection === "Meta concluída!") {
-            return <span className="text-emerald-500 font-semibold">{projectionResult.projection}</span>
-        }
-        if (projectionResult.completionDate) {
-            const date = new Date(projectionResult.completionDate);
-            date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
-            return <span>Estimativa: <span className="font-semibold text-foreground/80 capitalize">{format(date, "MMMM 'de' yyyy", { locale: ptBR })}</span></span>
-        }
-        return <span className="capitalize">{projectionResult.projection}</span>
-    }
-
+  if (isLoading) {
     return (
-        <Card className="flex flex-col h-full">
-            <CardHeader className="pb-2 flex-shrink-0">
-                <div className="flex items-center gap-2">
-                    <div className="p-1 rounded-full bg-primary/20">
-                        <Target className="h-3 w-3 text-primary"/>
-                    </div>
-                    <div className="min-w-0 flex-1">
-                         <CardTitle className="text-sm truncate">{firstGoal.name}</CardTitle>
-                         <CardDescription className="text-xs">Sua meta em destaque</CardDescription>
-                    </div>
-                </div>
-            </CardHeader>
-            <CardContent className="space-y-2 pb-3 flex-1">
-                <Progress value={Math.min(percentage, 100)} className="h-1.5" />
-                 <div className="flex justify-between items-baseline">
-                    <p className="text-base font-bold text-foreground">R$ {firstGoal.currentAmount.toFixed(2)}</p>
-                    <p className="text-xs text-muted-foreground">de R$ {firstGoal.targetAmount.toFixed(2)}</p>
-                </div>
-                 <div className="text-xs text-muted-foreground flex items-center gap-1 justify-between">
-                    <div className="flex items-center gap-1 min-w-0">
-                        <Sparkles className={cn("h-3 w-3 text-primary/80 flex-shrink-0", isProjecting && "animate-pulse")} />
-                         <span className="truncate">
-                         {isProjecting ? (
-                            "Calculando..."
-                        ) : (
-                           getProjectionText()
-                        )}
-                         </span>
-                    </div>
-                    {projectionResult && !isProjecting && (
-                        <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            className="h-4 w-4 p-0 text-muted-foreground hover:text-primary flex-shrink-0"
-                            onClick={refreshProjection}
-                            title="Atualizar previsão"
-                        >
-                            <RefreshCw className="h-3 w-3" />
-                        </Button>
-                    )}
-                </div>
-            </CardContent>
-             <CardFooter className="flex gap-2 p-4 pt-0 flex-shrink-0">
-                 <Button asChild variant="outline" className="flex-1" size="sm">
-                    <Link href="/goals">Ver Todas</Link>
-                 </Button>
-                  <AddDepositDialog goal={firstGoal}>
-                    <Button className="flex-1" size="sm" disabled={firstGoal.currentAmount >= firstGoal.targetAmount}>
-                        <PiggyBank className="mr-1 h-3 w-3"/>Depositar
-                    </Button>
-                </AddDepositDialog>
-             </CardFooter>
-        </Card>
-    )
+      <Card>
+        <CardHeader sx={{ pb: 1 }}>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <PiggyBank style={{ width: 16, height: 16 }} />
+            <Typography variant="body2">Metas</Typography>
+          </Stack>
+        </CardHeader>
+        <CardContent sx={{ pb: 1.5 }}>
+          <Stack spacing={1}>
+            <Skeleton variant="rounded" sx={{ height: 16, width: "75%" }} />
+            <Skeleton variant="rounded" sx={{ height: 12, width: "100%" }} />
+            <Skeleton variant="rounded" sx={{ height: 8, width: "100%" }} />
+          </Stack>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!firstGoal) {
+    return (
+      <Card
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          textAlign: "center",
+          p: 2,
+        }}
+      >
+        <Target
+          style={{
+            width: 32,
+            height: 32,
+            color: alpha(theme.palette.primary.main, 0.7),
+            marginBottom: 8,
+          }}
+        />
+        <Typography variant="subtitle1">Crie sua Primeira Meta</Typography>
+        <CardContent sx={{ p: 0, mt: 0.5, mb: 1.5 }}>
+          <Typography variant="caption" color="text.secondary">
+            Comece a economizar para seus sonhos.
+          </Typography>
+        </CardContent>
+        <Button size="small" component={Link} href="/goals">
+          Criar Meta
+        </Button>
+      </Card>
+    );
+  }
+
+  const percentage = Math.round(
+    (firstGoal.currentAmount / firstGoal.targetAmount) * 100
+  );
+
+  const getProjectionText = () => {
+    if (!projectionResult) return null;
+    if (projectionResult.projection === "Meta concluída!") {
+      return (
+        <Typography
+          component="span"
+          sx={{ color: "success.main", fontWeight: 600 }}
+        >
+          {projectionResult.projection}
+        </Typography>
+      );
+    }
+    if (projectionResult.completionDate) {
+      const date = new Date(projectionResult.completionDate);
+      date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+      return (
+        <Typography component="span">
+          Estimativa:{" "}
+          <Typography
+            component="span"
+            sx={{
+              fontWeight: 600,
+              color: "text.primary",
+              textTransform: "capitalize",
+            }}
+          >
+            {format(date, "MMMM 'de' yyyy", { locale: ptBR })}
+          </Typography>
+        </Typography>
+      );
+    }
+    return (
+      <Typography component="span" sx={{ textTransform: "capitalize" }}>
+        {projectionResult.projection}
+      </Typography>
+    );
+  };
+
+  return (
+    <Card sx={{ display: "flex", flexDirection: "column", height: "100%" }}>
+      <CardHeader sx={{ pb: 1, flexShrink: 0 }}>
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <Box
+            sx={{
+              p: 0.5,
+              borderRadius: "50%",
+              bgcolor: alpha(theme.palette.primary.main, 0.2),
+            }}
+          >
+            <Target
+              style={{
+                width: 12,
+                height: 12,
+                color: theme.palette.primary.main,
+              }}
+            />
+          </Box>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+                fontWeight: 500,
+              }}
+            >
+              {firstGoal.name}
+            </Typography>
+            <Typography variant="caption" color="text.secondary">
+              Sua meta em destaque
+            </Typography>
+          </Box>
+        </Stack>
+      </CardHeader>
+      <CardContent
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 1,
+          pb: 1.5,
+          flex: 1,
+        }}
+      >
+        <LinearProgress
+          variant="determinate"
+          value={Math.min(percentage, 100)}
+          sx={{ height: 6 }}
+        />
+        <Stack
+          direction="row"
+          justifyContent="space-between"
+          alignItems="baseline"
+        >
+          <Typography sx={{ fontSize: "1rem", fontWeight: 700 }}>
+            R$ {firstGoal.currentAmount.toFixed(2)}
+          </Typography>
+          <Typography variant="caption" color="text.secondary">
+            de R$ {firstGoal.targetAmount.toFixed(2)}
+          </Typography>
+        </Stack>
+        <Stack
+          direction="row"
+          alignItems="center"
+          spacing={0.5}
+          justifyContent="space-between"
+          sx={{ fontSize: "0.75rem", color: "text.secondary" }}
+        >
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={0.5}
+            sx={{ minWidth: 0 }}
+          >
+            <Sparkles
+              style={{
+                width: 12,
+                height: 12,
+                color: alpha(theme.palette.primary.main, 0.8),
+                flexShrink: 0,
+                animation: isProjecting
+                  ? `${pulse} 2s ease-in-out infinite`
+                  : "none",
+              }}
+            />
+            <Box
+              sx={{
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {isProjecting ? "Calculando..." : getProjectionText()}
+            </Box>
+          </Stack>
+          {projectionResult && !isProjecting && (
+            <Button
+              variant="text"
+              size="small"
+              sx={{
+                height: 16,
+                width: 16,
+                p: 0,
+                minWidth: 16,
+                color: "text.secondary",
+                "&:hover": { color: "primary.main" },
+                flexShrink: 0,
+              }}
+              onClick={refreshProjection}
+              title="Atualizar previsão"
+            >
+              <RefreshCw style={{ width: 12, height: 12 }} />
+            </Button>
+          )}
+        </Stack>
+      </CardContent>
+      <CardActions sx={{ display: "flex", gap: 1, p: 2, pt: 0, flexShrink: 0 }}>
+        <Button
+          variant="outlined"
+          sx={{ flex: 1 }}
+          size="small"
+          component={Link}
+          href="/goals"
+        >
+          Ver Todas
+        </Button>
+        <AddDepositDialog goal={firstGoal}>
+          <Button
+            sx={{ flex: 1 }}
+            size="small"
+            disabled={firstGoal.currentAmount >= firstGoal.targetAmount}
+          >
+            <PiggyBank style={{ marginRight: 4, width: 12, height: 12 }} />
+            Depositar
+          </Button>
+        </AddDepositDialog>
+      </CardActions>
+    </Card>
+  );
 }

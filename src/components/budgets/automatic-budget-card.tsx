@@ -1,9 +1,8 @@
 // src/components/budgets/automatic-budget-card.tsx
 'use client';
 import { useState, useTransition, useMemo } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Loader2, Sparkles } from "lucide-react";
+import {Card, CardContent, CardHeader, Typography, Button, Box, Stack, CircularProgress, useTheme, alpha} from '@mui/material';
+import { Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useBudgets } from "@/hooks/use-budgets";
@@ -39,7 +38,7 @@ export function AutomaticBudgetCard() {
   const handleGenerate = () => {
     if (!user || lastMonthTransactions.length === 0) {
         toast({
-            variant: "destructive",
+            variant: "error",
             title: "Dados insuficientes",
             description: "Não há transações de despesa no mês passado para gerar orçamentos."
         })
@@ -65,13 +64,15 @@ export function AutomaticBudgetCard() {
       } catch (error) {
         console.error("Error generating automatic budgets", error);
         toast({
-            variant: "destructive",
+            variant: "error",
             title: "Erro na Geração Automática",
             description: "Não foi possível gerar as sugestões. Verifique suas configurações de IA.",
         })
       }
     });
   }
+
+  const theme = useTheme();
 
   return (
     <>
@@ -80,20 +81,35 @@ export function AutomaticBudgetCard() {
             setIsOpen={setIsDialogOpen}
             suggestedBudgets={suggestedBudgets}
         />
-        <Card className="bg-primary/10 border-primary/20">
-        <CardHeader>
-            <div className="flex items-center gap-2">
-                <Sparkles className="h-5 w-5 text-primary"/>
-                <CardTitle className="text-primary">Orçamentos Automáticos</CardTitle>
-            </div>
-            <CardDescription className="text-primary/80">
-            Deixe a IA analisar seus gastos do mês passado e criar um plano de orçamento para você em segundos.
-            </CardDescription>
-        </CardHeader>
+        <Card sx={{ 
+            bgcolor: alpha(theme.palette.primary.main, 0.05), 
+            borderColor: alpha(theme.palette.primary.main, 0.2),
+            borderWidth: 1,
+            borderStyle: 'solid'
+        }}>
+        <CardHeader
+            title={
+                <Stack direction="row" alignItems="center" spacing={1.5}>
+                    <Sparkles style={{ width: '1.25rem', height: '1.25rem', color: theme.palette.primary.main }} />
+                    <Typography variant="h6" color="primary.main">
+                        Orçamentos Automáticos
+                    </Typography>
+                </Stack>
+            }
+            subheader={
+                <Typography variant="body2" sx={{ color: alpha(theme.palette.primary.main, 0.8), mt: 0.5 }}>
+                    Deixe a IA analisar seus gastos do mês passado e criar um plano de orçamento para você em segundos.
+                </Typography>
+            }
+        />
         <CardContent>
-            <Button onClick={handleGenerate} disabled={isGenerating}>
-            {isGenerating && <Loader2 className="mr-2 h-4 w-4 animate-spin"/>}
-            Gerar Orçamentos com IA
+            <Button 
+                variant="contained" 
+                onClick={handleGenerate} 
+                disabled={isGenerating}
+                startIcon={isGenerating ? <CircularProgress size={16} color="inherit" /> : null}
+            >
+            {isGenerating ? 'Gerando...' : 'Gerar Orçamentos com IA'}
             </Button>
         </CardContent>
         </Card>

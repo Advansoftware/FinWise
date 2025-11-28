@@ -1,8 +1,8 @@
 // src/app/api/data/[...path]/route.ts
 
-import { NextRequest, NextResponse } from 'next/server';
-import { connectToDatabase } from '@/lib/mongodb';
-import { ObjectId } from 'mongodb';
+import {NextRequest, NextResponse} from 'next/server';
+import {connectToDatabase} from '@/lib/mongodb';
+import {ObjectId} from 'mongodb';
 
 // This is a placeholder for a real session/token validation mechanism.
 // In a production app, you would use a secure method like JWT or session cookies.
@@ -28,14 +28,38 @@ async function handler(
     if (!authenticatedUserId) {
         return NextResponse.json({ error: 'Unauthorized: Invalid or missing user identifier.' }, { status: 401 });
     }
-    
+
     const { db } = await connectToDatabase();
     const [collectionName, docId] = params.path;
+
+    // Redirect transactions operations to the specialized API
+    if (collectionName === 'transactions') {
+        const baseUrl = request.url.split('/api/data')[0];
+        const searchParams = new URLSearchParams(request.url.split('?')[1] || '');
+        searchParams.set('userId', authenticatedUserId);
+
+        let targetUrl: string;
+        if (docId) {
+            targetUrl = `${baseUrl}/api/transactions/${docId}?${searchParams.toString()}`;
+        } else {
+            targetUrl = `${baseUrl}/api/transactions?${searchParams.toString()}`;
+        }
+
+        // Forward the request to the transactions API
+        const forwardedRequest = new Request(targetUrl, {
+            method: request.method,
+            headers: request.headers,
+            body: request.method !== 'GET' ? await request.text() : undefined,
+        });
+
+        return fetch(forwardedRequest);
+    }
+
     const collection = db.collection(collectionName);
-    
+
     try {
         let query: any = {};
-        
+
         // When accessing the 'users' collection, the document ID must be the authenticated user's ID.
         if (collectionName === 'users') {
             if (docId !== authenticatedUserId) {
@@ -45,21 +69,21 @@ async function handler(
         } else {
             // For all other collections, filter by the userId field.
             query.userId = authenticatedUserId;
-            if (docId) { 
+            if (docId) {
                 try {
-                   query._id = new ObjectId(docId);
-                } catch(e) {
-                     return NextResponse.json({ error: 'Invalid document ID format' }, { status: 400 });
+                    query._id = new ObjectId(docId);
+                } catch (e) {
+                    return NextResponse.json({ error: 'Invalid document ID format' }, { status: 400 });
                 }
             }
         }
 
         if (request.method === 'GET') {
-            if (docId) { 
+            if (docId) {
                 const item = await collection.findOne(query);
                 if (!item) return NextResponse.json({ error: 'Not found or permission denied' }, { status: 404 });
                 return NextResponse.json(item);
-            } else { 
+            } else {
                 const items = await collection.find({ userId: authenticatedUserId }).toArray();
                 return NextResponse.json(items);
             }
@@ -73,9 +97,9 @@ async function handler(
         }
 
         if ((request.method === 'PUT' || request.method === 'PATCH') && docId) {
-             const body = await request.json();
-             delete body.userId; // Prevent user from changing ownership
-             delete body._id;
+            const body = await request.json();
+            delete body.userId; // Prevent user from changing ownership
+            delete body._id;
 
             const result = await collection.updateOne(query, { $set: body });
             if (result.matchedCount === 0) return NextResponse.json({ error: 'Not found or permission denied' }, { status: 404 });
@@ -91,7 +115,7 @@ async function handler(
         return NextResponse.json({ error: 'Method not allowed' }, { status: 405 });
     } catch (error: any) {
         console.error(`MongoDB Error on path ${params.path.join('/')}:`, error);
-         if (error.name === 'BSONError' || (error.message && error.message.includes('Argument passed in must be a string'))) {
+        if (error.name === 'BSONError' || (error.message && error.message.includes('Argument passed in must be a string'))) {
             return NextResponse.json({ error: 'Invalid document ID format' }, { status: 400 });
         }
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });

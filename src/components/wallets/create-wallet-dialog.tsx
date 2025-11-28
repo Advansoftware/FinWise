@@ -1,51 +1,79 @@
 // src/components/wallets/create-wallet-dialog.tsx
-'use client';
+"use client";
 
-import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useEffect } from "react";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+  DialogActions,
+  Button,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  FormLabel,
+  FormHelperText,
+  Stack,
+  Box,
+  Typography,
+  CircularProgress,
+} from "@mui/material";
 import { useToast } from "@/hooks/use-toast";
 import { useWallets } from "@/hooks/use-wallets";
 import { Wallet, WalletType } from "@/lib/types";
-import { Loader2 } from "lucide-react";
 
 const walletSchema = z.object({
   name: z.string().min(1, "O nome da carteira é obrigatório."),
-  type: z.enum(['Conta Corrente', 'Cartão de Crédito', 'Poupança', 'Investimentos', 'Dinheiro', 'Outros'], {
-      required_error: "O tipo de carteira é obrigatório"
-  }),
+  type: z.enum(
+    [
+      "Conta Corrente",
+      "Cartão de Crédito",
+      "Poupança",
+      "Investimentos",
+      "Dinheiro",
+      "Outros",
+    ],
+    {
+      required_error: "O tipo de carteira é obrigatório",
+    }
+  ),
 });
 
 type WalletFormValues = z.infer<typeof walletSchema>;
 
-const walletTypes: WalletType[] = ['Conta Corrente', 'Cartão de Crédito', 'Poupança', 'Investimentos', 'Dinheiro', 'Outros'];
+const walletTypes: WalletType[] = [
+  "Conta Corrente",
+  "Cartão de Crédito",
+  "Poupança",
+  "Investimentos",
+  "Dinheiro",
+  "Outros",
+];
 
 interface CreateWalletDialogProps {
-  children: React.ReactNode;
+  open: boolean;
+  onClose: () => void;
   initialData?: Wallet;
 }
 
-export function CreateWalletDialog({ children, initialData }: CreateWalletDialogProps) {
+export function CreateWalletDialog({
+  open,
+  onClose,
+  initialData,
+}: CreateWalletDialogProps) {
   const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { addWallet, updateWallet } = useWallets();
 
-  const form = useForm<WalletFormValues>({
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors, isSubmitting },
+  } = useForm<WalletFormValues>({
     resolver: zodResolver(walletSchema),
     defaultValues: {
       name: "",
@@ -54,91 +82,97 @@ export function CreateWalletDialog({ children, initialData }: CreateWalletDialog
   });
 
   useEffect(() => {
-    if (isOpen) {
-        if (initialData) {
-            form.reset({
-                name: initialData.name,
-                type: initialData.type,
-            });
-        } else {
-            form.reset({ name: "", type: "Conta Corrente" });
-        }
+    if (open) {
+      if (initialData) {
+        reset({
+          name: initialData.name,
+          type: initialData.type,
+        });
+      } else {
+        reset({ name: "", type: "Conta Corrente" });
+      }
     }
-  }, [isOpen, initialData, form]);
+  }, [open, initialData, reset]);
 
   const onSubmit = async (data: WalletFormValues) => {
-    setIsSubmitting(true);
     try {
       if (initialData) {
         await updateWallet(initialData.id, data);
       } else {
         await addWallet(data);
       }
-      setIsOpen(false);
+      onClose();
     } catch (error) {
       console.error("Failed to save wallet:", error);
-      toast({ variant: "destructive", title: "Erro ao salvar carteira." });
-    } finally {
-      setIsSubmitting(false);
+      toast({ variant: "error", title: "Erro ao salvar carteira." });
     }
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={setIsOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>
+        {initialData ? "Editar Carteira" : "Criar Nova Carteira"}
+      </DialogTitle>
       <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{initialData ? "Editar Carteira" : "Criar Nova Carteira"}</DialogTitle>
-          <DialogDescription>
-            Adicione uma nova conta, cartão ou outra fonte de recursos.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-            <FormField
-              control={form.control}
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+          Adicione uma nova conta, cartão ou outra fonte de recursos.
+        </Typography>
+        <form onSubmit={handleSubmit(onSubmit)} id="wallet-form">
+          <Stack spacing={3}>
+            <Controller
               name="name"
+              control={control}
               render={({ field }) => (
-                <FormItem>
+                <FormControl fullWidth error={!!errors.name}>
                   <FormLabel>Nome da Carteira</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Ex: Conta Principal" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+                  <TextField
+                    {...field}
+                    placeholder="Ex: Conta Principal"
+                    error={!!errors.name}
+                    fullWidth
+                  />
+                  {errors.name && (
+                    <FormHelperText>{errors.name.message}</FormHelperText>
+                  )}
+                </FormControl>
               )}
             />
-            <FormField
-              control={form.control}
+            <Controller
               name="type"
+              control={control}
               render={({ field }) => (
-                <FormItem>
+                <FormControl fullWidth error={!!errors.type}>
                   <FormLabel>Tipo de Carteira</FormLabel>
-                   <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione um tipo" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {walletTypes.map(type => (
-                        <SelectItem key={type} value={type}>{type}</SelectItem>
-                      ))}
-                    </SelectContent>
+                  <Select {...field} fullWidth>
+                    {walletTypes.map((type) => (
+                      <MenuItem key={type} value={type}>
+                        {type}
+                      </MenuItem>
+                    ))}
                   </Select>
-                  <FormMessage />
-                </FormItem>
+                  {errors.type && (
+                    <FormHelperText>{errors.type.message}</FormHelperText>
+                  )}
+                </FormControl>
               )}
             />
-            <DialogFooter>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {initialData ? "Salvar Alterações" : "Criar Carteira"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+          </Stack>
+        </form>
       </DialogContent>
+      <DialogActions>
+        <Button variant="outlined" onClick={onClose}>
+          Cancelar
+        </Button>
+        <Button
+          type="submit"
+          form="wallet-form"
+          variant="contained"
+          disabled={isSubmitting}
+          startIcon={isSubmitting ? <CircularProgress size={16} /> : null}
+        >
+          {initialData ? "Salvar Alterações" : "Criar Carteira"}
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 }

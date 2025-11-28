@@ -1,123 +1,184 @@
 // src/components/goals/add-deposit-dialog.tsx
-'use client';
+"use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
+import { useState, useEffect, cloneElement, isValidElement } from "react";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
-  DialogDescription,
-  DialogFooter,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
+  DialogContentText,
+  DialogActions,
+  Button,
+  TextField,
+  Box,
+  MenuItem,
+  CircularProgress,
+} from "@mui/material";
 import { useToast } from "@/hooks/use-toast";
 import { useGoals } from "@/hooks/use-goals";
 import { Goal } from "@/lib/types";
-import { Loader2 } from "lucide-react";
 import { useWallets } from "@/hooks/use-wallets";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 const depositSchema = z.object({
-  amount: z.coerce.number().positive("O valor do depósito deve ser maior que zero."),
-  walletId: z.string().min(1, "A carteira de origem é obrigatória.")
+  amount: z.coerce
+    .number()
+    .positive("O valor do depósito deve ser maior que zero."),
+  walletId: z.string().min(1, "A carteira de origem é obrigatória."),
 });
 
 type DepositFormValues = z.infer<typeof depositSchema>;
 
 interface AddDepositDialogProps {
-  children: React.ReactNode;
   goal: Goal;
+  children?: React.ReactNode;
+  open?: boolean;
+  onClose?: () => void;
 }
 
-export function AddDepositDialog({ children, goal }: AddDepositDialogProps) {
+export function AddDepositDialog({
+  goal,
+  children,
+  open: controlledOpen,
+  onClose: controlledOnClose,
+}: AddDepositDialogProps) {
   const { toast } = useToast();
-  const [isOpen, setIsOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { addDeposit } = useGoals();
   const { wallets } = useWallets();
+  const [internalOpen, setInternalOpen] = useState(false);
 
-  const form = useForm<DepositFormValues>({
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+
+  const handleOpen = () => {
+    if (!isControlled) setInternalOpen(true);
+  };
+
+  const handleClose = () => {
+    if (isControlled && controlledOnClose) {
+      controlledOnClose();
+    } else {
+      setInternalOpen(false);
+    }
+  };
+
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<DepositFormValues>({
     resolver: zodResolver(depositSchema),
-    defaultValues: { amount: 0, walletId: '' },
+    defaultValues: { amount: 0, walletId: "" },
   });
+
+  useEffect(() => {
+    if (!open) {
+      reset();
+    }
+  }, [open, reset]);
 
   const onSubmit = async (data: DepositFormValues) => {
     setIsSubmitting(true);
     try {
       await addDeposit(goal.id, Number(data.amount), data.walletId);
-      setIsOpen(false);
-      form.reset();
+      toast({ title: "Depósito realizado com sucesso!" });
+      handleClose();
     } catch (error) {
       console.error("Failed to add deposit:", error);
-      toast({ variant: "destructive", title: "Erro ao adicionar depósito." });
+      toast({ variant: "error", title: "Erro ao adicionar depósito." });
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const trigger =
+    children &&
+    (isValidElement(children) ? (
+      cloneElement(children as any, { onClick: handleOpen })
+    ) : (
+      <div onClick={handleOpen}>{children}</div>
+    ));
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => { setIsOpen(open); if(!open) form.reset(); }}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Adicionar Depósito para "{goal.name}"</DialogTitle>
-          <DialogDescription>
-            Insira o valor que você deseja adicionar a esta meta e de qual carteira o dinheiro sairá.
-          </DialogDescription>
-        </DialogHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-4">
-            <FormField
-              control={form.control}
+    <>
+      {trigger}
+      <Dialog open={!!open} onClose={handleClose} fullWidth maxWidth="xs">
+        <DialogTitle>Adicionar Depósito para "{goal.name}"</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 3 }}>
+            Insira o valor que você deseja adicionar a esta meta e de qual
+            carteira o dinheiro sairá.
+          </DialogContentText>
+
+          <Box
+            component="form"
+            onSubmit={handleSubmit(onSubmit)}
+            sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+          >
+            <Controller
               name="amount"
+              control={control}
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Valor do Depósito (R$)</FormLabel>
-                  <FormControl>
-                    <Input type="number" step="0.01" placeholder="Ex: 100.00" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
+                <TextField
+                  {...field}
+                  label="Valor do Depósito (R$)"
+                  type="number"
+                  placeholder="Ex: 100.00"
+                  fullWidth
+                  error={!!errors.amount}
+                  helperText={errors.amount?.message}
+                  inputProps={{ step: "0.01" }}
+                />
               )}
             />
-             <FormField
-              control={form.control}
+
+            <Controller
               name="walletId"
+              control={control}
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Carteira de Origem</FormLabel>
-                  <Select onValueChange={field.onChange} value={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione de onde sairá o dinheiro" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      {wallets.map(wallet => (
-                        <SelectItem key={wallet.id} value={wallet.id}>{wallet.name} (R$ {(wallet.balance || 0).toFixed(2)})</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
+                <TextField
+                  {...field}
+                  select
+                  label="Carteira de Origem"
+                  fullWidth
+                  placeholder="Selecione de onde sairá o dinheiro"
+                  error={!!errors.walletId}
+                  helperText={errors.walletId?.message}
+                  value={field.value || ""}
+                >
+                  {wallets.map((wallet) => (
+                    <MenuItem key={wallet.id} value={wallet.id}>
+                      {wallet.name} (R$ {(wallet.balance || 0).toFixed(2)})
+                    </MenuItem>
+                  ))}
+                </TextField>
               )}
             />
-            <DialogFooter>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+
+            <DialogActions sx={{ px: 0, pt: 2 }}>
+              <Button onClick={handleClose} disabled={isSubmitting}>
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                disabled={isSubmitting}
+                startIcon={
+                  isSubmitting ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : null
+                }
+              >
                 Adicionar
               </Button>
-            </DialogFooter>
-          </form>
-        </Form>
-      </DialogContent>
-    </Dialog>
+            </DialogActions>
+          </Box>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
