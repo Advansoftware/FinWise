@@ -48,6 +48,8 @@ import { usePlan } from "@/hooks/use-plan";
 import { ProUpgradeCard } from "../pro-upgrade-card";
 import { useReasoningChat } from "@/hooks/use-reasoning-chat";
 import { useAISettings } from "@/hooks/use-ai-settings";
+import { useWebLLM } from "@/hooks/use-webllm";
+import { chatWithWebLLM } from "@/services/webllm-ai-actions";
 
 // Componente de input isolado para evitar re-renders
 interface ChatInputFieldProps {
@@ -166,6 +168,7 @@ export function ChatAssistant() {
     streamReasoningResponse,
     clearReasoning,
   } = useReasoningChat();
+  const { isWebLLMActive, isReady: isWebLLMReady, isLoading: isWebLLMLoading, progress: webllmProgress } = useWebLLM();
 
   // Determinar se deve usar raciocínio
   const activeCredential = displayedCredentials.find(
@@ -216,7 +219,17 @@ export function ChatAssistant() {
 
           let response: string;
 
-          if (shouldUseReasoning) {
+          // Verifica se WebLLM está ativo e pronto
+          if (isWebLLMActive && isWebLLMReady) {
+            // Usa WebLLM client-side (não consome créditos, roda no navegador)
+            response = await chatWithWebLLM(
+              messages,
+              messageToSend,
+              currentMonthTransactions,
+              currentYearMonthlyReports,
+              pastAnnualReports
+            );
+          } else if (shouldUseReasoning) {
             response = await streamReasoningResponse(
               messages,
               messageToSend,
@@ -277,6 +290,8 @@ export function ChatAssistant() {
       monthlyReports,
       annualReports,
       shouldUseReasoning,
+      isWebLLMActive,
+      isWebLLMReady,
       user,
       toast,
       clearReasoning,
@@ -335,6 +350,42 @@ export function ChatAssistant() {
     if (messages.length === 0) {
       return (
         <Box sx={{ textAlign: "center", p: 3 }}>
+          {/* WebLLM Loading Status */}
+          {isWebLLMActive && isWebLLMLoading && (
+            <Box
+              sx={{
+                mb: 3,
+                p: 2,
+                borderRadius: 2,
+                bgcolor: (theme) => alpha(theme.palette.info.main, 0.1),
+                border: 1,
+                borderColor: (theme) => alpha(theme.palette.info.main, 0.3),
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <CircularProgress size={16} color="info" />
+                <Typography variant="body2" color="info.main" fontWeight={600}>
+                  Carregando modelo local...
+                </Typography>
+              </Box>
+              {webllmProgress && (
+                <Typography variant="caption" color="text.secondary">
+                  {webllmProgress.text}
+                </Typography>
+              )}
+            </Box>
+          )}
+
+          {/* WebLLM Ready Indicator */}
+          {isWebLLMActive && isWebLLMReady && (
+            <Chip
+              label="IA Local Ativa (WebLLM)"
+              color="success"
+              size="small"
+              sx={{ mb: 2 }}
+            />
+          )}
+
           <Typography color="text.secondary" sx={{ mb: 3 }}>
             Faça uma pergunta sobre suas finanças ou escolha uma sugestão.
           </Typography>

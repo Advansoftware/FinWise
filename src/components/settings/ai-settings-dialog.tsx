@@ -23,10 +23,11 @@ import {
   Alert,
   Chip,
 } from "@mui/material";
-import { Refresh as RefreshIcon, Warning as WarningIcon } from "@mui/icons-material";
+import { Refresh as RefreshIcon, Warning as WarningIcon, CheckCircle as CheckCircleIcon } from "@mui/icons-material";
 import { useToast } from "@/hooks/use-toast";
 import { AICredential, WebLLMModel } from "@/lib/types";
 import { useAISettings } from "@/hooks/use-ai-settings";
+import { useWebLLM } from "@/hooks/use-webllm";
 import { useEffect, useState, useTransition } from "react";
 import { usePlan } from "@/hooks/use-plan";
 
@@ -177,6 +178,7 @@ export function AISettingsDialog({
 }: AISettingsDialogProps) {
   const { toast } = useToast();
   const { handleSaveCredential, isSaving } = useAISettings();
+  const { isSupported: isWebGPUSupported, isReady: isWebLLMReady, isLoading: isWebLLMLoading, currentModelId, progress: webllmProgress, loadModel: loadWebLLMModel } = useWebLLM();
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
   const [isFetchingOllama, startFetchingOllama] = useTransition();
   const [showWebLLMRequirements, setShowWebLLMRequirements] = useState(false);
@@ -495,6 +497,15 @@ export function AISettingsDialog({
                   </Typography>
                 </Alert>
 
+                {/* Status WebGPU */}
+                {!isWebGPUSupported && (
+                  <Alert severity="error" sx={{ mb: 1 }}>
+                    <Typography variant="body2">
+                      Seu navegador não suporta WebGPU. Use Chrome 113+ ou Edge 113+.
+                    </Typography>
+                  </Alert>
+                )}
+
                 <Controller
                   name="webLLMModel"
                   control={control}
@@ -505,6 +516,7 @@ export function AISettingsDialog({
                         {...field}
                         label="Modelo WebLLM"
                         value={field.value || ""}
+                        disabled={!isWebGPUSupported}
                       >
                         {WEBLLM_MODELS.map((model) => (
                           <MenuItem key={model.id} value={model.id}>
@@ -512,6 +524,14 @@ export function AISettingsDialog({
                               <Typography>{model.name}</Typography>
                               {model.recommended && (
                                 <Chip label="Recomendado" size="small" color="primary" />
+                              )}
+                              {currentModelId === model.id && isWebLLMReady && (
+                                <Chip 
+                                  label="Carregado" 
+                                  size="small" 
+                                  color="success" 
+                                  icon={<CheckCircleIcon />}
+                                />
                               )}
                             </Stack>
                           </MenuItem>
@@ -564,6 +584,48 @@ export function AISettingsDialog({
                           <Typography variant="caption" color="text.secondary">
                             {model.description}
                           </Typography>
+
+                          {/* Status de carregamento */}
+                          {isWebLLMLoading && (
+                            <Box sx={{ mt: 1 }}>
+                              <Stack direction="row" alignItems="center" spacing={1}>
+                                <CircularProgress size={16} />
+                                <Typography variant="caption" color="text.secondary">
+                                  Carregando modelo...
+                                </Typography>
+                              </Stack>
+                              {webllmProgress && (
+                                <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                                  {webllmProgress.text}
+                                </Typography>
+                              )}
+                            </Box>
+                          )}
+
+                          {/* Modelo já carregado */}
+                          {currentModelId === webLLMModel && isWebLLMReady && (
+                            <Alert severity="success" sx={{ mt: 1 }}>
+                              <Stack direction="row" alignItems="center" spacing={1}>
+                                <CheckCircleIcon fontSize="small" />
+                                <Typography variant="caption">
+                                  Modelo carregado e pronto para uso!
+                                </Typography>
+                              </Stack>
+                            </Alert>
+                          )}
+
+                          {/* Botão para pré-carregar */}
+                          {isWebGPUSupported && currentModelId !== webLLMModel && !isWebLLMLoading && (
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              onClick={() => loadWebLLMModel(webLLMModel as any)}
+                              sx={{ mt: 1 }}
+                            >
+                              Pré-carregar modelo agora
+                            </Button>
+                          )}
+
                           <Alert severity="warning" sx={{ mt: 1 }}>
                             <Typography variant="caption">
                               ⚠️ Certifique-se de que seu navegador suporta WebGPU. 
