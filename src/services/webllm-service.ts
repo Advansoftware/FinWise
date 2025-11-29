@@ -193,6 +193,9 @@ export async function* generateTextStream(
   });
 
   for await (const chunk of asyncChunkGenerator) {
+    // Yield to main thread to prevent UI blocking
+    await new Promise(resolve => setTimeout(resolve, 0));
+
     const delta = chunk.choices[0]?.delta?.content;
     if (delta) {
       yield delta;

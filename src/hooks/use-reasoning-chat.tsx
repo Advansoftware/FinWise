@@ -155,6 +155,9 @@ export function useReasoningChat() {
         const { done, value } = await reader.read();
         if (done) break;
 
+        // Yield to main thread to prevent UI blocking during navigation
+        await new Promise(resolve => setTimeout(resolve, 0));
+
         const chunk = decoder.decode(value, { stream: true });
         const processedText = processStreamChunk(chunk);
         
