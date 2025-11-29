@@ -727,7 +727,7 @@ export function ReceiptScannerDialog({ children }: ReceiptScannerDialogProps) {
           sx={{
             position: "fixed",
             inset: 0,
-            zIndex: 1400, // Acima do bottom nav (1200) e outros modais
+            zIndex: 9999, // Máximo z-index para ficar acima de tudo (header, bottom nav, FABs)
             bgcolor: "black",
             display: isOpen ? "flex" : "none",
             flexDirection: "column",
@@ -740,7 +740,7 @@ export function ReceiptScannerDialog({ children }: ReceiptScannerDialogProps) {
               top: 0,
               left: 0,
               right: 0,
-              zIndex: 10,
+              zIndex: 100,
               background:
                 "linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 100%)",
               px: 2,
@@ -817,6 +817,7 @@ export function ReceiptScannerDialog({ children }: ReceiptScannerDialogProps) {
                     right: 12,
                     top: "50%",
                     transform: "translateY(-50%)",
+                    zIndex: 50,
                   }}
                 >
                   {camera.hasFlash && (
@@ -873,6 +874,8 @@ export function ReceiptScannerDialog({ children }: ReceiptScannerDialogProps) {
               {/* Bottom Controls */}
               <Box
                 sx={{
+                  position: "relative",
+                  zIndex: 100,
                   background:
                     "linear-gradient(to top, rgba(0,0,0,0.95) 70%, transparent 100%)",
                   px: 3,

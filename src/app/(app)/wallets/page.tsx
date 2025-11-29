@@ -115,7 +115,11 @@ export default function WalletsPage() {
             }}
           >
             <Box>
-              <Typography variant="h4" fontWeight="bold">
+              <Typography
+                variant="h4"
+                fontWeight="bold"
+                sx={{ display: { xs: "none", md: "block" } }}
+              >
                 Carteiras
               </Typography>
               <Typography variant="body1" color="text.secondary">
@@ -124,12 +128,21 @@ export default function WalletsPage() {
                 físico.
               </Typography>
             </Box>
-            <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-              <GamificationGuide />
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: { xs: "column", md: "row" },
+                gap: 1,
+                width: { xs: "100%", md: "auto" },
+              }}
+            >
+              <GamificationGuide sx={{ width: { xs: "100%", md: "auto" } }} />
               <Button
                 variant="contained"
                 startIcon={<PlusCircle size={18} />}
                 onClick={handleCreateWallet}
+                fullWidth
+                sx={{ width: { xs: "100%", md: "auto" } }}
               >
                 Nova Carteira
               </Button>

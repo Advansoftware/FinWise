@@ -56,7 +56,12 @@ export default function TransactionsPage() {
             }}
           >
             <Box>
-              <Typography variant="h4" fontWeight="bold" gutterBottom>
+              <Typography
+                variant="h4"
+                fontWeight="bold"
+                gutterBottom
+                sx={{ display: { xs: "none", md: "block" } }}
+              >
                 Transações
               </Typography>
               <Typography variant="body1" color="text.secondary">
@@ -68,21 +73,18 @@ export default function TransactionsPage() {
             <Box
               sx={{
                 display: "flex",
-                flexDirection: "row",
+                flexDirection: { xs: "column", md: "row" },
                 gap: 1,
-                alignItems: "center",
-                width: { xs: "100%", sm: "auto" },
+                width: { xs: "100%", md: "auto" },
               }}
             >
-              <Box sx={{ flex: { xs: 1, sm: "none" } }}>
-                <GamificationGuide />
-              </Box>
+              <GamificationGuide sx={{ width: { xs: "100%", md: "auto" } }} />
               <AddTransactionSheet>
                 <Button
                   variant="contained"
                   fullWidth
                   startIcon={<PlusCircle size={18} />}
-                  sx={{ flex: { xs: 1, sm: "none" } }}
+                  sx={{ width: { xs: "100%", md: "auto" } }}
                 >
                   Adicionar Transação
                 </Button>

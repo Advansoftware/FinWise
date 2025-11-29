@@ -106,14 +106,13 @@ export default function InstallmentsPage() {
               <Typography
                 variant="h5"
                 fontWeight="bold"
-                sx={{ fontSize: { xs: "1.25rem", md: "1.5rem" } }}
+                sx={{ fontSize: { xs: "1.25rem", md: "1.5rem" }, display: { xs: "none", md: "block" } }}
               >
                 Parcelamentos
               </Typography>
               <Typography
                 variant="body2"
                 color="text.secondary"
-                sx={{ display: { xs: "none", sm: "block" } }}
               >
                 Gerencie suas prestações e acompanhe pagamentos.
               </Typography>
@@ -122,16 +121,18 @@ export default function InstallmentsPage() {
               <Box
                 sx={{
                   display: "flex",
+                  flexDirection: { xs: "column", md: "row" },
                   gap: 1,
-                  justifyContent: { xs: "stretch", sm: "flex-end" },
+                  width: { xs: "100%", md: "auto" },
                 }}
               >
-                <GamificationGuide />
+                <GamificationGuide sx={{ width: { xs: "100%", md: "auto" } }} />
                 <Button
                   variant="contained"
                   onClick={() => setIsCreateOpen(true)}
                   startIcon={<Plus size={18} />}
-                  sx={{ flex: { xs: 1, sm: "none" } }}
+                  fullWidth
+                  sx={{ width: { xs: "100%", md: "auto" } }}
                 >
                   Novo Parcelamento
                 </Button>

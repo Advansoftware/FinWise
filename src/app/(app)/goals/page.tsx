@@ -108,7 +108,11 @@ export default function GoalsPage() {
             }}
           >
             <Box>
-              <Typography variant="h4" fontWeight="bold">
+              <Typography
+                variant="h4"
+                fontWeight="bold"
+                sx={{ display: { xs: "none", md: "block" } }}
+              >
                 Metas de Economia
               </Typography>
               <Typography variant="body1" color="text.secondary">

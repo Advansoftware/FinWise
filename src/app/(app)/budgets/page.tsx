@@ -126,7 +126,12 @@ export default function BudgetsPage() {
         spacing={2}
       >
         <Box>
-          <Typography variant="h4" fontWeight="bold" gutterBottom>
+          <Typography
+            variant="h4"
+            fontWeight="bold"
+            gutterBottom
+            sx={{ display: { xs: "none", md: "block" } }}
+          >
             Orçamentos
           </Typography>
           <Typography variant="body1" color="text.secondary">
@@ -134,21 +139,18 @@ export default function BudgetsPage() {
             surpresas no final do mês.
           </Typography>
         </Box>
-        <Stack 
-          direction="row" 
-          spacing={1} 
-          alignItems="center"
+        <Stack
+          direction={{ xs: "column", md: "row" }}
+          spacing={1}
           sx={{ width: { xs: "100%", md: "auto" } }}
         >
-          <Box sx={{ flex: { xs: 1, md: "none" } }}>
-            <GamificationGuide />
-          </Box>
+          <GamificationGuide sx={{ width: { xs: "100%", md: "auto" } }} />
           <CreateBudgetDialog>
-            <Button 
-              variant="contained" 
+            <Button
+              variant="contained"
               startIcon={<PlusCircle size={18} />}
               fullWidth
-              sx={{ flex: { xs: 1, md: "none" } }}
+              sx={{ width: { xs: "100%", md: "auto" }, flex: { xs: 1, md: "none" } }}
             >
               Novo Orçamento
             </Button>
