@@ -303,22 +303,22 @@ export default function GoalsPage() {
             </Card>
           )}
         </Grid>
-
-        {/* Dialogs */}
-        <CreateGoalDialog
-          open={createDialogOpen}
-          onClose={handleCloseDialogs}
-          initialData={selectedGoal}
-        />
-
-        {selectedGoal && (
-          <AddDepositDialog
-            open={depositDialogOpen}
-            onClose={handleCloseDialogs}
-            goal={selectedGoal}
-          />
-        )}
       </Grid>
+
+      {/* Dialogs - MUST be outside Grid to avoid z-index conflicts */}
+      <CreateGoalDialog
+        open={createDialogOpen}
+        onClose={handleCloseDialogs}
+        initialData={selectedGoal}
+      />
+
+      {selectedGoal && (
+        <AddDepositDialog
+          open={depositDialogOpen}
+          onClose={handleCloseDialogs}
+          goal={selectedGoal}
+        />
+      )}
     </Box>
   );
 }
