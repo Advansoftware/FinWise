@@ -31,6 +31,7 @@ import {
   Divider,
   Tabs,
   Tab,
+  Portal,
 } from "@mui/material";
 import {
   Upload,
@@ -723,6 +724,8 @@ export function ReceiptScannerDialog({ children }: ReceiptScannerDialogProps) {
     return (
       <>
         {trigger}
+      {/* Mobile Scanner View - Full Screen with Portal to break stacking context */}
+      <Portal>
         <Box
           sx={{
             position: "fixed",
@@ -1112,6 +1115,7 @@ export function ReceiptScannerDialog({ children }: ReceiptScannerDialogProps) {
           />
           <canvas ref={camera.canvasRef} style={{ display: "none" }} />
         </Box>
+      </Portal>
       </>
     );
   }
