@@ -68,6 +68,10 @@ export function DataRefreshProvider({ children }: { children: ReactNode }) {
   }, [triggerRefresh]);
 
   // Auto-refresh when pathname changes (navigation)
+  // Auto-refresh when pathname changes (navigation)
+  // DISABLED: This was causing UI freezing/jank on navigation because it triggers
+  // all data fetchers (transactions, goals, wallets, etc.) simultaneously.
+  /*
   useEffect(() => {
     // Only trigger refresh if this is not the initial load
     if (previousPathnameRef.current && previousPathnameRef.current !== pathname) {
@@ -77,6 +81,7 @@ export function DataRefreshProvider({ children }: { children: ReactNode }) {
     
     previousPathnameRef.current = pathname;
   }, [pathname, refreshOnNavigation]);
+  */
 
   const value: DataRefreshContextType = {
     triggerRefresh,
