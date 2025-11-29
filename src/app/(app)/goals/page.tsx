@@ -89,7 +89,7 @@ export default function GoalsPage() {
   }
 
   return (
-    <Box sx={{ flexGrow: 1, position: "relative", zIndex: 0, width: "100%" }}>
+    <Box sx={{ flexGrow: 1, position: "relative", width: "100%" }}>
       <Grid
         container
         spacing={{ xs: 2, sm: 3 }}
@@ -544,6 +544,7 @@ function GoalCard({ goal, onDelete, onEdit, onDeposit }: GoalCardProps) {
       <Dialog
         open={deleteDialogOpen}
         onClose={() => setDeleteDialogOpen(false)}
+        sx={{ zIndex: 1300 }}
       >
         <DialogTitle>Você tem certeza?</DialogTitle>
         <DialogContent>
