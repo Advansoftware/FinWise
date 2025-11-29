@@ -1,6 +1,6 @@
 // src/app/api/data/route.ts
-import {NextRequest, NextResponse} from 'next/server';
-import {getDatabaseAdapter} from '@/core/services/service-factory';
+import { NextRequest, NextResponse } from 'next/server';
+import { getDatabaseAdapter } from '@/core/services/service-factory';
 
 export async function GET(request: NextRequest) {
   try {
@@ -83,6 +83,15 @@ export async function GET(request: NextRequest) {
           return NextResponse.json(goals);
         }
 
+      case 'installments':
+        if (id) {
+          const installment = await db.installments.findById(id);
+          return NextResponse.json(installment);
+        } else {
+          const installments = await db.installments.findByUserId(userId);
+          return NextResponse.json(installments);
+        }
+
       case 'aiCreditLogs':
         const logs = await db.aiCreditLogs.findByUserId(userId);
         return NextResponse.json(logs);
@@ -110,6 +119,7 @@ export async function POST(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const collection = searchParams.get('collection');
+    const userId = searchParams.get('userId');
     const body = await request.json();
 
     if (!collection) {
@@ -137,6 +147,16 @@ export async function POST(request: NextRequest) {
       case 'goals':
         const newGoal = await db.goals.create(body);
         return NextResponse.json(newGoal);
+
+      case 'installments':
+        if (!userId) {
+          return NextResponse.json(
+            { error: 'UserId is required for installments' },
+            { status: 400 }
+          );
+        }
+        const newInstallment = await db.installments.create(userId, body);
+        return NextResponse.json(newInstallment);
 
       case 'aiCreditLogs':
         const newLog = await db.aiCreditLogs.create(body);
@@ -190,6 +210,10 @@ export async function PUT(request: NextRequest) {
         await db.goals.update(id, body);
         return NextResponse.json({ success: true });
 
+      case 'installments':
+        await db.installments.update(id, body);
+        return NextResponse.json({ success: true });
+
       case 'settings':
         await db.settings.updateByUserId(id, body);
         return NextResponse.json({ success: true });
@@ -239,6 +263,10 @@ export async function DELETE(request: NextRequest) {
 
       case 'goals':
         await db.goals.delete(id);
+        return NextResponse.json({ success: true });
+
+      case 'installments':
+        await db.installments.delete(id);
         return NextResponse.json({ success: true });
 
       default:
