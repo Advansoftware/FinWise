@@ -46,16 +46,30 @@ export function OfflineStorageInitializer() {
     initializeOfflineStorage();
   }, []);
 
-  // Sincroniza quando usuário loga (em background, sem mostrar indicador)
+  // Sincroniza quando usuário loga (apenas uma vez por sessão)
   useEffect(() => {
     if (!isInitialized || !user) return;
 
     const syncData = async () => {
+      // Verifica se já sincronizou nesta sessão
+      const sessionKey = `sync_done_${user.uid}`;
+      const alreadySynced = sessionStorage.getItem(sessionKey);
+
+      if (alreadySynced) {
+        console.log("⏭️ Sincronização já foi feita nesta sessão, pulando...");
+        return;
+      }
+
       // Sincroniza silenciosamente em background
       try {
+        console.log("🔄 Sincronização inicial (primeira vez nesta sessão)...");
         await offlineStorage.forcePullFromServer(user.uid);
         const status = await offlineStorage.getSyncStatus();
         setSyncStatus(status);
+        
+        // Marca como sincronizado nesta sessão
+        sessionStorage.setItem(sessionKey, "true");
+        console.log("✅ Sincronização inicial concluída");
       } catch (error) {
         console.error("Erro na sincronização inicial:", error);
       }
