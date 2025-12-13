@@ -44,3 +44,8 @@ apphosting.yaml
 
 # Firebase
 firebase-credentials.json
+
+# Development Environment
+scripts/mongo-dump/
+.env.dev.local
+.env.dev

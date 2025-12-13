@@ -1,0 +1,5 @@
+# Ignorar dumps de dados de produção
+scripts/mongo-dump/
+
+# Ambiente de desenvolvimento
+.env.dev.local

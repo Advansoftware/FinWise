@@ -1,0 +1,26 @@
+# Dockerfile para ambiente de desenvolvimento
+FROM node:20-alpine
+
+# Instalar dependências do sistema
+RUN apk add --no-cache libc6-compat
+
+# Definir diretório de trabalho
+WORKDIR /app
+
+# Copiar arquivos de dependências
+COPY package.json package-lock.json ./
+
+# Instalar dependências (incluindo devDependencies)
+RUN npm ci
+
+# Copiar o restante do código
+COPY . .
+
+# Desabilitar telemetria do Next.js
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Expor porta do Next.js
+EXPOSE 9002
+
+# Comando para iniciar o servidor de desenvolvimento com hot reload
+CMD ["npm", "run", "dev"]
