@@ -855,11 +855,11 @@ export default function Page() {
                 <Table sx={{ minWidth: 650 }}>
                   <TableHead>
                     <TableRow sx={{ bgcolor: 'primary.main' }}>
-                      <TableCell sx={{ color: 'primary.contrastText', fontWeight: 700 }}>Recurso</TableCell>
-                      <TableCell align="center" sx={{ color: 'primary.contrastText', fontWeight: 700 }}>Básico</TableCell>
-                      <TableCell align="center" sx={{ color: 'primary.contrastText', fontWeight: 700 }}>Pro</TableCell>
-                      <TableCell align="center" sx={{ color: 'primary.contrastText', fontWeight: 700 }}>Plus</TableCell>
-                      <TableCell align="center" sx={{ color: 'primary.contrastText', fontWeight: 700 }}>Infinity</TableCell>
+                      <TableCell sx={{ color: '#ffffff', fontWeight: 700 }}>Recurso</TableCell>
+                      <TableCell align="center" sx={{ color: '#ffffff', fontWeight: 700 }}>Básico</TableCell>
+                      <TableCell align="center" sx={{ color: '#ffffff', fontWeight: 700 }}>Pro</TableCell>
+                      <TableCell align="center" sx={{ color: '#ffffff', fontWeight: 700 }}>Plus</TableCell>
+                      <TableCell align="center" sx={{ color: '#ffffff', fontWeight: 700 }}>Infinity</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>

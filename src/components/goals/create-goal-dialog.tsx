@@ -128,6 +128,7 @@ export function CreateGoalDialog({
         </DialogContentText>
 
         <Box
+          id="create-goal-form"
           component="form"
           onSubmit={handleSubmit(onSubmit)}
           sx={{ display: "flex", flexDirection: "column", gap: 2 }}
@@ -223,25 +224,26 @@ export function CreateGoalDialog({
             )}
           />
 
-          <DialogActions sx={{ px: 0, pt: 2 }}>
-            <Button onClick={onClose} disabled={isSubmitting}>
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={isSubmitting}
-              startIcon={
-                isSubmitting ? (
-                  <CircularProgress size={16} color="inherit" />
-                ) : null
-              }
-            >
-              {initialData ? "Salvar Alterações" : "Criar Meta"}
-            </Button>
-          </DialogActions>
         </Box>
       </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 3 }}>
+        <Button onClick={onClose} disabled={isSubmitting}>
+          Cancelar
+        </Button>
+        <Button
+          type="submit"
+          form="create-goal-form"
+          variant="contained"
+          disabled={isSubmitting}
+          startIcon={
+            isSubmitting ? (
+              <CircularProgress size={16} color="inherit" />
+            ) : null
+          }
+        >
+          {initialData ? "Salvar Alterações" : "Criar Meta"}
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 }
