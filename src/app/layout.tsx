@@ -1,9 +1,4 @@
-import { ToastProvider } from "@/components/providers/toast-provider";
 import { Inter } from "next/font/google";
-import { AuthProvider } from "@/hooks/use-auth";
-import { SessionProvider } from "next-auth/react";
-import { PWAUpdater } from "@/components/pwa-updater";
-import { DataRefreshProvider } from "@/hooks/use-data-refresh";
 import { Metadata, Viewport } from "next";
 import {
   structuredData,
@@ -11,7 +6,7 @@ import {
   websiteData,
   financialToolsData,
 } from "@/lib/structured-data";
-import ThemeRegistry from "@/components/theme-registry/theme-registry";
+import { AppProviders } from "@/components/providers/app-providers";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -196,16 +191,7 @@ export default function RootLayout({
         <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body className={inter.className}>
-        <SessionProvider>
-          <AuthProvider>
-            <DataRefreshProvider>
-              <ThemeRegistry>
-                <ToastProvider>{children}</ToastProvider>
-              </ThemeRegistry>
-              <PWAUpdater />
-            </DataRefreshProvider>
-          </AuthProvider>
-        </SessionProvider>
+        <AppProviders>{children}</AppProviders>
       </body>
     </html>
   );
