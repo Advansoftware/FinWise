@@ -44,7 +44,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
-import { motion } from "framer-motion";
+import { LazyMotion, domAnimation, m } from "framer-motion";
 import Image from "next/image";
 import {
   structuredData,
@@ -700,7 +700,7 @@ export default function Page() {
   };
 
   return (
-    <>
+    <LazyMotion features={domAnimation}>
       <Head>
         <script
           type="application/ld+json"
@@ -741,7 +741,7 @@ export default function Page() {
         >
           <Toolbar sx={{ justifyContent: "space-between" }}>
             <Box
-              component={motion.div}
+              component={m.div}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5 }}
@@ -772,7 +772,7 @@ export default function Page() {
             </Box>
 
             <Box
-              component={motion.div}
+              component={m.div}
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -831,7 +831,7 @@ export default function Page() {
                   sx={{ textAlign: { xs: "center", md: "left" }, zIndex: 2 }}
                 >
                   <Stack spacing={4}>
-                    <Box component={motion.div} {...fadeIn}>
+                    <Box component={m.div} {...fadeIn}>
                       <Chip
                         label="Novo: Gestão com IA"
                         color="primary"
@@ -878,7 +878,7 @@ export default function Page() {
                     </Box>
 
                     <Typography
-                      component={motion.p}
+                      component={m.p}
                       variant="h6"
                       {...fadeIn}
                       transition={{ ...fadeIn.transition, delay: 0.2 }}
@@ -899,7 +899,7 @@ export default function Page() {
                       direction={{ xs: "column", sm: "row" }}
                       spacing={2}
                       justifyContent={{ xs: "center", md: "flex-start" }}
-                      component={motion.div}
+                      component={m.div}
                       {...fadeIn}
                       transition={{ ...fadeIn.transition, delay: 0.4 }}
                     >
@@ -945,7 +945,7 @@ export default function Page() {
                 {/* Hero Image */}
                 <Grid size={{ xs: 12, md: 6 }} sx={{ position: "relative" }}>
                   <Box
-                    component={motion.div}
+                    component={m.div}
                     initial={{ opacity: 0, scale: 0.9, rotate: 2 }}
                     animate={{ opacity: 1, scale: 1, rotate: 0 }}
                     transition={{ duration: 0.8, ease: "easeOut" }}
@@ -1000,7 +1000,7 @@ export default function Page() {
 
                     {/* Floating Elements for "Pop" */}
                     <Card
-                      component={motion.div}
+                      component={m.div}
                       animate={{ y: [0, -10, 0] }}
                       transition={{
                         duration: 4,
@@ -1050,7 +1050,7 @@ export default function Page() {
                     </Card>
 
                     <Card
-                      component={motion.div}
+                      component={m.div}
                       animate={{ y: [0, 10, 0] }}
                       transition={{
                         duration: 5,
@@ -1107,7 +1107,7 @@ export default function Page() {
           >
             <Container maxWidth="xl">
               <Box
-                component={motion.div}
+                component={m.div}
                 {...fadeIn}
                 sx={{ textAlign: "center", mb: { xs: 6, sm: 8 } }}
               >
@@ -1142,7 +1142,7 @@ export default function Page() {
                 {features.map((feature, index) => (
                   <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
                     <Box
-                      component={motion.div}
+                      component={m.div}
                       {...fadeIn}
                       transition={{ ...fadeIn.transition, delay: index * 0.1 }}
                     >
@@ -1189,7 +1189,7 @@ export default function Page() {
           {/* Pricing Section */}
           <Container maxWidth="xl" sx={{ py: { xs: 8, sm: 12, md: 16 } }}>
             <Box
-              component={motion.div}
+              component={m.div}
               {...fadeIn}
               sx={{ textAlign: "center", mb: { xs: 6, sm: 8 } }}
             >
@@ -1221,7 +1221,7 @@ export default function Page() {
               {plans.map((plan, index) => (
                 <Grid size={{ xs: 12, sm: 6, lg: 3 }} key={index}>
                   <Box
-                    component={motion.div}
+                    component={m.div}
                     {...fadeIn}
                     transition={{ ...fadeIn.transition, delay: index * 0.1 }}
                     sx={{ height: "100%" }}
@@ -1342,7 +1342,7 @@ export default function Page() {
           >
             <Container maxWidth="xl">
               <Box
-                component={motion.div}
+                component={m.div}
                 {...fadeIn}
                 sx={{ textAlign: "center", mb: { xs: 6, sm: 8 } }}
               >
@@ -1491,7 +1491,7 @@ export default function Page() {
           {/* FAQ Section */}
           <Container maxWidth="xl" sx={{ py: { xs: 8, sm: 12, md: 16 } }}>
             <Box
-              component={motion.div}
+              component={m.div}
               {...fadeIn}
               sx={{ textAlign: "center", mb: { xs: 6, sm: 8 } }}
             >
@@ -1510,7 +1510,7 @@ export default function Page() {
             <Stack spacing={3} sx={{ maxWidth: "48rem", mx: "auto" }}>
               {faqs.map((faq, index) => (
                 <Box
-                  component={motion.div}
+                  component={m.div}
                   {...fadeIn}
                   transition={{ ...fadeIn.transition, delay: index * 0.1 }}
                   key={index}
@@ -1560,7 +1560,7 @@ export default function Page() {
             </Stack>
 
             <Box
-              component={motion.div}
+              component={m.div}
               {...fadeIn}
               transition={{ ...fadeIn.transition, delay: 0.6 }}
               sx={{ textAlign: "center", mt: 6 }}
@@ -1590,7 +1590,7 @@ export default function Page() {
           >
             <Container maxWidth="xl">
               <Box
-                component={motion.div}
+                component={m.div}
                 {...fadeIn}
                 sx={{ textAlign: "center", mb: { xs: 6, sm: 8 } }}
               >
@@ -1621,7 +1621,7 @@ export default function Page() {
                 {blogPosts.map((post, index) => (
                   <Grid size={{ xs: 12, md: 4 }} key={index}>
                     <Box
-                      component={motion.div}
+                      component={m.div}
                       {...fadeIn}
                       transition={{ ...fadeIn.transition, delay: index * 0.1 }}
                       sx={{ height: "100%" }}
@@ -1711,7 +1711,7 @@ export default function Page() {
               </Grid>
 
               <Box
-                component={motion.div}
+                component={m.div}
                 {...fadeIn}
                 transition={{ ...fadeIn.transition, delay: 0.6 }}
                 sx={{ textAlign: "center", mt: 6 }}
@@ -1803,6 +1803,6 @@ export default function Page() {
           </Container>
         </Box>
       </Box>
-    </>
+    </LazyMotion>
   );
 }
