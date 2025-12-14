@@ -13,6 +13,7 @@ const PUBLIC_ROUTES = [
   "/terms",      // Terms of use
   "/api/auth",   // NextAuth API routes
   "/api/cron",   // Cron jobs
+  "/api/mobile", // Mobile API (has own auth via Bearer tokens)
 ];
 
 // Routes that should redirect to dashboard if user is already logged in
