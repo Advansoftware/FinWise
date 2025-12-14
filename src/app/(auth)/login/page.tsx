@@ -67,7 +67,10 @@ export default function LoginPage() {
         title: "Login realizado com sucesso!",
         description: "Redirecionando para o dashboard...",
       });
-      router.push("/dashboard");
+      // Força refresh do router para reconhecer a nova sessão
+      router.refresh();
+      // Usa replace para evitar voltar para login com botão voltar
+      router.replace("/dashboard");
     } catch (error: any) {
       toast({
         variant: "error",
