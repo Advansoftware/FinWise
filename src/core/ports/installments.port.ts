@@ -69,6 +69,9 @@ export interface CreateInstallmentInput {
   isRecurring?: boolean;
   recurringType?: 'monthly' | 'yearly';
   endDate?: string;
+
+  // Valores customizados por parcela (soma deve ser igual ao totalAmount)
+  customInstallmentAmounts?: number[];
 }
 
 export interface UpdateInstallmentInput {
