@@ -121,13 +121,14 @@ export function CreateGoalDialog({
       <DialogTitle>
         {initialData ? "Editar Meta" : "Criar Nova Meta"}
       </DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ overflowX: 'hidden' }}>
         <DialogContentText sx={{ mb: 3 }}>
           Defina um objetivo financeiro. Preencha os campos opcionais para
           ajudar a IA a fazer projeções mais precisas.
         </DialogContentText>
 
         <Box
+          id="create-goal-form"
           component="form"
           onSubmit={handleSubmit(onSubmit)}
           sx={{ display: "flex", flexDirection: "column", gap: 2 }}
@@ -223,25 +224,26 @@ export function CreateGoalDialog({
             )}
           />
 
-          <DialogActions sx={{ px: 0, pt: 2 }}>
-            <Button onClick={onClose} disabled={isSubmitting}>
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              variant="contained"
-              disabled={isSubmitting}
-              startIcon={
-                isSubmitting ? (
-                  <CircularProgress size={16} color="inherit" />
-                ) : null
-              }
-            >
-              {initialData ? "Salvar Alterações" : "Criar Meta"}
-            </Button>
-          </DialogActions>
         </Box>
       </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 3 }}>
+        <Button variant="outlined" onClick={onClose} disabled={isSubmitting}>
+          Cancelar
+        </Button>
+        <Button
+          type="submit"
+          form="create-goal-form"
+          variant="contained"
+          disabled={isSubmitting}
+          startIcon={
+            isSubmitting ? (
+              <CircularProgress size={16} color="inherit" />
+            ) : null
+          }
+        >
+          {initialData ? "Salvar Alterações" : "Criar Meta"}
+        </Button>
+      </DialogActions>
     </Dialog>
   );
 }

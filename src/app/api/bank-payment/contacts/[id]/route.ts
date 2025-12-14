@@ -6,9 +6,10 @@ import { MongoBankPaymentRepository } from '@/core/adapters/mongodb/mongodb-bank
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 
@@ -19,7 +20,7 @@ export async function GET(
     const { db } = await connectToDatabase();
     const repository = new MongoBankPaymentRepository(db);
 
-    const contact = await repository.findContactById(params.id);
+    const contact = await repository.findContactById(id);
 
     if (!contact) {
       return NextResponse.json({ error: 'Contato não encontrado' }, { status: 404 });
@@ -42,9 +43,10 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 
@@ -56,7 +58,7 @@ export async function PATCH(
     const repository = new MongoBankPaymentRepository(db);
 
     // Verificar se contato existe e pertence ao usuário
-    const existing = await repository.findContactById(params.id);
+    const existing = await repository.findContactById(id);
     if (!existing) {
       return NextResponse.json({ error: 'Contato não encontrado' }, { status: 404 });
     }
@@ -65,7 +67,7 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const contact = await repository.updateContact(params.id, body);
+    const contact = await repository.updateContact(id, body);
 
     return NextResponse.json({ contact });
   } catch (error: any) {
@@ -79,9 +81,10 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 
@@ -93,7 +96,7 @@ export async function DELETE(
     const repository = new MongoBankPaymentRepository(db);
 
     // Verificar se contato existe e pertence ao usuário
-    const existing = await repository.findContactById(params.id);
+    const existing = await repository.findContactById(id);
     if (!existing) {
       return NextResponse.json({ error: 'Contato não encontrado' }, { status: 404 });
     }
@@ -101,7 +104,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }
 
-    await repository.deleteContact(params.id);
+    await repository.deleteContact(id);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

@@ -101,23 +101,29 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
         ]);
 
         if (monthlyResponse.ok) {
-          monthlyData = await monthlyResponse.json();
-          monthlyData = Array.isArray(monthlyData) ? monthlyData : [];
-          // Cache monthly reports
-          await offlineStorage.saveSetting(
-            `monthly_reports_${user.uid}`,
-            monthlyData
-          );
+          const contentType = monthlyResponse.headers.get("content-type");
+          if (contentType?.includes("application/json")) {
+            monthlyData = await monthlyResponse.json();
+            monthlyData = Array.isArray(monthlyData) ? monthlyData : [];
+            // Cache monthly reports
+            await offlineStorage.saveSetting(
+              `monthly_reports_${user.uid}`,
+              monthlyData
+            );
+          }
         }
 
         if (annualResponse.ok) {
-          annualData = await annualResponse.json();
-          annualData = Array.isArray(annualData) ? annualData : [];
-          // Cache annual reports
-          await offlineStorage.saveSetting(
-            `annual_reports_${user.uid}`,
-            annualData
-          );
+          const contentType = annualResponse.headers.get("content-type");
+          if (contentType?.includes("application/json")) {
+            annualData = await annualResponse.json();
+            annualData = Array.isArray(annualData) ? annualData : [];
+            // Cache annual reports
+            await offlineStorage.saveSetting(
+              `annual_reports_${user.uid}`,
+              annualData
+            );
+          }
         }
       } else {
         // Offline: load from cache

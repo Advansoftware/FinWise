@@ -71,7 +71,7 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
 
     // Para parcelamentos recorrentes, usar o valor total como valor de cada parcela
     // Para normais, dividir pelo número de parcelas
-    const installmentAmount = installment.isRecurring
+    const defaultInstallmentAmount = installment.isRecurring
       ? installment.totalAmount
       : installment.totalAmount / installment.totalInstallments;
 
@@ -81,6 +81,11 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
       : installment.totalInstallments;
 
     const intervalUnit = installment.isRecurring && installment.recurringType === 'yearly' ? 'year' : 'month';
+
+    // Verificar se há valores customizados e se o array tem o tamanho correto
+    const hasCustomAmounts = installment.customInstallmentAmounts &&
+      installment.customInstallmentAmounts.length === installment.totalInstallments &&
+      !installment.isRecurring;
 
     for (let i = 0; i < totalToGenerate; i++) {
       const dueDate = intervalUnit === 'year'
@@ -93,12 +98,17 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
         if (dueDate > endDate) break;
       }
 
+      // Usar valor customizado se disponível, senão usar valor padrão
+      const scheduledAmount = hasCustomAmounts && installment.customInstallmentAmounts![i] !== undefined
+        ? installment.customInstallmentAmounts![i]
+        : defaultInstallmentAmount;
+
       payments.push({
         id: new ObjectId().toString(),
         installmentId: installment._id.toString(),
         installmentNumber: i + 1,
         dueDate: dueDate.toISOString(),
-        scheduledAmount: installmentAmount,
+        scheduledAmount,
         status: 'pending'
       });
     }

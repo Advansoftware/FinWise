@@ -635,7 +635,7 @@ export function AISettingsDialog({
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={() => setIsOpen(false)} color="inherit">
+        <Button onClick={() => setIsOpen(false)} variant="outlined">
           Cancelar
         </Button>
         <Button

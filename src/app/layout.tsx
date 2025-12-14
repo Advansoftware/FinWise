@@ -3,7 +3,6 @@ import { Inter } from "next/font/google";
 import { AuthProvider } from "@/hooks/use-auth";
 import { SessionProvider } from "next-auth/react";
 import { PWAUpdater } from "@/components/pwa-updater";
-import { OfflineStorageInitializer } from "@/components/offline-storage-initializer";
 import { DataRefreshProvider } from "@/hooks/use-data-refresh";
 import { Metadata, Viewport } from "next";
 import {
@@ -200,7 +199,6 @@ export default function RootLayout({
         <SessionProvider>
           <AuthProvider>
             <DataRefreshProvider>
-              <OfflineStorageInitializer />
               <ThemeRegistry>
                 <ToastProvider>{children}</ToastProvider>
               </ThemeRegistry>

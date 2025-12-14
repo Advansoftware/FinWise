@@ -28,27 +28,12 @@ export function PWAUpdater() {
     };
   }, []);
 
-  // Mostrar toast quando ficar offline/online
+  // Background sync trigger when coming online (no UI)
   useEffect(() => {
-    if (!isOnline) {
-      toast({
-        title: 'Modo Offline',
-        description: 'Você está offline. As alterações serão sincronizadas quando voltar online.',
-        duration: 5000,
-        variant: 'info',
-        action: (
-          <WifiOff style={{ width: '1rem', height: '1rem' }} />
-        ),
-      });
-    } else {
-      // Verificar se há dados para sincronizar quando voltar online
-      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage({
-          type: 'SYNC_DATA'
-        });
-      }
+    if (isOnline && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'SYNC_DATA' });
     }
-  }, [isOnline, toast]);
+  }, [isOnline]);
 
   // Gerenciar instalação PWA
   useEffect(() => {
@@ -204,30 +189,6 @@ export function PWAUpdater() {
       });
     }
   }, [waitingWorker, toast, handleUpdate]);
-
-  // Indicador de status de conexão (opcional)
-  if (!isOnline) {
-    return (
-      <Box sx={{ position: 'fixed', bottom: 16, left: 16, zIndex: 50 }}>
-        <Stack 
-          direction="row" 
-          alignItems="center" 
-          spacing={2} 
-          sx={{ 
-            bgcolor: 'rgba(0, 0, 0, 0.6)',
-            backdropFilter: 'blur(4px)', 
-            px: 3, 
-            py: 2, 
-            borderRadius: 2, 
-            fontSize: '0.875rem' 
-          }}
-        >
-          <WifiOff style={{ width: '1rem', height: '1rem' }} />
-          <Typography component="span" sx={{ color: 'text.secondary' }}>Offline</Typography>
-        </Stack>
-      </Box>
-    );
-  }
 
   return null;
 }

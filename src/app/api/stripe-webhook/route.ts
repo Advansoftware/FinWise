@@ -206,7 +206,8 @@ export async function POST(req: NextRequest) {
     console.log(`[Webhook] 🎯 Received webhook request at ${new Date().toISOString()}`);
 
     const buf = await req.text();
-    const sig = headers().get('stripe-signature') as string;
+    const headersList = await headers();
+    const sig = headersList.get('stripe-signature') as string;
 
     console.log(`[Webhook] Request details: signature=${sig ? 'present' : 'missing'}, body length=${buf.length}`);
 

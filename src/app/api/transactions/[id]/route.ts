@@ -18,8 +18,9 @@ async function getUserIdFromRequest(request: NextRequest): Promise<string | null
 // GET - Buscar transação específica
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const authenticatedUserId = await getUserIdFromRequest(request);
   if (!authenticatedUserId) {
     return NextResponse.json({ error: 'Unauthorized: Invalid or missing user identifier.' }, { status: 401 });
@@ -27,13 +28,13 @@ export async function GET(
 
   try {
     // Validate ObjectId format
-    if (!ObjectId.isValid(params.id)) {
+    if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: 'Invalid transaction ID format' }, { status: 400 });
     }
 
     const { db } = await connectToDatabase();
     const transaction = await db.collection('transactions').findOne({
-      _id: new ObjectId(params.id),
+      _id: new ObjectId(id),
       userId: authenticatedUserId
     });
 
@@ -58,8 +59,9 @@ export async function GET(
 // PUT - Atualizar transação com reversão e aplicação do saldo
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const authenticatedUserId = await getUserIdFromRequest(request);
   if (!authenticatedUserId) {
     return NextResponse.json({ error: 'Unauthorized: Invalid or missing user identifier.' }, { status: 401 });
@@ -71,13 +73,13 @@ export async function PUT(
     const { db } = await connectToDatabase();
 
     // Validate ObjectId format
-    if (!ObjectId.isValid(params.id)) {
+    if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: 'Invalid transaction ID format' }, { status: 400 });
     }
 
     // Verificar se a transação existe e pertence ao usuário
     const existingTransaction = await db.collection('transactions').findOne({
-      _id: new ObjectId(params.id),
+      _id: new ObjectId(id),
       userId: authenticatedUserId
     });
 
@@ -96,7 +98,7 @@ export async function PUT(
     delete updatedData._id;
 
     const result = await db.collection('transactions').updateOne(
-      { _id: new ObjectId(params.id), userId: authenticatedUserId },
+      { _id: new ObjectId(id), userId: authenticatedUserId },
       { $set: updatedData }
     );
 
@@ -106,7 +108,7 @@ export async function PUT(
 
     // Obter a transação atualizada
     const updatedTransaction = await db.collection('transactions').findOne({
-      _id: new ObjectId(params.id)
+      _id: new ObjectId(id)
     });
 
     // Aplicar o novo saldo
@@ -130,8 +132,9 @@ export async function PUT(
 // DELETE - Remover transação com reversão do saldo (e filhos se houver)
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const authenticatedUserId = await getUserIdFromRequest(request);
   if (!authenticatedUserId) {
     return NextResponse.json({ error: 'Unauthorized: Invalid or missing user identifier.' }, { status: 401 });
@@ -142,7 +145,7 @@ export async function DELETE(
     const transactionToDelete = body as Transaction;
 
     // Validate ObjectId format
-    if (!ObjectId.isValid(params.id)) {
+    if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: 'Invalid transaction ID format' }, { status: 400 });
     }
 
@@ -150,7 +153,7 @@ export async function DELETE(
 
     // Verificar se a transação existe e pertence ao usuário
     const existingTransaction = await db.collection('transactions').findOne({
-      _id: new ObjectId(params.id),
+      _id: new ObjectId(id),
       userId: authenticatedUserId
     });
 
@@ -175,14 +178,14 @@ export async function DELETE(
     // Se a transação tem filhos, deletar os filhos primeiro
     if (existingTransaction.hasChildren) {
       await db.collection('transactions').deleteMany({
-        parentId: params.id,
+        parentId: id,
         userId: authenticatedUserId
       });
     }
 
     // Deletar a transação
     const result = await db.collection('transactions').deleteOne({
-      _id: new ObjectId(params.id),
+      _id: new ObjectId(id),
       userId: authenticatedUserId
     });
 

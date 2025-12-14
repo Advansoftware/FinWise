@@ -1,6 +1,6 @@
 // src/app/api/reports/route.ts
-import {NextRequest, NextResponse} from 'next/server';
-import {getDatabaseAdapter} from '@/core/services/service-factory';
+import { NextRequest, NextResponse } from 'next/server';
+import { getDatabaseAdapter } from '@/core/services/service-factory';
 
 export async function GET(request: NextRequest) {
   try {
@@ -47,10 +47,11 @@ export async function GET(request: NextRequest) {
     const reports = await db.reports.findByUserId(userId);
     return NextResponse.json(reports);
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Reports GET failed:', error);
+    console.error('Error stack:', error?.stack);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error?.message },
       { status: 500 }
     );
   }

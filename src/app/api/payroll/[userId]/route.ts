@@ -1,16 +1,17 @@
-import {NextRequest, NextResponse} from 'next/server';
-import {connectToDatabase} from '@/lib/mongodb';
-import {PayrollData} from '@/lib/types';
+import { NextRequest, NextResponse } from 'next/server';
+import { connectToDatabase } from '@/lib/mongodb';
+import { PayrollData } from '@/lib/types';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await params;
     const { db } = await connectToDatabase();
     const payrollCollection = db.collection('payroll');
 
-    const payrollData = await payrollCollection.findOne({ userId: params.userId });
+    const payrollData = await payrollCollection.findOne({ userId });
 
     if (!payrollData) {
       return NextResponse.json({ error: 'Payroll data not found' }, { status: 404 });
@@ -29,9 +30,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await params;
     const payrollData: PayrollData = await request.json();
 
     // Validate required fields
@@ -40,7 +42,7 @@ export async function PUT(
     }
 
     // Ensure userId matches the route parameter
-    if (payrollData.userId !== params.userId) {
+    if (payrollData.userId !== userId) {
       return NextResponse.json({ error: 'User ID mismatch' }, { status: 400 });
     }
 
@@ -85,13 +87,13 @@ export async function PUT(
 
     // Use upsert to create or update the document
     const result = await payrollCollection.replaceOne(
-      { userId: params.userId },
+      { userId },
       dataToSave,
       { upsert: true }
     );
 
     // Fetch the updated document
-    const updatedPayroll = await payrollCollection.findOne({ userId: params.userId });
+    const updatedPayroll = await payrollCollection.findOne({ userId });
 
     if (!updatedPayroll) {
       throw new Error('Failed to retrieve updated payroll data');
@@ -110,13 +112,14 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { userId: string } }
+  { params }: { params: Promise<{ userId: string }> }
 ) {
   try {
+    const { userId } = await params;
     const { db } = await connectToDatabase();
     const payrollCollection = db.collection('payroll');
 
-    const result = await payrollCollection.deleteOne({ userId: params.userId });
+    const result = await payrollCollection.deleteOne({ userId });
 
     if (result.deletedCount === 0) {
       return NextResponse.json({ error: 'Payroll data not found' }, { status: 404 });

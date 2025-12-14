@@ -4,7 +4,7 @@ import * as React from "react";
 import { Calendar as CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { DateRange } from "react-day-picker";
+import { DateRange } from "@/lib/types";
 import {
   Box,
   useTheme,

@@ -13,7 +13,6 @@ import { InstallmentsProvider } from "@/hooks/use-installments";
 import { PlanProvider } from "@/hooks/use-plan";
 import { CreditsProvider } from "@/hooks/use-credits";
 import { GoalCompletionCelebration } from "@/components/goals/goal-celebration";
-import { OnlineStatusIndicator } from "@/components/online-status-indicator";
 import { useGoals } from "@/hooks/use-goals";
 import { GamificationProvider } from "@/hooks/use-gamification";
 import { BankPaymentProvider } from "@/hooks/use-bank-payment";
@@ -21,12 +20,16 @@ import { PaymentConfirmationProvider } from "@/components/bank-payment/payment-c
 import { GamificationGlobalUI } from "@/components/gamification";
 import { ResponsiveLayout } from "@/components/layout";
 
+import { WalletOnboarding } from "@/components/onboarding/wallet-onboarding";
+import { OfflineStorageInitializer } from "@/components/offline-storage-initializer";
+
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const { completedGoal, clearCompletedGoal } = useGoals();
 
   return (
     <>
       {/* Componentes globais */}
+      <OfflineStorageInitializer />
       <GamificationGlobalUI />
       {completedGoal && (
         <GoalCompletionCelebration
@@ -34,7 +37,9 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
           onComplete={clearCompletedGoal}
         />
       )}
-      <OnlineStatusIndicator />
+      
+      {/* Onboarding para novos usuários sem carteira */}
+      <WalletOnboarding />
 
       {/* Layout responsivo - mobile ou desktop */}
       <ResponsiveLayout>{children}</ResponsiveLayout>

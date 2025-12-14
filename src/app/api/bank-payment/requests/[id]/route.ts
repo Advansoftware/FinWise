@@ -6,13 +6,14 @@ import { MongoBankPaymentRepository } from '@/core/adapters/mongodb/mongodb-bank
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { db } = await connectToDatabase();
     const repository = new MongoBankPaymentRepository(db);
 
-    const paymentRequest = await repository.findPaymentRequestById(params.id);
+    const paymentRequest = await repository.findPaymentRequestById(id);
 
     if (!paymentRequest) {
       return NextResponse.json({ error: 'Solicitação não encontrada' }, { status: 404 });

@@ -1,0 +1,65 @@
+services:
+  # Aplicação Next.js em modo de desenvolvimento
+  app:
+    container_name: finwise-dev-app
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "9002:9002"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    env_file:
+      - .env.dev
+    environment:
+      - NODE_ENV=development
+      - MONGODB_URI=mongodb://mongo:27017
+      - MONGODB_DB=gastometria_dev
+      - NEXT_PUBLIC_DATABASE_TYPE=mongodb
+      - NEXT_PUBLIC_AUTH_PROVIDER=mongodb
+      - NEXT_PUBLIC_APP_URL=http://localhost:9002
+      - NEXTAUTH_URL=http://localhost:9002
+      - AUTH_TRUST_HOST=true
+    volumes:
+      # Montar código fonte para hot reload
+      - ./src:/app/src
+      - ./public:/app/public
+      - ./middleware.ts:/app/middleware.ts
+      - ./next.config.js:/app/next.config.js
+      - ./next.config.mjs:/app/next.config.mjs
+      - ./tsconfig.json:/app/tsconfig.json
+      # Excluir node_modules e .next do volume para melhor performance
+      - /app/node_modules
+      - /app/.next
+    networks:
+      - finwise-dev
+
+  # MongoDB para desenvolvimento
+  mongo:
+    container_name: finwise-dev-mongo
+    image: mongo:7.0
+    ports:
+      - "27019:27017"
+    environment:
+      - MONGO_INITDB_DATABASE=gastometria_dev
+    volumes:
+      - mongo-dev-data:/data/db
+      - ./scripts/mongo-init.sh:/docker-entrypoint-initdb.d/mongo-init.sh:ro
+      - ./scripts/mongo-dump:/mongo-dump:ro
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - finwise-dev
+
+volumes:
+  mongo-dev-data:
+    driver: local
+
+networks:
+  finwise-dev:
+    driver: bridge

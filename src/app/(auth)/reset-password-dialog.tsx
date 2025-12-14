@@ -63,17 +63,24 @@ export function ResetPasswordDialog({ children }: ResetPasswordDialogProps) {
 
     setIsSending(true);
     try {
-      // TODO: Implementar funcionalidade de reset de senha com Firebase ou API
-      // await sendPasswordResetEmail(email);
-
-      // Simular delay de rede
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      toast({
-        title: "Email enviado!",
-        description: "Verifique sua caixa de entrada para redefinir sua senha.",
+      const response = await fetch("/api/auth/send-reset-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email }),
       });
-      setIsSent(true);
+
+      if (response.ok) {
+        toast({
+          title: "Email enviado!",
+          description: "Se o email estiver cadastrado, você receberá um link para redefinir sua senha.",
+        });
+        setIsSent(true);
+      } else {
+        const data = await response.json();
+        throw new Error(data.error || "Erro ao enviar email");
+      }
     } catch (error: any) {
       toast({
         variant: "error",

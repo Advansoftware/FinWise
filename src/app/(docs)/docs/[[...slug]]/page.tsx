@@ -27,9 +27,10 @@ async function getDocContent(slug: string) {
 export async function generateMetadata({
   params,
 }: {
-  params: { slug?: string[] };
+  params: Promise<{ slug?: string[] }>;
 }): Promise<Metadata> {
-  const slug = params.slug?.join("/") || "introducao";
+  const resolvedParams = await params;
+  const slug = resolvedParams.slug?.join("/") || "introducao";
   const doc = await getDocContent(slug);
 
   if (!doc) {
@@ -184,9 +185,10 @@ const markdownStyles = {
 export default async function DocPage({
   params,
 }: {
-  params: { slug?: string[] };
+  params: Promise<{ slug?: string[] }>;
 }) {
-  const slug = params.slug?.join("/") || "introducao";
+  const resolvedParams = await params;
+  const slug = resolvedParams.slug?.join("/") || "introducao";
   const doc = await getDocContent(slug);
   const allDocs = await getDocs();
 
