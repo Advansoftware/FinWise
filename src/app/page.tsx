@@ -1071,11 +1071,11 @@ export default function Page() {
               <Stack direction="row" spacing={3}>
                 <Link href="/privacy" passHref>
                   <Typography 
-                    component="a" 
                     variant="body2" 
                     sx={{ 
                       color: 'text.secondary', 
                       textDecoration: 'none',
+                      cursor: 'pointer',
                       '&:hover': { color: 'primary.main' }
                     }}
                   >
@@ -1084,11 +1084,11 @@ export default function Page() {
                 </Link>
                 <Link href="/terms" passHref>
                   <Typography 
-                    component="a" 
                     variant="body2" 
                     sx={{ 
                       color: 'text.secondary', 
                       textDecoration: 'none',
+                      cursor: 'pointer',
                       '&:hover': { color: 'primary.main' }
                     }}
                   >
