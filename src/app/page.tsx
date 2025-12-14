@@ -31,8 +31,6 @@ import { Logo } from "@/components/logo";
 import { useAuth } from "@/hooks/use-auth";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import {Skeleton} from '@/components/mui-wrappers/skeleton';
-import {AuthGuard} from '@/components/auth/auth-guard';
 import {structuredData, organizationData, websiteData, breadcrumbData, faqData} from '@/lib/structured-data';
 import Head from 'next/head';
 
@@ -305,22 +303,17 @@ const comparisonFeatures = [
 ];
 
 export default function Page() {
+  // Non-blocking redirect: if user is logged in, redirect to dashboard
+  // This does NOT block rendering - landing page shows immediately
   const { user, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
+    // Only redirect when auth check is complete AND user is logged in
     if (!loading && user) {
-      router.push('/dashboard');
+      router.replace('/dashboard');
     }
   }, [user, loading, router]);
-
-  if (loading) {
-    return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
-        <Skeleton variant="rectangular" width="100%" height="100vh" />
-      </Box>
-    );
-  }
 
   const renderCellValue = (value: any) => {
     if (typeof value === 'boolean') {
@@ -351,7 +344,7 @@ export default function Page() {
   };
 
   return (
-    <AuthGuard>
+    <>
       <Head>
         <script
           type="application/ld+json"
@@ -1120,6 +1113,6 @@ export default function Page() {
           </Container>
         </Box>
       </Box>
-    </AuthGuard>
+    </>
   );
 }
