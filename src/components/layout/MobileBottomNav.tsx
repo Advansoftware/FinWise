@@ -129,6 +129,8 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
                   sx={{
                     position: "absolute",
                     top: 0,
+                    left: "50%",
+                    transform: "translateX(-50%)",
                     width: 32,
                     height: 3,
                     borderRadius: "0 0 4px 4px",
