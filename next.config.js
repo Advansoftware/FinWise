@@ -17,7 +17,12 @@ const nextConfig = {
         '@genkit-ai/googleai',
         'require-in-the-middle'
     ],
-    output: 'standalone'
+    output: 'standalone',
+    // Include docs folder for standalone builds
+    outputFileTracingIncludes: {
+        '/docs': ['./docs/**/*'],
+        '/docs/*': ['./docs/**/*'],
+    },
 };
 
 module.exports = nextConfig;
