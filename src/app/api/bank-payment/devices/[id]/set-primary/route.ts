@@ -6,9 +6,10 @@ import { MongoBankPaymentRepository } from '@/core/adapters/mongodb/mongodb-bank
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 
@@ -20,7 +21,7 @@ export async function POST(
     const repository = new MongoBankPaymentRepository(db);
 
     // Verificar se dispositivo existe e pertence ao usuário
-    const existing = await repository.findDeviceById(params.id);
+    const existing = await repository.findDeviceById(id);
     if (!existing) {
       return NextResponse.json({ error: 'Dispositivo não encontrado' }, { status: 404 });
     }

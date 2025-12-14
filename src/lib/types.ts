@@ -1,6 +1,12 @@
 
 // src/lib/types.ts
 
+// DateRange type (replacement for react-day-picker DateRange)
+export interface DateRange {
+  from: Date | undefined;
+  to?: Date | undefined;
+}
+
 export type UserPlan = 'Básico' | 'Pro' | 'Plus' | 'Infinity';
 
 export type TransactionCategory = "Supermercado" | "Transporte" | "Entretenimento" | "Contas" | "Restaurante" | "Saúde" | "Educação" | "Lazer" | "Vestuário" | "Outros" | "Salário" | "Investimentos" | "Vendas" | "Transferência";

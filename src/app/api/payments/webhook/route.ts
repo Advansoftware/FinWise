@@ -1,13 +1,14 @@
 // src/app/api/payments/webhook/route.ts
 
-import {NextRequest, NextResponse} from 'next/server';
-import {headers} from 'next/headers';
-import {getPaymentService} from '@/core/services/service-factory';
+import { NextRequest, NextResponse } from 'next/server';
+import { headers } from 'next/headers';
+import { getPaymentService } from '@/core/services/service-factory';
 
 export async function POST(req: NextRequest) {
   try {
     const rawBody = await req.text();
-    const signature = headers().get('stripe-signature');
+    const headersList = await headers();
+    const signature = headersList.get('stripe-signature');
 
     if (!signature) {
       console.error('[PaymentWebhook] Missing stripe signature');

@@ -14,7 +14,7 @@ const DataRefreshContext = createContext<DataRefreshContextType | undefined>(und
 
 export function DataRefreshProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const previousPathnameRef = useRef<string>();
+  const previousPathnameRef = useRef<string | undefined>(undefined);
   
   // Use useRef to store handlers to avoid recreating them on every render
   const refreshHandlersRef = useRef<Map<string, () => Promise<void> | void>>(new Map());

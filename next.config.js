@@ -9,19 +9,14 @@ const nextConfig = {
         ],
     },
     transpilePackages: ['tr46', 'whatwg-url'],
-    experimental: {
-        serverActions: {
-            bodySizeLimit: '4mb', // Para upload de imagens de notas fiscais
-        },
-        serverComponentsExternalPackages: [
-            '@genkit-ai/core',
-            'genkit',
-            'genkitx-ollama',
-            'genkitx-openai',
-            '@genkit-ai/googleai',
-            'require-in-the-middle'
-        ],
-    },
+    serverExternalPackages: [
+        '@genkit-ai/core',
+        'genkit',
+        'genkitx-ollama',
+        'genkitx-openai',
+        '@genkit-ai/googleai',
+        'require-in-the-middle'
+    ],
     output: 'standalone'
 };
 

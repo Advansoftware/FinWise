@@ -4,7 +4,14 @@ import { Resend } from "resend";
 import { connectToDatabase } from "@/lib/mongodb";
 import crypto from "crypto";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy initialization to avoid build-time errors when API key is not set
+let resendInstance: Resend | null = null;
+function getResend(): Resend {
+  if (!resendInstance) {
+    resendInstance = new Resend(process.env.RESEND_API_KEY);
+  }
+  return resendInstance;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,7 +55,7 @@ export async function POST(request: NextRequest) {
 
       // Send email via Resend
       try {
-        await resend.emails.send({
+        await getResend().emails.send({
           from: process.env.RESEND_FROM_EMAIL || "Gastometria <onboarding@resend.dev>",
           to: email,
           subject: "Redefinição de Senha - Gastometria",

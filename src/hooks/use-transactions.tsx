@@ -10,9 +10,8 @@ import {
   ReactNode,
   useCallback,
 } from "react";
-import { DateRange } from "react-day-picker";
 import { startOfMonth, endOfDay } from "date-fns";
-import { Transaction, TransactionCategory, Wallet } from "@/lib/types";
+import { Transaction, TransactionCategory, Wallet, DateRange } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { apiClient } from "@/lib/api-client";

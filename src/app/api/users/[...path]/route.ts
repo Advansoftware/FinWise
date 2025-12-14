@@ -1,18 +1,18 @@
 
 // src/app/api/users/[...path]/route.ts
-import {NextRequest, NextResponse} from 'next/server';
-import {connectToDatabase} from '@/lib/mongodb';
-import {getAdminApp} from '@/lib/firebase-admin';
-import {ObjectId} from 'mongodb';
+import { NextRequest, NextResponse } from 'next/server';
+import { connectToDatabase } from '@/lib/mongodb';
+import { getAdminApp } from '@/lib/firebase-admin';
+import { ObjectId } from 'mongodb';
 import bcrypt from 'bcrypt';
 import * as admin from 'firebase-admin';
-import {setupDefaultUserData} from '@/services/default-setup-service';
+import { setupDefaultUserData } from '@/services/default-setup-service';
 
 const SALT_ROUNDS = 10;
 
 // This function is for SOCIAL LOGINS ONLY now.
 // It verifies the ID token from Google/etc. to get a trusted UID.
-async function getUserIdFromToken(request: NextRequest): Promise<{uid: string, name: string | undefined, email: string | undefined} | null> {
+async function getUserIdFromToken(request: NextRequest): Promise<{ uid: string, name: string | undefined, email: string | undefined } | null> {
     const authHeader = request.headers.get('Authorization');
     if (authHeader?.startsWith('Bearer ')) {
         const idToken = authHeader.split('Bearer ')[1];
@@ -33,10 +33,11 @@ async function getUserIdFromToken(request: NextRequest): Promise<{uid: string, n
 
 async function handler(
     request: NextRequest,
-    { params }: { params: { path: string[] } }
+    { params }: { params: Promise<{ path: string[] }> }
 ) {
+    const { path } = await params;
     const { db } = await connectToDatabase();
-    const [action] = params.path;
+    const [action] = path;
     const usersCollection = db.collection('users');
 
     try {
@@ -50,9 +51,9 @@ async function handler(
             if (existingUser) {
                 return NextResponse.json({ error: 'Email already in use' }, { status: 409 });
             }
-            
+
             const hashedPassword = await bcrypt.hash(password, SALT_ROUNDS);
-            
+
             const newUser = {
                 displayName,
                 email,
@@ -64,11 +65,11 @@ async function handler(
 
             const result = await usersCollection.insertOne(newUser);
             const userProfile = await usersCollection.findOne({ _id: result.insertedId });
-            
+
             if (!userProfile) throw new Error("Could not retrieve created user");
 
             const { password: _, ...userToReturn } = userProfile as any;
-            userToReturn.uid = userProfile._id.toHexString(); 
+            userToReturn.uid = userProfile._id.toHexString();
             delete userToReturn._id;
 
             // Configurar dados padrão para o novo usuário (categorias, etc.)
@@ -87,7 +88,7 @@ async function handler(
         if (request.method === 'POST' && action === 'login') {
             const { email, password } = await request.json();
             if (!email || !password) {
-                 return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
+                return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
             }
 
             const user = await usersCollection.findOne({ email });
@@ -99,7 +100,7 @@ async function handler(
             if (!isPasswordValid) {
                 return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
             }
-            
+
             const { password: _, ...userToReturn } = user as any;
             userToReturn.uid = user._id.toHexString();
             delete userToReturn._id;
@@ -110,7 +111,7 @@ async function handler(
         if (request.method === 'POST' && action === 'social-login') {
             const socialUser = await getUserIdFromToken(request);
             if (!socialUser) {
-                 return NextResponse.json({ error: 'Invalid social token' }, { status: 401 });
+                return NextResponse.json({ error: 'Invalid social token' }, { status: 401 });
             }
 
             // Find user by their main email.
@@ -142,7 +143,7 @@ async function handler(
             const { password, ...userToReturn } = user as any;
             userToReturn.uid = user._id.toHexString();
             delete userToReturn._id;
-            
+
             return NextResponse.json({ user: userToReturn });
         }
 
@@ -150,12 +151,10 @@ async function handler(
 
 
     } catch (error: any) {
-        console.error(`API Error on path /api/users/${params.path.join('/')}:`, error);
+        console.error(`API Error on path /api/users/${path.join('/')}:`, error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
 
 // Only POST is needed for login/signup
 export { handler as POST };
-
-    

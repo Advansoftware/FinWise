@@ -6,9 +6,10 @@ import { MongoBankPaymentRepository } from '@/core/adapters/mongodb/mongodb-bank
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 
@@ -19,7 +20,7 @@ export async function GET(
     const { db } = await connectToDatabase();
     const repository = new MongoBankPaymentRepository(db);
 
-    const device = await repository.findDeviceById(params.id);
+    const device = await repository.findDeviceById(id);
 
     if (!device) {
       return NextResponse.json({ error: 'Dispositivo não encontrado' }, { status: 404 });
@@ -41,9 +42,10 @@ export async function GET(
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 
@@ -54,7 +56,7 @@ export async function PATCH(
     const { db } = await connectToDatabase();
     const repository = new MongoBankPaymentRepository(db);
 
-    const existing = await repository.findDeviceById(params.id);
+    const existing = await repository.findDeviceById(id);
     if (!existing) {
       return NextResponse.json({ error: 'Dispositivo não encontrado' }, { status: 404 });
     }
@@ -63,7 +65,7 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const device = await repository.updateDevice(params.id, body);
+    const device = await repository.updateDevice(id, body);
 
     return NextResponse.json({ device });
   } catch (error: any) {
@@ -77,9 +79,10 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 
@@ -91,7 +94,7 @@ export async function DELETE(
     const repository = new MongoBankPaymentRepository(db);
 
     // Verificar se dispositivo existe e pertence ao usuário
-    const existing = await repository.findDeviceById(params.id);
+    const existing = await repository.findDeviceById(id);
     if (!existing) {
       return NextResponse.json({ error: 'Dispositivo não encontrado' }, { status: 404 });
     }
@@ -99,7 +102,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Não autorizado' }, { status: 403 });
     }
 
-    await repository.removeDevice(params.id);
+    await repository.removeDevice(id);
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

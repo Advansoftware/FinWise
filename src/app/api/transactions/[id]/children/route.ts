@@ -45,15 +45,16 @@ async function recalculateParentAmount(db: any, parentId: string, userId: string
 // GET - Buscar transações filhas de uma transação pai
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const authenticatedUserId = await getUserIdFromRequest(request);
   if (!authenticatedUserId) {
     return NextResponse.json({ error: 'Unauthorized: Invalid or missing user identifier.' }, { status: 401 });
   }
 
   try {
-    if (!ObjectId.isValid(params.id)) {
+    if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: 'Invalid transaction ID format' }, { status: 400 });
     }
 
@@ -62,7 +63,7 @@ export async function GET(
     // Buscar transações filhas pelo parentId
     const children = await db.collection('transactions')
       .find({
-        parentId: params.id,
+        parentId: id,
         userId: authenticatedUserId
       })
       .sort({ item: 1 })
@@ -84,15 +85,16 @@ export async function GET(
 // POST - Adicionar nova transação filha
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const authenticatedUserId = await getUserIdFromRequest(request);
   if (!authenticatedUserId) {
     return NextResponse.json({ error: 'Unauthorized: Invalid or missing user identifier.' }, { status: 401 });
   }
 
   try {
-    if (!ObjectId.isValid(params.id)) {
+    if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: 'Invalid transaction ID format' }, { status: 400 });
     }
 
@@ -101,7 +103,7 @@ export async function POST(
 
     // Verificar se o pai existe
     const parentTransaction = await db.collection('transactions').findOne({
-      _id: new ObjectId(params.id),
+      _id: new ObjectId(id),
       userId: authenticatedUserId
     });
 
@@ -117,20 +119,18 @@ export async function POST(
     const childToInsert = {
       ...body,
       userId: authenticatedUserId,
-      parentId: params.id,
+      parentId: id,
       createdAt: new Date()
     };
 
     const result = await db.collection('transactions').insertOne(childToInsert);
 
     // Recalcular valor do pai
-    const { totalAmount } = await recalculateParentAmount(db, params.id, authenticatedUserId);
+    const { totalAmount } = await recalculateParentAmount(db, id, authenticatedUserId);
 
     // Atualizar saldo da carteira
-    // Se o pai já tinha filhas, reverter o valor antigo e aplicar o novo
-    // Se não tinha, reverter o valor original do pai e aplicar a soma das filhas
     const transactionForWallet = {
-      id: params.id,
+      id: id,
       userId: authenticatedUserId,
       walletId: parentTransaction.walletId,
       type: parentTransaction.type,
@@ -174,15 +174,16 @@ export async function POST(
 // PUT - Atualizar transação filha
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const authenticatedUserId = await getUserIdFromRequest(request);
   if (!authenticatedUserId) {
     return NextResponse.json({ error: 'Unauthorized: Invalid or missing user identifier.' }, { status: 401 });
   }
 
   try {
-    if (!ObjectId.isValid(params.id)) {
+    if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: 'Invalid parent transaction ID format' }, { status: 400 });
     }
 
@@ -197,7 +198,7 @@ export async function PUT(
 
     // Verificar se o pai existe
     const parentTransaction = await db.collection('transactions').findOne({
-      _id: new ObjectId(params.id),
+      _id: new ObjectId(id),
       userId: authenticatedUserId
     });
 
@@ -214,16 +215,16 @@ export async function PUT(
     delete updatedData.parentId;
 
     await db.collection('transactions').updateOne(
-      { _id: new ObjectId(childId), parentId: params.id, userId: authenticatedUserId },
+      { _id: new ObjectId(childId), parentId: id, userId: authenticatedUserId },
       { $set: updatedData }
     );
 
     // Recalcular valor do pai
-    const { totalAmount } = await recalculateParentAmount(db, params.id, authenticatedUserId);
+    const { totalAmount } = await recalculateParentAmount(db, id, authenticatedUserId);
 
     // Atualizar saldo (reverter antigo, aplicar novo)
     const transactionForWallet = {
-      id: params.id,
+      id: id,
       userId: authenticatedUserId,
       walletId: parentTransaction.walletId,
       type: parentTransaction.type,
@@ -253,15 +254,16 @@ export async function PUT(
 // DELETE - Remover transação filha
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   const authenticatedUserId = await getUserIdFromRequest(request);
   if (!authenticatedUserId) {
     return NextResponse.json({ error: 'Unauthorized: Invalid or missing user identifier.' }, { status: 401 });
   }
 
   try {
-    if (!ObjectId.isValid(params.id)) {
+    if (!ObjectId.isValid(id)) {
       return NextResponse.json({ error: 'Invalid parent transaction ID format' }, { status: 400 });
     }
 
@@ -276,7 +278,7 @@ export async function DELETE(
 
     // Verificar se o pai existe
     const parentTransaction = await db.collection('transactions').findOne({
-      _id: new ObjectId(params.id),
+      _id: new ObjectId(id),
       userId: authenticatedUserId
     });
 
@@ -289,16 +291,16 @@ export async function DELETE(
     // Deletar a filha
     await db.collection('transactions').deleteOne({
       _id: new ObjectId(childId),
-      parentId: params.id,
+      parentId: id,
       userId: authenticatedUserId
     });
 
     // Recalcular valor do pai
-    const { totalAmount, hasChildren } = await recalculateParentAmount(db, params.id, authenticatedUserId);
+    const { totalAmount, hasChildren } = await recalculateParentAmount(db, id, authenticatedUserId);
 
     // Atualizar saldo
     const transactionForWallet = {
-      id: params.id,
+      id: id,
       userId: authenticatedUserId,
       walletId: parentTransaction.walletId,
       type: parentTransaction.type,
