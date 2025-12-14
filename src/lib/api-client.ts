@@ -1,6 +1,17 @@
 
 // src/lib/api-client.ts
 
+// Helper to safely parse JSON response
+async function safeJsonParse(response: Response): Promise<any> {
+  const contentType = response.headers.get('content-type');
+  if (!contentType || !contentType.includes('application/json')) {
+    // Response is not JSON (possibly HTML error page)
+    const text = await response.text();
+    throw new Error(`Expected JSON response but got ${contentType || 'unknown'}: ${text.substring(0, 100)}`);
+  }
+  return response.json();
+}
+
 // API client for interacting with our data API
 export class ApiClient {
   private getBaseUrl() {
@@ -43,7 +54,7 @@ export class ApiClient {
     if (!response.ok) {
       throw new Error(`Failed to fetch ${collection}: ${response.statusText}`);
     }
-    return response.json();
+    return safeJsonParse(response);
   }
 
   private async getTransactions(userId: string, id?: string) {
@@ -54,7 +65,7 @@ export class ApiClient {
     if (!response.ok) {
       throw new Error(`Failed to fetch transactions: ${response.statusText}`);
     }
-    return response.json();
+    return safeJsonParse(response);
   }
 
   private async getTransactionChildren(userId: string, parentId: string) {
@@ -64,7 +75,7 @@ export class ApiClient {
     if (!response.ok) {
       throw new Error(`Failed to fetch transaction children: ${response.statusText}`);
     }
-    return response.json();
+    return safeJsonParse(response);
   }
 
   async create(collection: string, data: any) {
@@ -99,7 +110,7 @@ export class ApiClient {
     if (!response.ok) {
       throw new Error(`Failed to create ${collection}: ${response.statusText}`);
     }
-    return response.json();
+    return safeJsonParse(response);
   }
 
   private async createTransaction(data: any) {
@@ -118,7 +129,7 @@ export class ApiClient {
     if (!response.ok) {
       throw new Error(`Failed to create transaction: ${response.statusText}`);
     }
-    return response.json();
+    return safeJsonParse(response);
   }
 
   private async createGroupedTransaction(data: any) {
@@ -137,7 +148,7 @@ export class ApiClient {
     if (!response.ok) {
       throw new Error(`Failed to create grouped transaction: ${response.statusText}`);
     }
-    return response.json();
+    return safeJsonParse(response);
   }
 
   private async createChildTransaction(parentId: string, data: any) {
@@ -156,7 +167,7 @@ export class ApiClient {
     if (!response.ok) {
       throw new Error(`Failed to create child transaction: ${response.statusText}`);
     }
-    return response.json();
+    return safeJsonParse(response);
   }
 
   async update(collection: string, id: string, data: any) {
@@ -183,7 +194,7 @@ export class ApiClient {
     if (!response.ok) {
       throw new Error(`Failed to update ${collection}: ${response.statusText}`);
     }
-    return response.json();
+    return safeJsonParse(response);
   }
 
   private async updateTransaction(id: string, data: any) {
@@ -205,7 +216,7 @@ export class ApiClient {
     if (!response.ok) {
       throw new Error(`Failed to update transaction: ${response.statusText}`);
     }
-    return response.json();
+    return safeJsonParse(response);
   }
 
   private async updateChildTransaction(parentId: string, childId: string, data: any) {
@@ -226,7 +237,7 @@ export class ApiClient {
     if (!response.ok) {
       throw new Error(`Failed to update child transaction: ${response.statusText}`);
     }
-    return response.json();
+    return safeJsonParse(response);
   }
 
   async delete(collection: string, id: string, data?: any) {
@@ -254,7 +265,7 @@ export class ApiClient {
     if (!response.ok) {
       throw new Error(`Failed to delete ${collection}: ${response.statusText}`);
     }
-    return response.json();
+    return safeJsonParse(response);
   }
 
   private async deleteTransaction(id: string, data?: any) {
@@ -275,7 +286,7 @@ export class ApiClient {
     if (!response.ok) {
       throw new Error(`Failed to delete transaction: ${response.statusText}`);
     }
-    return response.json();
+    return safeJsonParse(response);
   }
 
   private async deleteChildTransaction(parentId: string, childId: string, data?: any) {
@@ -300,7 +311,7 @@ export class ApiClient {
     if (response.status === 204) {
       return { success: true };
     }
-    return response.json();
+    return safeJsonParse(response);
   }
 }
 

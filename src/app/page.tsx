@@ -622,6 +622,60 @@ const comparisonFeatures = [
       },
     ],
   },
+  {
+    category: "API & Integrações",
+    features: [
+      {
+        name: "Acesso à API REST v1",
+        basico: false,
+        pro: false,
+        plus: false,
+        infinity: true,
+      },
+      {
+        name: "Documentação Interativa",
+        basico: true,
+        pro: true,
+        plus: true,
+        infinity: true,
+      },
+      {
+        name: "Autenticação JWT",
+        basico: false,
+        pro: false,
+        plus: false,
+        infinity: true,
+      },
+      {
+        name: "Endpoints de Carteiras",
+        basico: false,
+        pro: false,
+        plus: false,
+        infinity: true,
+      },
+      {
+        name: "Endpoints de Transações",
+        basico: false,
+        pro: false,
+        plus: false,
+        infinity: true,
+      },
+      {
+        name: "Endpoints de Metas/Orçamentos",
+        basico: false,
+        pro: false,
+        plus: false,
+        infinity: true,
+      },
+      {
+        name: "Integração com Apps Externos",
+        basico: false,
+        pro: false,
+        plus: false,
+        infinity: true,
+      },
+    ],
+  },
 ];
 
 export default function Page() {
@@ -1332,31 +1386,58 @@ export default function Page() {
               >
                 <Table sx={{ minWidth: 650 }}>
                   <TableHead>
-                    <TableRow sx={{ bgcolor: "primary.main" }}>
-                      <TableCell sx={{ color: "#ffffff", fontWeight: 700 }}>
+                    <TableRow sx={{ bgcolor: "grey.900" }}>
+                      <TableCell
+                        sx={{
+                          color: "#ffffff",
+                          fontWeight: 700,
+                          borderBottom: "2px solid",
+                          borderColor: "primary.main",
+                        }}
+                      >
                         Recurso
                       </TableCell>
                       <TableCell
                         align="center"
-                        sx={{ color: "#ffffff", fontWeight: 700 }}
+                        sx={{
+                          color: "#ffffff",
+                          fontWeight: 700,
+                          borderBottom: "2px solid",
+                          borderColor: "primary.main",
+                        }}
                       >
                         Básico
                       </TableCell>
                       <TableCell
                         align="center"
-                        sx={{ color: "#ffffff", fontWeight: 700 }}
+                        sx={{
+                          color: "#ffffff",
+                          fontWeight: 700,
+                          borderBottom: "2px solid",
+                          borderColor: "primary.main",
+                        }}
                       >
                         Pro
                       </TableCell>
                       <TableCell
                         align="center"
-                        sx={{ color: "#ffffff", fontWeight: 700 }}
+                        sx={{
+                          color: "#ffffff",
+                          fontWeight: 700,
+                          borderBottom: "2px solid",
+                          borderColor: "primary.main",
+                        }}
                       >
                         Plus
                       </TableCell>
                       <TableCell
                         align="center"
-                        sx={{ color: "#ffffff", fontWeight: 700 }}
+                        sx={{
+                          color: "primary.main",
+                          fontWeight: 700,
+                          borderBottom: "2px solid",
+                          borderColor: "primary.main",
+                        }}
                       >
                         Infinity
                       </TableCell>
@@ -1543,6 +1624,7 @@ export default function Page() {
                       component={motion.div}
                       {...fadeIn}
                       transition={{ ...fadeIn.transition, delay: index * 0.1 }}
+                      sx={{ height: "100%" }}
                     >
                       <Card
                         sx={{
@@ -1556,7 +1638,14 @@ export default function Page() {
                           },
                         }}
                       >
-                        <CardContent sx={{ flexGrow: 1 }}>
+                        <CardContent
+                          sx={{
+                            flexGrow: 1,
+                            display: "flex",
+                            flexDirection: "column",
+                            height: "100%",
+                          }}
+                        >
                           <Chip
                             label={post.category}
                             size="small"
@@ -1564,17 +1653,35 @@ export default function Page() {
                               mb: 2,
                               bgcolor: post.color,
                               color: "white",
+                              width: "fit-content",
                             }}
                           />
                           <Typography
                             variant="h6"
-                            sx={{ fontWeight: 600, mb: 1 }}
+                            sx={{
+                              fontWeight: 600,
+                              mb: 1,
+                              minHeight: { md: "3.5rem" },
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
+                            }}
                           >
                             {post.title}
                           </Typography>
                           <Typography
                             variant="body2"
-                            sx={{ color: "text.secondary", mb: 2 }}
+                            sx={{
+                              color: "text.secondary",
+                              mb: 2,
+                              flexGrow: 1,
+                              minHeight: { md: "3rem" },
+                              display: "-webkit-box",
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: "vertical",
+                              overflow: "hidden",
+                            }}
                           >
                             {post.description}
                           </Typography>
@@ -1586,6 +1693,8 @@ export default function Page() {
                             endIcon={<ArrowRight size={16} />}
                             sx={{
                               p: 0,
+                              alignSelf: "flex-start",
+                              mt: "auto",
                               transition: "all 0.3s ease",
                               "&:hover": {
                                 transform: "translateX(4px)",

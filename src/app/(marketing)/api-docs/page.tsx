@@ -27,6 +27,7 @@ import {
   Drawer,
   useMediaQuery,
   useTheme,
+  Avatar,
 } from "@mui/material";
 import {
   ChevronDown,
@@ -98,7 +99,7 @@ const endpoints: Endpoint[] = [
     path: "/api/v1/login",
     title: "Login",
     description:
-      "Autenticar usuário e obter tokens JWT. Requer plano Infinity.",
+      "Autenticar usuário e obter tokens JWT. O access token expira em 15 minutos, use /refresh para renová-lo. Requer conta com plano Infinity ativo.",
     requiresAuth: false,
     category: "auth",
     requestBody: {
@@ -107,13 +108,15 @@ const endpoints: Endpoint[] = [
           name: "email",
           type: "string",
           required: true,
-          description: "Email do usuário",
+          description:
+            "E-mail cadastrado na conta Gastometria. Exemplo: usuario@email.com",
         },
         {
           name: "password",
           type: "string",
           required: true,
-          description: "Senha do usuário",
+          description:
+            "Senha da conta. Mínimo 6 caracteres. A senha é transmitida de forma segura via HTTPS",
         },
       ],
       example: { email: "usuario@email.com", password: "sua_senha_aqui" },
@@ -124,8 +127,13 @@ const endpoints: Endpoint[] = [
         email: "usuario@email.com",
         name: "Nome",
         plan: "Infinity",
+        image: "https://...",
       },
-      tokens: { accessToken: "eyJhbGc...", refreshToken: "eyJhbGc..." },
+      tokens: {
+        accessToken: "eyJhbGc...",
+        refreshToken: "eyJhbGc...",
+        expiresIn: 900,
+      },
     },
     errors: [
       { code: 400, message: "Email and password are required" },
@@ -137,7 +145,8 @@ const endpoints: Endpoint[] = [
     method: "POST",
     path: "/api/v1/refresh",
     title: "Refresh Token",
-    description: "Renovar o access token usando o refresh token.",
+    description:
+      "Renovar o access token usando o refresh token. Use este endpoint quando o access token expirar (15 min). O refresh token expira em 7 dias.",
     requiresAuth: false,
     category: "auth",
     requestBody: {
@@ -146,7 +155,8 @@ const endpoints: Endpoint[] = [
           name: "refreshToken",
           type: "string",
           required: true,
-          description: "Refresh token obtido no login",
+          description:
+            "Refresh token JWT obtido na resposta do endpoint /login. Válido por 7 dias",
         },
       ],
       example: { refreshToken: "eyJhbGc..." },
@@ -161,16 +171,19 @@ const endpoints: Endpoint[] = [
     method: "GET",
     path: "/api/v1/me",
     title: "Perfil do Usuário",
-    description: "Obter informações do usuário autenticado.",
+    description:
+      "Obter informações completas do usuário autenticado, incluindo plano, créditos de IA e dados do perfil.",
     requiresAuth: true,
     category: "auth",
     responseExample: {
       user: {
         id: "abc123",
         email: "usuario@email.com",
-        name: "Nome",
+        name: "Nome Completo",
+        image: "https://lh3.googleusercontent.com/...",
         plan: "Infinity",
         aiCredits: 100,
+        createdAt: "2024-01-15T10:30:00Z",
       },
     },
   },
@@ -180,7 +193,8 @@ const endpoints: Endpoint[] = [
     method: "GET",
     path: "/api/v1/wallets",
     title: "Listar Carteiras",
-    description: "Obter todas as carteiras do usuário.",
+    description:
+      "Obter todas as carteiras do usuário. Retorna array ordenado por data de criação. Cada carteira contém saldo atual calculado.",
     requiresAuth: true,
     category: "wallets",
     responseExample: [
@@ -189,12 +203,16 @@ const endpoints: Endpoint[] = [
         name: "Conta Principal",
         type: "Conta Corrente",
         balance: 1500.0,
+        icon: "🏦",
+        color: "#4caf50",
       },
       {
         id: "456",
         name: "Cartão Nubank",
         type: "Cartão de Crédito",
         balance: -250.0,
+        icon: "💳",
+        color: "#9c27b0",
       },
     ],
   },
@@ -202,7 +220,8 @@ const endpoints: Endpoint[] = [
     method: "POST",
     path: "/api/v1/wallets",
     title: "Criar Carteira",
-    description: "Criar uma nova carteira.",
+    description:
+      "Criar uma nova carteira para organizar suas finanças. Cada carteira tem seu próprio saldo e pode representar contas bancárias, cartões ou dinheiro físico.",
     requiresAuth: true,
     category: "wallets",
     requestBody: {
@@ -211,37 +230,62 @@ const endpoints: Endpoint[] = [
           name: "name",
           type: "string",
           required: true,
-          description: "Nome da carteira",
+          description:
+            "Nome identificador da carteira. Ex: 'Banco Inter', 'Nubank Roxinho', 'Dinheiro da carteira'",
         },
         {
           name: "type",
           type: "string",
           required: true,
           description:
-            "Tipo: Conta Corrente, Cartão de Crédito, Poupança, Investimentos, Dinheiro, Outros",
+            "Tipo da carteira. Valores aceitos: 'Conta Corrente', 'Cartão de Crédito', 'Poupança', 'Investimentos', 'Dinheiro', 'Outros'",
         },
         {
           name: "balance",
           type: "number",
           required: false,
           defaultValue: 0,
-          description: "Saldo inicial",
+          description:
+            "Saldo inicial em reais (R$). Use valores negativos para dívidas. Padrão: 0",
+        },
+        {
+          name: "icon",
+          type: "string",
+          required: false,
+          description:
+            "Emoji para identificar a carteira. Ex: '🏦', '💳', '💰'. Padrão: '💳'",
+        },
+        {
+          name: "color",
+          type: "string",
+          required: false,
+          description:
+            "Cor em hexadecimal para a carteira. Ex: '#4caf50', '#9c27b0'. Padrão: '#2196f3'",
         },
       ],
-      example: { name: "Poupança", type: "Poupança", balance: 5000 },
+      example: {
+        name: "Poupança Itaú",
+        type: "Poupança",
+        balance: 5000,
+        icon: "🏦",
+        color: "#ff5722",
+      },
     },
     responseExample: {
       id: "789",
-      name: "Poupança",
+      name: "Poupança Itaú",
       type: "Poupança",
       balance: 5000,
+      icon: "🏦",
+      color: "#ff5722",
     },
   },
   {
     method: "GET",
     path: "/api/v1/wallets/[id]",
     title: "Detalhes da Carteira",
-    description: "Obter detalhes de uma carteira específica.",
+    description:
+      "Obter informações detalhadas de uma carteira específica, incluindo saldo atual e metadados.",
     requiresAuth: true,
     category: "wallets",
     pathParams: ["id"],
@@ -250,13 +294,18 @@ const endpoints: Endpoint[] = [
       name: "Conta Principal",
       type: "Conta Corrente",
       balance: 1500.0,
+      icon: "🏦",
+      color: "#4caf50",
+      createdAt: "2024-01-15T10:30:00Z",
+      updatedAt: "2024-12-14T15:45:00Z",
     },
   },
   {
     method: "PUT",
     path: "/api/v1/wallets/[id]",
     title: "Atualizar Carteira",
-    description: "Atualizar detalhes de uma carteira.",
+    description:
+      "Atualizar nome, tipo ou fazer ajuste manual de saldo. Útil para correções ou reconciliação bancária.",
     requiresAuth: true,
     category: "wallets",
     pathParams: ["id"],
@@ -266,19 +315,22 @@ const endpoints: Endpoint[] = [
           name: "name",
           type: "string",
           required: false,
-          description: "Novo nome",
+          description:
+            "Novo nome da carteira. Deixe em branco para manter o atual",
         },
         {
           name: "type",
           type: "string",
           required: false,
-          description: "Novo tipo",
+          description:
+            "Novo tipo da carteira. Valores: 'Conta Corrente', 'Cartão de Crédito', etc.",
         },
         {
           name: "balance",
           type: "number",
           required: false,
-          description: "Ajuste manual de saldo",
+          description:
+            "Ajuste manual de saldo. Sobrescreve o saldo atual. Use com cuidado para reconciliação",
         },
       ],
       example: { name: "Conta Salário", balance: 2000 },
@@ -289,11 +341,13 @@ const endpoints: Endpoint[] = [
     method: "DELETE",
     path: "/api/v1/wallets/[id]",
     title: "Excluir Carteira",
-    description: "Excluir uma carteira permanentemente.",
+    description:
+      "Excluir uma carteira permanentemente. ATENÇÃO: Esta ação é irreversível e pode afetar transações associadas.",
     requiresAuth: true,
     category: "wallets",
     pathParams: ["id"],
     responseExample: { success: true, message: "Wallet deleted" },
+    errors: [{ code: 404, message: "Wallet not found" }],
   },
 
   // ===== TRANSACTIONS =====
@@ -301,17 +355,48 @@ const endpoints: Endpoint[] = [
     method: "GET",
     path: "/api/v1/transactions",
     title: "Listar Transações",
-    description: "Obter as últimas 100 transações do usuário.",
+    description:
+      "Obter as últimas 100 transações do usuário, ordenadas por data (mais recentes primeiro). Inclui receitas, despesas e transferências.",
     requiresAuth: true,
     category: "transactions",
+    queryParams: [
+      {
+        name: "walletId",
+        type: "string",
+        required: false,
+        description: "Filtrar por carteira específica. Passe o ID da carteira",
+      },
+      {
+        name: "type",
+        type: "string",
+        required: false,
+        description:
+          "Filtrar por tipo: 'income' (receita), 'expense' (despesa), 'transfer' (transferência)",
+      },
+      {
+        name: "startDate",
+        type: "string",
+        required: false,
+        description: "Data inicial no formato ISO 8601. Ex: '2024-12-01'",
+      },
+      {
+        name: "endDate",
+        type: "string",
+        required: false,
+        description: "Data final no formato ISO 8601. Ex: '2024-12-31'",
+      },
+    ],
     responseExample: [
       {
         id: "tx1",
         amount: 50.0,
         type: "expense",
         category: "Alimentação",
-        item: "Almoço",
+        subcategory: "Restaurante",
+        item: "Almoço executivo",
         date: "2024-12-14",
+        walletId: "123",
+        walletName: "Conta Principal",
       },
     ],
   },
@@ -320,7 +405,7 @@ const endpoints: Endpoint[] = [
     path: "/api/v1/transactions",
     title: "Criar Transação",
     description:
-      "Criar uma nova transação (atualiza saldo da carteira automaticamente).",
+      "Criar uma nova transação. O saldo da carteira é atualizado automaticamente (+ para income, - para expense).",
     requiresAuth: true,
     category: "transactions",
     requestBody: {
@@ -329,69 +414,87 @@ const endpoints: Endpoint[] = [
           name: "amount",
           type: "number",
           required: true,
-          description: "Valor da transação",
+          description:
+            "Valor da transação em reais (R$). Sempre positivo, o tipo define se é entrada ou saída",
         },
         {
           name: "walletId",
           type: "string",
           required: true,
-          description: "ID da carteira",
+          description:
+            "ID da carteira onde a transação será registrada. Obtenha via GET /wallets",
         },
         {
           name: "type",
           type: "string",
           required: true,
-          description: "Tipo: income, expense, transfer",
+          description:
+            "Tipo da transação: 'income' (receita/entrada), 'expense' (despesa/saída), 'transfer' (transferência entre carteiras)",
         },
         {
           name: "category",
           type: "string",
           required: true,
-          description: "Categoria",
+          description:
+            "Categoria principal. Ex: 'Alimentação', 'Transporte', 'Salário'. Use GET /categories para listar disponíveis",
         },
         {
           name: "item",
           type: "string",
           required: true,
-          description: "Descrição do item",
+          description:
+            "Descrição breve da transação. Ex: 'Almoço no restaurante', 'Uber para o trabalho', 'Salário mensal'",
         },
         {
           name: "date",
           type: "string",
           required: false,
-          description: "Data (ISO 8601), padrão: hoje",
+          description:
+            "Data da transação no formato ISO 8601 (YYYY-MM-DD). Padrão: data atual. Ex: '2024-12-14'",
         },
         {
           name: "establishment",
           type: "string",
           required: false,
-          description: "Estabelecimento",
+          description:
+            "Nome do estabelecimento ou pagador/recebedor. Ex: 'Restaurante Bom Sabor', 'Uber', 'Empresa XYZ'",
         },
         {
           name: "subcategory",
           type: "string",
           required: false,
-          description: "Subcategoria",
+          description:
+            "Subcategoria para detalhamento. Ex: categoria 'Alimentação' pode ter subcategoria 'Restaurante' ou 'Supermercado'",
         },
       ],
       example: {
         amount: 150.0,
         walletId: "123",
         type: "expense",
-        category: "Supermercado",
+        category: "Alimentação",
+        subcategory: "Supermercado",
         item: "Compras do mês",
+        establishment: "Carrefour",
+        date: "2024-12-14",
       },
     },
     responseExample: {
       id: "tx2",
-      transaction: { amount: 150.0, type: "expense" },
+      transaction: {
+        id: "tx2",
+        amount: 150.0,
+        type: "expense",
+        category: "Alimentação",
+        item: "Compras do mês",
+      },
     },
   },
   {
     method: "GET",
     path: "/api/v1/transactions/[id]",
     title: "Detalhes da Transação",
-    description: "Obter detalhes de uma transação específica.",
+    description:
+      "Obter informações completas de uma transação específica pelo ID.",
     requiresAuth: true,
     category: "transactions",
     pathParams: ["id"],
@@ -400,13 +503,20 @@ const endpoints: Endpoint[] = [
       amount: 50.0,
       type: "expense",
       category: "Alimentação",
+      subcategory: "Restaurante",
+      item: "Almoço executivo",
+      establishment: "Restaurante Bom Sabor",
+      date: "2024-12-14",
+      walletId: "123",
+      createdAt: "2024-12-14T12:30:00Z",
     },
   },
   {
     method: "PUT",
     path: "/api/v1/transactions/[id]",
     title: "Atualizar Transação",
-    description: "Atualizar uma transação (recalcula saldos automaticamente).",
+    description:
+      "Atualizar uma transação existente. Os saldos das carteiras são recalculados automaticamente se o valor ou carteira mudar.",
     requiresAuth: true,
     category: "transactions",
     pathParams: ["id"],
@@ -1548,24 +1658,63 @@ function EndpointCard({
   );
 }
 
+interface UserInfo {
+  id: string;
+  email: string;
+  name?: string;
+  image?: string;
+  plan?: string;
+}
+
 export default function ApiDocsPage() {
   const [authToken, setAuthToken] = useState<string>("");
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("auth");
   const [drawerOpen, setDrawerOpen] = useState(false);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
-  // Load token from cookie on mount
+  // Load token from cookie on mount and fetch user info
   useEffect(() => {
     const savedToken = getApiDocsToken();
     if (savedToken) {
       setAuthToken(savedToken);
+      // Fetch user info
+      fetchUserInfo(savedToken);
     }
   }, []);
 
+  const fetchUserInfo = async (token: string) => {
+    try {
+      const res = await fetch("/api/v1/me", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setUserInfo(data.user);
+      } else {
+        // Token invalid, clear it
+        setAuthToken("");
+        setUserInfo(null);
+        setApiDocsToken("");
+      }
+    } catch {
+      // Silent fail
+    }
+  };
+
   const handleLogout = () => {
     setAuthToken("");
+    setUserInfo(null);
     setApiDocsToken("");
+  };
+
+  // Handle auth token update (from login response)
+  const handleSetAuthToken = (token: string) => {
+    setAuthToken(token);
+    if (token) {
+      fetchUserInfo(token);
+    }
   };
 
   const filteredEndpoints = endpoints.filter(
@@ -1647,14 +1796,40 @@ export default function ApiDocsPage() {
             <Chip label="v1" size="small" color="primary" />
           </Stack>
           <Stack direction="row" alignItems="center" gap={1}>
-            {authToken && (
+            {authToken && userInfo && (
+              <Stack direction="row" alignItems="center" gap={1.5}>
+                <Avatar src={userInfo.image} sx={{ width: 32, height: 32 }}>
+                  {userInfo.name?.charAt(0) || userInfo.email?.charAt(0) || "U"}
+                </Avatar>
+                <Box sx={{ display: { xs: "none", sm: "block" } }}>
+                  <Typography variant="body2" fontWeight={600} lineHeight={1.2}>
+                    {userInfo.name || userInfo.email}
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    sx={{ display: "flex", alignItems: "center", gap: 0.5 }}
+                  >
+                    <Shield size={10} />
+                    {userInfo.plan || "Plano"} • Conectado
+                  </Typography>
+                </Box>
+                <Chip
+                  label="Sair"
+                  color="default"
+                  size="small"
+                  onClick={handleLogout}
+                  icon={<LogOut size={14} />}
+                  sx={{ ml: 1 }}
+                />
+              </Stack>
+            )}
+            {!authToken && (
               <Chip
-                icon={<Shield size={14} />}
-                label="Autenticado"
-                color="success"
+                label="Não autenticado"
+                color="warning"
                 size="small"
-                onDelete={handleLogout}
-                deleteIcon={<LogOut size={14} />}
+                icon={<Lock size={14} />}
               />
             )}
             <Button
@@ -1711,10 +1886,10 @@ export default function ApiDocsPage() {
             <Alert severity="info" sx={{ mb: 3 }}>
               <Typography variant="body2">
                 <strong>Como começar:</strong> Use o endpoint{" "}
-                <code>/api/v1/login</code> abaixo para autenticar. O token será
-                salvo automaticamente em um cookie separado (
-                <code>{API_DOCS_TOKEN_COOKIE}</code>) para não conflitar com sua
-                sessão normal do navegador.
+                <code>/api/v1/login</code> abaixo para autenticar com seu e-mail
+                e senha. O token será salvo automaticamente e todas as rotas
+                autenticadas serão liberadas para teste. Seu avatar e
+                informações da conta aparecerão no cabeçalho.
               </Typography>
             </Alert>
           )}
@@ -1722,9 +1897,16 @@ export default function ApiDocsPage() {
           {/* Infinity Plan Warning */}
           <Alert severity="warning" sx={{ mb: 3 }} icon={<Shield size={20} />}>
             <Typography variant="body2">
-              <strong>Acesso Restrito:</strong> A API v1 requer plano{" "}
-              <strong>Infinity</strong>. A documentação é pública, mas apenas
-              usuários Infinity podem testar as rotas.
+              <strong>Acesso Exclusivo Plano Infinity:</strong> A API v1 está
+              disponível exclusivamente para assinantes do plano{" "}
+              <strong>Infinity</strong>. A documentação é pública para consulta,
+              mas apenas usuários com plano Infinity podem utilizar as rotas.{" "}
+              <Link
+                href="/#pricing"
+                style={{ color: "inherit", fontWeight: 600 }}
+              >
+                Upgrade para Infinity →
+              </Link>
             </Typography>
           </Alert>
 
@@ -1735,7 +1917,7 @@ export default function ApiDocsPage() {
                 key={`${endpoint.method}-${endpoint.path}-${index}`}
                 endpoint={endpoint}
                 authToken={authToken}
-                setAuthToken={setAuthToken}
+                setAuthToken={handleSetAuthToken}
               />
             ))}
           </Box>

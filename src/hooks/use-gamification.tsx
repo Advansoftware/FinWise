@@ -286,6 +286,12 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
         throw new Error("Falha ao carregar dados de gamificação");
       }
 
+      // Verificar se a resposta é JSON
+      const contentType = response.headers.get("content-type");
+      if (!contentType?.includes("application/json")) {
+        throw new Error("Resposta inválida do servidor");
+      }
+
       const legacyData = await response.json();
       const legacyGamification =
         legacyData.gamification as LegacyGamificationData;

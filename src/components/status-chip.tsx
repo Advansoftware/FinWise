@@ -1,76 +1,53 @@
 "use client";
 
-import { Chip, ChipProps, useTheme, alpha } from "@mui/material";
+import { Chip, ChipProps } from "@mui/material";
 
-interface StatusChipProps extends Omit<ChipProps, 'color'> {
+interface StatusChipProps extends Omit<ChipProps, "color"> {
   value: string;
 }
 
 export function StatusChip({ value, sx, ...props }: StatusChipProps) {
-  const theme = useTheme();
-  
-  // Determine status type for styling
-  const getStatusColor = (val: string) => {
+  // Determine color type for styling - use static values to avoid hydration mismatch
+  const getChipColor = (
+    val: string
+  ): "default" | "primary" | "secondary" | "info" => {
     switch (val) {
-      case '0':
-      case 'Email':
-      case '48h':
-        return 'default';
-      case 'Básico':
-        return 'default';
-      case 'Pro':
-      case '24h':
-      case '100':
-      case '12h':
-        return 'info';
-      case 'Plus':
-      case '300':
-      case 'Avançado':
-        return 'secondary';
-      case 'Infinity':
-      case '500':
-      case '4h':
-      case '24/7':
-        return 'primary';
+      case "0":
+      case "Email":
+      case "48h":
+      case "Básico":
+        return "default";
+      case "Pro":
+      case "24h":
+      case "100":
+      case "12h":
+        return "info";
+      case "Plus":
+      case "300":
+      case "Avançado":
+      case "Prioritário":
+        return "secondary";
+      case "Infinity":
+      case "500":
+      case "4h":
+      case "24/7":
+        return "primary";
       default:
-        return 'primary';
+        return "primary";
     }
   };
 
-  const statusType = getStatusColor(value);
-
-  // Custom styles based on status
-  const getStyles = () => {
-    if (statusType === 'default') {
-      return {
-        bgcolor: 'action.hover',
-        color: 'text.secondary',
-        borderColor: 'divider',
-      };
-    }
-    
-    // For colored chips, use the theme palette
-    // logic similar to inline style but more robust
-    const colorMain = statusType === 'info' ? theme.palette.info.main 
-                    : statusType === 'secondary' ? theme.palette.secondary.main
-                    : theme.palette.primary.main;
-                    
-    return {
-      bgcolor: alpha(colorMain, 0.1),
-      color: colorMain,
-      borderColor: alpha(colorMain, 0.2),
-    };
-  };
+  const chipColor = getChipColor(value);
 
   return (
     <Chip
       label={value}
       size="small"
-      variant="outlined"
+      variant="filled"
+      color={chipColor}
       {...props}
       sx={{
         fontWeight: 600,
-        ...getStyles(),
         ...sx,
       }}
     />

@@ -8,13 +8,14 @@ import { useAuth } from "@/hooks/use-auth";
 
 /**
  * This component initializes offline storage and syncs data to IndexedDB
- * in the background for WebLLM to use. No UI is shown to the user - 
+ * in the background for WebLLM to use. No UI is shown to the user -
  * all sync happens silently.
  */
 export function OfflineStorageInitializer() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [isInitialized, setIsInitialized] = useState(false);
   const hasSyncedRef = useRef(false);
+  const lastUserIdRef = useRef<string | null>(null);
 
   // Initialize storage
   useEffect(() => {
@@ -31,9 +32,24 @@ export function OfflineStorageInitializer() {
     initializeOfflineStorage();
   }, []);
 
+  // Reset sync flag when user changes (logout/login)
+  useEffect(() => {
+    if (authLoading) return;
+
+    const currentUserId = user?.uid || null;
+
+    // User changed (logged out or different user logged in)
+    if (lastUserIdRef.current !== currentUserId) {
+      hasSyncedRef.current = false;
+      lastUserIdRef.current = currentUserId;
+    }
+  }, [user?.uid, authLoading]);
+
   // Sync when user logs in (once per session, silently)
   useEffect(() => {
-    if (!isInitialized || !user || hasSyncedRef.current) return;
+    // Don't sync if auth is still loading or no user
+    if (authLoading || !isInitialized || !user?.uid || hasSyncedRef.current)
+      return;
 
     const syncData = async () => {
       try {
@@ -47,11 +63,18 @@ export function OfflineStorageInitializer() {
     };
 
     syncData();
-  }, [isInitialized, user]);
+  }, [isInitialized, user?.uid, authLoading]);
 
   // Sync when online status changes (silently)
   useEffect(() => {
-    if (typeof window === "undefined" || !isInitialized || !user) return;
+    // Don't sync if no user or auth loading
+    if (
+      typeof window === "undefined" ||
+      !isInitialized ||
+      !user?.uid ||
+      authLoading
+    )
+      return;
 
     const handleOnline = async () => {
       try {
@@ -63,7 +86,7 @@ export function OfflineStorageInitializer() {
 
     window.addEventListener("online", handleOnline);
     return () => window.removeEventListener("online", handleOnline);
-  }, [isInitialized, user]);
+  }, [isInitialized, user?.uid, authLoading]);
 
   // No UI - sync happens silently in background
   return null;
