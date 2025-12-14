@@ -1,13 +1,9 @@
 // src/app/(marketing)/terms/page.tsx
+"use client";
+
 import { Container, Typography, Box, Paper, Link as MuiLink, Stack, Divider } from "@mui/material";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "Termos de Uso - Gastometria",
-  description: "Leia os Termos de Uso do Gastometria para entender as regras de uso da plataforma.",
-};
 
 export default function TermsOfUsePage() {
   const lastUpdated = "14 de Dezembro de 2024";

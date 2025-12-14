@@ -1,3 +1,8 @@
+---
+title: Introdução ao Gastometria
+order: 1
+---
+
 # Introdução ao Gastometria
 
 Bem-vindo ao Gastometria! Este é o ponto de partida para você dominar suas finanças. Projetamos cada ferramenta para ser poderosa, mas fácil de usar.

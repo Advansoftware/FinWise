@@ -1,13 +1,9 @@
 // src/app/(marketing)/privacy/page.tsx
+"use client";
+
 import { Container, Typography, Box, Paper, Link as MuiLink, Stack, Divider } from "@mui/material";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
-import type { Metadata } from "next";
-
-export const metadata: Metadata = {
-  title: "Política de Privacidade - Gastometria",
-  description: "Conheça como o Gastometria coleta, usa e protege seus dados pessoais.",
-};
 
 export default function PrivacyPolicyPage() {
   const lastUpdated = "14 de Dezembro de 2024";
