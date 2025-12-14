@@ -2,8 +2,6 @@
 "use client";
 
 import React from 'react';
-import {useEffect} from 'react';
-import {useRouter} from 'next/navigation';
 import { 
   Button, 
   Container, 
@@ -28,7 +26,6 @@ import {
 import { ArrowRight, BarChart, Bot, LayoutDashboard, Wallet, Check, Goal, Upload, CheckCircle, XCircle, HelpCircle, ChevronRight, Sparkles, TrendingUp, Shield, Zap } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
-import { useAuth } from "@/hooks/use-auth";
 import { motion } from "framer-motion";
 import Image from "next/image";
 import {structuredData, organizationData, websiteData, breadcrumbData, faqData} from '@/lib/structured-data';
@@ -303,18 +300,8 @@ const comparisonFeatures = [
 ];
 
 export default function Page() {
-  // Non-blocking redirect: if user is logged in, redirect to dashboard
-  // This does NOT block rendering - landing page shows immediately
-  const { user, loading } = useAuth();
-  const router = useRouter();
-
-  useEffect(() => {
-    // Only redirect when auth check is complete AND user is logged in
-    if (!loading && user) {
-      router.replace('/dashboard');
-    }
-  }, [user, loading, router]);
-
+  // Auth routing is handled by middleware - no client-side checks needed
+  
   const renderCellValue = (value: any) => {
     if (typeof value === 'boolean') {
       return value ? (
@@ -413,9 +400,9 @@ export default function Page() {
                 <Button 
                   variant="contained" 
                   component={Link} 
-                  href={user ? "/dashboard" : "/login"}
+                  href="/login"
                 >
-                  {user ? "Painel" : "Entrar"}
+                  Entrar
                 </Button>
               </Stack>
             </Box>
@@ -499,7 +486,7 @@ export default function Page() {
                         variant="contained"
                         size="large"
                         component={Link}
-                        href={user ? "/dashboard" : "/login"}
+                        href="/login"
                         endIcon={<ArrowRight />}
                         sx={{ 
                           px: 4, 
@@ -793,7 +780,7 @@ export default function Page() {
                           variant={plan.variant as any}
                           size="large"
                           component={Link}
-                          href={user ? "/dashboard" : "/login"}
+                          href="/login"
                           fullWidth
                           sx={{
                             transition: 'all 0.3s ease',
