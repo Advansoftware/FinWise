@@ -435,9 +435,15 @@ export default function Page() {
           <Box sx={{ 
             position: 'relative',
             overflow: 'hidden',
-            background: (theme) => `radial-gradient(circle at 50% 50%, ${theme.palette.primary.main}15 0%, transparent 70%)`
+            background: (theme) => `radial-gradient(circle at 50% 50%, ${theme.palette.primary.main}15 0%, transparent 70%)`,
+            // Full height minus header on desktop to fit screen perfectly
+            minHeight: { xs: 'auto', md: 'calc(100vh - 80px)' }, // Adjusted to 80px to be safe with header
+            height: { md: 'calc(100vh - 80px)' }, // Force fix height on desktop to contain it
+            display: 'flex',
+            alignItems: 'center',
+            py: { xs: 8, md: 0 } // Remove padding on desktop as using flex center, keep for mobile
           }}>
-            <Container maxWidth="xl" sx={{ pt: { xs: 4, md: 8 }, pb: { xs: 8, md: 16 } }}>
+            <Container maxWidth="xl">
               <Grid container spacing={{ xs: 6, md: 4, lg: 8 }} alignItems="center">
                 
                 {/* Text Content */}
