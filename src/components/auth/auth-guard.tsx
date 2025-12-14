@@ -36,24 +36,23 @@ export function AuthGuard({
       if (isProtected) {
         // If on a protected route, redirect to login.
         router.replace(LOGIN_ROOT);
-      } else {
-        // On a public route without a user, stop checking and show the content.
-        setIsChecking(false);
+        return;
       }
+      // On a public route (including login/signup) without a user, show the content.
+      setIsChecking(false);
       return;
     }
 
     // User is logged in
-    if (user) {
-      // If on an auth page (login/signup) or the landing page, redirect to the main dashboard.
-      if (isAuthRoute || pathname === PUBLIC_ROOT) {
-        router.replace(PROTECTED_ROOT);
-      } else {
-        // On any other page (protected or public docs), stop checking and show content.
-        setIsChecking(false);
-      }
+    // If on an auth page (login/signup) or the landing page, redirect to the main dashboard.
+    if (isAuthRoute || pathname === PUBLIC_ROOT) {
+      router.replace(PROTECTED_ROOT);
+      return;
     }
-  }, [user, loading, isProtected, router]); // Removed pathname
+
+    // On any other page (protected or public docs), stop checking and show content.
+    setIsChecking(false);
+  }, [user, loading, isProtected, router, pathname]);
 
   if (isChecking) {
     return (
