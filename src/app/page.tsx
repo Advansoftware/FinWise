@@ -491,7 +491,7 @@ export default function Page() {
                         maxWidth: { xs: '100%', md: '90%' }
                       }}
                     >
-                      Pare de apenas anotar gastos. O <strong>FinWise</strong> usa Inteligência Artificial para analisar, categorizar e te dizer exatamente como atingir seus sonhos mais rápido.
+                      Pare de apenas anotar gastos. O <strong>Gastometria</strong> usa Inteligência Artificial para analisar, categorizar e te dizer exatamente como atingir seus sonhos mais rápido.
                     </Typography>
 
                     <Stack 
@@ -582,7 +582,7 @@ export default function Page() {
                     >
                       <Image
                         src="/images/hero-devices.png"
-                        alt="Plataforma FinWise em Desktop, Tablet e Mobile"
+                        alt="Plataforma Gastometria em Desktop, Tablet e Mobile"
                         width={1200}
                         height={800}
                         style={{ width: '100%', height: 'auto', display: 'block' }}
@@ -643,7 +643,7 @@ export default function Page() {
                           <Bot size={20} color="white" />
                         </Box>
                         <Box>
-                          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>FinWise AI</Typography>
+                          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>Gastometria AI</Typography>
                           <Typography variant="body2" fontWeight={700}>"Gasto com Uber alto!"</Typography>
                         </Box>
                       </Stack>
