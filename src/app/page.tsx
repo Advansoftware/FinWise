@@ -432,109 +432,221 @@ export default function Page() {
         {/* Main Content */}
         <Box component="main" sx={{ flex: 1 }}>
           {/* Hero Section */}
-          <Container maxWidth="xl" sx={{ py: { xs: 8, sm: 12, md: 16 } }}>
-            <Stack spacing={4} alignItems="center" textAlign="center">
-              <Typography
-                component={motion.h1}
-                variant="h1"
-                {...fadeIn}
-                sx={{
-                  fontSize: { xs: '2rem', sm: '2.5rem', md: '3.5rem', lg: '4rem' },
-                  fontWeight: 700,
-                  letterSpacing: '-0.02em',
-                  background: (theme) => `linear-gradient(90deg, ${theme.palette.primary.main}, ${theme.palette.primary.main}CC, ${theme.palette.primary.main}99)`,
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  lineHeight: 1.2
-                }}
-              >
-                Sua vida financeira, sob seu controle.
-              </Typography>
+          <Box sx={{ 
+            position: 'relative',
+            overflow: 'hidden',
+            background: (theme) => `radial-gradient(circle at 50% 50%, ${theme.palette.primary.main}15 0%, transparent 70%)`
+          }}>
+            <Container maxWidth="xl" sx={{ pt: { xs: 4, md: 8 }, pb: { xs: 8, md: 16 } }}>
+              <Grid container spacing={{ xs: 6, md: 4, lg: 8 }} alignItems="center">
+                
+                {/* Text Content */}
+                <Grid item xs={12} md={6} sx={{ textAlign: { xs: 'center', md: 'left' }, zIndex: 2 }}>
+                  <Stack spacing={4}>
+                    <Box component={motion.div} {...fadeIn}>
+                      <Chip 
+                        label="Novo: Gestão com IA" 
+                        color="primary" 
+                        variant="outlined" 
+                        size="medium"
+                        sx={{ mb: 2, fontWeight: 600, borderColor: 'primary.main' }} 
+                      />
+                      <Typography
+                        component="h1"
+                        variant="h1"
+                        sx={{
+                          fontSize: { xs: '2.5rem', sm: '3.5rem', md: '4rem', lg: '4.5rem' },
+                          fontWeight: 800,
+                          letterSpacing: '-0.02em',
+                          lineHeight: 1.1,
+                          mb: 2,
+                          background: (theme) => `linear-gradient(135deg, ${theme.palette.text.primary} 30%, ${theme.palette.primary.main} 100%)`,
+                          backgroundClip: 'text',
+                          WebkitBackgroundClip: 'text',
+                          WebkitTextFillColor: 'transparent',
+                        }}
+                      >
+                        Sua vida financeira, <br/>
+                        <Box component="span" sx={{ color: 'primary.main', WebkitTextFillColor: 'initial' }}>
+                           sob controle.
+                        </Box>
+                      </Typography>
+                    </Box>
 
-              <Typography
-                component={motion.p}
-                variant="h6"
-                {...fadeIn}
-                transition={{ ...fadeIn.transition, delay: 0.2 }}
-                sx={{
-                  color: 'text.secondary',
-                  maxWidth: '42rem',
-                  fontSize: { xs: '1rem', sm: '1.125rem', md: '1.25rem' },
-                  lineHeight: 1.6
-                }}
-              >
-                Gastometria une um design intuitivo com o poder da Inteligência Artificial para transformar a forma como você gerencia seu dinheiro.
-              </Typography>
+                    <Typography
+                      component={motion.p}
+                      variant="h6"
+                      {...fadeIn}
+                      transition={{ ...fadeIn.transition, delay: 0.2 }}
+                      sx={{
+                        color: 'text.secondary',
+                        fontSize: { xs: '1.125rem', md: '1.25rem' },
+                        lineHeight: 1.6,
+                        maxWidth: { xs: '100%', md: '90%' }
+                      }}
+                    >
+                      Pare de apenas anotar gastos. O <strong>FinWise</strong> usa Inteligência Artificial para analisar, categorizar e te dizer exatamente como atingir seus sonhos mais rápido.
+                    </Typography>
 
-              <Box
-                component={motion.div}
-                {...fadeIn}
-                transition={{ ...fadeIn.transition, delay: 0.4 }}
-              >
-                <Button
-                  variant="contained"
-                  size="large"
-                  component={Link}
-                  href={user ? "/dashboard" : "/login"}
-                  endIcon={<ArrowRight />}
-                  sx={{ 
-                    px: 4, 
-                    py: 1.5,
-                    fontSize: { xs: '0.875rem', sm: '1rem' },
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: 8
-                    }
-                  }}
-                >
-                  Comece Agora Gratuitamente
-                </Button>
-              </Box>
+                    <Stack 
+                      direction={{ xs: 'column', sm: 'row' }} 
+                      spacing={2} 
+                      justifyContent={{ xs: 'center', md: 'flex-start' }}
+                      component={motion.div}
+                      {...fadeIn}
+                      transition={{ ...fadeIn.transition, delay: 0.4 }}
+                    >
+                      <Button
+                        variant="contained"
+                        size="large"
+                        component={Link}
+                        href={user ? "/dashboard" : "/login"}
+                        endIcon={<ArrowRight />}
+                        sx={{ 
+                          px: 4, 
+                          py: 1.5,
+                          fontSize: '1.125rem',
+                          fontWeight: 700,
+                          boxShadow: '0 8px 20px rgba(0,0,0,0.2)',
+                          '&:hover': {
+                            transform: 'translateY(-2px)',
+                            boxShadow: '0 12px 24px rgba(0,0,0,0.3)',
+                          }
+                        }}
+                      >
+                        Começar Grátis
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        size="large"
+                        component={Link}
+                        href="/docs"
+                        sx={{ 
+                          px: 4, 
+                          py: 1.5, 
+                          fontSize: '1rem',
+                          borderWidth: 2,
+                          '&:hover': { borderWidth: 2 }
+                        }}
+                      >
+                        Ver Demonstração
+                      </Button>
+                    </Stack>
+                  </Stack>
+                </Grid>
 
-              <Box
-                component={motion.div}
-                {...fadeIn}
-                transition={{ ...fadeIn.transition, delay: 0.6 }}
-                sx={{ width: '100%', maxWidth: '80rem', mt: { xs: 4, sm: 6, md: 8 } }}
-              >
-                <Paper 
-                  elevation={8}
-                  sx={{ 
-                    borderRadius: 2,
-                    overflow: 'hidden',
-                    position: 'relative',
-                    transition: 'all 0.3s ease',
-                    '&:hover': {
-                      transform: 'scale(1.02)',
-                      boxShadow: 12
-                    }
-                  }}
-                >
-                  <Image
-                    src="https://picsum.photos/1200/700"
-                    alt="Dashboard Gastometria"
-                    width={1200}
-                    height={700}
-                    data-ai-hint="dashboard finance"
-                    style={{ width: '100%', height: 'auto', display: 'block' }}
-                    priority
-                  />
-                  <Box 
+                {/* Hero Image */}
+                <Grid item xs={12} md={6} sx={{ position: 'relative' }}>
+                  <Box
+                    component={motion.div}
+                    initial={{ opacity: 0, scale: 0.9, rotate: 2 }}
+                    animate={{ opacity: 1, scale: 1, rotate: 0 }}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
                     sx={{ 
-                      position: 'absolute',
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      height: '50%',
-                      background: (theme) => `linear-gradient(to top, ${theme.palette.background.default}, transparent)`
+                      position: 'relative',
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -50%)',
+                        width: '140%',
+                        height: '140%',
+                        background: (theme) => `radial-gradient(circle, ${theme.palette.primary.main}40 0%, transparent 60%)`,
+                        zIndex: 0,
+                        filter: 'blur(40px)',
+                      }
                     }}
-                  />
-                </Paper>
-              </Box>
-            </Stack>
-          </Container>
+                  >
+                    <Paper 
+                      elevation={24}
+                      sx={{ 
+                        borderRadius: 4,
+                        overflow: 'hidden',
+                        position: 'relative',
+                        zIndex: 1,
+                        border: '1px solid',
+                        borderColor: 'divider',
+                        transform: 'perspective(1000px) rotateY(-5deg) rotateX(2deg)',
+                        transition: 'transform 0.5s ease',
+                        '&:hover': {
+                          transform: 'perspective(1000px) rotateY(0deg) rotateX(0deg) scale(1.02)',
+                        }
+                      }}
+                    >
+                      <Image
+                        src="/images/hero-devices.png"
+                        alt="Plataforma FinWise em Desktop, Tablet e Mobile"
+                        width={1200}
+                        height={800}
+                        style={{ width: '100%', height: 'auto', display: 'block' }}
+                        priority
+                      />
+                    </Paper>
+
+                    {/* Floating Elements for "Pop" */}
+                    <Card
+                      component={motion.div}
+                      animate={{ y: [0, -10, 0] }}
+                      transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                      sx={{
+                        position: 'absolute',
+                        top: '10%',
+                        right: '-5%',
+                        p: 2,
+                        borderRadius: 3,
+                        boxShadow: 8,
+                        display: { xs: 'none', lg: 'block' },
+                        backdropFilter: 'blur(8px)',
+                        bgcolor: 'rgba(30, 30, 30, 0.8)',
+                        zIndex: 2,
+                        border: '1px solid rgba(255,255,255,0.1)'
+                      }}
+                    >
+                      <Stack direction="row" spacing={1.5} alignItems="center">
+                        <Box sx={{ p: 1, bgcolor: 'success.dark', borderRadius: '50%' }}>
+                          <TrendingUp size={20} color="white" />
+                        </Box>
+                        <Box>
+                          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>Economia</Typography>
+                          <Typography variant="body2" fontWeight={700} color="success.main">+15% este mês</Typography>
+                        </Box>
+                      </Stack>
+                    </Card>
+
+                    <Card
+                      component={motion.div}
+                      animate={{ y: [0, 10, 0] }}
+                      transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                      sx={{
+                        position: 'absolute',
+                        bottom: '15%',
+                        left: '-5%',
+                        p: 2,
+                        borderRadius: 3,
+                        boxShadow: 8,
+                        display: { xs: 'none', lg: 'block' },
+                        backdropFilter: 'blur(8px)',
+                        bgcolor: 'rgba(30, 30, 30, 0.8)',
+                        zIndex: 2,
+                        border: '1px solid rgba(255,255,255,0.1)'
+                      }}
+                    >
+                       <Stack direction="row" spacing={1.5} alignItems="center">
+                        <Box sx={{ p: 1, bgcolor: 'primary.dark', borderRadius: '50%' }}>
+                          <Bot size={20} color="white" />
+                        </Box>
+                        <Box>
+                          <Typography variant="caption" sx={{ color: 'text.secondary', display: 'block' }}>FinWise AI</Typography>
+                          <Typography variant="body2" fontWeight={700}>"Gasto com Uber alto!"</Typography>
+                        </Box>
+                      </Stack>
+                    </Card>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Container>
+          </Box>
 
           {/* Why Section */}
           <Box sx={{ py: { xs: 8, sm: 12, md: 16 }, bgcolor: 'background.paper' }}>
