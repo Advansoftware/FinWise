@@ -21,6 +21,8 @@ import { PaymentConfirmationProvider } from "@/components/bank-payment/payment-c
 import { GamificationGlobalUI } from "@/components/gamification";
 import { ResponsiveLayout } from "@/components/layout";
 
+import { WalletOnboarding } from "@/components/onboarding/wallet-onboarding";
+
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const { completedGoal, clearCompletedGoal } = useGoals();
 
@@ -35,6 +37,9 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
         />
       )}
       <OnlineStatusIndicator />
+      
+      {/* Onboarding para novos usuários sem carteira */}
+      <WalletOnboarding />
 
       {/* Layout responsivo - mobile ou desktop */}
       <ResponsiveLayout>{children}</ResponsiveLayout>

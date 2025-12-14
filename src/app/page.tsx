@@ -1072,16 +1072,51 @@ export default function Page() {
         <Box 
           component="footer" 
           sx={{ 
-            py: 3,
+            py: 4,
             borderTop: 1,
             borderColor: 'divider',
             bgcolor: 'background.paper'
           }}
         >
           <Container maxWidth="xl">
-            <Typography variant="body2" align="center" sx={{ color: 'text.secondary' }}>
-              © {new Date().getFullYear()} Gastometria. Todos os direitos reservados.
-            </Typography>
+            <Stack 
+              direction={{ xs: 'column', sm: 'row' }} 
+              justifyContent="space-between" 
+              alignItems="center"
+              spacing={2}
+            >
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                © {new Date().getFullYear()} Gastometria. Todos os direitos reservados.
+              </Typography>
+              <Stack direction="row" spacing={3}>
+                <Link href="/privacy" passHref>
+                  <Typography 
+                    component="a" 
+                    variant="body2" 
+                    sx={{ 
+                      color: 'text.secondary', 
+                      textDecoration: 'none',
+                      '&:hover': { color: 'primary.main' }
+                    }}
+                  >
+                    Política de Privacidade
+                  </Typography>
+                </Link>
+                <Link href="/terms" passHref>
+                  <Typography 
+                    component="a" 
+                    variant="body2" 
+                    sx={{ 
+                      color: 'text.secondary', 
+                      textDecoration: 'none',
+                      '&:hover': { color: 'primary.main' }
+                    }}
+                  >
+                    Termos de Uso
+                  </Typography>
+                </Link>
+              </Stack>
+            </Stack>
           </Container>
         </Box>
       </Box>
