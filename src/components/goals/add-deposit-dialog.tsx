@@ -160,7 +160,7 @@ export function AddDepositDialog({
             />
 
             <DialogActions sx={{ px: 0, pt: 2 }}>
-              <Button onClick={handleClose} disabled={isSubmitting}>
+              <Button variant="outlined" onClick={handleClose} disabled={isSubmitting}>
                 Cancelar
               </Button>
               <Button

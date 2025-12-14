@@ -121,7 +121,7 @@ export function CreateGoalDialog({
       <DialogTitle>
         {initialData ? "Editar Meta" : "Criar Nova Meta"}
       </DialogTitle>
-      <DialogContent>
+      <DialogContent sx={{ overflowX: 'hidden' }}>
         <DialogContentText sx={{ mb: 3 }}>
           Defina um objetivo financeiro. Preencha os campos opcionais para
           ajudar a IA a fazer projeções mais precisas.
@@ -227,7 +227,7 @@ export function CreateGoalDialog({
         </Box>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 3 }}>
-        <Button onClick={onClose} disabled={isSubmitting}>
+        <Button variant="outlined" onClick={onClose} disabled={isSubmitting}>
           Cancelar
         </Button>
         <Button

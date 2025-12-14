@@ -238,7 +238,7 @@ export function CreateBudgetDialog({ children, initialData }: CreateBudgetDialog
             </Stack>
             
             <DialogActions sx={{ p: 0, mt: 3 }}>
-              <Button onClick={() => setIsOpen(false)} disabled={isSubmitting} color="inherit">
+              <Button onClick={() => setIsOpen(false)} disabled={isSubmitting} variant="outlined">
                 Cancelar
               </Button>
               <Button 
