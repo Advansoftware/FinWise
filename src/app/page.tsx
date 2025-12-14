@@ -515,7 +515,7 @@ export default function Page() {
                           '&:hover': { borderWidth: 2 }
                         }}
                       >
-                        Ver Demonstração
+                        Ver Documentação
                       </Button>
                     </Stack>
                   </Stack>
