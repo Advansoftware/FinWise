@@ -359,6 +359,7 @@ export default function Page() {
         {/* Header */}
         <AppBar 
           position="sticky" 
+          color="default"
           elevation={0}
           sx={{ 
             bgcolor: 'background.default',

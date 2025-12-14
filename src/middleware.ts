@@ -9,6 +9,7 @@ const PUBLIC_ROUTES = [
   "/login",      // Login page
   "/signup",     // Signup page
   "/docs",       // Documentation (all /docs/* routes)
+  "/api-docs",   // API Documentation page
   "/privacy",    // Privacy policy
   "/terms",      // Terms of use
   "/api/auth",   // NextAuth API routes

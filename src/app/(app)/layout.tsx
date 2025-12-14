@@ -21,6 +21,7 @@ import { GamificationGlobalUI } from "@/components/gamification";
 import { ResponsiveLayout } from "@/components/layout";
 
 import { WalletOnboarding } from "@/components/onboarding/wallet-onboarding";
+import { OfflineStorageInitializer } from "@/components/offline-storage-initializer";
 
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const { completedGoal, clearCompletedGoal } = useGoals();
@@ -28,6 +29,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   return (
     <>
       {/* Componentes globais */}
+      <OfflineStorageInitializer />
       <GamificationGlobalUI />
       {completedGoal && (
         <GoalCompletionCelebration
