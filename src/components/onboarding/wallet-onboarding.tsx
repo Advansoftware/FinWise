@@ -144,6 +144,10 @@ export function WalletOnboarding({ forceOpen }: WalletOnboardingProps) {
 
   const steps = ["Escolha o tipo", "Detalhes", "Concluído"];
 
+  // Don't render if loading or if user has wallets
+  if (isLoading) return null;
+  if (wallets.length > 0 && !forceOpen) return null;
+
   return (
     <Dialog
       open={isOpen}
@@ -159,6 +163,22 @@ export function WalletOnboarding({ forceOpen }: WalletOnboardingProps) {
       }}
       // Prevent closing by clicking outside or pressing escape
       disableEscapeKeyDown
+      // Make backdrop completely opaque to hide content behind
+      slotProps={{
+        backdrop: {
+          sx: {
+            bgcolor: "rgba(0, 0, 0, 0.9)",
+            backdropFilter: "blur(10px)",
+          },
+        },
+      }}
+      // Highest z-index to cover everything including bottom nav
+      sx={{
+        zIndex: 9999,
+        "& .MuiDialog-container": {
+          zIndex: 9999,
+        },
+      }}
     >
       <Box
         sx={{
