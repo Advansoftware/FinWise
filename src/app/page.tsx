@@ -447,7 +447,7 @@ export default function Page() {
               <Grid container spacing={{ xs: 6, md: 4, lg: 8 }} alignItems="center">
                 
                 {/* Text Content */}
-                <Grid item xs={12} md={6} sx={{ textAlign: { xs: 'center', md: 'left' }, zIndex: 2 }}>
+                <Grid size={{ xs: 12, md: 6 }} sx={{ textAlign: { xs: 'center', md: 'left' }, zIndex: 2 }}>
                   <Stack spacing={4}>
                     <Box component={motion.div} {...fadeIn}>
                       <Chip 
@@ -542,7 +542,7 @@ export default function Page() {
                 </Grid>
 
                 {/* Hero Image */}
-                <Grid item xs={12} md={6} sx={{ position: 'relative' }}>
+                <Grid size={{ xs: 12, md: 6 }} sx={{ position: 'relative' }}>
                   <Box
                     component={motion.div}
                     initial={{ opacity: 0, scale: 0.9, rotate: 2 }}
