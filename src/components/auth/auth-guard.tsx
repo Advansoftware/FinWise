@@ -23,6 +23,16 @@ export function AuthGuard({
   const pathname = usePathname();
   const [isChecking, setIsChecking] = useState(true);
 
+  // Safety timeout - if loading takes more than 3 seconds, stop waiting
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (isChecking && loading) {
+        setIsChecking(false);
+      }
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, [isChecking, loading]);
+
   useEffect(() => {
     if (loading) {
       return; // Still waiting for auth state to resolve.
