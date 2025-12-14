@@ -3,12 +3,10 @@
 
 import { Box, CircularProgress } from "@mui/material";
 import { useAuth } from "@/hooks/use-auth";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Logo } from "../logo";
 
-const PROTECTED_ROOT = "/dashboard";
-const PUBLIC_ROOT = "/";
 const LOGIN_ROOT = "/login";
 
 export function AuthGuard({
@@ -20,51 +18,33 @@ export function AuthGuard({
 }) {
   const { user, loading } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
-  const [isChecking, setIsChecking] = useState(true);
-
-  // Safety timeout - if loading takes more than 3 seconds, stop waiting
-  useEffect(() => {
-    const timeout = setTimeout(() => {
-      if (isChecking && loading) {
-        setIsChecking(false);
-      }
-    }, 3000);
-    return () => clearTimeout(timeout);
-  }, [isChecking, loading]);
+  const [isReady, setIsReady] = useState(false);
 
   useEffect(() => {
+    // If not a protected route, show content immediately
+    if (!isProtected) {
+      setIsReady(true);
+      return;
+    }
+
+    // For protected routes, wait for auth to resolve
     if (loading) {
-      return; // Still waiting for auth state to resolve.
-    }
-
-    const isAuthRoute =
-      pathname.startsWith(LOGIN_ROOT) || pathname.startsWith("/signup");
-
-    // User is not logged in
-    if (!user) {
-      if (isProtected) {
-        // If on a protected route, redirect to login.
-        router.replace(LOGIN_ROOT);
-        return;
-      }
-      // On a public route (including login/signup) without a user, show the content.
-      setIsChecking(false);
       return;
     }
 
-    // User is logged in
-    // If on an auth page (login/signup) or the landing page, redirect to the main dashboard.
-    if (isAuthRoute || pathname === PUBLIC_ROOT) {
-      router.replace(PROTECTED_ROOT);
-      return;
+    // Auth resolved - check if user exists
+    if (user) {
+      // User is authenticated, show protected content
+      setIsReady(true);
+    } else {
+      // No user on protected route - redirect to login
+      // The middleware should handle this, but this is a fallback
+      router.replace(LOGIN_ROOT);
     }
+  }, [user, loading, isProtected, router]);
 
-    // On any other page (protected or public docs), stop checking and show content.
-    setIsChecking(false);
-  }, [user, loading, isProtected, router, pathname]);
-
-  if (isChecking) {
+  // Show loading state for protected routes while checking auth
+  if (isProtected && !isReady) {
     return (
       <Box
         sx={{
