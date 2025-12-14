@@ -1,21 +1,21 @@
-// src/middleware.ts
+// src/proxy.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
 // Routes that don't require authentication
 const PUBLIC_ROUTES = [
-  "/",           // Landing page
-  "/login",      // Login page
-  "/signup",     // Signup page
-  "/docs",       // Documentation (all /docs/* routes)
-  "/api-docs",   // API Documentation page
-  "/privacy",    // Privacy policy
-  "/terms",      // Terms of use
-  "/api/auth",   // NextAuth API routes
-  "/api/cron",   // Cron jobs
+  "/", // Landing page
+  "/login", // Login page
+  "/signup", // Signup page
+  "/docs", // Documentation (all /docs/* routes)
+  "/api-docs", // API Documentation page
+  "/privacy", // Privacy policy
+  "/terms", // Terms of use
+  "/api/auth", // NextAuth API routes
+  "/api/cron", // Cron jobs
   "/api/mobile", // Legacy Mobile API (keep for compatibility if needed)
-  "/api/v1",     // New V1 API (Auth via Bearer)
+  "/api/v1", // New V1 API (Auth via Bearer)
 ];
 
 // Routes that should redirect to dashboard if user is already logged in
@@ -36,10 +36,10 @@ function isAuthRoute(pathname: string): boolean {
   return AUTH_ROUTES.some((route) => pathname === route || pathname.startsWith(`${route}/`));
 }
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Skip middleware for static files and Next.js internals
+  // Skip proxy for static files and Next.js internals
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/api/auth") ||
@@ -81,7 +81,7 @@ export async function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
-// Configure which paths the middleware should run on
+// Configure which paths the proxy should run on
 export const config = {
   matcher: [
     /*
