@@ -7,6 +7,7 @@ import {
   Typography,
   Grid,
   useTheme,
+  useMediaQuery,
   alpha,
   IconButton,
   Menu,
@@ -40,6 +41,7 @@ import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useInstallments } from "@/hooks/use-installments";
 import { useBankPayment } from "@/hooks/use-bank-payment";
+import { usePlanFeatures } from "@/hooks/use-plan-features";
 import { PayInstallmentDialog } from "./pay-installment-dialog";
 import { EditInstallmentDialog } from "./edit-installment-dialog";
 import { MarkAsPaidDialog } from "./mark-as-paid-dialog";
@@ -60,9 +62,14 @@ export function InstallmentCard({
   const [isMarkAsPaidOpen, setIsMarkAsPaidOpen] = useState(false);
   const { deleteInstallment } = useInstallments();
   const { contacts } = useBankPayment();
+  const { canUseFeature } = usePlanFeatures();
   const [editingInstallment, setEditingInstallment] =
     useState<Installment | null>(null);
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  // Check if user can use Open Finance payment
+  const canUseOpenFinance = canUseFeature("pix-payment");
 
   // Menu state
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -493,41 +500,53 @@ export function InstallmentCard({
 
               {showActions && (
                 <Stack spacing={1} sx={{ mt: 2 }}>
-                  <Stack direction={{ xs: "column", sm: "row" }} spacing={1}>
-                    <Button
-                      onClick={() => setIsPayDialogOpen(true)}
-                      variant="contained"
-                      color={
-                        nextPayment.status === "overdue" ? "error" : "primary"
-                      }
-                      size="small"
-                      sx={{ flex: { sm: 1 } }}
-                      fullWidth
+                  <Grid container spacing={1}>
+                    <Grid
+                      size={{
+                        xs: 12,
+                        sm:
+                          linkedContact && linkedPixKey && canUseOpenFinance
+                            ? 6
+                            : 12,
+                      }}
                     >
-                      <DollarSign
-                        style={{
-                          width: "1rem",
-                          height: "1rem",
-                          marginRight: "0.5rem",
-                        }}
-                      />
-                      Registrar
-                    </Button>
-                    {linkedContact && linkedPixKey && (
-                      <PaymentButton
-                        amount={nextPayment.scheduledAmount}
-                        description={`Parcela ${nextPayment.installmentNumber}/${installment.totalInstallments} - ${installment.name}`}
-                        receiverName={linkedContact.name}
-                        receiverPixKey={linkedPixKey.pixKey}
-                        bank={linkedPixKey.bank || "nubank"}
-                        installmentId={installment.id}
-                        recipientId={linkedContact.id}
+                      <Button
+                        onClick={() => setIsPayDialogOpen(true)}
+                        variant="contained"
+                        color={
+                          nextPayment.status === "overdue" ? "error" : "primary"
+                        }
                         size="small"
-                        variant="outlined"
                         fullWidth
-                      />
+                      >
+                        <DollarSign
+                          style={{
+                            width: "1rem",
+                            height: "1rem",
+                            marginRight: "0.5rem",
+                          }}
+                        />
+                        Registrar
+                      </Button>
+                    </Grid>
+                    {linkedContact && linkedPixKey && canUseOpenFinance && (
+                      <Grid size={{ xs: 12, sm: 6 }}>
+                        <PaymentButton
+                          amount={nextPayment.scheduledAmount}
+                          description={`Parcela ${nextPayment.installmentNumber}/${installment.totalInstallments} - ${installment.name}`}
+                          receiverName={linkedContact.name}
+                          receiverPixKey={linkedPixKey.pixKey}
+                          bank={linkedPixKey.bank || "nubank"}
+                          installmentId={installment.id}
+                          sourceWalletId={installment.sourceWalletId}
+                          recipientId={linkedContact.id}
+                          size="small"
+                          variant="outlined"
+                          fullWidth
+                        />
+                      </Grid>
                     )}
-                  </Stack>
+                  </Grid>
 
                   {nextPayment.status === "overdue" && (
                     <Button

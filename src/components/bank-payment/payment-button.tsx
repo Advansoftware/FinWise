@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Button,
   Dialog,
@@ -16,6 +16,10 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Link,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import {
   Payment as PaymentIcon,
@@ -24,9 +28,11 @@ import {
   Send as SendIcon,
   OpenInNew as OpenInNewIcon,
   AccountBalance as BankIcon,
+  AccountBalanceWallet as WalletIcon,
 } from "@mui/icons-material";
 import { useBankPayment } from "@/hooks/use-bank-payment";
 import { usePluggy } from "@/hooks/use-pluggy";
+import { useWallets } from "@/hooks/use-wallets";
 import { SupportedBank } from "@/core/ports/bank-payment.port";
 import { usePaymentConfirmation } from "./payment-confirmation-dialog";
 
@@ -39,6 +45,7 @@ interface PaymentButtonProps {
   receiverPixKey?: string;
   bank?: SupportedBank;
   installmentId?: string;
+  sourceWalletId?: string; // Carteira de origem para débito
   variant?: "contained" | "outlined" | "text";
   size?: "small" | "medium" | "large";
   fullWidth?: boolean;
@@ -67,6 +74,7 @@ export function PaymentButton({
   receiverPixKey,
   bank = "nubank",
   installmentId,
+  sourceWalletId,
   variant = "contained",
   size = "medium",
   fullWidth = false,
@@ -84,20 +92,40 @@ export function PaymentButton({
     hasMobileDeviceWithPush,
     loading,
   } = useBankPayment();
-  const { initiatePayment: initiatePluggyPayment, getPaymentStatus } = usePluggy();
+  const { initiatePayment: initiatePluggyPayment, getPaymentStatus } =
+    usePluggy();
+  const { wallets } = useWallets();
   const { setPendingPaymentBeforeRedirect } = usePaymentConfirmation();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pushSent, setPushSent] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(preferredMethod);
+  const [paymentMethod, setPaymentMethod] =
+    useState<PaymentMethod>(preferredMethod);
   const [pluggyPaymentUrl, setPluggyPaymentUrl] = useState<string | null>(null);
+  const [selectedWalletId, setSelectedWalletId] = useState<string>(
+    sourceWalletId || ""
+  );
+
+  // Get selected wallet and check balance
+  const selectedWallet = useMemo(() => {
+    if (!selectedWalletId && sourceWalletId) {
+      setSelectedWalletId(sourceWalletId);
+    }
+    return (
+      wallets.find((w) => w.id === (selectedWalletId || sourceWalletId)) ||
+      wallets[0]
+    );
+  }, [wallets, selectedWalletId, sourceWalletId]);
+
+  const hasInsufficientBalance =
+    selectedWallet && amount > selectedWallet.balance;
 
   // Check if Pluggy payment is available
   const isPluggyAvailable = Boolean(
     process.env.NEXT_PUBLIC_PLUGGY_ENABLED !== "false" &&
-    (recipientId || recipientData || receiverPixKey)
+      (recipientId || recipientData || receiverPixKey)
   );
 
   // Formatação de valor
@@ -144,14 +172,18 @@ export function PaymentButton({
         amount,
         description,
         recipientId,
-        recipientData: recipientData || (receiverPixKey ? {
-          taxNumber: "",
-          name: receiverName || "Destinatário",
-          paymentInstitutionId: "",
-          branch: "",
-          accountNumber: "",
-          pixKey: receiverPixKey,
-        } : undefined),
+        recipientData:
+          recipientData ||
+          (receiverPixKey
+            ? {
+                taxNumber: "",
+                name: receiverName || "Destinatário",
+                paymentInstitutionId: "",
+                branch: "",
+                accountNumber: "",
+                pixKey: receiverPixKey,
+              }
+            : undefined),
         installmentId,
       });
 
@@ -319,10 +351,79 @@ export function PaymentButton({
               )}
             </Box>
 
+            {/* Seletor de carteira (apenas para Open Finance) */}
+            {paymentMethod === "pluggy" && wallets.length > 0 && (
+              <Box>
+                <FormControl fullWidth size="small">
+                  <InputLabel>Carteira de débito</InputLabel>
+                  <Select
+                    value={selectedWalletId || selectedWallet?.id || ""}
+                    label="Carteira de débito"
+                    onChange={(e) => setSelectedWalletId(e.target.value)}
+                    startAdornment={
+                      <WalletIcon sx={{ mr: 1, color: "action.active" }} />
+                    }
+                  >
+                    {wallets.map((wallet) => (
+                      <MenuItem key={wallet.id} value={wallet.id}>
+                        <Stack
+                          direction="row"
+                          justifyContent="space-between"
+                          width="100%"
+                        >
+                          <Typography>{wallet.name}</Typography>
+                          <Typography
+                            variant="body2"
+                            color={
+                              wallet.balance >= amount
+                                ? "success.main"
+                                : "error.main"
+                            }
+                          >
+                            {formatCurrency(wallet.balance)}
+                          </Typography>
+                        </Stack>
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+                {selectedWallet && (
+                  <Stack
+                    direction="row"
+                    justifyContent="space-between"
+                    mt={1}
+                    px={1}
+                  >
+                    <Typography variant="caption" color="text.secondary">
+                      Saldo disponível:
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      fontWeight="bold"
+                      color={
+                        hasInsufficientBalance ? "error.main" : "success.main"
+                      }
+                    >
+                      {formatCurrency(selectedWallet.balance)}
+                    </Typography>
+                  </Stack>
+                )}
+                {hasInsufficientBalance && (
+                  <Alert severity="error" sx={{ mt: 1 }}>
+                    Saldo insuficiente na carteira selecionada
+                  </Alert>
+                )}
+              </Box>
+            )}
+
             {/* Seletor de método de pagamento */}
             {isPluggyAvailable && (
               <Box>
-                <Typography variant="caption" color="text.secondary" gutterBottom>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  gutterBottom
+                >
                   Método de pagamento
                 </Typography>
                 <ToggleButtonGroup
@@ -407,8 +508,18 @@ export function PaymentButton({
                   display="block"
                   mt={1}
                 >
-                  Você será redirecionado para autorizar o pagamento via Open Finance
+                  Você será redirecionado para autorizar o pagamento via Open
+                  Finance
                 </Typography>
+                <Alert severity="info" sx={{ mt: 2 }}>
+                  <Typography variant="caption">
+                    ✅ Transação será registrada automaticamente
+                    <br />
+                    ✅ Saldo da carteira será atualizado
+                    <br />
+                    {installmentId && "✅ Parcela será marcada como paga"}
+                  </Typography>
+                </Alert>
               </Box>
             )}
 
@@ -439,11 +550,7 @@ export function PaymentButton({
               <Alert severity="success">
                 <Typography variant="body2">
                   Página de pagamento aberta!{" "}
-                  <Link
-                    href={pluggyPaymentUrl}
-                    target="_blank"
-                    rel="noopener"
-                  >
+                  <Link href={pluggyPaymentUrl} target="_blank" rel="noopener">
                     Clique aqui se não abriu automaticamente
                   </Link>
                 </Typography>
@@ -477,6 +584,7 @@ export function PaymentButton({
               onClick={handlePay}
               disabled={
                 processing ||
+                (paymentMethod === "pluggy" && hasInsufficientBalance) ||
                 (paymentMethod === "deeplink" &&
                   !isMobile &&
                   !hasMobileDeviceWithPush)
@@ -491,9 +599,15 @@ export function PaymentButton({
                 )
               }
               sx={{
-                bgcolor: paymentMethod === "pluggy" ? "primary.main" : getBankColor(bank),
+                bgcolor:
+                  paymentMethod === "pluggy"
+                    ? "primary.main"
+                    : getBankColor(bank),
                 "&:hover": {
-                  bgcolor: paymentMethod === "pluggy" ? "primary.dark" : getBankColor(bank),
+                  bgcolor:
+                    paymentMethod === "pluggy"
+                      ? "primary.dark"
+                      : getBankColor(bank),
                   filter: "brightness(0.9)",
                 },
               }}
