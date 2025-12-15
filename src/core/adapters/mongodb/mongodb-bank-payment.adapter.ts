@@ -4,6 +4,8 @@ import { Db, ObjectId } from 'mongodb';
 import {
   IBankPaymentRepository,
   PaymentContact,
+  ContactPixKey,
+  PixKeyInput,
   UserDevice,
   PaymentRequest,
   PaymentEvent,
@@ -113,34 +115,67 @@ export class MongoBankPaymentRepository implements IBankPaymentRepository {
   async createContact(userId: string, data: CreateContactInput): Promise<PaymentContact> {
     const now = new Date().toISOString();
 
-    // Encriptar dados sensíveis
-    const encryptedPixKey = await this.encrypt(data.pixKey);
+    // Encriptar documento se fornecido
     const encryptedDocument = data.document ? await this.encrypt(data.document) : undefined;
+
+    // Construir array de chaves PIX
+    let pixKeys: any[] = [];
+
+    if (data.pixKeys && data.pixKeys.length > 0) {
+      // Nova estrutura: múltiplas chaves
+      pixKeys = await Promise.all(
+        data.pixKeys.map(async (key, index) => ({
+          id: new ObjectId().toString(),
+          pixKeyType: key.pixKeyType,
+          pixKey: await this.encrypt(key.pixKey),
+          bank: key.bank,
+          bankName: key.bankName,
+          label: key.label,
+          isDefault: key.isDefault ?? index === 0, // Primeira chave é default por padrão
+          createdAt: now,
+        }))
+      );
+    } else if (data.pixKey && data.pixKeyType) {
+      // Compatibilidade: chave única (deprecated)
+      pixKeys = [{
+        id: new ObjectId().toString(),
+        pixKeyType: data.pixKeyType,
+        pixKey: await this.encrypt(data.pixKey),
+        bank: data.bank,
+        bankName: data.bankName,
+        label: undefined,
+        isDefault: true,
+        createdAt: now,
+      }];
+    }
 
     const contact = {
       userId,
       name: data.name,
       nickname: data.nickname,
-      pixKeyType: data.pixKeyType,
-      pixKey: encryptedPixKey,
-      bank: data.bank,
-      bankName: data.bankName,
-      agency: data.agency,
-      account: data.account,
       document: encryptedDocument,
       notes: data.notes,
       isFavorite: data.isFavorite || false,
       usageCount: 0,
+      pixKeys,
       createdAt: now,
       updatedAt: now,
     };
 
     const result = await this.contactsCollection.insertOne(contact);
 
+    // Retornar com chaves descriptografadas
+    const decryptedPixKeys = await Promise.all(
+      pixKeys.map(async (key) => ({
+        ...key,
+        pixKey: await this.decrypt(key.pixKey),
+      }))
+    );
+
     return {
       ...contact,
       id: result.insertedId.toString(),
-      pixKey: data.pixKey, // Retornar descriptografado
+      pixKeys: decryptedPixKeys,
       document: data.document,
     };
   }
@@ -151,8 +186,19 @@ export class MongoBankPaymentRepository implements IBankPaymentRepository {
       if (!doc) return null;
 
       const contact = this.toContact(doc);
-      // Descriptografar dados sensíveis
-      contact.pixKey = await this.decrypt(contact.pixKey);
+      // Descriptografar chaves PIX
+      if (contact.pixKeys && Array.isArray(contact.pixKeys)) {
+        contact.pixKeys = await Promise.all(
+          contact.pixKeys.map(async (key: any) => ({
+            ...key,
+            pixKey: await this.decrypt(key.pixKey),
+          }))
+        );
+      }
+      // Compatibilidade com dados antigos
+      if (contact.pixKey) {
+        contact.pixKey = await this.decrypt(contact.pixKey);
+      }
       if (contact.document) {
         contact.document = await this.decrypt(contact.document);
       }
@@ -171,7 +217,18 @@ export class MongoBankPaymentRepository implements IBankPaymentRepository {
     return Promise.all(
       docs.map(async (doc) => {
         const contact = this.toContact(doc);
-        contact.pixKey = await this.decrypt(contact.pixKey);
+        // Descriptografar chaves PIX
+        if (contact.pixKeys && Array.isArray(contact.pixKeys)) {
+          contact.pixKeys = await Promise.all(
+            contact.pixKeys.map(async (key: any) => ({
+              ...key,
+              pixKey: await this.decrypt(key.pixKey),
+            }))
+          );
+        }
+        if (contact.pixKey) {
+          contact.pixKey = await this.decrypt(contact.pixKey);
+        }
         if (contact.document) {
           contact.document = await this.decrypt(contact.document);
         }
@@ -189,7 +246,17 @@ export class MongoBankPaymentRepository implements IBankPaymentRepository {
     return Promise.all(
       docs.map(async (doc) => {
         const contact = this.toContact(doc);
-        contact.pixKey = await this.decrypt(contact.pixKey);
+        if (contact.pixKeys && Array.isArray(contact.pixKeys)) {
+          contact.pixKeys = await Promise.all(
+            contact.pixKeys.map(async (key: any) => ({
+              ...key,
+              pixKey: await this.decrypt(key.pixKey),
+            }))
+          );
+        }
+        if (contact.pixKey) {
+          contact.pixKey = await this.decrypt(contact.pixKey);
+        }
         if (contact.document) {
           contact.document = await this.decrypt(contact.document);
         }
@@ -202,10 +269,7 @@ export class MongoBankPaymentRepository implements IBankPaymentRepository {
     try {
       const updateData: any = { ...data, updatedAt: new Date().toISOString() };
 
-      // Encriptar novos dados sensíveis
-      if (data.pixKey) {
-        updateData.pixKey = await this.encrypt(data.pixKey);
-      }
+      // Encriptar documento se fornecido
       if (data.document) {
         updateData.document = await this.encrypt(data.document);
       }
@@ -219,7 +283,17 @@ export class MongoBankPaymentRepository implements IBankPaymentRepository {
       if (!result) return null;
 
       const contact = this.toContact(result);
-      contact.pixKey = await this.decrypt(contact.pixKey);
+      if (contact.pixKeys && Array.isArray(contact.pixKeys)) {
+        contact.pixKeys = await Promise.all(
+          contact.pixKeys.map(async (key: any) => ({
+            ...key,
+            pixKey: await this.decrypt(key.pixKey),
+          }))
+        );
+      }
+      if (contact.pixKey) {
+        contact.pixKey = await this.decrypt(contact.pixKey);
+      }
       if (contact.document) {
         contact.document = await this.decrypt(contact.document);
       }
@@ -268,13 +342,135 @@ export class MongoBankPaymentRepository implements IBankPaymentRepository {
     return Promise.all(
       docs.map(async (doc) => {
         const contact = this.toContact(doc);
-        contact.pixKey = await this.decrypt(contact.pixKey);
+        if (contact.pixKeys && Array.isArray(contact.pixKeys)) {
+          contact.pixKeys = await Promise.all(
+            contact.pixKeys.map(async (key: any) => ({
+              ...key,
+              pixKey: await this.decrypt(key.pixKey),
+            }))
+          );
+        }
+        if (contact.pixKey) {
+          contact.pixKey = await this.decrypt(contact.pixKey);
+        }
         if (contact.document) {
           contact.document = await this.decrypt(contact.document);
         }
         return contact;
       })
     );
+  }
+
+  // ==================== CHAVES PIX ====================
+
+  async addPixKey(contactId: string, data: any): Promise<any> {
+    const now = new Date().toISOString();
+    const keyId = new ObjectId().toString();
+
+    const newKey = {
+      id: keyId,
+      pixKeyType: data.pixKeyType,
+      pixKey: await this.encrypt(data.pixKey),
+      bank: data.bank,
+      bankName: data.bankName,
+      label: data.label,
+      isDefault: data.isDefault ?? false,
+      createdAt: now,
+    };
+
+    // Se for default, remover default das outras
+    if (data.isDefault) {
+      await this.contactsCollection.updateOne(
+        { _id: new ObjectId(contactId) },
+        { $set: { 'pixKeys.$[].isDefault': false } }
+      );
+    }
+
+    await this.contactsCollection.updateOne(
+      { _id: new ObjectId(contactId) },
+      {
+        $push: { pixKeys: newKey } as any,
+        $set: { updatedAt: now }
+      }
+    );
+
+    return {
+      ...newKey,
+      pixKey: data.pixKey, // Retornar descriptografado
+    };
+  }
+
+  async updatePixKey(contactId: string, keyId: string, data: any): Promise<any | null> {
+    try {
+      const updateFields: any = { updatedAt: new Date().toISOString() };
+
+      if (data.pixKeyType !== undefined) {
+        updateFields['pixKeys.$.pixKeyType'] = data.pixKeyType;
+      }
+      if (data.pixKey !== undefined) {
+        updateFields['pixKeys.$.pixKey'] = await this.encrypt(data.pixKey);
+      }
+      if (data.bank !== undefined) {
+        updateFields['pixKeys.$.bank'] = data.bank;
+      }
+      if (data.bankName !== undefined) {
+        updateFields['pixKeys.$.bankName'] = data.bankName;
+      }
+      if (data.label !== undefined) {
+        updateFields['pixKeys.$.label'] = data.label;
+      }
+
+      await this.contactsCollection.updateOne(
+        { _id: new ObjectId(contactId), 'pixKeys.id': keyId },
+        { $set: updateFields }
+      );
+
+      // Buscar contato atualizado
+      const contact = await this.findContactById(contactId);
+      return contact?.pixKeys?.find((k: any) => k.id === keyId) || null;
+    } catch {
+      return null;
+    }
+  }
+
+  async removePixKey(contactId: string, keyId: string): Promise<boolean> {
+    try {
+      const result = await this.contactsCollection.updateOne(
+        { _id: new ObjectId(contactId) },
+        {
+          $pull: { pixKeys: { id: keyId } } as any,
+          $set: { updatedAt: new Date().toISOString() }
+        }
+      );
+      return result.modifiedCount > 0;
+    } catch {
+      return false;
+    }
+  }
+
+  async setDefaultPixKey(contactId: string, keyId: string): Promise<boolean> {
+    try {
+      // Remover default de todas as chaves
+      await this.contactsCollection.updateOne(
+        { _id: new ObjectId(contactId) },
+        { $set: { 'pixKeys.$[].isDefault': false } }
+      );
+
+      // Definir a chave específica como default
+      const result = await this.contactsCollection.updateOne(
+        { _id: new ObjectId(contactId), 'pixKeys.id': keyId },
+        {
+          $set: {
+            'pixKeys.$.isDefault': true,
+            updatedAt: new Date().toISOString()
+          }
+        }
+      );
+
+      return result.modifiedCount > 0;
+    } catch {
+      return false;
+    }
   }
 
   // ==================== DISPOSITIVOS ====================

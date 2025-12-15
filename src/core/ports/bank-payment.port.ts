@@ -58,26 +58,45 @@ export type DeviceType = 'mobile' | 'desktop' | 'tablet';
 export type DevicePlatform = 'android' | 'ios' | 'windows' | 'macos' | 'linux' | 'unknown';
 
 /**
+ * Chave PIX individual de um contato
+ */
+export interface ContactPixKey {
+  id: string;
+  pixKeyType: PixKeyType;
+  pixKey: string; // Encriptado no banco
+  bank?: SupportedBank;
+  bankName?: string; // Para "outros"
+  label?: string; // Ex: "Pessoal", "Trabalho"
+  isDefault: boolean;
+  createdAt: string;
+}
+
+/**
  * Contato/Favorecido para pagamentos
+ * Suporta múltiplas chaves PIX por contato
  */
 export interface PaymentContact {
   id: string;
   userId: string;
   name: string;
   nickname?: string;
-  pixKeyType: PixKeyType;
-  pixKey: string; // Encriptado no banco
-  bank?: SupportedBank;
-  bankName?: string; // Para "outros"
-  agency?: string;
-  account?: string;
   document?: string; // CPF/CNPJ encriptado
   notes?: string;
   isFavorite: boolean;
   usageCount: number;
   lastUsedAt?: string;
+  // Múltiplas chaves PIX
+  pixKeys: ContactPixKey[];
   createdAt: string;
   updatedAt: string;
+
+  // @deprecated - Mantido para compatibilidade, usar pixKeys
+  pixKeyType?: PixKeyType;
+  pixKey?: string;
+  bank?: SupportedBank;
+  bankName?: string;
+  agency?: string;
+  account?: string;
 }
 
 /**
@@ -216,20 +235,33 @@ export interface PushPayload {
 }
 
 /**
+ * Input para criar/adicionar uma chave PIX
+ */
+export interface PixKeyInput {
+  pixKeyType: PixKeyType;
+  pixKey: string;
+  bank?: SupportedBank;
+  bankName?: string;
+  label?: string;
+  isDefault?: boolean;
+}
+
+/**
  * Input para criar contato
  */
 export interface CreateContactInput {
   name: string;
   nickname?: string;
-  pixKeyType: PixKeyType;
-  pixKey: string;
-  bank?: SupportedBank;
-  bankName?: string;
-  agency?: string;
-  account?: string;
   document?: string;
   notes?: string;
   isFavorite?: boolean;
+  // Nova estrutura: múltiplas chaves
+  pixKeys?: PixKeyInput[];
+  // @deprecated - Compatibilidade: criar com chave única
+  pixKeyType?: PixKeyType;
+  pixKey?: string;
+  bank?: SupportedBank;
+  bankName?: string;
 }
 
 /**
@@ -238,15 +270,10 @@ export interface CreateContactInput {
 export interface UpdateContactInput {
   name?: string;
   nickname?: string;
-  pixKeyType?: PixKeyType;
-  pixKey?: string;
-  bank?: SupportedBank;
-  bankName?: string;
-  agency?: string;
-  account?: string;
   document?: string;
   notes?: string;
   isFavorite?: boolean;
+  // Para atualizar chaves, usar métodos específicos
 }
 
 /**
@@ -304,6 +331,12 @@ export interface IBankPaymentRepository {
   deleteContact(id: string): Promise<boolean>;
   incrementContactUsage(id: string): Promise<void>;
   searchContacts(userId: string, query: string): Promise<PaymentContact[]>;
+
+  // Chaves PIX do contato
+  addPixKey(contactId: string, data: PixKeyInput): Promise<ContactPixKey>;
+  updatePixKey(contactId: string, keyId: string, data: Partial<PixKeyInput>): Promise<ContactPixKey | null>;
+  removePixKey(contactId: string, keyId: string): Promise<boolean>;
+  setDefaultPixKey(contactId: string, keyId: string): Promise<boolean>;
 
   // Dispositivos
   registerDevice(userId: string, data: RegisterDeviceInput): Promise<UserDevice>;

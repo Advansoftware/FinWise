@@ -43,6 +43,8 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
     "/profile",
     "/settings",
     "/billing",
+    "/contacts",
+    "/bank-connections",
   ];
   const isMoreActive = morePages.some((page) => pathname.startsWith(page));
 

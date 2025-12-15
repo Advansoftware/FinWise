@@ -41,6 +41,7 @@ import {
   X,
   Check,
   ImageIcon,
+  QrCode,
 } from "lucide-react";
 import {
   useRef,
@@ -88,6 +89,8 @@ interface UnifiedForm {
 }
 
 // ============ SUB-COMPONENTS ============
+
+type ScanMode = "photo" | "qrcode";
 
 interface ScanFrameProps {
   isVisible: boolean;

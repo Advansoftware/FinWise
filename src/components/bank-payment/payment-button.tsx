@@ -13,16 +13,24 @@ import {
   Stack,
   Alert,
   Chip,
+  ToggleButton,
+  ToggleButtonGroup,
+  Link,
 } from "@mui/material";
 import {
   Payment as PaymentIcon,
   Smartphone as SmartphoneIcon,
   Computer as ComputerIcon,
   Send as SendIcon,
+  OpenInNew as OpenInNewIcon,
+  AccountBalance as BankIcon,
 } from "@mui/icons-material";
 import { useBankPayment } from "@/hooks/use-bank-payment";
+import { usePluggy } from "@/hooks/use-pluggy";
 import { SupportedBank } from "@/core/ports/bank-payment.port";
 import { usePaymentConfirmation } from "./payment-confirmation-dialog";
+
+type PaymentMethod = "deeplink" | "pluggy";
 
 interface PaymentButtonProps {
   amount: number;
@@ -37,6 +45,19 @@ interface PaymentButtonProps {
   disabled?: boolean;
   onSuccess?: () => void;
   onError?: (error: string) => void;
+  // Pluggy-specific props
+  recipientId?: string;
+  recipientData?: {
+    taxNumber: string;
+    name: string;
+    paymentInstitutionId: string;
+    branch: string;
+    accountNumber: string;
+    accountType?: "CHECKING" | "SAVINGS";
+    pixKey?: string;
+  };
+  // Allow specifying preferred method
+  preferredMethod?: PaymentMethod;
 }
 
 export function PaymentButton({
@@ -52,6 +73,9 @@ export function PaymentButton({
   disabled = false,
   onSuccess,
   onError,
+  recipientId,
+  recipientData,
+  preferredMethod = "pluggy",
 }: PaymentButtonProps) {
   const {
     initiatePayment,
@@ -60,12 +84,21 @@ export function PaymentButton({
     hasMobileDeviceWithPush,
     loading,
   } = useBankPayment();
+  const { initiatePayment: initiatePluggyPayment, getPaymentStatus } = usePluggy();
   const { setPendingPaymentBeforeRedirect } = usePaymentConfirmation();
 
   const [dialogOpen, setDialogOpen] = useState(false);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pushSent, setPushSent] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(preferredMethod);
+  const [pluggyPaymentUrl, setPluggyPaymentUrl] = useState<string | null>(null);
+
+  // Check if Pluggy payment is available
+  const isPluggyAvailable = Boolean(
+    process.env.NEXT_PUBLIC_PLUGGY_ENABLED !== "false" &&
+    (recipientId || recipientData || receiverPixKey)
+  );
 
   // Formatação de valor
   const formatCurrency = (value: number) => {
@@ -92,17 +125,55 @@ export function PaymentButton({
 
   // Handler do botão de pagamento
   const handlePayClick = () => {
-    // Se estiver no mobile, não precisa de confirmação
-    if (isMobile) {
+    // Se estiver no mobile e usando deeplink, não precisa de confirmação
+    if (isMobile && paymentMethod === "deeplink") {
       handlePay();
     } else {
-      // No desktop, mostrar diálogo de confirmação
+      // Mostrar diálogo de confirmação
       setDialogOpen(true);
     }
   };
 
-  // Processar pagamento
-  const handlePay = async () => {
+  // Processar pagamento via Pluggy
+  const handlePluggyPayment = async () => {
+    setProcessing(true);
+    setError(null);
+
+    try {
+      const result = await initiatePluggyPayment({
+        amount,
+        description,
+        recipientId,
+        recipientData: recipientData || (receiverPixKey ? {
+          taxNumber: "",
+          name: receiverName || "Destinatário",
+          paymentInstitutionId: "",
+          branch: "",
+          accountNumber: "",
+          pixKey: receiverPixKey,
+        } : undefined),
+        installmentId,
+      });
+
+      if (result.success && result.paymentUrl) {
+        setPluggyPaymentUrl(result.paymentUrl);
+        // Open payment URL in new tab
+        window.open(result.paymentUrl, "_blank");
+        onSuccess?.();
+      } else {
+        throw new Error(result.error || "Falha ao iniciar pagamento");
+      }
+    } catch (err: any) {
+      const errorMsg = err.message || "Erro ao processar pagamento";
+      setError(errorMsg);
+      onError?.(errorMsg);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
+  // Processar pagamento via deep link
+  const handleDeepLinkPayment = async () => {
     setProcessing(true);
     setError(null);
     setPushSent(false);
@@ -169,11 +240,21 @@ export function PaymentButton({
     }
   };
 
+  // Processar pagamento baseado no método selecionado
+  const handlePay = async () => {
+    if (paymentMethod === "pluggy") {
+      await handlePluggyPayment();
+    } else {
+      await handleDeepLinkPayment();
+    }
+  };
+
   // Fechar diálogo
   const handleClose = () => {
     setDialogOpen(false);
     setError(null);
     setPushSent(false);
+    setPluggyPaymentUrl(null);
   };
 
   return (
@@ -203,7 +284,7 @@ export function PaymentButton({
         Pagar
       </Button>
 
-      {/* Diálogo de confirmação (apenas desktop) */}
+      {/* Diálogo de confirmação */}
       <Dialog open={dialogOpen} onClose={handleClose} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ pb: 1 }}>
           <Stack direction="row" alignItems="center" gap={1}>
@@ -238,90 +319,192 @@ export function PaymentButton({
               )}
             </Box>
 
-            {/* Indicador de fluxo */}
-            <Box
-              sx={{
-                bgcolor: "grey.100",
-                borderRadius: 2,
-                p: 2,
-              }}
-            >
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent="center"
-                spacing={2}
-              >
-                <ComputerIcon color="action" />
-                <SendIcon sx={{ color: "primary.main" }} />
-                <SmartphoneIcon sx={{ color: getBankColor(bank) }} />
-              </Stack>
-              <Typography
-                variant="caption"
-                color="text.secondary"
-                textAlign="center"
-                display="block"
-                mt={1}
-              >
-                Uma notificação será enviada para seu celular
-              </Typography>
-            </Box>
+            {/* Seletor de método de pagamento */}
+            {isPluggyAvailable && (
+              <Box>
+                <Typography variant="caption" color="text.secondary" gutterBottom>
+                  Método de pagamento
+                </Typography>
+                <ToggleButtonGroup
+                  value={paymentMethod}
+                  exclusive
+                  onChange={(_, value) => value && setPaymentMethod(value)}
+                  fullWidth
+                  size="small"
+                  sx={{ mt: 1 }}
+                >
+                  <ToggleButton value="pluggy">
+                    <Stack direction="row" alignItems="center" gap={0.5}>
+                      <BankIcon fontSize="small" />
+                      <Typography variant="caption">Open Finance</Typography>
+                    </Stack>
+                  </ToggleButton>
+                  <ToggleButton value="deeplink">
+                    <Stack direction="row" alignItems="center" gap={0.5}>
+                      <SmartphoneIcon fontSize="small" />
+                      <Typography variant="caption">App do Banco</Typography>
+                    </Stack>
+                  </ToggleButton>
+                </ToggleButtonGroup>
+              </Box>
+            )}
 
-            {/* Banco selecionado */}
-            <Box textAlign="center">
-              <Chip
-                label={bank.toUpperCase()}
+            {/* Indicador de fluxo - Deep Link */}
+            {paymentMethod === "deeplink" && (
+              <Box
                 sx={{
-                  bgcolor: getBankColor(bank),
-                  color: "white",
-                  fontWeight: "bold",
+                  bgcolor: "grey.100",
+                  borderRadius: 2,
+                  p: 2,
                 }}
-              />
-            </Box>
+              >
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="center"
+                  spacing={2}
+                >
+                  <ComputerIcon color="action" />
+                  <SendIcon sx={{ color: "primary.main" }} />
+                  <SmartphoneIcon sx={{ color: getBankColor(bank) }} />
+                </Stack>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  textAlign="center"
+                  display="block"
+                  mt={1}
+                >
+                  {isMobile
+                    ? "O app do banco será aberto automaticamente"
+                    : "Uma notificação será enviada para seu celular"}
+                </Typography>
+              </Box>
+            )}
 
-            {/* Mensagem de sucesso */}
-            {pushSent && (
+            {/* Indicador de fluxo - Pluggy */}
+            {paymentMethod === "pluggy" && (
+              <Box
+                sx={{
+                  bgcolor: "grey.100",
+                  borderRadius: 2,
+                  p: 2,
+                }}
+              >
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="center"
+                  spacing={2}
+                >
+                  <BankIcon color="primary" />
+                  <OpenInNewIcon sx={{ color: "primary.main" }} />
+                </Stack>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  textAlign="center"
+                  display="block"
+                  mt={1}
+                >
+                  Você será redirecionado para autorizar o pagamento via Open Finance
+                </Typography>
+              </Box>
+            )}
+
+            {/* Banco selecionado (apenas deep link) */}
+            {paymentMethod === "deeplink" && (
+              <Box textAlign="center">
+                <Chip
+                  label={bank.toUpperCase()}
+                  sx={{
+                    bgcolor: getBankColor(bank),
+                    color: "white",
+                    fontWeight: "bold",
+                  }}
+                />
+              </Box>
+            )}
+
+            {/* Mensagem de sucesso - Push enviado */}
+            {pushSent && paymentMethod === "deeplink" && (
               <Alert severity="success">
                 Notificação enviada! Verifique seu celular para completar o
                 pagamento.
               </Alert>
             )}
 
+            {/* Mensagem de sucesso - Pluggy */}
+            {pluggyPaymentUrl && paymentMethod === "pluggy" && (
+              <Alert severity="success">
+                <Typography variant="body2">
+                  Página de pagamento aberta!{" "}
+                  <Link
+                    href={pluggyPaymentUrl}
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    Clique aqui se não abriu automaticamente
+                  </Link>
+                </Typography>
+              </Alert>
+            )}
+
             {/* Mensagem de erro */}
             {error && <Alert severity="error">{error}</Alert>}
 
-            {/* Aviso se não houver dispositivo móvel com push */}
-            {!isMobile && !hasMobileDeviceWithPush && !pushSent && (
-              <Alert severity="warning">
-                {hasMobileDevice
-                  ? "Seu dispositivo móvel não tem notificações push ativadas. Ative nas configurações para receber alertas de pagamento."
-                  : "Você não tem um dispositivo móvel cadastrado. Cadastre nas configurações para receber notificações de pagamento."}
-              </Alert>
-            )}
+            {/* Aviso se não houver dispositivo móvel com push (apenas deep link) */}
+            {paymentMethod === "deeplink" &&
+              !isMobile &&
+              !hasMobileDeviceWithPush &&
+              !pushSent && (
+                <Alert severity="warning">
+                  {hasMobileDevice
+                    ? "Seu dispositivo móvel não tem notificações push ativadas. Ative nas configurações para receber alertas de pagamento."
+                    : "Você não tem um dispositivo móvel cadastrado. Cadastre nas configurações para receber notificações de pagamento."}
+                </Alert>
+              )}
           </Stack>
         </DialogContent>
 
         <DialogActions sx={{ p: 2, pt: 0 }}>
           <Button onClick={handleClose} disabled={processing}>
-            {pushSent ? "Fechar" : "Cancelar"}
+            {pushSent || pluggyPaymentUrl ? "Fechar" : "Cancelar"}
           </Button>
-          {!pushSent && (
+          {!pushSent && !pluggyPaymentUrl && (
             <Button
               variant="contained"
               onClick={handlePay}
-              disabled={processing || (!isMobile && !hasMobileDeviceWithPush)}
+              disabled={
+                processing ||
+                (paymentMethod === "deeplink" &&
+                  !isMobile &&
+                  !hasMobileDeviceWithPush)
+              }
               startIcon={
-                processing ? <CircularProgress size={16} /> : <SendIcon />
+                processing ? (
+                  <CircularProgress size={16} />
+                ) : paymentMethod === "pluggy" ? (
+                  <OpenInNewIcon />
+                ) : (
+                  <SendIcon />
+                )
               }
               sx={{
-                bgcolor: getBankColor(bank),
+                bgcolor: paymentMethod === "pluggy" ? "primary.main" : getBankColor(bank),
                 "&:hover": {
-                  bgcolor: getBankColor(bank),
+                  bgcolor: paymentMethod === "pluggy" ? "primary.dark" : getBankColor(bank),
                   filter: "brightness(0.9)",
                 },
               }}
             >
-              {processing ? "Enviando..." : "Enviar para Celular"}
+              {processing
+                ? "Processando..."
+                : paymentMethod === "pluggy"
+                ? "Pagar via Open Finance"
+                : isMobile
+                ? "Abrir App do Banco"
+                : "Enviar para Celular"}
             </Button>
           )}
         </DialogActions>

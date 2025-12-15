@@ -30,6 +30,10 @@ export interface Installment {
   createdAt: string; // ISO 8601
   updatedAt: string; // ISO 8601
 
+  // Campos para contato PIX
+  contactId?: string; // Link para PaymentContact
+  pixKeyId?: string; // Chave PIX específica do contato
+
   // Campos para parcelamentos recorrentes
   isRecurring?: boolean; // Se é um parcelamento recorrente (como aluguel)
   recurringType?: 'monthly' | 'yearly'; // Tipo de recorrência
@@ -65,6 +69,10 @@ export interface CreateInstallmentInput {
   sourceWalletId: string;
   destinationWalletId?: string;
 
+  // Contato PIX para pagamento
+  contactId?: string;
+  pixKeyId?: string;
+
   // Campos para parcelamentos recorrentes
   isRecurring?: boolean;
   recurringType?: 'monthly' | 'yearly';
@@ -83,6 +91,10 @@ export interface UpdateInstallmentInput {
   sourceWalletId?: string;
   destinationWalletId?: string;
   isActive?: boolean;
+
+  // Contato PIX para pagamento
+  contactId?: string;
+  pixKeyId?: string;
 
   // Campos para parcelamentos recorrentes
   isRecurring?: boolean;

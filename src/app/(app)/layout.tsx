@@ -19,6 +19,8 @@ import { BankPaymentProvider } from "@/hooks/use-bank-payment";
 import { PaymentConfirmationProvider } from "@/components/bank-payment/payment-confirmation-provider";
 import { GamificationGlobalUI } from "@/components/gamification";
 import { ResponsiveLayout } from "@/components/layout";
+import { PlanFeaturesProvider } from "@/hooks/use-plan-features";
+import { UpgradeModal } from "@/components/subscription/upgrade-modal";
 
 import { WalletOnboarding } from "@/components/onboarding/wallet-onboarding";
 import { OfflineStorageInitializer } from "@/components/offline-storage-initializer";
@@ -59,8 +61,11 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
                   <BudgetsProvider>
                     <GoalsProvider>
                       <BankPaymentProvider>
-                        <PaymentConfirmationProvider />
-                        <AppLayoutContent>{children}</AppLayoutContent>
+                        <PlanFeaturesProvider>
+                          <PaymentConfirmationProvider />
+                          <UpgradeModal />
+                          <AppLayoutContent>{children}</AppLayoutContent>
+                        </PlanFeaturesProvider>
                       </BankPaymentProvider>
                     </GoalsProvider>
                   </BudgetsProvider>

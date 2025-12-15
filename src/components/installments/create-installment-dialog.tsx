@@ -1,6 +1,6 @@
 // src/components/installments/create-installment-dialog.tsx
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -31,6 +31,8 @@ import {
   Switch,
   Collapse,
   Alert,
+  Chip,
+  Divider,
 } from "@mui/material";
 import {
   Loader2,
@@ -41,9 +43,11 @@ import {
   X,
   Settings2,
 } from "lucide-react";
+import { Pix as PixIcon } from "@mui/icons-material";
 import { useInstallments } from "@/hooks/use-installments";
 import { useWallets } from "@/hooks/use-wallets";
 import { useTransactions } from "@/hooks/use-transactions";
+import { useBankPayment } from "@/hooks/use-bank-payment";
 import { format } from "date-fns";
 
 const installmentSchema = z
@@ -117,8 +121,13 @@ export function CreateInstallmentDialog({
   const { createInstallment } = useInstallments();
   const { wallets } = useWallets();
   const { categories, subcategories } = useTransactions();
+  const { contacts } = useBankPayment();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  // State for optional contact/PIX key selection
+  const [selectedContactId, setSelectedContactId] = useState<string>("");
+  const [selectedPixKeyId, setSelectedPixKeyId] = useState<string>("");
 
   const form = useForm<InstallmentForm>({
     resolver: zodResolver(installmentSchema),
@@ -175,6 +184,42 @@ export function CreateInstallmentDialog({
     }
   }, [isRecurring, form]);
 
+  // Get selected contact and its PIX keys
+  const selectedContact = useMemo(() => 
+    contacts.find(c => c.id === selectedContactId),
+    [contacts, selectedContactId]
+  );
+
+  const availablePixKeys = useMemo(() => {
+    if (!selectedContact) return [];
+    // Support both new pixKeys array and legacy single key
+    if (selectedContact.pixKeys && selectedContact.pixKeys.length > 0) {
+      return selectedContact.pixKeys;
+    }
+    if (selectedContact.pixKey && selectedContact.pixKeyType) {
+      return [{
+        id: 'legacy',
+        pixKeyType: selectedContact.pixKeyType,
+        pixKey: selectedContact.pixKey,
+        bank: selectedContact.bank,
+        bankName: selectedContact.bankName,
+        isDefault: true,
+        createdAt: selectedContact.createdAt,
+      }];
+    }
+    return [];
+  }, [selectedContact]);
+
+  // Auto-select default PIX key when contact changes
+  useEffect(() => {
+    if (availablePixKeys.length > 0) {
+      const defaultKey = availablePixKeys.find(k => k.isDefault) || availablePixKeys[0];
+      setSelectedPixKeyId(defaultKey.id);
+    } else {
+      setSelectedPixKeyId("");
+    }
+  }, [availablePixKeys]);
+
   const onSubmit = async (data: InstallmentForm) => {
     // Validar valores customizados se habilitado
     if (isManualValues && !isCustomAmountsValid) {
@@ -198,6 +243,9 @@ export function CreateInstallmentDialog({
         isRecurring: data.isRecurring,
         recurringType: data.isRecurring ? data.recurringType : undefined,
         endDate: data.endDate?.toISOString(),
+        // Contact PIX for payment
+        contactId: selectedContactId || undefined,
+        pixKeyId: selectedPixKeyId || undefined,
         // Incluir valores customizados se habilitado
         customInstallmentAmounts: isManualValues && customAmounts.length > 0
           ? customAmounts
@@ -751,6 +799,73 @@ export function CreateInstallmentDialog({
                   )}
                 />
               </Grid>
+
+              {/* Optional: Contact PIX for payment */}
+              <Grid size={12}>
+                <Divider sx={{ my: 1 }}>
+                  <Chip 
+                    icon={<PixIcon />} 
+                    label="Contato PIX (Opcional)" 
+                    size="small"
+                    variant="outlined"
+                  />
+                </Divider>
+              </Grid>
+
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <FormControl fullWidth size={isMobile ? "small" : "medium"}>
+                  <InputLabel>Contato de Pagamento</InputLabel>
+                  <Select
+                    value={selectedContactId}
+                    label="Contato de Pagamento"
+                    onChange={(e) => {
+                      setSelectedContactId(e.target.value);
+                    }}
+                    MenuProps={{ sx: { zIndex: 1400 } }}
+                  >
+                    <MenuItem value="">
+                      <em>Nenhum (pagar manualmente)</em>
+                    </MenuItem>
+                    {contacts.map((contact) => (
+                      <MenuItem key={contact.id} value={contact.id}>
+                        {contact.name}
+                        {contact.isFavorite && " ⭐"}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                  <FormHelperText>
+                    Vincule a um contato para pagamento rápido via PIX
+                  </FormHelperText>
+                </FormControl>
+              </Grid>
+
+              {selectedContactId && availablePixKeys.length > 0 && (
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <FormControl fullWidth size={isMobile ? "small" : "medium"}>
+                    <InputLabel>Chave PIX</InputLabel>
+                    <Select
+                      value={selectedPixKeyId}
+                      label="Chave PIX"
+                      onChange={(e) => setSelectedPixKeyId(e.target.value)}
+                      MenuProps={{ sx: { zIndex: 1400 } }}
+                    >
+                      {availablePixKeys.map((key) => (
+                        <MenuItem key={key.id} value={key.id}>
+                          <Stack direction="row" alignItems="center" gap={1}>
+                            <Typography variant="body2">
+                              {key.label ? `${key.label} - ` : ""}
+                              {key.pixKeyType.toUpperCase()}: {key.pixKey}
+                            </Typography>
+                            {key.isDefault && (
+                              <Chip label="Padrão" size="small" color="primary" sx={{ height: 18, fontSize: "0.6rem" }} />
+                            )}
+                          </Stack>
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+              )}
             </Grid>
           </Stack>
         </form>

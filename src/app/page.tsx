@@ -105,6 +105,7 @@ const plans = [
     features: [
       "Tudo do Pro",
       "300 créditos IA/mês",
+      "Open Finance",
       "OCR de notas fiscais",
       "Importação CSV/OFX",
       "Ollama local (ilimitado)",
@@ -530,6 +531,60 @@ const comparisonFeatures = [
       },
       {
         name: "Sugestão de Orçamento IA (2 créditos)",
+        basico: false,
+        pro: false,
+        plus: true,
+        infinity: true,
+      },
+    ],
+  },
+  {
+    category: "Open Finance & PIX",
+    features: [
+      {
+        name: "Conexão Bancária Automática",
+        basico: false,
+        pro: false,
+        plus: true,
+        infinity: true,
+      },
+      {
+        name: "Importação Automática de Transações",
+        basico: false,
+        pro: false,
+        plus: true,
+        infinity: true,
+      },
+      {
+        name: "Sincronização em Tempo Real",
+        basico: false,
+        pro: false,
+        plus: true,
+        infinity: true,
+      },
+      {
+        name: "100+ Bancos Suportados (Pluggy)",
+        basico: false,
+        pro: false,
+        plus: true,
+        infinity: true,
+      },
+      {
+        name: "Contatos PIX (Múltiplas Chaves)",
+        basico: false,
+        pro: false,
+        plus: true,
+        infinity: true,
+      },
+      {
+        name: "Pagamento PIX Direto",
+        basico: false,
+        pro: false,
+        plus: true,
+        infinity: true,
+      },
+      {
+        name: "Vinculação PIX em Parcelamentos",
         basico: false,
         pro: false,
         plus: true,
