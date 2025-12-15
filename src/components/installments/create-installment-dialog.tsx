@@ -228,6 +228,16 @@ export function CreateInstallmentDialog({
         // Garantir que o dialog fique acima do bottom nav
         zIndex: isMobile ? 1300 : undefined,
       }}
+      slotProps={{
+        paper: {
+          sx: isMobile ? {
+            margin: 0,
+            maxHeight: "100%",
+            maxWidth: "100%",
+            borderRadius: 0,
+          } : undefined,
+        },
+      }}
     >
       <DialogTitle
         sx={{
@@ -517,6 +527,7 @@ export function CreateInstallmentDialog({
                               {...field}
                               label="Tipo de Recorrência"
                               value={field.value || ""}
+                              MenuProps={{ sx: { zIndex: 1400 } }}
                             >
                               <MenuItem value="monthly">Mensal</MenuItem>
                               <MenuItem value="yearly">Anual</MenuItem>
@@ -616,6 +627,7 @@ export function CreateInstallmentDialog({
                         {...field}
                         label="Categoria"
                         value={field.value || ""}
+                        MenuProps={{ sx: { zIndex: 1400 } }}
                       >
                         {categories.map((category) => (
                           <MenuItem key={category} value={category}>
@@ -644,6 +656,7 @@ export function CreateInstallmentDialog({
                         {...field}
                         label="Subcategoria (Opcional)"
                         value={field.value || ""}
+                        MenuProps={{ sx: { zIndex: 1400 } }}
                       >
                         {(subcategories as any)[selectedCategory]?.map(
                           (sub: string) => (
@@ -725,6 +738,7 @@ export function CreateInstallmentDialog({
                         {...field}
                         label="Carteira de Pagamento"
                         value={field.value || ""}
+                        MenuProps={{ sx: { zIndex: 1400 } }}
                       >
                         {wallets.map((wallet) => (
                           <MenuItem key={wallet.id} value={wallet.id}>

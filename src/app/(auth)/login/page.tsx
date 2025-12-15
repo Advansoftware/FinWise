@@ -101,7 +101,6 @@ export default function LoginPage() {
             alignItems: "center",
             background: `linear-gradient(135deg, ${alpha(theme.palette.primary.dark, 0.95)} 0%, ${alpha("#1a1a2e", 0.98)} 100%)`,
             overflow: "hidden",
-            p: 6,
           }}
         >
           {/* Background Image */}

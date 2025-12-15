@@ -124,8 +124,6 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
               {/* Indicador ativo */}
               {isActive && (
                 <Box
-                  component={motion.div}
-                  layoutId="bottomNavIndicator"
                   sx={{
                     position: "absolute",
                     top: 0,
@@ -135,6 +133,7 @@ export function MobileBottomNav({ onMoreClick }: MobileBottomNavProps) {
                     height: 3,
                     borderRadius: "0 0 4px 4px",
                     bgcolor: "primary.main",
+                    transition: "all 0.2s ease",
                   }}
                 />
               )}

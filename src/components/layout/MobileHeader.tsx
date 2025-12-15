@@ -25,9 +25,6 @@ export function MobileHeader({ showBack, title, rightAction }: MobileHeaderProps
   // Determinar se deve mostrar botão de voltar
   const isMainPage = [
     "/dashboard",
-    "/transactions",
-    "/wallets",
-    "/goals",
   ].includes(pathname);
 
   const shouldShowBack = showBack ?? !isMainPage;

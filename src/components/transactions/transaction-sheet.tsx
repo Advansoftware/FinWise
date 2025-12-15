@@ -308,9 +308,9 @@ export function TransactionSheet({
           sx: {
             width: isMobile ? "100%" : 450,
             maxWidth: "100%",
-            height: isMobile ? "90vh" : "100%",
-            borderTopLeftRadius: isMobile ? 16 : 0,
-            borderTopRightRadius: isMobile ? 16 : 0,
+            height: isMobile ? "100%" : "100%",
+            borderTopLeftRadius: 0,
+            borderTopRightRadius: 0,
             overflow: "hidden",
           },
         }}
@@ -464,6 +464,7 @@ export function TransactionSheet({
                         onChange={(e) =>
                           handleInputChange("walletId", e.target.value)
                         }
+                        MenuProps={{ sx: { zIndex: 1400 } }}
                       >
                         {wallets.map((wallet) => (
                           <MenuItem key={wallet.id} value={wallet.id}>
@@ -484,6 +485,7 @@ export function TransactionSheet({
                         onChange={(e) =>
                           handleInputChange("toWalletId", e.target.value)
                         }
+                        MenuProps={{ sx: { zIndex: 1400 } }}
                       >
                         {wallets
                           .filter((w) => w.id !== formState.walletId)
@@ -583,6 +585,7 @@ export function TransactionSheet({
                         onChange={(e) =>
                           handleInputChange("walletId", e.target.value)
                         }
+                        MenuProps={{ sx: { zIndex: 1400 } }}
                       >
                         {wallets.map((wallet) => (
                           <MenuItem key={wallet.id} value={wallet.id}>
@@ -603,6 +606,7 @@ export function TransactionSheet({
                         onChange={(e) =>
                           handleInputChange("category", e.target.value)
                         }
+                        MenuProps={{ sx: { zIndex: 1400 } }}
                       >
                         {categories
                           .filter((c) => c !== "Transferência")
@@ -631,6 +635,7 @@ export function TransactionSheet({
                         onChange={(e) =>
                           handleInputChange("subcategory", e.target.value)
                         }
+                        MenuProps={{ sx: { zIndex: 1400 } }}
                       >
                         <MenuItem value="">
                           <em>Nenhuma</em>
