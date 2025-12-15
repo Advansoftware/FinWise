@@ -149,7 +149,7 @@ export function UserNav({ compact = false }: UserNavProps) {
         ) : (
           gamificationData &&
           levelInfo && (
-            <>
+            <Box>
               <Divider />
               <Box sx={{ px: 2, py: 1.5 }}>
                 {/* Nível com ícone e título */}
@@ -323,7 +323,7 @@ export function UserNav({ compact = false }: UserNavProps) {
                   </Box>
                 )}
               </Box>
-            </>
+            </Box>
           )
         )}
 

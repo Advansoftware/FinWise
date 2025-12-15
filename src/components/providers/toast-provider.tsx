@@ -8,19 +8,19 @@ import { styled, alpha } from "@mui/material/styles";
 const StyledMaterialDesignContent = styled(MaterialDesignContent)(
   ({ theme }) => ({
     "&.notistack-MuiContent-success": {
-      backgroundColor: "rgba(16, 185, 129, 0.15)",
+      backgroundColor: "rgba(16, 185, 129, 0.85)",
       backdropFilter: "blur(12px)",
       WebkitBackdropFilter: "blur(12px)",
-      border: "1px solid rgba(16, 185, 129, 0.3)",
-      color: "#10b981 !important",
+      border: "1px solid rgba(16, 185, 129, 0.5)",
+      color: "#ffffff !important",
       borderRadius: 8,
       padding: "4px 16px",
       minWidth: "auto",
-      boxShadow: "none",
+      boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)",
       fontFamily: theme.typography.fontFamily,
       fontSize: "0.875rem",
       "& *": {
-        color: "#10b981 !important",
+        color: "#ffffff !important",
       },
       "& .SnackbarItem-message": {
         padding: 0,
