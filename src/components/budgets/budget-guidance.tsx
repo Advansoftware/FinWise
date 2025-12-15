@@ -294,7 +294,7 @@ export function BudgetGuidance({ onBudgetCreated }: BudgetGuidanceProps) {
               <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   label="Renda Líquida Mensal"
-                  type="number"
+                  type="text"
                   placeholder="3100"
                   value={income}
                   onChange={(e) => setIncome(e.target.value)}
@@ -304,7 +304,7 @@ export function BudgetGuidance({ onBudgetCreated }: BudgetGuidanceProps) {
               <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   label="Dívidas/Empréstimos Mensais"
-                  type="number"
+                  type="text"
                   placeholder="1800"
                   value={debts}
                   onChange={(e) => setDebts(e.target.value)}
@@ -314,7 +314,7 @@ export function BudgetGuidance({ onBudgetCreated }: BudgetGuidanceProps) {
               <Grid size={{ xs: 12, md: 4 }}>
                 <TextField
                   label="Gastos Fixos (Aluguel + Contas)"
-                  type="number"
+                  type="text"
                   placeholder="1400"
                   value={fixedExpenses}
                   onChange={(e) => setFixedExpenses(e.target.value)}
@@ -355,7 +355,7 @@ export function BudgetGuidance({ onBudgetCreated }: BudgetGuidanceProps) {
                     <Grid size={{ xs: 12, md: 6 }}>
                       <TextField
                         label="Renda Futura"
-                        type="number"
+                        type="text"
                         placeholder="5333"
                         value={futureIncome}
                         onChange={(e) => setFutureIncome(e.target.value)}
@@ -569,7 +569,7 @@ export function BudgetGuidance({ onBudgetCreated }: BudgetGuidanceProps) {
                             spacing={1}
                           >
                             <TextField
-                              type="number"
+                              type="text"
                               value={category.percentage.toFixed(1)}
                               onChange={(e) =>
                                 updateCategoryPercentage(

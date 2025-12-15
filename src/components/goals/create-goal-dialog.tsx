@@ -155,7 +155,7 @@ export function CreateGoalDialog({
               <TextField
                 {...field}
                 label="Valor da Meta (R$)"
-                type="number"
+                type="text"
                 placeholder="Ex: 30000.00"
                 fullWidth
                 error={!!errors.targetAmount}
@@ -190,7 +190,7 @@ export function CreateGoalDialog({
               <TextField
                 {...field}
                 label="Depósito Mensal Planejado (R$)"
-                type="number"
+                type="text"
                 placeholder="Ex: 500.00"
                 fullWidth
                 error={!!errors.monthlyDeposit}

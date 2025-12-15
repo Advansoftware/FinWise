@@ -62,7 +62,7 @@ export function ManualSalaryInput({ data, onChange }: ManualSalaryInputProps) {
         <Grid size={{ xs: 12, md: 6 }}>
           <TextField
             label="Salário Bruto (R$)"
-            type="number"
+            type="text"
             value={data.grossSalary || ""}
             onChange={(e) => handleGrossChange(e.target.value)}
             placeholder="Ex: 5000.00"
@@ -75,7 +75,7 @@ export function ManualSalaryInput({ data, onChange }: ManualSalaryInputProps) {
         <Grid size={{ xs: 12, md: 6 }}>
           <TextField
             label="Salário Líquido (R$)"
-            type="number"
+            type="text"
             value={data.netSalary || ""}
             onChange={(e) => handleNetChange(e.target.value)}
             placeholder="Ex: 4200.00"

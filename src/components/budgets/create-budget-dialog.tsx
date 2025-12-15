@@ -203,7 +203,7 @@ export function CreateBudgetDialog({ children, initialData }: CreateBudgetDialog
                         <TextField
                             {...field}
                             label="Valor Orçado (R$)"
-                            type="number"
+                            type="text"
                             placeholder="Ex: 500.00"
                             fullWidth
                             InputProps={{

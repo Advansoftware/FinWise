@@ -425,7 +425,7 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
           <Box>
             <TextField
               label="Dias de Férias"
-              type="number"
+              type="text"
               value={vacationDays}
               onChange={(e) => setVacationDays(parseInt(e.target.value) || 30)}
               placeholder="30"

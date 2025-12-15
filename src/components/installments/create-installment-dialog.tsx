@@ -147,7 +147,7 @@ export function CreateInstallmentDialog({
   // Atualizar customAmounts quando totalInstallments ou totalAmount mudar
   useEffect(() => {
     if (totalInstallments > 0 && totalAmount > 0 && isManualValues) {
-      const defaultValue = totalAmount / totalInstallments;
+      const defaultValue = parseFloat((totalAmount / totalInstallments).toFixed(2));
       setCustomAmounts(Array(totalInstallments).fill(defaultValue));
     } else if (!isManualValues) {
       setCustomAmounts([]);
@@ -318,7 +318,7 @@ export function CreateInstallmentDialog({
                       {...field}
                       label={isRecurring ? "Valor da Parcela" : "Valor Total"}
                       placeholder="0.00"
-                      type="number"
+                      type="text"
                       InputProps={{
                         startAdornment: (
                           <InputAdornment position="start">R$</InputAdornment>
@@ -343,7 +343,7 @@ export function CreateInstallmentDialog({
                       {...field}
                       label="Número de Parcelas"
                       placeholder={isRecurring ? "N/A" : "12"}
-                      type="number"
+                      type="text"
                       disabled={isRecurring}
                       error={!!error}
                       helperText={error?.message}
@@ -422,8 +422,8 @@ export function CreateInstallmentDialog({
                             <Grid size={{ xs: 6, sm: 4, md: 3 }} key={index}>
                               <TextField
                                 label={`Parcela ${index + 1}`}
-                                type="number"
-                                value={amount}
+                                type="text"
+                                value={parseFloat(amount.toFixed(2))}
                                 onChange={(e) => {
                                   const newAmounts = [...customAmounts];
                                   newAmounts[index] = Number(e.target.value) || 0;
@@ -448,7 +448,7 @@ export function CreateInstallmentDialog({
                             size="small"
                             variant="outlined"
                             onClick={() => {
-                              const equalValue = totalAmount / totalInstallments;
+                              const equalValue = parseFloat((totalAmount / totalInstallments).toFixed(2));
                               setCustomAmounts(Array(totalInstallments).fill(equalValue));
                             }}
                           >

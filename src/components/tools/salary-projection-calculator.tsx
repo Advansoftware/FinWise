@@ -181,7 +181,7 @@ export function SalaryProjectionCalculator({
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Período (meses)"
-                type="number"
+                type="text"
                 value={projectionMonths}
                 onChange={(e) =>
                   setProjectionMonths(parseInt(e.target.value) || 12)

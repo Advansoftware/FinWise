@@ -300,7 +300,7 @@ export function ThirteenthSalaryCalculator({
           <Stack spacing={1}>
             <TextField
               label="Meses Trabalhados no Ano"
-              type="number"
+              type="text"
               value={monthsWorked}
               onChange={(e) => setMonthsWorked(parseInt(e.target.value) || 12)}
               placeholder="12"

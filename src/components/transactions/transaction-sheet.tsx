@@ -425,7 +425,7 @@ export function TransactionSheet({
                 <TextField
                   label="Valor"
                   placeholder="0.00"
-                  type="number"
+                  type="text"
                   value={formState.amount}
                   onChange={(e) => handleInputChange("amount", e.target.value)}
                   fullWidth
@@ -566,7 +566,7 @@ export function TransactionSheet({
                   <Grid size={{ xs: 4, sm: 4, md: 4 }}>
                     <TextField
                       label="Quantidade"
-                      type="number"
+                      type="text"
                       value={formState.quantity}
                       onChange={(e) =>
                         handleInputChange("quantity", e.target.value)

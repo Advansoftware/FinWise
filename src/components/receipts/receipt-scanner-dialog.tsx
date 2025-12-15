@@ -451,7 +451,7 @@ function ReceiptFormView({
                   <TextField
                     size="small"
                     label="Valor"
-                    type="number"
+                    type="text"
                     value={item.amount}
                     onChange={(e) =>
                       onUpdateItem(index, {
@@ -469,7 +469,7 @@ function ReceiptFormView({
                   <TextField
                     size="small"
                     label="Qtd"
-                    type="number"
+                    type="text"
                     value={item.quantity || 1}
                     onChange={(e) =>
                       onUpdateItem(index, {

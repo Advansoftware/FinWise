@@ -313,7 +313,7 @@ export function SeveranceCalculator({ payrollData }: SeveranceCalculatorProps) {
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Meses trabalhados"
-                type="number"
+                type="text"
                 value={workMonths}
                 onChange={(e) => setWorkMonths(Number(e.target.value))}
                 inputProps={{ min: 1, max: 600 }}
@@ -325,7 +325,7 @@ export function SeveranceCalculator({ payrollData }: SeveranceCalculatorProps) {
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Dias de férias pendentes"
-                type="number"
+                type="text"
                 value={vacationDays}
                 onChange={(e) => setVacationDays(Number(e.target.value))}
                 inputProps={{ min: 0, max: 60 }}
@@ -337,7 +337,7 @@ export function SeveranceCalculator({ payrollData }: SeveranceCalculatorProps) {
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Saldo FGTS (R$)"
-                type="number"
+                type="text"
                 value={fgtsBalance}
                 onChange={(e) => setFgtsBalance(Number(e.target.value))}
                 inputProps={{ min: 0 }}

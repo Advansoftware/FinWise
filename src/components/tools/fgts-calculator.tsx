@@ -170,7 +170,7 @@ export function FGTSCalculator({ payrollData }: FGTSCalculatorProps) {
             <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 label="Meses trabalhados"
-                type="number"
+                type="text"
                 value={workMonths}
                 onChange={(e) => setWorkMonths(Number(e.target.value))}
                 helperText="Tempo na empresa atual"
@@ -183,7 +183,7 @@ export function FGTSCalculator({ payrollData }: FGTSCalculatorProps) {
             <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 label="Saldo FGTS atual (R$)"
-                type="number"
+                type="text"
                 value={currentFGTSBalance}
                 onChange={(e) => setCurrentFGTSBalance(Number(e.target.value))}
                 helperText="Consulte no app FGTS"
@@ -196,7 +196,7 @@ export function FGTSCalculator({ payrollData }: FGTSCalculatorProps) {
             <Grid size={{ xs: 12, sm: 4 }}>
               <TextField
                 label="Projetar para (anos)"
-                type="number"
+                type="text"
                 value={projectionYears}
                 onChange={(e) => setProjectionYears(Number(e.target.value))}
                 helperText="Tempo futuro"

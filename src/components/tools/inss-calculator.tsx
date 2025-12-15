@@ -223,7 +223,7 @@ export function INSSCalculator({ payrollData }: INSSCalculatorProps) {
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Idade atual"
-                type="number"
+                type="text"
                 value={currentAge}
                 onChange={(e) => setCurrentAge(Number(e.target.value))}
                 inputProps={{ min: 18, max: 70 }}
@@ -234,7 +234,7 @@ export function INSSCalculator({ payrollData }: INSSCalculatorProps) {
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Anos já contribuídos"
-                type="number"
+                type="text"
                 value={contributionYears}
                 onChange={(e) => setContributionYears(Number(e.target.value))}
                 inputProps={{ min: 0, max: 50 }}

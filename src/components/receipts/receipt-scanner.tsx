@@ -199,7 +199,7 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
                   fullWidth
                 />
                 <TextField 
-                  type="number" 
+                  type="text" 
                   defaultValue={item.amount} 
                   placeholder="Valor"
                   InputProps={{ readOnly: !extractedData.isValid }}
@@ -221,7 +221,7 @@ export function ReceiptScanner({ onComplete }: ReceiptScannerProps) {
           <Stack spacing={1}>
             <Typography component="label" htmlFor="total" sx={{ fontSize: '0.875rem', fontWeight: 500 }}>Total</Typography>
             <TextField 
-              type="number" 
+              type="text" 
               defaultValue={extractedData.totalAmount || 0} 
               placeholder="Total" 
               InputProps={{ readOnly: !extractedData.isValid }}

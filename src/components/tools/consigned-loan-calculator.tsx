@@ -295,7 +295,7 @@ export function ConsignedLoanCalculator({ payrollData }: ConsignedLoanProps) {
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Consignações atuais (R$)"
-                type="number"
+                type="text"
                 value={currentLoans}
                 onChange={(e) => setCurrentLoans(Number(e.target.value))}
                 InputProps={{ inputProps: { min: 0 } }}
@@ -306,7 +306,7 @@ export function ConsignedLoanCalculator({ payrollData }: ConsignedLoanProps) {
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Valor desejado (R$)"
-                type="number"
+                type="text"
                 value={loanAmount}
                 onChange={(e) => setLoanAmount(Number(e.target.value))}
                 InputProps={{ inputProps: { min: 1000, max: 500000 } }}
@@ -317,7 +317,7 @@ export function ConsignedLoanCalculator({ payrollData }: ConsignedLoanProps) {
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Prazo (meses)"
-                type="number"
+                type="text"
                 value={termMonths}
                 onChange={(e) => setTermMonths(Number(e.target.value))}
                 InputProps={{ inputProps: { min: 6, max: 96 } }}
@@ -328,7 +328,7 @@ export function ConsignedLoanCalculator({ payrollData }: ConsignedLoanProps) {
             <Grid size={{ xs: 12, sm: 6 }}>
               <TextField
                 label="Taxa de juros (% a.m.)"
-                type="number"
+                type="text"
                 value={interestRate}
                 onChange={(e) => setInterestRate(Number(e.target.value))}
                 InputProps={{

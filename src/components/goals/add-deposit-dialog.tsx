@@ -126,7 +126,7 @@ export function AddDepositDialog({
                 <TextField
                   {...field}
                   label="Valor do Depósito (R$)"
-                  type="number"
+                  type="text"
                   placeholder="Ex: 100.00"
                   fullWidth
                   error={!!errors.amount}

@@ -218,7 +218,7 @@ export function PayInstallmentDialog({
                   <TextField
                     {...field}
                     label="Valor Pago"
-                    type="number"
+                    type="text"
                     InputProps={{
                       startAdornment: <InputAdornment position="start">R$</InputAdornment>,
                     }}

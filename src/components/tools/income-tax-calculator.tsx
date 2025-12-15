@@ -242,7 +242,7 @@ export function IncomeTaxCalculator({ payrollData }: IncomeTaxCalculatorProps) {
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 label="Número de dependentes"
-                type="number"
+                type="text"
                 value={dependents}
                 onChange={(e) => setDependents(Number(e.target.value))}
                 inputProps={{ min: 0, max: 10 }}
@@ -253,7 +253,7 @@ export function IncomeTaxCalculator({ payrollData }: IncomeTaxCalculatorProps) {
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 label="Gastos médicos/ano (R$)"
-                type="number"
+                type="text"
                 value={medicalExpenses}
                 onChange={(e) => setMedicalExpenses(Number(e.target.value))}
                 inputProps={{ min: 0 }}
@@ -264,7 +264,7 @@ export function IncomeTaxCalculator({ payrollData }: IncomeTaxCalculatorProps) {
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
                 label="Gastos educação/ano (R$)"
-                type="number"
+                type="text"
                 value={educationExpenses}
                 onChange={(e) => setEducationExpenses(Number(e.target.value))}
                 inputProps={{ min: 0 }}
@@ -276,7 +276,7 @@ export function IncomeTaxCalculator({ payrollData }: IncomeTaxCalculatorProps) {
               <Grid size={{ xs: 12, md: 6 }}>
                 <TextField
                   label="Desconto INSS mensal (R$)"
-                  type="number"
+                  type="text"
                   value={inssContribution}
                   onChange={(e) => setInssContribution(Number(e.target.value))}
                   inputProps={{ min: 0 }}

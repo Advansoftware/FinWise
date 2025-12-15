@@ -255,7 +255,7 @@ export function ChildTransactionsDialog({
           <TextField
             label="Valor"
             size="small"
-            type="number"
+            type="text"
             value={childForm.amount || ""}
             onChange={(e) =>
               setChildForm((f) => ({
@@ -274,7 +274,7 @@ export function ChildTransactionsDialog({
           <TextField
             label="Qtd"
             size="small"
-            type="number"
+            type="text"
             value={childForm.quantity}
             onChange={(e) =>
               setChildForm((f) => ({

@@ -14,8 +14,13 @@ import {
   Box,
   Stack,
   Typography,
+  IconButton,
+  InputAdornment,
+  useTheme,
+  useMediaQuery,
+  alpha,
 } from "@mui/material";
-import { Save, Plus, X, Receipt, DollarSign } from "lucide-react";
+import { Save, Plus, X, Receipt, DollarSign, Pencil, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import {
   PayrollData,
@@ -24,8 +29,12 @@ import {
   STANDARD_ALLOWANCE_TYPES,
 } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 
 export function PayrollCard() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
+  
   const [payrollData, setPayrollData] = useState<PayrollData>({
     id: "",
     userId: "",
@@ -35,8 +44,10 @@ export function PayrollCard() {
     netSalary: 0,
     updatedAt: new Date().toISOString(),
   });
+  const [originalData, setOriginalData] = useState<PayrollData | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isPending, startTransition] = useTransition();
+  const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
   const { user } = useAuth();
 
   const calculateNetSalary = (gross: number, discounts: PayrollDiscount[]) => {
@@ -127,6 +138,7 @@ export function PayrollCard() {
         if (response.ok) {
           const savedData = await response.json();
           setPayrollData(savedData);
+          setOriginalData(null);
           setIsEditing(false);
         } else {
           const errorData = await response.json();
@@ -138,37 +150,45 @@ export function PayrollCard() {
     });
   };
 
-  const clearPayrollData = () => {
-    if (
-      confirm(
-        "Tem certeza que deseja limpar todos os dados do holerite? Esta ação não pode ser desfeita."
-      )
-    ) {
-      const emptyPayrollData: PayrollData = {
-        id: user?.uid || "",
-        userId: user?.uid || "",
-        grossSalary: 0,
-        allowances: 0,
-        discounts: [],
-        netSalary: 0,
-        updatedAt: new Date().toISOString(),
-      };
-      setPayrollData(emptyPayrollData);
-      setIsEditing(false);
+  const handleStartEdit = () => {
+    setOriginalData(JSON.parse(JSON.stringify(payrollData)));
+    setIsEditing(true);
+  };
 
-      if (user) {
-        startTransition(async () => {
-          try {
-            await fetch(`/api/payroll/${user.uid}`, {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(emptyPayrollData),
-            });
-          } catch (error) {
-            console.error("Error clearing payroll data:", error);
-          }
-        });
-      }
+  const handleCancelEdit = () => {
+    if (originalData) {
+      setPayrollData(originalData);
+    }
+    setOriginalData(null);
+    setIsEditing(false);
+  };
+
+  const handleClearData = async () => {
+    const emptyPayrollData: PayrollData = {
+      id: user?.uid || "",
+      userId: user?.uid || "",
+      grossSalary: 0,
+      allowances: 0,
+      discounts: [],
+      netSalary: 0,
+      updatedAt: new Date().toISOString(),
+    };
+    setPayrollData(emptyPayrollData);
+    setIsEditing(false);
+    setIsClearDialogOpen(false);
+
+    if (user) {
+      startTransition(async () => {
+        try {
+          await fetch(`/api/payroll/${user.uid}`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(emptyPayrollData),
+          });
+        } catch (error) {
+          console.error("Error clearing payroll data:", error);
+        }
+      });
     }
   };
 
@@ -192,6 +212,19 @@ export function PayrollCard() {
     }));
   };
 
+  const addDiscount = (type: "discount" | "allowance") => {
+    const newItem: PayrollDiscount = {
+      id: Date.now().toString(),
+      name: "",
+      amount: 0,
+      type,
+    };
+    setPayrollData((prev) => ({
+      ...prev,
+      discounts: [...prev.discounts, newItem],
+    }));
+  };
+
   const totalDiscounts = payrollData.discounts
     .filter((d) => d.type === "discount")
     .reduce((sum, discount) => sum + discount.amount, 0);
@@ -200,543 +233,549 @@ export function PayrollCard() {
     .reduce((sum, allowance) => sum + allowance.amount, 0);
 
   return (
-    <Card sx={{ height: "100%" }}>
-      <CardHeader sx={{ pb: 2 }}>
-        <Stack
-          direction="row"
-          alignItems="center"
-          justifyContent="space-between"
-        >
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Receipt style={{ width: 20, height: 20 }} />
-            <Typography variant="h6" sx={{ fontSize: "1.125rem" }}>
-              Dados do Holerite
-            </Typography>
-          </Stack>
-          <Stack direction="row" alignItems="center" spacing={1}>
-            {payrollData.grossSalary > 0 && (
-              <Button
-                variant="contained"
-                color="error"
-                size="small"
-                onClick={clearPayrollData}
-                sx={{ height: 32, fontSize: "0.75rem" }}
-              >
-                🗑️ Limpar
-              </Button>
-            )}
-            <Button
-              variant={isEditing ? "contained" : "outlined"}
-              size="small"
-              onClick={() => {
-                if (isEditing) {
-                  savePayrollData();
-                } else {
-                  setIsEditing(true);
-                }
-              }}
-              disabled={isPending}
-              sx={{ height: 32 }}
-            >
-              {isPending ? (
-                "Salvando..."
-              ) : isEditing ? (
+    <>
+      <Card sx={{ height: "100%" }}>
+        <CardHeader
+          sx={{ pb: 2 }}
+          title={
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Receipt style={{ width: 20, height: 20 }} />
+              <Typography variant="h6" sx={{ fontSize: "1.125rem" }}>
+                Dados do Holerite
+              </Typography>
+            </Stack>
+          }
+          action={
+            <Stack direction="row" alignItems="center" spacing={1}>
+              {isEditing ? (
                 <>
-                  <Save style={{ width: 16, height: 16, marginRight: 8 }} />
-                  Salvar
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={handleCancelEdit}
+                    disabled={isPending}
+                    sx={{ height: 32 }}
+                  >
+                    Cancelar
+                  </Button>
+                  {payrollData.grossSalary > 0 && (
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      size="small"
+                      onClick={() => setIsClearDialogOpen(true)}
+                      disabled={isPending}
+                      startIcon={<Trash2 size={14} />}
+                      sx={{ height: 32 }}
+                    >
+                      {!isMobile && "Limpar"}
+                    </Button>
+                  )}
+                  <Button
+                    variant="contained"
+                    size="small"
+                    onClick={savePayrollData}
+                    disabled={isPending}
+                    startIcon={<Save size={14} />}
+                    sx={{ height: 32 }}
+                  >
+                    {isPending ? "Salvando..." : "Salvar"}
+                  </Button>
                 </>
               ) : (
-                "Editar"
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={handleStartEdit}
+                  startIcon={<Pencil size={14} />}
+                  sx={{ height: 32 }}
+                >
+                  Editar
+                </Button>
               )}
-            </Button>
-          </Stack>
-        </Stack>
-      </CardHeader>
-      <CardContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        {/* Salary Information Grid */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
-            gap: 2,
-          }}
-        >
-          <Stack spacing={1}>
-            <Typography
-              component="label"
-              htmlFor="grossSalary"
-              sx={{ fontSize: "0.875rem", fontWeight: 500 }}
-            >
-              Salário Bruto
-            </Typography>
-            {isEditing ? (
-              <TextField
-                id="grossSalary"
-                type="number"
-                value={payrollData.grossSalary}
-                onChange={(e) =>
-                  setPayrollData((prev) => ({
-                    ...prev,
-                    grossSalary: parseFloat(e.target.value) || 0,
-                  }))
-                }
-                placeholder="0,00"
-                size="small"
-                fullWidth
-                inputProps={{ step: "0.01" }}
-              />
-            ) : (
+            </Stack>
+          }
+        />
+        <CardContent sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {/* Salary Information Grid */}
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: { xs: "1fr", md: "repeat(3, 1fr)" },
+              gap: 2,
+            }}
+          >
+            <Stack spacing={1}>
+              <Typography
+                component="label"
+                htmlFor="grossSalary"
+                sx={{ fontSize: "0.875rem", fontWeight: 500 }}
+              >
+                Salário Bruto
+              </Typography>
+              {isEditing ? (
+                <TextField
+                  id="grossSalary"
+                  type="text"
+                  value={payrollData.grossSalary || ""}
+                  onChange={(e) =>
+                    setPayrollData((prev) => ({
+                      ...prev,
+                      grossSalary: parseFloat(e.target.value) || 0,
+                    }))
+                  }
+                  placeholder="0,00"
+                  size="small"
+                  fullWidth
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">R$</InputAdornment>
+                    ),
+                  }}
+                  inputProps={{ inputMode: "decimal" }}
+                />
+              ) : (
+                <Box
+                  sx={{
+                    height: 40,
+                    display: "flex",
+                    alignItems: "center",
+                    px: 1.5,
+                    bgcolor: alpha(theme.palette.success.main, 0.1),
+                    color: theme.palette.success.main,
+                    fontWeight: 500,
+                    borderRadius: 1,
+                    border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
+                  }}
+                >
+                  {formatCurrency(payrollData.grossSalary)}
+                </Box>
+              )}
+            </Stack>
+
+            <Stack spacing={1}>
+              <Typography
+                component="label"
+                sx={{
+                  fontSize: "0.875rem",
+                  fontWeight: 500,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
+                }}
+              >
+                <DollarSign style={{ width: 16, height: 16, color: theme.palette.info.main }} />
+                <span>Total de Ajudas de Custo</span>
+              </Typography>
               <Box
                 sx={{
-                  height: 36,
+                  height: 40,
                   display: "flex",
                   alignItems: "center",
                   px: 1.5,
-                  bgcolor: "rgba(34, 197, 94, 0.1)",
-                  color: "#16a34a",
+                  bgcolor: alpha(theme.palette.info.main, 0.1),
+                  color: theme.palette.info.main,
                   fontWeight: 500,
                   borderRadius: 1,
-                  border: "1px solid rgba(34, 197, 94, 0.2)",
+                  border: `1px solid ${alpha(theme.palette.info.main, 0.2)}`,
                 }}
               >
-                {formatCurrency(payrollData.grossSalary)}
+                {formatCurrency(totalAllowances)}
               </Box>
-            )}
-          </Stack>
-
-          <Stack spacing={1}>
-            <Typography
-              component="label"
-              sx={{
-                fontSize: "0.875rem",
-                fontWeight: 500,
-                display: "flex",
-                alignItems: "center",
-                gap: 0.5,
-              }}
-            >
-              <DollarSign style={{ width: 16, height: 16, color: "#2563eb" }} />
-              <span>Total de Ajudas de Custo</span>
-            </Typography>
-            <Box
-              sx={{
-                height: 36,
-                display: "flex",
-                alignItems: "center",
-                px: 1.5,
-                bgcolor: "rgba(59, 130, 246, 0.1)",
-                color: "#2563eb",
-                fontWeight: 500,
-                borderRadius: 1,
-                border: "1px solid rgba(59, 130, 246, 0.2)",
-              }}
-            >
-              {formatCurrency(totalAllowances)}
-            </Box>
-          </Stack>
-
-          <Stack spacing={1}>
-            <Typography
-              component="label"
-              sx={{
-                fontSize: "0.875rem",
-                fontWeight: 500,
-                display: "flex",
-                alignItems: "center",
-                gap: 0.5,
-              }}
-            >
-              <DollarSign style={{ width: 16, height: 16 }} />
-              <span>Salário Líquido</span>
-            </Typography>
-            <Box
-              sx={{
-                height: 36,
-                display: "flex",
-                alignItems: "center",
-                px: 1.5,
-                bgcolor: (theme) => `${theme.palette.primary.main}1a`,
-                color: "primary.main",
-                fontWeight: 700,
-                borderRadius: 1,
-                border: (theme) => `1px solid ${theme.palette.primary.main}33`,
-              }}
-            >
-              {formatCurrency(payrollData.netSalary)}
-            </Box>
-          </Stack>
-        </Box>
-
-        {/* Discounts and Allowances Section */}
-        <Stack spacing={2}>
-          {/* Descontos */}
-          <Stack spacing={1.5}>
-            <Stack
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-            >
-              <Typography
-                component="label"
-                sx={{ fontSize: "0.875rem", fontWeight: 500, color: "#dc2626" }}
-              >
-                💳 Descontos{" "}
-                {payrollData.discounts.filter((d) => d.type === "discount")
-                  .length > 0 &&
-                  `(${
-                    payrollData.discounts.filter((d) => d.type === "discount")
-                      .length
-                  })`}
-              </Typography>
-              {isEditing && (
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => {
-                    const newDiscount: PayrollDiscount = {
-                      id: Date.now().toString(),
-                      name: "",
-                      amount: 0,
-                      type: "discount",
-                    };
-                    setPayrollData((prev) => ({
-                      ...prev,
-                      discounts: [...prev.discounts, newDiscount],
-                    }));
-                  }}
-                  sx={{ height: 28, fontSize: "0.75rem" }}
-                >
-                  <Plus style={{ width: 12, height: 12, marginRight: 4 }} />
-                  Adicionar Desconto
-                </Button>
-              )}
             </Stack>
 
-            {payrollData.discounts.filter((d) => d.type === "discount").length >
-            0 ? (
-              <Stack spacing={1} sx={{ maxHeight: 160, overflowY: "auto" }}>
-                {payrollData.discounts
-                  .filter((d) => d.type === "discount")
-                  .map((discount) => (
-                    <Stack
-                      key={discount.id}
-                      direction="row"
-                      alignItems="center"
-                      spacing={1}
-                      sx={{
-                        p: 1,
-                        bgcolor: "rgba(239, 68, 68, 0.1)",
-                        borderRadius: 1,
-                        border: "1px solid rgba(239, 68, 68, 0.2)",
-                      }}
-                    >
-                      {isEditing ? (
-                        <>
-                          <Select
-                            value={discount.name}
-                            onChange={(e) =>
-                              updateDiscount(
-                                discount.id,
-                                "name",
-                                e.target.value
-                              )
-                            }
-                            size="small"
-                            fullWidth
-                            sx={{ flex: 1, fontSize: "0.75rem" }}
-                          >
-                            {STANDARD_DISCOUNT_TYPES.map((discountType) => (
-                              <MenuItem
-                                key={discountType}
-                                value={discountType}
-                                sx={{ fontSize: "0.75rem" }}
-                              >
-                                {discountType}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                          <TextField
-                            type="number"
-                            value={discount.amount}
-                            onChange={(e) =>
-                              updateDiscount(
-                                discount.id,
-                                "amount",
-                                parseFloat(e.target.value) || 0
-                              )
-                            }
-                            placeholder="0,00"
-                            size="small"
-                            inputProps={{ step: "0.01" }}
-                            sx={{ width: 96, fontSize: "0.75rem" }}
-                          />
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={() => removeDiscount(discount.id)}
-                            sx={{ height: 32, width: 32, minWidth: 32, p: 0 }}
-                          >
-                            <X style={{ width: 12, height: 12 }} />
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Typography
-                            sx={{
-                              flex: 1,
-                              fontSize: "0.75rem",
-                              fontWeight: 500,
-                              color: "#dc2626",
-                            }}
-                          >
-                            {discount.name}
-                          </Typography>
-                          <Chip
-                            variant="filled"
-                            color="error"
-                            label={`-${formatCurrency(discount.amount)}`}
-                            sx={{ fontSize: "0.75rem" }}
-                          />
-                        </>
-                      )}
-                    </Stack>
-                  ))}
-              </Stack>
-            ) : (
-              <Typography
-                sx={{
-                  fontSize: "0.75rem",
-                  color: "text.secondary",
-                  textAlign: "center",
-                  py: 1,
-                }}
-              >
-                Nenhum desconto cadastrado
-              </Typography>
-            )}
-
-            {payrollData.discounts.filter((d) => d.type === "discount").length >
-              0 && (
-              <Box sx={{ textAlign: "right" }}>
-                <Typography
-                  component="span"
-                  sx={{
-                    fontSize: "0.75rem",
-                    color: "#dc2626",
-                    fontWeight: 500,
-                  }}
-                >
-                  Total descontos: {formatCurrency(totalDiscounts)}
-                </Typography>
-              </Box>
-            )}
-          </Stack>
-
-          <Divider />
-
-          {/* Ajudas de Custo / Adicionais */}
-          <Stack spacing={1.5}>
-            <Stack
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-            >
+            <Stack spacing={1}>
               <Typography
                 component="label"
-                sx={{ fontSize: "0.875rem", fontWeight: 500, color: "#16a34a" }}
-              >
-                💰 Adicionais{" "}
-                {payrollData.discounts.filter((d) => d.type === "allowance")
-                  .length > 0 &&
-                  `(${
-                    payrollData.discounts.filter((d) => d.type === "allowance")
-                      .length
-                  })`}
-              </Typography>
-              {isEditing && (
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={() => {
-                    const newAllowance: PayrollDiscount = {
-                      id: Date.now().toString(),
-                      name: "",
-                      amount: 0,
-                      type: "allowance",
-                    };
-                    setPayrollData((prev) => ({
-                      ...prev,
-                      discounts: [...prev.discounts, newAllowance],
-                    }));
-                  }}
-                  sx={{ height: 28, fontSize: "0.75rem" }}
-                >
-                  <Plus style={{ width: 12, height: 12, marginRight: 4 }} />
-                  Adicionar Adicional
-                </Button>
-              )}
-            </Stack>
-
-            {payrollData.discounts.filter((d) => d.type === "allowance")
-              .length > 0 ? (
-              <Stack spacing={1} sx={{ maxHeight: 160, overflowY: "auto" }}>
-                {payrollData.discounts
-                  .filter((d) => d.type === "allowance")
-                  .map((allowance) => (
-                    <Stack
-                      key={allowance.id}
-                      direction="row"
-                      alignItems="center"
-                      spacing={1}
-                      sx={{
-                        p: 1,
-                        bgcolor: "rgba(34, 197, 94, 0.1)",
-                        borderRadius: 1,
-                        border: "1px solid rgba(34, 197, 94, 0.2)",
-                      }}
-                    >
-                      {isEditing ? (
-                        <>
-                          <Select
-                            value={allowance.name}
-                            onChange={(e) =>
-                              updateDiscount(
-                                allowance.id,
-                                "name",
-                                e.target.value
-                              )
-                            }
-                            size="small"
-                            fullWidth
-                            sx={{ flex: 1, fontSize: "0.75rem" }}
-                          >
-                            {STANDARD_ALLOWANCE_TYPES.map((allowanceType) => (
-                              <MenuItem
-                                key={allowanceType}
-                                value={allowanceType}
-                                sx={{ fontSize: "0.75rem" }}
-                              >
-                                {allowanceType}
-                              </MenuItem>
-                            ))}
-                          </Select>
-                          <TextField
-                            type="number"
-                            value={allowance.amount}
-                            onChange={(e) =>
-                              updateDiscount(
-                                allowance.id,
-                                "amount",
-                                Number(e.target.value) || 0
-                              )
-                            }
-                            placeholder="Valor"
-                            size="small"
-                            fullWidth
-                            sx={{ width: 96, height: 32, fontSize: "0.75rem" }}
-                          />
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={() => removeDiscount(allowance.id)}
-                            sx={{ height: 32, width: 32, minWidth: 32, p: 0 }}
-                          >
-                            <X style={{ width: 12, height: 12 }} />
-                          </Button>
-                        </>
-                      ) : (
-                        <>
-                          <Typography
-                            sx={{
-                              flex: 1,
-                              fontSize: "0.75rem",
-                              fontWeight: 500,
-                              color: "#16a34a",
-                            }}
-                          >
-                            {allowance.name}
-                          </Typography>
-                          <Chip
-                            variant="filled"
-                            color="success"
-                            label={`+${formatCurrency(allowance.amount)}`}
-                            sx={{ fontSize: "0.75rem" }}
-                          />
-                        </>
-                      )}
-                    </Stack>
-                  ))}
-              </Stack>
-            ) : (
-              <Typography
                 sx={{
-                  fontSize: "0.75rem",
-                  color: "text.secondary",
-                  textAlign: "center",
-                  py: 1,
+                  fontSize: "0.875rem",
+                  fontWeight: 500,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 0.5,
                 }}
               >
-                Nenhum adicional cadastrado
+                <DollarSign style={{ width: 16, height: 16 }} />
+                <span>Salário Líquido</span>
               </Typography>
-            )}
-
-            {payrollData.discounts.filter((d) => d.type === "allowance")
-              .length > 0 && (
-              <Box sx={{ textAlign: "right" }}>
-                <Typography
-                  component="span"
-                  sx={{
-                    fontSize: "0.75rem",
-                    color: "#16a34a",
-                    fontWeight: 500,
-                  }}
-                >
-                  Total adicionais: {formatCurrency(totalAllowances)}
-                </Typography>
-              </Box>
-            )}
-          </Stack>
-        </Stack>
-
-        {/* Summary */}
-        {!isEditing && payrollData.grossSalary > 0 && (
-          <Box
-            sx={{
-              fontSize: "0.75rem",
-              color: "text.secondary",
-              bgcolor: "action.hover",
-              p: 3,
-              borderRadius: 1,
-            }}
-          >
-            <Box sx={{ textAlign: "center" }}>
-              <strong>Cálculo:</strong>{" "}
-              {formatCurrency(payrollData.grossSalary)} +{" "}
-              {formatCurrency(payrollData.allowances)} -{" "}
-              {formatCurrency(totalDiscounts)} ={" "}
               <Box
-                component="span"
-                sx={{ color: "primary.main", fontWeight: 600 }}
+                sx={{
+                  height: 40,
+                  display: "flex",
+                  alignItems: "center",
+                  px: 1.5,
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  color: theme.palette.primary.main,
+                  fontWeight: 700,
+                  borderRadius: 1,
+                  border: `1px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                }}
               >
                 {formatCurrency(payrollData.netSalary)}
               </Box>
-            </Box>
+            </Stack>
           </Box>
-        )}
 
-        {payrollData.updatedAt && !isEditing && (
-          <Typography
-            sx={{
-              fontSize: "0.75rem",
-              color: "text.secondary",
-              textAlign: "center",
-            }}
-          >
-            Atualizado em:{" "}
-            {new Date(payrollData.updatedAt).toLocaleDateString("pt-BR")}
-          </Typography>
-        )}
-      </CardContent>
-    </Card>
+          {/* Discounts and Allowances Section */}
+          <Stack spacing={2}>
+            {/* Descontos */}
+            <Stack spacing={1.5}>
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+              >
+                <Typography
+                  component="label"
+                  sx={{ fontSize: "0.875rem", fontWeight: 500, color: theme.palette.error.main }}
+                >
+                  💳 Descontos{" "}
+                  {payrollData.discounts.filter((d) => d.type === "discount")
+                    .length > 0 &&
+                    `(${
+                      payrollData.discounts.filter((d) => d.type === "discount")
+                        .length
+                    })`}
+                </Typography>
+                {isEditing && (
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => addDiscount("discount")}
+                    startIcon={<Plus size={12} />}
+                    sx={{ height: 28, fontSize: "0.75rem" }}
+                  >
+                    Adicionar Desconto
+                  </Button>
+                )}
+              </Stack>
+
+              {payrollData.discounts.filter((d) => d.type === "discount").length >
+              0 ? (
+                <Stack spacing={1} sx={{ maxHeight: 160, overflowY: "auto" }}>
+                  {payrollData.discounts
+                    .filter((d) => d.type === "discount")
+                    .map((discount) => (
+                      <Stack
+                        key={discount.id}
+                        direction="row"
+                        alignItems="center"
+                        spacing={1}
+                        sx={{
+                          p: 1,
+                          bgcolor: alpha(theme.palette.error.main, 0.08),
+                          borderRadius: 1,
+                          border: `1px solid ${alpha(theme.palette.error.main, 0.2)}`,
+                        }}
+                      >
+                        {isEditing ? (
+                          <>
+                            <Select
+                              value={discount.name}
+                              onChange={(e) =>
+                                updateDiscount(
+                                  discount.id,
+                                  "name",
+                                  e.target.value
+                                )
+                              }
+                              size="small"
+                              fullWidth
+                              sx={{ flex: 1, fontSize: "0.75rem" }}
+                            >
+                              {STANDARD_DISCOUNT_TYPES.map((discountType) => (
+                                <MenuItem
+                                  key={discountType}
+                                  value={discountType}
+                                  sx={{ fontSize: "0.75rem" }}
+                                >
+                                  {discountType}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                            <TextField
+                              type="text"
+                              value={discount.amount || ""}
+                              onChange={(e) =>
+                                updateDiscount(
+                                  discount.id,
+                                  "amount",
+                                  parseFloat(e.target.value) || 0
+                                )
+                              }
+                              placeholder="0,00"
+                              size="small"
+                              inputProps={{ inputMode: "decimal" }}
+                              sx={{ width: 96, fontSize: "0.75rem" }}
+                            />
+                            <IconButton
+                              size="small"
+                              onClick={() => removeDiscount(discount.id)}
+                              sx={{ color: theme.palette.error.main }}
+                            >
+                              <X size={14} />
+                            </IconButton>
+                          </>
+                        ) : (
+                          <>
+                            <Typography
+                              sx={{
+                                flex: 1,
+                                fontSize: "0.75rem",
+                                fontWeight: 500,
+                                color: theme.palette.error.main,
+                              }}
+                            >
+                              {discount.name}
+                            </Typography>
+                            <Chip
+                              variant="filled"
+                              color="error"
+                              label={`-${formatCurrency(discount.amount)}`}
+                              size="small"
+                              sx={{ fontSize: "0.75rem" }}
+                            />
+                          </>
+                        )}
+                      </Stack>
+                    ))}
+                </Stack>
+              ) : (
+                <Typography
+                  sx={{
+                    fontSize: "0.75rem",
+                    color: "text.secondary",
+                    textAlign: "center",
+                    py: 1,
+                  }}
+                >
+                  Nenhum desconto cadastrado
+                </Typography>
+              )}
+
+              {payrollData.discounts.filter((d) => d.type === "discount").length >
+                0 && (
+                <Box sx={{ textAlign: "right" }}>
+                  <Typography
+                    component="span"
+                    sx={{
+                      fontSize: "0.75rem",
+                      color: theme.palette.error.main,
+                      fontWeight: 500,
+                    }}
+                  >
+                    Total descontos: {formatCurrency(totalDiscounts)}
+                  </Typography>
+                </Box>
+              )}
+            </Stack>
+
+            <Divider />
+
+            {/* Ajudas de Custo / Adicionais */}
+            <Stack spacing={1.5}>
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+              >
+                <Typography
+                  component="label"
+                  sx={{ fontSize: "0.875rem", fontWeight: 500, color: theme.palette.success.main }}
+                >
+                  💰 Adicionais{" "}
+                  {payrollData.discounts.filter((d) => d.type === "allowance")
+                    .length > 0 &&
+                    `(${
+                      payrollData.discounts.filter((d) => d.type === "allowance")
+                        .length
+                    })`}
+                </Typography>
+                {isEditing && (
+                  <Button
+                    variant="outlined"
+                    size="small"
+                    onClick={() => addDiscount("allowance")}
+                    startIcon={<Plus size={12} />}
+                    sx={{ height: 28, fontSize: "0.75rem" }}
+                  >
+                    Adicionar Adicional
+                  </Button>
+                )}
+              </Stack>
+
+              {payrollData.discounts.filter((d) => d.type === "allowance")
+                .length > 0 ? (
+                <Stack spacing={1} sx={{ maxHeight: 160, overflowY: "auto" }}>
+                  {payrollData.discounts
+                    .filter((d) => d.type === "allowance")
+                    .map((allowance) => (
+                      <Stack
+                        key={allowance.id}
+                        direction="row"
+                        alignItems="center"
+                        spacing={1}
+                        sx={{
+                          p: 1,
+                          bgcolor: alpha(theme.palette.success.main, 0.08),
+                          borderRadius: 1,
+                          border: `1px solid ${alpha(theme.palette.success.main, 0.2)}`,
+                        }}
+                      >
+                        {isEditing ? (
+                          <>
+                            <Select
+                              value={allowance.name}
+                              onChange={(e) =>
+                                updateDiscount(
+                                  allowance.id,
+                                  "name",
+                                  e.target.value
+                                )
+                              }
+                              size="small"
+                              fullWidth
+                              sx={{ flex: 1, fontSize: "0.75rem" }}
+                            >
+                              {STANDARD_ALLOWANCE_TYPES.map((allowanceType) => (
+                                <MenuItem
+                                  key={allowanceType}
+                                  value={allowanceType}
+                                  sx={{ fontSize: "0.75rem" }}
+                                >
+                                  {allowanceType}
+                                </MenuItem>
+                              ))}
+                            </Select>
+                            <TextField
+                              type="text"
+                              value={allowance.amount || ""}
+                              onChange={(e) =>
+                                updateDiscount(
+                                  allowance.id,
+                                  "amount",
+                                  parseFloat(e.target.value) || 0
+                                )
+                              }
+                              placeholder="Valor"
+                              size="small"
+                              inputProps={{ inputMode: "decimal" }}
+                              sx={{ width: 96, fontSize: "0.75rem" }}
+                            />
+                            <IconButton
+                              size="small"
+                              onClick={() => removeDiscount(allowance.id)}
+                              sx={{ color: theme.palette.error.main }}
+                            >
+                              <X size={14} />
+                            </IconButton>
+                          </>
+                        ) : (
+                          <>
+                            <Typography
+                              sx={{
+                                flex: 1,
+                                fontSize: "0.75rem",
+                                fontWeight: 500,
+                                color: theme.palette.success.main,
+                              }}
+                            >
+                              {allowance.name}
+                            </Typography>
+                            <Chip
+                              variant="filled"
+                              color="success"
+                              label={`+${formatCurrency(allowance.amount)}`}
+                              size="small"
+                              sx={{ fontSize: "0.75rem" }}
+                            />
+                          </>
+                        )}
+                      </Stack>
+                    ))}
+                </Stack>
+              ) : (
+                <Typography
+                  sx={{
+                    fontSize: "0.75rem",
+                    color: "text.secondary",
+                    textAlign: "center",
+                    py: 1,
+                  }}
+                >
+                  Nenhum adicional cadastrado
+                </Typography>
+              )}
+
+              {payrollData.discounts.filter((d) => d.type === "allowance")
+                .length > 0 && (
+                <Box sx={{ textAlign: "right" }}>
+                  <Typography
+                    component="span"
+                    sx={{
+                      fontSize: "0.75rem",
+                      color: theme.palette.success.main,
+                      fontWeight: 500,
+                    }}
+                  >
+                    Total adicionais: {formatCurrency(totalAllowances)}
+                  </Typography>
+                </Box>
+              )}
+            </Stack>
+          </Stack>
+
+          {/* Summary */}
+          {!isEditing && payrollData.grossSalary > 0 && (
+            <Box
+              sx={{
+                fontSize: "0.75rem",
+                color: "text.secondary",
+                bgcolor: alpha(theme.palette.background.default, 0.5),
+                p: 2,
+                borderRadius: 1,
+              }}
+            >
+              <Box sx={{ textAlign: "center" }}>
+                <strong>Cálculo:</strong>{" "}
+                {formatCurrency(payrollData.grossSalary)} +{" "}
+                {formatCurrency(payrollData.allowances)} -{" "}
+                {formatCurrency(totalDiscounts)} ={" "}
+                <Box
+                  component="span"
+                  sx={{ color: "primary.main", fontWeight: 600 }}
+                >
+                  {formatCurrency(payrollData.netSalary)}
+                </Box>
+              </Box>
+            </Box>
+          )}
+
+          {payrollData.updatedAt && !isEditing && (
+            <Typography
+              sx={{
+                fontSize: "0.75rem",
+                color: "text.secondary",
+                textAlign: "center",
+              }}
+            >
+              Atualizado em:{" "}
+              {new Date(payrollData.updatedAt).toLocaleDateString("pt-BR")}
+            </Typography>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Confirm Clear Dialog */}
+      <ConfirmDialog
+        open={isClearDialogOpen}
+        onClose={() => setIsClearDialogOpen(false)}
+        onConfirm={handleClearData}
+        title="Limpar Dados do Holerite"
+        description="Tem certeza que deseja limpar todos os dados do holerite? Esta ação não pode ser desfeita."
+        confirmText="Limpar Tudo"
+        confirmColor="error"
+      />
+    </>
   );
 }
