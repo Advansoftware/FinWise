@@ -890,9 +890,9 @@ export function ReceiptScannerDialog({ children }: ReceiptScannerDialogProps) {
                 <Tabs
                   value={scanMode}
                   onChange={(_, v) => setScanMode(v)}
-                  centered
                   sx={{
                     mb: 2,
+                    "& .MuiTabs-flexContainer": { justifyContent: "center" },
                     "& .MuiTab-root": { color: "grey.500", minWidth: 100 },
                     "& .Mui-selected": { color: "white" },
                     "& .MuiTabs-indicator": { bgcolor: "primary.main" },
