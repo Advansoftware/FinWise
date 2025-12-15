@@ -149,20 +149,41 @@ export function EditInstallmentDialog({
 
   // Auto-select default PIX key when contact changes
   useEffect(() => {
-    // Only auto-select when contact actually changes (not on initial load with existing data)
+    // Only auto-select when contact actually changes
     if (selectedContactId !== prevContactId) {
       setPrevContactId(selectedContactId);
 
-      // If contact changed, auto-select default PIX key
-      if (availablePixKeys.length > 0) {
-        const defaultKey =
-          availablePixKeys.find((k) => k.isDefault) || availablePixKeys[0];
-        setSelectedPixKeyId(defaultKey.id);
+      // Get PIX keys from the selected contact directly (not from memo which might be stale)
+      const contact = contacts.find((c) => c.id === selectedContactId);
+      if (contact) {
+        let pixKeys: typeof availablePixKeys = [];
+        if (contact.pixKeys && contact.pixKeys.length > 0) {
+          pixKeys = contact.pixKeys;
+        } else if (contact.pixKey && contact.pixKeyType) {
+          pixKeys = [
+            {
+              id: "legacy",
+              pixKeyType: contact.pixKeyType,
+              pixKey: contact.pixKey,
+              bank: contact.bank,
+              bankName: contact.bankName,
+              isDefault: true,
+              createdAt: contact.createdAt,
+            },
+          ];
+        }
+
+        if (pixKeys.length > 0) {
+          const defaultKey = pixKeys.find((k) => k.isDefault) || pixKeys[0];
+          setSelectedPixKeyId(defaultKey.id);
+        } else {
+          setSelectedPixKeyId("");
+        }
       } else {
         setSelectedPixKeyId("");
       }
     }
-  }, [selectedContactId, prevContactId, availablePixKeys]);
+  }, [selectedContactId, prevContactId, contacts]);
 
   // Reset subcategory when category changes
   useEffect(() => {
