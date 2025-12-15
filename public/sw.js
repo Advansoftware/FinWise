@@ -1,7 +1,7 @@
 // Gastometria PWA Service Worker
-const CACHE_NAME = 'gastometria-cache-v3';
-const RUNTIME_CACHE = 'gastometria-runtime-v3';
-const DATA_CACHE = 'gastometria-data-v3';
+const CACHE_NAME = 'gastometria-cache-v4';
+const RUNTIME_CACHE = 'gastometria-runtime-v4';
+const DATA_CACHE = 'gastometria-data-v4';
 
 // Recursos essenciais para cache
 const urlsToCache = [
@@ -94,24 +94,34 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  // Para recursos estáticos (CSS, JS, imagens)
+  // Para recursos Next.js (_next/) - Network First para evitar 404s após deploy
+  if (event.request.url.includes('/_next/')) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          const responseClone = response.clone();
+          caches.open(RUNTIME_CACHE)
+            .then(cache => cache.put(event.request, responseClone));
+          return response;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Para outros recursos estáticos (CSS, JS, imagens não-Next)
   if (event.request.destination === 'style' ||
     event.request.destination === 'script' ||
-    event.request.destination === 'image' ||
-    event.request.url.includes('/_next/')) {
+    event.request.destination === 'image') {
     event.respondWith(
       caches.match(event.request)
         .then(response => {
-          if (response) {
-            return response;
-          }
+          if (response) return response;
           return fetch(event.request)
             .then(response => {
               const responseClone = response.clone();
               caches.open(RUNTIME_CACHE)
-                .then(cache => {
-                  cache.put(event.request, responseClone);
-                });
+                .then(cache => cache.put(event.request, responseClone));
               return response;
             });
         })

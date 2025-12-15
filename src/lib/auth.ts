@@ -27,6 +27,7 @@ const client = new MongoClient(uri, mongoOptions);
 const clientPromise = client.connect();
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   adapter: MongoDBAdapter(clientPromise, {
     databaseName: process.env.MONGODB_DB || 'gastometria',
   }),
