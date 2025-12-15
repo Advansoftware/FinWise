@@ -217,16 +217,25 @@ export function CreateInstallmentDialog({
     return [];
   }, [selectedContact]);
 
+  // Track previous contact to detect contact changes
+  const [prevContactId, setPrevContactId] = useState<string>("");
+
   // Auto-select default PIX key when contact changes
   useEffect(() => {
-    if (availablePixKeys.length > 0) {
-      const defaultKey =
-        availablePixKeys.find((k) => k.isDefault) || availablePixKeys[0];
-      setSelectedPixKeyId(defaultKey.id);
-    } else {
-      setSelectedPixKeyId("");
+    // Only auto-select when contact actually changes
+    if (selectedContactId !== prevContactId) {
+      setPrevContactId(selectedContactId);
+
+      // If contact changed, auto-select default PIX key
+      if (availablePixKeys.length > 0) {
+        const defaultKey =
+          availablePixKeys.find((k) => k.isDefault) || availablePixKeys[0];
+        setSelectedPixKeyId(defaultKey.id);
+      } else {
+        setSelectedPixKeyId("");
+      }
     }
-  }, [availablePixKeys]);
+  }, [selectedContactId, prevContactId, availablePixKeys]);
 
   const onSubmit = async (data: InstallmentForm) => {
     // Validar valores customizados se habilitado

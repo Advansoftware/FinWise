@@ -137,21 +137,32 @@ export function EditInstallmentDialog({
         sourceWalletId: getValidWalletId(),
       });
       // Initialize contact and PIX key from installment
-      setSelectedContactId(installment.contactId || "");
+      const contactId = installment.contactId || "";
+      setSelectedContactId(contactId);
+      setPrevContactId(contactId); // Sync prevContactId to avoid auto-select overwriting
       setSelectedPixKeyId(installment.pixKeyId || "");
     }
   }, [installment, open, form, wallets]);
 
-  // Auto-select default PIX key when contact changes (only if not already set from installment)
+  // Track previous contact to detect contact changes
+  const [prevContactId, setPrevContactId] = useState<string>("");
+
+  // Auto-select default PIX key when contact changes
   useEffect(() => {
-    if (availablePixKeys.length > 0 && !selectedPixKeyId) {
-      const defaultKey =
-        availablePixKeys.find((k) => k.isDefault) || availablePixKeys[0];
-      setSelectedPixKeyId(defaultKey.id);
-    } else if (availablePixKeys.length === 0) {
-      setSelectedPixKeyId("");
+    // Only auto-select when contact actually changes (not on initial load with existing data)
+    if (selectedContactId !== prevContactId) {
+      setPrevContactId(selectedContactId);
+
+      // If contact changed, auto-select default PIX key
+      if (availablePixKeys.length > 0) {
+        const defaultKey =
+          availablePixKeys.find((k) => k.isDefault) || availablePixKeys[0];
+        setSelectedPixKeyId(defaultKey.id);
+      } else {
+        setSelectedPixKeyId("");
+      }
     }
-  }, [availablePixKeys, selectedPixKeyId]);
+  }, [selectedContactId, prevContactId, availablePixKeys]);
 
   // Reset subcategory when category changes
   useEffect(() => {
