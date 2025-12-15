@@ -26,8 +26,41 @@ const mongoOptions: MongoClientOptions = isAtlas ? {
 const client = new MongoClient(uri, mongoOptions);
 const clientPromise = client.connect();
 
+// Determinar se estamos em produção (HTTPS)
+const useSecureCookies = process.env.NODE_ENV === 'production';
+const cookiePrefix = useSecureCookies ? '__Secure-' : '';
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   trustHost: true,
+  cookies: {
+    sessionToken: {
+      name: `${cookiePrefix}next-auth.session-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: useSecureCookies,
+      },
+    },
+    callbackUrl: {
+      name: `${cookiePrefix}next-auth.callback-url`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: useSecureCookies,
+      },
+    },
+    csrfToken: {
+      name: `next-auth.csrf-token`,
+      options: {
+        httpOnly: true,
+        sameSite: 'lax',
+        path: '/',
+        secure: useSecureCookies,
+      },
+    },
+  },
   adapter: MongoDBAdapter(clientPromise, {
     databaseName: process.env.MONGODB_DB || 'gastometria',
   }),
