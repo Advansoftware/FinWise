@@ -42,14 +42,14 @@ export async function POST(request: NextRequest) {
     // Validação básica - suporta tanto formato novo (pixKeys) quanto legado (pixKey/pixKeyType)
     const hasNewFormat = body.pixKeys && Array.isArray(body.pixKeys) && body.pixKeys.length > 0;
     const hasLegacyFormat = body.pixKey && body.pixKeyType;
-    
+
     if (!body.name) {
       return NextResponse.json(
         { error: 'Nome é obrigatório' },
         { status: 400 }
       );
     }
-    
+
     if (!hasNewFormat && !hasLegacyFormat) {
       return NextResponse.json(
         { error: 'Pelo menos uma chave PIX é obrigatória' },
