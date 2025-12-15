@@ -11,6 +11,8 @@ const PUBLIC_ROUTES = [
   "/reset-password", // Password reset page (with token)
   "/docs", // Documentation (all /docs/* routes)
   "/api-docs", // API Documentation page
+  "/blog", // Blog pages (all /blog/* routes)
+  "/faq", // FAQ page
   "/privacy", // Privacy policy
   "/terms", // Terms of use
   "/api/auth", // NextAuth API routes

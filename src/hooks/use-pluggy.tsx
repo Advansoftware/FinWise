@@ -155,48 +155,100 @@ export function usePluggy() {
       // Open Pluggy Connect widget
       // The widget is loaded from Pluggy's CDN
       return new Promise((resolve) => {
-        const script = document.createElement("script");
-        script.src = "https://cdn.pluggy.ai/pluggy-connect/v2.0.0/pluggy-connect.js";
-        script.async = true;
-        script.onload = () => {
-          // @ts-ignore - Pluggy is loaded globally
-          const pluggyConnect = new window.PluggyConnect({
-            connectToken: tokenData.accessToken,
-            onSuccess: async (data: { item: { id: string } }) => {
-              // Store the connection
-              await fetch("/api/pluggy/items", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                  itemId: data.item.id,
-                  userId: user.uid,
-                }),
-              });
-
-              toast({
-                title: "Conta conectada!",
-                description: "Sua conta bancária foi conectada com sucesso.",
-              });
-
-              // Refresh connections
-              await fetchConnections();
-              resolve(true);
-            },
-            onError: (error: { message: string }) => {
-              console.error("Pluggy Connect error:", error);
-              toast({
-                variant: "error",
-                title: "Erro na conexão",
-                description: error.message || "Não foi possível conectar a conta.",
-              });
-              resolve(false);
-            },
-            onClose: () => {
-              setIsConnecting(false);
-            },
+        // Timeout for script loading
+        const loadTimeout = setTimeout(() => {
+          console.error("Pluggy Connect script loading timeout");
+          toast({
+            variant: "error",
+            title: "Erro ao carregar",
+            description: "O widget de conexão demorou muito para carregar. Tente novamente.",
           });
+          setIsConnecting(false);
+          resolve(false);
+        }, 15000); // 15 second timeout
 
-          pluggyConnect.init();
+        const script = document.createElement("script");
+        script.src = "https://cdn.pluggy.ai/pluggy-connect/latest/pluggy-connect.js";
+        script.async = true;
+        
+        script.onerror = () => {
+          clearTimeout(loadTimeout);
+          console.error("Failed to load Pluggy Connect script");
+          toast({
+            variant: "error",
+            title: "Erro ao carregar",
+            description: "Não foi possível carregar o widget de conexão bancária.",
+          });
+          setIsConnecting(false);
+          resolve(false);
+        };
+
+        script.onload = () => {
+          clearTimeout(loadTimeout);
+          
+          // Check if PluggyConnect is available
+          // @ts-ignore
+          if (!window.PluggyConnect) {
+            console.error("PluggyConnect not found in window");
+            toast({
+              variant: "error",
+              title: "Erro",
+              description: "Widget de conexão não disponível.",
+            });
+            setIsConnecting(false);
+            resolve(false);
+            return;
+          }
+
+          try {
+            // @ts-ignore - Pluggy is loaded globally
+            const pluggyConnect = new window.PluggyConnect({
+              connectToken: tokenData.accessToken,
+              onSuccess: async (data: { item: { id: string } }) => {
+                // Store the connection
+                await fetch("/api/pluggy/items", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    itemId: data.item.id,
+                    userId: user.uid,
+                  }),
+                });
+
+                toast({
+                  title: "Conta conectada!",
+                  description: "Sua conta bancária foi conectada com sucesso.",
+                });
+
+                // Refresh connections
+                await fetchConnections();
+                resolve(true);
+              },
+              onError: (error: { message: string }) => {
+                console.error("Pluggy Connect error:", error);
+                toast({
+                  variant: "error",
+                  title: "Erro na conexão",
+                  description: error.message || "Não foi possível conectar a conta.",
+                });
+                resolve(false);
+              },
+              onClose: () => {
+                setIsConnecting(false);
+              },
+            });
+
+            pluggyConnect.init();
+          } catch (initError: any) {
+            console.error("Error initializing Pluggy Connect:", initError);
+            toast({
+              variant: "error",
+              title: "Erro",
+              description: "Falha ao inicializar conexão bancária.",
+            });
+            setIsConnecting(false);
+            resolve(false);
+          }
         };
 
         document.body.appendChild(script);

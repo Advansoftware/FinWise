@@ -95,12 +95,15 @@ const categories = [
 ];
 
 function formatDate(dateString: string) {
-  const date = new Date(dateString);
-  return new Intl.DateTimeFormat("pt-BR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-  }).format(date);
+  const date = new Date(dateString + 'T12:00:00Z'); // Add time to prevent timezone issues
+  const months = [
+    'janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho',
+    'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'
+  ];
+  const day = date.getUTCDate();
+  const month = months[date.getUTCMonth()];
+  const year = date.getUTCFullYear();
+  return `${day} de ${month} de ${year}`;
 }
 
 function getCategoryColor(

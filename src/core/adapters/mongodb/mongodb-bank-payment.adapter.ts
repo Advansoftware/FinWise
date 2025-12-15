@@ -72,14 +72,45 @@ export class MongoBankPaymentRepository implements IBankPaymentRepository {
     return `${iv.toString('hex')}:${encrypted}`;
   }
 
+
   private async decrypt(encryptedText: string): Promise<string> {
-    const [ivHex, encrypted] = encryptedText.split(':');
-    const iv = Buffer.from(ivHex, 'hex');
-    const key = (await scryptAsync(ENCRYPTION_KEY, 'salt', 32)) as Buffer;
-    const decipher = createDecipheriv(ALGORITHM, key, iv);
-    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
-    decrypted += decipher.final('utf8');
-    return decrypted;
+    // Validate input - return as-is if not in encrypted format
+    if (!encryptedText || typeof encryptedText !== 'string') {
+      return encryptedText || '';
+    }
+
+    // Check if it's in the expected format (iv:encrypted)
+    if (!encryptedText.includes(':')) {
+      // Not encrypted (legacy data) - return as-is
+      return encryptedText;
+    }
+
+    const parts = encryptedText.split(':');
+    if (parts.length !== 2) {
+      // Invalid format - return as-is
+      return encryptedText;
+    }
+
+    const [ivHex, encrypted] = parts;
+
+    // Validate IV hex length (16 bytes = 32 hex chars)
+    if (!ivHex || ivHex.length !== 32 || !/^[0-9a-fA-F]+$/.test(ivHex)) {
+      // Invalid IV format - return as-is (likely unencrypted data)
+      return encryptedText;
+    }
+
+    try {
+      const iv = Buffer.from(ivHex, 'hex');
+      const key = (await scryptAsync(ENCRYPTION_KEY, 'salt', 32)) as Buffer;
+      const decipher = createDecipheriv(ALGORITHM, key, iv);
+      let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+      decrypted += decipher.final('utf8');
+      return decrypted;
+    } catch (error) {
+      // Decryption failed - data might be unencrypted or corrupted
+      console.warn('Decryption failed, returning original value:', error);
+      return encryptedText;
+    }
   }
 
   private toContact(doc: any): PaymentContact {

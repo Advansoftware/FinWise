@@ -1682,11 +1682,16 @@ export default function Page() {
                       sx={{ height: "100%" }}
                     >
                       <Card
+                        component={Link}
+                        href={`/blog/${post.slug}`}
                         sx={{
                           height: "100%",
                           display: "flex",
                           flexDirection: "column",
                           transition: "all 0.3s ease",
+                          cursor: "pointer",
+                          textDecoration: "none",
+                          color: "inherit",
                           "&:hover": {
                             transform: "translateY(-8px)",
                             boxShadow: 8,
@@ -1743,8 +1748,6 @@ export default function Page() {
                           <Button
                             variant="text"
                             size="small"
-                            component={Link}
-                            href={`/blog/${post.slug}`}
                             endIcon={<ArrowRight size={16} />}
                             sx={{
                               p: 0,
