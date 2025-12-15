@@ -8,6 +8,7 @@ const PUBLIC_ROUTES = [
   "/", // Landing page
   "/login", // Login page
   "/signup", // Signup page
+  "/reset-password", // Password reset page (with token)
   "/docs", // Documentation (all /docs/* routes)
   "/api-docs", // API Documentation page
   "/privacy", // Privacy policy
