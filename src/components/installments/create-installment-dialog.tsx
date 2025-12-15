@@ -156,7 +156,9 @@ export function CreateInstallmentDialog({
   // Atualizar customAmounts quando totalInstallments ou totalAmount mudar
   useEffect(() => {
     if (totalInstallments > 0 && totalAmount > 0 && isManualValues) {
-      const defaultValue = parseFloat((totalAmount / totalInstallments).toFixed(2));
+      const defaultValue = parseFloat(
+        (totalAmount / totalInstallments).toFixed(2)
+      );
       setCustomAmounts(Array(totalInstallments).fill(defaultValue));
     } else if (!isManualValues) {
       setCustomAmounts([]);
@@ -164,7 +166,10 @@ export function CreateInstallmentDialog({
   }, [totalInstallments, totalAmount, isManualValues]);
 
   // Calcular soma dos valores customizados
-  const customAmountsSum = customAmounts.reduce((acc, val) => acc + (val || 0), 0);
+  const customAmountsSum = customAmounts.reduce(
+    (acc, val) => acc + (val || 0),
+    0
+  );
   const customAmountsDiff = Math.abs(customAmountsSum - totalAmount);
   const isCustomAmountsValid = customAmountsDiff < 0.01; // Tolerância para erros de ponto flutuante
 
@@ -185,8 +190,8 @@ export function CreateInstallmentDialog({
   }, [isRecurring, form]);
 
   // Get selected contact and its PIX keys
-  const selectedContact = useMemo(() => 
-    contacts.find(c => c.id === selectedContactId),
+  const selectedContact = useMemo(
+    () => contacts.find((c) => c.id === selectedContactId),
     [contacts, selectedContactId]
   );
 
@@ -197,15 +202,17 @@ export function CreateInstallmentDialog({
       return selectedContact.pixKeys;
     }
     if (selectedContact.pixKey && selectedContact.pixKeyType) {
-      return [{
-        id: 'legacy',
-        pixKeyType: selectedContact.pixKeyType,
-        pixKey: selectedContact.pixKey,
-        bank: selectedContact.bank,
-        bankName: selectedContact.bankName,
-        isDefault: true,
-        createdAt: selectedContact.createdAt,
-      }];
+      return [
+        {
+          id: "legacy",
+          pixKeyType: selectedContact.pixKeyType,
+          pixKey: selectedContact.pixKey,
+          bank: selectedContact.bank,
+          bankName: selectedContact.bankName,
+          isDefault: true,
+          createdAt: selectedContact.createdAt,
+        },
+      ];
     }
     return [];
   }, [selectedContact]);
@@ -213,7 +220,8 @@ export function CreateInstallmentDialog({
   // Auto-select default PIX key when contact changes
   useEffect(() => {
     if (availablePixKeys.length > 0) {
-      const defaultKey = availablePixKeys.find(k => k.isDefault) || availablePixKeys[0];
+      const defaultKey =
+        availablePixKeys.find((k) => k.isDefault) || availablePixKeys[0];
       setSelectedPixKeyId(defaultKey.id);
     } else {
       setSelectedPixKeyId("");
@@ -247,9 +255,10 @@ export function CreateInstallmentDialog({
         contactId: selectedContactId || undefined,
         pixKeyId: selectedPixKeyId || undefined,
         // Incluir valores customizados se habilitado
-        customInstallmentAmounts: isManualValues && customAmounts.length > 0
-          ? customAmounts
-          : undefined,
+        customInstallmentAmounts:
+          isManualValues && customAmounts.length > 0
+            ? customAmounts
+            : undefined,
       };
 
       const installment = await createInstallment(installmentData);
@@ -259,6 +268,8 @@ export function CreateInstallmentDialog({
         form.reset();
         setIsManualValues(false);
         setCustomAmounts([]);
+        setSelectedContactId("");
+        setSelectedPixKeyId("");
       }
     } finally {
       setIsSubmitting(false);
@@ -278,12 +289,14 @@ export function CreateInstallmentDialog({
       }}
       slotProps={{
         paper: {
-          sx: isMobile ? {
-            margin: 0,
-            maxHeight: "100%",
-            maxWidth: "100%",
-            borderRadius: 0,
-          } : undefined,
+          sx: isMobile
+            ? {
+                margin: 0,
+                maxHeight: "100%",
+                maxWidth: "100%",
+                borderRadius: 0,
+              }
+            : undefined,
         },
       }}
     >
@@ -404,110 +417,139 @@ export function CreateInstallmentDialog({
               </Grid>
 
               {/* Manual Values Section - Only show when not recurring and has installments */}
-              {!isRecurring && totalInstallments > 0 && totalInstallments <= 24 && (
-                <Grid size={12}>
-                  <Box
-                    sx={{
-                      p: 2,
-                      borderRadius: 2,
-                      border: 1,
-                      borderColor: isManualValues ? "primary.main" : "divider",
-                      bgcolor: isManualValues
-                        ? alpha(theme.palette.primary.main, 0.05)
-                        : "transparent",
-                      transition: "all 0.2s ease",
-                    }}
-                  >
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={isManualValues}
-                          onChange={(e) => setIsManualValues(e.target.checked)}
-                          size={isMobile ? "small" : "medium"}
-                        />
-                      }
-                      label={
-                        <Box>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 0.5,
-                            }}
-                          >
-                            <Settings2
-                              style={{ width: "0.875rem", height: "0.875rem" }}
-                            />
-                            <Typography variant="body2" fontWeight="medium">
-                              Valores Manuais por Parcela
+              {!isRecurring &&
+                totalInstallments > 0 &&
+                totalInstallments <= 24 && (
+                  <Grid size={12}>
+                    <Box
+                      sx={{
+                        p: 2,
+                        borderRadius: 2,
+                        border: 1,
+                        borderColor: isManualValues
+                          ? "primary.main"
+                          : "divider",
+                        bgcolor: isManualValues
+                          ? alpha(theme.palette.primary.main, 0.05)
+                          : "transparent",
+                        transition: "all 0.2s ease",
+                      }}
+                    >
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={isManualValues}
+                            onChange={(e) =>
+                              setIsManualValues(e.target.checked)
+                            }
+                            size={isMobile ? "small" : "medium"}
+                          />
+                        }
+                        label={
+                          <Box>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.5,
+                              }}
+                            >
+                              <Settings2
+                                style={{
+                                  width: "0.875rem",
+                                  height: "0.875rem",
+                                }}
+                              />
+                              <Typography variant="body2" fontWeight="medium">
+                                Valores Manuais por Parcela
+                              </Typography>
+                            </Box>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              Distribua o valor total como preferir
                             </Typography>
                           </Box>
-                          <Typography variant="caption" color="text.secondary">
-                            Distribua o valor total como preferir
-                          </Typography>
-                        </Box>
-                      }
-                    />
+                        }
+                      />
 
-                    <Collapse in={isManualValues}>
-                      <Box sx={{ mt: 2 }}>
-                        {/* Validation Alert */}
-                        {!isCustomAmountsValid && customAmounts.length > 0 && (
-                          <Alert severity="warning" sx={{ mb: 2 }}>
-                            A soma das parcelas (R$ {customAmountsSum.toFixed(2)}) deve ser igual ao valor total (R$ {totalAmount.toFixed(2)}).
-                            Diferença: R$ {customAmountsDiff.toFixed(2)}
-                          </Alert>
-                        )}
-                        {isCustomAmountsValid && customAmounts.length > 0 && (
-                          <Alert severity="success" sx={{ mb: 2 }}>
-                            ✓ Valores distribuídos corretamente!
-                          </Alert>
-                        )}
+                      <Collapse in={isManualValues}>
+                        <Box sx={{ mt: 2 }}>
+                          {/* Validation Alert */}
+                          {!isCustomAmountsValid &&
+                            customAmounts.length > 0 && (
+                              <Alert severity="warning" sx={{ mb: 2 }}>
+                                A soma das parcelas (R${" "}
+                                {customAmountsSum.toFixed(2)}) deve ser igual ao
+                                valor total (R$ {totalAmount.toFixed(2)}).
+                                Diferença: R$ {customAmountsDiff.toFixed(2)}
+                              </Alert>
+                            )}
+                          {isCustomAmountsValid && customAmounts.length > 0 && (
+                            <Alert severity="success" sx={{ mb: 2 }}>
+                              ✓ Valores distribuídos corretamente!
+                            </Alert>
+                          )}
 
-                        {/* Installment Amount Inputs */}
-                        <Grid container spacing={1}>
-                          {customAmounts.map((amount, index) => (
-                            <Grid size={{ xs: 6, sm: 4, md: 3 }} key={index}>
-                              <TextField
-                                label={`Parcela ${index + 1}`}
-                                type="text"
-                                value={parseFloat(amount.toFixed(2))}
-                                onChange={(e) => {
-                                  const newAmounts = [...customAmounts];
-                                  newAmounts[index] = Number(e.target.value) || 0;
-                                  setCustomAmounts(newAmounts);
-                                }}
-                                InputProps={{
-                                  startAdornment: (
-                                    <InputAdornment position="start">R$</InputAdornment>
-                                  ),
-                                }}
-                                size="small"
-                                fullWidth
-                                inputProps={{ step: "0.01", min: "0" }}
-                              />
-                            </Grid>
-                          ))}
-                        </Grid>
+                          {/* Installment Amount Inputs */}
+                          <Grid container spacing={1}>
+                            {customAmounts.map((amount, index) => (
+                              <Grid size={{ xs: 6, sm: 4, md: 3 }} key={index}>
+                                <TextField
+                                  label={`Parcela ${index + 1}`}
+                                  type="text"
+                                  value={parseFloat(amount.toFixed(2))}
+                                  onChange={(e) => {
+                                    const newAmounts = [...customAmounts];
+                                    newAmounts[index] =
+                                      Number(e.target.value) || 0;
+                                    setCustomAmounts(newAmounts);
+                                  }}
+                                  InputProps={{
+                                    startAdornment: (
+                                      <InputAdornment position="start">
+                                        R$
+                                      </InputAdornment>
+                                    ),
+                                  }}
+                                  size="small"
+                                  fullWidth
+                                  inputProps={{ step: "0.01", min: "0" }}
+                                />
+                              </Grid>
+                            ))}
+                          </Grid>
 
-                        {/* Quick Actions */}
-                        <Box sx={{ mt: 2, display: "flex", gap: 1, flexWrap: "wrap" }}>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            onClick={() => {
-                              const equalValue = parseFloat((totalAmount / totalInstallments).toFixed(2));
-                              setCustomAmounts(Array(totalInstallments).fill(equalValue));
+                          {/* Quick Actions */}
+                          <Box
+                            sx={{
+                              mt: 2,
+                              display: "flex",
+                              gap: 1,
+                              flexWrap: "wrap",
                             }}
                           >
-                            Dividir Igualmente
-                          </Button>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              onClick={() => {
+                                const equalValue = parseFloat(
+                                  (totalAmount / totalInstallments).toFixed(2)
+                                );
+                                setCustomAmounts(
+                                  Array(totalInstallments).fill(equalValue)
+                                );
+                              }}
+                            >
+                              Dividir Igualmente
+                            </Button>
+                          </Box>
                         </Box>
-                      </Box>
-                    </Collapse>
-                  </Box>
-                </Grid>
-              )}
+                      </Collapse>
+                    </Box>
+                  </Grid>
+                )}
 
               {/* Campos para parcelamentos recorrentes */}
               <Grid size={12}>
@@ -803,9 +845,9 @@ export function CreateInstallmentDialog({
               {/* Optional: Contact PIX for payment */}
               <Grid size={12}>
                 <Divider sx={{ my: 1 }}>
-                  <Chip 
-                    icon={<PixIcon />} 
-                    label="Contato PIX (Opcional)" 
+                  <Chip
+                    icon={<PixIcon />}
+                    label="Contato PIX (Opcional)"
                     size="small"
                     variant="outlined"
                   />
@@ -857,7 +899,12 @@ export function CreateInstallmentDialog({
                               {key.pixKeyType.toUpperCase()}: {key.pixKey}
                             </Typography>
                             {key.isDefault && (
-                              <Chip label="Padrão" size="small" color="primary" sx={{ height: 18, fontSize: "0.6rem" }} />
+                              <Chip
+                                label="Padrão"
+                                size="small"
+                                color="primary"
+                                sx={{ height: 18, fontSize: "0.6rem" }}
+                              />
                             )}
                           </Stack>
                         </MenuItem>

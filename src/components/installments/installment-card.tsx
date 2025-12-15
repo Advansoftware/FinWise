@@ -1,6 +1,6 @@
 // src/components/installments/installment-card.tsx
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Box,
   Stack,
@@ -39,9 +39,11 @@ import { formatCurrency } from "@/lib/utils";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useInstallments } from "@/hooks/use-installments";
+import { useBankPayment } from "@/hooks/use-bank-payment";
 import { PayInstallmentDialog } from "./pay-installment-dialog";
 import { EditInstallmentDialog } from "./edit-installment-dialog";
 import { MarkAsPaidDialog } from "./mark-as-paid-dialog";
+import { PaymentButton } from "@/components/bank-payment";
 
 interface InstallmentCardProps {
   installment: Installment;
@@ -57,6 +59,7 @@ export function InstallmentCard({
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isMarkAsPaidOpen, setIsMarkAsPaidOpen] = useState(false);
   const { deleteInstallment } = useInstallments();
+  const { contacts } = useBankPayment();
   const [editingInstallment, setEditingInstallment] =
     useState<Installment | null>(null);
   const theme = useTheme();
@@ -70,6 +73,36 @@ export function InstallmentCard({
   const handleMenuClose = () => {
     setAnchorEl(null);
   };
+
+  // Get linked contact and PIX key data
+  const linkedContact = useMemo(() => {
+    if (!installment.contactId) return null;
+    return contacts.find((c) => c.id === installment.contactId) || null;
+  }, [installment.contactId, contacts]);
+
+  const linkedPixKey = useMemo(() => {
+    if (!linkedContact || !installment.pixKeyId) return null;
+    // Support both new pixKeys array and legacy single key
+    if (linkedContact.pixKeys && linkedContact.pixKeys.length > 0) {
+      return (
+        linkedContact.pixKeys.find((k) => k.id === installment.pixKeyId) ||
+        linkedContact.pixKeys.find((k) => k.isDefault) ||
+        linkedContact.pixKeys[0]
+      );
+    }
+    if (linkedContact.pixKey && linkedContact.pixKeyType) {
+      return {
+        id: "legacy",
+        pixKeyType: linkedContact.pixKeyType,
+        pixKey: linkedContact.pixKey,
+        bank: linkedContact.bank,
+        bankName: linkedContact.bankName,
+        isDefault: true,
+        createdAt: linkedContact.createdAt,
+      };
+    }
+    return null;
+  }, [linkedContact, installment.pixKeyId]);
 
   const progressPercentage =
     (installment.paidInstallments / installment.totalInstallments) * 100;
@@ -480,6 +513,20 @@ export function InstallmentCard({
                       />
                       Registrar
                     </Button>
+                    {linkedContact && linkedPixKey && (
+                      <PaymentButton
+                        amount={nextPayment.scheduledAmount}
+                        description={`Parcela ${nextPayment.installmentNumber}/${installment.totalInstallments} - ${installment.name}`}
+                        receiverName={linkedContact.name}
+                        receiverPixKey={linkedPixKey.pixKey}
+                        bank={linkedPixKey.bank || "nubank"}
+                        installmentId={installment.id}
+                        recipientId={linkedContact.id}
+                        size="small"
+                        variant="outlined"
+                        fullWidth
+                      />
+                    )}
                   </Stack>
 
                   {nextPayment.status === "overdue" && (
