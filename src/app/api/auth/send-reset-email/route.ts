@@ -16,6 +16,9 @@ function getResend(): Resend {
 export async function POST(request: NextRequest) {
   try {
     const { email } = await request.json();
+    console.log("[Reset Email] Request received for:", email);
+    console.log("[Reset Email] RESEND_API_KEY exists:", !!process.env.RESEND_API_KEY);
+    console.log("[Reset Email] RESEND_FROM_EMAIL:", process.env.RESEND_FROM_EMAIL);
 
     if (!email) {
       return NextResponse.json(
@@ -30,10 +33,12 @@ export async function POST(request: NextRequest) {
 
     // Find user by email
     const user = await usersCollection.findOne({ email: email.toLowerCase() });
+    console.log("[Reset Email] User found:", !!user, user ? user.email : "N/A");
 
     // Always return success to prevent email enumeration attacks
     // But only send email if user exists
     if (user) {
+      console.log("[Reset Email] Generating reset token...");
       // Generate secure token
       const resetToken = crypto.randomBytes(32).toString("hex");
       const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
@@ -55,7 +60,8 @@ export async function POST(request: NextRequest) {
 
       // Send email via Resend
       try {
-        await getResend().emails.send({
+        console.log("[Reset Email] Sending email via Resend...");
+        const result = await getResend().emails.send({
           from: process.env.RESEND_FROM_EMAIL || "Gastometria <onboarding@resend.dev>",
           to: email,
           subject: "Redefinição de Senha - Gastometria",
@@ -109,9 +115,10 @@ export async function POST(request: NextRequest) {
             </html>
           `,
         });
-        console.log(`Password reset email sent to ${email}`);
-      } catch (emailError) {
-        console.error("Error sending email:", emailError);
+        console.log("[Reset Email] Resend result:", JSON.stringify(result));
+        console.log(`[Reset Email] Password reset email sent to ${email}`);
+      } catch (emailError: any) {
+        console.error("[Reset Email] Error sending email:", emailError?.message || emailError);
         // Don't expose email sending errors to client
       }
     }
