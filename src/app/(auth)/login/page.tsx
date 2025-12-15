@@ -12,26 +12,28 @@ import {
   Stack,
   Link as MuiLink,
   CircularProgress,
-  Paper,
   InputAdornment,
   IconButton,
   Divider,
-  Fade,
   alpha,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import {
   Visibility,
   VisibilityOff,
   Email as EmailIcon,
   Lock as LockIcon,
-  AccountBalanceWallet as WalletIcon,
+  TrendingUp,
+  Savings,
+  PieChart,
 } from "@mui/icons-material";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Logo } from "@/components/logo";
 import { ResetPasswordDialog } from "../reset-password-dialog";
+import Image from "next/image";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Por favor, insira um email válido." }),
@@ -45,7 +47,8 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const { login } = useAuth();
   const { toast } = useToast();
-  const router = useRouter();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   const {
     control,
@@ -67,282 +70,393 @@ export default function LoginPage() {
         title: "Login realizado com sucesso!",
         description: "Redirecionando para o dashboard...",
       });
-      // Força refresh do router para reconhecer a nova sessão
-      router.refresh();
-      // Usa replace para evitar voltar para login com botão voltar
-      router.replace("/dashboard");
+      window.location.href = "/dashboard";
     } catch (error: any) {
       toast({
         variant: "error",
         title: "Erro de Login",
         description: error.message || "Email ou senha inválidos.",
       });
-    } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <Fade in timeout={600}>
-      <Paper
-        elevation={0}
-        sx={{
-          width: "100%",
-          borderRadius: 4,
-          overflow: "hidden",
-          border: 1,
-          borderColor: "divider",
-          bgcolor: (theme) => alpha(theme.palette.background.paper, 0.8),
-          backdropFilter: "blur(20px)",
-        }}
-      >
-        {/* Header Section */}
+    <Box
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        bgcolor: "background.default",
+      }}
+    >
+      {/* Left Side - Hero Image (Hidden on mobile) */}
+      {!isMobile && (
         <Box
           sx={{
-            pt: { xs: 4, sm: 5 },
-            pb: 3,
-            px: { xs: 3, sm: 4 },
-            textAlign: "center",
+            flex: 1,
+            position: "relative",
+            display: "flex",
+            flexDirection: "column",
+            justifyContent: "center",
+            alignItems: "center",
+            background: `linear-gradient(135deg, ${alpha(theme.palette.primary.dark, 0.95)} 0%, ${alpha("#1a1a2e", 0.98)} 100%)`,
+            overflow: "hidden",
+            p: 6,
           }}
         >
-          {/* Logo */}
+          {/* Background Image */}
           <Box
             sx={{
-              width: 72,
-              height: 72,
-              mx: "auto",
-              mb: 3,
-              p: 1.5,
-              borderRadius: 3,
-              bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              opacity: 0.5,
+              zIndex: 0,
             }}
           >
-            <Logo />
+            <Image
+              src="/images/login-hero.png"
+              alt="Financial illustration"
+              fill
+              style={{ objectFit: "cover" }}
+              priority
+            />
           </Box>
 
-          {/* Title */}
-          <Typography
-            variant="h4"
-            fontWeight={700}
+          {/* Gradient Overlay */}
+          <Box
             sx={{
-              mb: 1,
-              background: (theme) =>
-                `linear-gradient(135deg, ${theme.palette.text.primary} 0%, ${theme.palette.primary.main} 100%)`,
-              backgroundClip: "text",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
+              position: "absolute",
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.4)} 0%, ${alpha("#1a1a2e", 0.8)} 100%)`,
+              zIndex: 1,
             }}
-          >
-            Bem-vindo de volta!
-          </Typography>
+          />
 
-          <Typography
-            variant="body1"
-            color="text.secondary"
-            sx={{ maxWidth: 280, mx: "auto" }}
-          >
-            Faça login para acessar seu painel financeiro inteligente
-          </Typography>
-        </Box>
+          {/* Content */}
+          <Box sx={{ position: "relative", zIndex: 2, textAlign: "center", maxWidth: 500 }}>
+            <Box
+              sx={{
+                width: 80,
+                height: 80,
+                mx: "auto",
+                mb: 4,
+                p: 2,
+                borderRadius: 4,
+                bgcolor: alpha("#fff", 0.1),
+                backdropFilter: "blur(10px)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <Logo />
+            </Box>
 
-        {/* Form Section */}
-        <Box
-          component="form"
-          onSubmit={handleSubmit(onSubmit)}
-          sx={{ px: { xs: 3, sm: 4 }, pb: { xs: 4, sm: 5 } }}
-        >
-          <Stack spacing={3}>
-            {/* Email Field */}
-            <Controller
-              name="email"
-              control={control}
-              render={({ field }) => (
-                <TextField
-                  {...field}
-                  label="Email"
-                  placeholder="seu@email.com"
-                  type="email"
-                  fullWidth
-                  autoComplete="email"
-                  error={!!errors.email}
-                  helperText={errors.email?.message}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <EmailIcon
-                          sx={{
-                            color: errors.email
-                              ? "error.main"
-                              : "text.secondary",
-                            fontSize: 20,
-                          }}
-                        />
-                      </InputAdornment>
-                    ),
+            <Typography
+              variant="h3"
+              fontWeight={800}
+              sx={{
+                color: "white",
+                mb: 2,
+                textShadow: "0 2px 20px rgba(0,0,0,0.3)",
+              }}
+            >
+              Gastometria
+            </Typography>
+
+            <Typography
+              variant="h6"
+              sx={{
+                color: alpha("#fff", 0.85),
+                mb: 6,
+                fontWeight: 400,
+                lineHeight: 1.6,
+              }}
+            >
+              Controle suas finanças com inteligência artificial e tome decisões mais inteligentes
+            </Typography>
+
+            {/* Features */}
+            <Stack spacing={3}>
+              {[
+                { icon: <TrendingUp />, text: "Análises inteligentes com IA" },
+                { icon: <Savings />, text: "Metas de economia personalizadas" },
+                { icon: <PieChart />, text: "Relatórios visuais detalhados" },
+              ].map((feature, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 2,
+                    p: 2,
+                    borderRadius: 3,
+                    bgcolor: alpha("#fff", 0.08),
+                    backdropFilter: "blur(10px)",
+                    border: `1px solid ${alpha("#fff", 0.1)}`,
                   }}
-                />
-              )}
-            />
-
-            {/* Password Field */}
-            <Box>
-              <Stack direction="row" justifyContent="flex-end" sx={{ mb: 0.5 }}>
-                <ResetPasswordDialog>
-                  <MuiLink
-                    component="button"
-                    type="button"
-                    variant="caption"
-                    underline="hover"
+                >
+                  <Box
                     sx={{
-                      fontWeight: 500,
-                      color: "primary.main",
-                      cursor: "pointer",
+                      p: 1,
+                      borderRadius: 2,
+                      bgcolor: alpha(theme.palette.primary.main, 0.3),
+                      color: "white",
+                      display: "flex",
                     }}
                   >
-                    Esqueceu sua senha?
-                  </MuiLink>
-                </ResetPasswordDialog>
-              </Stack>
+                    {feature.icon}
+                  </Box>
+                  <Typography color="white" fontWeight={500}>
+                    {feature.text}
+                  </Typography>
+                </Box>
+              ))}
+            </Stack>
+          </Box>
+        </Box>
+      )}
+
+      {/* Right Side - Login Form */}
+      <Box
+        sx={{
+          flex: isMobile ? 1 : "0 0 480px",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          p: { xs: 3, sm: 6 },
+          bgcolor: "background.paper",
+        }}
+      >
+        <Box sx={{ width: "100%", maxWidth: 400 }}>
+          {/* Mobile Logo */}
+          {isMobile && (
+            <Box sx={{ textAlign: "center", mb: 4 }}>
+              <Box
+                sx={{
+                  width: 64,
+                  height: 64,
+                  mx: "auto",
+                  mb: 2,
+                  p: 1.5,
+                  borderRadius: 3,
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <Logo />
+              </Box>
+              <Typography variant="h5" fontWeight={700} color="primary">
+                Gastometria
+              </Typography>
+            </Box>
+          )}
+
+          {/* Header */}
+          <Box sx={{ mb: 4 }}>
+            <Typography
+              variant="h4"
+              fontWeight={700}
+              sx={{
+                mb: 1,
+                background: `linear-gradient(135deg, ${theme.palette.text.primary} 0%, ${theme.palette.primary.main} 100%)`,
+                backgroundClip: "text",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+              }}
+            >
+              Bem-vindo de volta!
+            </Typography>
+            <Typography variant="body1" color="text.secondary">
+              Entre na sua conta para continuar
+            </Typography>
+          </Box>
+
+          {/* Form */}
+          <Box component="form" onSubmit={handleSubmit(onSubmit)}>
+            <Stack spacing={2.5}>
+              {/* Email Field */}
               <Controller
-                name="password"
+                name="email"
                 control={control}
                 render={({ field }) => (
                   <TextField
                     {...field}
-                    label="Senha"
-                    placeholder="••••••••"
-                    type={showPassword ? "text" : "password"}
+                    label="Email"
+                    placeholder="seu@email.com"
+                    type="email"
                     fullWidth
-                    autoComplete="current-password"
-                    error={!!errors.password}
-                    helperText={errors.password?.message}
+                    autoComplete="email"
+                    error={!!errors.email}
+                    helperText={errors.email?.message}
                     InputProps={{
                       startAdornment: (
                         <InputAdornment position="start">
-                          <LockIcon
+                          <EmailIcon
                             sx={{
-                              color: errors.password
-                                ? "error.main"
-                                : "text.secondary",
+                              color: errors.email ? "error.main" : "text.secondary",
                               fontSize: 20,
                             }}
                           />
                         </InputAdornment>
                       ),
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            aria-label={
-                              showPassword ? "Ocultar senha" : "Mostrar senha"
-                            }
-                            onClick={() => setShowPassword(!showPassword)}
-                            edge="end"
-                            size="small"
-                          >
-                            {showPassword ? (
-                              <VisibilityOff sx={{ fontSize: 20 }} />
-                            ) : (
-                              <Visibility sx={{ fontSize: 20 }} />
-                            )}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
+                    }}
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: 2,
+                      },
                     }}
                   />
                 )}
               />
-            </Box>
 
-            {/* Submit Button */}
-            <Button
-              type="submit"
-              variant="contained"
-              fullWidth
-              size="large"
-              disabled={isLoading}
-              sx={{
-                py: 1.5,
-                mt: 1,
-                fontWeight: 600,
-                fontSize: "1rem",
-              }}
-            >
-              {isLoading ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                "Entrar"
-              )}
-            </Button>
-          </Stack>
+              {/* Password Field */}
+              <Box>
+                <Stack direction="row" justifyContent="flex-end" sx={{ mb: 0.5 }}>
+                  <ResetPasswordDialog>
+                    <MuiLink
+                      component="button"
+                      type="button"
+                      variant="caption"
+                      underline="hover"
+                      sx={{
+                        fontWeight: 500,
+                        color: "primary.main",
+                        cursor: "pointer",
+                      }}
+                    >
+                      Esqueceu sua senha?
+                    </MuiLink>
+                  </ResetPasswordDialog>
+                </Stack>
+                <Controller
+                  name="password"
+                  control={control}
+                  render={({ field }) => (
+                    <TextField
+                      {...field}
+                      label="Senha"
+                      placeholder="••••••••"
+                      type={showPassword ? "text" : "password"}
+                      fullWidth
+                      autoComplete="current-password"
+                      error={!!errors.password}
+                      helperText={errors.password?.message}
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <LockIcon
+                              sx={{
+                                color: errors.password ? "error.main" : "text.secondary",
+                                fontSize: 20,
+                              }}
+                            />
+                          </InputAdornment>
+                        ),
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
+                              onClick={() => setShowPassword(!showPassword)}
+                              edge="end"
+                              size="small"
+                            >
+                              {showPassword ? (
+                                <VisibilityOff sx={{ fontSize: 20 }} />
+                              ) : (
+                                <Visibility sx={{ fontSize: 20 }} />
+                              )}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
+                      sx={{
+                        "& .MuiOutlinedInput-root": {
+                          borderRadius: 2,
+                        },
+                      }}
+                    />
+                  )}
+                />
+              </Box>
 
-          {/* Divider */}
-          <Divider sx={{ my: 3 }}>
-            <Typography variant="caption" color="text.secondary">
-              ou
-            </Typography>
-          </Divider>
-
-          {/* Sign Up Link */}
-          <Box sx={{ textAlign: "center" }}>
-            <Typography variant="body2" color="text.secondary">
-              Não tem uma conta?{" "}
-              <MuiLink
-                component={Link}
-                href="/signup"
-                underline="hover"
+              {/* Submit Button */}
+              <Button
+                type="submit"
+                variant="contained"
+                fullWidth
+                size="large"
+                disabled={isLoading}
                 sx={{
+                  py: 1.5,
+                  mt: 1,
                   fontWeight: 600,
-                  color: "primary.main",
+                  fontSize: "1rem",
+                  borderRadius: 2,
+                  background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+                  boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.4)}`,
                   "&:hover": {
-                    color: "primary.dark",
+                    boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.5)}`,
                   },
                 }}
               >
-                Cadastre-se gratuitamente
+                {isLoading ? <CircularProgress size={24} color="inherit" /> : "Entrar"}
+              </Button>
+            </Stack>
+
+            {/* Divider */}
+            <Divider sx={{ my: 3 }}>
+              <Typography variant="caption" color="text.secondary">
+                ou
+              </Typography>
+            </Divider>
+
+            {/* Sign Up Link */}
+            <Box sx={{ textAlign: "center" }}>
+              <Typography variant="body2" color="text.secondary">
+                Não tem uma conta?{" "}
+                <MuiLink
+                  component={Link}
+                  href="/signup"
+                  underline="hover"
+                  sx={{
+                    fontWeight: 600,
+                    color: "primary.main",
+                    "&:hover": {
+                      color: "primary.dark",
+                    },
+                  }}
+                >
+                  Cadastre-se gratuitamente
+                </MuiLink>
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* Footer */}
+          <Box sx={{ mt: 6, textAlign: "center" }}>
+            <Typography variant="caption" color="text.secondary">
+              Ao entrar, você concorda com nossos{" "}
+              <MuiLink component={Link} href="/terms" underline="hover" color="primary">
+                Termos de Uso
+              </MuiLink>{" "}
+              e{" "}
+              <MuiLink component={Link} href="/privacy" underline="hover" color="primary">
+                Política de Privacidade
               </MuiLink>
             </Typography>
           </Box>
-
-          {/* Features hint */}
-          <Stack
-            direction="row"
-            spacing={2}
-            justifyContent="center"
-            sx={{ mt: 3 }}
-          >
-            {[
-              { icon: "📊", text: "Relatórios IA" },
-              { icon: "🎯", text: "Metas" },
-              { icon: "💳", text: "Carteiras" },
-            ].map((feature) => (
-              <Box
-                key={feature.text}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 0.5,
-                  px: 1.5,
-                  py: 0.5,
-                  borderRadius: 2,
-                  bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
-                }}
-              >
-                <Typography variant="body2">{feature.icon}</Typography>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  fontWeight={500}
-                >
-                  {feature.text}
-                </Typography>
-              </Box>
-            ))}
-          </Stack>
         </Box>
-      </Paper>
-    </Fade>
+      </Box>
+    </Box>
   );
 }

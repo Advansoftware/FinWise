@@ -5,26 +5,38 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Box,
-  Container,
-  Paper,
   Typography,
   TextField,
   Button,
   CircularProgress,
   Alert,
   Stack,
+  InputAdornment,
+  IconButton,
   alpha,
+  useTheme,
+  Link as MuiLink,
 } from "@mui/material";
-import { Lock, CheckCircle2, XCircle, ArrowLeft } from "lucide-react";
+import {
+  Lock as LockIcon,
+  Visibility,
+  VisibilityOff,
+  CheckCircle,
+  Error as ErrorIcon,
+} from "@mui/icons-material";
 import Link from "next/link";
+import { AuthLayoutWrapper } from "../../auth-layout-wrapper";
 
 export default function ResetPasswordPage() {
   const params = useParams();
   const router = useRouter();
+  const theme = useTheme();
   const token = params.token as string;
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isValidating, setIsValidating] = useState(true);
   const [isValid, setIsValid] = useState(false);
@@ -97,167 +109,221 @@ export default function ResetPasswordPage() {
     }
   };
 
+  // Loading state
   if (isValidating) {
     return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          bgcolor: "background.default",
-        }}
-      >
-        <Stack alignItems="center" spacing={2}>
-          <CircularProgress />
-          <Typography color="text.secondary">Validando link...</Typography>
-        </Stack>
-      </Box>
+      <AuthLayoutWrapper>
+        <Box sx={{ textAlign: "center", py: 8 }}>
+          <CircularProgress size={48} sx={{ mb: 3 }} />
+          <Typography variant="h6" color="text.secondary">
+            Validando link...
+          </Typography>
+        </Box>
+      </AuthLayoutWrapper>
     );
   }
 
+  // Invalid token state
   if (!isValid && !isSuccess) {
     return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          bgcolor: "background.default",
-          p: 2,
-        }}
-      >
-        <Paper sx={{ p: 4, maxWidth: 400, width: "100%", textAlign: "center", borderRadius: 3 }}>
-          <XCircle size={64} color="#EF4444" style={{ marginBottom: 16 }} />
+      <AuthLayoutWrapper>
+        <Box sx={{ textAlign: "center", py: 4 }}>
+          <Box
+            sx={{
+              width: 80,
+              height: 80,
+              mx: "auto",
+              mb: 3,
+              borderRadius: "50%",
+              bgcolor: alpha(theme.palette.error.main, 0.1),
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <ErrorIcon sx={{ fontSize: 40, color: "error.main" }} />
+          </Box>
           <Typography variant="h5" fontWeight={700} gutterBottom>
             Link Inválido
           </Typography>
-          <Typography color="text.secondary" sx={{ mb: 3 }}>
+          <Typography color="text.secondary" sx={{ mb: 4 }}>
             {error || "Este link de redefinição é inválido ou expirou."}
           </Typography>
-          <Link href="/login" passHref>
-            <Button variant="contained" startIcon={<ArrowLeft size={16} />}>
-              Voltar ao Login
-            </Button>
-          </Link>
-        </Paper>
-      </Box>
+          <Button
+            component={Link}
+            href="/login"
+            variant="contained"
+            sx={{
+              borderRadius: 2,
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+            }}
+          >
+            Voltar ao Login
+          </Button>
+        </Box>
+      </AuthLayoutWrapper>
     );
   }
 
+  // Success state
   if (isSuccess) {
     return (
-      <Box
-        sx={{
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          bgcolor: "background.default",
-          p: 2,
-        }}
-      >
-        <Paper sx={{ p: 4, maxWidth: 400, width: "100%", textAlign: "center", borderRadius: 3 }}>
-          <CheckCircle2 size={64} color="#22C55E" style={{ marginBottom: 16 }} />
+      <AuthLayoutWrapper>
+        <Box sx={{ textAlign: "center", py: 4 }}>
+          <Box
+            sx={{
+              width: 80,
+              height: 80,
+              mx: "auto",
+              mb: 3,
+              borderRadius: "50%",
+              bgcolor: alpha(theme.palette.success.main, 0.1),
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <CheckCircle sx={{ fontSize: 40, color: "success.main" }} />
+          </Box>
           <Typography variant="h5" fontWeight={700} gutterBottom>
             Senha Redefinida!
           </Typography>
-          <Typography color="text.secondary" sx={{ mb: 3 }}>
+          <Typography color="text.secondary" sx={{ mb: 4 }}>
             Sua senha foi atualizada com sucesso. Você será redirecionado para o login...
           </Typography>
           <CircularProgress size={24} />
-        </Paper>
-      </Box>
+        </Box>
+      </AuthLayoutWrapper>
     );
   }
 
+  // Form state
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        bgcolor: "background.default",
-        p: 2,
-      }}
+    <AuthLayoutWrapper
+      title="Nova Senha"
+      subtitle="Digite sua nova senha abaixo"
     >
-      <Container maxWidth="xs">
-        <Paper sx={{ p: 4, borderRadius: 3 }}>
-          <Box sx={{ textAlign: "center", mb: 4 }}>
-            <Box
-              sx={{
-                display: "inline-flex",
-                p: 2,
-                borderRadius: 3,
-                bgcolor: (theme) => alpha(theme.palette.primary.main, 0.1),
-                mb: 2,
-              }}
-            >
-              <Lock size={32} color="#9333EA" />
-            </Box>
-            <Typography variant="h5" fontWeight={700} gutterBottom>
-              Nova Senha
-            </Typography>
-            <Typography color="text.secondary">
-              Digite sua nova senha abaixo
-            </Typography>
-          </Box>
+      {error && (
+        <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+          {error}
+        </Alert>
+      )}
 
-          {error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {error}
-            </Alert>
-          )}
+      <Box component="form" onSubmit={handleSubmit}>
+        <Stack spacing={2.5}>
+          <TextField
+            label="Nova Senha"
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            fullWidth
+            required
+            disabled={isLoading}
+            placeholder="Mínimo 8 caracteres"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <LockIcon sx={{ color: "text.secondary", fontSize: 20 }} />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowPassword(!showPassword)}
+                    edge="end"
+                    size="small"
+                  >
+                    {showPassword ? (
+                      <VisibilityOff sx={{ fontSize: 20 }} />
+                    ) : (
+                      <Visibility sx={{ fontSize: 20 }} />
+                    )}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+              },
+            }}
+          />
 
-          <form onSubmit={handleSubmit}>
-            <Stack spacing={3}>
-              <TextField
-                label="Nova Senha"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                fullWidth
-                required
-                disabled={isLoading}
-                placeholder="Mínimo 8 caracteres"
-              />
-              <TextField
-                label="Confirmar Senha"
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                fullWidth
-                required
-                disabled={isLoading}
-                placeholder="Digite a senha novamente"
-              />
-              <Button
-                type="submit"
-                variant="contained"
-                size="large"
-                disabled={isLoading}
-                fullWidth
-              >
-                {isLoading ? (
-                  <CircularProgress size={24} color="inherit" />
-                ) : (
-                  "Redefinir Senha"
-                )}
-              </Button>
-            </Stack>
-          </form>
+          <TextField
+            label="Confirmar Senha"
+            type={showConfirmPassword ? "text" : "password"}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            fullWidth
+            required
+            disabled={isLoading}
+            placeholder="Digite a senha novamente"
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <LockIcon sx={{ color: "text.secondary", fontSize: 20 }} />
+                </InputAdornment>
+              ),
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    edge="end"
+                    size="small"
+                  >
+                    {showConfirmPassword ? (
+                      <VisibilityOff sx={{ fontSize: 20 }} />
+                    ) : (
+                      <Visibility sx={{ fontSize: 20 }} />
+                    )}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+              },
+            }}
+          />
 
-          <Box sx={{ textAlign: "center", mt: 3 }}>
-            <Link href="/login" passHref>
-              <Button variant="text" startIcon={<ArrowLeft size={16} />}>
-                Voltar ao Login
-              </Button>
-            </Link>
-          </Box>
-        </Paper>
-      </Container>
-    </Box>
+          <Button
+            type="submit"
+            variant="contained"
+            size="large"
+            disabled={isLoading}
+            fullWidth
+            sx={{
+              py: 1.5,
+              mt: 1,
+              fontWeight: 600,
+              fontSize: "1rem",
+              borderRadius: 2,
+              background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.primary.dark} 100%)`,
+              boxShadow: `0 4px 14px ${alpha(theme.palette.primary.main, 0.4)}`,
+              "&:hover": {
+                boxShadow: `0 6px 20px ${alpha(theme.palette.primary.main, 0.5)}`,
+              },
+            }}
+          >
+            {isLoading ? <CircularProgress size={24} color="inherit" /> : "Redefinir Senha"}
+          </Button>
+        </Stack>
+
+        <Box sx={{ textAlign: "center", mt: 4 }}>
+          <MuiLink
+            component={Link}
+            href="/login"
+            underline="hover"
+            sx={{
+              color: "text.secondary",
+              "&:hover": { color: "primary.main" },
+            }}
+          >
+            ← Voltar ao Login
+          </MuiLink>
+        </Box>
+      </Box>
+    </AuthLayoutWrapper>
   );
 }

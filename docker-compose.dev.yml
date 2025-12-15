@@ -25,9 +25,7 @@ services:
       # Montar código fonte para hot reload
       - ./src:/app/src
       - ./public:/app/public
-      - ./middleware.ts:/app/middleware.ts
       - ./next.config.js:/app/next.config.js
-      - ./next.config.mjs:/app/next.config.mjs
       - ./tsconfig.json:/app/tsconfig.json
       # Excluir node_modules e .next do volume para melhor performance
       - /app/node_modules
