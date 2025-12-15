@@ -29,8 +29,6 @@ import {
   Checkbox,
   InputAdornment,
   Divider,
-  Tabs,
-  Tab,
   Portal,
 } from "@mui/material";
 import {
@@ -43,7 +41,6 @@ import {
   X,
   Check,
   ImageIcon,
-  QrCode,
 } from "lucide-react";
 import {
   useRef,
@@ -65,9 +62,9 @@ import { useNFCeScanner, NFCeItemForm } from "@/hooks/use-nfce-scanner";
 import { DEFAULT_AI_CREDENTIAL } from "@/lib/ai-settings";
 import { TransactionCategory } from "@/lib/types";
 import { InlineCategorySelector } from "@/components/transactions/category-selector";
+import { isNFCeUrl } from "@/lib/nfce-utils";
 
 // ============ TYPES ============
-type ScanMode = "photo" | "qrcode";
 
 // Tipo de item unificado (ambos são compatíveis)
 interface UnifiedItemForm {
@@ -589,7 +586,6 @@ export function ReceiptScannerDialog({ children }: ReceiptScannerDialogProps) {
   const theme = useTheme();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [scanMode, setScanMode] = useState<ScanMode>("photo");
 
   // Custom hooks
   const camera = useCamera({ facingMode: "environment" });
@@ -636,7 +632,6 @@ export function ReceiptScannerDialog({ children }: ReceiptScannerDialogProps) {
     camera.stop();
     receiptScanner.reset();
     nfceScanner.reset();
-    setScanMode("photo");
     if (fileInputRef.current) fileInputRef.current.value = "";
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -663,7 +658,6 @@ export function ReceiptScannerDialog({ children }: ReceiptScannerDialogProps) {
         reader.onloadend = () => {
           const imageData = reader.result as string;
           receiptScanner.processImage(imageData);
-          setScanMode("photo");
         };
         reader.readAsDataURL(file);
       }
@@ -671,24 +665,50 @@ export function ReceiptScannerDialog({ children }: ReceiptScannerDialogProps) {
     [receiptScanner]
   );
 
-  // Handle camera capture
-  const handleCapture = useCallback(() => {
+  // Handle camera capture with smart QR code detection
+  const handleCapture = useCallback(async () => {
     const imageData = camera.capture(0.9);
-    if (imageData) {
-      camera.stop();
-      if (scanMode === "qrcode") {
-        // TODO: Implement QR code detection from image
-        // For now, fallback to AI processing
-        receiptScanner.processImage(imageData);
+    if (!imageData) return;
+
+    camera.stop();
+    
+    // Tentar detectar QR Code na imagem
+    toast({
+      title: "Analisando imagem...",
+      description: "Verificando se há QR Code de nota fiscal",
+    });
+    
+    try {
+      const qrUrl = await camera.detectQRCode(imageData);
+      
+      if (qrUrl && isNFCeUrl(qrUrl)) {
+        // QR Code de NFCe detectado - usar scraping
+        toast({
+          title: "QR Code Detectado!",
+          description: "Acessando portal da NFCe...",
+        });
+        await nfceScanner.processQRCode(qrUrl);
       } else {
+        // Nenhum QR Code ou não é NFCe - usar IA
+        if (qrUrl) {
+          toast({
+            title: "QR Code não reconhecido",
+            description: "Enviando imagem para análise por IA...",
+          });
+        } else {
+          toast({
+            title: "Foto Capturada!",
+            description: "Processando com IA...",
+          });
+        }
         receiptScanner.processImage(imageData);
       }
-      toast({
-        title: "Foto Capturada!",
-        description: "Processando a nota fiscal...",
-      });
+    } catch (error) {
+      console.error("Erro ao processar imagem:", error);
+      // Fallback para IA em caso de erro
+      receiptScanner.processImage(imageData);
     }
-  }, [camera, scanMode, receiptScanner, toast]);
+  }, [camera, receiptScanner, nfceScanner, toast]);
 
   // Handle save transactions
   const handleSave = useCallback(async () => {
@@ -810,7 +830,7 @@ export function ReceiptScannerDialog({ children }: ReceiptScannerDialogProps) {
                 </Fade>
 
                 {/* Scan Frame */}
-                <ScanFrame isVisible={camera.isReady} mode={scanMode} />
+                <ScanFrame isVisible={camera.isReady} mode="photo" />
 
                 {/* Side Controls */}
                 <Stack
@@ -886,44 +906,16 @@ export function ReceiptScannerDialog({ children }: ReceiptScannerDialogProps) {
                   pb: "calc(env(safe-area-inset-bottom, 16px) + 16px)",
                 }}
               >
-                {/* Mode selector */}
-                <Tabs
-                  value={scanMode}
-                  onChange={(_, v) => setScanMode(v)}
-                  sx={{
-                    mb: 2,
-                    "& .MuiTabs-flexContainer": { justifyContent: "center" },
-                    "& .MuiTab-root": { color: "grey.500", minWidth: 100 },
-                    "& .Mui-selected": { color: "white" },
-                    "& .MuiTabs-indicator": { bgcolor: "primary.main" },
-                  }}
-                >
-                  <Tab
-                    value="photo"
-                    icon={<Camera size={16} />}
-                    label="Foto"
-                    iconPosition="start"
+                {/* AI Provider Selector */}
+                <Box sx={{ mb: 2.5, maxWidth: 400, mx: "auto" }}>
+                  <AIProviderSelector
+                    value={receiptScanner.selectedAI}
+                    onChange={receiptScanner.setSelectedAI}
+                    credentials={receiptScanner.visionCapableCredentials}
+                    disabled={!receiptScanner.canSelectProvider}
+                    variant="dark"
                   />
-                  <Tab
-                    value="qrcode"
-                    icon={<QrCode size={16} />}
-                    label="QR Code"
-                    iconPosition="start"
-                  />
-                </Tabs>
-
-                {/* AI Provider (only for photo mode) */}
-                {scanMode === "photo" && (
-                  <Box sx={{ mb: 2.5, maxWidth: 400, mx: "auto" }}>
-                    <AIProviderSelector
-                      value={receiptScanner.selectedAI}
-                      onChange={receiptScanner.setSelectedAI}
-                      credentials={receiptScanner.visionCapableCredentials}
-                      disabled={!receiptScanner.canSelectProvider}
-                      variant="dark"
-                    />
-                  </Box>
-                )}
+                </Box>
 
                 {/* Capture Buttons */}
                 <Stack
@@ -963,11 +955,7 @@ export function ReceiptScannerDialog({ children }: ReceiptScannerDialogProps) {
                       "&:active": { transform: "scale(0.92)" },
                     }}
                   >
-                    {scanMode === "qrcode" ? (
-                      <QrCode size={24} />
-                    ) : (
-                      <Camera size={24} />
-                    )}
+                    <Camera size={24} />
                   </IconButton>
 
                   <Box sx={{ width: 48 }} />

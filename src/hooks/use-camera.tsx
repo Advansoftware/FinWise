@@ -24,6 +24,8 @@ interface UseCameraReturn {
   capture: (quality?: number) => string | null;
   toggleFlash: () => Promise<void>;
   switchCamera: () => Promise<void>;
+  /** Detecta QR codes em uma imagem base64 e retorna a URL ou null */
+  detectQRCode: (imageData: string) => Promise<string | null>;
 }
 
 export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
@@ -347,6 +349,51 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
     await start(newFacing);
   }, [facingMode, start]);
 
+  /**
+   * Detecta QR codes em uma imagem base64 usando BarcodeDetector API
+   * @param imageData - Imagem em base64 (data:image/...)
+   * @returns URL do QR code detectado ou null
+   */
+  const detectQRCode = useCallback(async (imageData: string): Promise<string | null> => {
+    try {
+      // Verificar se BarcodeDetector API está disponível
+      if (!("BarcodeDetector" in window)) {
+        console.log("BarcodeDetector API não disponível neste navegador");
+        return null;
+      }
+
+      // Criar detector de QR codes
+      const barcodeDetector = new (window as any).BarcodeDetector({
+        formats: ["qr_code"],
+      });
+
+      // Criar imagem a partir do base64
+      const img = new Image();
+      
+      const loadPromise = new Promise<HTMLImageElement>((resolve, reject) => {
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+      });
+      
+      img.src = imageData;
+      await loadPromise;
+
+      // Detectar QR codes na imagem
+      const barcodes = await barcodeDetector.detect(img);
+
+      if (barcodes.length > 0) {
+        const rawValue = barcodes[0].rawValue;
+        console.log("QR Code detectado:", rawValue);
+        return rawValue;
+      }
+
+      return null;
+    } catch (error) {
+      console.error("Erro ao detectar QR Code:", error);
+      return null;
+    }
+  }, []);
+
   return {
     videoRef,
     canvasRef,
@@ -361,5 +408,6 @@ export function useCamera(options: UseCameraOptions = {}): UseCameraReturn {
     capture,
     toggleFlash,
     switchCamera,
+    detectQRCode,
   };
 }
