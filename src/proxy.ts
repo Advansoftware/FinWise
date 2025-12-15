@@ -49,9 +49,16 @@ export async function proxy(request: NextRequest) {
   }
 
   // Get the user's session token
+  // Cookie name must match what's configured in auth.ts
+  const useSecureCookies = process.env.NODE_ENV === 'production';
+  const cookieName = useSecureCookies
+    ? '__Secure-next-auth.session-token'
+    : 'next-auth.session-token';
+
   const token = await getToken({
     req: request,
     secret: process.env.NEXTAUTH_SECRET,
+    cookieName,
   });
 
   const isAuthenticated = !!token;
