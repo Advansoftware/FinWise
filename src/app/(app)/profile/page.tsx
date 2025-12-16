@@ -16,6 +16,7 @@ import { GamificationGuide, DailyQuestsCard } from "@/components/gamification";
 import { PayrollCard } from "@/components/profile/payroll-card";
 import { UpdateNameForm } from "@/components/profile/update-name-form";
 import { UpdatePasswordForm } from "@/components/profile/update-password-form";
+import { CPFCard } from "@/components/profile/cpf-card";
 import { usePlan } from "@/hooks/use-plan";
 import { ProUpgradeCard } from "@/components/pro-upgrade-card";
 
@@ -73,6 +74,11 @@ export default function ProfilePage() {
               <UpdatePasswordForm />
             </CardContent>
           </Card>
+        </Grid>
+
+        {/* CPF para Open Finance */}
+        <Grid size={{ xs: 12 }}>
+          <CPFCard />
         </Grid>
 
         {/* Segunda linha - Holerite e Perfil Financeiro */}

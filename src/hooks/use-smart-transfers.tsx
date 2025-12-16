@@ -47,7 +47,8 @@ export interface SmartTransferPayment {
 
 export interface CreatePreauthorizationOptions {
   connectorId: number;
-  cpf: string;
+  itemId?: string; // Pluggy item ID
+  cpf?: string; // Optional - will fetch from profile if not provided
   cnpj?: string;
   recipientIds: string[];
 }
@@ -111,6 +112,24 @@ export function useSmartTransfers() {
 
       setIsLoading(true);
       try {
+        // Buscar CPF do perfil se não foi fornecido
+        let cpf = options.cpf;
+        if (!cpf) {
+          const cpfResponse = await fetch(
+            `/api/users/cpf?userId=${user.uid}&decrypt=true`
+          );
+          if (cpfResponse.ok) {
+            const cpfData = await cpfResponse.json();
+            cpf = cpfData.cpf;
+          }
+
+          if (!cpf) {
+            throw new Error(
+              "CPF não cadastrado. Cadastre seu CPF no perfil primeiro."
+            );
+          }
+        }
+
         const response = await fetch(
           "/api/pluggy/smart-transfers/preauthorizations",
           {
@@ -118,6 +137,7 @@ export function useSmartTransfers() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               ...options,
+              cpf,
               userId: user.uid,
             }),
           }

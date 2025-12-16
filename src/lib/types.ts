@@ -131,6 +131,9 @@ export interface UserProfile {
   subscriptionStatus?: string; // Status da assinatura (active, canceled, past_due, etc)
   createdAt: string;
   image?: string | null;
+  // Open Finance - dados criptografados
+  cpfEncrypted?: string; // CPF criptografado para Open Finance
+  openFinanceConnectedBankId?: string; // ID do connector do Pluggy conectado
 }
 
 export type AICreditLogAction =
