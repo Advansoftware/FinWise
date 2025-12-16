@@ -168,13 +168,8 @@ export function PaymentButton({
 
   // Handler do botão de pagamento
   const handlePayClick = () => {
-    // Se estiver no mobile e usando deeplink, não precisa de confirmação
-    if (isMobile && effectivePaymentMethod === "deeplink") {
-      handlePay();
-    } else {
-      // Mostrar diálogo de confirmação
-      setDialogOpen(true);
-    }
+    // Sempre mostrar diálogo de confirmação para permitir escolha do método
+    setDialogOpen(true);
   };
 
   // Processar pagamento via Pluggy
@@ -457,6 +452,18 @@ export function PaymentButton({
                   </ToggleButton>
                 </ToggleButtonGroup>
               </Box>
+            )}
+
+            {/* Mensagem quando Open Finance não está disponível */}
+            {!isPluggyAvailable && (
+              <Alert severity="info" sx={{ mt: 1 }}>
+                <Typography variant="caption">
+                  <strong>Open Finance indisponível</strong> para este contato.
+                  <br />
+                  Para usar Open Finance, adicione os dados completos do
+                  destinatário (CPF/CNPJ, banco, agência e conta).
+                </Typography>
+              </Alert>
             )}
 
             {/* Indicador de fluxo - Deep Link */}
