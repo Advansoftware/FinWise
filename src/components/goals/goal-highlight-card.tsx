@@ -15,115 +15,64 @@ import {
   Skeleton,
   useTheme,
   alpha,
-  keyframes,
 } from "@mui/material";
-import { Target, PiggyBank, Sparkles, RefreshCw } from "lucide-react";
+import { Target, PiggyBank, Calendar } from "lucide-react";
 import Link from "next/link";
 import { AddDepositDialog } from "./add-deposit-dialog";
-import { useAuth } from "@/hooks/use-auth";
-import { useTransactions } from "@/hooks/use-transactions";
-import { useState, useEffect, useTransition, useMemo } from "react";
-import { getSmartGoalPrediction } from "@/services/ai-automation-service";
-import { format } from "date-fns";
+import { useMemo } from "react";
+import { format, addMonths, parseISO, isBefore } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ProjectGoalCompletionOutput } from "@/ai/ai-types";
-
-const pulse = keyframes`
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-`;
 
 export function GoalHighlightCard() {
   const { goals, isLoading: isGoalsLoading } = useGoals();
-  const { allTransactions, isLoading: isTxLoading } = useTransactions();
-  const { user } = useAuth();
-  const [isProjecting, startProjecting] = useTransition();
-  const [projectionResult, setProjectionResult] =
-    useState<ProjectGoalCompletionOutput | null>(null);
-  const [hasLoadedProjection, setHasLoadedProjection] = useState(false);
   const theme = useTheme();
-
-  const isLoading = isGoalsLoading || isTxLoading;
 
   const firstGoal = useMemo(() => {
     if (!goals || goals.length === 0) return null;
     return goals.find((g) => g.currentAmount < g.targetAmount) || goals[0];
   }, [goals]);
 
-  const transactionsJson = useMemo(
-    () => JSON.stringify(allTransactions, null, 2),
-    [allTransactions]
-  );
+  // Cálculo matemático da previsão de conclusão
+  const projectionData = useMemo(() => {
+    if (!firstGoal) return null;
 
-  useEffect(() => {
-    if (
-      user &&
-      firstGoal &&
-      firstGoal.currentAmount < firstGoal.targetAmount &&
-      !hasLoadedProjection
-    ) {
-      startProjecting(async () => {
-        try {
-          const result = await getSmartGoalPrediction(
-            firstGoal.id,
-            {
-              goalName: firstGoal.name,
-              targetAmount: firstGoal.targetAmount,
-              currentAmount: firstGoal.currentAmount,
-              targetDate: firstGoal.targetDate,
-              monthlyDeposit: firstGoal.monthlyDeposit,
-              transactions: transactionsJson,
-            },
-            user.uid
-          );
-          setProjectionResult(result);
-          setHasLoadedProjection(true);
-        } catch (e) {
-          console.error("Projection error:", e);
-          setProjectionResult({ projection: "Erro ao calcular." });
-          setHasLoadedProjection(true);
-        }
-      });
-    } else if (
-      firstGoal &&
-      firstGoal.currentAmount >= firstGoal.targetAmount &&
-      !hasLoadedProjection
-    ) {
-      setProjectionResult({ projection: "Meta concluída!" });
-      setHasLoadedProjection(true);
+    const remaining = firstGoal.targetAmount - firstGoal.currentAmount;
+
+    // Meta já concluída
+    if (remaining <= 0) {
+      return { type: "completed" as const, message: "Meta concluída!" };
     }
-  }, [firstGoal, user, hasLoadedProjection, transactionsJson]);
 
-  const refreshProjection = () => {
-    if (!user || !firstGoal) return;
+    // Se não tem depósito mensal definido
+    if (!firstGoal.monthlyDeposit || firstGoal.monthlyDeposit <= 0) {
+      return {
+        type: "no-deposit" as const,
+        message: "Defina um depósito mensal",
+      };
+    }
 
-    setHasLoadedProjection(false);
-    startProjecting(async () => {
-      try {
-        const result = await getSmartGoalPrediction(
-          firstGoal.id,
-          {
-            goalName: firstGoal.name,
-            targetAmount: firstGoal.targetAmount,
-            currentAmount: firstGoal.currentAmount,
-            targetDate: firstGoal.targetDate,
-            monthlyDeposit: firstGoal.monthlyDeposit,
-            transactions: transactionsJson,
-          },
-          user.uid,
-          true
-        );
-        setProjectionResult(result);
-        setHasLoadedProjection(true);
-      } catch (e) {
-        console.error("Projection error:", e);
-        setProjectionResult({ projection: "Erro ao calcular." });
-        setHasLoadedProjection(true);
-      }
-    });
-  };
+    // Calcular meses necessários
+    const monthsNeeded = Math.ceil(remaining / firstGoal.monthlyDeposit);
+    const estimatedDate = addMonths(new Date(), monthsNeeded);
 
-  if (isLoading) {
+    // Verificar se vai atingir antes da data alvo
+    const targetDate = firstGoal.targetDate
+      ? parseISO(firstGoal.targetDate)
+      : null;
+    const willMeetTarget = targetDate
+      ? isBefore(estimatedDate, targetDate) ||
+        estimatedDate.getTime() === targetDate.getTime()
+      : true;
+
+    return {
+      type: "estimated" as const,
+      date: estimatedDate,
+      monthsNeeded,
+      willMeetTarget,
+    };
+  }, [firstGoal]);
+
+  if (isGoalsLoading) {
     return (
       <Card>
         <CardHeader sx={{ pb: 1 }}>
@@ -181,41 +130,55 @@ export function GoalHighlightCard() {
   );
 
   const getProjectionText = () => {
-    if (!projectionResult) return null;
-    if (projectionResult.projection === "Meta concluída!") {
+    if (!projectionData) return null;
+
+    if (projectionData.type === "completed") {
       return (
         <Typography
           component="span"
           sx={{ color: "success.main", fontWeight: 600 }}
         >
-          {projectionResult.projection}
+          {projectionData.message}
         </Typography>
       );
     }
-    if (projectionResult.completionDate) {
-      const date = new Date(projectionResult.completionDate);
-      date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+
+    if (projectionData.type === "no-deposit") {
+      return (
+        <Typography component="span" sx={{ color: "text.secondary" }}>
+          {projectionData.message}
+        </Typography>
+      );
+    }
+
+    if (projectionData.type === "estimated") {
       return (
         <Typography component="span">
-          Estimativa:{" "}
+          Previsão:{" "}
           <Typography
             component="span"
             sx={{
               fontWeight: 600,
-              color: "text.primary",
+              color: projectionData.willMeetTarget
+                ? "success.main"
+                : "warning.main",
               textTransform: "capitalize",
             }}
           >
-            {format(date, "MMMM 'de' yyyy", { locale: ptBR })}
+            {format(projectionData.date, "MMM 'de' yyyy", { locale: ptBR })}
+          </Typography>
+          <Typography
+            component="span"
+            sx={{ color: "text.secondary", ml: 0.5 }}
+          >
+            ({projectionData.monthsNeeded}{" "}
+            {projectionData.monthsNeeded === 1 ? "mês" : "meses"})
           </Typography>
         </Typography>
       );
     }
-    return (
-      <Typography component="span" sx={{ textTransform: "capitalize" }}>
-        {projectionResult.projection}
-      </Typography>
-    );
+
+    return null;
   };
 
   return (
@@ -285,55 +248,25 @@ export function GoalHighlightCard() {
           direction="row"
           alignItems="center"
           spacing={0.5}
-          justifyContent="space-between"
           sx={{ fontSize: "0.75rem", color: "text.secondary" }}
         >
-          <Stack
-            direction="row"
-            alignItems="center"
-            spacing={0.5}
-            sx={{ minWidth: 0 }}
+          <Calendar
+            style={{
+              width: 12,
+              height: 12,
+              color: alpha(theme.palette.primary.main, 0.8),
+              flexShrink: 0,
+            }}
+          />
+          <Box
+            sx={{
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
           >
-            <Sparkles
-              style={{
-                width: 12,
-                height: 12,
-                color: alpha(theme.palette.primary.main, 0.8),
-                flexShrink: 0,
-                animation: isProjecting
-                  ? `${pulse} 2s ease-in-out infinite`
-                  : "none",
-              }}
-            />
-            <Box
-              sx={{
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {isProjecting ? "Calculando..." : getProjectionText()}
-            </Box>
-          </Stack>
-          {projectionResult && !isProjecting && (
-            <Button
-              variant="text"
-              size="small"
-              sx={{
-                height: 16,
-                width: 16,
-                p: 0,
-                minWidth: 16,
-                color: "text.secondary",
-                "&:hover": { color: "primary.main" },
-                flexShrink: 0,
-              }}
-              onClick={refreshProjection}
-              title="Atualizar previsão"
-            >
-              <RefreshCw style={{ width: 12, height: 12 }} />
-            </Button>
-          )}
+            {getProjectionText()}
+          </Box>
         </Stack>
       </CardContent>
       <CardActions sx={{ display: "flex", gap: 1, p: 2, pt: 0, flexShrink: 0 }}>
