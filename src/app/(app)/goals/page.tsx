@@ -1,7 +1,7 @@
 // src/app/(app)/goals/page.tsx
 "use client";
 
-import { useState, useTransition, useEffect, useMemo, MouseEvent } from "react";
+import { useState, useMemo, MouseEvent } from "react";
 import {
   Card,
   CardContent,
@@ -31,20 +31,15 @@ import {
   Target,
   PiggyBank,
   CircleDollarSign,
-  Sparkles,
+  CalendarClock,
   Trophy,
 } from "lucide-react";
 import { useGoals } from "@/hooks/use-goals";
 import { CreateGoalDialog } from "@/components/goals/create-goal-dialog";
 import { AddDepositDialog } from "@/components/goals/add-deposit-dialog";
 import { Goal } from "@/lib/types";
-import { projectGoalCompletion } from "@/services/ai-service-router";
-import { useAuth } from "@/hooks/use-auth";
-import { useWebLLM } from "@/hooks/use-webllm";
-import { useTransactions } from "@/hooks/use-transactions";
-import { format } from "date-fns";
+import { format, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { ProjectGoalCompletionOutput } from "@/ai/ai-types";
 import { useGamification } from "@/hooks/use-gamification";
 import { GamificationGuide, DailyQuestsCard } from "@/components/gamification";
 import { formatCurrency } from "@/lib/utils";
@@ -336,76 +331,67 @@ interface GoalCardProps {
 
 function GoalCard({ goal, onDelete, onEdit, onDeposit }: GoalCardProps) {
   const percentage = Math.round((goal.currentAmount / goal.targetAmount) * 100);
-  const { user } = useAuth();
-  const { allTransactions } = useTransactions();
-  const [isProjecting, startProjecting] = useTransition();
-  const [projectionResult, setProjectionResult] =
-    useState<ProjectGoalCompletionOutput | null>(null);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const { isWebLLMActive } = useWebLLM();
 
-  const transactionsJson = useMemo(
-    () => JSON.stringify(allTransactions, null, 2),
-    [allTransactions]
-  );
+  // Cálculo matemático da projeção (sem IA)
+  const projectionResult = useMemo(() => {
+    const remainingAmount = goal.targetAmount - goal.currentAmount;
 
-  useEffect(() => {
-    if (
-      user &&
-      allTransactions.length > 0 &&
-      goal.currentAmount < goal.targetAmount
-    ) {
-      startProjecting(async () => {
-        try {
-          const result = await projectGoalCompletion(
-            {
-              goalName: goal.name,
-              targetAmount: goal.targetAmount,
-              currentAmount: goal.currentAmount,
-              monthlyDeposit: goal.monthlyDeposit ?? 0,
-              targetDate: goal.targetDate,
-              transactions: transactionsJson,
-            },
-            user.uid
-          );
-          setProjectionResult(result);
-        } catch (e) {
-          console.error("Projection error:", e);
-          setProjectionResult({ projection: "Erro ao calcular projeção." });
-        }
-      });
-    } else if (goal.currentAmount >= goal.targetAmount) {
-      setProjectionResult({ projection: "Meta concluída!" });
+    // Meta já concluída
+    if (remainingAmount <= 0) {
+      return { type: "completed" as const };
     }
-  }, [goal, user, allTransactions.length, transactionsJson]);
+
+    // Sem depósito mensal definido
+    if (!goal.monthlyDeposit || goal.monthlyDeposit <= 0) {
+      return { type: "no-deposit" as const };
+    }
+
+    // Calcular meses necessários
+    const monthsNeeded = Math.ceil(remainingAmount / goal.monthlyDeposit);
+    const projectedDate = addMonths(new Date(), monthsNeeded);
+
+    return {
+      type: "projected" as const,
+      date: projectedDate,
+      months: monthsNeeded,
+    };
+  }, [goal.targetAmount, goal.currentAmount, goal.monthlyDeposit]);
 
   const getProjectionText = () => {
-    if (!projectionResult) return null;
-    if (projectionResult.projection === "Meta concluída!") {
-      return (
-        <Typography variant="caption" color="success.main" fontWeight="bold">
-          {projectionResult.projection}
-        </Typography>
-      );
+    switch (projectionResult.type) {
+      case "completed":
+        return (
+          <Typography variant="caption" color="success.main" fontWeight="bold">
+            Meta concluída! 🎉
+          </Typography>
+        );
+      case "no-deposit":
+        return (
+          <Typography variant="caption" color="text.secondary">
+            Defina um depósito mensal para ver a projeção
+          </Typography>
+        );
+      case "projected":
+        return (
+          <Typography variant="caption">
+            Estimativa:{" "}
+            <Box component="span" fontWeight="bold" textTransform="capitalize">
+              {format(projectionResult.date, "MMMM 'de' yyyy", {
+                locale: ptBR,
+              })}
+            </Box>
+            {projectionResult.months && (
+              <Box component="span" color="text.secondary">
+                {" "}
+                ({projectionResult.months}{" "}
+                {projectionResult.months === 1 ? "mês" : "meses"})
+              </Box>
+            )}
+          </Typography>
+        );
     }
-    if (projectionResult.completionDate) {
-      const date = new Date(projectionResult.completionDate);
-      date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
-      return (
-        <Typography variant="caption">
-          Estimativa:{" "}
-          <Box component="span" fontWeight="bold" textTransform="capitalize">
-            {format(date, "MMMM 'de' yyyy", { locale: ptBR })}
-          </Box>
-        </Typography>
-      );
-    }
-    return (
-      <Typography variant="caption" textTransform="capitalize">
-        {projectionResult.projection}
-      </Typography>
-    );
   };
 
   const handleMenuOpen = (event: MouseEvent<HTMLElement>) => {
@@ -478,27 +464,14 @@ function GoalCard({ goal, onDelete, onEdit, onDeposit }: GoalCardProps) {
 
           <Box display="flex" alignItems="center" gap={1} minHeight={20}>
             <Box
-              component={Sparkles}
+              component={CalendarClock}
               sx={{
                 width: 14,
                 height: 14,
                 opacity: 0.7,
-                animation: isProjecting
-                  ? "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite"
-                  : "none",
-                "@keyframes pulse": {
-                  "0%, 100%": { opacity: 1 },
-                  "50%": { opacity: 0.5 },
-                },
               }}
             />
-            {isProjecting ? (
-              <Typography variant="caption" color="text.secondary">
-                Calculando projeção...
-              </Typography>
-            ) : (
-              getProjectionText()
-            )}
+            {getProjectionText()}
           </Box>
         </CardContent>
         <CardActions sx={{ p: 2, pt: 0 }}>

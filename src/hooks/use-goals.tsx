@@ -14,7 +14,6 @@ import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { apiClient } from "@/lib/api-client";
 import { offlineStorage } from "@/lib/offline-storage";
-import { getSmartGoalPrediction } from "@/services/ai-automation-service";
 import { useDataRefresh } from "./use-data-refresh";
 
 interface GoalsContextType {
@@ -323,30 +322,6 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
           await apiClient.update("wallets", walletId, {
             balance: wallet.balance - amount,
           });
-        }
-
-        // Generate AI prediction (only when online)
-        try {
-          const userTransactions = await apiClient.get(
-            "transactions",
-            user.uid
-          );
-          const transactionsJson = JSON.stringify(userTransactions, null, 2);
-
-          await getSmartGoalPrediction(
-            goalId,
-            {
-              goalName: updatedGoal.name,
-              targetAmount: updatedGoal.targetAmount,
-              currentAmount: updatedGoal.currentAmount,
-              targetDate: updatedGoal.targetDate,
-              monthlyDeposit: updatedGoal.monthlyDeposit,
-              transactions: transactionsJson,
-            },
-            user.uid
-          );
-        } catch (error) {
-          console.log("Erro ao gerar previsão de meta:", error);
         }
 
         toast({ title: `Depósito de R$ ${amount.toFixed(2)} adicionado!` });
