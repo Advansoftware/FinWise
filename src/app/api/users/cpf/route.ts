@@ -4,6 +4,24 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { connectToDatabase } from '@/lib/mongodb';
 import { encrypt, decrypt, maskCPF, isValidCPF } from '@/lib/encryption';
+import { ObjectId } from 'mongodb';
+
+/**
+ * Helper para criar query flexível de busca de usuário
+ * Suporta busca por _id (ObjectId), email, ou uid
+ */
+function buildUserQuery(userId: string) {
+  // Se parece com ObjectId, buscar por _id
+  if (ObjectId.isValid(userId) && userId.length === 24) {
+    return { _id: new ObjectId(userId) };
+  }
+  // Se parece com email
+  if (userId.includes('@')) {
+    return { email: userId };
+  }
+  // Tentar buscar por uid ou _id como string
+  return { $or: [{ uid: userId }, { _id: new ObjectId(userId) }] };
+}
 
 /**
  * GET /api/users/cpf
@@ -26,7 +44,7 @@ export async function GET(request: NextRequest) {
     const { db } = await connectToDatabase();
 
     const user = await db.collection('users').findOne(
-      { uid: userId },
+      buildUserQuery(userId),
       { projection: { cpfEncrypted: 1 } }
     );
 
@@ -94,8 +112,8 @@ export async function POST(request: NextRequest) {
 
     const { db } = await connectToDatabase();
 
-    await db.collection('users').updateOne(
-      { uid: userId },
+    const result = await db.collection('users').updateOne(
+      buildUserQuery(userId),
       {
         $set: {
           cpfEncrypted,
@@ -103,6 +121,13 @@ export async function POST(request: NextRequest) {
         }
       }
     );
+
+    if (result.matchedCount === 0) {
+      return NextResponse.json(
+        { error: 'Usuário não encontrado' },
+        { status: 404 }
+      );
+    }
 
     return NextResponse.json({
       success: true,
@@ -136,7 +161,7 @@ export async function DELETE(request: NextRequest) {
     const { db } = await connectToDatabase();
 
     await db.collection('users').updateOne(
-      { uid: userId },
+      buildUserQuery(userId),
       {
         $unset: { cpfEncrypted: '' },
         $set: { updatedAt: new Date().toISOString() },
