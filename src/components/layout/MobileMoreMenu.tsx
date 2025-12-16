@@ -28,13 +28,26 @@ import {
   Landmark,
   Users,
 } from "lucide-react";
+import { getFeatureFlags } from "@/lib/feature-flags";
 
-const menuItems = [
+const { openFinance: isOpenFinanceEnabled } = getFeatureFlags();
+
+const baseMenuItems = [
   { href: "/categories", label: "Categorias", icon: FolderKanban },
   { href: "/budgets", label: "Orçamentos", icon: Target },
   { href: "/installments", label: "Parcelamentos", icon: CreditCard },
-  { href: "/bank-connections", label: "Open Finance", icon: Landmark },
-  { href: "/contacts", label: "Contatos PIX", icon: Users },
+];
+
+const openFinanceItems = isOpenFinanceEnabled
+  ? [
+      { href: "/bank-connections", label: "Open Finance", icon: Landmark },
+      { href: "/contacts", label: "Contatos PIX", icon: Users },
+    ]
+  : [];
+
+const menuItems = [
+  ...baseMenuItems,
+  ...openFinanceItems,
   { href: "/reports", label: "Relatórios", icon: FileText },
   { href: "/tools", label: "Ferramentas", icon: Calculator },
   { href: "/import", label: "Importar", icon: Upload },

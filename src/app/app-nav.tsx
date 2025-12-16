@@ -27,8 +27,11 @@ import {
   Users,
   Landmark,
 } from "lucide-react";
+import { getFeatureFlags } from "@/lib/feature-flags";
 
-const navItems = [
+const { openFinance: isOpenFinanceEnabled } = getFeatureFlags();
+
+const baseNavItems = [
   { href: "/dashboard", label: "Painel", icon: Home },
   { href: "/transactions", label: "Transações", icon: History },
   { href: "/wallets", label: "Carteiras", icon: Wallet },
@@ -36,8 +39,19 @@ const navItems = [
   { href: "/budgets", label: "Orçamentos", icon: Target },
   { href: "/goals", label: "Metas", icon: Goal },
   { href: "/installments", label: "Parcelamentos", icon: CreditCard },
-  { href: "/bank-connections", label: "Open Finance", icon: Landmark },
-  { href: "/contacts", label: "Contatos PIX", icon: Users },
+];
+
+// Itens condicionais baseados em feature flags
+const openFinanceItems = isOpenFinanceEnabled
+  ? [
+      { href: "/bank-connections", label: "Open Finance", icon: Landmark },
+      { href: "/contacts", label: "Contatos PIX", icon: Users },
+    ]
+  : [];
+
+const navItems = [
+  ...baseNavItems,
+  ...openFinanceItems,
   { href: "/reports", label: "Relatórios", icon: FileText },
   { href: "/tools", label: "Ferramentas", icon: Calculator },
   { href: "/import", label: "Importar", icon: Upload },

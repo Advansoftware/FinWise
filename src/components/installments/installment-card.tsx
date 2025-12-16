@@ -46,6 +46,9 @@ import { PayInstallmentDialog } from "./pay-installment-dialog";
 import { CreateInstallmentDialog } from "./create-installment-dialog";
 import { MarkAsPaidDialog } from "./mark-as-paid-dialog";
 import { PaymentButton } from "@/components/bank-payment";
+import { getFeatureFlags } from "@/lib/feature-flags";
+
+const { openFinance: isOpenFinanceEnabled } = getFeatureFlags();
 
 interface InstallmentCardProps {
   installment: Installment;
@@ -69,7 +72,8 @@ export function InstallmentCard({
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   // Check if user can use Open Finance payment
-  const canUseOpenFinance = canUseFeature("pix-payment");
+  const canUseOpenFinance =
+    isOpenFinanceEnabled && canUseFeature("pix-payment");
 
   // Menu state
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);

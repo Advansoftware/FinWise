@@ -2,30 +2,36 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import {
-  Box,
-  Typography,
-  Paper,
-  alpha,
-  Stack,
-  Skeleton,
-} from "@mui/material";
+import { useRouter } from "next/navigation";
+import { Box, Typography, Paper, alpha, Stack, Skeleton } from "@mui/material";
 import { Users } from "lucide-react";
+import { getFeatureFlags } from "@/lib/feature-flags";
+
+const { openFinance: isOpenFinanceEnabled } = getFeatureFlags();
 
 // Lazy load component that uses hooks requiring context
 import dynamic from "next/dynamic";
 
 const ContactManager = dynamic(
-  () => import("@/components/bank-payment/contact-manager").then(mod => mod.ContactManager),
+  () =>
+    import("@/components/bank-payment/contact-manager").then(
+      (mod) => mod.ContactManager
+    ),
   { ssr: false, loading: () => <Skeleton variant="rounded" height={300} /> }
 );
 
 export default function ContactsPage() {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
+    // Redirecionar se Open Finance estiver desabilitado
+    if (!isOpenFinanceEnabled) {
+      router.replace("/dashboard");
+      return;
+    }
     setMounted(true);
-  }, []);
+  }, [router]);
 
   return (
     <Box>
@@ -64,7 +70,11 @@ export default function ContactsPage() {
           borderColor: (theme) => alpha(theme.palette.divider, 0.1),
         }}
       >
-        {mounted ? <ContactManager /> : <Skeleton variant="rounded" height={300} />}
+        {mounted ? (
+          <ContactManager />
+        ) : (
+          <Skeleton variant="rounded" height={300} />
+        )}
       </Paper>
     </Box>
   );

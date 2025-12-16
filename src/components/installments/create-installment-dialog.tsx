@@ -51,6 +51,9 @@ import { useWallets } from "@/hooks/use-wallets";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useBankPayment } from "@/hooks/use-bank-payment";
 import { format } from "date-fns";
+import { getFeatureFlags } from "@/lib/feature-flags";
+
+const { openFinance: isOpenFinanceEnabled } = getFeatureFlags();
 
 const installmentSchema = z
   .object({
@@ -1023,78 +1026,85 @@ export function CreateInstallmentDialog({
                 />
               </Grid>
 
-              {/* Optional: Contact PIX for payment */}
-              <Grid size={12}>
-                <Divider sx={{ my: 1 }}>
-                  <Chip
-                    icon={<PixIcon />}
-                    label="Contato PIX (Opcional)"
-                    size="small"
-                    variant="outlined"
-                  />
-                </Divider>
-              </Grid>
+              {/* Optional: Contact PIX for payment - só mostra se Open Finance habilitado */}
+              {isOpenFinanceEnabled && (
+                <>
+                  <Grid size={12}>
+                    <Divider sx={{ my: 1 }}>
+                      <Chip
+                        icon={<PixIcon />}
+                        label="Contato PIX (Opcional)"
+                        size="small"
+                        variant="outlined"
+                      />
+                    </Divider>
+                  </Grid>
 
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <FormControl fullWidth size={isMobile ? "small" : "medium"}>
-                  <InputLabel>Contato de Pagamento</InputLabel>
-                  <Select
-                    value={selectedContactId}
-                    label="Contato de Pagamento"
-                    onChange={(e) => {
-                      setSelectedContactId(e.target.value);
-                    }}
-                    MenuProps={{ sx: { zIndex: 1400 } }}
-                  >
-                    <MenuItem value="">
-                      <em>Nenhum (pagar manualmente)</em>
-                    </MenuItem>
-                    {contacts.map((contact) => (
-                      <MenuItem key={contact.id} value={contact.id}>
-                        {contact.name}
-                        {contact.isFavorite && " ⭐"}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                  <FormHelperText>
-                    Vincule a um contato para pagamento rápido via PIX
-                  </FormHelperText>
-                </FormControl>
-              </Grid>
-
-              {selectedContactId && availablePixKeys.length > 0 && (
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <FormControl fullWidth size={isMobile ? "small" : "medium"}>
-                    <InputLabel>Chave PIX</InputLabel>
-                    <Select
-                      value={selectedPixKeyId}
-                      label="Chave PIX"
-                      onChange={(e) => {
-                        const newValue = e.target.value as string;
-                        setSelectedPixKeyId(newValue);
-                        setUserSelectedPixKey(true); // Mark as manually selected
-                      }}
-                      MenuProps={{ sx: { zIndex: 1400 } }}
-                      renderValue={(selected) => {
-                        const key = availablePixKeys.find(
-                          (k) => k.id === selected
-                        );
-                        if (!key) return "";
-                        return `${key.pixKeyType.toUpperCase()}: ${key.pixKey}${
-                          key.isDefault ? " (Padrão)" : ""
-                        }`;
-                      }}
-                    >
-                      {availablePixKeys.map((key) => (
-                        <MenuItem key={key.id} value={key.id}>
-                          {key.label ? `${key.label} - ` : ""}
-                          {key.pixKeyType.toUpperCase()}: {key.pixKey}
-                          {key.isDefault ? " (Padrão)" : ""}
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <FormControl fullWidth size={isMobile ? "small" : "medium"}>
+                      <InputLabel>Contato de Pagamento</InputLabel>
+                      <Select
+                        value={selectedContactId}
+                        label="Contato de Pagamento"
+                        onChange={(e) => {
+                          setSelectedContactId(e.target.value);
+                        }}
+                        MenuProps={{ sx: { zIndex: 1400 } }}
+                      >
+                        <MenuItem value="">
+                          <em>Nenhum (pagar manualmente)</em>
                         </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
+                        {contacts.map((contact) => (
+                          <MenuItem key={contact.id} value={contact.id}>
+                            {contact.name}
+                            {contact.isFavorite && " ⭐"}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                      <FormHelperText>
+                        Vincule a um contato para pagamento rápido via PIX
+                      </FormHelperText>
+                    </FormControl>
+                  </Grid>
+
+                  {selectedContactId && availablePixKeys.length > 0 && (
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <FormControl
+                        fullWidth
+                        size={isMobile ? "small" : "medium"}
+                      >
+                        <InputLabel>Chave PIX</InputLabel>
+                        <Select
+                          value={selectedPixKeyId}
+                          label="Chave PIX"
+                          onChange={(e) => {
+                            const newValue = e.target.value as string;
+                            setSelectedPixKeyId(newValue);
+                            setUserSelectedPixKey(true); // Mark as manually selected
+                          }}
+                          MenuProps={{ sx: { zIndex: 1400 } }}
+                          renderValue={(selected) => {
+                            const key = availablePixKeys.find(
+                              (k) => k.id === selected
+                            );
+                            if (!key) return "";
+                            return `${key.pixKeyType.toUpperCase()}: ${
+                              key.pixKey
+                            }${key.isDefault ? " (Padrão)" : ""}`;
+                          }}
+                        >
+                          {availablePixKeys.map((key) => (
+                            <MenuItem key={key.id} value={key.id}>
+                              {key.label ? `${key.label} - ` : ""}
+                              {key.pixKeyType.toUpperCase()}: {key.pixKey}
+                              {key.isDefault ? " (Padrão)" : ""}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    </Grid>
+                  )}
+                </>
               )}
             </Grid>
           </Stack>

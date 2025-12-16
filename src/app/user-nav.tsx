@@ -163,80 +163,98 @@ export function UserNav({ compact = false }: UserNavProps) {
         </Box>
 
         {/* Créditos de IA e IA em uso */}
-        {plan !== "Básico" && (
-          <>
-            <Divider />
-            <Box sx={{ px: 2, py: 1.5 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "space-between",
-                  mb: 1,
-                }}
-              >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Sparkles
-                    size={16}
-                    style={{ color: credits < 5 ? "#ef4444" : "#6366f1" }}
-                  />
-                  <Typography variant="body2" fontWeight={500}>
-                    {isLoadingCredits ? "..." : credits} créditos
-                  </Typography>
-                </Box>
-                <Chip
-                  size="small"
-                  label={isUsingGastometriaAI ? "Gastometria IA" : "IA Própria"}
-                  icon={
-                    isUsingGastometriaAI ? (
-                      <Sparkles size={12} />
-                    ) : (
-                      <Zap size={12} />
-                    )
-                  }
-                  sx={{
-                    height: 22,
-                    fontSize: "0.65rem",
-                    ...(isUsingGastometriaAI
-                      ? {
-                          bgcolor: "rgba(59, 130, 246, 0.1)",
-                          color: "#2563eb",
-                          borderColor: "rgba(59, 130, 246, 0.2)",
-                          "& .MuiChip-icon": { color: "#2563eb" },
-                        }
-                      : {
-                          bgcolor: "rgba(16, 185, 129, 0.1)",
-                          color: "#059669",
-                          borderColor: "rgba(16, 185, 129, 0.2)",
-                          "& .MuiChip-icon": { color: "#059669" },
-                        }),
-                  }}
-                  variant="outlined"
+        {plan !== "Básico" && [
+          <Divider key="credits-divider" />,
+          <Box key="credits-section" sx={{ px: 2, py: 1.5 }}>
+            <Box
+              component={Link}
+              href="/profile"
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                mb: 1,
+                textDecoration: "none",
+                color: "inherit",
+                "&:hover": { opacity: 0.8 },
+              }}
+            >
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Sparkles
+                  size={16}
+                  style={{ color: credits < 5 ? "#ef4444" : "#6366f1" }}
                 />
+                <Typography variant="body2" fontWeight={500}>
+                  {isLoadingCredits ? "..." : credits} créditos
+                </Typography>
               </Box>
-              {isUsingGastometriaAI && (
-                <Typography
-                  variant="caption"
-                  sx={{ color: "text.secondary", fontSize: "0.65rem" }}
-                >
-                  {isPlus
-                    ? "Configure Ollama local para uso ilimitado"
-                    : isInfinity
-                    ? "Configure suas credenciais para uso ilimitado"
-                    : ""}
-                </Typography>
-              )}
-              {!isUsingGastometriaAI && (
-                <Typography
-                  variant="caption"
-                  sx={{ color: "#059669", fontSize: "0.65rem" }}
-                >
-                  Uso ilimitado e gratuito! 🎉
-                </Typography>
-              )}
+              <Chip
+                size="small"
+                label={isUsingGastometriaAI ? "Gastometria IA" : "IA Própria"}
+                icon={
+                  isUsingGastometriaAI ? (
+                    <Sparkles size={12} />
+                  ) : (
+                    <Zap size={12} />
+                  )
+                }
+                sx={{
+                  height: 22,
+                  fontSize: "0.65rem",
+                  ...(isUsingGastometriaAI
+                    ? {
+                        bgcolor: "rgba(59, 130, 246, 0.1)",
+                        color: "#2563eb",
+                        borderColor: "rgba(59, 130, 246, 0.2)",
+                        "& .MuiChip-icon": { color: "#2563eb" },
+                      }
+                    : {
+                        bgcolor: "rgba(16, 185, 129, 0.1)",
+                        color: "#059669",
+                        borderColor: "rgba(16, 185, 129, 0.2)",
+                        "& .MuiChip-icon": { color: "#059669" },
+                      }),
+                }}
+                variant="outlined"
+              />
             </Box>
-          </>
-        )}
+            {isUsingGastometriaAI && (
+              <Typography
+                variant="caption"
+                sx={{ color: "text.secondary", fontSize: "0.65rem" }}
+              >
+                {isPlus
+                  ? "Configure Ollama local para uso ilimitado"
+                  : isInfinity
+                  ? "Configure suas credenciais para uso ilimitado"
+                  : ""}
+              </Typography>
+            )}
+            {!isUsingGastometriaAI && (
+              <Typography
+                variant="caption"
+                sx={{ color: "#059669", fontSize: "0.65rem" }}
+              >
+                Uso ilimitado e gratuito! 🎉
+              </Typography>
+            )}
+            <Typography
+              variant="caption"
+              component={Link}
+              href="/profile"
+              sx={{
+                color: "primary.main",
+                fontSize: "0.65rem",
+                display: "block",
+                mt: 0.5,
+                textDecoration: "none",
+                "&:hover": { textDecoration: "underline" },
+              }}
+            >
+              Ver extrato completo →
+            </Typography>
+          </Box>,
+        ]}
 
         {/* Gamification Section - Melhorado */}
         {isGamificationLoading ? (

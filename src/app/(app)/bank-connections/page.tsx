@@ -2,6 +2,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   Box,
   Typography,
@@ -14,6 +15,9 @@ import {
   Skeleton,
 } from "@mui/material";
 import { Landmark, Shield, RefreshCw } from "lucide-react";
+import { getFeatureFlags } from "@/lib/feature-flags";
+
+const { openFinance: isOpenFinanceEnabled } = getFeatureFlags();
 
 // Lazy load components that use hooks requiring context
 import dynamic from "next/dynamic";
@@ -51,6 +55,7 @@ const OpenFinanceSetup = dynamic(
 );
 
 export default function BankConnectionsPage() {
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [selectedConnection, setSelectedConnection] = useState<any>(null);
@@ -59,8 +64,13 @@ export default function BankConnectionsPage() {
   );
 
   useEffect(() => {
+    // Redirecionar se Open Finance estiver desabilitado
+    if (!isOpenFinanceEnabled) {
+      router.replace("/dashboard");
+      return;
+    }
     setMounted(true);
-  }, []);
+  }, [router]);
 
   const handleImport = (connection: any, accountId: string) => {
     setSelectedConnection(connection);
