@@ -19,25 +19,44 @@ import { Landmark, Shield, RefreshCw } from "lucide-react";
 import dynamic from "next/dynamic";
 
 const PluggyConnectCard = dynamic(
-  () => import("@/components/open-finance/pluggy-connect-button").then(mod => mod.PluggyConnectCard),
+  () =>
+    import("@/components/open-finance/pluggy-connect-button").then(
+      (mod) => mod.PluggyConnectCard
+    ),
   { ssr: false, loading: () => <Skeleton variant="rounded" height={200} /> }
 );
 
 const ConnectedAccountsList = dynamic(
-  () => import("@/components/open-finance/connected-accounts-list").then(mod => mod.ConnectedAccountsList),
+  () =>
+    import("@/components/open-finance/connected-accounts-list").then(
+      (mod) => mod.ConnectedAccountsList
+    ),
   { ssr: false, loading: () => <Skeleton variant="rounded" height={150} /> }
 );
 
 const ImportTransactionsDialog = dynamic(
-  () => import("@/components/open-finance/import-transactions-dialog").then(mod => mod.ImportTransactionsDialog),
+  () =>
+    import("@/components/open-finance/import-transactions-dialog").then(
+      (mod) => mod.ImportTransactionsDialog
+    ),
   { ssr: false }
+);
+
+const OpenFinanceSetup = dynamic(
+  () =>
+    import("@/components/open-finance/open-finance-setup").then(
+      (mod) => mod.OpenFinanceSetup
+    ),
+  { ssr: false, loading: () => <Skeleton variant="rounded" height={150} /> }
 );
 
 export default function BankConnectionsPage() {
   const [mounted, setMounted] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [selectedConnection, setSelectedConnection] = useState<any>(null);
-  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(null);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     setMounted(true);
@@ -89,19 +108,23 @@ export default function BankConnectionsPage() {
       </Box>
 
       {/* Info Alert */}
-      <Alert 
-        severity="info" 
+      <Alert
+        severity="info"
         sx={{ mb: 3, borderRadius: 2 }}
         icon={<RefreshCw size={20} />}
       >
         <AlertTitle>Sincronização Automática</AlertTitle>
-        Ao conectar sua conta, importamos automaticamente os últimos 30 dias de transações.
-        Novas transações são sincronizadas automaticamente via webhook.
+        Ao conectar sua conta, importamos automaticamente os últimos 30 dias de
+        transações. Novas transações são sincronizadas automaticamente via
+        webhook.
       </Alert>
 
       <Stack spacing={3}>
         {/* Connect Card */}
         <PluggyConnectCard onSuccess={() => {}} />
+
+        {/* Open Finance Setup - Smart Transfers */}
+        {mounted && <OpenFinanceSetup />}
 
         {/* Connected Accounts */}
         {mounted && (

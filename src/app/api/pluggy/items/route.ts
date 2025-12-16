@@ -208,16 +208,44 @@ export async function POST(request: NextRequest) {
       { upsert: true }
     );
 
-    // 3. Fetch accounts and auto-create wallets
+    // 3. Fetch accounts and auto-create wallets (or reuse existing ones)
     const accounts = await pluggyService.listAccounts(itemId);
     const createdWallets: any[] = [];
+    const reusedWallets: any[] = [];
 
     for (const account of accounts) {
-      // Check if wallet already exists for this Pluggy account
-      const existingWallet = await db.collection('wallets').findOne({
+      // First, check if wallet already exists for this exact Pluggy account ID
+      let existingWallet = await db.collection('wallets').findOne({
         userId,
         'metadata.pluggyAccountId': account.id,
       });
+
+      // If not found, try to find by connector name + account type (for reconnection scenarios)
+      if (!existingWallet) {
+        existingWallet = await db.collection('wallets').findOne({
+          userId,
+          'metadata.source': 'pluggy',
+          'metadata.connectorName': item.connector.name,
+          type: mapAccountToWalletType(account.type),
+        });
+
+        // If found, update the metadata to link to new pluggy account/item
+        if (existingWallet) {
+          await db.collection('wallets').updateOne(
+            { _id: existingWallet._id },
+            {
+              $set: {
+                balance: account.balance || existingWallet.balance,
+                'metadata.pluggyAccountId': account.id,
+                'metadata.pluggyItemId': itemId,
+                updatedAt: new Date().toISOString(),
+              },
+            }
+          );
+          reusedWallets.push({ ...existingWallet, id: existingWallet._id.toString() });
+          console.log(`[Pluggy] Reused wallet "${existingWallet.name}" for account ${account.id}`);
+        }
+      }
 
       if (!existingWallet) {
         const walletName = account.name || `${item.connector.name} - ${account.type}`;
@@ -278,9 +306,9 @@ export async function POST(request: NextRequest) {
 
       if (allTransactions.length === 0) continue;
 
-      // Check for duplicates
+      // Check for duplicates - first by pluggyTransactionId
       const pluggyIds = allTransactions.map((tx) => tx.id);
-      const existingTxs = await db
+      const existingTxsByPluggyId = await db
         .collection('transactions')
         .find({
           userId,
@@ -288,13 +316,46 @@ export async function POST(request: NextRequest) {
         })
         .toArray();
 
-      const existingIds = new Set(
-        existingTxs.map((tx) => tx.metadata?.pluggyTransactionId)
+      const existingPluggyIds = new Set(
+        existingTxsByPluggyId.map((tx) => tx.metadata?.pluggyTransactionId)
       );
 
-      // Filter and map new transactions
-      const newTransactions = allTransactions
-        .filter((tx) => !existingIds.has(tx.id))
+      // Filter out transactions already imported by pluggyTransactionId
+      let transactionsToCheck = allTransactions.filter((tx) => !existingPluggyIds.has(tx.id));
+
+      // For remaining transactions, check for duplicates by date+amount+description
+      // This catches duplicates when reconnecting the same bank account
+      if (transactionsToCheck.length > 0) {
+        const walletTransactions = await db
+          .collection('transactions')
+          .find({
+            userId,
+            walletId: wallet._id.toString(),
+            date: {
+              $gte: fromDate,
+              $lte: toDate
+            }
+          })
+          .toArray();
+
+        // Create a Set of signatures for quick lookup
+        const existingSignatures = new Set(
+          walletTransactions.map((tx) => {
+            const txDate = new Date(tx.date).toISOString().split('T')[0];
+            return `${txDate}|${Math.abs(tx.amount)}|${tx.type}`;
+          })
+        );
+
+        transactionsToCheck = transactionsToCheck.filter((tx) => {
+          const txDate = new Date(tx.date).toISOString().split('T')[0];
+          const txType = tx.type === 'CREDIT' ? 'income' : 'expense';
+          const signature = `${txDate}|${Math.abs(tx.amount)}|${txType}`;
+          return !existingSignatures.has(signature);
+        });
+      }
+
+      // Map new transactions
+      const newTransactions = transactionsToCheck
         .map((tx) => ({
           userId,
           walletId: wallet._id.toString(),
@@ -325,8 +386,12 @@ export async function POST(request: NextRequest) {
       item,
       connection,
       walletsCreated: createdWallets.length,
+      walletsReused: reusedWallets.length,
       transactionsImported: totalImported,
       accounts: accounts.length,
+      message: reusedWallets.length > 0
+        ? `Reconectado com sucesso! ${totalImported} novas transações importadas.`
+        : `Conectado com sucesso! ${totalImported} transações importadas.`,
     });
   } catch (error: any) {
     console.error('Error storing Pluggy item:', error);

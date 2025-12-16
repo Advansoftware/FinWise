@@ -449,9 +449,9 @@ export default function WalletsPage() {
                     color="text.secondary"
                     maxWidth="sm"
                   >
-                    Para começar, você precisa criar sua primeira carteira. Pense
-                    nela como sua conta bancária principal ou o cartão que mais
-                    usa.
+                    Para começar, você precisa criar sua primeira carteira.
+                    Pense nela como sua conta bancária principal ou o cartão que
+                    mais usa.
                   </Typography>
                   <Button
                     variant="contained"
@@ -515,23 +515,42 @@ function WalletCard({ wallet, onDelete, onEdit }: WalletCardProps) {
       <Card sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
         <CardHeader
           action={
-            <IconButton size="small" onClick={handleMenuOpen}>
+            <IconButton
+              size="small"
+              onClick={handleMenuOpen}
+              sx={{ flexShrink: 0 }}
+            >
               <MoreVertical size={18} />
             </IconButton>
           }
           title={
-            <Box display="flex" alignItems="center" gap={1.5}>
+            <Box
+              display="flex"
+              alignItems="center"
+              gap={1.5}
+              sx={{ minWidth: 0 }}
+            >
               <Box
                 p={1}
                 borderRadius="50%"
                 bgcolor="primary.light"
                 color="primary.main"
                 display="flex"
+                sx={{ flexShrink: 0 }}
               >
                 <WalletIcon type={wallet.type} />
               </Box>
-              <Box>
-                <Typography variant="h6" noWrap title={wallet.name}>
+              <Box sx={{ minWidth: 0, overflow: "hidden" }}>
+                <Typography
+                  variant="h6"
+                  noWrap
+                  title={wallet.name}
+                  sx={{
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    maxWidth: "100%",
+                  }}
+                >
                   {wallet.name}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -540,7 +559,18 @@ function WalletCard({ wallet, onDelete, onEdit }: WalletCardProps) {
               </Box>
             </Box>
           }
-          sx={{ pb: 1 }}
+          sx={{
+            pb: 1,
+            "& .MuiCardHeader-content": {
+              minWidth: 0,
+              overflow: "hidden",
+            },
+            "& .MuiCardHeader-action": {
+              alignSelf: "center",
+              marginTop: 0,
+              marginRight: 0,
+            },
+          }}
         />
         <CardContent sx={{ flexGrow: 1 }}>
           <Typography variant="body2" color="text.secondary">

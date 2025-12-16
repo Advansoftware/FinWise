@@ -162,9 +162,9 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Check for already imported transactions
+    // Check for already imported transactions by pluggyTransactionId
     const pluggyIds = allTransactions.map((tx) => tx.id);
-    const existingTxs = await db
+    const existingTxsByPluggyId = await db
       .collection('transactions')
       .find({
         userId,
@@ -172,14 +172,49 @@ export async function POST(request: NextRequest) {
       })
       .toArray();
 
-    const existingIds = new Set(
-      existingTxs.map((tx) => tx.metadata?.pluggyTransactionId)
+    const existingPluggyIds = new Set(
+      existingTxsByPluggyId.map((tx) => tx.metadata?.pluggyTransactionId)
     );
 
-    // Filter out already imported
-    const newTransactions = allTransactions.filter(
-      (tx) => !existingIds.has(tx.id)
+    // Filter out already imported by pluggyTransactionId
+    let transactionsToCheck = allTransactions.filter(
+      (tx) => !existingPluggyIds.has(tx.id)
     );
+
+    // For remaining transactions, check for duplicates by date+amount (catches reconnection duplicates)
+    if (transactionsToCheck.length > 0) {
+      const minDate = transactionsToCheck.reduce((min, tx) =>
+        tx.date < min ? tx.date : min, transactionsToCheck[0].date
+      );
+      const maxDate = transactionsToCheck.reduce((max, tx) =>
+        tx.date > max ? tx.date : max, transactionsToCheck[0].date
+      );
+
+      const walletTransactions = await db
+        .collection('transactions')
+        .find({
+          userId,
+          walletId,
+          date: { $gte: minDate, $lte: maxDate }
+        })
+        .toArray();
+
+      const existingSignatures = new Set(
+        walletTransactions.map((tx) => {
+          const txDate = new Date(tx.date).toISOString().split('T')[0];
+          return `${txDate}|${Math.abs(tx.amount)}|${tx.type}`;
+        })
+      );
+
+      transactionsToCheck = transactionsToCheck.filter((tx) => {
+        const txDate = new Date(tx.date).toISOString().split('T')[0];
+        const txType = tx.type === 'CREDIT' ? 'income' : 'expense';
+        const signature = `${txDate}|${Math.abs(tx.amount)}|${txType}`;
+        return !existingSignatures.has(signature);
+      });
+    }
+
+    const newTransactions = transactionsToCheck;
 
     if (newTransactions.length === 0) {
       return NextResponse.json({

@@ -29,7 +29,9 @@ import {
   OpenInNew as OpenInNewIcon,
   AccountBalance as BankIcon,
   AccountBalanceWallet as WalletIcon,
+  Settings as SettingsIcon,
 } from "@mui/icons-material";
+import NextLink from "next/link";
 import { useBankPayment } from "@/hooks/use-bank-payment";
 import { usePluggy } from "@/hooks/use-pluggy";
 import { useSmartTransfers } from "@/hooks/use-smart-transfers";
@@ -539,12 +541,26 @@ export function PaymentButton({
 
             {/* Mensagem quando Open Finance não está disponível */}
             {!isPluggyAvailable && !isSmartTransferAvailable && (
-              <Alert severity="info" sx={{ mt: 1 }}>
+              <Alert
+                severity="info"
+                sx={{ mt: 1 }}
+                action={
+                  <Button
+                    component={NextLink}
+                    href="/bank-connections"
+                    size="small"
+                    color="inherit"
+                    startIcon={<SettingsIcon />}
+                  >
+                    Configurar
+                  </Button>
+                }
+              >
                 <Typography variant="caption">
                   <strong>Open Finance indisponível</strong>
                   <br />
-                  Configure o Open Finance nas configurações para habilitar
-                  pagamentos automáticos.
+                  Configure o Open Finance para habilitar pagamentos
+                  automáticos.
                 </Typography>
               </Alert>
             )}
