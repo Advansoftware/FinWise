@@ -11,6 +11,7 @@ import {
   Grid,
 } from "@mui/material";
 import { useTransactions } from "@/hooks/use-transactions";
+import { useInfiniteTransactions } from "@/hooks/use-infinite-transactions";
 import { columns } from "@/components/transactions/columns";
 import { DataTable } from "@/components/transactions/data-table";
 import { DateRangePicker } from "@/components/dashboard/date-range-picker";
@@ -19,23 +20,47 @@ import { TransactionCardList } from "@/components/transactions/transaction-card-
 import { AddTransactionSheet } from "@/components/dashboard/add-transaction-sheet";
 import { GamificationGuide, DailyQuestsCard } from "@/components/gamification";
 import { PlusCircle } from "lucide-react";
+import { useState, useMemo } from "react";
+import { startOfMonth } from "date-fns";
+import { DateRange } from "@/lib/types";
 
 export default function TransactionsPage() {
+  const { categories, subcategories } = useTransactions();
+
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: startOfMonth(new Date()),
+    to: new Date(),
+  });
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string>("all");
+
+  // Usar scroll infinito
   const {
+    transactions,
     isLoading,
-    filteredTransactions,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useInfiniteTransactions({
     dateRange,
-    setDateRange,
-    categories,
-    handleCategoryChange,
-    selectedCategory,
-    availableSubcategories,
-    selectedSubcategory,
-    setSelectedSubcategory,
-  } = useTransactions();
+    category: selectedCategory,
+    subcategory: selectedSubcategory,
+    pageSize: 20,
+  });
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+
+  // Filtrar subcategorias disponíveis baseado na categoria selecionada
+  const availableSubcategories = useMemo(() => {
+    if (selectedCategory === "all") return [];
+    return subcategories[selectedCategory as keyof typeof subcategories] || [];
+  }, [selectedCategory, subcategories]);
+
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    setSelectedSubcategory("all"); // Reset subcategory when category changes
+  };
 
   return (
     <Box sx={{ flexGrow: 1 }}>
@@ -65,7 +90,7 @@ export default function TransactionsPage() {
                 Transações
               </Typography>
               <Typography variant="body1" color="text.secondary">
-                Visualize e gerencie suas transações com filtros e paginação.
+                Visualize e gerencie suas transações com scroll infinito.
               </Typography>
             </Box>
 
@@ -141,9 +166,20 @@ export default function TransactionsPage() {
               />
             </Box>
           ) : isMobile ? (
-            <TransactionCardList transactions={filteredTransactions} />
+            <TransactionCardList
+              transactions={transactions}
+              hasNextPage={hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
+              fetchNextPage={fetchNextPage}
+            />
           ) : (
-            <DataTable columns={columns} data={filteredTransactions} />
+            <DataTable
+              columns={columns}
+              data={transactions}
+              hasNextPage={hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
+              fetchNextPage={fetchNextPage}
+            />
           )}
         </Grid>
       </Grid>

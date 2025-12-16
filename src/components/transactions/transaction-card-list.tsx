@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { Transaction } from "@/lib/types";
 import {
   Card,
@@ -15,6 +15,7 @@ import {
   useTheme,
   alpha,
   Badge,
+  CircularProgress,
 } from "@mui/material";
 import { CategoryIcon } from "../icons";
 import { format } from "date-fns";
@@ -50,11 +51,43 @@ import { useToast } from "@/hooks/use-toast";
 
 interface TransactionCardListProps {
   transactions: Transaction[];
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
+  fetchNextPage?: () => void;
 }
 
 export function TransactionCardList({
   transactions,
+  hasNextPage,
+  isFetchingNextPage,
+  fetchNextPage,
 }: TransactionCardListProps) {
+  const observerRef = useRef<IntersectionObserver | null>(null);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
+  // Intersection Observer para scroll infinito
+  useEffect(() => {
+    if (!fetchNextPage) return;
+
+    observerRef.current = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (first.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1, rootMargin: "100px" }
+    );
+
+    if (loadMoreRef.current) {
+      observerRef.current.observe(loadMoreRef.current);
+    }
+
+    return () => {
+      observerRef.current?.disconnect();
+    };
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
   if (transactions.length === 0) {
     return (
       <Box sx={{ textAlign: "center", py: 12, px: 4, color: "text.secondary" }}>
@@ -79,6 +112,31 @@ export function TransactionCardList({
       {transactions.map((transaction) => (
         <TransactionCard key={transaction.id} transaction={transaction} />
       ))}
+
+      {/* Load More Trigger */}
+      <Box
+        ref={loadMoreRef}
+        sx={{
+          display: "flex",
+          justifyContent: "center",
+          py: 2,
+          minHeight: 60,
+        }}
+      >
+        {isFetchingNextPage && (
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <CircularProgress size={24} />
+            <Typography variant="body2" color="text.secondary">
+              Carregando mais transações...
+            </Typography>
+          </Stack>
+        )}
+        {!hasNextPage && transactions.length > 0 && (
+          <Typography variant="body2" color="text.secondary">
+            Todas as transações foram carregadas
+          </Typography>
+        )}
+      </Box>
     </Stack>
   );
 }

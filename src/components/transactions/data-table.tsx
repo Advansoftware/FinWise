@@ -1,88 +1,126 @@
 // src/components/transactions/data-table.tsx
-'use client';
-
-import {ColumnDef, flexRender, getCoreRowModel, getPaginationRowModel, getSortedRowModel, getFilteredRowModel, useReactTable, SortingState, ColumnFiltersState, RowSelectionState} from '@tanstack/react-table';
+"use client";
 
 import {
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableRow, 
-  TableContainer, 
+  ColumnDef,
+  flexRender,
+  getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  useReactTable,
+  SortingState,
+  ColumnFiltersState,
+  RowSelectionState,
+} from "@tanstack/react-table";
+
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  TableContainer,
   Paper,
   Button,
   TextField,
   Box,
   Stack,
   Typography,
-  alpha
-} from '@mui/material';
-import {useState} from 'react';
-import {AnalyzeTransactionsDialog} from './analyze-transactions-dialog';
+  alpha,
+  CircularProgress,
+} from "@mui/material";
+import { useState, useRef, useEffect, useCallback } from "react";
+import { AnalyzeTransactionsDialog } from "./analyze-transactions-dialog";
 
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
+  hasNextPage?: boolean;
+  isFetchingNextPage?: boolean;
+  fetchNextPage?: () => void;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
+  hasNextPage,
+  isFetchingNextPage,
+  fetchNextPage,
 }: DataTableProps<TData, TValue>) {
-    const [sorting, setSorting] = useState<SortingState>([
-      { id: 'date', desc: true } // Ordenação inicial por data decrescente
-    ]);
-    const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-    const [rowSelection, setRowSelection] = useState({});
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: "date", desc: true }, // Ordenação inicial por data decrescente
+  ]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [rowSelection, setRowSelection] = useState({});
+  const tableContainerRef = useRef<HTMLDivElement>(null);
 
-    const table = useReactTable({
-        data,
-        columns,
-        getCoreRowModel: getCoreRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        onSortingChange: setSorting,
-        getSortedRowModel: getSortedRowModel(),
-        onColumnFiltersChange: setColumnFilters,
-        getFilteredRowModel: getFilteredRowModel(),
-        onRowSelectionChange: setRowSelection,
-        state: {
-          sorting,
-          columnFilters,
-          rowSelection,
-        },
-        initialState: {
-            pagination: {
-                pageSize: 10,
-            }
-        }
+  const table = useReactTable({
+    data,
+    columns,
+    getCoreRowModel: getCoreRowModel(),
+    onSortingChange: setSorting,
+    getSortedRowModel: getSortedRowModel(),
+    onColumnFiltersChange: setColumnFilters,
+    getFilteredRowModel: getFilteredRowModel(),
+    onRowSelectionChange: setRowSelection,
+    state: {
+      sorting,
+      columnFilters,
+      rowSelection,
+    },
   });
 
-  const selectedRows = table.getFilteredSelectedRowModel().rows.map(row => row.original);
+  // Scroll infinito para desktop
+  const handleScroll = useCallback(() => {
+    if (!tableContainerRef.current || !fetchNextPage) return;
+
+    const { scrollTop, scrollHeight, clientHeight } = tableContainerRef.current;
+    // Carregar mais quando estiver a 200px do final
+    if (
+      scrollHeight - scrollTop - clientHeight < 200 &&
+      hasNextPage &&
+      !isFetchingNextPage
+    ) {
+      fetchNextPage();
+    }
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+
+  useEffect(() => {
+    const container = tableContainerRef.current;
+    if (!container) return;
+
+    container.addEventListener("scroll", handleScroll);
+    return () => container.removeEventListener("scroll", handleScroll);
+  }, [handleScroll]);
+
+  const selectedRows = table
+    .getFilteredSelectedRowModel()
+    .rows.map((row) => row.original);
 
   return (
-    <Paper 
-      variant="outlined" 
-      sx={{ 
-        width: '100%', 
-        overflow: 'hidden',
+    <Paper
+      variant="outlined"
+      sx={{
+        width: "100%",
+        overflow: "hidden",
         bgcolor: (theme) => alpha(theme.palette.background.paper, 0.6),
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
         border: (theme) => `1px solid ${alpha(theme.palette.divider, 0.1)}`,
       }}
     >
-      <Stack 
-        direction={{ xs: 'column', sm: 'row' }} 
-        alignItems="center" 
-        justifyContent="space-between" 
-        spacing={2} 
-        sx={{ 
+      <Stack
+        direction={{ xs: "column", sm: "row" }}
+        alignItems="center"
+        justifyContent="space-between"
+        spacing={2}
+        sx={{
           p: 2,
           bgcolor: (theme) => alpha(theme.palette.background.paper, 0.8),
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          borderBottom: (theme) => `1px solid ${alpha(theme.palette.divider, 0.15)}`,
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
+          borderBottom: (theme) =>
+            `1px solid ${alpha(theme.palette.divider, 0.15)}`,
         }}
       >
         <TextField
@@ -92,107 +130,119 @@ export function DataTable<TData, TValue>({
             table.getColumn("item")?.setFilterValue(event.target.value)
           }
           size="small"
-          sx={{ 
-            maxWidth: '24rem', 
-            width: '100%',
-            '& .MuiOutlinedInput-root': {
+          sx={{
+            maxWidth: "24rem",
+            width: "100%",
+            "& .MuiOutlinedInput-root": {
               bgcolor: (theme) => alpha(theme.palette.background.default, 0.5),
-            }
+            },
           }}
         />
         {selectedRows.length > 0 && (
           <AnalyzeTransactionsDialog transactions={selectedRows as any} />
         )}
       </Stack>
-      <TableContainer sx={{ maxHeight: 600 }}>
+      <TableContainer ref={tableContainerRef} sx={{ maxHeight: 600 }}>
         <Table stickyHeader>
-            <TableHead>
+          <TableHead>
             {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
+              <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => {
-                    return (
-                    <TableCell 
-                        key={header.id} 
-                        sx={{ 
-                            fontWeight: 'bold',
-                            width: header.getSize() !== 150 ? `${header.getSize()}px` : undefined,
-                            bgcolor: (theme) => alpha(theme.palette.background.paper, 0.95),
-                            backdropFilter: 'blur(12px)',
-                            WebkitBackdropFilter: 'blur(12px)',
-                            borderBottom: (theme) => `2px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                        }}
+                  return (
+                    <TableCell
+                      key={header.id}
+                      sx={{
+                        fontWeight: "bold",
+                        width:
+                          header.getSize() !== 150
+                            ? `${header.getSize()}px`
+                            : undefined,
+                        bgcolor: (theme) =>
+                          alpha(theme.palette.background.paper, 0.95),
+                        backdropFilter: "blur(12px)",
+                        WebkitBackdropFilter: "blur(12px)",
+                        borderBottom: (theme) =>
+                          `2px solid ${alpha(theme.palette.primary.main, 0.2)}`,
+                      }}
                     >
-                        {header.isPlaceholder
+                      {header.isPlaceholder
                         ? null
                         : flexRender(
                             header.column.columnDef.header,
                             header.getContext()
-                            )}
+                          )}
                     </TableCell>
-                    );
+                  );
                 })}
-                </TableRow>
+              </TableRow>
             ))}
-            </TableHead>
-            <TableBody>
+          </TableHead>
+          <TableBody>
             {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                <TableRow
-                    key={row.id}
-                    selected={row.getIsSelected()}
-                    hover
-                >
-                    {row.getVisibleCells().map((cell) => (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id} selected={row.getIsSelected()} hover>
+                  {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
                     </TableCell>
-                    ))}
+                  ))}
                 </TableRow>
-                ))
+              ))
             ) : (
-                <TableRow>
-                <TableCell colSpan={columns.length} align="center" sx={{ py: 6 }}>
-                    <Typography color="text.secondary">Nenhum resultado encontrado.</Typography>
+              <TableRow>
+                <TableCell
+                  colSpan={columns.length}
+                  align="center"
+                  sx={{ py: 6 }}
+                >
+                  <Typography color="text.secondary">
+                    Nenhum resultado encontrado.
+                  </Typography>
                 </TableCell>
-                </TableRow>
+              </TableRow>
             )}
-            </TableBody>
+          </TableBody>
         </Table>
       </TableContainer>
-       <Stack 
-        direction="row" 
-        alignItems="center" 
-        justifyContent="flex-end" 
-        spacing={2} 
-        sx={{ 
-          p: 2, 
-          borderTop: 1, 
+      <Stack
+        direction="row"
+        alignItems="center"
+        justifyContent="center"
+        spacing={2}
+        sx={{
+          p: 2,
+          borderTop: 1,
           borderColor: (theme) => alpha(theme.palette.divider, 0.15),
           bgcolor: (theme) => alpha(theme.palette.background.paper, 0.8),
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
+          backdropFilter: "blur(12px)",
+          WebkitBackdropFilter: "blur(12px)",
         }}
       >
-        <Typography variant="body2" color="text.secondary" sx={{ flex: 1 }}>
-          {table.getFilteredSelectedRowModel().rows.length} de{" "}
-          {table.getFilteredRowModel().rows.length} linha(s) selecionadas.
-        </Typography>
-        <Button
-          variant="outlined"
-          size="small"
-          onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}
-        >
-          Anterior
-        </Button>
-        <Button
-          variant="outlined"
-          size="small"
-          onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}
-        >
-          Próximo
-        </Button>
+        {isFetchingNextPage ? (
+          <Stack direction="row" alignItems="center" spacing={2}>
+            <CircularProgress size={20} />
+            <Typography variant="body2" color="text.secondary">
+              Carregando mais transações...
+            </Typography>
+          </Stack>
+        ) : hasNextPage ? (
+          <Button variant="outlined" size="small" onClick={fetchNextPage}>
+            Carregar mais
+          </Button>
+        ) : data.length > 0 ? (
+          <Typography variant="body2" color="text.secondary">
+            {table.getFilteredSelectedRowModel().rows.length > 0
+              ? `${table.getFilteredSelectedRowModel().rows.length} de ${
+                  table.getFilteredRowModel().rows.length
+                } linha(s) selecionadas.`
+              : `${
+                  table.getFilteredRowModel().rows.length
+                } transações carregadas`}
+          </Typography>
+        ) : null}
       </Stack>
     </Paper>
   );

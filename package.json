@@ -21,6 +21,7 @@
     "@mui/material": "^7.3.5",
     "@mui/material-nextjs": "^7.3.5",
     "@mui/x-date-pickers": "^8.19.0",
+    "@tanstack/react-query": "^5.90.12",
     "@tanstack/react-table": "^8.19.3",
     "@types/stripe": "^8.0.417",
     "@types/web-push": "^3.6.4",
