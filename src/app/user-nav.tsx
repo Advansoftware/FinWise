@@ -59,7 +59,13 @@ export function UserNav({ compact = false }: UserNavProps) {
   };
 
   if (loading) {
-    return <Skeleton variant="circular" width={compact ? 32 : 36} height={compact ? 32 : 36} />;
+    return (
+      <Skeleton
+        variant="circular"
+        width={compact ? 32 : 36}
+        height={compact ? 32 : 36}
+      />
+    );
   }
 
   const getInitials = (name?: string | null) => {
@@ -355,7 +361,7 @@ export function UserNav({ compact = false }: UserNavProps) {
             <Settings size={18} />
           </ListItemIcon>
           <ListItemText
-            primary="Configurações"
+            primary="Configurações de IA"
             primaryTypographyProps={{ variant: "body2" }}
           />
         </MenuItem>

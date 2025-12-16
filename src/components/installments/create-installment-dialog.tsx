@@ -42,7 +42,9 @@ import {
   Calendar as CalendarIcon,
   X,
   Settings2,
+  Edit3,
 } from "lucide-react";
+import { Installment } from "@/core/ports/installments.port";
 import { Pix as PixIcon } from "@mui/icons-material";
 import { useInstallments } from "@/hooks/use-installments";
 import { useWallets } from "@/hooks/use-wallets";
@@ -109,16 +111,20 @@ type InstallmentForm = z.infer<typeof installmentSchema>;
 interface CreateInstallmentDialogProps {
   open: boolean;
   onClose: () => void;
+  /** Parcelamento para edição - se fornecido, o dialog entra em modo de edição */
+  installment?: Installment | null;
 }
 
 export function CreateInstallmentDialog({
   open,
   onClose,
+  installment,
 }: CreateInstallmentDialogProps) {
+  const isEditMode = !!installment;
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isManualValues, setIsManualValues] = useState(false);
   const [customAmounts, setCustomAmounts] = useState<number[]>([]);
-  const { createInstallment } = useInstallments();
+  const { createInstallment, updateInstallment } = useInstallments();
   const { wallets } = useWallets();
   const { categories, subcategories } = useTransactions();
   const { contacts } = useBankPayment();
@@ -152,6 +158,56 @@ export function CreateInstallmentDialog({
   const totalInstallments = Number(form.watch("totalInstallments") || 0);
   const installmentAmount =
     totalInstallments > 0 ? totalAmount / totalInstallments : 0;
+
+  // Track if we've initialized for edit mode to prevent re-initialization
+  const [hasInitializedEdit, setHasInitializedEdit] = useState(false);
+
+  // Preencher formulário quando em modo de edição
+  useEffect(() => {
+    if (installment && open && !hasInitializedEdit) {
+      // Find valid wallet ID
+      const validWalletId =
+        installment.sourceWalletId &&
+        wallets.find((w) => w.id === installment.sourceWalletId)
+          ? installment.sourceWalletId
+          : wallets.length > 0
+          ? wallets[0].id
+          : "";
+
+      form.reset({
+        name: installment.name,
+        description: installment.description || "",
+        totalAmount: String(installment.totalAmount),
+        totalInstallments: installment.isRecurring
+          ? ""
+          : String(installment.totalInstallments),
+        category: installment.category,
+        subcategory: installment.subcategory || "",
+        establishment: installment.establishment || "",
+        sourceWalletId: validWalletId,
+        isRecurring: installment.isRecurring || false,
+        recurringType: installment.recurringType || "monthly",
+        startDate: new Date(installment.startDate),
+        endDate: installment.endDate
+          ? new Date(installment.endDate)
+          : undefined,
+      });
+
+      // Initialize contact and PIX key from installment
+      const contactId = installment.contactId || "";
+      setSelectedContactId(contactId);
+      setPrevContactId(contactId); // Sync to prevent auto-select from overwriting
+      setSelectedPixKeyId(installment.pixKeyId || "");
+      setHasInitializedEdit(true);
+    }
+  }, [installment, open, wallets, form, hasInitializedEdit]);
+
+  // Reset initialization flag when dialog closes or installment changes
+  useEffect(() => {
+    if (!open) {
+      setHasInitializedEdit(false);
+    }
+  }, [open]);
 
   // Atualizar customAmounts quando totalInstallments ou totalAmount mudar
   useEffect(() => {
@@ -259,47 +315,77 @@ export function CreateInstallmentDialog({
   }, [selectedContactId, prevContactId, contacts]);
 
   const onSubmit = async (data: InstallmentForm) => {
-    // Validar valores customizados se habilitado
-    if (isManualValues && !isCustomAmountsValid) {
+    // Validar valores customizados se habilitado (apenas para criação)
+    if (!isEditMode && isManualValues && !isCustomAmountsValid) {
       return; // Não submeter se valores não batem
     }
 
     setIsSubmitting(true);
     try {
-      const installmentData = {
-        name: data.name,
-        description: data.description || undefined,
-        totalAmount: Number(data.totalAmount),
-        totalInstallments: data.isRecurring
-          ? 999999
-          : Number(data.totalInstallments), // Valor alto para recorrentes
-        category: data.category,
-        subcategory: data.subcategory || undefined,
-        establishment: data.establishment || undefined,
-        startDate: data.startDate.toISOString(),
-        sourceWalletId: data.sourceWalletId,
-        isRecurring: data.isRecurring,
-        recurringType: data.isRecurring ? data.recurringType : undefined,
-        endDate: data.endDate?.toISOString(),
-        // Contact PIX for payment
-        contactId: selectedContactId || undefined,
-        pixKeyId: selectedPixKeyId || undefined,
-        // Incluir valores customizados se habilitado
-        customInstallmentAmounts:
-          isManualValues && customAmounts.length > 0
-            ? customAmounts
-            : undefined,
-      };
+      if (isEditMode && installment) {
+        // Modo de edição - apenas atualiza campos editáveis
+        const updateData = {
+          name: data.name,
+          description: data.description || undefined,
+          category: data.category,
+          subcategory: data.subcategory || undefined,
+          establishment: data.establishment || undefined,
+          sourceWalletId: data.sourceWalletId,
+          // Contact PIX for payment - use null to clear if not selected
+          contactId: selectedContactId || null,
+          pixKeyId: selectedPixKeyId || null,
+          updatedAt: new Date().toISOString(),
+        };
 
-      const installment = await createInstallment(installmentData);
+        const success = await updateInstallment(
+          installment.id,
+          updateData as any
+        );
 
-      if (installment) {
-        onClose();
-        form.reset();
-        setIsManualValues(false);
-        setCustomAmounts([]);
-        setSelectedContactId("");
-        setSelectedPixKeyId("");
+        if (success) {
+          onClose();
+          form.reset();
+          setSelectedContactId("");
+          setSelectedPixKeyId("");
+          setHasInitializedEdit(false);
+        }
+      } else {
+        // Modo de criação
+        const installmentData = {
+          name: data.name,
+          description: data.description || undefined,
+          totalAmount: Number(data.totalAmount),
+          totalInstallments: data.isRecurring
+            ? 999999
+            : Number(data.totalInstallments), // Valor alto para recorrentes
+          category: data.category,
+          subcategory: data.subcategory || undefined,
+          establishment: data.establishment || undefined,
+          startDate: data.startDate.toISOString(),
+          sourceWalletId: data.sourceWalletId,
+          isRecurring: data.isRecurring,
+          recurringType: data.isRecurring ? data.recurringType : undefined,
+          endDate: data.endDate?.toISOString(),
+          // Contact PIX for payment
+          contactId: selectedContactId || undefined,
+          pixKeyId: selectedPixKeyId || undefined,
+          // Incluir valores customizados se habilitado
+          customInstallmentAmounts:
+            isManualValues && customAmounts.length > 0
+              ? customAmounts
+              : undefined,
+        };
+
+        const newInstallment = await createInstallment(installmentData);
+
+        if (newInstallment) {
+          onClose();
+          form.reset();
+          setIsManualValues(false);
+          setCustomAmounts([]);
+          setSelectedContactId("");
+          setSelectedPixKeyId("");
+        }
       }
     } finally {
       setIsSubmitting(false);
@@ -340,14 +426,16 @@ export function CreateInstallmentDialog({
       >
         <Box>
           <Typography variant={isMobile ? "subtitle1" : "h6"} fontWeight="bold">
-            Novo Parcelamento
+            {isEditMode ? "Editar Parcelamento" : "Novo Parcelamento"}
           </Typography>
           <Typography
             variant="caption"
             color="text.secondary"
             sx={{ display: { xs: "none", sm: "block" } }}
           >
-            Crie um novo parcelamento para acompanhar suas prestações.
+            {isEditMode
+              ? `Atualize as informações do parcelamento "${installment?.name}"`
+              : "Crie um novo parcelamento para acompanhar suas prestações."}
           </Typography>
         </Box>
         <IconButton onClick={onClose} size="small">
@@ -400,51 +488,98 @@ export function CreateInstallmentDialog({
                 />
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Controller
-                  name="totalAmount"
-                  control={form.control}
-                  render={({ field, fieldState: { error } }) => (
-                    <TextField
-                      {...field}
-                      label={isRecurring ? "Valor da Parcela" : "Valor Total"}
-                      placeholder="0.00"
-                      type="text"
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">R$</InputAdornment>
-                        ),
-                      }}
-                      error={!!error}
-                      helperText={error?.message}
-                      fullWidth
-                      required
-                      size={isMobile ? "small" : "medium"}
-                    />
-                  )}
-                />
-              </Grid>
+              {/* Modo de edição: mostrar valores como read-only */}
+              {isEditMode && installment && (
+                <Grid size={12}>
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(2, 1fr)",
+                      gap: 2,
+                    }}
+                  >
+                    <Box
+                      sx={{ p: 2, bgcolor: "action.hover", borderRadius: 1 }}
+                    >
+                      <Typography variant="caption" color="text.secondary">
+                        Valor Total
+                      </Typography>
+                      <Typography variant="h6" fontWeight="semibold">
+                        {new Intl.NumberFormat("pt-BR", {
+                          style: "currency",
+                          currency: "BRL",
+                        }).format(installment.totalAmount)}
+                      </Typography>
+                    </Box>
+                    <Box
+                      sx={{ p: 2, bgcolor: "action.hover", borderRadius: 1 }}
+                    >
+                      <Typography variant="caption" color="text.secondary">
+                        Nº de Parcelas
+                      </Typography>
+                      <Typography variant="h6" fontWeight="semibold">
+                        {installment.paidInstallments}/
+                        {installment.totalInstallments}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Grid>
+              )}
 
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Controller
-                  name="totalInstallments"
-                  control={form.control}
-                  render={({ field, fieldState: { error } }) => (
-                    <TextField
-                      {...field}
-                      label="Número de Parcelas"
-                      placeholder={isRecurring ? "N/A" : "12"}
-                      type="text"
-                      disabled={isRecurring}
-                      error={!!error}
-                      helperText={error?.message}
-                      fullWidth
-                      required={!isRecurring}
-                      size={isMobile ? "small" : "medium"}
+              {/* Modo de criação: campos editáveis */}
+              {!isEditMode && (
+                <>
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Controller
+                      name="totalAmount"
+                      control={form.control}
+                      render={({ field, fieldState: { error } }) => (
+                        <TextField
+                          {...field}
+                          label={
+                            isRecurring ? "Valor da Parcela" : "Valor Total"
+                          }
+                          placeholder="0.00"
+                          type="text"
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                R$
+                              </InputAdornment>
+                            ),
+                          }}
+                          error={!!error}
+                          helperText={error?.message}
+                          fullWidth
+                          required
+                          size={isMobile ? "small" : "medium"}
+                        />
+                      )}
                     />
-                  )}
-                />
-              </Grid>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, sm: 6 }}>
+                    <Controller
+                      name="totalInstallments"
+                      control={form.control}
+                      render={({ field, fieldState: { error } }) => (
+                        <TextField
+                          {...field}
+                          label="Número de Parcelas"
+                          placeholder={isRecurring ? "N/A" : "12"}
+                          type="text"
+                          disabled={isRecurring}
+                          error={!!error}
+                          helperText={error?.message}
+                          fullWidth
+                          required={!isRecurring}
+                          size={isMobile ? "small" : "medium"}
+                        />
+                      )}
+                    />
+                  </Grid>
+                </>
+              )}
 
               {/* Manual Values Section - Only show when not recurring and has installments */}
               {!isRecurring &&
@@ -581,122 +716,130 @@ export function CreateInstallmentDialog({
                   </Grid>
                 )}
 
-              {/* Campos para parcelamentos recorrentes */}
-              <Grid size={12}>
-                <Controller
-                  name="isRecurring"
-                  control={form.control}
-                  render={({ field }) => (
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={field.value}
-                          onChange={field.onChange}
-                          size={isMobile ? "small" : "medium"}
-                        />
-                      }
-                      label={
-                        <Box>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 0.5,
-                            }}
-                          >
-                            <Repeat
-                              style={{ width: "0.875rem", height: "0.875rem" }}
-                            />
-                            <Typography variant="body2" fontWeight="medium">
-                              Parcelamento Recorrente
-                            </Typography>
-                          </Box>
-                          <Typography variant="caption" color="text.secondary">
-                            Aluguel, contas fixas, etc.
-                          </Typography>
-                        </Box>
-                      }
-                    />
-                  )}
-                />
-
-                {isRecurring && (
-                  <Grid
-                    container
-                    spacing={{ xs: 1.5, md: 2 }}
-                    sx={{
-                      mt: 1,
-                      pl: { xs: 2, md: 4 },
-                      borderLeft: 2,
-                      borderColor: "divider",
-                    }}
-                  >
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <Controller
-                        name="recurringType"
-                        control={form.control}
-                        render={({ field, fieldState: { error } }) => (
-                          <FormControl
-                            fullWidth
-                            error={!!error}
-                            required
-                            size={isMobile ? "small" : "medium"}
-                          >
-                            <InputLabel>Tipo de Recorrência</InputLabel>
-                            <Select
-                              {...field}
-                              label="Tipo de Recorrência"
-                              value={field.value || ""}
-                              MenuProps={{ sx: { zIndex: 1400 } }}
-                            >
-                              <MenuItem value="monthly">Mensal</MenuItem>
-                              <MenuItem value="yearly">Anual</MenuItem>
-                            </Select>
-                            <FormHelperText>{error?.message}</FormHelperText>
-                          </FormControl>
-                        )}
-                      />
-                    </Grid>
-
-                    <Grid size={{ xs: 12, sm: 6 }}>
-                      <Controller
-                        name="endDate"
-                        control={form.control}
-                        render={({ field, fieldState: { error } }) => (
-                          <TextField
-                            type="date"
-                            label="Data de Fim (Opcional)"
-                            value={
-                              field.value
-                                ? format(field.value, "yyyy-MM-dd")
-                                : ""
-                            }
-                            onChange={(e) => {
-                              const date = e.target.value
-                                ? new Date(e.target.value)
-                                : undefined;
-                              if (date) {
-                                date.setMinutes(
-                                  date.getMinutes() + date.getTimezoneOffset()
-                                );
-                              }
-                              field.onChange(date);
-                            }}
-                            InputLabelProps={{ shrink: true }}
-                            error={!!error}
-                            helperText={error?.message}
-                            fullWidth
+              {/* Campos para parcelamentos recorrentes - apenas no modo de criação */}
+              {!isEditMode && (
+                <Grid size={12}>
+                  <Controller
+                    name="isRecurring"
+                    control={form.control}
+                    render={({ field }) => (
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={field.value}
+                            onChange={field.onChange}
                             size={isMobile ? "small" : "medium"}
                           />
-                        )}
+                        }
+                        label={
+                          <Box>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: 0.5,
+                              }}
+                            >
+                              <Repeat
+                                style={{
+                                  width: "0.875rem",
+                                  height: "0.875rem",
+                                }}
+                              />
+                              <Typography variant="body2" fontWeight="medium">
+                                Parcelamento Recorrente
+                              </Typography>
+                            </Box>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              Aluguel, contas fixas, etc.
+                            </Typography>
+                          </Box>
+                        }
                       />
-                    </Grid>
-                  </Grid>
-                )}
-              </Grid>
+                    )}
+                  />
 
-              {/* Calculated installment amount */}
-              {totalAmount > 0 && (
+                  {isRecurring && (
+                    <Grid
+                      container
+                      spacing={{ xs: 1.5, md: 2 }}
+                      sx={{
+                        mt: 1,
+                        pl: { xs: 2, md: 4 },
+                        borderLeft: 2,
+                        borderColor: "divider",
+                      }}
+                    >
+                      <Grid size={{ xs: 12, sm: 6 }}>
+                        <Controller
+                          name="recurringType"
+                          control={form.control}
+                          render={({ field, fieldState: { error } }) => (
+                            <FormControl
+                              fullWidth
+                              error={!!error}
+                              required
+                              size={isMobile ? "small" : "medium"}
+                            >
+                              <InputLabel>Tipo de Recorrência</InputLabel>
+                              <Select
+                                {...field}
+                                label="Tipo de Recorrência"
+                                value={field.value || ""}
+                                MenuProps={{ sx: { zIndex: 1400 } }}
+                              >
+                                <MenuItem value="monthly">Mensal</MenuItem>
+                                <MenuItem value="yearly">Anual</MenuItem>
+                              </Select>
+                              <FormHelperText>{error?.message}</FormHelperText>
+                            </FormControl>
+                          )}
+                        />
+                      </Grid>
+
+                      <Grid size={{ xs: 12, sm: 6 }}>
+                        <Controller
+                          name="endDate"
+                          control={form.control}
+                          render={({ field, fieldState: { error } }) => (
+                            <TextField
+                              type="date"
+                              label="Data de Fim (Opcional)"
+                              value={
+                                field.value
+                                  ? format(field.value, "yyyy-MM-dd")
+                                  : ""
+                              }
+                              onChange={(e) => {
+                                const date = e.target.value
+                                  ? new Date(e.target.value)
+                                  : undefined;
+                                if (date) {
+                                  date.setMinutes(
+                                    date.getMinutes() + date.getTimezoneOffset()
+                                  );
+                                }
+                                field.onChange(date);
+                              }}
+                              InputLabelProps={{ shrink: true }}
+                              error={!!error}
+                              helperText={error?.message}
+                              fullWidth
+                              size={isMobile ? "small" : "medium"}
+                            />
+                          )}
+                        />
+                      </Grid>
+                    </Grid>
+                  )}
+                </Grid>
+              )}
+
+              {/* Calculated installment amount - apenas no modo de criação */}
+              {!isEditMode && totalAmount > 0 && (
                 <Grid size={12}>
                   <Box
                     sx={{ p: 1.5, bgcolor: "action.hover", borderRadius: 1 }}
@@ -810,38 +953,41 @@ export function CreateInstallmentDialog({
                 />
               </Grid>
 
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Controller
-                  name="startDate"
-                  control={form.control}
-                  render={({ field, fieldState: { error } }) => (
-                    <TextField
-                      type="date"
-                      label="Data da Primeira Parcela"
-                      value={
-                        field.value ? format(field.value, "yyyy-MM-dd") : ""
-                      }
-                      onChange={(e) => {
-                        const date = e.target.value
-                          ? new Date(e.target.value)
-                          : undefined;
-                        if (date) {
-                          date.setMinutes(
-                            date.getMinutes() + date.getTimezoneOffset()
-                          );
+              {/* Data de início - apenas no modo de criação */}
+              {!isEditMode && (
+                <Grid size={{ xs: 12, sm: 6 }}>
+                  <Controller
+                    name="startDate"
+                    control={form.control}
+                    render={({ field, fieldState: { error } }) => (
+                      <TextField
+                        type="date"
+                        label="Data da Primeira Parcela"
+                        value={
+                          field.value ? format(field.value, "yyyy-MM-dd") : ""
                         }
-                        field.onChange(date);
-                      }}
-                      InputLabelProps={{ shrink: true }}
-                      error={!!error}
-                      helperText={error?.message}
-                      fullWidth
-                      required
-                      size={isMobile ? "small" : "medium"}
-                    />
-                  )}
-                />
-              </Grid>
+                        onChange={(e) => {
+                          const date = e.target.value
+                            ? new Date(e.target.value)
+                            : undefined;
+                          if (date) {
+                            date.setMinutes(
+                              date.getMinutes() + date.getTimezoneOffset()
+                            );
+                          }
+                          field.onChange(date);
+                        }}
+                        InputLabelProps={{ shrink: true }}
+                        error={!!error}
+                        helperText={error?.message}
+                        fullWidth
+                        required
+                        size={isMobile ? "small" : "medium"}
+                      />
+                    )}
+                  />
+                </Grid>
+              )}
 
               <Grid size={12}>
                 <Controller
@@ -966,12 +1112,14 @@ export function CreateInstallmentDialog({
           startIcon={
             isSubmitting ? (
               <CircularProgress size={16} color="inherit" />
+            ) : isEditMode ? (
+              <Edit3 size={16} />
             ) : (
               <Plus size={16} />
             )
           }
         >
-          Criar
+          {isEditMode ? "Salvar Alterações" : "Criar"}
         </Button>
       </DialogActions>
     </Dialog>

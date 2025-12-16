@@ -43,7 +43,7 @@ import { useInstallments } from "@/hooks/use-installments";
 import { useBankPayment } from "@/hooks/use-bank-payment";
 import { usePlanFeatures } from "@/hooks/use-plan-features";
 import { PayInstallmentDialog } from "./pay-installment-dialog";
-import { EditInstallmentDialog } from "./edit-installment-dialog";
+import { CreateInstallmentDialog } from "./create-installment-dialog";
 import { MarkAsPaidDialog } from "./mark-as-paid-dialog";
 import { PaymentButton } from "@/components/bank-payment";
 
@@ -601,10 +601,10 @@ export function InstallmentCard({
         onOpenChange={setIsPayDialogOpen}
       />
 
-      <EditInstallmentDialog
+      <CreateInstallmentDialog
         installment={editingInstallment}
         open={isEditDialogOpen}
-        onOpenChange={setIsEditDialogOpen}
+        onClose={() => setIsEditDialogOpen(false)}
       />
 
       <MarkAsPaidDialog

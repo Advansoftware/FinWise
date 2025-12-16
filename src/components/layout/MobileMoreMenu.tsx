@@ -25,12 +25,16 @@ import {
   Calculator,
   Upload,
   X,
+  Landmark,
+  Users,
 } from "lucide-react";
 
 const menuItems = [
   { href: "/categories", label: "Categorias", icon: FolderKanban },
   { href: "/budgets", label: "Orçamentos", icon: Target },
   { href: "/installments", label: "Parcelamentos", icon: CreditCard },
+  { href: "/bank-connections", label: "Open Finance", icon: Landmark },
+  { href: "/contacts", label: "Contatos PIX", icon: Users },
   { href: "/reports", label: "Relatórios", icon: FileText },
   { href: "/tools", label: "Ferramentas", icon: Calculator },
   { href: "/import", label: "Importar", icon: Upload },
@@ -63,8 +67,7 @@ export function MobileMoreMenu({ open, onClose }: MobileMoreMenuProps) {
           borderTopRightRadius: 24,
           maxHeight: "85vh",
           // Glass morphism
-          bgcolor: (theme) =>
-            alpha(theme.palette.background.paper, 0.95),
+          bgcolor: (theme) => alpha(theme.palette.background.paper, 0.95),
           backdropFilter: "blur(20px)",
           WebkitBackdropFilter: "blur(20px)",
         },
@@ -113,7 +116,13 @@ export function MobileMoreMenu({ open, onClose }: MobileMoreMenuProps) {
       <Box sx={{ overflow: "auto", pb: "env(safe-area-inset-bottom)" }}>
         <Typography
           variant="overline"
-          sx={{ px: 2, pt: 2, pb: 1, display: "block", color: "text.secondary" }}
+          sx={{
+            px: 2,
+            pt: 2,
+            pb: 1,
+            display: "block",
+            color: "text.secondary",
+          }}
         >
           Recursos
         </Typography>
