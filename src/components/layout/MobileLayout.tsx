@@ -10,7 +10,6 @@ import { MobileHeader } from "./MobileHeader";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { MobileMoreMenu } from "./MobileMoreMenu";
 import { ChatAssistant } from "@/components/chat/chat-assistant";
-import { AICreditIndicator } from "@/components/credits/ai-credit-indicator";
 import { PlanExpirationAlert } from "@/components/billing/plan-expiration-alert";
 
 interface MobileLayoutProps {
@@ -62,26 +61,16 @@ export function MobileLayout({ children }: MobileLayoutProps) {
         </Box>
       </Box>
 
-      {/* FABs flutuantes - posicionados acima do bottom nav */}
+      {/* FAB flutuante - apenas chat, posicionado acima do bottom nav */}
       <Box
         sx={{
           position: "fixed",
           bottom: "calc(80px + env(safe-area-inset-bottom))",
           right: 16,
           zIndex: 1000, // Abaixo do drawer (1200) mas acima do conteúdo
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "flex-end",
-          gap: 1,
-          // Permite cliques passarem através de áreas vazias
-          pointerEvents: "none",
-          "& > *": {
-            pointerEvents: "auto", // Habilita cliques nos filhos diretos
-          },
         }}
       >
         <ChatAssistant />
-        <AICreditIndicator />
       </Box>
 
       {/* Bottom Navigation */}
@@ -95,4 +84,3 @@ export function MobileLayout({ children }: MobileLayoutProps) {
     </Box>
   );
 }
-

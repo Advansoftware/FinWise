@@ -93,7 +93,8 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const {
       userId,
-      connectorId, // Bank connector ID (e.g., 612 for Nubank)
+      connectorId: providedConnectorId, // Bank connector ID (e.g., 612 for Nubank)
+      itemId, // Pluggy item ID - can be used to fetch connectorId
       cpf,
       cnpj,
       recipientIds, // Pluggy recipient IDs to authorize
@@ -101,15 +102,38 @@ export async function POST(request: NextRequest) {
       callbackUrls,
     } = body;
 
-    if (!userId || !connectorId || !cpf || !recipientIds?.length) {
+    // Validate required fields
+    if (!userId || !cpf || !recipientIds?.length) {
       return NextResponse.json(
-        { error: 'userId, connectorId, cpf, and recipientIds are required' },
+        { error: 'userId, cpf, and recipientIds are required' },
         { status: 400 }
       );
     }
 
     const pluggyService = getPluggyService();
     const { db } = await connectToDatabase();
+
+    // Get connectorId - either provided directly or fetched from itemId
+    let connectorId = providedConnectorId;
+    let connectorName = 'Unknown';
+
+    if (!connectorId && itemId) {
+      // Fetch item details to get connectorId
+      try {
+        const item = await pluggyService.getItem(itemId);
+        connectorId = item.connector?.id;
+        connectorName = item.connector?.name || 'Unknown';
+      } catch (err) {
+        console.error('Error fetching item:', err);
+      }
+    }
+
+    if (!connectorId) {
+      return NextResponse.json(
+        { error: 'connectorId is required. Provide connectorId or a valid itemId.' },
+        { status: 400 }
+      );
+    }
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:9002';
 
@@ -141,7 +165,7 @@ export async function POST(request: NextRequest) {
       userId,
       pluggyPreauthorizationId: preauthorization.id,
       connectorId,
-      connectorName: preauthorization.connector?.name || 'Unknown',
+      connectorName: preauthorization.connector?.name || connectorName,
       recipientIds,
       status: preauthorization.status,
       consentUrl: preauthorization.consentUrl,

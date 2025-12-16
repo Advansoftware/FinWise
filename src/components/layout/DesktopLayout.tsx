@@ -3,17 +3,11 @@
 
 "use client";
 
-import {
-  Drawer,
-  Box,
-  Divider,
-  alpha,
-} from "@mui/material";
+import { Drawer, Box, Divider, alpha } from "@mui/material";
 import { UserNav } from "@/app/user-nav";
 import { Logo } from "@/components/logo";
 import { AppNav } from "@/app/app-nav";
 import { ChatAssistant } from "@/components/chat/chat-assistant";
-import { AICreditIndicator } from "@/components/credits/ai-credit-indicator";
 import { PlanExpirationAlert } from "@/components/billing/plan-expiration-alert";
 
 const DRAWER_WIDTH = 280;
@@ -30,8 +24,7 @@ export function DesktopLayout({ children }: DesktopLayoutProps) {
         flexDirection: "column",
         height: "100%",
         // Glass morphism sutil
-        bgcolor: (theme) =>
-          alpha(theme.palette.background.paper, 0.8),
+        bgcolor: (theme) => alpha(theme.palette.background.paper, 0.8),
         backdropFilter: "blur(10px)",
       }}
     >
@@ -68,7 +61,9 @@ export function DesktopLayout({ children }: DesktopLayoutProps) {
       </Box>
 
       {/* User section */}
-      <Divider sx={{ borderColor: (theme) => alpha(theme.palette.divider, 0.1) }} />
+      <Divider
+        sx={{ borderColor: (theme) => alpha(theme.palette.divider, 0.1) }}
+      />
       <Box sx={{ p: 2 }}>
         <UserNav />
       </Box>
@@ -123,21 +118,16 @@ export function DesktopLayout({ children }: DesktopLayoutProps) {
           {children}
         </Box>
 
-        {/* FABs flutuantes */}
+        {/* FAB flutuante - apenas chat */}
         <Box
           sx={{
             position: "fixed",
             bottom: 24,
             right: 24,
             zIndex: 1000,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "flex-end",
-            gap: 1.5,
           }}
         >
           <ChatAssistant />
-          <AICreditIndicator />
         </Box>
       </Box>
     </Box>

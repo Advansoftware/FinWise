@@ -17,6 +17,7 @@ import {
   alpha,
   Tooltip,
   IconButton,
+  Chip,
 } from "@mui/material";
 import {
   Settings,
@@ -26,12 +27,16 @@ import {
   Trophy,
   ExternalLink,
   Flame,
+  Sparkles,
+  Zap,
 } from "lucide-react";
 import Link from "next/link";
 import { useAuth } from "@/hooks/use-auth";
 import { useGamification } from "@/hooks/use-gamification";
 import { BillingPortalButton } from "@/components/billing/billing-portal-button";
 import { usePlan } from "@/hooks/use-plan";
+import { useCredits } from "@/hooks/use-credits";
+import { useAISettings } from "@/hooks/use-ai-settings";
 
 interface UserNavProps {
   /** Modo compacto para uso em headers mobile */
@@ -46,9 +51,20 @@ export function UserNav({ compact = false }: UserNavProps) {
     calculateProgress,
     getLevelInfo,
   } = useGamification();
-  const { plan } = usePlan();
+  const { plan, isPlus, isInfinity } = usePlan();
+  const { credits, isLoading: isLoadingCredits } = useCredits();
+  const { displayedCredentials, activeCredentialId } = useAISettings();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const open = Boolean(anchorEl);
+
+  // Verificar qual IA está sendo usada
+  const activeCredential = displayedCredentials.find(
+    (c) => c.id === activeCredentialId
+  );
+  const isUsingGastometriaAI =
+    activeCredential?.id === "gastometria-ai-default" ||
+    activeCredential?.provider === "gastometria" ||
+    !activeCredential;
 
   const handleClick = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -145,6 +161,82 @@ export function UserNav({ compact = false }: UserNavProps) {
             {user?.email || "Bem-vindo!"}
           </Typography>
         </Box>
+
+        {/* Créditos de IA e IA em uso */}
+        {plan !== "Básico" && (
+          <>
+            <Divider />
+            <Box sx={{ px: 2, py: 1.5 }}>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  mb: 1,
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Sparkles
+                    size={16}
+                    style={{ color: credits < 5 ? "#ef4444" : "#6366f1" }}
+                  />
+                  <Typography variant="body2" fontWeight={500}>
+                    {isLoadingCredits ? "..." : credits} créditos
+                  </Typography>
+                </Box>
+                <Chip
+                  size="small"
+                  label={isUsingGastometriaAI ? "Gastometria IA" : "IA Própria"}
+                  icon={
+                    isUsingGastometriaAI ? (
+                      <Sparkles size={12} />
+                    ) : (
+                      <Zap size={12} />
+                    )
+                  }
+                  sx={{
+                    height: 22,
+                    fontSize: "0.65rem",
+                    ...(isUsingGastometriaAI
+                      ? {
+                          bgcolor: "rgba(59, 130, 246, 0.1)",
+                          color: "#2563eb",
+                          borderColor: "rgba(59, 130, 246, 0.2)",
+                          "& .MuiChip-icon": { color: "#2563eb" },
+                        }
+                      : {
+                          bgcolor: "rgba(16, 185, 129, 0.1)",
+                          color: "#059669",
+                          borderColor: "rgba(16, 185, 129, 0.2)",
+                          "& .MuiChip-icon": { color: "#059669" },
+                        }),
+                  }}
+                  variant="outlined"
+                />
+              </Box>
+              {isUsingGastometriaAI && (
+                <Typography
+                  variant="caption"
+                  sx={{ color: "text.secondary", fontSize: "0.65rem" }}
+                >
+                  {isPlus
+                    ? "Configure Ollama local para uso ilimitado"
+                    : isInfinity
+                    ? "Configure suas credenciais para uso ilimitado"
+                    : ""}
+                </Typography>
+              )}
+              {!isUsingGastometriaAI && (
+                <Typography
+                  variant="caption"
+                  sx={{ color: "#059669", fontSize: "0.65rem" }}
+                >
+                  Uso ilimitado e gratuito! 🎉
+                </Typography>
+              )}
+            </Box>
+          </>
+        )}
 
         {/* Gamification Section - Melhorado */}
         {isGamificationLoading ? (
