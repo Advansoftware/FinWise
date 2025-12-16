@@ -69,19 +69,23 @@ export function OpenFinanceSetup({ onSetupComplete }: OpenFinanceSetupProps) {
   const [error, setError] = useState<string | null>(null);
   const [consentUrl, setConsentUrl] = useState<string | null>(null);
 
-  const steps = ["Selecionar banco", "Informar CPF", "Selecionar destinatários", "Autorizar"];
+  const steps = [
+    "Selecionar banco",
+    "Informar CPF",
+    "Selecionar destinatários",
+    "Autorizar",
+  ];
 
   // Get recipients from contacts
-  const availableRecipients = contacts
-    .flatMap((contact) =>
-      (contact.pixKeys || [])
-        .filter((pk) => pk.pluggyRecipientId)
-        .map((pk) => ({
-          id: pk.pluggyRecipientId!,
-          name: contact.name,
-          pixKey: pk.pixKey,
-        }))
-    );
+  const availableRecipients = contacts.flatMap((contact) =>
+    (contact.pixKeys || [])
+      .filter((pk) => pk.pluggyRecipientId)
+      .map((pk) => ({
+        id: pk.pluggyRecipientId!,
+        name: contact.name,
+        pixKey: pk.pixKey,
+      }))
+  );
 
   const handleNext = async () => {
     if (activeStep === steps.length - 2) {
@@ -134,10 +138,16 @@ export function OpenFinanceSetup({ onSetupComplete }: OpenFinanceSetupProps) {
   const formatCpf = (value: string) => {
     const numbers = value.replace(/\D/g, "");
     if (numbers.length <= 3) return numbers;
-    if (numbers.length <= 6) return `${numbers.slice(0, 3)}.${numbers.slice(3)}`;
+    if (numbers.length <= 6)
+      return `${numbers.slice(0, 3)}.${numbers.slice(3)}`;
     if (numbers.length <= 9)
-      return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6)}`;
-    return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(6, 9)}-${numbers.slice(9, 11)}`;
+      return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(
+        6
+      )}`;
+    return `${numbers.slice(0, 3)}.${numbers.slice(3, 6)}.${numbers.slice(
+      6,
+      9
+    )}-${numbers.slice(9, 11)}`;
   };
 
   const isNextDisabled = () => {
@@ -168,11 +178,7 @@ export function OpenFinanceSetup({ onSetupComplete }: OpenFinanceSetupProps) {
                 Banco: {activePreauthorization?.connectorName || "Configurado"}
               </Typography>
             </Box>
-            <Chip
-              label="Ativo"
-              color="success"
-              size="small"
-            />
+            <Chip label="Ativo" color="success" size="small" />
           </Stack>
         </CardContent>
       </Card>
@@ -244,7 +250,9 @@ export function OpenFinanceSetup({ onSetupComplete }: OpenFinanceSetupProps) {
                 {SUPPORTED_BANKS.map((bank) => (
                   <Button
                     key={bank.id}
-                    variant={selectedBank === bank.id ? "contained" : "outlined"}
+                    variant={
+                      selectedBank === bank.id ? "contained" : "outlined"
+                    }
                     onClick={() => setSelectedBank(bank.id)}
                     sx={{ justifyContent: "flex-start" }}
                   >
@@ -312,8 +320,8 @@ export function OpenFinanceSetup({ onSetupComplete }: OpenFinanceSetupProps) {
                 <Alert severity="warning" sx={{ mt: 2 }}>
                   <Typography variant="caption">
                     Nenhum destinatário com recipient ID do Pluggy encontrado.
-                    Você precisa primeiro cadastrar contatos e fazer um pagamento
-                    via Open Finance para salvar o recipient ID.
+                    Você precisa primeiro cadastrar contatos e fazer um
+                    pagamento via Open Finance para salvar o recipient ID.
                   </Typography>
                 </Alert>
               )}
@@ -329,7 +337,8 @@ export function OpenFinanceSetup({ onSetupComplete }: OpenFinanceSetupProps) {
                 </Typography>
               </Alert>
               <Typography variant="body2" color="text.secondary" gutterBottom>
-                Clique no botão abaixo para autorizar os pagamentos no seu banco:
+                Clique no botão abaixo para autorizar os pagamentos no seu
+                banco:
               </Typography>
               <Button
                 variant="contained"

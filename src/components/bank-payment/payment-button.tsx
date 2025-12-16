@@ -509,8 +509,13 @@ export function PaymentButton({
                   {isSmartTransferAvailable && (
                     <ToggleButton value="smart-transfer">
                       <Stack direction="row" alignItems="center" gap={0.5}>
-                        <PaymentIcon fontSize="small" sx={{ color: "success.main" }} />
-                        <Typography variant="caption">PIX Automático</Typography>
+                        <PaymentIcon
+                          fontSize="small"
+                          sx={{ color: "success.main" }}
+                        />
+                        <Typography variant="caption">
+                          PIX Automático
+                        </Typography>
                       </Stack>
                     </ToggleButton>
                   )}
@@ -575,7 +580,14 @@ export function PaymentButton({
                   O pagamento será realizado automaticamente, sem necessidade de
                   autorização adicional.
                 </Typography>
-                <Box sx={{ bgcolor: "rgba(255,255,255,0.1)", borderRadius: 1, p: 1, mt: 1 }}>
+                <Box
+                  sx={{
+                    bgcolor: "rgba(255,255,255,0.1)",
+                    borderRadius: 1,
+                    p: 1,
+                    mt: 1,
+                  }}
+                >
                   <Typography variant="caption">
                     ✅ Sem redirecionamento
                     <br />
