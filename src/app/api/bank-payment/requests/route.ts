@@ -33,13 +33,14 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
+    const body = await request.json();
+
+    // Accept userId from query params or body
+    const userId = searchParams.get('userId') || body.userId;
 
     if (!userId) {
       return NextResponse.json({ error: 'userId é obrigatório' }, { status: 400 });
     }
-
-    const body = await request.json();
 
     // Validação básica
     if (!body.paymentData || !body.originDevice) {
