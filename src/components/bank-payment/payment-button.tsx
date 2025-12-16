@@ -101,6 +101,7 @@ export function PaymentButton({
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pushSent, setPushSent] = useState(false);
+  // Default to deeplink if Pluggy is preferred but not available
   const [paymentMethod, setPaymentMethod] =
     useState<PaymentMethod>(preferredMethod);
   const [pluggyPaymentUrl, setPluggyPaymentUrl] = useState<string | null>(null);
@@ -123,10 +124,24 @@ export function PaymentButton({
     selectedWallet && amount > selectedWallet.balance;
 
   // Check if Pluggy payment is available
+  // Pluggy requires either:
+  // 1. A valid recipientId (UUID from Pluggy)
+  // 2. Complete recipientData (taxNumber, paymentInstitutionId, account info)
+  // Just having a PIX key is NOT enough for Pluggy - use deeplink instead
+  const hasCompleteRecipientData =
+    recipientData &&
+    recipientData.taxNumber &&
+    recipientData.paymentInstitutionId &&
+    recipientData.branch &&
+    recipientData.accountNumber;
+
   const isPluggyAvailable = Boolean(
     process.env.NEXT_PUBLIC_PLUGGY_ENABLED !== "false" &&
-      (recipientId || recipientData || receiverPixKey)
+      (recipientId || hasCompleteRecipientData)
   );
+
+  // Auto-switch to deeplink if Pluggy is not available
+  const effectivePaymentMethod = isPluggyAvailable ? paymentMethod : "deeplink";
 
   // Formatação de valor
   const formatCurrency = (value: number) => {
@@ -154,7 +169,7 @@ export function PaymentButton({
   // Handler do botão de pagamento
   const handlePayClick = () => {
     // Se estiver no mobile e usando deeplink, não precisa de confirmação
-    if (isMobile && paymentMethod === "deeplink") {
+    if (isMobile && effectivePaymentMethod === "deeplink") {
       handlePay();
     } else {
       // Mostrar diálogo de confirmação
@@ -168,22 +183,16 @@ export function PaymentButton({
     setError(null);
 
     try {
+      // Only use recipientData if it's complete
+      const completeRecipientData = hasCompleteRecipientData
+        ? recipientData
+        : undefined;
+
       const result = await initiatePluggyPayment({
         amount,
         description,
         recipientId,
-        recipientData:
-          recipientData ||
-          (receiverPixKey
-            ? {
-                taxNumber: "",
-                name: receiverName || "Destinatário",
-                paymentInstitutionId: "",
-                branch: "",
-                accountNumber: "",
-                pixKey: receiverPixKey,
-              }
-            : undefined),
+        recipientData: completeRecipientData,
         installmentId,
       });
 
@@ -274,7 +283,7 @@ export function PaymentButton({
 
   // Processar pagamento baseado no método selecionado
   const handlePay = async () => {
-    if (paymentMethod === "pluggy") {
+    if (effectivePaymentMethod === "pluggy") {
       await handlePluggyPayment();
     } else {
       await handleDeepLinkPayment();
@@ -352,7 +361,7 @@ export function PaymentButton({
             </Box>
 
             {/* Seletor de carteira (apenas para Open Finance) */}
-            {paymentMethod === "pluggy" && wallets.length > 0 && (
+            {effectivePaymentMethod === "pluggy" && wallets.length > 0 && (
               <Box>
                 <FormControl fullWidth size="small">
                   <InputLabel>Carteira de débito</InputLabel>
@@ -451,10 +460,10 @@ export function PaymentButton({
             )}
 
             {/* Indicador de fluxo - Deep Link */}
-            {paymentMethod === "deeplink" && (
+            {effectivePaymentMethod === "deeplink" && (
               <Box
                 sx={{
-                  bgcolor: "grey.100",
+                  bgcolor: "action.hover",
                   borderRadius: 2,
                   p: 2,
                 }}
@@ -484,10 +493,10 @@ export function PaymentButton({
             )}
 
             {/* Indicador de fluxo - Pluggy */}
-            {paymentMethod === "pluggy" && (
+            {effectivePaymentMethod === "pluggy" && (
               <Box
                 sx={{
-                  bgcolor: "grey.100",
+                  bgcolor: "action.hover",
                   borderRadius: 2,
                   p: 2,
                 }}
@@ -524,7 +533,7 @@ export function PaymentButton({
             )}
 
             {/* Banco selecionado (apenas deep link) */}
-            {paymentMethod === "deeplink" && (
+            {effectivePaymentMethod === "deeplink" && (
               <Box textAlign="center">
                 <Chip
                   label={bank.toUpperCase()}
@@ -538,7 +547,7 @@ export function PaymentButton({
             )}
 
             {/* Mensagem de sucesso - Push enviado */}
-            {pushSent && paymentMethod === "deeplink" && (
+            {pushSent && effectivePaymentMethod === "deeplink" && (
               <Alert severity="success">
                 Notificação enviada! Verifique seu celular para completar o
                 pagamento.
@@ -546,7 +555,7 @@ export function PaymentButton({
             )}
 
             {/* Mensagem de sucesso - Pluggy */}
-            {pluggyPaymentUrl && paymentMethod === "pluggy" && (
+            {pluggyPaymentUrl && effectivePaymentMethod === "pluggy" && (
               <Alert severity="success">
                 <Typography variant="body2">
                   Página de pagamento aberta!{" "}
@@ -561,7 +570,7 @@ export function PaymentButton({
             {error && <Alert severity="error">{error}</Alert>}
 
             {/* Aviso se não houver dispositivo móvel com push (apenas deep link) */}
-            {paymentMethod === "deeplink" &&
+            {effectivePaymentMethod === "deeplink" &&
               !isMobile &&
               !hasMobileDeviceWithPush &&
               !pushSent && (
@@ -584,15 +593,16 @@ export function PaymentButton({
               onClick={handlePay}
               disabled={
                 processing ||
-                (paymentMethod === "pluggy" && hasInsufficientBalance) ||
-                (paymentMethod === "deeplink" &&
+                (effectivePaymentMethod === "pluggy" &&
+                  hasInsufficientBalance) ||
+                (effectivePaymentMethod === "deeplink" &&
                   !isMobile &&
                   !hasMobileDeviceWithPush)
               }
               startIcon={
                 processing ? (
                   <CircularProgress size={16} />
-                ) : paymentMethod === "pluggy" ? (
+                ) : effectivePaymentMethod === "pluggy" ? (
                   <OpenInNewIcon />
                 ) : (
                   <SendIcon />
@@ -600,12 +610,12 @@ export function PaymentButton({
               }
               sx={{
                 bgcolor:
-                  paymentMethod === "pluggy"
+                  effectivePaymentMethod === "pluggy"
                     ? "primary.main"
                     : getBankColor(bank),
                 "&:hover": {
                   bgcolor:
-                    paymentMethod === "pluggy"
+                    effectivePaymentMethod === "pluggy"
                       ? "primary.dark"
                       : getBankColor(bank),
                   filter: "brightness(0.9)",
@@ -614,7 +624,7 @@ export function PaymentButton({
             >
               {processing
                 ? "Processando..."
-                : paymentMethod === "pluggy"
+                : effectivePaymentMethod === "pluggy"
                 ? "Pagar via Open Finance"
                 : isMobile
                 ? "Abrir App do Banco"

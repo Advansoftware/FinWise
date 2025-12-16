@@ -42,6 +42,22 @@ export async function POST(request: NextRequest) {
 
     let finalRecipientId = recipientId;
 
+    // SECURITY: Validate that the recipientId belongs to the user
+    // The recipientId should be stored in one of the user's contacts' pixKeys
+    if (recipientId) {
+      const contactWithRecipient = await db.collection('payment_contacts').findOne({
+        userId,
+        'pixKeys.pluggyRecipientId': recipientId
+      });
+
+      if (!contactWithRecipient) {
+        return NextResponse.json(
+          { error: 'Invalid recipientId: recipient not found or does not belong to this user' },
+          { status: 403 }
+        );
+      }
+    }
+
     // Create recipient if data provided instead of ID
     if (!recipientId && recipientData) {
       const recipient = await pluggyService.createPaymentRecipient({
@@ -56,6 +72,23 @@ export async function POST(request: NextRequest) {
         pixKey: recipientData.pixKey,
       });
       finalRecipientId = recipient.id;
+
+      // If contactId and pixKeyId were provided, save the pluggyRecipientId for future use
+      if (body.contactId && body.pixKeyId) {
+        await db.collection('payment_contacts').updateOne(
+          {
+            _id: body.contactId,
+            userId,
+            'pixKeys.id': body.pixKeyId
+          },
+          {
+            $set: {
+              'pixKeys.$.pluggyRecipientId': finalRecipientId,
+              updatedAt: new Date().toISOString()
+            }
+          }
+        );
+      }
     }
 
     // Get or create payment customer for the user

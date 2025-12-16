@@ -539,7 +539,8 @@ export function InstallmentCard({
                           bank={linkedPixKey.bank || "nubank"}
                           installmentId={installment.id}
                           sourceWalletId={installment.sourceWalletId}
-                          recipientId={linkedContact.id}
+                          // Usar o pluggyRecipientId salvo no contato (seguro)
+                          recipientId={linkedPixKey.pluggyRecipientId}
                           size="small"
                           variant="outlined"
                           fullWidth

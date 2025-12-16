@@ -69,6 +69,8 @@ export interface ContactPixKey {
   label?: string; // Ex: "Pessoal", "Trabalho"
   isDefault: boolean;
   createdAt: string;
+  // ID do recipient criado na Pluggy (para Open Finance)
+  pluggyRecipientId?: string;
 }
 
 /**

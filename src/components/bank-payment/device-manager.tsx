@@ -351,8 +351,10 @@ export function DeviceManager() {
                       width: 40,
                       height: 40,
                       borderRadius: 1,
-                      bgcolor: device.isPrimary ? "primary.main" : "grey.200",
-                      color: device.isPrimary ? "white" : "grey.600",
+                      bgcolor: device.isPrimary
+                        ? "primary.main"
+                        : "action.hover",
+                      color: device.isPrimary ? "white" : "text.secondary",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",
