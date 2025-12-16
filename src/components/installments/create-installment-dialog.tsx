@@ -206,6 +206,8 @@ export function CreateInstallmentDialog({
   useEffect(() => {
     if (!open) {
       setHasInitializedEdit(false);
+      setUserSelectedPixKey(false);
+      setPrevContactId("");
     }
   }, [open]);
 
@@ -275,12 +277,15 @@ export function CreateInstallmentDialog({
 
   // Track previous contact to detect contact changes
   const [prevContactId, setPrevContactId] = useState<string>("");
+  // Track if user has manually selected a PIX key
+  const [userSelectedPixKey, setUserSelectedPixKey] = useState(false);
 
   // Auto-select default PIX key when contact changes
   useEffect(() => {
-    // Only auto-select when contact actually changes
+    // Only auto-select when contact actually changes AND user hasn't manually selected
     if (selectedContactId !== prevContactId) {
       setPrevContactId(selectedContactId);
+      setUserSelectedPixKey(false); // Reset manual selection flag when contact changes
 
       // Get PIX keys from the selected contact directly (not from memo which might be stale)
       const contact = contacts.find((c) => c.id === selectedContactId);
@@ -1064,25 +1069,27 @@ export function CreateInstallmentDialog({
                     <Select
                       value={selectedPixKeyId}
                       label="Chave PIX"
-                      onChange={(e) => setSelectedPixKeyId(e.target.value)}
+                      onChange={(e) => {
+                        const newValue = e.target.value as string;
+                        setSelectedPixKeyId(newValue);
+                        setUserSelectedPixKey(true); // Mark as manually selected
+                      }}
                       MenuProps={{ sx: { zIndex: 1400 } }}
+                      renderValue={(selected) => {
+                        const key = availablePixKeys.find(
+                          (k) => k.id === selected
+                        );
+                        if (!key) return "";
+                        return `${key.pixKeyType.toUpperCase()}: ${key.pixKey}${
+                          key.isDefault ? " (Padrão)" : ""
+                        }`;
+                      }}
                     >
                       {availablePixKeys.map((key) => (
                         <MenuItem key={key.id} value={key.id}>
-                          <Stack direction="row" alignItems="center" gap={1}>
-                            <Typography variant="body2">
-                              {key.label ? `${key.label} - ` : ""}
-                              {key.pixKeyType.toUpperCase()}: {key.pixKey}
-                            </Typography>
-                            {key.isDefault && (
-                              <Chip
-                                label="Padrão"
-                                size="small"
-                                color="primary"
-                                sx={{ height: 18, fontSize: "0.6rem" }}
-                              />
-                            )}
-                          </Stack>
+                          {key.label ? `${key.label} - ` : ""}
+                          {key.pixKeyType.toUpperCase()}: {key.pixKey}
+                          {key.isDefault ? " (Padrão)" : ""}
                         </MenuItem>
                       ))}
                     </Select>
