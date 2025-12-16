@@ -41,6 +41,13 @@ export interface InitiatePaymentOptions {
   amount: number;
   description?: string;
   recipientId?: string;
+  // NEW: Just pass the PIX key - preferred method!
+  pixKey?: string;
+  receiverName?: string;
+  // For saving the recipientId back to the contact
+  contactId?: string;
+  pixKeyId?: string;
+  // Alternative: full recipient data
   recipientData?: {
     taxNumber: string;
     name: string;
@@ -161,23 +168,26 @@ export function usePluggy() {
           toast({
             variant: "error",
             title: "Erro ao carregar",
-            description: "O widget de conexão demorou muito para carregar. Tente novamente.",
+            description:
+              "O widget de conexão demorou muito para carregar. Tente novamente.",
           });
           setIsConnecting(false);
           resolve(false);
         }, 15000); // 15 second timeout
 
         const script = document.createElement("script");
-        script.src = "https://cdn.pluggy.ai/pluggy-connect/latest/pluggy-connect.js";
+        script.src =
+          "https://cdn.pluggy.ai/pluggy-connect/latest/pluggy-connect.js";
         script.async = true;
-        
+
         script.onerror = () => {
           clearTimeout(loadTimeout);
           console.error("Failed to load Pluggy Connect script");
           toast({
             variant: "error",
             title: "Erro ao carregar",
-            description: "Não foi possível carregar o widget de conexão bancária.",
+            description:
+              "Não foi possível carregar o widget de conexão bancária.",
           });
           setIsConnecting(false);
           resolve(false);
@@ -185,7 +195,7 @@ export function usePluggy() {
 
         script.onload = () => {
           clearTimeout(loadTimeout);
-          
+
           // Check if PluggyConnect is available
           // @ts-ignore
           if (!window.PluggyConnect) {
@@ -229,7 +239,8 @@ export function usePluggy() {
                 toast({
                   variant: "error",
                   title: "Erro na conexão",
-                  description: error.message || "Não foi possível conectar a conta.",
+                  description:
+                    error.message || "Não foi possível conectar a conta.",
                 });
                 resolve(false);
               },
@@ -258,7 +269,8 @@ export function usePluggy() {
       toast({
         variant: "error",
         title: "Erro",
-        description: error.message || "Não foi possível abrir o widget de conexão.",
+        description:
+          error.message || "Não foi possível abrir o widget de conexão.",
       });
       return false;
     } finally {
@@ -328,7 +340,8 @@ export function usePluggy() {
         toast({
           variant: "error",
           title: "Erro",
-          description: error.message || "Não foi possível buscar as transações.",
+          description:
+            error.message || "Não foi possível buscar as transações.",
         });
         return null;
       }
@@ -339,7 +352,9 @@ export function usePluggy() {
   // ==================== IMPORT TRANSACTIONS ====================
 
   const importTransactions = useCallback(
-    async (options: ImportTransactionsOptions): Promise<ImportResult | null> => {
+    async (
+      options: ImportTransactionsOptions
+    ): Promise<ImportResult | null> => {
       if (!user?.uid) return null;
 
       try {
@@ -369,7 +384,8 @@ export function usePluggy() {
         toast({
           variant: "error",
           title: "Erro",
-          description: error.message || "Não foi possível importar as transações.",
+          description:
+            error.message || "Não foi possível importar as transações.",
         });
         return null;
       }
@@ -380,7 +396,9 @@ export function usePluggy() {
   // ==================== INITIATE PAYMENT ====================
 
   const initiatePayment = useCallback(
-    async (options: InitiatePaymentOptions): Promise<PaymentInitiationResult> => {
+    async (
+      options: InitiatePaymentOptions
+    ): Promise<PaymentInitiationResult> => {
       if (!user?.uid) {
         return { success: false, error: "User not authenticated" };
       }
@@ -419,26 +437,23 @@ export function usePluggy() {
 
   // ==================== GET PAYMENT STATUS ====================
 
-  const getPaymentStatus = useCallback(
-    async (paymentRequestId: string) => {
-      try {
-        const response = await fetch(
-          `/api/pluggy/payments/initiate?paymentRequestId=${paymentRequestId}`
-        );
-        const data = await response.json();
+  const getPaymentStatus = useCallback(async (paymentRequestId: string) => {
+    try {
+      const response = await fetch(
+        `/api/pluggy/payments/initiate?paymentRequestId=${paymentRequestId}`
+      );
+      const data = await response.json();
 
-        if (!response.ok) {
-          throw new Error(data.error || "Failed to get payment status");
-        }
-
-        return data;
-      } catch (error: any) {
-        console.error("Error getting payment status:", error);
-        return null;
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to get payment status");
       }
-    },
-    []
-  );
+
+      return data;
+    } catch (error: any) {
+      console.error("Error getting payment status:", error);
+      return null;
+    }
+  }, []);
 
   // ==================== RETURN ====================
 

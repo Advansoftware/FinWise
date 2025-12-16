@@ -32,11 +32,12 @@ import {
 } from "@mui/icons-material";
 import { useBankPayment } from "@/hooks/use-bank-payment";
 import { usePluggy } from "@/hooks/use-pluggy";
+import { useSmartTransfers } from "@/hooks/use-smart-transfers";
 import { useWallets } from "@/hooks/use-wallets";
 import { SupportedBank } from "@/core/ports/bank-payment.port";
 import { usePaymentConfirmation } from "./payment-confirmation-dialog";
 
-type PaymentMethod = "deeplink" | "pluggy";
+type PaymentMethod = "deeplink" | "pluggy" | "smart-transfer";
 
 interface PaymentButtonProps {
   amount: number;
@@ -94,6 +95,12 @@ export function PaymentButton({
   } = useBankPayment();
   const { initiatePayment: initiatePluggyPayment, getPaymentStatus } =
     usePluggy();
+  const {
+    hasActivePreauthorization,
+    createPayment: createSmartTransferPayment,
+    isCreatingPayment,
+    activePreauthorization,
+  } = useSmartTransfers();
   const { wallets } = useWallets();
   const { setPendingPaymentBeforeRedirect } = usePaymentConfirmation();
 
@@ -124,10 +131,9 @@ export function PaymentButton({
     selectedWallet && amount > selectedWallet.balance;
 
   // Check if Pluggy payment is available
-  // Pluggy requires either:
-  // 1. A valid recipientId (UUID from Pluggy)
-  // 2. Complete recipientData (taxNumber, paymentInstitutionId, account info)
-  // Just having a PIX key is NOT enough for Pluggy - use deeplink instead
+  // Requirements:
+  // 1. Have a recipientId (Pluggy recipient UUID)
+  // 2. OR have complete recipientData
   const hasCompleteRecipientData =
     recipientData &&
     recipientData.taxNumber &&
@@ -135,13 +141,34 @@ export function PaymentButton({
     recipientData.branch &&
     recipientData.accountNumber;
 
+  // Smart Transfers: Automatic payment with active preauthorization
+  // This is the BEST method - no user interaction needed!
+  const isSmartTransferAvailable = Boolean(
+    process.env.NEXT_PUBLIC_PLUGGY_ENABLED !== "false" &&
+      hasActivePreauthorization &&
+      recipientId // Need a Pluggy recipientId for Smart Transfers
+  );
+
+  // Regular Pluggy (redirects to payment page)
   const isPluggyAvailable = Boolean(
     process.env.NEXT_PUBLIC_PLUGGY_ENABLED !== "false" &&
       (recipientId || hasCompleteRecipientData)
   );
 
-  // Auto-switch to deeplink if Pluggy is not available
-  const effectivePaymentMethod = isPluggyAvailable ? paymentMethod : "deeplink";
+  // Determine effective payment method
+  // Priority: Smart Transfer > Pluggy > Deeplink
+  const effectivePaymentMethod = useMemo(() => {
+    if (isSmartTransferAvailable && paymentMethod === "smart-transfer") {
+      return "smart-transfer";
+    }
+    if (
+      isPluggyAvailable &&
+      (paymentMethod === "pluggy" || paymentMethod === "smart-transfer")
+    ) {
+      return "pluggy";
+    }
+    return "deeplink";
+  }, [isSmartTransferAvailable, isPluggyAvailable, paymentMethod]);
 
   // Formatação de valor
   const formatCurrency = (value: number) => {
@@ -183,10 +210,14 @@ export function PaymentButton({
         ? recipientData
         : undefined;
 
+      // NEW: Pass PIX key directly - the API will create the recipient automatically!
       const result = await initiatePluggyPayment({
         amount,
         description,
         recipientId,
+        // Pass PIX key if we don't have a recipientId - this is the preferred method!
+        pixKey: !recipientId ? receiverPixKey : undefined,
+        receiverName: !recipientId ? receiverName : undefined,
         recipientData: completeRecipientData,
         installmentId,
       });
@@ -276,9 +307,46 @@ export function PaymentButton({
     }
   };
 
+  // Processar pagamento via Smart Transfer (automático, sem interação do usuário)
+  const handleSmartTransferPayment = async () => {
+    if (!recipientId) {
+      setError("recipientId é necessário para Smart Transfer");
+      return;
+    }
+
+    setProcessing(true);
+    setError(null);
+
+    try {
+      const result = await createSmartTransferPayment({
+        recipientId,
+        amount,
+        description,
+        installmentId,
+        walletId: selectedWalletId || sourceWalletId,
+      });
+
+      if (result.success) {
+        // Pagamento realizado automaticamente!
+        setDialogOpen(false);
+        onSuccess?.();
+      } else {
+        throw new Error(result.error || "Falha no pagamento");
+      }
+    } catch (err: any) {
+      const errorMsg = err.message || "Erro ao processar pagamento";
+      setError(errorMsg);
+      onError?.(errorMsg);
+    } finally {
+      setProcessing(false);
+    }
+  };
+
   // Processar pagamento baseado no método selecionado
   const handlePay = async () => {
-    if (effectivePaymentMethod === "pluggy") {
+    if (effectivePaymentMethod === "smart-transfer") {
+      await handleSmartTransferPayment();
+    } else if (effectivePaymentMethod === "pluggy") {
       await handlePluggyPayment();
     } else {
       await handleDeepLinkPayment();
@@ -421,7 +489,7 @@ export function PaymentButton({
             )}
 
             {/* Seletor de método de pagamento */}
-            {isPluggyAvailable && (
+            {(isPluggyAvailable || isSmartTransferAvailable) && (
               <Box>
                 <Typography
                   variant="caption"
@@ -438,12 +506,22 @@ export function PaymentButton({
                   size="small"
                   sx={{ mt: 1 }}
                 >
-                  <ToggleButton value="pluggy">
-                    <Stack direction="row" alignItems="center" gap={0.5}>
-                      <BankIcon fontSize="small" />
-                      <Typography variant="caption">Open Finance</Typography>
-                    </Stack>
-                  </ToggleButton>
+                  {isSmartTransferAvailable && (
+                    <ToggleButton value="smart-transfer">
+                      <Stack direction="row" alignItems="center" gap={0.5}>
+                        <PaymentIcon fontSize="small" sx={{ color: "success.main" }} />
+                        <Typography variant="caption">PIX Automático</Typography>
+                      </Stack>
+                    </ToggleButton>
+                  )}
+                  {isPluggyAvailable && (
+                    <ToggleButton value="pluggy">
+                      <Stack direction="row" alignItems="center" gap={0.5}>
+                        <BankIcon fontSize="small" />
+                        <Typography variant="caption">Open Finance</Typography>
+                      </Stack>
+                    </ToggleButton>
+                  )}
                   <ToggleButton value="deeplink">
                     <Stack direction="row" alignItems="center" gap={0.5}>
                       <SmartphoneIcon fontSize="small" />
@@ -455,15 +533,60 @@ export function PaymentButton({
             )}
 
             {/* Mensagem quando Open Finance não está disponível */}
-            {!isPluggyAvailable && (
+            {!isPluggyAvailable && !isSmartTransferAvailable && (
               <Alert severity="info" sx={{ mt: 1 }}>
                 <Typography variant="caption">
-                  <strong>Open Finance indisponível</strong> para este contato.
+                  <strong>Open Finance indisponível</strong>
                   <br />
-                  Para usar Open Finance, adicione os dados completos do
-                  destinatário (CPF/CNPJ, banco, agência e conta).
+                  Configure o Open Finance nas configurações para habilitar
+                  pagamentos automáticos.
                 </Typography>
               </Alert>
+            )}
+
+            {/* Indicador de fluxo - Smart Transfer (PIX Automático) */}
+            {effectivePaymentMethod === "smart-transfer" && (
+              <Box
+                sx={{
+                  bgcolor: "success.main",
+                  color: "success.contrastText",
+                  borderRadius: 2,
+                  p: 2,
+                }}
+              >
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="center"
+                  spacing={2}
+                >
+                  <PaymentIcon />
+                  <Typography variant="body2" fontWeight="bold">
+                    PIX Automático
+                  </Typography>
+                </Stack>
+                <Typography
+                  variant="caption"
+                  textAlign="center"
+                  display="block"
+                  mt={1}
+                  sx={{ opacity: 0.9 }}
+                >
+                  O pagamento será realizado automaticamente, sem necessidade de
+                  autorização adicional.
+                </Typography>
+                <Box sx={{ bgcolor: "rgba(255,255,255,0.1)", borderRadius: 1, p: 1, mt: 1 }}>
+                  <Typography variant="caption">
+                    ✅ Sem redirecionamento
+                    <br />
+                    ✅ Pagamento instantâneo
+                    <br />
+                    ✅ Transação registrada automaticamente
+                    <br />
+                    {installmentId && "✅ Parcela marcada como paga"}
+                  </Typography>
+                </Box>
+              </Box>
             )}
 
             {/* Indicador de fluxo - Deep Link */}

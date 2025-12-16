@@ -23,6 +23,10 @@ import {
   PluggyPaymentIntent,
   PluggyPaginatedResponse,
   PluggyConnectTokenRequest,
+  PluggySmartTransferPreauthorization,
+  PluggyCreateSmartTransferPreauthorizationRequest,
+  PluggySmartTransferPayment,
+  PluggyCreateSmartTransferPaymentRequest,
 } from './pluggy.types';
 
 /**
@@ -265,6 +269,31 @@ export class PluggyService {
     await this.client.delete(`/payments/recipients/${recipientId}`);
   }
 
+  /**
+   * Create a payment recipient from a PIX key
+   * This uses the DICT lookup to get recipient info from the PIX key
+   */
+  async createPaymentRecipientFromPixKey(
+    pixKey: string,
+    name?: string
+  ): Promise<PluggyPaymentRecipient> {
+    return this.client.post<PluggyPaymentRecipient>('/payments/recipients/pix-key', {
+      pixKey,
+      name,
+    });
+  }
+
+  /**
+   * Create a payment recipient from a PIX QR code
+   */
+  async createPaymentRecipientFromPixQr(
+    pixQrCode: string
+  ): Promise<PluggyPaymentRecipient> {
+    return this.client.post<PluggyPaymentRecipient>('/payments/recipients/pix-qr', {
+      pixQrCode,
+    });
+  }
+
   // ==================== PAYMENT REQUESTS ====================
 
   /**
@@ -327,6 +356,64 @@ export class PluggyService {
     return this.client.post<PluggyPaymentIntent>('/payments/intents', {
       paymentRequestId,
     });
+  }
+
+  // ==================== SMART TRANSFERS ====================
+
+  /**
+   * List smart transfer preauthorizations
+   */
+  async listSmartTransferPreauthorizations(): Promise<PluggySmartTransferPreauthorization[]> {
+    const response = await this.client.get<PluggyPaginatedResponse<PluggySmartTransferPreauthorization>>(
+      '/smart-transfers/preauthorizations'
+    );
+    return response.results;
+  }
+
+  /**
+   * Create a smart transfer preauthorization
+   * User will need to authorize via consentUrl
+   */
+  async createSmartTransferPreauthorization(
+    data: PluggyCreateSmartTransferPreauthorizationRequest
+  ): Promise<PluggySmartTransferPreauthorization> {
+    return this.client.post<PluggySmartTransferPreauthorization>(
+      '/smart-transfers/preauthorizations',
+      data
+    );
+  }
+
+  /**
+   * Get a smart transfer preauthorization by ID
+   */
+  async getSmartTransferPreauthorization(
+    preauthorizationId: string
+  ): Promise<PluggySmartTransferPreauthorization> {
+    return this.client.get<PluggySmartTransferPreauthorization>(
+      `/smart-transfers/preauthorizations/${preauthorizationId}`
+    );
+  }
+
+  /**
+   * Create a smart transfer payment (automatic, no user interaction needed)
+   * Requires an active/completed preauthorization
+   */
+  async createSmartTransferPayment(
+    data: PluggyCreateSmartTransferPaymentRequest
+  ): Promise<PluggySmartTransferPayment> {
+    return this.client.post<PluggySmartTransferPayment>(
+      '/smart-transfers/payments',
+      data
+    );
+  }
+
+  /**
+   * Get a smart transfer payment by ID
+   */
+  async getSmartTransferPayment(paymentId: string): Promise<PluggySmartTransferPayment> {
+    return this.client.get<PluggySmartTransferPayment>(
+      `/smart-transfers/payments/${paymentId}`
+    );
   }
 }
 

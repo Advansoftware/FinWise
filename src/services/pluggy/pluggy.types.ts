@@ -414,7 +414,96 @@ export type PluggyWebhookEvent =
   | 'all'
   | 'payment_intent/created'
   | 'payment_intent/completed'
-  | 'payment_intent/error';
+  | 'payment_intent/error'
+  | 'smart_transfer/preauthorization/completed'
+  | 'smart_transfer/payment/completed';
+
+// ==================== SMART TRANSFERS ====================
+
+export type PluggySmartTransferPreauthorizationStatus =
+  | 'CREATED'
+  | 'COMPLETED'
+  | 'REJECTED'
+  | 'ERROR'
+  | 'EXPIRED';
+
+export interface PluggySmartTransferPreauthorization {
+  id: string;
+  status: PluggySmartTransferPreauthorizationStatus;
+  consentUrl?: string;
+  clientPreauthorizationId?: string;
+  callbackUrls?: {
+    success?: string;
+    error?: string;
+  };
+  recipients: PluggyPaymentRecipient[];
+  connector: {
+    id: number;
+    name: string;
+    primaryColor: string;
+    imageUrl: string;
+  };
+  configuration?: PluggySmartTransferConfiguration;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface PluggySmartTransferConfiguration {
+  totalAllowedAmount?: number;
+  transactionLimit?: number;
+  periodicLimits?: {
+    day?: { quantityLimit?: number; transactionLimit?: number };
+    week?: { quantityLimit?: number; transactionLimit?: number };
+    month?: { quantityLimit?: number; transactionLimit?: number };
+    year?: { quantityLimit?: number; transactionLimit?: number };
+  };
+}
+
+export interface PluggyCreateSmartTransferPreauthorizationRequest {
+  connectorId: number;
+  parameters: {
+    cpf: string;
+    cnpj?: string;
+  };
+  recipientIds: string[];
+  callbackUrls?: {
+    success?: string;
+    error?: string;
+  };
+  configuration?: PluggySmartTransferConfiguration;
+  clientPreauthorizationId?: string;
+}
+
+export type PluggySmartTransferPaymentStatus =
+  | 'CONSENT_AUTHORIZED'
+  | 'PAYMENT_PENDING'
+  | 'PAYMENT_COMPLETED'
+  | 'PAYMENT_REJECTED'
+  | 'ERROR';
+
+export interface PluggySmartTransferPayment {
+  id: string;
+  preauthorizationId: string;
+  status: PluggySmartTransferPaymentStatus;
+  amount: number;
+  description?: string;
+  recipient: PluggyPaymentRecipient;
+  clientPaymentId?: string;
+  createdAt: string;
+  updatedAt: string;
+  paymentReceipt?: {
+    endToEndId: string;
+    completedAt: string;
+  };
+}
+
+export interface PluggyCreateSmartTransferPaymentRequest {
+  preauthorizationId: string;
+  recipientId: string;
+  amount: number;
+  description?: string;
+  clientPaymentId?: string;
+}
 
 export interface PluggyWebhookPayload {
   event: PluggyWebhookEvent;

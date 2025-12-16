@@ -3,3 +3,4 @@
 export { PluggyConnectButton, PluggyConnectCard } from './pluggy-connect-button';
 export { ConnectedAccountsList } from './connected-accounts-list';
 export { ImportTransactionsDialog } from './import-transactions-dialog';
+export { OpenFinanceSetup } from './open-finance-setup';
