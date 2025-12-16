@@ -619,6 +619,7 @@ export function BankPaymentProvider({
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
+              userId: user.uid,
               paymentData,
               preferredBank,
               originDevice: "mobile",
@@ -647,6 +648,7 @@ export function BankPaymentProvider({
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            userId: user.uid,
             paymentData,
             preferredBank,
             originDevice: "desktop",
