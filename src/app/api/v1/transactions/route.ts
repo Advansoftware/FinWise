@@ -53,8 +53,6 @@ export async function POST(request: NextRequest) {
     const transactionToInsert = {
       ...body,
       userId: user.id,
-      // Mapeia 'description' do mobile para 'item' da web (compatibilidade)
-      item: body.item || body.description || 'Sem descrição',
       amount: Number(body.amount),
       date: body.date || new Date().toISOString(),
       createdAt: new Date().toISOString()
