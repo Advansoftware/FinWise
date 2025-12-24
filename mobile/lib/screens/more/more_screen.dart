@@ -32,13 +32,19 @@ class MoreScreen extends StatelessWidget {
           // User Card
           _UserCard(
             user: user,
-            gamification: gamification,
-            gamificationProvider: gamificationProvider,
             onTap: () => Navigator.push(
               context,
               MaterialPageRoute(builder: (context) => const ProfileScreen()),
             ),
           ),
+          
+          if (gamification != null) ...[
+            const SizedBox(height: 16),
+            _GamificationCard(
+              gamification: gamification,
+              provider: gamificationProvider,
+            ),
+          ],
 
           const SizedBox(height: 24),
 
@@ -202,14 +208,10 @@ class MoreScreen extends StatelessWidget {
 
 class _UserCard extends StatelessWidget {
   final dynamic user;
-  final GamificationModel? gamification;
-  final GamificationProvider gamificationProvider;
   final VoidCallback onTap;
 
   const _UserCard({
     required this.user,
-    required this.gamification,
-    required this.gamificationProvider,
     required this.onTap,
   });
 
@@ -270,43 +272,6 @@ class _UserCard extends StatelessWidget {
                       color: Colors.white.withAlpha(153),
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  // Gamification Level
-                  if (gamification != null) ...[
-                    Row(
-                      children: [
-                        Text(
-                          gamification!.level.icon,
-                          style: const TextStyle(fontSize: 14),
-                        ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'Nível ${gamification!.level.level}',
-                          style: const TextStyle(
-                            fontSize: 12,
-                            color: Colors.amber,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: AppTheme.primary.withAlpha(30),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Text(
-                            '${gamificationProvider.points} XP',
-                            style: const TextStyle(
-                              fontSize: 10,
-                              color: AppTheme.primary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
                 ],
               ),
             ),
@@ -473,6 +438,228 @@ class _LogoutButton extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// Gamification Card
+// ============================================================================
+
+class _GamificationCard extends StatelessWidget {
+  final GamificationModel gamification;
+  final GamificationProvider provider;
+
+  const _GamificationCard({
+    required this.gamification,
+    required this.provider,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final level = gamification.level;
+    final progress = provider.levelProgress;
+    final xpCurrent = provider.points;
+    final xpToNext = provider.xpToNextLevel;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.card,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppTheme.border),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Level info
+          Row(
+            children: [
+              // Level icon container
+              Container(
+                width: 50,
+                height: 50,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      Colors.amber.withOpacity(0.3),
+                      Colors.orange.withOpacity(0.3),
+                    ],
+                  ),
+                  border: Border.all(
+                    color: Colors.amber.withOpacity(0.5),
+                    width: 1.5,
+                  ),
+                ),
+                child: Center(
+                  child: Text(
+                    level.icon,
+                    style: const TextStyle(fontSize: 24),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Text(
+                          'Nível ${level.level}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primary.withOpacity(0.15),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            level.name,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: AppTheme.primary,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '$xpCurrent / $xpToNext XP',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.white.withOpacity(0.6),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 16),
+
+          // Progress bar
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: progress / 100,
+                  minHeight: 8,
+                  backgroundColor: Colors.white.withOpacity(0.1),
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    Colors.amber,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  '${progress.toInt()}% para o próximo nível',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Colors.white.withOpacity(0.4),
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          // Streak
+          if (provider.streak > 0) ...[
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.orange.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: Colors.orange.withOpacity(0.3),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(
+                    Icons.local_fire_department,
+                    color: Colors.orange,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${provider.streak} ${provider.streak == 1 ? "mês" : "meses"} seguidos em dia!',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.orange,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // Badges
+          if (gamification.badges.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            const Divider(color: AppTheme.border, height: 1),
+            const SizedBox(height: 12),
+            Text(
+              'Conquistas Recentes',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: Colors.white.withOpacity(0.7),
+              ),
+            ),
+            const SizedBox(height: 12),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  ...gamification.badges.map((badge) => Container(
+                    margin: const EdgeInsets.only(right: 12),
+                    child: Tooltip(
+                      message: badge.name,
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: Colors.white.withOpacity(0.08),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.1),
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            badge.icon,
+                            style: const TextStyle(fontSize: 20),
+                          ),
+                        ),
+                      ),
+                    ),
+                  )),
+                ],
+              ),
+            ),
+          ],
+        ],
       ),
     );
   }
