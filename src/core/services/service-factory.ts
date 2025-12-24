@@ -28,8 +28,8 @@ class ServiceFactory {
   }
 
   async getDatabaseAdapter(): Promise<IDatabaseAdapter> {
-    // Retorna o adapter já inicializado
-    if (this.databaseAdapter) {
+    // Retorna o adapter já inicializado E com repositórios prontos
+    if (this.databaseAdapter && this.databaseAdapter.transactions && this.databaseAdapter.reports) {
       return this.databaseAdapter;
     }
 
@@ -42,13 +42,15 @@ class ServiceFactory {
 
     // Cria a promise de inicialização e guarda para evitar race conditions
     this.databaseAdapterPromise = this.initializeMongoDBAdapter().then(() => {
-      if (!this.databaseAdapter) {
+      if (!this.databaseAdapter || !this.databaseAdapter.transactions || !this.databaseAdapter.reports) {
         this.databaseAdapterPromise = null; // Reset on failure
-        throw new Error('Failed to initialize database adapter');
+        this.databaseAdapter = null; // Limpar adapter incompleto
+        throw new Error('Failed to initialize database adapter - repositories not ready');
       }
       return this.databaseAdapter;
     }).catch((error) => {
       this.databaseAdapterPromise = null; // Reset on failure to allow retry
+      this.databaseAdapter = null; // Limpar adapter incompleto
       throw error;
     });
 
