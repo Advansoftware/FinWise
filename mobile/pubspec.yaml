@@ -41,6 +41,18 @@ dependencies:
   # Conectividade
   connectivity_plus: ^6.1.1
 
+  # Scanner de QR Code
+  mobile_scanner: ^5.2.3
+  
+  # Permissões
+  permission_handler: ^11.3.1
+  
+  # Câmera
+  camera: ^0.11.0
+  
+  # Seletor de imagens
+  image_picker: ^1.1.2
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
