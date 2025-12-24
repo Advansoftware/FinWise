@@ -19,7 +19,22 @@ class TransactionProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get hasMore => _hasMore;
+  bool get hasMore => _hasMore;
   bool get isOfflineMode => _isOfflineMode;
+
+  // Filtros ativos
+  int? _filterMonth;
+  int? _filterYear;
+  String? _filterWalletId;
+  String? _filterCategory;
+  TransactionType? _filterType;
+
+  // Getters para filtros
+  int? get filterMonth => _filterMonth;
+  int? get filterYear => _filterYear;
+  String? get filterWalletId => _filterWalletId;
+  String? get filterCategory => _filterCategory;
+  TransactionType? get filterType => _filterType;
 
   TransactionProvider() {
     _localStorage = LocalStorageService();
@@ -49,6 +64,31 @@ class TransactionProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  /// Aplica filtros e recarrega transações
+  void setFilters({
+    int? month,
+    int? year,
+    String? walletId,
+    String? category,
+    TransactionType? type,
+  }) {
+    if (month != null) _filterMonth = month;
+    if (year != null) _filterYear = year;
+    // WalletId pode ser null para limpar filtro
+    _filterWalletId = walletId; 
+    _filterCategory = category;
+    _filterType = type;
+    loadTransactions(refresh: true);
+  }
+
+  /// Limpa filtros (exceto mês/ano)
+  void clearFilters() {
+    _filterWalletId = null;
+    _filterCategory = null;
+    _filterType = null;
+    loadTransactions(refresh: true);
+  }
+
   /// Carrega transações (primeira página) - offline-first
   Future<void> loadTransactions({
     int? month,
@@ -60,6 +100,11 @@ class TransactionProvider extends ChangeNotifier {
       _currentPage = 1;
       _hasMore = true;
     }
+    
+    // Atualiza estado se parâmetros forem passados explicitamente (compatibilidade)
+    if (month != null) _filterMonth = month;
+    if (year != null) _filterYear = year;
+    if (walletId != null) _filterWalletId = walletId;
 
     _isLoading = true;
     _error = null;
@@ -67,9 +112,11 @@ class TransactionProvider extends ChangeNotifier {
 
     // Tenta carregar do servidor
     final result = await _service.getTransactions(
-      month: month,
-      year: year,
-      walletId: walletId,
+      month: _filterMonth,
+      year: _filterYear,
+      walletId: _filterWalletId,
+      category: _filterCategory,
+      type: _filterType,
       page: _currentPage,
     );
 
