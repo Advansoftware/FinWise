@@ -120,7 +120,7 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       // FAB de Chat com IA
-      floatingActionButton: const AIChatFabSimple(),
+      floatingActionButton: const AIChatFab(),
     );
   }
 }

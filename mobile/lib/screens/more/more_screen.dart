@@ -4,6 +4,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/providers/providers.dart';
 import '../../core/providers/gamification_provider.dart';
 import '../../core/models/gamification_model.dart';
+import '../../core/widgets/plan_badge.dart';
 import '../profile/profile_screen.dart';
 import 'settings_screen.dart';
 
@@ -265,14 +266,16 @@ class _UserCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 2),
-                  Text(
-                    user?.email ?? '',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.white.withAlpha(153),
+                    Text(
+                      user?.email ?? '',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.white.withAlpha(153),
+                      ),
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 8),
+                    PlanBadge(user: user),
+                  ],
               ),
             ),
             Icon(Icons.chevron_right, color: Colors.white.withAlpha(128)),

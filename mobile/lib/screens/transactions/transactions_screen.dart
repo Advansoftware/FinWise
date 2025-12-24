@@ -6,6 +6,7 @@ import '../../core/utils/format_utils.dart';
 import '../../core/providers/providers.dart';
 import '../../core/widgets/compact_add_button.dart';
 import '../../core/widgets/skeleton_loading.dart';
+import 'widgets/transactions_filter_sheet.dart';
 import 'transaction_form_screen.dart';
 
 class TransactionsScreen extends StatelessWidget {
@@ -23,6 +24,38 @@ class TransactionsScreen extends StatelessWidget {
         title: const Text('Transações'),
         backgroundColor: AppTheme.background,
         elevation: 0,
+        actions: [
+          Stack(
+            children: [
+              IconButton(
+                onPressed: () {
+                  showModalBottomSheet(
+                    context: context,
+                    isScrollControlled: true,
+                    backgroundColor: Colors.transparent,
+                    builder: (context) => const TransactionsFilterSheet(),
+                  );
+                },
+                icon: const Icon(Icons.filter_list, color: Colors.white),
+              ),
+              if (transactionProvider.filterCategory != null || 
+                  transactionProvider.filterType != null || 
+                  transactionProvider.filterWalletId != null)
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: Container(
+                    width: 8,
+                    height: 8,
+                    decoration: const BoxDecoration(
+                      color: AppTheme.primary,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
       ),
       body: RefreshIndicator(
         onRefresh: () => transactionProvider.loadTransactions(),
@@ -306,10 +339,24 @@ class _SwipeableTransactionCard extends StatelessWidget {
         ),
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
-        child: const Icon(
-          Icons.delete,
-          color: Colors.white,
-          size: 28,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.end,
+          children: [
+            const Text(
+              'Excluir',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(
+              Icons.delete,
+              color: Colors.white,
+              size: 28,
+            ),
+          ],
         ),
       ),
       child: _TransactionCard(

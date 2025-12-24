@@ -228,7 +228,7 @@ class _RegisterPaymentModalState extends State<RegisterPaymentModal> {
                       const Expanded(
                         child: Text(
                           'Saldo insuficiente na carteira selecionada',
-                          style: TextStyle(color: Colors.white, fontSize: 13),
+                          style: TextStyle(color: AppTheme.error, fontSize: 13, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
