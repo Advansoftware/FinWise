@@ -145,3 +145,43 @@ class CategoryModel {
     );
   }
 }
+
+/// Resumo de Orçamentos
+class BudgetSummary {
+  final double totalBudget;
+  final double totalSpent;
+  final int onTrackCount;
+  final int overBudgetCount;
+
+  BudgetSummary({
+    required this.totalBudget,
+    required this.totalSpent,
+    required this.onTrackCount,
+    required this.overBudgetCount,
+  });
+
+  double get remaining => totalBudget - totalSpent;
+
+  double get usagePercentage {
+    if (totalBudget == 0) return 0;
+    return (totalSpent / totalBudget) * 100;
+  }
+}
+
+/// Resumo de Metas
+class GoalsSummary {
+  final double totalTarget;
+  final double totalCurrent;
+
+  GoalsSummary({
+    required this.totalTarget,
+    required this.totalCurrent,
+  });
+
+  double get remaining => totalTarget - totalCurrent;
+
+  double get overallProgress {
+    if (totalTarget == 0) return 0;
+    return (totalCurrent / totalTarget) * 100;
+  }
+}

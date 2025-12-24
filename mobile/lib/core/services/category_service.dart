@@ -9,7 +9,7 @@ class CategoryService {
 
   /// Busca todas as categorias (padrão + personalizadas)
   Future<Map<String, List<String>>> getCategories() async {
-    final result = await _apiService.get<Map<String, dynamic>>(
+    final result = await _apiService.get<Map<String, List<String>>>(
       ApiConstants.categories,
       (data) => data['categories'] != null 
           ? Map<String, List<dynamic>>.from(data['categories']).map(

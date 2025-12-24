@@ -47,14 +47,11 @@ dependencies:
   # Permissões
   permission_handler: ^11.3.1
   
-  permission_handler: ^11.3.1
-  
   # Câmera
   camera: ^0.11.0
 
   # Compras no App (Google Play Billing)
   in_app_purchase: ^3.2.0
-  camera: ^0.11.0
   
   # Seletor de imagens
   image_picker: ^1.1.2

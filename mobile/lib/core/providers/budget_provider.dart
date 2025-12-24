@@ -35,10 +35,8 @@ class BudgetProvider extends ChangeNotifier {
     return BudgetSummary(
       totalBudget: totalBudget,
       totalSpent: totalSpent,
-      remaining: totalBudget - totalSpent,
       overBudgetCount: overBudgetCount,
       onTrackCount: onTrackCount,
-      totalCount: _budgets.length,
     );
   }
 
@@ -144,24 +142,4 @@ class BudgetProvider extends ChangeNotifier {
   }
 }
 
-/// Resumo dos orçamentos
-class BudgetSummary {
-  final double totalBudget;
-  final double totalSpent;
-  final double remaining;
-  final int overBudgetCount;
-  final int onTrackCount;
-  final int totalCount;
 
-  const BudgetSummary({
-    required this.totalBudget,
-    required this.totalSpent,
-    required this.remaining,
-    required this.overBudgetCount,
-    required this.onTrackCount,
-    required this.totalCount,
-  });
-
-  double get usagePercentage =>
-      totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
-}

@@ -43,10 +43,6 @@ class GoalProvider extends ChangeNotifier {
     return GoalsSummary(
       totalTarget: totalTarget,
       totalCurrent: totalCurrent,
-      remaining: totalTarget - totalCurrent,
-      completedCount: completedCount,
-      inProgressCount: inProgressCount,
-      totalCount: _goals.length,
     );
   }
 
@@ -172,24 +168,4 @@ class GoalProvider extends ChangeNotifier {
   }
 }
 
-/// Resumo das metas
-class GoalsSummary {
-  final double totalTarget;
-  final double totalCurrent;
-  final double remaining;
-  final int completedCount;
-  final int inProgressCount;
-  final int totalCount;
 
-  const GoalsSummary({
-    required this.totalTarget,
-    required this.totalCurrent,
-    required this.remaining,
-    required this.completedCount,
-    required this.inProgressCount,
-    required this.totalCount,
-  });
-
-  double get overallProgress =>
-      totalTarget > 0 ? (totalCurrent / totalTarget) * 100 : 0;
-}

@@ -138,43 +138,4 @@ class InstallmentProvider extends ChangeNotifier {
   }
 }
 
-/// Provider de categorias
-class CategoryProvider extends ChangeNotifier {
-  final CategoryService _service = CategoryService();
 
-  List<CategoryModel> _categories = [];
-  bool _isLoading = false;
-
-  List<CategoryModel> get categories => _categories;
-  List<CategoryModel> get expenseCategories => 
-      _categories.where((c) => c.type == 'expense').toList();
-  List<CategoryModel> get incomeCategories => 
-      _categories.where((c) => c.type == 'income').toList();
-  bool get isLoading => _isLoading;
-
-  /// Carrega categorias
-  Future<void> loadCategories() async {
-    if (_categories.isNotEmpty) return; // Já carregado
-    
-    _isLoading = true;
-    notifyListeners();
-
-    final result = await _service.getCategories();
-
-    if (result.isSuccess && result.data != null) {
-      _categories = result.data!;
-    }
-
-    _isLoading = false;
-    notifyListeners();
-  }
-
-  /// Retorna subcategorias de uma categoria
-  List<String> getSubcategories(String categoryName) {
-    final category = _categories.firstWhere(
-      (c) => c.name == categoryName,
-      orElse: () => CategoryModel(name: categoryName),
-    );
-    return category.subcategories;
-  }
-}

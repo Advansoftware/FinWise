@@ -100,6 +100,7 @@ class AppTheme {
   static const Color error = AppColors.error;
   static const Color warning = AppColors.warning;
   static const Color info = AppColors.info;
+  static const Color surface = AppColors.cardLight;
   
   // Cores de texto
   static const Color textPrimary = AppColors.foregroundDark;

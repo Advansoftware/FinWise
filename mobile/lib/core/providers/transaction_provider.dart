@@ -19,7 +19,7 @@ class TransactionProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get hasMore => _hasMore;
-  bool get hasMore => _hasMore;
+
   bool get isOfflineMode => _isOfflineMode;
 
   // Filtros ativos
@@ -162,136 +162,61 @@ class TransactionProvider extends ChangeNotifier {
     );
   }
 
-  /// Adiciona uma transação (offline-first)
+  /// Adiciona uma transação (via SyncService)
   Future<bool> addTransaction(TransactionModel transaction) async {
-    // Adiciona localmente primeiro (otimistic update)
-    final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
-    final tempTransaction = TransactionModel(
-      id: tempId,
-      description: transaction.description,
-      amount: transaction.amount,
-      type: transaction.type,
-      category: transaction.category,
-      walletId: transaction.walletId,
-      date: transaction.date,
-    );
-    
-    _transactions = [tempTransaction, ..._transactions];
-    notifyListeners();
+    if (_syncService == null) {
+      _error = 'Serviço de sincronização não disponível';
+      notifyListeners();
+      return false;
+    }
 
-    // Salva no cache local
-    await _localStorage.addTransactionToCache(tempTransaction);
-
-    // Tenta enviar para o servidor
-    final result = await _service.createTransaction(transaction);
-
-    if (result.isSuccess && result.data != null) {
-      // Substitui a transação temporária pela real
-      final index = _transactions.indexWhere((t) => t.id == tempId);
-      if (index >= 0) {
-        _transactions[index] = result.data!;
-      }
-      
-      // Atualiza cache com ID real
-      await _localStorage.removeTransactionFromCache(tempId);
-      await _localStorage.addTransactionToCache(result.data!);
-      
+    try {
+      final newTransaction = await _syncService!.addTransaction(transaction);
+      _transactions = [newTransaction, ..._transactions];
       notifyListeners();
       return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
     }
-
-    // Falhou - mantém localmente e adiciona operação pendente
-    _isOfflineMode = true;
-    await _localStorage.addPendingOperation(PendingOperation(
-      id: 'op_${DateTime.now().millisecondsSinceEpoch}',
-      type: OperationType.create,
-      entityType: 'transaction',
-      data: tempTransaction.toJson(),
-      createdAt: DateTime.now(),
-    ));
-    
-    notifyListeners();
-    return true; // Retorna true pois salvou localmente
   }
 
-  /// Atualiza uma transação (offline-first)
+  /// Atualiza uma transação (via SyncService)
   Future<bool> updateTransaction(String id, TransactionModel transaction) async {
-    // Atualiza localmente primeiro
-    final index = _transactions.indexWhere((t) => t.id == id);
-    final oldTransaction = index >= 0 ? _transactions[index] : null;
-    
-    if (index >= 0) {
-      _transactions[index] = transaction;
-      notifyListeners();
-    }
+    if (_syncService == null) return false;
 
-    // Salva no cache local
-    await _localStorage.updateTransactionInCache(transaction);
-
-    // Tenta enviar para o servidor
-    final result = await _service.updateTransaction(id, transaction);
-
-    if (result.isSuccess && result.data != null) {
+    try {
+      await _syncService!.updateTransaction(transaction);
+      
+      final index = _transactions.indexWhere((t) => t.id == id);
       if (index >= 0) {
-        _transactions[index] = result.data!;
+        _transactions[index] = transaction;
         notifyListeners();
       }
       return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
     }
-
-    // Falhou - adiciona operação pendente
-    _isOfflineMode = true;
-    await _localStorage.addPendingOperation(PendingOperation(
-      id: 'op_${DateTime.now().millisecondsSinceEpoch}',
-      type: OperationType.update,
-      entityType: 'transaction',
-      data: transaction.toJson(),
-      createdAt: DateTime.now(),
-    ));
-    
-    return true; // Retorna true pois salvou localmente
   }
 
-  /// Remove uma transação (offline-first)
+  /// Remove uma transação (via SyncService)
   Future<bool> deleteTransaction(String id) async {
-    // Remove localmente primeiro
-    final removedTransaction = _transactions.firstWhere(
-      (t) => t.id == id,
-      orElse: () => TransactionModel(
-        id: '', description: '', amount: 0, 
-        type: TransactionType.expense, date: DateTime.now(),
-      ),
-    );
-    
-    _transactions = _transactions.where((t) => t.id != id).toList();
-    notifyListeners();
+    if (_syncService == null) return false;
 
-    // Remove do cache local
-    await _localStorage.removeTransactionFromCache(id);
-
-    // Se for ID temporário, apenas remove
-    if (id.startsWith('temp_')) {
+    try {
+      await _syncService!.deleteTransaction(id);
+      
+      _transactions = _transactions.where((t) => t.id != id).toList();
+      notifyListeners();
       return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
     }
-
-    // Tenta enviar para o servidor
-    final result = await _service.deleteTransaction(id);
-
-    if (result.isSuccess) {
-      return true;
-    }
-
-    // Falhou - adiciona operação pendente
-    _isOfflineMode = true;
-    await _localStorage.addPendingOperation(PendingOperation(
-      id: 'op_${DateTime.now().millisecondsSinceEpoch}',
-      type: OperationType.delete,
-      entityType: 'transaction',
-      data: {'id': id},
-      createdAt: DateTime.now(),
-    ));
-    
-    return true; // Retorna true pois removeu localmente
   }
 
   /// Calcula totais

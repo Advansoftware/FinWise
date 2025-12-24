@@ -6,3 +6,4 @@ export 'quick_access_section.dart';
 export 'dashboard_filters_section.dart';
 export 'consolidated_wallet_card.dart';
 export 'ai_insight_card.dart';
+export 'scan_receipt_button.dart';

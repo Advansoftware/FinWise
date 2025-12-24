@@ -11,7 +11,7 @@ class TransactionService {
     int? month,
     int? year,
     String? walletId,
-    String? walletId,
+
     String? category,
     TransactionType? type,
     int page = 1,
@@ -23,7 +23,7 @@ class TransactionService {
       if (month != null) 'month': month.toString(),
       if (year != null) 'year': year.toString(),
       if (walletId != null) 'walletId': walletId,
-      if (walletId != null) 'walletId': walletId,
+
       if (category != null) 'category': category,
       if (type != null) 'type': type.name, // Suporta income, expense, transfer
     };

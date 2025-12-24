@@ -326,8 +326,8 @@ class OverviewSpendingChart extends StatelessWidget {
                 ),
                 lineTouchData: LineTouchData(
                   touchTooltipData: LineTouchTooltipData(
-                    tooltipBgColor: AppTheme.surface,
-                    tooltipRoundedRadius: 8,
+                    getTooltipColor: (_) => AppTheme.surface,
+
                     tooltipPadding: const EdgeInsets.all(12),
                     getTooltipItems: (touchedSpots) {
                       return touchedSpots.map((spot) {
