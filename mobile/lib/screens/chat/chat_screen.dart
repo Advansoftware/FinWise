@@ -5,6 +5,7 @@ import '../../core/providers/providers.dart';
 import '../../core/services/services.dart';
 import '../../core/models/models.dart';
 import '../../core/utils/format_utils.dart';
+import '../../core/constants/api_constants.dart';
 
 /// Modelo de mensagem do chat
 class ChatMessage {
@@ -143,23 +144,9 @@ class _ChatScreenState extends State<ChatScreen> {
     
     try {
       final result = await apiService.post<Map<String, dynamic>>(
-        '/api/v1/ai/chat',
+        ApiConstants.aiChat,
         {
           'message': question,
-          'context': {
-            'transactionCount': transactions.length,
-            'totalExpenses': transactions
-                .where((t) => t.type == TransactionType.expense)
-                .fold<double>(0, (sum, t) => sum + t.amount),
-            'totalIncome': transactions
-                .where((t) => t.type == TransactionType.income)
-                .fold<double>(0, (sum, t) => sum + t.amount),
-            'categories': transactions
-                .map((t) => t.category)
-                .where((c) => c != null)
-                .toSet()
-                .toList(),
-          },
         },
         (data) => data,
       );

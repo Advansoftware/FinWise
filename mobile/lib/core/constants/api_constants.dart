@@ -33,6 +33,7 @@ class ApiConstants {
   static const String credits = '/credits';
   static const String reports = '/reports';
   static const String settings = '/settings';
+  static const String aiChat = '/ai/chat';
 
   /// Timeout padrão para requisições (em segundos)
   static const int connectionTimeout = 30;
