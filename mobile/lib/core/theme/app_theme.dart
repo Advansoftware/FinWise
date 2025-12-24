@@ -99,6 +99,7 @@ class AppTheme {
   static const Color success = AppColors.success;
   static const Color error = AppColors.error;
   static const Color warning = AppColors.warning;
+  static const Color info = AppColors.info;
   
   // Cores de texto
   static const Color textPrimary = AppColors.foregroundDark;

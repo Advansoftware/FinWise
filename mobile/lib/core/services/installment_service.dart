@@ -8,10 +8,12 @@ class InstallmentService {
 
   /// Busca todos os parcelamentos com resumo
   Future<ApiResult<List<InstallmentModel>>> getInstallments() async {
+    // A API retorna { total, active, totalMonthlyCommitment, installments } com action=summary
+    // ou retorna array diretamente sem action
     return _api.getList<InstallmentModel>(
       ApiConstants.installments,
       InstallmentModel.fromJson,
-      queryParams: {'summary': 'true'},
+      queryParams: {'action': 'summary'},
       listKey: 'installments',
     );
   }

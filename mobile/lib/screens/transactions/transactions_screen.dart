@@ -4,6 +4,8 @@ import '../../core/theme/app_theme.dart';
 import '../../core/models/models.dart';
 import '../../core/utils/format_utils.dart';
 import '../../core/providers/providers.dart';
+import '../../core/widgets/compact_add_button.dart';
+import '../../core/widgets/skeleton_loading.dart';
 import 'transaction_form_screen.dart';
 
 class TransactionsScreen extends StatelessWidget {
@@ -13,6 +15,7 @@ class TransactionsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final transactionProvider = context.watch<TransactionProvider>();
     final transactions = transactionProvider.transactions;
+    final isLoading = transactionProvider.isLoading;
 
     return Scaffold(
       backgroundColor: AppTheme.background,
@@ -26,11 +29,12 @@ class TransactionsScreen extends StatelessWidget {
         color: AppTheme.primary,
         child: CustomScrollView(
           slivers: [
-            // Botão de adicionar transação no topo (grid 12)
+            // Botão de adicionar transação (100% largura)
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: _AddTransactionButton(
+                child: AddTransactionButton(
+                  isCompact: false,
                   onPressed: () async {
                     final result = await TransactionFormScreen.show(context);
                     if (result == true) {
@@ -41,7 +45,17 @@ class TransactionsScreen extends StatelessWidget {
               ),
             ),
             // Lista de transações
-            if (transactions.isEmpty)
+            if (isLoading && transactions.isEmpty)
+              SliverPadding(
+                padding: const EdgeInsets.all(16),
+                sliver: SliverList(
+                  delegate: SliverChildBuilderDelegate(
+                    (context, index) => const SkeletonTransactionCard(),
+                    childCount: 6,
+                  ),
+                ),
+              )
+            else if (transactions.isEmpty)
               SliverFillRemaining(
                 child: Center(
                   child: Column(
@@ -101,55 +115,6 @@ class TransactionsScreen extends StatelessWidget {
               child: SizedBox(height: 100),
             ),
           ],
-        ),
-      ),
-    );
-  }
-}
-
-/// Botão de adicionar transação (ocupa toda largura)
-class _AddTransactionButton extends StatelessWidget {
-  final VoidCallback onPressed;
-
-  const _AddTransactionButton({required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppTheme.primary,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withAlpha(51),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.add,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'Adicionar Transação',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );

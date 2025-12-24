@@ -224,36 +224,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
 
                 const SizedBox(height: 24),
-
-                // Aviso sobre plano Infinity
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: AppColors.info.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(
-                      color: AppColors.info.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(
-                        Icons.info_outline,
-                        color: AppColors.info,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'A API Mobile está disponível exclusivamente para usuários do plano Infinity.',
-                          style: TextStyle(
-                            color: AppColors.info.withValues(alpha: 0.9),
-                            fontSize: 13,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
               ],
             ),
           ),

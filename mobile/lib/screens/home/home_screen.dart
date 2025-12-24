@@ -5,12 +5,16 @@ import '../../core/models/models.dart';
 import '../../core/utils/format_utils.dart';
 import '../../core/providers/providers.dart';
 import '../../core/widgets/ai_chat_fab.dart';
+import '../../core/widgets/avatar_menu.dart';
+import '../../core/widgets/compact_add_button.dart';
+import '../../core/widgets/skeleton_loading.dart';
 import '../budgets/budgets_screen.dart';
 import '../goals/goals_screen.dart';
 import '../transactions/transactions_screen.dart';
 import '../transactions/transaction_form_screen.dart';
 import '../wallets/wallets_screen.dart';
 import '../profile/profile_screen.dart';
+import '../more/more_screen.dart';
 import '../installments/installments_screen.dart';
 import 'widgets/stats_widgets.dart';
 import 'widgets/gamification_widgets.dart';
@@ -69,7 +73,7 @@ class _HomeScreenState extends State<HomeScreen> {
       case 3:
         return const WalletsScreen();
       case 4:
-        return const ProfileScreen();
+        return const MoreScreen();
       default:
         return const _DashboardTab();
     }
@@ -109,9 +113,9 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Carteiras',
           ),
           NavigationDestination(
-            icon: Icon(Icons.person_outline),
-            selectedIcon: Icon(Icons.person, color: AppTheme.primary),
-            label: 'Perfil',
+            icon: Icon(Icons.menu_outlined),
+            selectedIcon: Icon(Icons.menu, color: AppTheme.primary),
+            label: 'Mais',
           ),
         ],
       ),
@@ -246,16 +250,10 @@ class _DashboardTabState extends State<_DashboardTab> {
                   color: _showFilters ? AppTheme.primary : Colors.white70,
                 ),
               ),
-              IconButton(
-                onPressed: () async {
-                  await context.read<AuthProvider>().logout();
-                },
-                icon: Icon(
-                  Icons.logout,
-                  color: Colors.white.withAlpha(179),
-                ),
+              const Padding(
+                padding: EdgeInsets.only(right: 8),
+                child: AvatarMenu(size: 36),
               ),
-              const SizedBox(width: 8),
             ],
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
@@ -321,31 +319,36 @@ class _DashboardTabState extends State<_DashboardTab> {
             padding: const EdgeInsets.all(16),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                // Botão de adicionar transação
-                _AddTransactionButton(
-                  onPressed: () async {
-                    final result = await Navigator.of(context).push<bool>(
-                      PageRouteBuilder(
-                        pageBuilder: (context, animation, secondaryAnimation) =>
-                            const TransactionFormScreen(),
-                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
-                          return SlideTransition(
-                            position: Tween<Offset>(
-                              begin: const Offset(0, 1),
-                              end: Offset.zero,
-                            ).animate(CurvedAnimation(
-                              parent: animation,
-                              curve: Curves.easeOutCubic,
-                            )),
-                            child: child,
-                          );
-                        },
-                      ),
-                    );
-                    if (result == true) {
-                      transactionProvider.loadTransactions(refresh: true);
-                    }
-                  },
+                // Botão de adicionar transação (compacto, alinhado à esquerda)
+                Row(
+                  children: [
+                    AddTransactionButton(
+                      isCompact: true,
+                      onPressed: () async {
+                        final result = await Navigator.of(context).push<bool>(
+                          PageRouteBuilder(
+                            pageBuilder: (context, animation, secondaryAnimation) =>
+                                const TransactionFormScreen(),
+                            transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                              return SlideTransition(
+                                position: Tween<Offset>(
+                                  begin: const Offset(0, 1),
+                                  end: Offset.zero,
+                                ).animate(CurvedAnimation(
+                                  parent: animation,
+                                  curve: Curves.easeOutCubic,
+                                )),
+                                child: child,
+                              );
+                            },
+                          ),
+                        );
+                        if (result == true) {
+                          transactionProvider.loadTransactions(refresh: true);
+                        }
+                      },
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 16),
                 const GamificationSection(),
@@ -932,51 +935,3 @@ class _DateFilterButton extends StatelessWidget {
   }
 }
 
-/// Botão de adicionar transação no Dashboard
-class _AddTransactionButton extends StatelessWidget {
-  final VoidCallback onPressed;
-
-  const _AddTransactionButton({required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppTheme.primary,
-      borderRadius: BorderRadius.circular(12),
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: Colors.white.withAlpha(51),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(
-                  Icons.add,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Text(
-                'Adicionar Transação',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
