@@ -24,6 +24,31 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     _checkBiometric();
+    
+    // Escuta mudanças no estado de autenticação para mostrar erros
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _setupAuthListener();
+    });
+  }
+  
+  void _setupAuthListener() {
+    final authProvider = context.read<AuthProvider>();
+    authProvider.addListener(_onAuthStateChanged);
+  }
+  
+  void _onAuthStateChanged() {
+    if (!mounted) return;
+    
+    final authProvider = context.read<AuthProvider>();
+    if (authProvider.state == AuthState.error && authProvider.errorMessage != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.errorMessage!),
+          backgroundColor: AppColors.error,
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    }
   }
 
   Future<void> _checkBiometric() async {
@@ -46,6 +71,10 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   void dispose() {
+    // Remove o listener para evitar memory leaks
+    try {
+      context.read<AuthProvider>().removeListener(_onAuthStateChanged);
+    } catch (_) {}
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -55,19 +84,11 @@ class _LoginScreenState extends State<LoginScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final authProvider = context.read<AuthProvider>();
-    final success = await authProvider.login(
+    await authProvider.login(
       _emailController.text.trim(),
       _passwordController.text,
     );
-
-    if (!success && mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(authProvider.errorMessage ?? 'Erro ao fazer login'),
-          backgroundColor: AppColors.error,
-        ),
-      );
-    }
+    // O listener _onAuthStateChanged vai mostrar a mensagem de erro se necessário
   }
 
   Future<void> _handleBiometricLogin() async {

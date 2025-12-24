@@ -3,11 +3,19 @@ class ApiConstants {
   ApiConstants._();
 
   /// URLs base da API
-  static const String devBaseUrl = 'http://10.0.2.2:9002/api/v1';
+  /// Android Emulator: 10.0.2.2 mapeia para localhost do host
+  static const String emulatorBaseUrl = 'http://10.0.2.2:9002/api/v1';
+  
+  /// Rede local: Use o IP da máquina para celular físico na mesma rede WiFi
+  static const String localNetworkBaseUrl = 'http://192.168.3.28:9002/api/v1';
+  
+  /// Produção: URL real do servidor
   static const String prodBaseUrl = 'https://gastometria.com.br/api/v1';
 
-  /// Use esta para alternar entre dev e prod
-  /// Em produção, mude para prodBaseUrl
+  /// URL atual em uso
+  /// - Para emulador: use emulatorBaseUrl
+  /// - Para celular físico em dev: use localNetworkBaseUrl  
+  /// - Para produção: use prodBaseUrl
   static const String baseUrl = prodBaseUrl;
 
   /// Endpoints de autenticação

@@ -115,8 +115,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
     final authProvider = context.watch<AuthProvider>();
 
     // Tela de loading inicial com splash animada
-    if (authProvider.state == AuthState.initial ||
-        authProvider.state == AuthState.loading) {
+    // Nota: Não incluir AuthState.loading aqui para não recriar a tela durante login
+    if (authProvider.state == AuthState.initial) {
       return const SplashScreen();
     }
 
@@ -125,7 +125,8 @@ class _AuthWrapperState extends State<AuthWrapper> {
       return const HomeScreen();
     }
 
-    // Se não autenticado, mostra login
+    // Se não autenticado ou erro, mostra login
+    // O LoginScreen vai lidar com o estado de loading e error internamente
     return const LoginScreen();
   }
 }
