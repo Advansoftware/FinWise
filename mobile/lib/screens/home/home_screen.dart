@@ -213,16 +213,7 @@ class _DashboardTabState extends State<_DashboardTab> {
       categoryData[cat] = (categoryData[cat] ?? 0) + t.amount;
     }
 
-    final incomeSparkline = transactions
-        .where((t) => t.type == TransactionType.income)
-        .take(7)
-        .map((t) => t.amount)
-        .toList();
-    final expenseSparkline = transactions
-        .where((t) => t.type == TransactionType.expense)
-        .take(7)
-        .map((t) => t.amount)
-        .toList();
+
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -367,75 +358,43 @@ class _DashboardTabState extends State<_DashboardTab> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                const GamificationSection(),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: StatsCard(
-                        title: 'Saldo Total',
-                        value: FormatUtils.formatCurrency(totalBalance),
-                        icon: Icons.account_balance_wallet,
-                        iconColor: AppTheme.primary,
-                        valueColor: totalBalance >= 0 
-                            ? Colors.white 
-                            : AppTheme.error,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: StatsCard(
-                        title: 'Balanço',
-                        value: FormatUtils.formatCurrency(totalIncome - totalExpense),
-                        icon: Icons.trending_up,
-                        iconColor: (totalIncome - totalExpense) >= 0 
-                            ? AppTheme.success 
-                            : AppTheme.error,
-                        valueColor: (totalIncome - totalExpense) >= 0 
-                            ? AppTheme.success 
-                            : AppTheme.error,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(
-                      child: StatsCard(
-                        title: 'Receitas',
-                        value: '+ ${FormatUtils.formatCurrency(totalIncome)}',
-                        icon: Icons.arrow_upward,
-                        iconColor: AppTheme.success,
-                        valueColor: AppTheme.success,
-                        sparklineData: incomeSparkline.isNotEmpty ? incomeSparkline : null,
-                        isPositive: true,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: StatsCard(
-                        title: 'Despesas',
-                        value: '- ${FormatUtils.formatCurrency(totalExpense)}',
-                        icon: Icons.arrow_downward,
-                        iconColor: AppTheme.error,
-                        valueColor: AppTheme.error,
-                        sparklineData: expenseSparkline.isNotEmpty ? expenseSparkline : null,
-                        isPositive: false,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                SpendingByCategoryChart(categoryData: categoryData),
-                const SizedBox(height: 16),
+                // 1. Visão Geral (Chart) - Topo como na Web
                 if (transactions.isNotEmpty)
                   OverviewSpendingChart(transactions: transactions),
-                if (transactions.isNotEmpty) 
-                  const SizedBox(height: 16),
+                if (transactions.isNotEmpty) const SizedBox(height: 16),
+
+                // 2. Transações Recentes
+                RecentTransactionsSection(
+                  transactions: transactions.take(5).toList(),
+                ),
+                const SizedBox(height: 16),
+
+                // 3. Gamification (Nível/Badges)
+                const GamificationSection(),
+                const SizedBox(height: 16),
+
+                // 4. Carteira Consolidada (Detalhes ricos)
+                ConsolidatedWalletCard(
+                  totalBalance: totalBalance,
+                  totalIncome: totalIncome,
+                  totalExpense: totalExpense,
+                  transactions: transactions,
+                ),
+                const SizedBox(height: 16),
+
+                // 5. Missões
                 const DailyQuestsSection(),
                 const SizedBox(height: 16),
-                // Cards de acesso rápido para Orçamentos e Metas
+
+                // 6. Dica IA
+                AIInsightCard(
+                  onRefresh: () {
+                    // TODO: Refresh insight
+                  },
+                ),
+                const SizedBox(height: 16),
+
+                // 7. Metas e Orçamentos
                 QuickAccessSection(
                   onBudgetsTap: () => Navigator.push(
                     context,
@@ -447,9 +406,9 @@ class _DashboardTabState extends State<_DashboardTab> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                RecentTransactionsSection(
-                  transactions: transactions.take(5).toList(),
-                ),
+
+                // Gráfico de Pizza (Secundário)
+                SpendingByCategoryChart(categoryData: categoryData),
                 const SizedBox(height: 80),
               ]),
             ),

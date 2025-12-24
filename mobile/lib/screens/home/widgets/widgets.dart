@@ -4,4 +4,5 @@ export 'transaction_item.dart';
 export 'recent_transactions_section.dart';
 export 'quick_access_section.dart';
 export 'dashboard_filters_section.dart';
-export 'scan_receipt_button.dart';
+export 'consolidated_wallet_card.dart';
+export 'ai_insight_card.dart';
