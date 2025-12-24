@@ -590,8 +590,9 @@ export class MongoDBAdapter implements IDatabaseAdapter {
   public installments!: IInstallmentsRepository;
 
   async connect(): Promise<void> {
-    if (this.client && this.db) {
-      return; // Already connected
+    // Verificar se já está totalmente conectado (inclui repositórios)
+    if (this.client && this.db && this.transactions) {
+      return; // Already connected and repositories initialized
     }
 
     const uri = process.env.MONGODB_URI;
@@ -611,9 +612,13 @@ export class MongoDBAdapter implements IDatabaseAdapter {
     } : {};
 
     console.log('🔧 Connecting to MongoDB...');
-    this.client = new MongoClient(uri, options);
-    await this.client.connect();
-    this.db = this.client.db(dbName);
+
+    // Se já temos client e db mas sem repositórios, reutilizar a conexão
+    if (!this.client || !this.db) {
+      this.client = new MongoClient(uri, options);
+      await this.client.connect();
+      this.db = this.client.db(dbName);
+    }
 
     // Initialize repositories
     this.users = new MongoUserRepository(this.db);

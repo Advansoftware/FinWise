@@ -103,9 +103,16 @@ class ServiceFactory {
       this.databaseAdapter = new MongoDBAdapter();
       await this.databaseAdapter.connect();
 
+      // Verificar se os repositórios foram inicializados corretamente
+      if (!this.databaseAdapter.transactions) {
+        this.databaseAdapter = null;
+        throw new Error('MongoDB repositories were not initialized properly after connect()');
+      }
+
       console.log('✅ MongoDB Database Adapter initialized successfully');
     } catch (error) {
       console.error('❌ Failed to initialize MongoDB adapter:', error);
+      this.databaseAdapter = null; // Garantir reset em caso de falha
       throw error;
     }
   }
