@@ -242,40 +242,47 @@ class SpendingByCategoryChart extends StatelessWidget {
   }
 }
 
-/// Gráfico de evolução de gastos no mês
-class MonthlySpendingChart extends StatelessWidget {
+/// Gráfico de visão geral dos gastos (Line Chart por Categoria)
+class OverviewSpendingChart extends StatelessWidget {
   final List<TransactionModel> transactions;
 
-  const MonthlySpendingChart({super.key, required this.transactions});
+  const OverviewSpendingChart({super.key, required this.transactions});
 
   @override
   Widget build(BuildContext context) {
-    // Agrupar por dia
-    final Map<int, double> dailyTotals = {};
+    // 1. Agrupar gastos por categoria
+    final Map<String, double> categoryTotals = {};
     for (var t in transactions) {
       if (t.type == TransactionType.expense) {
-        final day = t.date.day;
-        dailyTotals[day] = (dailyTotals[day] ?? 0) + t.amount;
+        final cat = t.category ?? 'Outros';
+        categoryTotals[cat] = (categoryTotals[cat] ?? 0) + t.amount;
       }
     }
 
-    if (dailyTotals.isEmpty) {
+    if (categoryTotals.isEmpty) {
       return const SizedBox.shrink();
     }
 
-    // Tentar identificar o mês/ano para exibir datas corretas
-    // Pega a primeira transação como referência (assumindo que o filtro é por mês)
-    final firstTx = transactions.first;
-    final currentMonth = firstTx.date.month;
-    final currentYear = firstTx.date.year;
+    // 2. Ordenar ou filtrar (ex: Top 7 categorias para caber no gráfico)
+    // O gráfico da web parece mostrar várias categorias. Vamos pegar top 7 ou 8.
+    final sortedEntries = categoryTotals.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value)); // Ordena por valor decrescente? 
+      // A imagem do usuário não parece 100% ordenada (tem altos e baixos), 
+      // mas geralmente line charts de categoria funcionam melhor se ordenados ou fixos.
+      // Vou ordenar por valor para ficar mais bonito (curva suave descendo ou subindo).
+      // Mas a imagem mostra uma "montanha" (sobe e desce). 
+      // Vamos manter a ordem de valor decrescente, mas talvez misturar?
+      // Melhor simplificar: Top Categories by Value.
+    
+    final entries = sortedEntries.take(7).toList();
 
-    final spots = dailyTotals.entries
-        .map((e) => FlSpot(e.key.toDouble(), e.value))
-        .toList()
-      ..sort((a, b) => a.x.compareTo(b.x));
+    // Mapear para Spots (X = índice, Y = valor)
+    final spots = entries.asMap().entries.map((e) {
+      return FlSpot(e.key.toDouble(), e.value.value);
+    }).toList();
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: AppTheme.card,
         borderRadius: BorderRadius.circular(16),
@@ -285,40 +292,65 @@ class MonthlySpendingChart extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Evolução de Gastos',
+            'Visão Geral dos Gastos',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.w600,
               color: Colors.white.withOpacity(0.9),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 4),
+          Text(
+            'Sua atividade de gastos para o período selecionado.',
+            style: TextStyle(
+              fontSize: 12,
+              color: Colors.white.withOpacity(0.5),
+            ),
+          ),
+          const SizedBox(height: 32),
           SizedBox(
-            height: 150,
+            height: 220,
             child: LineChart(
               LineChartData(
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
-                  horizontalInterval: 1000, // Ajustado para ser menos denso
+                  horizontalInterval: 1000,
                   getDrawingHorizontalLine: (value) {
                     return FlLine(
-                      color: AppTheme.border,
+                      color: AppTheme.border.withOpacity(0.5),
                       strokeWidth: 1,
+                      dashArray: [5, 5],
                     );
                   },
                 ),
                 lineTouchData: LineTouchData(
                   touchTooltipData: LineTouchTooltipData(
                     tooltipBgColor: AppTheme.surface,
+                    tooltipRoundedRadius: 8,
+                    tooltipPadding: const EdgeInsets.all(12),
                     getTooltipItems: (touchedSpots) {
                       return touchedSpots.map((spot) {
+                        final index = spot.x.toInt();
+                        if (index < 0 || index >= entries.length) return null;
+                        final entry = entries[index];
                         return LineTooltipItem(
-                          FormatUtils.formatCurrency(spot.y),
+                          '${entry.key}\n',
                           const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
+                            fontSize: 14,
                           ),
+                          children: [
+                            TextSpan(
+                              text: 'Total: ${FormatUtils.formatCurrency(entry.value)}',
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.7),
+                                fontSize: 12,
+                                fontWeight: FontWeight.normal,
+                              ),
+                            ),
+                          ],
                         );
                       }).toList();
                     },
@@ -328,11 +360,12 @@ class MonthlySpendingChart extends StatelessWidget {
                   leftTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      reservedSize: 45,
+                      reservedSize: 50,
+                      interval: 1000, // Ajustar intervalo conforme necessário
                       getTitlesWidget: (value, meta) {
-                        if (value == meta.min || value == meta.max) return const SizedBox.shrink();
+                        if (value == meta.min) return const SizedBox.shrink(); // Hide 0 maybe? Image shows R$0
                         return Text(
-                          FormatUtils.formatCurrency(value).replaceAll('R\$', '').trim(),
+                          FormatUtils.formatCurrency(value).replaceAll(' ', ''),
                           style: TextStyle(
                             fontSize: 10,
                             color: Colors.white.withOpacity(0.5),
@@ -351,18 +384,25 @@ class MonthlySpendingChart extends StatelessWidget {
                   bottomTitles: AxisTitles(
                     sideTitles: SideTitles(
                       showTitles: true,
-                      reservedSize: 22,
-                      interval: 5, // Mostrar a cada 5 dias para não encavalar
+                      reservedSize: 40,
+                      interval: 1,
                       getTitlesWidget: (value, meta) {
-                        final day = value.toInt();
-                        if (day > 31 || day < 1) return const SizedBox.shrink();
+                        final index = value.toInt();
+                        if (index < 0 || index >= entries.length) return const SizedBox.shrink();
+                        final name = entries[index].key;
+                        
+                        // Rotacionar texto se for muito longo ou apenas mostrar Initials?
+                        // A imagem mostra nomes inclinados: "Alimentação", "Transferência"...
                         return Padding(
-                          padding: const EdgeInsets.only(top: 4),
-                          child: Text(
-                            '${day.toString().padLeft(2, '0')}/${currentMonth.toString().padLeft(2, '0')}',
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: Colors.white.withOpacity(0.5),
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Transform.rotate(
+                            angle: -0.5, // Rotação leve
+                            child: Text(
+                              name.length > 10 ? '${name.substring(0, 8)}...' : name,
+                              style: TextStyle(
+                                fontSize: 10,
+                                color: Colors.white.withOpacity(0.5),
+                              ),
                             ),
                           ),
                         );
@@ -376,20 +416,22 @@ class MonthlySpendingChart extends StatelessWidget {
                     spots: spots,
                     isCurved: true,
                     curveSmoothness: 0.35,
-                    color: AppTheme.secondary,
+                    color: const Color(0xFF6366F1), // Cor próxima da imagem (Indigo)
                     barWidth: 2,
                     isStrokeCapRound: true,
-                    dotData: const FlDotData(show: false),
-                    belowBarData: BarAreaData(
+                    dotData: FlDotData(
                       show: true,
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          AppTheme.secondary.withOpacity(0.3),
-                          AppTheme.secondary.withOpacity(0.0),
-                        ],
-                      ),
+                      checkToShowDot: (spot, barData) {
+                        // Mostrar dot apenas no ponto selecionado? Não, fl_chart mostra todos por padrão.
+                        // Imagem mostra apenas 1 dot (hover).
+                        // Vamos mostrar dots pequenos sempre ou ocultar?
+                        // Imagem mostra 1 dot branco grande com borda preta no hover.
+                        // Por padrão ocultamos, o touch mostra o indicador.
+                        return false; 
+                      },
+                    ),
+                    belowBarData: BarAreaData(
+                      show: false, // Imagem não tem área preenchida, apenas linha.
                     ),
                   ),
                 ],

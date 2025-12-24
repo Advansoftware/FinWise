@@ -430,7 +430,7 @@ class _DashboardTabState extends State<_DashboardTab> {
                 SpendingByCategoryChart(categoryData: categoryData),
                 const SizedBox(height: 16),
                 if (transactions.isNotEmpty)
-                  MonthlySpendingChart(transactions: transactions),
+                  OverviewSpendingChart(transactions: transactions),
                 if (transactions.isNotEmpty) 
                   const SizedBox(height: 16),
                 const DailyQuestsSection(),
