@@ -5,6 +5,7 @@ import { NextRequest } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 import { auth } from '@/lib/auth';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
 export interface AuthenticatedUser {
   id: string;
@@ -17,6 +18,14 @@ export interface AuthenticatedUser {
 const JWT_SECRET = process.env.NEXTAUTH_SECRET!;
 const ACCESS_TOKEN_EXPIRY = '15m';
 const REFRESH_TOKEN_EXPIRY = '30d';
+
+// Configuração do App Oficial
+const OFFICIAL_APP_CONFIG = {
+  identifier: 'gastometria-mobile-official',
+  secretKey: process.env.OFFICIAL_APP_SECRET || 'gastometria-app-secret-key-v1',
+  protocolVersion: 1,
+  enabled: process.env.ENABLE_OFFICIAL_APP_BYPASS === 'true',
+};
 
 /**
  * Get authenticated user from request
@@ -88,19 +97,93 @@ export function hasInfinityPlan(user: AuthenticatedUser): boolean {
 }
 
 /**
- * Get authenticated user from request (mobile API - requires Infinity plan)
- * Returns user if authenticated AND has Infinity plan
- * Returns null if not authenticated or doesn't have Infinity plan
+ * Verifica se a requisição vem do app oficial Gastometria
+ * O app oficial pode acessar a API sem precisar de plano Infinity
+ */
+export function isOfficialAppRequest(request: NextRequest): boolean {
+  if (!OFFICIAL_APP_CONFIG.enabled) {
+    return false;
+  }
+
+  try {
+    const appToken = request.headers.get('X-App-Token');
+    const platform = request.headers.get('X-App-Platform');
+    const protocolVersion = request.headers.get('X-Security-Protocol');
+
+    if (!appToken || !platform || !protocolVersion) {
+      return false;
+    }
+
+    // Verifica versão do protocolo
+    if (parseInt(protocolVersion) !== OFFICIAL_APP_CONFIG.protocolVersion) {
+      return false;
+    }
+
+    // Decodifica e valida o token do app
+    const decoded = Buffer.from(appToken, 'base64').toString('utf-8');
+    const [payloadStr, signature] = decoded.split('|');
+
+    if (!payloadStr || !signature) {
+      return false;
+    }
+
+    // Verifica a assinatura HMAC
+    const expectedSignature = crypto
+      .createHmac('sha256', OFFICIAL_APP_CONFIG.secretKey)
+      .update(payloadStr)
+      .digest('hex');
+
+    if (signature !== expectedSignature) {
+      return false;
+    }
+
+    // Valida o payload
+    const payload = JSON.parse(payloadStr);
+
+    // Verifica identificador do app
+    if (payload.app !== OFFICIAL_APP_CONFIG.identifier) {
+      return false;
+    }
+
+    // Verifica timestamp (token válido por 5 minutos)
+    const tokenAge = Date.now() - payload.ts;
+    if (tokenAge > 5 * 60 * 1000) {
+      return false;
+    }
+
+    // Verifica se a plataforma corresponde
+    if (payload.platform !== platform.toLowerCase()) {
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error('Erro ao validar token do app oficial:', error);
+    return false;
+  }
+}
+
+/**
+ * Get authenticated user from request (mobile API - requires Infinity plan OR official app)
+ * Returns user if authenticated AND (has Infinity plan OR is official app)
+ * Returns null if not authenticated or doesn't have access
  */
 export async function getAuthenticatedMobileUser(
   request: NextRequest
-): Promise<{ user: AuthenticatedUser | null; error?: string }> {
+): Promise<{ user: AuthenticatedUser | null; error?: string; isOfficialApp?: boolean }> {
   const user = await getAuthenticatedUser(request);
 
   if (!user) {
     return { user: null, error: 'Unauthorized: Invalid or missing authentication' };
   }
 
+  // Verifica se é o app oficial (bypass do plano Infinity)
+  const isOfficial = isOfficialAppRequest(request);
+  if (isOfficial) {
+    return { user, isOfficialApp: true };
+  }
+
+  // Se não é app oficial, precisa de plano Infinity
   if (!hasInfinityPlan(user)) {
     return {
       user: null,
@@ -108,7 +191,7 @@ export async function getAuthenticatedMobileUser(
     };
   }
 
-  return { user };
+  return { user, isOfficialApp: false };
 }
 
 /**

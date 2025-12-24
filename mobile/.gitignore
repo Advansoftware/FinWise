@@ -99,33 +99,36 @@ app.*.map.json
 **/ios/Runner/GeneratedPluginRegistrant.*
 
 # =========================
-# MACOS
+# MACOS (não usado - apenas Android/iOS)
 # =========================
 
+/macos/
 **/macos/Flutter/GeneratedPluginRegistrant.swift
 **/macos/Flutter/ephemeral
 
 # =========================
-# WINDOWS
+# WINDOWS (não usado - apenas Android/iOS)
 # =========================
 
+/windows/
 **/windows/flutter/generated_plugin_registrant.cc
 **/windows/flutter/generated_plugin_registrant.h
 **/windows/flutter/generated_plugins.cmake
 
 # =========================
-# LINUX
+# LINUX (não usado - apenas Android/iOS)
 # =========================
 
+/linux/
 **/linux/flutter/generated_plugin_registrant.cc
 **/linux/flutter/generated_plugin_registrant.h
 **/linux/flutter/generated_plugins.cmake
 
 # =========================
-# WEB
+# WEB (não usado - apenas Android/iOS)
 # =========================
 
-# Não incluir build web
+# Não incluir web
 /web/
 
 # =========================
@@ -155,6 +158,9 @@ firebase_options.dart
 # =========================
 # TESTES E COVERAGE
 # =========================
+
+# Pasta de testes (descomente quando tiver testes)
+/test/
 
 coverage/
 .test_coverage.dart
