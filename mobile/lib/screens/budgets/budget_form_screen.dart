@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/models/models.dart';
-import '../../core/providers/budget_provider.dart';
+import '../../core/providers/providers.dart';
 
 class BudgetFormScreen extends StatefulWidget {
   final BudgetModel? budget;
@@ -18,21 +18,10 @@ class _BudgetFormScreenState extends State<BudgetFormScreen> {
   final _nameController = TextEditingController();
   final _amountController = TextEditingController();
   
-  String _selectedCategory = 'Alimentação';
+  String? _selectedCategory;
+  String? _selectedSubcategory;
   String _selectedPeriod = 'monthly';
   bool _isLoading = false;
-
-  final List<String> _categories = [
-    'Alimentação',
-    'Transporte',
-    'Moradia',
-    'Saúde',
-    'Educação',
-    'Lazer',
-    'Compras',
-    'Serviços',
-    'Outros',
-  ];
 
   final Map<String, String> _periods = {
     'monthly': 'Mensal',
@@ -49,8 +38,14 @@ class _BudgetFormScreenState extends State<BudgetFormScreen> {
       _nameController.text = widget.budget!.name ?? '';
       _amountController.text = widget.budget!.amount.toString();
       _selectedCategory = widget.budget!.category;
+      _selectedSubcategory = widget.budget!.subcategory;
       _selectedPeriod = widget.budget!.period;
     }
+    
+    // Load categories
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CategoryProvider>().loadCategories();
+    });
   }
 
   @override
@@ -72,212 +67,258 @@ class _BudgetFormScreenState extends State<BudgetFormScreen> {
       ),
       body: Form(
         key: _formKey,
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            // Categoria
-            const Text(
-              'Categoria',
-              style: TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: AppTheme.card,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _selectedCategory,
-                  isExpanded: true,
-                  dropdownColor: AppTheme.card,
-                  style: const TextStyle(
+        child: Consumer<CategoryProvider>(
+          builder: (context, categoryProvider, _) {
+            final categories = categoryProvider.categories;
+            final categoryKeys = categories.keys.toList()..sort();
+            
+            return ListView(
+              padding: const EdgeInsets.all(16),
+              children: [
+                // Categoria e Subcategoria
+                const Text(
+                  'Categoria',
+                  style: TextStyle(
                     color: AppTheme.textPrimary,
-                    fontSize: 16,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
                   ),
-                  icon: const Icon(Icons.keyboard_arrow_down,
-                      color: AppTheme.textSecondary),
-                  items: _categories.map((category) {
-                    return DropdownMenuItem(
-                      value: category,
-                      child: Row(
-                        children: [
-                          Icon(
-                            _getCategoryIcon(category),
-                            color: _getCategoryColor(category),
-                            size: 20,
-                          ),
-                          const SizedBox(width: 12),
-                          Text(category),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => _selectedCategory = value);
+                ),
+                const SizedBox(height: 8),
+                if (categoryProvider.isLoading && categories.isEmpty)
+                   const Center(child: CircularProgressIndicator())
+                else
+                   _buildCategorySelectors(categories, categoryKeys),
+
+                const SizedBox(height: 20),
+
+                // Nome (opcional)
+                const Text(
+                  'Nome (opcional)',
+                  style: TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _nameController,
+                  style: const TextStyle(color: AppTheme.textPrimary),
+                  decoration: InputDecoration(
+                    hintText: 'Ex: Orçamento de Janeiro',
+                    hintStyle: const TextStyle(color: AppTheme.textSecondary),
+                    filled: true,
+                    fillColor: AppTheme.card,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Valor
+                const Text(
+                  'Valor Limite',
+                  style: TextStyle(
+                    color: AppTheme.textPrimary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _amountController,
+                  style: const TextStyle(color: AppTheme.textPrimary),
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  decoration: InputDecoration(
+                    prefixText: 'R\$ ',
+                    prefixStyle: const TextStyle(color: AppTheme.textPrimary),
+                    hintText: '0,00',
+                    hintStyle: const TextStyle(color: AppTheme.textSecondary),
+                    filled: true,
+                    fillColor: AppTheme.card,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Informe o valor';
                     }
+                    final parsed = double.tryParse(value.replaceAll(',', '.'));
+                    if (parsed == null || parsed <= 0) {
+                      return 'Valor inválido';
+                    }
+                    return null;
                   },
                 ),
-              ),
-            ),
 
-            const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
-            // Nome (opcional)
-            const Text(
-              'Nome (opcional)',
-              style: TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _nameController,
-              style: const TextStyle(color: AppTheme.textPrimary),
-              decoration: InputDecoration(
-                hintText: 'Ex: Orçamento de Janeiro',
-                hintStyle: const TextStyle(color: AppTheme.textSecondary),
-                filled: true,
-                fillColor: AppTheme.card,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // Valor
-            const Text(
-              'Valor Limite',
-              style: TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
-            TextFormField(
-              controller: _amountController,
-              style: const TextStyle(color: AppTheme.textPrimary),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: InputDecoration(
-                prefixText: 'R\$ ',
-                prefixStyle: const TextStyle(color: AppTheme.textPrimary),
-                hintText: '0,00',
-                hintStyle: const TextStyle(color: AppTheme.textSecondary),
-                filled: true,
-                fillColor: AppTheme.card,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Informe o valor';
-                }
-                final parsed = double.tryParse(value.replaceAll(',', '.'));
-                if (parsed == null || parsed <= 0) {
-                  return 'Valor inválido';
-                }
-                return null;
-              },
-            ),
-
-            const SizedBox(height: 20),
-
-            // Período
-            const Text(
-              'Período',
-              style: TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 14,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: AppTheme.card,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _selectedPeriod,
-                  isExpanded: true,
-                  dropdownColor: AppTheme.card,
-                  style: const TextStyle(
+                // Período
+                const Text(
+                  'Período',
+                  style: TextStyle(
                     color: AppTheme.textPrimary,
-                    fontSize: 16,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
                   ),
-                  icon: const Icon(Icons.keyboard_arrow_down,
-                      color: AppTheme.textSecondary),
-                  items: _periods.entries.map((entry) {
-                    return DropdownMenuItem(
-                      value: entry.key,
-                      child: Text(entry.value),
-                    );
-                  }).toList(),
-                  onChanged: (value) {
-                    if (value != null) {
-                      setState(() => _selectedPeriod = value);
-                    }
-                  },
                 ),
-              ),
-            ),
-
-            const SizedBox(height: 32),
-
-            // Botão Salvar
-            SizedBox(
-              height: 52,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _save,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: AppTheme.card,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                ),
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          color: Colors.white,
-                          strokeWidth: 2,
-                        ),
-                      )
-                    : Text(
-                        isEditing ? 'Salvar Alterações' : 'Criar Orçamento',
-                        style: const TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                        ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedPeriod,
+                      isExpanded: true,
+                      dropdownColor: AppTheme.card,
+                      style: const TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 16,
                       ),
-              ),
-            ),
-          ],
+                      icon: const Icon(Icons.keyboard_arrow_down,
+                          color: AppTheme.textSecondary),
+                      items: _periods.entries.map((entry) {
+                        return DropdownMenuItem(
+                          value: entry.key,
+                          child: Text(entry.value),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        if (value != null) {
+                          setState(() => _selectedPeriod = value);
+                        }
+                      },
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+
+                // Botão Salvar
+                SizedBox(
+                  height: 52,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _save,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(
+                            isEditing ? 'Salvar Alterações' : 'Criar Orçamento',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                  ),
+                ),
+              ],
+            );
+          }
         ),
       ),
     );
   }
+  
+  Widget _buildCategorySelectors(Map<String, List<String>> categories, List<String> sortedCategories) {
+    return Column(children: [
+      Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: AppTheme.card,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: DropdownButtonHideUnderline(
+          child: DropdownButton<String>(
+            value: _selectedCategory,
+            isExpanded: true,
+            hint: const Text('Selecione uma categoria', style: TextStyle(color: AppTheme.textSecondary)),
+            dropdownColor: AppTheme.card,
+            style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16),
+            icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.textSecondary),
+            items: sortedCategories.map((category) {
+              return DropdownMenuItem(
+                value: category,
+                child: Row(
+                  children: [
+                    Icon(_getCategoryIcon(category), color: _getCategoryColor(category), size: 20),
+                    const SizedBox(width: 12),
+                    Text(category),
+                  ],
+                ),
+              );
+            }).toList(),
+            onChanged: (value) => setState(() {
+               _selectedCategory = value;
+               _selectedSubcategory = null;
+            }),
+          ),
+        ),
+      ),
+      if (_selectedCategory != null && (categories[_selectedCategory]?.isNotEmpty ?? false)) ...[
+         const SizedBox(height: 12),
+         Container(
+           padding: const EdgeInsets.symmetric(horizontal: 16),
+           decoration: BoxDecoration(
+             color: AppTheme.card,
+             borderRadius: BorderRadius.circular(12),
+           ),
+           child: DropdownButtonHideUnderline(
+             child: DropdownButton<String>(
+               value: _selectedSubcategory,
+               isExpanded: true,
+               hint: const Text('Subcategoria (Opcional)', style: TextStyle(color: AppTheme.textSecondary)),
+               dropdownColor: AppTheme.card,
+               style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16),
+               icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.textSecondary),
+               items: [
+                   const DropdownMenuItem<String>(
+                     value: null, 
+                     child: Text('Nenhuma', style: TextStyle(fontStyle: FontStyle.italic)),
+                   ),
+                   ...categories[_selectedCategory]!.map((sub) => DropdownMenuItem(
+                       value: sub,
+                       child: Text(sub),
+                   )),
+               ],
+               onChanged: (value) => setState(() => _selectedSubcategory = value),
+             ),
+           ),
+         ),
+      ]
+    ]);
+  }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    
+    if (_selectedCategory == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Selecione uma categoria')),
+      );
+      return;
+    }
 
     setState(() => _isLoading = true);
 
@@ -287,7 +328,8 @@ class _BudgetFormScreenState extends State<BudgetFormScreen> {
 
       final budget = BudgetModel(
         id: widget.budget?.id ?? '',
-        category: _selectedCategory,
+        category: _selectedCategory!,
+        subcategory: _selectedSubcategory,
         name: _nameController.text.isEmpty ? null : _nameController.text,
         amount: amount,
         spent: widget.budget?.spent ?? 0,

@@ -8,6 +8,7 @@ class TransactionModel {
   final double amount;
   final TransactionType type;
   final String? category;
+  final String? subcategory;
   final String? categoryIcon;
   final String? walletId;
   final String? walletName;
@@ -27,6 +28,7 @@ class TransactionModel {
     required this.amount,
     required this.type,
     this.category,
+    this.subcategory,
     this.categoryIcon,
     this.walletId,
     this.walletName,
@@ -48,6 +50,7 @@ class TransactionModel {
       amount: (json['amount'] ?? 0).toDouble(),
       type: _parseType(json['type']),
       category: json['category'],
+      subcategory: json['subcategory'],
       categoryIcon: json['categoryIcon'],
       walletId: json['walletId'],
       walletName: json['walletName'],
@@ -86,6 +89,7 @@ class TransactionModel {
       'amount': amount,
       'type': type.name,
       'category': category,
+      if (subcategory != null) 'subcategory': subcategory,
       'walletId': walletId,
       if (destinationWalletId != null) 'destinationWalletId': destinationWalletId,
       'date': date.toIso8601String(),
@@ -105,6 +109,7 @@ class TransactionModel {
     double? amount,
     TransactionType? type,
     String? category,
+    String? subcategory,
     String? categoryIcon,
     String? walletId,
     String? walletName,
@@ -122,6 +127,7 @@ class TransactionModel {
       amount: amount ?? this.amount,
       type: type ?? this.type,
       category: category ?? this.category,
+      subcategory: subcategory ?? this.subcategory,
       categoryIcon: categoryIcon ?? this.categoryIcon,
       walletId: walletId ?? this.walletId,
       walletName: walletName ?? this.walletName,

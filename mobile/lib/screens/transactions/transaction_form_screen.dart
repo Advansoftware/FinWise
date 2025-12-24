@@ -33,36 +33,14 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   late TextEditingController _amountController;
   
   TransactionType _type = TransactionType.expense;
-  String _category = 'Outros';
+  String? _category;
+  String? _subcategory;
   String? _selectedWalletId;
   String? _selectedDestinationWalletId;
   DateTime _selectedDate = DateTime.now();
   bool _isLoading = false;
 
   bool get isEditing => widget.transaction != null;
-
-  // Categorias padrão
-  final List<String> _expenseCategories = [
-    'Alimentação',
-    'Transporte',
-    'Moradia',
-    'Lazer',
-    'Saúde',
-    'Educação',
-    'Compras',
-    'Serviços',
-    'Investimentos',
-    'Outros',
-  ];
-
-  final List<String> _incomeCategories = [
-    'Salário',
-    'Freelance',
-    'Investimentos',
-    'Presente',
-    'Vendas',
-    'Outros',
-  ];
 
   @override
   void initState() {
@@ -76,11 +54,17 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     
     if (tx != null) {
       _type = tx.type;
-      _category = tx.category ?? 'Outros';
+      _category = tx.category;
+      _subcategory = tx.subcategory;
       _selectedWalletId = tx.walletId;
       _selectedDestinationWalletId = tx.destinationWalletId;
       _selectedDate = tx.date;
     }
+
+    // Carrega categorias da API
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<CategoryProvider>().loadCategories();
+    });
   }
 
   @override
@@ -88,13 +72,6 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     _descriptionController.dispose();
     _amountController.dispose();
     super.dispose();
-  }
-
-  List<String> get _categories {
-    if (_type == TransactionType.transfer) {
-      return ['Transferência'];
-    }
-    return _type == TransactionType.expense ? _expenseCategories : _incomeCategories;
   }
 
   Future<void> _selectDate() async {
@@ -125,6 +102,14 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
+    
+    if (_type != TransactionType.transfer && _category == null) {
+       ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Selecione uma categoria')),
+      );
+      return;     
+    }
+
     if (_selectedWalletId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Selecione uma carteira')),
@@ -160,7 +145,8 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       description: _descriptionController.text.trim(),
       amount: amount,
       type: _type,
-      category: _category,
+      category: _type == TransactionType.transfer ? 'Transferência' : _category,
+      subcategory: _type == TransactionType.transfer ? null : _subcategory,
       walletId: _selectedWalletId!,
       destinationWalletId: _type == TransactionType.transfer ? _selectedDestinationWalletId : null,
       date: _selectedDate,
@@ -192,6 +178,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   @override
   Widget build(BuildContext context) {
     final wallets = context.watch<WalletProvider>().wallets;
+    final categoryProvider = context.watch<CategoryProvider>();
     
     // Seleciona primeira carteira se não houver seleção
     if (_selectedWalletId == null && wallets.isNotEmpty) {
@@ -254,7 +241,10 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             if (_type != TransactionType.transfer) ...[
               _buildSectionTitle('Categoria'),
               const SizedBox(height: 8),
-              _buildCategorySelector(),
+              if (categoryProvider.isLoading && categoryProvider.categories.isEmpty)
+                 const Center(child: CircularProgressIndicator())
+              else
+                 _buildCategorySelectors(categoryProvider.categories),
               const SizedBox(height: 24),
             ],
 
@@ -311,9 +301,6 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               isSelected: _type == TransactionType.expense,
               onTap: () => setState(() {
                 _type = TransactionType.expense;
-                if (!_expenseCategories.contains(_category)) {
-                  _category = 'Outros';
-                }
               }),
             ),
           ),
@@ -325,9 +312,6 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               isSelected: _type == TransactionType.income,
               onTap: () => setState(() {
                 _type = TransactionType.income;
-                if (!_incomeCategories.contains(_category)) {
-                  _category = 'Outros';
-                }
               }),
             ),
           ),
@@ -340,6 +324,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               onTap: () => setState(() {
                 _type = TransactionType.transfer;
                 _category = 'Transferência';
+                _subcategory = null;
               }),
             ),
           ),
@@ -443,34 +428,84 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     );
   }
 
-  Widget _buildCategorySelector() {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: _categories.map((category) {
-        final isSelected = _category == category;
-        return GestureDetector(
-          onTap: () => setState(() => _category = category),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            decoration: BoxDecoration(
-              color: isSelected ? AppTheme.primary : AppTheme.card,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(
-                color: isSelected ? AppTheme.primary : AppTheme.border,
-              ),
+  Widget _buildCategorySelectors(Map<String, List<String>> categories) {
+    // Se a categoria selecionada não existir mais, limpa
+    if (_category != null && !categories.containsKey(_category)) {
+      _category = null;
+      _subcategory = null;
+    }
+    
+    // Lista de categorias ordenada
+    final sortedCategories = categories.keys.toList()..sort();
+    
+    return Column(
+      children: [
+        // Dropdown Categoria
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: AppTheme.card,
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppTheme.border),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _category,
+              isExpanded: true,
+              hint: Text('Selecione', style: TextStyle(color: Colors.white.withAlpha(128))),
+              dropdownColor: AppTheme.card,
+              style: const TextStyle(color: Colors.white),
+              icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white54),
+              items: sortedCategories.map((cat) {
+                return DropdownMenuItem(
+                  value: cat,
+                  child: Text(cat),
+                );
+              }).toList(),
+              onChanged: (value) => setState(() {
+                _category = value;
+                _subcategory = null; // Reset sub ao mudar categoria
+              }),
             ),
-            child: Text(
-              category,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                color: isSelected ? Colors.white : Colors.white.withAlpha(179),
+          ),
+        ),
+        
+        // Dropdown Subcategoria (apenas se tiver subcategorias)
+        if (_category != null && (categories[_category]?.isNotEmpty ?? false)) ...[
+           const SizedBox(height: 12),
+           Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: AppTheme.card,
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: AppTheme.border),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _subcategory,
+                isExpanded: true,
+                hint: Text('Subcategoria (Opcional)', style: TextStyle(color: Colors.white.withAlpha(128))),
+                dropdownColor: AppTheme.card,
+                style: const TextStyle(color: Colors.white),
+                icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white54),
+                items: [
+                   const DropdownMenuItem<String>(
+                     value: null, 
+                     child: Text('Nenhuma', style: TextStyle(fontStyle: FontStyle.italic)),
+                   ),
+                   ...categories[_category]!.map((sub) {
+                    return DropdownMenuItem(
+                      value: sub,
+                      child: Text(sub),
+                    );
+                  }),
+                ],
+                onChanged: (value) => setState(() => _subcategory = value),
               ),
             ),
           ),
-        );
-      }).toList(),
+        ],
+      ],
     );
   }
 

@@ -5,3 +5,4 @@ export 'goal_provider.dart';
 export 'installment_provider.dart';
 export 'transaction_provider.dart';
 export 'wallet_provider.dart';
+export 'category_provider.dart';

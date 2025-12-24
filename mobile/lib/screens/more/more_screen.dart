@@ -7,6 +7,7 @@ import '../../core/models/gamification_model.dart';
 import '../../core/widgets/plan_badge.dart';
 import '../profile/profile_screen.dart';
 import 'settings_screen.dart';
+import '../categories/categories_screen.dart';
 
 /// Tela "Mais" - equivalente ao menu lateral do site
 /// Contém: Perfil resumido, navegação para outras telas, configurações
@@ -79,8 +80,10 @@ class MoreScreen extends StatelessWidget {
                 label: 'Categorias',
                 subtitle: 'Organize suas transações',
                 onTap: () {
-                  // TODO: Navegar para Categorias
-                  _showComingSoon(context, 'Categorias');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const CategoriesScreen()),
+                  );
                 },
               ),
               const Divider(color: AppTheme.border, height: 1),
