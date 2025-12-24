@@ -57,13 +57,15 @@ class InstallmentService {
   /// Marca uma parcela como paga
   Future<ApiResult<InstallmentModel>> markAsPaid(
     String installmentId,
-    String paymentId, {
+    int installmentNumber, {
     double? amount,
   }) async {
-    final body = amount != null ? {'amount': amount} : <String, dynamic>{};
     return _api.post<InstallmentModel>(
-      '${ApiConstants.installments}/$installmentId/payments/$paymentId/pay',
-      body,
+      '${ApiConstants.installments}/$installmentId/pay',
+      {
+        'installmentNumber': installmentNumber,
+        if (amount != null) 'paidAmount': amount,
+      },
       (data) => InstallmentModel.fromJson(data['installment'] ?? data),
     );
   }

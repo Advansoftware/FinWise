@@ -96,8 +96,8 @@ class InstallmentProvider extends ChangeNotifier {
   }
 
   /// Marca parcela como paga
-  Future<bool> markAsPaid(String installmentId, String paymentId, {double? amount}) async {
-    final result = await _service.markAsPaid(installmentId, paymentId, amount: amount);
+  Future<bool> markAsPaid(String installmentId, int installmentNumber, {double? amount}) async {
+    final result = await _service.markAsPaid(installmentId, installmentNumber, amount: amount);
 
     if (result.isSuccess && result.data != null) {
       final index = _installments.indexWhere((i) => i.id == installmentId);

@@ -93,7 +93,7 @@ class TransactionsScreen extends StatelessWidget {
                   delegate: SliverChildBuilderDelegate(
                     (context, index) {
                       final transaction = transactions[index];
-                      return _TransactionCard(
+                      return _SwipeableTransactionCard(
                         transaction: transaction,
                         onTap: () async {
                           final result = await TransactionFormScreen.show(
@@ -103,6 +103,21 @@ class TransactionsScreen extends StatelessWidget {
                           if (result == true) {
                             transactionProvider.loadTransactions(refresh: true);
                           }
+                        },
+                        onDelete: () async {
+                          final confirmed = await _showDeleteConfirmation(context, transaction);
+                          if (confirmed == true) {
+                            final success = await transactionProvider.deleteTransaction(transaction.id);
+                            if (success && context.mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Transação excluída'),
+                                  backgroundColor: AppTheme.success,
+                                ),
+                              );
+                            }
+                          }
+                          return confirmed == true;
                         },
                       );
                     },
@@ -224,6 +239,82 @@ class _TransactionCard extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+// ============================================================================
+// Swipeable Transaction Card
+// ============================================================================
+
+Future<bool?> _showDeleteConfirmation(BuildContext context, TransactionModel transaction) {
+  return showDialog<bool>(
+    context: context,
+    builder: (context) => AlertDialog(
+      backgroundColor: AppTheme.card,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: const Text('Confirmar Exclusão', style: TextStyle(color: Colors.white)),
+      content: Text(
+        'Tem certeza que deseja excluir a transação "${transaction.description}"? Esta ação não pode ser desfeita.',
+        style: TextStyle(color: Colors.white.withAlpha(204)),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context, false),
+          child: Text('Cancelar', style: TextStyle(color: Colors.white.withAlpha(153))),
+        ),
+        FilledButton(
+          onPressed: () => Navigator.pop(context, true),
+          style: FilledButton.styleFrom(backgroundColor: AppTheme.error),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Icon(Icons.delete, size: 18),
+              SizedBox(width: 4),
+              Text('Excluir'),
+            ],
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+class _SwipeableTransactionCard extends StatelessWidget {
+  final TransactionModel transaction;
+  final VoidCallback? onTap;
+  final Future<bool> Function() onDelete;
+
+  const _SwipeableTransactionCard({
+    required this.transaction,
+    this.onTap,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Dismissible(
+      key: Key(transaction.id),
+      direction: DismissDirection.endToStart,
+      confirmDismiss: (direction) => onDelete(),
+      background: Container(
+        margin: const EdgeInsets.only(bottom: 12),
+        decoration: BoxDecoration(
+          color: AppTheme.error,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        child: const Icon(
+          Icons.delete,
+          color: Colors.white,
+          size: 28,
+        ),
+      ),
+      child: _TransactionCard(
+        transaction: transaction,
+        onTap: onTap,
       ),
     );
   }

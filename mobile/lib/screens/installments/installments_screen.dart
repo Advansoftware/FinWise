@@ -931,6 +931,8 @@ class _InstallmentCard extends StatelessWidget {
             _NextPaymentSection(
               payment: nextDue,
               overdueCount: overdueCount,
+              installment: installment,
+              onRefresh: onRefresh,
             ),
         ],
       ),
@@ -1222,7 +1224,7 @@ class _InstallmentMenu extends StatelessWidget {
       try {
         await context.read<InstallmentProvider>().markAsPaid(
           installment.id,
-          payment.id,
+          payment.installmentNumber,
         );
         if (onRefresh != null) {
           onRefresh!();
@@ -1299,10 +1301,14 @@ class _InstallmentMenu extends StatelessWidget {
 class _NextPaymentSection extends StatelessWidget {
   final InstallmentPayment payment;
   final int overdueCount;
+  final InstallmentModel? installment;
+  final VoidCallback? onRefresh;
 
   const _NextPaymentSection({
     required this.payment,
     required this.overdueCount,
+    this.installment,
+    this.onRefresh,
   });
 
   @override
@@ -1329,12 +1335,18 @@ class _NextPaymentSection extends StatelessWidget {
         children: [
           // Overdue warning
           if (isOverdue)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+            Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppTheme.error.withAlpha(25),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: AppTheme.error.withAlpha(77)),
+              ),
               child: Row(
                 children: [
                   Icon(Icons.warning, size: 16, color: AppTheme.error),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 8),
                   Text(
                     'Parcela em atraso!',
                     style: TextStyle(
@@ -1402,6 +1414,47 @@ class _NextPaymentSection extends StatelessWidget {
             ],
           ),
 
+          // Action buttons (like web version)
+          const SizedBox(height: 16),
+          
+          // Registrar button (orange/warning color)
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: () => _handleRegisterPayment(context),
+              style: FilledButton.styleFrom(
+                backgroundColor: AppTheme.warning,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              icon: const Icon(Icons.attach_money, size: 18),
+              label: const Text('Registrar', style: TextStyle(fontWeight: FontWeight.w600)),
+            ),
+          ),
+          
+          const SizedBox(height: 8),
+          
+          // Marcar como Pago button (outline)
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () => _handleMarkAsPaid(context),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: Colors.white,
+                side: const BorderSide(color: Colors.white38),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              icon: const Icon(Icons.check_circle_outline, size: 18),
+              label: const Text('Marcar como Pago', style: TextStyle(fontWeight: FontWeight.w500)),
+            ),
+          ),
+
           // Multiple overdue warning
           if (overdueCount > 1)
             Container(
@@ -1430,5 +1483,144 @@ class _NextPaymentSection extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  void _handleRegisterPayment(BuildContext context) async {
+    if (installment == null) return;
+    
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.card,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Registrar Pagamento', style: TextStyle(color: Colors.white)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Registre o pagamento da parcela ${payment.installmentNumber} de ${installment!.name}',
+              style: TextStyle(color: Colors.white.withAlpha(204)),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.background,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text('Valor Previsto', style: TextStyle(color: Colors.white70)),
+                  Text(
+                    FormatUtils.formatCurrency(payment.scheduledAmount),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancelar', style: TextStyle(color: Colors.white.withAlpha(153))),
+          ),
+          FilledButton.icon(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.warning),
+            icon: const Icon(Icons.attach_money, size: 18),
+            label: const Text('Registrar Pagamento'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      try {
+        await context.read<InstallmentProvider>().markAsPaid(
+          installment!.id,
+          payment.installmentNumber,
+        );
+        if (onRefresh != null) {
+          onRefresh!();
+        }
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Parcela ${payment.installmentNumber} paga com sucesso!'),
+              backgroundColor: AppTheme.success,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erro ao registrar pagamento: $e'),
+              backgroundColor: AppTheme.error,
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  void _handleMarkAsPaid(BuildContext context) async {
+    if (installment == null) return;
+    
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: AppTheme.card,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: const Text('Marcar como Pago', style: TextStyle(color: Colors.white)),
+        content: Text(
+          'Marcar a parcela ${payment.installmentNumber} como paga?',
+          style: TextStyle(color: Colors.white.withAlpha(204)),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancelar', style: TextStyle(color: Colors.white.withAlpha(153))),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: FilledButton.styleFrom(backgroundColor: AppTheme.success),
+            child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true && context.mounted) {
+      try {
+        await context.read<InstallmentProvider>().markAsPaid(
+          installment!.id,
+          payment.installmentNumber,
+        );
+        if (onRefresh != null) {
+          onRefresh!();
+        }
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Parcela ${payment.installmentNumber} marcada como paga!'),
+              backgroundColor: AppTheme.success,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Erro: $e'),
+              backgroundColor: AppTheme.error,
+            ),
+          );
+        }
+      }
+    }
   }
 }
