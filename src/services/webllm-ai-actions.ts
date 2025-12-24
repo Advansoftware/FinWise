@@ -14,6 +14,7 @@ import { Transaction } from '@/lib/types';
 import { Message } from '@/ai/ai-types';
 import { offlineStorage } from '@/lib/offline-storage';
 import * as webllmService from './webllm-service';
+import { safeLowerCase } from '@/lib/string-utils';
 
 // System prompts para diferentes contextos
 const SYSTEM_PROMPTS = {
@@ -447,9 +448,9 @@ export async function generateAutomaticBudgetsWithWebLLM(
       categoryTotals[t.category] = (categoryTotals[t.category] || 0) + Math.abs(t.amount);
     });
 
-  const existingCategories = existingBudgets.map(b => b.category.toLowerCase());
+  const existingCategories = existingBudgets.map(b => safeLowerCase(b.category));
   const newCategories = Object.entries(categoryTotals)
-    .filter(([cat]) => !existingCategories.includes(cat.toLowerCase()))
+    .filter(([cat]) => !existingCategories.includes(safeLowerCase(cat)))
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5);
 

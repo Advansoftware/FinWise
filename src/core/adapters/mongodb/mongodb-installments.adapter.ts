@@ -3,6 +3,7 @@
 import { Db, ObjectId } from 'mongodb';
 import { IInstallmentsRepository, Installment, InstallmentPayment, CreateInstallmentInput, UpdateInstallmentInput, PayInstallmentInput, AdjustRecurringInstallmentInput, InstallmentSummary, GamificationData } from '@/core/ports/installments.port';
 import { addMonths, addYears, isAfter, isBefore, parseISO, format } from 'date-fns';
+import { safeLowerCase } from '@/lib/string-utils';
 
 export class MongoInstallmentsRepository implements IInstallmentsRepository {
   constructor(private db: Db) { }
@@ -228,8 +229,8 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
 
       // Verificar se há carteiras com nome similar
       const nubankWallets = allUserWallets.filter(w =>
-        (w.name || '').toLowerCase().includes('nubank') ||
-        (w.name || '').toLowerCase().includes('nu bank')
+        safeLowerCase(w.name).includes('nubank') ||
+        safeLowerCase(w.name).includes('nu bank')
       );
       console.log('🏦 Carteiras "Nubank" encontradas:', nubankWallets.length);
       nubankWallets.forEach((w, index) => {

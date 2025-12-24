@@ -28,6 +28,7 @@ import { SingleDatePicker } from "../single-date-picker";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useAuth } from "@/hooks/use-auth";
 import { useWallets } from "@/hooks/use-wallets";
+import { safeLowerCase } from "@/lib/string-utils";
 
 interface TransactionSheetProps {
   children?: React.ReactNode;
@@ -102,8 +103,9 @@ export function TransactionSheet({
   const uniqueTransactions = useMemo(() => {
     const seen = new Set<string>();
     return allTransactions.filter((t) => {
-      const duplicate = seen.has(t.item.toLowerCase());
-      seen.add(t.item.toLowerCase());
+      const itemLower = safeLowerCase(t.item);
+      const duplicate = seen.has(itemLower);
+      seen.add(itemLower);
       return !duplicate;
     });
   }, [allTransactions]);
