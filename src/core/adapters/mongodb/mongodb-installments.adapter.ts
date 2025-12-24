@@ -228,8 +228,8 @@ export class MongoInstallmentsRepository implements IInstallmentsRepository {
 
       // Verificar se há carteiras com nome similar
       const nubankWallets = allUserWallets.filter(w =>
-        w.name.toLowerCase().includes('nubank') ||
-        w.name.toLowerCase().includes('nu bank')
+        (w.name || '').toLowerCase().includes('nubank') ||
+        (w.name || '').toLowerCase().includes('nu bank')
       );
       console.log('🏦 Carteiras "Nubank" encontradas:', nubankWallets.length);
       nubankWallets.forEach((w, index) => {
