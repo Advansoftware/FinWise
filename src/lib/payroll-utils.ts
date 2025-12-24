@@ -1,78 +1,79 @@
-import {PayrollData, PayrollDiscount} from '@/lib/types';
+import { PayrollData, PayrollDiscount } from '@/lib/types';
+import { safeLowerCase } from '@/lib/string-utils';
 
 // Utilitários para extrair informações dos dados do holerite
 
 export function getINSSFromPayroll(payrollData: PayrollData): number {
   const inssDiscount = payrollData.discounts.find(discount =>
-    discount.name.toLowerCase().includes('inss') ||
-    discount.name.toLowerCase().includes('previdência') ||
-    discount.name.toLowerCase().includes('previdencia')
+    safeLowerCase(discount.name).includes('inss') ||
+    safeLowerCase(discount.name).includes('previdência') ||
+    safeLowerCase(discount.name).includes('previdencia')
   );
   return inssDiscount?.amount || 0;
 }
 
 export function getIRFromPayroll(payrollData: PayrollData): number {
   const irDiscount = payrollData.discounts.find(discount =>
-    discount.name.toLowerCase().includes('ir') ||
-    discount.name.toLowerCase().includes('imposto') ||
-    discount.name.toLowerCase().includes('renda')
+    safeLowerCase(discount.name).includes('ir') ||
+    safeLowerCase(discount.name).includes('imposto') ||
+    safeLowerCase(discount.name).includes('renda')
   );
   return irDiscount?.amount || 0;
 }
 
 export function getHealthInsuranceFromPayroll(payrollData: PayrollData): number {
   const healthDiscounts = payrollData.discounts.filter(discount =>
-    discount.name.toLowerCase().includes('plano') ||
-    discount.name.toLowerCase().includes('saúde') ||
-    discount.name.toLowerCase().includes('saude') ||
-    discount.name.toLowerCase().includes('médico') ||
-    discount.name.toLowerCase().includes('medico')
+    safeLowerCase(discount.name).includes('plano') ||
+    safeLowerCase(discount.name).includes('saúde') ||
+    safeLowerCase(discount.name).includes('saude') ||
+    safeLowerCase(discount.name).includes('médico') ||
+    safeLowerCase(discount.name).includes('medico')
   );
   return healthDiscounts.reduce((sum, discount) => sum + discount.amount, 0);
 }
 
 export function getUnionFeeFromPayroll(payrollData: PayrollData): number {
   const unionDiscount = payrollData.discounts.find(discount =>
-    discount.name.toLowerCase().includes('sindicato') ||
-    discount.name.toLowerCase().includes('sindical') ||
-    discount.name.toLowerCase().includes('confederativo')
+    safeLowerCase(discount.name).includes('sindicato') ||
+    safeLowerCase(discount.name).includes('sindical') ||
+    safeLowerCase(discount.name).includes('confederativo')
   );
   return unionDiscount?.amount || 0;
 }
 
 export function getDentalInsuranceFromPayroll(payrollData: PayrollData): number {
   const dentalDiscounts = payrollData.discounts.filter(discount =>
-    discount.name.toLowerCase().includes('dental') ||
-    discount.name.toLowerCase().includes('odonto')
+    safeLowerCase(discount.name).includes('dental') ||
+    safeLowerCase(discount.name).includes('odonto')
   );
   return dentalDiscounts.reduce((sum, discount) => sum + discount.amount, 0);
 }
 
 export function getLifeInsuranceFromPayroll(payrollData: PayrollData): number {
   const lifeDiscounts = payrollData.discounts.filter(discount =>
-    discount.name.toLowerCase().includes('vida') ||
-    discount.name.toLowerCase().includes('seguro')
+    safeLowerCase(discount.name).includes('vida') ||
+    safeLowerCase(discount.name).includes('seguro')
   );
   return lifeDiscounts.reduce((sum, discount) => sum + discount.amount, 0);
 }
 
 export function getTransportVoucherFromPayroll(payrollData: PayrollData): number {
   const transportDiscount = payrollData.discounts.find(discount =>
-    discount.name.toLowerCase().includes('vale') ||
-    discount.name.toLowerCase().includes('transporte') ||
-    discount.name.toLowerCase().includes('vt')
+    safeLowerCase(discount.name).includes('vale') ||
+    safeLowerCase(discount.name).includes('transporte') ||
+    safeLowerCase(discount.name).includes('vt')
   );
   return transportDiscount?.amount || 0;
 }
 
 export function getMealVoucherFromPayroll(payrollData: PayrollData): number {
   const mealDiscount = payrollData.discounts.find(discount =>
-    discount.name.toLowerCase().includes('alimentação') ||
-    discount.name.toLowerCase().includes('alimentacao') ||
-    discount.name.toLowerCase().includes('refeição') ||
-    discount.name.toLowerCase().includes('refeicao') ||
-    discount.name.toLowerCase().includes('va') ||
-    discount.name.toLowerCase().includes('vr')
+    safeLowerCase(discount.name).includes('alimentação') ||
+    safeLowerCase(discount.name).includes('alimentacao') ||
+    safeLowerCase(discount.name).includes('refeição') ||
+    safeLowerCase(discount.name).includes('refeicao') ||
+    safeLowerCase(discount.name).includes('va') ||
+    safeLowerCase(discount.name).includes('vr')
   );
   return mealDiscount?.amount || 0;
 }
@@ -125,9 +126,9 @@ export function calculateIRFromSalary(grossSalary: number, inssDiscount: number,
 
 export function getConsignedLoanFromPayroll(payrollData: PayrollData): number {
   const consignedDiscounts = payrollData.discounts.filter(discount =>
-    discount.name.toLowerCase().includes('consignado') ||
-    discount.name.toLowerCase().includes('empréstimo') ||
-    discount.name.toLowerCase().includes('emprestimo')
+    safeLowerCase(discount.name).includes('consignado') ||
+    safeLowerCase(discount.name).includes('empréstimo') ||
+    safeLowerCase(discount.name).includes('emprestimo')
   );
   return consignedDiscounts.reduce((sum, discount) => sum + discount.amount, 0);
 }

@@ -28,6 +28,7 @@ import {
 import { PayrollData } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
 import { getConsignedLoanFromPayroll } from "@/lib/payroll-utils";
+import { safeLowerCase } from "@/lib/string-utils";
 import { CalculatorModeToggle } from "./calculator-mode-toggle";
 import { ManualSalaryInput, ManualSalaryData } from "./manual-salary-input";
 
@@ -108,13 +109,13 @@ export function PostVacationCalculator({
 
       // Buscar descontos específicos na lista de descontos
       const inssDiscount = payrollData.discounts.find(
-        (d) => d.type === "discount" && d.name.toLowerCase().includes("inss")
+        (d) => d.type === "discount" && safeLowerCase(d.name).includes("inss")
       );
       const irDiscount = payrollData.discounts.find(
         (d) =>
           d.type === "discount" &&
-          (d.name.toLowerCase().includes("imposto") ||
-            d.name.toLowerCase().includes("renda"))
+          (safeLowerCase(d.name).includes("imposto") ||
+            safeLowerCase(d.name).includes("renda"))
       );
 
       // INSS proporcional
@@ -128,12 +129,12 @@ export function PostVacationCalculator({
         .filter(
           (d) =>
             d.type === "discount" &&
-            !d.name.toLowerCase().includes("inss") &&
-            !d.name.toLowerCase().includes("imposto") &&
-            !d.name.toLowerCase().includes("renda") &&
-            !d.name.toLowerCase().includes("consignado") &&
-            !d.name.toLowerCase().includes("empréstimo") &&
-            !d.name.toLowerCase().includes("emprestimo")
+            !safeLowerCase(d.name).includes("inss") &&
+            !safeLowerCase(d.name).includes("imposto") &&
+            !safeLowerCase(d.name).includes("renda") &&
+            !safeLowerCase(d.name).includes("consignado") &&
+            !safeLowerCase(d.name).includes("empréstimo") &&
+            !safeLowerCase(d.name).includes("emprestimo")
         )
         .map((d) => ({ name: d.name, amount: d.amount * workProportion }));
 
@@ -268,9 +269,9 @@ export function PostVacationCalculator({
                 {payrollData.discounts.filter(
                   (d) =>
                     d.type === "discount" &&
-                    !d.name.toLowerCase().includes("consignado") &&
-                    !d.name.toLowerCase().includes("empréstimo") &&
-                    !d.name.toLowerCase().includes("emprestimo")
+                    !safeLowerCase(d.name).includes("consignado") &&
+                    !safeLowerCase(d.name).includes("empréstimo") &&
+                    !safeLowerCase(d.name).includes("emprestimo")
                 ).length > 0 && (
                   <Box>
                     <Typography
@@ -285,9 +286,9 @@ export function PostVacationCalculator({
                         .filter(
                           (d) =>
                             d.type === "discount" &&
-                            !d.name.toLowerCase().includes("consignado") &&
-                            !d.name.toLowerCase().includes("empréstimo") &&
-                            !d.name.toLowerCase().includes("emprestimo")
+                            !safeLowerCase(d.name).includes("consignado") &&
+                            !safeLowerCase(d.name).includes("empréstimo") &&
+                            !safeLowerCase(d.name).includes("emprestimo")
                         )
                         .map((discount, index) => (
                           <Box
@@ -317,9 +318,9 @@ export function PostVacationCalculator({
                 {payrollData.discounts.filter(
                   (d) =>
                     d.type === "discount" &&
-                    (d.name.toLowerCase().includes("consignado") ||
-                      d.name.toLowerCase().includes("empréstimo") ||
-                      d.name.toLowerCase().includes("emprestimo"))
+                    (safeLowerCase(d.name).includes("consignado") ||
+                      safeLowerCase(d.name).includes("empréstimo") ||
+                      safeLowerCase(d.name).includes("emprestimo"))
                 ).length > 0 && (
                   <Box>
                     <Typography
@@ -334,9 +335,9 @@ export function PostVacationCalculator({
                         .filter(
                           (d) =>
                             d.type === "discount" &&
-                            (d.name.toLowerCase().includes("consignado") ||
-                              d.name.toLowerCase().includes("empréstimo") ||
-                              d.name.toLowerCase().includes("emprestimo"))
+                            (safeLowerCase(d.name).includes("consignado") ||
+                              safeLowerCase(d.name).includes("empréstimo") ||
+                              safeLowerCase(d.name).includes("emprestimo"))
                         )
                         .map((discount, index) => (
                           <Box
