@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/models/models.dart';
+import '../../../core/utils/format_utils.dart';
 
 /// Card de estatísticas com mini gráfico sparkline
 class StatsCard extends StatelessWidget {
@@ -262,6 +263,12 @@ class MonthlySpendingChart extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    // Tentar identificar o mês/ano para exibir datas corretas
+    // Pega a primeira transação como referência (assumindo que o filtro é por mês)
+    final firstTx = transactions.first;
+    final currentMonth = firstTx.date.month;
+    final currentYear = firstTx.date.year;
+
     final spots = dailyTotals.entries
         .map((e) => FlSpot(e.key.toDouble(), e.value))
         .toList()
@@ -293,7 +300,7 @@ class MonthlySpendingChart extends StatelessWidget {
                 gridData: FlGridData(
                   show: true,
                   drawVerticalLine: false,
-                  horizontalInterval: 100,
+                  horizontalInterval: 1000, // Ajustado para ser menos denso
                   getDrawingHorizontalLine: (value) {
                     return FlLine(
                       color: AppTheme.border,
@@ -301,9 +308,39 @@ class MonthlySpendingChart extends StatelessWidget {
                     );
                   },
                 ),
+                lineTouchData: LineTouchData(
+                  touchTooltipData: LineTouchTooltipData(
+                    tooltipBgColor: AppTheme.surface,
+                    getTooltipItems: (touchedSpots) {
+                      return touchedSpots.map((spot) {
+                        return LineTooltipItem(
+                          FormatUtils.formatCurrency(spot.y),
+                          const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        );
+                      }).toList();
+                    },
+                  ),
+                ),
                 titlesData: FlTitlesData(
-                  leftTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 45,
+                      getTitlesWidget: (value, meta) {
+                        if (value == meta.min || value == meta.max) return const SizedBox.shrink();
+                        return Text(
+                          FormatUtils.formatCurrency(value).replaceAll('R\$', '').trim(),
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Colors.white.withOpacity(0.5),
+                          ),
+                          textAlign: TextAlign.right,
+                        );
+                      },
+                    ),
                   ),
                   topTitles: const AxisTitles(
                     sideTitles: SideTitles(showTitles: false),
@@ -315,13 +352,18 @@ class MonthlySpendingChart extends StatelessWidget {
                     sideTitles: SideTitles(
                       showTitles: true,
                       reservedSize: 22,
-                      interval: 7,
+                      interval: 5, // Mostrar a cada 5 dias para não encavalar
                       getTitlesWidget: (value, meta) {
-                        return Text(
-                          '${value.toInt()}',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Colors.white.withOpacity(0.5),
+                        final day = value.toInt();
+                        if (day > 31 || day < 1) return const SizedBox.shrink();
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 4),
+                          child: Text(
+                            '${day.toString().padLeft(2, '0')}/${currentMonth.toString().padLeft(2, '0')}',
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: Colors.white.withOpacity(0.5),
+                            ),
                           ),
                         );
                       },
@@ -333,6 +375,7 @@ class MonthlySpendingChart extends StatelessWidget {
                   LineChartBarData(
                     spots: spots,
                     isCurved: true,
+                    curveSmoothness: 0.35,
                     color: AppTheme.secondary,
                     barWidth: 2,
                     isStrokeCapRound: true,
