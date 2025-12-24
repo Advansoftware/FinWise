@@ -32,6 +32,7 @@ import {
   CheckCircle,
 } from "lucide-react";
 import { PayrollData } from "@/lib/types";
+import { safeLowerCase } from "@/lib/string-utils";
 import {
   getINSSFromPayroll,
   getIRFromPayroll,
@@ -149,8 +150,8 @@ export function IncomeTaxCalculator({ payrollData }: IncomeTaxCalculatorProps) {
       registeredIR ||
       payrollData.discounts?.find(
         (d) =>
-          d.name.toLowerCase().includes("ir") ||
-          d.name.toLowerCase().includes("imposto")
+          safeLowerCase(d.name).includes("ir") ||
+          safeLowerCase(d.name).includes("imposto")
       )?.amount ||
       0;
 

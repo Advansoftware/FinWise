@@ -20,6 +20,7 @@ import {
 import { TrendingUp, Calculator, Info } from "lucide-react";
 import { PayrollData } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
+import { safeLowerCase } from "@/lib/string-utils";
 import {
   calculateConsignedImpactOnThirteenth,
   getConsignedLoanFromPayroll,
@@ -76,9 +77,9 @@ export function ThirteenthSalaryCalculator({
       const regularDiscounts = payrollData.discounts.filter(
         (d) =>
           d.type === "discount" &&
-          !d.name.toLowerCase().includes("consignado") &&
-          !d.name.toLowerCase().includes("empréstimo") &&
-          !d.name.toLowerCase().includes("emprestimo")
+          !safeLowerCase(d.name).includes("consignado") &&
+          !safeLowerCase(d.name).includes("empréstimo") &&
+          !safeLowerCase(d.name).includes("emprestimo")
       );
 
       const regularDiscountRate =
@@ -191,9 +192,9 @@ export function ThirteenthSalaryCalculator({
                 {payrollData.discounts.filter(
                   (d) =>
                     d.type === "discount" &&
-                    !d.name.toLowerCase().includes("consignado") &&
-                    !d.name.toLowerCase().includes("empréstimo") &&
-                    !d.name.toLowerCase().includes("emprestimo")
+                    !safeLowerCase(d.name).includes("consignado") &&
+                    !safeLowerCase(d.name).includes("empréstimo") &&
+                    !safeLowerCase(d.name).includes("emprestimo")
                 ).length > 0 && (
                   <Stack spacing={0.5}>
                     <Typography
@@ -208,9 +209,9 @@ export function ThirteenthSalaryCalculator({
                         .filter(
                           (d) =>
                             d.type === "discount" &&
-                            !d.name.toLowerCase().includes("consignado") &&
-                            !d.name.toLowerCase().includes("empréstimo") &&
-                            !d.name.toLowerCase().includes("emprestimo")
+                            !safeLowerCase(d.name).includes("consignado") &&
+                            !safeLowerCase(d.name).includes("empréstimo") &&
+                            !safeLowerCase(d.name).includes("emprestimo")
                         )
                         .map((discount, index) => (
                           <Stack
@@ -243,9 +244,9 @@ export function ThirteenthSalaryCalculator({
                 {payrollData.discounts.filter(
                   (d) =>
                     d.type === "discount" &&
-                    (d.name.toLowerCase().includes("consignado") ||
-                      d.name.toLowerCase().includes("empréstimo") ||
-                      d.name.toLowerCase().includes("emprestimo"))
+                    (safeLowerCase(d.name).includes("consignado") ||
+                      safeLowerCase(d.name).includes("empréstimo") ||
+                      safeLowerCase(d.name).includes("emprestimo"))
                 ).length > 0 && (
                   <Stack spacing={0.5}>
                     <Typography
@@ -260,9 +261,9 @@ export function ThirteenthSalaryCalculator({
                         .filter(
                           (d) =>
                             d.type === "discount" &&
-                            (d.name.toLowerCase().includes("consignado") ||
-                              d.name.toLowerCase().includes("empréstimo") ||
-                              d.name.toLowerCase().includes("emprestimo"))
+                            (safeLowerCase(d.name).includes("consignado") ||
+                              safeLowerCase(d.name).includes("empréstimo") ||
+                              safeLowerCase(d.name).includes("emprestimo"))
                         )
                         .map((discount, index) => (
                           <Stack

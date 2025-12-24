@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import { PayrollData } from "@/lib/types";
 import { formatCurrency } from "@/lib/utils";
+import { safeLowerCase } from "@/lib/string-utils";
 import {
   calculateConsignedImpactOnVacation,
   getConsignedLoanFromPayroll,
@@ -96,15 +97,15 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
     if (mode === "payroll") {
       // Extrai valores específicos do holerite
       const inssFromPayroll =
-        payrollData.discounts.find((d) => d.name.toLowerCase().includes("inss"))
+        payrollData.discounts.find((d) => safeLowerCase(d.name).includes("inss"))
           ?.amount || 0;
 
       const irFromPayroll =
         payrollData.discounts.find(
           (d) =>
-            d.name.toLowerCase().includes("imposto") ||
-            d.name.toLowerCase().includes("ir") ||
-            d.name.toLowerCase().includes("renda")
+            safeLowerCase(d.name).includes("imposto") ||
+            safeLowerCase(d.name).includes("ir") ||
+            safeLowerCase(d.name).includes("renda")
         )?.amount || 0;
 
       // Calcula INSS proporcional: se R$ 556,20 é para 30 dias, para 15 dias seria metade
@@ -118,13 +119,13 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
       const otherDiscountsFromPayroll = payrollData.discounts.filter(
         (d) =>
           d.type === "discount" &&
-          !d.name.toLowerCase().includes("inss") &&
-          !d.name.toLowerCase().includes("imposto") &&
-          !d.name.toLowerCase().includes("ir") &&
-          !d.name.toLowerCase().includes("renda") &&
-          !d.name.toLowerCase().includes("consignado") &&
-          !d.name.toLowerCase().includes("empréstimo") &&
-          !d.name.toLowerCase().includes("emprestimo")
+          !safeLowerCase(d.name).includes("inss") &&
+          !safeLowerCase(d.name).includes("imposto") &&
+          !safeLowerCase(d.name).includes("ir") &&
+          !safeLowerCase(d.name).includes("renda") &&
+          !safeLowerCase(d.name).includes("consignado") &&
+          !safeLowerCase(d.name).includes("empréstimo") &&
+          !safeLowerCase(d.name).includes("emprestimo")
       );
 
       const otherDiscountsTotal = otherDiscountsFromPayroll.reduce(
@@ -315,9 +316,9 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
                 {payrollData.discounts.filter(
                   (d) =>
                     d.type === "discount" &&
-                    !d.name.toLowerCase().includes("consignado") &&
-                    !d.name.toLowerCase().includes("empréstimo") &&
-                    !d.name.toLowerCase().includes("emprestimo")
+                    !safeLowerCase(d.name).includes("consignado") &&
+                    !safeLowerCase(d.name).includes("empréstimo") &&
+                    !safeLowerCase(d.name).includes("emprestimo")
                 ).length > 0 && (
                   <Box>
                     <Typography
@@ -332,9 +333,9 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
                         .filter(
                           (d) =>
                             d.type === "discount" &&
-                            !d.name.toLowerCase().includes("consignado") &&
-                            !d.name.toLowerCase().includes("empréstimo") &&
-                            !d.name.toLowerCase().includes("emprestimo")
+                            !safeLowerCase(d.name).includes("consignado") &&
+                            !safeLowerCase(d.name).includes("empréstimo") &&
+                            !safeLowerCase(d.name).includes("emprestimo")
                         )
                         .map((discount, index) => (
                           <Box
@@ -364,9 +365,9 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
                 {payrollData.discounts.filter(
                   (d) =>
                     d.type === "discount" &&
-                    (d.name.toLowerCase().includes("consignado") ||
-                      d.name.toLowerCase().includes("empréstimo") ||
-                      d.name.toLowerCase().includes("emprestimo"))
+                    (safeLowerCase(d.name).includes("consignado") ||
+                      safeLowerCase(d.name).includes("empréstimo") ||
+                      safeLowerCase(d.name).includes("emprestimo"))
                 ).length > 0 && (
                   <Box>
                     <Typography
@@ -381,9 +382,9 @@ export function VacationCalculator({ payrollData }: VacationCalculatorProps) {
                         .filter(
                           (d) =>
                             d.type === "discount" &&
-                            (d.name.toLowerCase().includes("consignado") ||
-                              d.name.toLowerCase().includes("empréstimo") ||
-                              d.name.toLowerCase().includes("emprestimo"))
+                            (safeLowerCase(d.name).includes("consignado") ||
+                              safeLowerCase(d.name).includes("empréstimo") ||
+                              safeLowerCase(d.name).includes("emprestimo"))
                         )
                         .map((discount, index) => (
                           <Box
