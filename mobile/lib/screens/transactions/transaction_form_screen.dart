@@ -35,6 +35,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
   TransactionType _type = TransactionType.expense;
   String _category = 'Outros';
   String? _selectedWalletId;
+  String? _selectedDestinationWalletId;
   DateTime _selectedDate = DateTime.now();
   bool _isLoading = false;
 
@@ -77,6 +78,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       _type = tx.type;
       _category = tx.category ?? 'Outros';
       _selectedWalletId = tx.walletId;
+      _selectedDestinationWalletId = tx.destinationWalletId;
       _selectedDate = tx.date;
     }
   }
@@ -88,8 +90,12 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
     super.dispose();
   }
 
-  List<String> get _categories => 
-      _type == TransactionType.expense ? _expenseCategories : _incomeCategories;
+  List<String> get _categories {
+    if (_type == TransactionType.transfer) {
+      return ['Transferência'];
+    }
+    return _type == TransactionType.expense ? _expenseCategories : _incomeCategories;
+  }
 
   Future<void> _selectDate() async {
     final picked = await showDatePicker(
@@ -125,6 +131,22 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       );
       return;
     }
+    
+    // Validação para transferência
+    if (_type == TransactionType.transfer) {
+      if (_selectedDestinationWalletId == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Selecione a carteira de destino')),
+        );
+        return;
+      }
+      if (_selectedDestinationWalletId == _selectedWalletId) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('As carteiras de origem e destino devem ser diferentes')),
+        );
+        return;
+      }
+    }
 
     setState(() => _isLoading = true);
 
@@ -140,6 +162,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       type: _type,
       category: _category,
       walletId: _selectedWalletId!,
+      destinationWalletId: _type == TransactionType.transfer ? _selectedDestinationWalletId : null,
       date: _selectedDate,
       createdAt: widget.transaction?.createdAt ?? DateTime.now(),
     );
@@ -227,17 +250,27 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             _buildDescriptionField(),
             const SizedBox(height: 24),
 
-            // Categoria
-            _buildSectionTitle('Categoria'),
-            const SizedBox(height: 8),
-            _buildCategorySelector(),
-            const SizedBox(height: 24),
+            // Categoria (esconde quando for transferência)
+            if (_type != TransactionType.transfer) ...[
+              _buildSectionTitle('Categoria'),
+              const SizedBox(height: 8),
+              _buildCategorySelector(),
+              const SizedBox(height: 24),
+            ],
 
-            // Carteira
-            _buildSectionTitle('Carteira'),
+            // Carteira de origem
+            _buildSectionTitle(_type == TransactionType.transfer ? 'Carteira de Origem' : 'Carteira'),
             const SizedBox(height: 8),
             _buildWalletSelector(wallets),
             const SizedBox(height: 24),
+
+            // Carteira de destino (apenas para transferência)
+            if (_type == TransactionType.transfer) ...[
+              _buildSectionTitle('Carteira de Destino'),
+              const SizedBox(height: 8),
+              _buildDestinationWalletSelector(wallets),
+              const SizedBox(height: 24),
+            ],
 
             // Data
             _buildSectionTitle('Data'),
@@ -298,9 +331,32 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               }),
             ),
           ),
+          Expanded(
+            child: _TypeButton(
+              label: 'Transf.',
+              icon: Icons.swap_horiz,
+              color: AppTheme.primary,
+              isSelected: _type == TransactionType.transfer,
+              onTap: () => setState(() {
+                _type = TransactionType.transfer;
+                _category = 'Transferência';
+              }),
+            ),
+          ),
         ],
       ),
     );
+  }
+
+  Color get _amountColor {
+    switch (_type) {
+      case TransactionType.expense:
+        return AppTheme.error;
+      case TransactionType.income:
+        return AppTheme.success;
+      case TransactionType.transfer:
+        return AppTheme.primary;
+    }
   }
 
   Widget _buildAmountField() {
@@ -310,7 +366,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       style: TextStyle(
         fontSize: 32,
         fontWeight: FontWeight.bold,
-        color: _type == TransactionType.expense ? AppTheme.error : AppTheme.success,
+        color: _amountColor,
       ),
       textAlign: TextAlign.center,
       decoration: InputDecoration(
@@ -318,7 +374,7 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
         prefixStyle: TextStyle(
           fontSize: 32,
           fontWeight: FontWeight.bold,
-          color: _type == TransactionType.expense ? AppTheme.error : AppTheme.success,
+          color: _amountColor,
         ),
         hintText: '0,00',
         hintStyle: TextStyle(
@@ -465,6 +521,71 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
             );
           }).toList(),
           onChanged: (value) => setState(() => _selectedWalletId = value),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDestinationWalletSelector(List<WalletModel> wallets) {
+    // Filtra para não mostrar a carteira de origem
+    final availableWallets = wallets.where((w) => w.id != _selectedWalletId).toList();
+    
+    if (availableWallets.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: AppTheme.card,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: AppTheme.border),
+        ),
+        child: Text(
+          'Selecione uma carteira de origem diferente',
+          style: TextStyle(color: Colors.white.withAlpha(128)),
+        ),
+      );
+    }
+
+    // Se a carteira destino selecionada não está mais disponível, limpa
+    if (_selectedDestinationWalletId != null && 
+        !availableWallets.any((w) => w.id == _selectedDestinationWalletId)) {
+      _selectedDestinationWalletId = null;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: AppTheme.card,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: AppTheme.border),
+      ),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: _selectedDestinationWalletId,
+          isExpanded: true,
+          dropdownColor: AppTheme.card,
+          style: const TextStyle(color: Colors.white),
+          icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white54),
+          hint: Text(
+            'Selecione a carteira de destino',
+            style: TextStyle(color: Colors.white.withAlpha(128)),
+          ),
+          items: availableWallets.map((wallet) {
+            return DropdownMenuItem(
+              value: wallet.id,
+              child: Row(
+                children: [
+                  Icon(
+                    _getWalletIcon(wallet.type),
+                    size: 20,
+                    color: AppTheme.success,
+                  ),
+                  const SizedBox(width: 12),
+                  Text(wallet.name),
+                ],
+              ),
+            );
+          }).toList(),
+          onChanged: (value) => setState(() => _selectedDestinationWalletId = value),
         ),
       ),
     );

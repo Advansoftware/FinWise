@@ -11,6 +11,8 @@ class TransactionModel {
   final String? categoryIcon;
   final String? walletId;
   final String? walletName;
+  final String? destinationWalletId; // Para transferências
+  final String? destinationWalletName; // Para transferências
   final DateTime date;
   final bool isPaid;
   final String? notes;
@@ -28,6 +30,8 @@ class TransactionModel {
     this.categoryIcon,
     this.walletId,
     this.walletName,
+    this.destinationWalletId,
+    this.destinationWalletName,
     required this.date,
     this.isPaid = true,
     this.notes,
@@ -47,6 +51,8 @@ class TransactionModel {
       categoryIcon: json['categoryIcon'],
       walletId: json['walletId'],
       walletName: json['walletName'],
+      destinationWalletId: json['destinationWalletId'],
+      destinationWalletName: json['destinationWalletName'],
       date: DateTime.tryParse(json['date'] ?? '') ?? DateTime.now(),
       isPaid: json['isPaid'] ?? true,
       notes: json['notes'],
@@ -80,6 +86,7 @@ class TransactionModel {
       'type': type.name,
       'category': category,
       'walletId': walletId,
+      if (destinationWalletId != null) 'destinationWalletId': destinationWalletId,
       'date': date.toIso8601String(),
       'isPaid': isPaid,
       'notes': notes,
@@ -100,6 +107,8 @@ class TransactionModel {
     String? categoryIcon,
     String? walletId,
     String? walletName,
+    String? destinationWalletId,
+    String? destinationWalletName,
     DateTime? date,
     bool? isPaid,
     String? notes,
@@ -115,6 +124,8 @@ class TransactionModel {
       categoryIcon: categoryIcon ?? this.categoryIcon,
       walletId: walletId ?? this.walletId,
       walletName: walletName ?? this.walletName,
+      destinationWalletId: destinationWalletId ?? this.destinationWalletId,
+      destinationWalletName: destinationWalletName ?? this.destinationWalletName,
       date: date ?? this.date,
       isPaid: isPaid ?? this.isPaid,
       notes: notes ?? this.notes,
