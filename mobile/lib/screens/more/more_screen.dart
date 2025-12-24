@@ -97,16 +97,6 @@ class MoreScreen extends StatelessWidget {
           _MenuCard(
             children: [
               _MenuItem(
-                icon: Icons.person_outline,
-                label: 'Perfil',
-                subtitle: 'Seus dados pessoais',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
-                ),
-              ),
-              const Divider(color: AppTheme.border, height: 1),
-              _MenuItem(
                 icon: Icons.settings_outlined,
                 label: 'Configurações',
                 subtitle: 'Biometria, tema e mais',

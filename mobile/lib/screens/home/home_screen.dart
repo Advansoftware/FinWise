@@ -5,7 +5,6 @@ import '../../core/models/models.dart';
 import '../../core/utils/format_utils.dart';
 import '../../core/providers/providers.dart';
 import '../../core/widgets/ai_chat_fab.dart';
-import '../../core/widgets/avatar_menu.dart';
 import '../../core/widgets/compact_add_button.dart';
 import '../../core/widgets/skeleton_loading.dart';
 import '../budgets/budgets_screen.dart';
@@ -16,6 +15,7 @@ import '../wallets/wallets_screen.dart';
 import '../profile/profile_screen.dart';
 import '../more/more_screen.dart';
 import '../installments/installments_screen.dart';
+import '../receipts/receipt_scanner_screen.dart';
 import 'widgets/stats_widgets.dart';
 import 'widgets/gamification_widgets.dart';
 
@@ -250,10 +250,6 @@ class _DashboardTabState extends State<_DashboardTab> {
                   color: _showFilters ? AppTheme.primary : Colors.white70,
                 ),
               ),
-              const Padding(
-                padding: EdgeInsets.only(right: 8),
-                child: AvatarMenu(size: 36),
-              ),
             ],
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
@@ -319,9 +315,30 @@ class _DashboardTabState extends State<_DashboardTab> {
             padding: const EdgeInsets.all(16),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
-                // Botão de adicionar transação (compacto, alinhado à esquerda)
+                // Botões de ação (Escanear Nota + Adicionar Transação)
                 Row(
                   children: [
+                    // Botão Escanear Nota
+                    Expanded(
+                      child: _ScanReceiptButton(
+                        onPressed: () async {
+                          final result = await ReceiptScannerScreen.show(context);
+                          if (result != null && result.success && context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Nota escaneada: ${result.items.length} itens de ${result.establishment ?? "Estabelecimento"}',
+                                ),
+                                backgroundColor: AppTheme.success,
+                              ),
+                            );
+                            transactionProvider.loadTransactions(refresh: true);
+                          }
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Botão Adicionar Transação
                     AddTransactionButton(
                       isCompact: true,
                       onPressed: () async {
@@ -935,3 +952,46 @@ class _DateFilterButton extends StatelessWidget {
   }
 }
 
+// ============================================================================
+// Scan Receipt Button
+// ============================================================================
+
+class _ScanReceiptButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _ScanReceiptButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          decoration: BoxDecoration(
+            color: AppTheme.warning.withAlpha(25),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: AppTheme.warning.withAlpha(77)),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.qr_code_scanner, size: 20, color: AppTheme.warning),
+              const SizedBox(width: 8),
+              Text(
+                'Escanear Nota',
+                style: TextStyle(
+                  color: AppTheme.warning,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

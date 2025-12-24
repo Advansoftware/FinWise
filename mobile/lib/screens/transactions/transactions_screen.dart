@@ -6,7 +6,6 @@ import '../../core/utils/format_utils.dart';
 import '../../core/providers/providers.dart';
 import '../../core/widgets/compact_add_button.dart';
 import '../../core/widgets/skeleton_loading.dart';
-import '../receipts/receipt_scanner_screen.dart';
 import 'transaction_form_screen.dart';
 
 class TransactionsScreen extends StatelessWidget {
@@ -24,28 +23,6 @@ class TransactionsScreen extends StatelessWidget {
         title: const Text('Transações'),
         backgroundColor: AppTheme.background,
         elevation: 0,
-        actions: [
-          // Botão de escanear nota
-          IconButton(
-            icon: const Icon(Icons.qr_code_scanner),
-            tooltip: 'Escanear Nota',
-            onPressed: () async {
-              final result = await ReceiptScannerScreen.show(context);
-              if (result != null && result.success && context.mounted) {
-                // TODO: Abrir modal de edição com os itens escaneados
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(
-                      'Nota escaneada: ${result.items.length} itens de ${result.establishment ?? "Estabelecimento"}',
-                    ),
-                    backgroundColor: AppTheme.success,
-                  ),
-                );
-                transactionProvider.loadTransactions(refresh: true);
-              }
-            },
-          ),
-        ],
       ),
       body: RefreshIndicator(
         onRefresh: () => transactionProvider.loadTransactions(),
@@ -56,41 +33,14 @@ class TransactionsScreen extends StatelessWidget {
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(16),
-                child: Row(
-                  children: [
-                    // Botão escanear nota
-                    Expanded(
-                      child: _ScanReceiptButton(
-                        onPressed: () async {
-                          final result = await ReceiptScannerScreen.show(context);
-                          if (result != null && result.success && context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Nota escaneada: ${result.items.length} itens',
-                                ),
-                                backgroundColor: AppTheme.success,
-                              ),
-                            );
-                            transactionProvider.loadTransactions(refresh: true);
-                          }
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    // Botão adicionar transação
-                    Expanded(
-                      child: AddTransactionButton(
-                        isCompact: true,
-                        onPressed: () async {
-                          final result = await TransactionFormScreen.show(context);
-                          if (result == true) {
-                            transactionProvider.loadTransactions(refresh: true);
-                          }
-                        },
-                      ),
-                    ),
-                  ],
+                child: AddTransactionButton(
+                  isCompact: true,
+                  onPressed: () async {
+                    final result = await TransactionFormScreen.show(context);
+                    if (result == true) {
+                      transactionProvider.loadTransactions(refresh: true);
+                    }
+                  },
                 ),
               ),
             ),
@@ -365,50 +315,6 @@ class _SwipeableTransactionCard extends StatelessWidget {
       child: _TransactionCard(
         transaction: transaction,
         onTap: onTap,
-      ),
-    );
-  }
-}
-
-// ============================================================================
-// Scan Receipt Button
-// ============================================================================
-
-class _ScanReceiptButton extends StatelessWidget {
-  final VoidCallback onPressed;
-
-  const _ScanReceiptButton({required this.onPressed});
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onPressed,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(
-            color: AppTheme.warning.withAlpha(25),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.warning.withAlpha(77)),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.qr_code_scanner, size: 20, color: AppTheme.warning),
-              const SizedBox(width: 8),
-              Text(
-                'Escanear Nota',
-                style: TextStyle(
-                  color: AppTheme.warning,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                ),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }
