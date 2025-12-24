@@ -64,6 +64,12 @@ class FormatUtils {
   /// Alias para currency - compatibilidade
   static String formatCurrency(double value) => currency(value);
 
+  /// Alias para date - compatibilidade
+  static String formatDate(DateTime dateValue) => date(dateValue);
+
+  /// Alias para monthYear - compatibilidade
+  static String formatMonthYear(DateTime dateValue) => monthYear(dateValue);
+
   /// Formata data relativa (hoje, ontem, etc)
   static String relativeDate(DateTime dateValue) {
     final now = DateTime.now();

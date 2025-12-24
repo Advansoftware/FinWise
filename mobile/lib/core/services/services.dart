@@ -4,3 +4,7 @@ export 'wallet_service.dart';
 export 'budget_service.dart';
 export 'goal_service.dart';
 export 'biometric_service.dart';
+export 'local_storage_service.dart';
+export 'sync_service.dart';
+export 'security_service.dart';
+export 'installment_service.dart';

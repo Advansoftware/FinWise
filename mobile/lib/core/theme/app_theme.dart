@@ -94,10 +94,15 @@ class AppTheme {
   static const Color secondary = AppColors.secondaryDark;
   static const Color background = AppColors.backgroundDark;
   static const Color card = AppColors.cardDark;
+  static const Color cardLight = AppColors.secondaryDark;
   static const Color border = AppColors.borderDark;
   static const Color success = AppColors.success;
   static const Color error = AppColors.error;
   static const Color warning = AppColors.warning;
+  
+  // Cores de texto
+  static const Color textPrimary = AppColors.foregroundDark;
+  static const Color textSecondary = AppColors.mutedForegroundDark;
 
   // Border Radius (do tokens.ts)
   static const double radiusSm = 8.0;   // 0.5rem

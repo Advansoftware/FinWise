@@ -4,9 +4,14 @@ import '../../core/theme/app_theme.dart';
 import '../../core/models/models.dart';
 import '../../core/utils/format_utils.dart';
 import '../../core/providers/providers.dart';
+import '../../core/widgets/ai_chat_fab.dart';
+import '../budgets/budgets_screen.dart';
+import '../goals/goals_screen.dart';
 import '../transactions/transactions_screen.dart';
+import '../transactions/transaction_form_screen.dart';
 import '../wallets/wallets_screen.dart';
 import '../profile/profile_screen.dart';
+import '../installments/installments_screen.dart';
 import 'widgets/stats_widgets.dart';
 import 'widgets/gamification_widgets.dart';
 
@@ -60,8 +65,10 @@ class _HomeScreenState extends State<HomeScreen> {
       case 1:
         return const TransactionsScreen();
       case 2:
-        return const WalletsScreen();
+        return const InstallmentsScreen();
       case 3:
+        return const WalletsScreen();
+      case 4:
         return const ProfileScreen();
       default:
         return const _DashboardTab();
@@ -78,7 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
           setState(() => _selectedIndex = index);
         },
         backgroundColor: AppTheme.card,
-        indicatorColor: AppTheme.primary.withOpacity(0.2),
+        indicatorColor: AppTheme.primary.withAlpha(51),
         labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
         destinations: const [
           NavigationDestination(
@@ -92,6 +99,11 @@ class _HomeScreenState extends State<HomeScreen> {
             label: 'Transações',
           ),
           NavigationDestination(
+            icon: Icon(Icons.credit_card_outlined),
+            selectedIcon: Icon(Icons.credit_card, color: AppTheme.primary),
+            label: 'Parcelas',
+          ),
+          NavigationDestination(
             icon: Icon(Icons.account_balance_wallet_outlined),
             selectedIcon: Icon(Icons.account_balance_wallet, color: AppTheme.primary),
             label: 'Carteiras',
@@ -103,21 +115,75 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Nova transação - Em breve!')),
-          );
-        },
-        backgroundColor: AppTheme.primary,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
+      // FAB de Chat com IA
+      floatingActionButton: const AIChatFabSimple(),
     );
   }
 }
 
-class _DashboardTab extends StatelessWidget {
+class _DashboardTab extends StatefulWidget {
   const _DashboardTab();
+
+  @override
+  State<_DashboardTab> createState() => _DashboardTabState();
+}
+
+class _DashboardTabState extends State<_DashboardTab> {
+  DateTime? _startDate;
+  DateTime? _endDate;
+  String? _selectedCategory;
+  String? _selectedSubcategory;
+  bool _showFilters = false;
+
+  final List<String> _categories = [
+    'Todas',
+    'Supermercado',
+    'Transporte',
+    'Alimentação',
+    'Entretenimento',
+    'Saúde',
+    'Educação',
+    'Moradia',
+    'Contas',
+    'Lazer',
+    'Vestuário',
+    'Salário',
+    'Investimentos',
+    'Outros',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    // Define período padrão: mês atual
+    final now = DateTime.now();
+    _startDate = DateTime(now.year, now.month, 1);
+    _endDate = DateTime(now.year, now.month + 1, 0);
+  }
+
+  List<TransactionModel> _filterTransactions(List<TransactionModel> transactions) {
+    return transactions.where((t) {
+      // Filtro por data
+      if (_startDate != null && t.date.isBefore(_startDate!)) return false;
+      if (_endDate != null && t.date.isAfter(_endDate!)) return false;
+
+      // Filtro por categoria
+      if (_selectedCategory != null && 
+          _selectedCategory != 'Todas' && 
+          t.category != _selectedCategory) {
+        return false;
+      }
+
+      // TODO: Adicionar filtro por subcategoria quando o modelo suportar
+      // if (_selectedSubcategory != null && 
+      //     _selectedSubcategory != 'Todas' &&
+      //     t.subcategory != _selectedSubcategory) {
+      //   return false;
+      // }
+
+      return true;
+    }).toList();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -126,7 +192,8 @@ class _DashboardTab extends StatelessWidget {
     final walletProvider = context.watch<WalletProvider>();
 
     final user = authProvider.user;
-    final transactions = transactionProvider.transactions;
+    final allTransactions = transactionProvider.transactions;
+    final transactions = _filterTransactions(allTransactions);
     final wallets = walletProvider.wallets;
 
     final totalBalance = wallets.fold<double>(0, (sum, w) => sum + w.balance);
@@ -167,10 +234,29 @@ class _DashboardTab extends StatelessWidget {
         physics: const AlwaysScrollableScrollPhysics(),
         slivers: [
           SliverAppBar(
-            expandedHeight: 100,
+            expandedHeight: _showFilters ? 200 : 100,
             floating: true,
             pinned: true,
             backgroundColor: AppTheme.background,
+            actions: [
+              IconButton(
+                onPressed: () => setState(() => _showFilters = !_showFilters),
+                icon: Icon(
+                  _showFilters ? Icons.filter_alt : Icons.filter_alt_outlined,
+                  color: _showFilters ? AppTheme.primary : Colors.white70,
+                ),
+              ),
+              IconButton(
+                onPressed: () async {
+                  await context.read<AuthProvider>().logout();
+                },
+                icon: Icon(
+                  Icons.logout,
+                  color: Colors.white.withAlpha(179),
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: BoxDecoration(
@@ -178,7 +264,7 @@ class _DashboardTab extends StatelessWidget {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                     colors: [
-                      AppTheme.primary.withOpacity(0.1),
+                      AppTheme.primary.withAlpha(25),
                       AppTheme.background,
                     ],
                   ),
@@ -200,30 +286,68 @@ class _DashboardTab extends StatelessWidget {
                     FormatUtils.formatDateFull(DateTime.now()),
                     style: TextStyle(
                       fontSize: 11,
-                      color: Colors.white.withOpacity(0.6),
+                      color: Colors.white.withAlpha(153),
                     ),
                   ),
                 ],
               ),
               titlePadding: const EdgeInsets.only(left: 16, bottom: 12),
             ),
-            actions: [
-              IconButton(
-                onPressed: () async {
-                  await context.read<AuthProvider>().logout();
-                },
-                icon: Icon(
-                  Icons.logout,
-                  color: Colors.white.withOpacity(0.7),
-                ),
-              ),
-              const SizedBox(width: 8),
-            ],
           ),
+          // Filtros (expansíveis)
+          if (_showFilters)
+            SliverToBoxAdapter(
+              child: _FiltersSection(
+                startDate: _startDate,
+                endDate: _endDate,
+                selectedCategory: _selectedCategory,
+                categories: _categories,
+                onStartDateChanged: (d) => setState(() => _startDate = d),
+                onEndDateChanged: (d) => setState(() => _endDate = d),
+                onCategoryChanged: (c) => setState(() {
+                  _selectedCategory = c;
+                  _selectedSubcategory = null;
+                }),
+                onClear: () => setState(() {
+                  final now = DateTime.now();
+                  _startDate = DateTime(now.year, now.month, 1);
+                  _endDate = DateTime(now.year, now.month + 1, 0);
+                  _selectedCategory = null;
+                  _selectedSubcategory = null;
+                }),
+              ),
+            ),
           SliverPadding(
             padding: const EdgeInsets.all(16),
             sliver: SliverList(
               delegate: SliverChildListDelegate([
+                // Botão de adicionar transação
+                _AddTransactionButton(
+                  onPressed: () async {
+                    final result = await Navigator.of(context).push<bool>(
+                      PageRouteBuilder(
+                        pageBuilder: (context, animation, secondaryAnimation) =>
+                            const TransactionFormScreen(),
+                        transitionsBuilder: (context, animation, secondaryAnimation, child) {
+                          return SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(0, 1),
+                              end: Offset.zero,
+                            ).animate(CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeOutCubic,
+                            )),
+                            child: child,
+                          );
+                        },
+                      ),
+                    );
+                    if (result == true) {
+                      transactionProvider.loadTransactions(refresh: true);
+                    }
+                  },
+                ),
+                const SizedBox(height: 16),
                 const GamificationSection(),
                 const SizedBox(height: 16),
                 Row(
@@ -291,6 +415,18 @@ class _DashboardTab extends StatelessWidget {
                 if (transactions.isNotEmpty) 
                   const SizedBox(height: 16),
                 const DailyQuestsSection(),
+                const SizedBox(height: 16),
+                // Cards de acesso rápido para Orçamentos e Metas
+                _QuickAccessSection(
+                  onBudgetsTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const BudgetsScreen()),
+                  ),
+                  onGoalsTap: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const GoalsScreen()),
+                  ),
+                ),
                 const SizedBox(height: 16),
                 _RecentTransactionsSection(
                   transactions: transactions.take(5).toList(),
@@ -376,6 +512,124 @@ class _RecentTransactionsSection extends StatelessWidget {
   }
 }
 
+class _QuickAccessSection extends StatelessWidget {
+  final VoidCallback onBudgetsTap;
+  final VoidCallback onGoalsTap;
+
+  const _QuickAccessSection({
+    required this.onBudgetsTap,
+    required this.onGoalsTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _QuickAccessCard(
+            icon: Icons.pie_chart_outline,
+            label: 'Orçamentos',
+            description: 'Controle de gastos',
+            color: Colors.orange,
+            onTap: onBudgetsTap,
+          ),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: _QuickAccessCard(
+            icon: Icons.flag_outlined,
+            label: 'Metas',
+            description: 'Objetivos financeiros',
+            color: Colors.green,
+            onTap: onGoalsTap,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _QuickAccessCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String description;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _QuickAccessCard({
+    required this.icon,
+    required this.label,
+    required this.description,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppTheme.card,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(16),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: AppTheme.border),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: color.withAlpha(51),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(
+                  icon,
+                  color: color,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                description,
+                style: TextStyle(
+                  color: Colors.white.withAlpha(128),
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  Icon(
+                    Icons.arrow_forward,
+                    size: 18,
+                    color: color,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _TransactionItem extends StatelessWidget {
   final TransactionModel transaction;
 
@@ -414,7 +668,7 @@ class _TransactionItem extends StatelessWidget {
       decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(
-            color: AppTheme.border.withOpacity(0.5),
+            color: AppTheme.border.withAlpha(128),
           ),
         ),
       ),
@@ -425,7 +679,7 @@ class _TransactionItem extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               color: (isExpense ? AppTheme.error : AppTheme.success)
-                  .withOpacity(0.1),
+                  .withAlpha(25),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -453,7 +707,7 @@ class _TransactionItem extends StatelessWidget {
                   '${transaction.category ?? 'Outros'} • ${FormatUtils.formatDateShort(transaction.date)}',
                   style: TextStyle(
                     fontSize: 11,
-                    color: Colors.white.withOpacity(0.5),
+                    color: Colors.white.withAlpha(128),
                   ),
                 ),
               ],
@@ -468,6 +722,260 @@ class _TransactionItem extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Seção de filtros do Dashboard
+class _FiltersSection extends StatelessWidget {
+  final DateTime? startDate;
+  final DateTime? endDate;
+  final String? selectedCategory;
+  final List<String> categories;
+  final void Function(DateTime?) onStartDateChanged;
+  final void Function(DateTime?) onEndDateChanged;
+  final void Function(String?) onCategoryChanged;
+  final VoidCallback onClear;
+
+  const _FiltersSection({
+    required this.startDate,
+    required this.endDate,
+    required this.selectedCategory,
+    required this.categories,
+    required this.onStartDateChanged,
+    required this.onEndDateChanged,
+    required this.onCategoryChanged,
+    required this.onClear,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: AppTheme.card,
+        border: Border(bottom: BorderSide(color: AppTheme.border)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Filtros',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.white,
+                ),
+              ),
+              TextButton.icon(
+                onPressed: onClear,
+                icon: const Icon(Icons.refresh, size: 16),
+                label: const Text('Limpar'),
+                style: TextButton.styleFrom(
+                  foregroundColor: AppTheme.primary,
+                  padding: EdgeInsets.zero,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Filtros de data
+          Row(
+            children: [
+              Expanded(
+                child: _DateFilterButton(
+                  label: 'De',
+                  date: startDate,
+                  onTap: () async {
+                    final date = await showDatePicker(
+                      context: context,
+                      initialDate: startDate ?? DateTime.now(),
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2030),
+                      builder: (context, child) {
+                        return Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: const ColorScheme.dark(
+                              primary: AppTheme.primary,
+                              surface: AppTheme.card,
+                            ),
+                          ),
+                          child: child!,
+                        );
+                      },
+                    );
+                    if (date != null) onStartDateChanged(date);
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _DateFilterButton(
+                  label: 'Até',
+                  date: endDate,
+                  onTap: () async {
+                    final date = await showDatePicker(
+                      context: context,
+                      initialDate: endDate ?? DateTime.now(),
+                      firstDate: DateTime(2020),
+                      lastDate: DateTime(2030),
+                      builder: (context, child) {
+                        return Theme(
+                          data: Theme.of(context).copyWith(
+                            colorScheme: const ColorScheme.dark(
+                              primary: AppTheme.primary,
+                              surface: AppTheme.card,
+                            ),
+                          ),
+                          child: child!,
+                        );
+                      },
+                    );
+                    if (date != null) onEndDateChanged(date);
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Filtro de categoria
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: AppTheme.background,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: AppTheme.border),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: selectedCategory,
+                hint: const Text(
+                  'Todas as categorias',
+                  style: TextStyle(color: Colors.white54, fontSize: 13),
+                ),
+                isExpanded: true,
+                dropdownColor: AppTheme.card,
+                icon: const Icon(Icons.arrow_drop_down, color: Colors.white54),
+                items: categories.map((cat) {
+                  return DropdownMenuItem(
+                    value: cat == 'Todas' ? null : cat,
+                    child: Text(
+                      cat,
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                    ),
+                  );
+                }).toList(),
+                onChanged: onCategoryChanged,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DateFilterButton extends StatelessWidget {
+  final String label;
+  final DateTime? date;
+  final VoidCallback onTap;
+
+  const _DateFilterButton({
+    required this.label,
+    required this.date,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppTheme.background,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: AppTheme.border),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.calendar_today, size: 16, color: Colors.white54),
+            const SizedBox(width: 8),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(fontSize: 10, color: Colors.white54),
+                ),
+                Text(
+                  date != null
+                      ? '${date!.day.toString().padLeft(2, '0')}/${date!.month.toString().padLeft(2, '0')}'
+                      : '--/--',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Botão de adicionar transação no Dashboard
+class _AddTransactionButton extends StatelessWidget {
+  final VoidCallback onPressed;
+
+  const _AddTransactionButton({required this.onPressed});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppTheme.primary,
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onPressed,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withAlpha(51),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.add,
+                  color: Colors.white,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              const Text(
+                'Adicionar Transação',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }

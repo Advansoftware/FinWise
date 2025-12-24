@@ -2,22 +2,54 @@ import 'package:flutter/foundation.dart';
 import '../models/models.dart';
 import '../services/services.dart';
 
-/// Provider de transações
+/// Provider de transações com suporte offline-first
 class TransactionProvider extends ChangeNotifier {
   final TransactionService _service = TransactionService();
+  late final LocalStorageService _localStorage;
+  SyncService? _syncService;
 
   List<TransactionModel> _transactions = [];
   bool _isLoading = false;
   String? _error;
   int _currentPage = 1;
   bool _hasMore = true;
+  bool _isOfflineMode = false;
 
   List<TransactionModel> get transactions => _transactions;
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get hasMore => _hasMore;
+  bool get isOfflineMode => _isOfflineMode;
 
-  /// Carrega transações (primeira página)
+  TransactionProvider() {
+    _localStorage = LocalStorageService();
+    _initOfflineSupport();
+  }
+
+  /// Configura o SyncService para sincronização em background
+  void setSyncService(SyncService syncService) {
+    _syncService = syncService;
+    _syncService!.onTransactionsUpdated = _onRemoteTransactionsUpdated;
+  }
+
+  Future<void> _initOfflineSupport() async {
+    await _localStorage.init();
+    // Carrega transações do cache local primeiro
+    final cached = await _localStorage.getCachedTransactions();
+    if (cached.isNotEmpty) {
+      _transactions = cached;
+      notifyListeners();
+    }
+  }
+
+  void _onRemoteTransactionsUpdated(List<TransactionModel> transactions) {
+    // Atualiza lista quando sincronização traz novos dados
+    _transactions = transactions;
+    _isOfflineMode = false;
+    notifyListeners();
+  }
+
+  /// Carrega transações (primeira página) - offline-first
   Future<void> loadTransactions({
     int? month,
     int? year,
@@ -33,6 +65,7 @@ class TransactionProvider extends ChangeNotifier {
     _error = null;
     notifyListeners();
 
+    // Tenta carregar do servidor
     final result = await _service.getTransactions(
       month: month,
       year: year,
@@ -47,8 +80,23 @@ class TransactionProvider extends ChangeNotifier {
         _transactions = [..._transactions, ...result.data!];
       }
       _hasMore = result.data!.length >= 50;
+      _isOfflineMode = false;
+
+      // Salva no cache local
+      await _localStorage.cacheTransactions(_transactions);
     } else {
+      // Fallback para cache local
       _error = result.error;
+      if (_transactions.isEmpty) {
+        final cached = await _localStorage.getCachedTransactions();
+        if (cached.isNotEmpty) {
+          _transactions = cached;
+          _isOfflineMode = true;
+          _error = null; // Limpa erro pois temos dados do cache
+        }
+      } else {
+        _isOfflineMode = true;
+      }
     }
 
     _isLoading = false;
@@ -67,32 +115,76 @@ class TransactionProvider extends ChangeNotifier {
     );
   }
 
-  /// Adiciona uma transação
+  /// Adiciona uma transação (offline-first)
   Future<bool> addTransaction(TransactionModel transaction) async {
-    _isLoading = true;
+    // Adiciona localmente primeiro (otimistic update)
+    final tempId = 'temp_${DateTime.now().millisecondsSinceEpoch}';
+    final tempTransaction = TransactionModel(
+      id: tempId,
+      description: transaction.description,
+      amount: transaction.amount,
+      type: transaction.type,
+      category: transaction.category,
+      walletId: transaction.walletId,
+      date: transaction.date,
+    );
+    
+    _transactions = [tempTransaction, ..._transactions];
     notifyListeners();
 
+    // Salva no cache local
+    await _localStorage.addTransactionToCache(tempTransaction);
+
+    // Tenta enviar para o servidor
     final result = await _service.createTransaction(transaction);
 
     if (result.isSuccess && result.data != null) {
-      _transactions = [result.data!, ..._transactions];
-      _isLoading = false;
+      // Substitui a transação temporária pela real
+      final index = _transactions.indexWhere((t) => t.id == tempId);
+      if (index >= 0) {
+        _transactions[index] = result.data!;
+      }
+      
+      // Atualiza cache com ID real
+      await _localStorage.removeTransactionFromCache(tempId);
+      await _localStorage.addTransactionToCache(result.data!);
+      
       notifyListeners();
       return true;
     }
 
-    _error = result.error;
-    _isLoading = false;
+    // Falhou - mantém localmente e adiciona operação pendente
+    _isOfflineMode = true;
+    await _localStorage.addPendingOperation(PendingOperation(
+      id: 'op_${DateTime.now().millisecondsSinceEpoch}',
+      type: OperationType.create,
+      entityType: 'transaction',
+      data: tempTransaction.toJson(),
+      createdAt: DateTime.now(),
+    ));
+    
     notifyListeners();
-    return false;
+    return true; // Retorna true pois salvou localmente
   }
 
-  /// Atualiza uma transação
+  /// Atualiza uma transação (offline-first)
   Future<bool> updateTransaction(String id, TransactionModel transaction) async {
+    // Atualiza localmente primeiro
+    final index = _transactions.indexWhere((t) => t.id == id);
+    final oldTransaction = index >= 0 ? _transactions[index] : null;
+    
+    if (index >= 0) {
+      _transactions[index] = transaction;
+      notifyListeners();
+    }
+
+    // Salva no cache local
+    await _localStorage.updateTransactionInCache(transaction);
+
+    // Tenta enviar para o servidor
     final result = await _service.updateTransaction(id, transaction);
 
     if (result.isSuccess && result.data != null) {
-      final index = _transactions.indexWhere((t) => t.id == id);
       if (index >= 0) {
         _transactions[index] = result.data!;
         notifyListeners();
@@ -100,24 +192,59 @@ class TransactionProvider extends ChangeNotifier {
       return true;
     }
 
-    _error = result.error;
-    notifyListeners();
-    return false;
+    // Falhou - adiciona operação pendente
+    _isOfflineMode = true;
+    await _localStorage.addPendingOperation(PendingOperation(
+      id: 'op_${DateTime.now().millisecondsSinceEpoch}',
+      type: OperationType.update,
+      entityType: 'transaction',
+      data: transaction.toJson(),
+      createdAt: DateTime.now(),
+    ));
+    
+    return true; // Retorna true pois salvou localmente
   }
 
-  /// Remove uma transação
+  /// Remove uma transação (offline-first)
   Future<bool> deleteTransaction(String id) async {
-    final result = await _service.deleteTransaction(id);
+    // Remove localmente primeiro
+    final removedTransaction = _transactions.firstWhere(
+      (t) => t.id == id,
+      orElse: () => TransactionModel(
+        id: '', description: '', amount: 0, 
+        type: TransactionType.expense, date: DateTime.now(),
+      ),
+    );
+    
+    _transactions = _transactions.where((t) => t.id != id).toList();
+    notifyListeners();
 
-    if (result.isSuccess) {
-      _transactions = _transactions.where((t) => t.id != id).toList();
-      notifyListeners();
+    // Remove do cache local
+    await _localStorage.removeTransactionFromCache(id);
+
+    // Se for ID temporário, apenas remove
+    if (id.startsWith('temp_')) {
       return true;
     }
 
-    _error = result.error;
-    notifyListeners();
-    return false;
+    // Tenta enviar para o servidor
+    final result = await _service.deleteTransaction(id);
+
+    if (result.isSuccess) {
+      return true;
+    }
+
+    // Falhou - adiciona operação pendente
+    _isOfflineMode = true;
+    await _localStorage.addPendingOperation(PendingOperation(
+      id: 'op_${DateTime.now().millisecondsSinceEpoch}',
+      type: OperationType.delete,
+      entityType: 'transaction',
+      data: {'id': id},
+      createdAt: DateTime.now(),
+    ));
+    
+    return true; // Retorna true pois removeu localmente
   }
 
   /// Calcula totais
