@@ -15,7 +15,6 @@ import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { useTransactions } from "./use-transactions";
 import { apiClient } from "@/lib/api-client";
-import { offlineStorage } from "@/lib/offline-storage";
 import { useDataRefresh } from "./use-data-refresh";
 
 interface BudgetsContextType {
@@ -61,35 +60,13 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
     if (!user) return;
     setIsLoading(true);
     try {
-      let fetchedBudgets: Budget[];
-
-      if (navigator.onLine) {
-        // Online: fetch from server and sync to offline storage
-        fetchedBudgets = await apiClient.get("budgets", user.uid);
-
-        // Save to offline storage
-        for (const budget of fetchedBudgets) {
-          await offlineStorage.saveBudget(budget, true);
-        }
-      } else {
-        // Offline: load from offline storage
-        fetchedBudgets = await offlineStorage.getBudgets(user.uid);
-      }
-
+      const fetchedBudgets: Budget[] = await apiClient.get("budgets", user.uid);
       setBudgets(
         fetchedBudgets.map((b: Budget) => ({ ...b, currentSpending: 0 }))
       );
     } catch (error) {
       console.error("Erro ao carregar orçamentos:", error);
-      // Try to load from offline storage as fallback
-      try {
-        const offlineBudgets = await offlineStorage.getBudgets(user.uid);
-        setBudgets(
-          offlineBudgets.map((b: Budget) => ({ ...b, currentSpending: 0 }))
-        );
-      } catch (offlineError) {
-        console.error("Erro ao carregar orçamentos offline:", offlineError);
-      }
+      setBudgets([]);
     } finally {
       setIsLoading(false);
     }
@@ -122,41 +99,17 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
       userId: user.uid,
       createdAt: new Date().toISOString(),
       currentSpending: 0,
-      id: `temp-${Date.now()}-${Math.random()}`, // Temporary ID for offline
     };
 
     try {
-      if (navigator.onLine) {
-        // Online: create on server
-        const newBudget = await apiClient.create("budgets", budgetWithUser);
-        await offlineStorage.saveBudget(newBudget, true);
-        setBudgets((prev) => [...prev, newBudget]);
-        toast({ title: "Orçamento criado com sucesso!" });
+      const newBudget = await apiClient.create("budgets", budgetWithUser);
+      setBudgets((prev) => [...prev, newBudget]);
+      toast({ title: "Orçamento criado com sucesso!" });
 
-        // Trigger global refresh to update other pages/components
-        setTimeout(() => {
-          triggerRefresh("all");
-        }, 500);
-      } else {
-        // Offline: save locally and mark for sync
-        await offlineStorage.saveBudget(budgetWithUser, false);
-        await offlineStorage.addPendingAction({
-          type: "create",
-          collection: "budgets",
-          data: budgetWithUser,
-        });
-
-        setBudgets((prev) => [...prev, budgetWithUser]);
-        toast({
-          title: "💾 Orçamento salvo offline",
-          description: "Será sincronizado quando você estiver online",
-        });
-
-        // Trigger global refresh to update other pages/components
-        setTimeout(() => {
-          triggerRefresh("all");
-        }, 500);
-      }
+      // Trigger global refresh to update other pages/components
+      setTimeout(() => {
+        triggerRefresh("all");
+      }, 500);
     } catch (error) {
       console.error("Erro ao adicionar orçamento:", error);
       toast({
@@ -171,37 +124,11 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
     if (!user) throw new Error("User not authenticated");
 
     try {
-      if (navigator.onLine) {
-        // Online: update on server
-        await apiClient.update("budgets", budgetId, updates);
-        const updatedBudget = budgets.find((b) => b.id === budgetId);
-        if (updatedBudget) {
-          const finalBudget = { ...updatedBudget, ...updates };
-          await offlineStorage.saveBudget(finalBudget, true);
-        }
-        toast({ title: "Orçamento atualizado!" });
-      } else {
-        // Offline: update locally and mark for sync
-        const updatedBudget = budgets.find((b) => b.id === budgetId);
-        if (updatedBudget) {
-          const finalBudget = { ...updatedBudget, ...updates };
-          await offlineStorage.saveBudget(finalBudget, false);
-          await offlineStorage.addPendingAction({
-            type: "update",
-            collection: "budgets",
-            data: { id: budgetId, ...updates },
-          });
-        }
-
-        toast({
-          title: "💾 Orçamento atualizado offline",
-          description: "Será sincronizado quando você estiver online",
-        });
-      }
-
+      await apiClient.update("budgets", budgetId, updates);
       setBudgets((prev) =>
         prev.map((b) => (b.id === budgetId ? { ...b, ...updates } : b))
       );
+      toast({ title: "Orçamento atualizado!" });
     } catch (error) {
       console.error("Erro ao atualizar orçamento:", error);
       toast({
@@ -216,30 +143,9 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
     if (!user) throw new Error("User not authenticated");
 
     try {
-      if (navigator.onLine) {
-        // Online: delete on server
-        await apiClient.delete("budgets", budgetId);
-        await offlineStorage.deleteItem("budgets", budgetId, user.uid);
-        toast({ title: "Orçamento excluído." });
-      } else {
-        // Offline: mark as deleted locally and queue for sync
-        const budgetToDelete = budgets.find((b) => b.id === budgetId);
-        if (budgetToDelete) {
-          await offlineStorage.deleteItem("budgets", budgetId, user.uid);
-          await offlineStorage.addPendingAction({
-            type: "delete",
-            collection: "budgets",
-            data: budgetToDelete,
-          });
-        }
-
-        toast({
-          title: "💾 Orçamento excluído offline",
-          description: "Será sincronizado quando você estiver online",
-        });
-      }
-
+      await apiClient.delete("budgets", budgetId);
       setBudgets((prev) => prev.filter((b) => b.id !== budgetId));
+      toast({ title: "Orçamento excluído." });
     } catch (error) {
       console.error("Erro ao excluir orçamento:", error);
       toast({

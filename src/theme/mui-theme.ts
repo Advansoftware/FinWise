@@ -124,9 +124,7 @@ const createComponents = (): Components<Omit<Theme, 'components'>> => {
           color: colors.foreground,
           backgroundImage: 'radial-gradient(ellipse 80% 80% at 50% -20%, rgba(120, 119, 198, 0.3), hsla(0, 0%, 100%, 0))',
           backgroundAttachment: 'fixed',
-          // PWA Native App Experience
-          WebkitUserSelect: 'none',
-          userSelect: 'none',
+          // PWA Native App Experience - Allow text selection in web
           WebkitTouchCallout: 'none',
           WebkitTapHighlightColor: 'transparent',
           overscrollBehavior: 'none',
@@ -135,11 +133,14 @@ const createComponents = (): Components<Omit<Theme, 'components'>> => {
           // Mobile touch handling
           touchAction: 'manipulation',
         },
-        // PWA Standalone Mode
+        // PWA Standalone Mode - Only disable selection in native app mode
         '@media (display-mode: standalone)': {
           body: {
             // Dynamic viewport height - fallback para browsers mais antigos
             minHeight: '100dvh',
+            // Disable text selection only in PWA/app mode
+            WebkitUserSelect: 'none',
+            userSelect: 'none',
           },
           // Hide scrollbars in PWA for cleaner look
           '*': {

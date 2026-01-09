@@ -41,7 +41,6 @@ import {
 import { suggestCategory } from "@/services/ai-service-router";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
-import { useWebLLM } from "@/hooks/use-webllm";
 import Link from "next/link";
 
 const pulse = keyframes`
@@ -76,7 +75,6 @@ export default function CategoriesPage() {
   const { toast } = useToast();
   const { user } = useAuth();
   const theme = useTheme();
-  const { isWebLLMActive } = useWebLLM();
 
   if (isLoading) {
     return <CategoriesSkeleton />;

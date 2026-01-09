@@ -189,6 +189,87 @@ class GastometriaApi {
 - **Re-verificação**: O plano é verificado em cada request
 - **HTTPS**: Sempre use HTTPS em produção
 
+---
+
+## Créditos de IA
+
+### GET /api/v1/credits
+
+Retorna o saldo de créditos IA do usuário.
+
+**Headers:**
+```
+Authorization: Bearer {accessToken}
+```
+
+**Response (200):**
+```json
+{
+  "aiCredits": 245,
+  "plan": "Infinity"
+}
+```
+
+### POST /api/v1/credits/consume
+
+Consome créditos de IA. Use este endpoint para debitar créditos quando processar mensagens via WhatsApp/RespondIA.
+
+**Headers:**
+```
+Authorization: Bearer {accessToken}
+Content-Type: application/json
+```
+
+**Request:**
+```json
+{
+  "action": "WhatsApp - Imagem/OCR",
+  "description": "Nota fiscal do mercado"
+}
+```
+
+**Ações disponíveis e custos padrão:**
+| Ação                           | Custo       |
+| ------------------------------ | ----------- |
+| `WhatsApp - Mensagem com IA`   | 2 créditos  |
+| `WhatsApp - Imagem/OCR`        | 10 créditos |
+| `WhatsApp - Áudio Transcrito`  | 5 créditos  |
+| `WhatsApp - Categorização`     | 1 crédito   |
+| `Dica Rápida`                  | 1 crédito   |
+| `Chat com Assistente`          | 2 créditos  |
+| `Sugestão de Categoria`        | 1 crédito   |
+| `Leitura de Nota Fiscal (OCR)` | 10 créditos |
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "creditsConsumed": 10,
+  "action": "WhatsApp - Imagem/OCR",
+  "previousBalance": 255,
+  "newBalance": 245,
+  "message": "10 crédito(s) consumido(s) para: WhatsApp - Imagem/OCR"
+}
+```
+
+**Erros:**
+- `400` - Ação inválida ou faltando
+- `401` - Não autenticado
+- `402` - Créditos insuficientes
+- `500` - Erro interno
+
+**Exemplo de resposta quando créditos insuficientes (402):**
+```json
+{
+  "error": "Insufficient credits",
+  "required": 10,
+  "available": 5,
+  "message": "Você precisa de 10 créditos, mas tem apenas 5."
+}
+```
+
+---
+
 ## Limitações
 
 - Rate limiting: 100 requests/minuto por IP
@@ -197,7 +278,7 @@ class GastometriaApi {
 
 ## Próximos Endpoints (Em Desenvolvimento)
 
-- `GET /api/mobile/transactions` - Listar transações
-- `POST /api/mobile/transactions` - Criar transação
-- `GET /api/mobile/wallets` - Listar carteiras
-- `GET /api/mobile/budgets` - Listar orçamentos
+- `GET /api/v1/transactions` - Listar transações ✅
+- `POST /api/v1/transactions` - Criar transação ✅
+- `GET /api/v1/wallets` - Listar carteiras ✅
+- `GET /api/v1/budgets` - Listar orçamentos ✅

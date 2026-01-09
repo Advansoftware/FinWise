@@ -67,24 +67,6 @@ Você também pode usar os modelos da OpenAI, como o GPT-4o.
     *   **Chave de API - OpenAI**: Cole a chave que você copiou.
 3.  Clique em **Salvar**.
 
-### Opção D: WebLLM (Modelos executados no navegador)
-
-WebLLM permite rodar modelos diretamente no navegador do usuário (sem enviar dados para servidores externos). É uma boa opção para privacidade, porém requer um navegador moderno com suporte a WebGPU e recursos de hardware (VRAM/RAM) para carregar os modelos.
-
-1.  Requisitos básicos:
-    - Navegador com suporte a WebGPU (Chrome/Edge recentes são recomendados).
-    - Espaço em disco/ cache e memória suficiente para baixar o modelo escolhido.
-    - A dependência `@mlc-ai/web-llm` precisa estar instalada no projeto para habilitar a integração.
-
-2.  Uso no Gastometria:
-    - Na tela de Configurações de IA selecione o provedor `WebLLM` e escolha o modelo.
-    - Ao selecionar um modelo, o Gastometria exibirá os requisitos mínimos (VRAM e RAM estimados).
-    - O carregamento do modelo é realizado no cliente e pode demorar dependendo da velocidade de rede e do tamanho do modelo.
-
-3.  Observações de implantação:
-    - Em produção, recomenda-se oferecer modelos menores para clientes com dispositivos limitados.
-    - Caso o pacote `@mlc-ai/web-llm` não esteja instalado (por exemplo, durante desenvolvimento sem acesso à internet), o Gastometria exibirá uma mensagem informando que WebLLM não está disponível e não quebrará a aplicação.
-
 ## Passo 3: Ativar a Credencial
 
 Após salvar, sua nova credencial aparecerá na lista. Se for a única, ela já estará ativa. Se houver outras, clique no botão **"Ativar"** ao lado da que você deseja usar. A credencial ativa terá um ícone de verificação verde ao lado.

@@ -19,7 +19,6 @@ import {
 import { useTransactions } from "./use-transactions";
 import { startOfMonth, subMonths, getYear, getMonth, isToday } from "date-fns";
 import { Report } from "@/core/ports/reports.port";
-import { offlineStorage } from "@/lib/offline-storage";
 
 interface ReportsContextType {
   monthlyReports: Report[];
@@ -93,73 +92,35 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
       let monthlyData: Report[] = [];
       let annualData: Report[] = [];
 
-      if (isOnline) {
-        // Online: fetch from server and cache
-        const [monthlyResponse, annualResponse] = await Promise.all([
-          fetch(`/api/reports?userId=${user.uid}&type=monthly`),
-          fetch(`/api/reports?userId=${user.uid}&type=annual`),
-        ]);
+      const [monthlyResponse, annualResponse] = await Promise.all([
+        fetch(`/api/reports?userId=${user.uid}&type=monthly`),
+        fetch(`/api/reports?userId=${user.uid}&type=annual`),
+      ]);
 
-        if (monthlyResponse.ok) {
-          const contentType = monthlyResponse.headers.get("content-type");
-          if (contentType?.includes("application/json")) {
-            monthlyData = await monthlyResponse.json();
-            monthlyData = Array.isArray(monthlyData) ? monthlyData : [];
-            // Cache monthly reports
-            await offlineStorage.saveSetting(
-              `monthly_reports_${user.uid}`,
-              monthlyData
-            );
-          }
+      if (monthlyResponse.ok) {
+        const contentType = monthlyResponse.headers.get("content-type");
+        if (contentType?.includes("application/json")) {
+          monthlyData = await monthlyResponse.json();
+          monthlyData = Array.isArray(monthlyData) ? monthlyData : [];
         }
+      }
 
-        if (annualResponse.ok) {
-          const contentType = annualResponse.headers.get("content-type");
-          if (contentType?.includes("application/json")) {
-            annualData = await annualResponse.json();
-            annualData = Array.isArray(annualData) ? annualData : [];
-            // Cache annual reports
-            await offlineStorage.saveSetting(
-              `annual_reports_${user.uid}`,
-              annualData
-            );
-          }
+      if (annualResponse.ok) {
+        const contentType = annualResponse.headers.get("content-type");
+        if (contentType?.includes("application/json")) {
+          annualData = await annualResponse.json();
+          annualData = Array.isArray(annualData) ? annualData : [];
         }
-      } else {
-        // Offline: load from cache
-        monthlyData =
-          (await offlineStorage.getSetting<Report[]>(
-            `monthly_reports_${user.uid}`
-          )) || [];
-        annualData =
-          (await offlineStorage.getSetting<Report[]>(
-            `annual_reports_${user.uid}`
-          )) || [];
       }
 
       setMonthlyReports(monthlyData);
       setAnnualReports(annualData);
     } catch (error) {
       console.error("Erro ao carregar relatórios:", error);
-      if (!isOnline) {
-        // Try offline fallback
-        try {
-          const offlineMonthly =
-            (await offlineStorage.getSetting<Report[]>(
-              `monthly_reports_${user.uid}`
-            )) || [];
-          const offlineAnnual =
-            (await offlineStorage.getSetting<Report[]>(
-              `annual_reports_${user.uid}`
-            )) || [];
-          setMonthlyReports(offlineMonthly);
-          setAnnualReports(offlineAnnual);
-        } catch (offlineError) {
-          console.error("Erro ao carregar relatórios offline:", offlineError);
-        }
-      }
+      setMonthlyReports([]);
+      setAnnualReports([]);
     }
-  }, [user?.uid, isOnline]);
+  }, [user?.uid]);
 
   useEffect(() => {
     const refreshHandler = () => {
@@ -278,17 +239,13 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
 
         const newReport = await response.json();
 
-        // Atualizar lista local e cache
+        // Atualizar lista local
         const updatedReports = [
           newReport,
           ...monthlyReports.filter((r) => r.period !== period),
         ].sort((a, b) => b.period.localeCompare(a.period));
 
         setMonthlyReports(updatedReports);
-        await offlineStorage.saveSetting(
-          `monthly_reports_${user.uid}`,
-          updatedReports
-        );
 
         triggerRefresh();
 
@@ -395,17 +352,13 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
 
         const newReport = await response.json();
 
-        // Atualizar lista local e cache
+        // Atualizar lista local
         const updatedReports = [
           newReport,
           ...annualReports.filter((r) => r.period !== period),
         ].sort((a, b) => b.period.localeCompare(a.period));
 
         setAnnualReports(updatedReports);
-        await offlineStorage.saveSetting(
-          `annual_reports_${user.uid}`,
-          updatedReports
-        );
 
         triggerRefresh();
 

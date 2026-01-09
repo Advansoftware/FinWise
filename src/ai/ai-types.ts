@@ -214,7 +214,11 @@ export type AICreditLogAction =
   | 'Sugestão de Orçamento'
   | 'Projeção de Meta'
   | 'Criação de Orçamentos Automáticos'
-  | 'Previsão de Saldo';
+  | 'Previsão de Saldo'
+  | 'WhatsApp - Mensagem com IA'
+  | 'WhatsApp - Imagem/OCR'
+  | 'WhatsApp - Áudio Transcrito'
+  | 'WhatsApp - Categorização';
 
 export const AICreditLogSchema = z.object({
   id: z.string(),

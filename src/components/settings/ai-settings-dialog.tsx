@@ -20,74 +20,19 @@ import {
   FormHelperText,
   CircularProgress,
   IconButton,
-  Alert,
-  Chip,
 } from "@mui/material";
-import { Refresh as RefreshIcon, Warning as WarningIcon, CheckCircle as CheckCircleIcon } from "@mui/icons-material";
+import { Refresh as RefreshIcon } from "@mui/icons-material";
 import { useToast } from "@/hooks/use-toast";
-import { AICredential, WebLLMModel } from "@/lib/types";
+import { AICredential } from "@/lib/types";
 import { useAISettings } from "@/hooks/use-ai-settings";
-import { useWebLLM } from "@/hooks/use-webllm";
-import { WebLLMProgressIndicator } from "./webllm-progress-indicator";
 import { useEffect, useState, useTransition } from "react";
 import { usePlan } from "@/hooks/use-plan";
-
-// Requisitos mínimos para cada modelo WebLLM
-const WEBLLM_MODELS: {
-  id: WebLLMModel;
-  name: string;
-  vram: string;
-  ram: string;
-  description: string;
-  recommended: boolean;
-}[] = [
-  {
-    id: "gemma-2-2b-it-q4f16_1-MLC",
-    name: "Gemma 2 2B",
-    vram: "2GB",
-    ram: "4GB",
-    description: "Modelo leve, ideal para dispositivos com recursos limitados",
-    recommended: false,
-  },
-  {
-    id: "Phi-3.5-mini-instruct-q4f16_1-MLC",
-    name: "Phi-3.5 Mini",
-    vram: "3GB",
-    ram: "6GB",
-    description: "Modelo compacto da Microsoft, bom equilíbrio entre tamanho e qualidade",
-    recommended: false,
-  },
-  {
-    id: "Llama-3.2-3B-Instruct-q4f16_1-MLC",
-    name: "Llama 3.2 3B",
-    vram: "3GB",
-    ram: "6GB",
-    description: "Modelo Meta compacto, bom para tarefas financeiras básicas",
-    recommended: true,
-  },
-  {
-    id: "Qwen2.5-7B-Instruct-q4f16_1-MLC",
-    name: "Qwen 2.5 7B",
-    vram: "6GB",
-    ram: "10GB",
-    description: "Modelo Alibaba, excelente para análises financeiras detalhadas",
-    recommended: false,
-  },
-  {
-    id: "Llama-3.1-8B-Instruct-q4f16_1-MLC",
-    name: "Llama 3.1 8B",
-    vram: "6GB",
-    ram: "12GB",
-    description: "Modelo mais poderoso, melhor qualidade mas requer mais recursos",
-    recommended: false,
-  },
-];
 
 const credentialSchema = z
   .object({
     id: z.string().optional(),
     name: z.string().min(1, "O nome é obrigatório."),
-    provider: z.enum(["ollama", "googleai", "openai", "gastometria", "webllm"]),
+    provider: z.enum(["ollama", "googleai", "openai", "gastometria"]),
     ollamaModel: z.string().optional(),
     ollamaServerAddress: z.string().optional(),
     googleAIApiKey: z.string().optional(),
@@ -95,15 +40,6 @@ const credentialSchema = z
       .enum(["gpt-3.5-turbo", "gpt-4", "gpt-4o", "gpt-4o-mini", "gpt-4-turbo"])
       .optional(),
     openAIApiKey: z.string().optional(),
-    webLLMModel: z
-      .enum([
-        "Llama-3.2-3B-Instruct-q4f16_1-MLC",
-        "Llama-3.1-8B-Instruct-q4f16_1-MLC",
-        "Qwen2.5-7B-Instruct-q4f16_1-MLC",
-        "Phi-3.5-mini-instruct-q4f16_1-MLC",
-        "gemma-2-2b-it-q4f16_1-MLC",
-      ])
-      .optional(),
   })
   .superRefine((data, ctx) => {
     if (data.provider === "ollama") {
@@ -155,13 +91,6 @@ const credentialSchema = z
         });
       }
     }
-    if (data.provider === "webllm" && !data.webLLMModel) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "O modelo WebLLM é obrigatório.",
-        path: ["webLLMModel"],
-      });
-    }
   });
 
 type CredentialFormValues = z.infer<typeof credentialSchema>;
@@ -179,11 +108,8 @@ export function AISettingsDialog({
 }: AISettingsDialogProps) {
   const { toast } = useToast();
   const { handleSaveCredential, isSaving } = useAISettings();
-  const { isSupported: isWebGPUSupported, isReady: isWebLLMReady, isLoading: isWebLLMLoading, currentModelId, progress: webllmProgress, loadModel: loadWebLLMModel } = useWebLLM();
   const [ollamaModels, setOllamaModels] = useState<string[]>([]);
   const [isFetchingOllama, startFetchingOllama] = useTransition();
-  const [showWebLLMRequirements, setShowWebLLMRequirements] = useState(false);
-  const [selectedWebLLMModel, setSelectedWebLLMModel] = useState<WebLLMModel | null>(null);
   const { isPlus, isInfinity } = usePlan();
 
   const {
@@ -192,7 +118,6 @@ export function AISettingsDialog({
     watch,
     reset,
     getValues,
-    setValue,
     formState: { errors },
   } = useForm<CredentialFormValues>({
     resolver: zodResolver(credentialSchema),
@@ -201,12 +126,10 @@ export function AISettingsDialog({
       provider: "ollama",
       ollamaServerAddress: "http://127.0.0.1:11434",
       openAIModel: "gpt-4o-mini",
-      webLLMModel: "Llama-3.2-3B-Instruct-q4f16_1-MLC",
     },
   });
 
   const provider = watch("provider");
-  const webLLMModel = watch("webLLMModel");
 
   useEffect(() => {
     if (isOpen) {
@@ -218,19 +141,10 @@ export function AISettingsDialog({
           provider: "ollama",
           ollamaServerAddress: "http://127.0.0.1:11434",
           openAIModel: "gpt-4o-mini",
-          webLLMModel: "Llama-3.2-3B-Instruct-q4f16_1-MLC",
         });
       }
     }
   }, [initialData, reset, isOpen]);
-
-  // Mostrar requisitos ao selecionar modelo WebLLM
-  useEffect(() => {
-    if (provider === "webllm" && webLLMModel) {
-      setSelectedWebLLMModel(webLLMModel);
-      setShowWebLLMRequirements(true);
-    }
-  }, [webLLMModel, provider]);
 
   const fetchOllamaModels = async () => {
     const address = getValues("ollamaServerAddress");
@@ -284,7 +198,6 @@ export function AISettingsDialog({
       reset();
     } catch (error) {
       // Error is already handled/logged in the hook, but we keep the dialog open
-      // We could add specific error handling here if needed
     }
   };
 
@@ -334,9 +247,6 @@ export function AISettingsDialog({
                   <Select {...field} label="Provedor">
                     {isPlus && (
                       <MenuItem value="ollama">Ollama (Local/Remoto)</MenuItem>
-                    )}
-                    {isPlus && (
-                      <MenuItem value="webllm">WebLLM (Navegador)</MenuItem>
                     )}
                     {isInfinity && (
                       <MenuItem value="googleai">Google AI</MenuItem>
@@ -489,146 +399,6 @@ export function AISettingsDialog({
                     />
                   )}
                 />
-              </>
-            )}
-
-            {/* Campos WebLLM */}
-            {provider === "webllm" && isPlus && (
-              <>
-                <Alert severity="info" icon={<WarningIcon />} sx={{ mb: 1 }}>
-                  <Typography variant="body2" fontWeight="medium" gutterBottom>
-                    WebLLM executa modelos de IA diretamente no seu navegador
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    Não requer servidor externo, mas precisa de um navegador moderno com WebGPU.
-                    O download inicial pode demorar alguns minutos.
-                  </Typography>
-                </Alert>
-
-                {/* Status WebGPU */}
-                {!isWebGPUSupported && (
-                  <Alert severity="error" sx={{ mb: 1 }}>
-                    <Typography variant="body2">
-                      Seu navegador não suporta WebGPU. Use Chrome 113+ ou Edge 113+.
-                    </Typography>
-                  </Alert>
-                )}
-
-                <Controller
-                  name="webLLMModel"
-                  control={control}
-                  render={({ field }) => (
-                    <FormControl error={!!errors.webLLMModel}>
-                      <InputLabel>Modelo WebLLM</InputLabel>
-                      <Select
-                        {...field}
-                        label="Modelo WebLLM"
-                        value={field.value || ""}
-                        disabled={!isWebGPUSupported}
-                      >
-                        {WEBLLM_MODELS.map((model) => (
-                          <MenuItem key={model.id} value={model.id}>
-                            <Stack direction="row" alignItems="center" spacing={1} width="100%">
-                              <Typography>{model.name}</Typography>
-                              {model.recommended && (
-                                <Chip label="Recomendado" size="small" color="primary" />
-                              )}
-                              {currentModelId === model.id && isWebLLMReady && (
-                                <Chip 
-                                  label="Carregado" 
-                                  size="small" 
-                                  color="success" 
-                                  icon={<CheckCircleIcon />}
-                                />
-                              )}
-                            </Stack>
-                          </MenuItem>
-                        ))}
-                      </Select>
-                      {errors.webLLMModel && (
-                        <FormHelperText>{errors.webLLMModel.message}</FormHelperText>
-                      )}
-                    </FormControl>
-                  )}
-                />
-
-                {/* Informações do modelo selecionado */}
-                {webLLMModel && (
-                  <Box
-                    sx={{
-                      p: 2,
-                      borderRadius: 2,
-                      bgcolor: "action.hover",
-                      border: 1,
-                      borderColor: "divider",
-                    }}
-                  >
-                    {(() => {
-                      const model = WEBLLM_MODELS.find((m) => m.id === webLLMModel);
-                      if (!model) return null;
-                      return (
-                        <Stack spacing={1}>
-                          <Typography variant="subtitle2" color="primary">
-                            Requisitos Mínimos
-                          </Typography>
-                          <Stack direction="row" spacing={2}>
-                            <Box>
-                              <Typography variant="caption" color="text.secondary">
-                                VRAM (GPU)
-                              </Typography>
-                              <Typography variant="body2" fontWeight="medium">
-                                {model.vram}
-                              </Typography>
-                            </Box>
-                            <Box>
-                              <Typography variant="caption" color="text.secondary">
-                                RAM
-                              </Typography>
-                              <Typography variant="body2" fontWeight="medium">
-                                {model.ram}
-                              </Typography>
-                            </Box>
-                          </Stack>
-                          <Typography variant="caption" color="text.secondary">
-                            {model.description}
-                          </Typography>
-
-                          {/* Indicador de progresso melhorado */}
-                          {(isWebLLMLoading || (currentModelId === webLLMModel && isWebLLMReady)) && (
-                            <Box sx={{ mt: 2 }}>
-                              <WebLLMProgressIndicator
-                                progress={webllmProgress}
-                                isLoading={isWebLLMLoading}
-                                isReady={currentModelId === webLLMModel && isWebLLMReady}
-                                modelId={currentModelId}
-                                variant="full"
-                              />
-                            </Box>
-                          )}
-
-                          {/* Botão para pré-carregar */}
-                          {isWebGPUSupported && currentModelId !== webLLMModel && !isWebLLMLoading && (
-                            <Button
-                              variant="outlined"
-                              size="small"
-                              onClick={() => loadWebLLMModel(webLLMModel as any)}
-                              sx={{ mt: 1 }}
-                            >
-                              Pré-carregar modelo agora
-                            </Button>
-                          )}
-
-                          <Alert severity="warning" sx={{ mt: 1 }}>
-                            <Typography variant="caption">
-                              ⚠️ Certifique-se de que seu navegador suporta WebGPU. 
-                              Chrome 113+ e Edge 113+ são recomendados.
-                            </Typography>
-                          </Alert>
-                        </Stack>
-                      );
-                    })()}
-                  </Box>
-                )}
               </>
             )}
           </Stack>

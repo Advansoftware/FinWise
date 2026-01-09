@@ -39,7 +39,6 @@ import { default as toJs } from "ofx-js";
 import { format } from "date-fns";
 import { suggestCategory } from "@/services/ai-service-router";
 import { useAuth } from "@/hooks/use-auth";
-import { useWebLLM } from "@/hooks/use-webllm";
 import { usePlan } from "@/hooks/use-plan";
 import { ProUpgradeCard } from "@/components/pro-upgrade-card";
 import { ProUpgradeButton } from "@/components/pro-upgrade-button";
@@ -125,7 +124,6 @@ export default function ImportPage() {
   } = useTransactions();
   const { wallets } = useWallets();
   const { isPro, isPlus, isLoading: isPlanLoading } = usePlan();
-  const { isWebLLMActive } = useWebLLM();
 
   const canUseAICategorization = isPlus;
 

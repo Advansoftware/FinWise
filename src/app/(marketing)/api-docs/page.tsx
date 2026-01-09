@@ -1237,6 +1237,76 @@ const endpoints: Endpoint[] = [
       ],
     },
   },
+  {
+    method: "POST",
+    path: "/api/v1/credits/consume",
+    title: "Consumir Créditos IA",
+    description:
+      "Debitar créditos de IA do usuário. Utilizado por integrações externas como WhatsApp (RespondIA).",
+    requiresAuth: true,
+    category: "credits",
+    requestBody: {
+      fields: [
+        {
+          name: "action",
+          type: "string",
+          required: true,
+          description:
+            'Tipo da ação: "whatsapp_message", "whatsapp_image", "whatsapp_audio", "whatsapp_categorization"',
+        },
+        {
+          name: "description",
+          type: "string",
+          required: false,
+          description: "Descrição opcional da ação",
+        },
+        {
+          name: "metadata",
+          type: "object",
+          required: false,
+          description: "Metadados adicionais (source, messageId, etc)",
+        },
+      ],
+      example: {
+        action: "whatsapp_message",
+        description: "Mensagem processada via WhatsApp",
+        metadata: { source: "respondia", messageId: "abc123" },
+      },
+    },
+    responseExample: {
+      success: true,
+      creditsUsed: 2,
+      remainingCredits: 98,
+      action: "whatsapp_message",
+    },
+    errors: [
+      { code: 400, message: "Ação inválida ou não especificada" },
+      { code: 402, message: "Créditos insuficientes" },
+      { code: 403, message: "Plano não permite API access" },
+    ],
+  },
+  {
+    method: "GET",
+    path: "/api/v1/credits/consume",
+    title: "Custos de Créditos",
+    description: "Obter informações sobre custo de créditos para cada ação.",
+    requiresAuth: true,
+    category: "credits",
+    responseExample: {
+      costs: {
+        whatsapp_message: 2,
+        whatsapp_image: 10,
+        whatsapp_audio: 5,
+        whatsapp_categorization: 1,
+      },
+      descriptions: {
+        whatsapp_message: "Mensagem processada via WhatsApp",
+        whatsapp_image: "Análise de imagem/OCR via WhatsApp",
+        whatsapp_audio: "Transcrição de áudio via WhatsApp",
+        whatsapp_categorization: "Categorização automática via WhatsApp",
+      },
+    },
+  },
 ];
 
 // Category configuration
@@ -1671,11 +1741,13 @@ export default function ApiDocsPage() {
   const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>("auth");
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [baseUrl, setBaseUrl] = useState<string>("");
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   // Load token from cookie on mount and fetch user info
   useEffect(() => {
+    setBaseUrl(window.location.origin);
     const savedToken = getApiDocsToken();
     if (savedToken) {
       setAuthToken(savedToken);
@@ -1936,11 +2008,7 @@ export default function ApiDocsPage() {
               © {new Date().getFullYear()} Gastometria - API v1
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Base URL:{" "}
-              <code>
-                {typeof window !== "undefined" ? window.location.origin : ""}
-                /api/v1
-              </code>
+              Base URL: <code>{baseUrl}/api/v1</code>
             </Typography>
           </Box>
         </Container>

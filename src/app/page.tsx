@@ -41,6 +41,12 @@ import {
   TrendingUp,
   Shield,
   Zap,
+  MessageCircle,
+  Calendar,
+  Mic,
+  Target,
+  ExternalLink,
+  Smartphone,
 } from "lucide-react";
 import Link from "next/link";
 import { Logo } from "@/components/logo";
@@ -1638,6 +1644,460 @@ export default function Page() {
               </Button>
             </Box>
           </Container>
+
+          {/* RespondIA Integration Section */}
+          <Box
+            sx={{
+              py: { xs: 8, sm: 12, md: 16 },
+              bgcolor: "background.paper",
+              position: "relative",
+              overflow: "hidden",
+              "&::before": {
+                content: '""',
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: (theme) =>
+                  `linear-gradient(135deg, ${theme.palette.success.main}08 0%, ${theme.palette.primary.main}08 100%)`,
+                zIndex: 0,
+              },
+            }}
+          >
+            <Container maxWidth="xl" sx={{ position: "relative", zIndex: 1 }}>
+              <Grid container spacing={{ xs: 4, md: 8 }} alignItems="center">
+                {/* Text Content */}
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box component={m.div} {...fadeIn}>
+                    <Chip
+                      label="🤝 Parceria Exclusiva"
+                      color="success"
+                      variant="outlined"
+                      size="medium"
+                      sx={{
+                        mb: 3,
+                        fontWeight: 600,
+                        borderColor: "success.main",
+                      }}
+                    />
+                    <Typography
+                      variant="h2"
+                      sx={{
+                        fontSize: { xs: "1.875rem", sm: "2.25rem", md: "3rem" },
+                        fontWeight: 700,
+                        mb: 2,
+                      }}
+                    >
+                      Sua Secretária IA no{" "}
+                      <Box component="span" sx={{ color: "success.main" }}>
+                        WhatsApp
+                      </Box>
+                    </Typography>
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        color: "text.secondary",
+                        fontSize: { xs: "1rem", sm: "1.125rem" },
+                        mb: 4,
+                        lineHeight: 1.8,
+                      }}
+                    >
+                      O <strong>Gastometria</strong> agora integra com o{" "}
+                      <strong>RespondIA</strong>! Registre seus gastos direto
+                      pelo WhatsApp: envie uma mensagem como{" "}
+                      <em>&quot;Gastei R$ 50 no mercado&quot;</em> ou até uma
+                      foto da nota fiscal. A IA categoriza e registra
+                      automaticamente no seu controle financeiro.
+                    </Typography>
+
+                    <Stack spacing={2} sx={{ mb: 4 }}>
+                      {[
+                        {
+                          icon: MessageCircle,
+                          text: "Registre gastos pelo WhatsApp 24/7",
+                          color: "#25D366",
+                        },
+                        {
+                          icon: Mic,
+                          text: "Transcrição automática de áudios",
+                          color: "#9c27b0",
+                        },
+                        {
+                          icon: Bot,
+                          text: "IA categoriza tudo automaticamente",
+                          color: "#2196f3",
+                        },
+                        {
+                          icon: Calendar,
+                          text: "Integra com Agenda do Google",
+                          color: "#4285F4",
+                        },
+                        {
+                          icon: Target,
+                          text: "Acompanhe metas pelo chat",
+                          color: "#ff9800",
+                        },
+                      ].map((item, index) => (
+                        <Stack
+                          key={index}
+                          direction="row"
+                          spacing={2}
+                          alignItems="center"
+                          component={m.div}
+                          {...fadeIn}
+                          transition={{
+                            ...fadeIn.transition,
+                            delay: 0.1 * index,
+                          }}
+                        >
+                          <Box
+                            sx={{
+                              p: 1,
+                              borderRadius: 2,
+                              bgcolor: `${item.color}20`,
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                            }}
+                          >
+                            <item.icon
+                              size={20}
+                              style={{ color: item.color }}
+                            />
+                          </Box>
+                          <Typography variant="body1" fontWeight={500}>
+                            {item.text}
+                          </Typography>
+                        </Stack>
+                      ))}
+                    </Stack>
+
+                    <Card
+                      sx={{
+                        p: 2,
+                        bgcolor: "info.dark",
+                        border: "1px solid",
+                        borderColor: "info.main",
+                        mb: 4,
+                      }}
+                    >
+                      <Stack direction="row" spacing={2} alignItems="center">
+                        <Sparkles size={24} style={{ color: "#4fc3f7" }} />
+                        <Typography variant="body2">
+                          Clientes <strong>Gastometria Infinity</strong>{" "}
+                          integram o controle financeiro ao WhatsApp usando seus
+                          próprios créditos de IA, sem custo adicional!
+                        </Typography>
+                      </Stack>
+                    </Card>
+
+                    <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
+                      <Button
+                        variant="contained"
+                        size="large"
+                        color="success"
+                        component="a"
+                        href="https://respondia.pro/"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        endIcon={<ExternalLink size={18} />}
+                        sx={{
+                          px: 4,
+                          py: 1.5,
+                          fontSize: "1rem",
+                          fontWeight: 700,
+                          bgcolor: "#25D366",
+                          "&:hover": {
+                            bgcolor: "#128C7E",
+                            transform: "translateY(-2px)",
+                            boxShadow: "0 8px 20px rgba(37, 211, 102, 0.3)",
+                          },
+                        }}
+                      >
+                        Conhecer RespondIA
+                      </Button>
+                      <Button
+                        variant="outlined"
+                        size="large"
+                        component={Link}
+                        href="/billing"
+                        sx={{
+                          px: 4,
+                          py: 1.5,
+                          fontSize: "1rem",
+                        }}
+                      >
+                        Ver Plano Infinity
+                      </Button>
+                    </Stack>
+                  </Box>
+                </Grid>
+
+                {/* Visual/Demo Side */}
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Box
+                    component={m.div}
+                    initial={{ opacity: 0, x: 50 }}
+                    whileInView={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.8 }}
+                    viewport={{ once: true }}
+                    sx={{ position: "relative" }}
+                  >
+                    {/* Phone Mockup with Chat - RespondIA Style */}
+                    <Paper
+                      elevation={16}
+                      sx={{
+                        borderRadius: "16px",
+                        overflow: "hidden",
+                        maxWidth: 400,
+                        mx: "auto",
+                        bgcolor: "#1A1D21",
+                        border: "1px solid rgba(255,255,255,0.08)",
+                      }}
+                    >
+                      {/* Header - RespondIA Style */}
+                      <Box
+                        sx={{
+                          bgcolor: "#1A1D21",
+                          py: 1.25,
+                          px: 2,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1.5,
+                          borderBottom: "1px solid rgba(255,255,255,0.06)",
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            width: 42,
+                            height: 42,
+                            borderRadius: "12px",
+                            bgcolor: "#00A67E",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                          }}
+                        >
+                          <Sparkles size={22} color="white" />
+                        </Box>
+                        <Box sx={{ flex: 1 }}>
+                          <Typography
+                            sx={{ color: "#FFFFFF", fontWeight: 600, fontSize: "0.95rem" }}
+                          >
+                            Gastometria
+                          </Typography>
+                          <Stack direction="row" alignItems="center" spacing={0.5}>
+                            <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#00A67E" }} />
+                            <Typography sx={{ color: "#00A67E", fontSize: "0.75rem" }}>
+                              Respondendo agora...
+                            </Typography>
+                          </Stack>
+                        </Box>
+                      </Box>
+
+                      {/* Chat Messages - RespondIA Style */}
+                      <Box
+                        sx={{
+                          p: 2,
+                          minHeight: 340,
+                          bgcolor: "#111316",
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 1.5,
+                        }}
+                      >
+                        {/* User message */}
+                        <Box
+                          component={m.div}
+                          initial={{ opacity: 0, y: 10 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.3 }}
+                          sx={{
+                            alignSelf: "flex-end",
+                            bgcolor: "#00A67E",
+                            py: 1.25,
+                            px: 1.5,
+                            borderRadius: "12px",
+                            borderBottomRightRadius: "4px",
+                            maxWidth: "75%",
+                          }}
+                        >
+                          <Typography sx={{ color: "#FFFFFF", fontSize: "0.9rem", lineHeight: 1.45 }}>
+                            Gastei 89,90 no mercado hoje
+                          </Typography>
+                          <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={0.5} sx={{ mt: 0.5 }}>
+                            <Typography sx={{ color: "rgba(255,255,255,0.7)", fontSize: "0.7rem" }}>
+                              10:42
+                            </Typography>
+                            <Typography sx={{ color: "rgba(255,255,255,0.7)", fontSize: "0.7rem" }}>✓</Typography>
+                          </Stack>
+                        </Box>
+
+                        {/* Bot response 1 */}
+                        <Box
+                          component={m.div}
+                          initial={{ opacity: 0, y: 10 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.6 }}
+                          sx={{
+                            alignSelf: "flex-start",
+                            bgcolor: "#1E2124",
+                            py: 1.25,
+                            px: 1.5,
+                            borderRadius: "12px",
+                            borderBottomLeftRadius: "4px",
+                            maxWidth: "85%",
+                          }}
+                        >
+                          <Typography sx={{ color: "#E4E4E7", fontSize: "0.9rem", lineHeight: 1.45 }}>
+                            Olá! 👋 Deixa eu registrar isso...
+                          </Typography>
+                          <Typography sx={{ color: "rgba(255,255,255,0.4)", fontSize: "0.7rem", textAlign: "right", mt: 0.5 }}>
+                            10:42
+                          </Typography>
+                        </Box>
+
+                        {/* Bot response 2 with card */}
+                        <Box
+                          component={m.div}
+                          initial={{ opacity: 0, y: 10 }}
+                          whileInView={{ opacity: 1, y: 0 }}
+                          transition={{ delay: 0.9 }}
+                          sx={{
+                            alignSelf: "flex-start",
+                            bgcolor: "#1E2124",
+                            py: 1.25,
+                            px: 1.5,
+                            borderRadius: "12px",
+                            borderBottomLeftRadius: "4px",
+                            maxWidth: "85%",
+                          }}
+                        >
+                          <Typography sx={{ color: "#E4E4E7", fontSize: "0.9rem", lineHeight: 1.45, mb: 1 }}>
+                            ✅ <strong>Registrado!</strong>
+                          </Typography>
+                          <Typography sx={{ color: "#E4E4E7", fontSize: "0.9rem", mb: 1 }}>
+                            Agendei para você:
+                          </Typography>
+
+                          {/* Embedded card - RespondIA style */}
+                          <Box
+                            sx={{
+                              bgcolor: "rgba(0, 166, 126, 0.15)",
+                              borderRadius: "8px",
+                              p: 1.25,
+                              mb: 1,
+                            }}
+                          >
+                            <Stack direction="row" alignItems="center" spacing={1}>
+                              <Typography sx={{ fontSize: "1rem" }}>💰</Typography>
+                              <Box>
+                                <Typography sx={{ color: "#00A67E", fontWeight: 600, fontSize: "0.9rem" }}>
+                                  R$ 89,90
+                                </Typography>
+                                <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>
+                                  Supermercado • Hoje
+                                </Typography>
+                              </Box>
+                            </Stack>
+                          </Box>
+
+                          <Typography sx={{ color: "rgba(255,255,255,0.6)", fontSize: "0.85rem", lineHeight: 1.45 }}>
+                            Posso ajudar em mais alguma coisa?
+                          </Typography>
+
+                          <Typography sx={{ color: "rgba(255,255,255,0.4)", fontSize: "0.7rem", textAlign: "right", mt: 0.75 }}>
+                            10:43
+                          </Typography>
+                        </Box>
+                      </Box>
+
+                      {/* Input bar - RespondIA Style */}
+                      <Box
+                        sx={{
+                          bgcolor: "#1A1D21",
+                          p: 1.25,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1.5,
+                          borderTop: "1px solid rgba(255,255,255,0.06)",
+                        }}
+                      >
+                        <Box sx={{ color: "#6B7280", display: "flex", alignItems: "center", gap: 1 }}>
+                          <Box sx={{ fontSize: "1.25rem", cursor: "pointer" }}>😊</Box>
+                          <Box sx={{ fontSize: "1.25rem", cursor: "pointer" }}>📎</Box>
+                        </Box>
+                        <Box
+                          sx={{
+                            flex: 1,
+                            bgcolor: "#2A2D32",
+                            borderRadius: "24px",
+                            py: 1,
+                            px: 2,
+                          }}
+                        >
+                          <Typography sx={{ color: "#6B7280", fontSize: "0.9rem" }}>
+                            Mensagem
+                          </Typography>
+                        </Box>
+                        <Box sx={{ color: "#6B7280", fontSize: "1.25rem", cursor: "pointer" }}>🎤</Box>
+                      </Box>
+                    </Paper>
+
+                    {/* Floating badge */}
+                    <Card
+                      component={m.div}
+                      animate={{ y: [0, -8, 0] }}
+                      transition={{
+                        duration: 3,
+                        repeat: Infinity,
+                        ease: "easeInOut",
+                      }}
+                      sx={{
+                        position: "absolute",
+                        bottom: -20,
+                        right: { xs: 0, md: -40 },
+                        p: 2,
+                        borderRadius: 3,
+                        boxShadow: 8,
+                        bgcolor: "background.paper",
+                        border: "1px solid",
+                        borderColor: "divider",
+                      }}
+                    >
+                      <Stack direction="row" spacing={1.5} alignItems="center">
+                        <Box
+                          sx={{
+                            p: 1,
+                            bgcolor: "success.dark",
+                            borderRadius: "50%",
+                          }}
+                        >
+                          <CheckCircle size={20} color="white" />
+                        </Box>
+                        <Box>
+                          <Typography
+                            variant="caption"
+                            sx={{ color: "text.secondary", display: "block" }}
+                          >
+                            Integração ativa
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            fontWeight={700}
+                            color="success.main"
+                          >
+                            24/7 no WhatsApp
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    </Card>
+                  </Box>
+                </Grid>
+              </Grid>
+            </Container>
+          </Box>
 
           {/* Blog Preview Section */}
           <Box

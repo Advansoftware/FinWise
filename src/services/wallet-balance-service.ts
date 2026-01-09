@@ -1,13 +1,11 @@
 // src/services/wallet-balance-service.ts
 
-import { Transaction, Wallet } from '@/lib/types';
+import { Transaction } from '@/lib/types';
 import { apiClient } from '@/lib/api-client';
-import { offlineStorage } from '@/lib/offline-storage';
 
 export class WalletBalanceService {
   /**
    * Atualiza o saldo da carteira baseado em uma transação
-   * Sincroniza tanto com MongoDB quanto IndexedDB
    */
   static async updateBalanceForTransaction(transaction: Transaction, userId?: string): Promise<void> {
     if (!transaction.walletId) return;
@@ -105,46 +103,11 @@ export class WalletBalanceService {
           balance: newBalance
         });
 
-        // Update IndexedDB for offline functionality
-        await this.updateWalletInIndexedDB(currentWallet, newBalance);
-
         console.log(`Saldo da carteira ${walletId} atualizado: R$ ${newBalance.toFixed(2)} (${balanceChange > 0 ? '+' : ''}${balanceChange.toFixed(2)})`);
       }
     } catch (error) {
       console.error(`Error updating wallet ${walletId} balance:`, error);
-
-      // If online update fails, store as pending action for later sync (only on client-side)
-      if (typeof window !== 'undefined' && !navigator.onLine) {
-        await offlineStorage.addPendingAction({
-          type: 'update',
-          collection: 'wallets',
-          data: {
-            id: walletId,
-            updates: { balance: balanceChange },
-            userId
-          }
-        });
-      }
-
       throw error;
-    }
-  }
-
-  /**
-   * Atualiza carteira no IndexedDB para funcionamento offline
-   */
-  private static async updateWalletInIndexedDB(wallet: Wallet, newBalance: number): Promise<void> {
-    // Only run on client-side (browser)
-    if (typeof window === 'undefined') {
-      return; // Skip IndexedDB operations on server
-    }
-
-    try {
-      // Save wallet state in IndexedDB
-      await offlineStorage.saveSetting(`wallet_${wallet.id}_balance`, newBalance);
-      await offlineStorage.saveSetting(`wallet_${wallet.id}_updated`, Date.now());
-    } catch (error) {
-      console.error('Error updating wallet in IndexedDB:', error);
     }
   }
 
@@ -188,43 +151,10 @@ export class WalletBalanceService {
         balance: calculatedBalance
       });
 
-      // Update IndexedDB
-      const wallet = await apiClient.get('wallets', userId, walletId);
-      if (wallet) {
-        await this.updateWalletInIndexedDB(wallet, calculatedBalance);
-      }
-
       console.log(`Saldo da carteira ${walletId} recalculado: R$ ${calculatedBalance.toFixed(2)}`);
     } catch (error) {
       console.error('Error recalculating wallet balance:', error);
       throw error;
-    }
-  }
-
-  /**
-   * Sincroniza carteiras offline com o servidor
-   */
-  static async syncOfflineWallets(userId: string): Promise<void> {
-    try {
-      const pendingActions = await offlineStorage.getPendingActions();
-      const walletActions = pendingActions.filter(action =>
-        action.collection === 'wallets'
-      );
-
-      for (const action of walletActions) {
-        try {
-          if (action.operation === 'update' && action.data) {
-            await apiClient.update('wallets', action.itemId, action.data);
-          }
-
-          // Remove from pending after successful sync
-          await offlineStorage.removePendingAction(action.id);
-        } catch (error) {
-          console.error('Failed to sync wallet action:', action, error);
-        }
-      }
-    } catch (error) {
-      console.error('Error syncing offline wallets:', error);
     }
   }
 }

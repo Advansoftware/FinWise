@@ -23,7 +23,6 @@ import { PlanFeaturesProvider } from "@/hooks/use-plan-features";
 import { UpgradeModal } from "@/components/subscription/upgrade-modal";
 
 import { WalletOnboarding } from "@/components/onboarding/wallet-onboarding";
-import { OfflineStorageInitializer } from "@/components/offline-storage-initializer";
 
 function AppLayoutContent({ children }: { children: React.ReactNode }) {
   const { completedGoal, clearCompletedGoal } = useGoals();
@@ -31,7 +30,6 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
   return (
     <>
       {/* Componentes globais */}
-      <OfflineStorageInitializer />
       <GamificationGlobalUI />
       {completedGoal && (
         <GoalCompletionCelebration
@@ -39,7 +37,7 @@ function AppLayoutContent({ children }: { children: React.ReactNode }) {
           onComplete={clearCompletedGoal}
         />
       )}
-      
+
       {/* Onboarding para novos usuários sem carteira */}
       <WalletOnboarding />
 
@@ -86,4 +84,3 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     </AuthGuard>
   );
 }
-

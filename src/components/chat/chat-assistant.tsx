@@ -48,9 +48,6 @@ import { usePlan } from "@/hooks/use-plan";
 import { ProUpgradeCard } from "../pro-upgrade-card";
 import { useReasoningChat } from "@/hooks/use-reasoning-chat";
 import { useAISettings } from "@/hooks/use-ai-settings";
-import { useWebLLM } from "@/hooks/use-webllm";
-import { chatWithWebLLM } from "@/services/webllm-ai-actions";
-import { WebLLMProgressIndicator } from "@/components/settings/webllm-progress-indicator";
 
 // Componente de input isolado para evitar re-renders
 interface ChatInputFieldProps {
@@ -169,7 +166,6 @@ export function ChatAssistant() {
     streamReasoningResponse,
     clearReasoning,
   } = useReasoningChat();
-  const { isWebLLMActive, isReady: isWebLLMReady, isLoading: isWebLLMLoading, progress: webllmProgress, currentModelId } = useWebLLM();
 
   // Determinar se deve usar raciocínio
   // Só usa reasoning para modelos Ollama específicos que suportam
@@ -223,17 +219,7 @@ export function ChatAssistant() {
 
           let response: string;
 
-          // Verifica se WebLLM está ativo e pronto
-          if (isWebLLMActive && isWebLLMReady) {
-            // Usa WebLLM client-side (não consome créditos, roda no navegador)
-            response = await chatWithWebLLM(
-              messages,
-              messageToSend,
-              currentMonthTransactions,
-              currentYearMonthlyReports,
-              pastAnnualReports
-            );
-          } else if (shouldUseReasoning) {
+          if (shouldUseReasoning) {
             try {
               response = await streamReasoningResponse(
                 messages,
@@ -245,7 +231,10 @@ export function ChatAssistant() {
               );
             } catch (reasoningError: any) {
               // Fallback para chat normal se reasoning falhar
-              console.warn("Reasoning chat failed, falling back to normal chat:", reasoningError);
+              console.warn(
+                "Reasoning chat failed, falling back to normal chat:",
+                reasoningError
+              );
               response = await getChatbotResponse(
                 {
                   history: messages,
@@ -309,8 +298,6 @@ export function ChatAssistant() {
       monthlyReports,
       annualReports,
       shouldUseReasoning,
-      isWebLLMActive,
-      isWebLLMReady,
       user,
       toast,
       clearReasoning,
@@ -369,19 +356,6 @@ export function ChatAssistant() {
     if (messages.length === 0) {
       return (
         <Box sx={{ textAlign: "center", p: 3 }}>
-          {/* WebLLM Progress Indicator */}
-          {isWebLLMActive && (isWebLLMLoading || isWebLLMReady) && (
-            <Box sx={{ mb: 3 }}>
-              <WebLLMProgressIndicator
-                progress={webllmProgress}
-                isLoading={isWebLLMLoading}
-                isReady={isWebLLMReady}
-                modelId={currentModelId}
-                variant="compact"
-              />
-            </Box>
-          )}
-
           <Typography color="text.secondary" sx={{ mb: 3 }}>
             Faça uma pergunta sobre suas finanças ou escolha uma sugestão.
           </Typography>

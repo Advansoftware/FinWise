@@ -14,7 +14,6 @@ import { Wallet } from "@/lib/types";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
 import { apiClient } from "@/lib/api-client";
-import { offlineStorage } from "@/lib/offline-storage";
 import { useDataRefresh } from "./use-data-refresh";
 
 interface WalletsContextType {
@@ -66,31 +65,14 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
     const loadWallets = async () => {
       setIsLoading(true);
       try {
-        let fetchedWallets: Wallet[];
-
-        if (navigator.onLine) {
-          // Online: fetch from server and sync to offline storage
-          fetchedWallets = await apiClient.get("wallets", user.uid);
-
-          // Save to offline storage
-          for (const wallet of fetchedWallets) {
-            await offlineStorage.saveWallet(wallet, true);
-          }
-        } else {
-          // Offline: load from offline storage
-          fetchedWallets = await offlineStorage.getWallets(user.uid);
-        }
-
+        const fetchedWallets: Wallet[] = await apiClient.get(
+          "wallets",
+          user.uid
+        );
         setWallets(fetchedWallets);
       } catch (error) {
         console.error("Erro ao carregar carteiras:", error);
-        // Try to load from offline storage as fallback
-        try {
-          const offlineWallets = await offlineStorage.getWallets(user.uid);
-          setWallets(offlineWallets);
-        } catch (offlineError) {
-          console.error("Erro ao carregar carteiras offline:", offlineError);
-        }
+        setWallets([]);
       } finally {
         setIsLoading(false);
       }
@@ -116,41 +98,17 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
       balance: 0, // Default balance
       userId: user.uid,
       createdAt: new Date().toISOString(),
-      id: `temp-${Date.now()}-${Math.random()}`, // Temporary ID for offline
     };
 
     try {
-      if (navigator.onLine) {
-        // Online: create on server
-        const newWallet = await apiClient.create("wallets", walletWithUser);
-        await offlineStorage.saveWallet(newWallet, true);
-        setWallets((prev) => [...prev, newWallet]);
-        toast({ title: "Carteira adicionada com sucesso!" });
+      const newWallet = await apiClient.create("wallets", walletWithUser);
+      setWallets((prev) => [...prev, newWallet]);
+      toast({ title: "Carteira adicionada com sucesso!" });
 
-        // Trigger global refresh to update other pages/components
-        setTimeout(() => {
-          triggerRefresh("all");
-        }, 500);
-      } else {
-        // Offline: save locally and mark for sync
-        await offlineStorage.saveWallet(walletWithUser, false);
-        await offlineStorage.addPendingAction({
-          type: "create",
-          collection: "wallets",
-          data: walletWithUser,
-        });
-
-        setWallets((prev) => [...prev, walletWithUser]);
-        toast({
-          title: "💾 Carteira salva offline",
-          description: "Será sincronizada quando você estiver online",
-        });
-
-        // Trigger global refresh to update other pages/components
-        setTimeout(() => {
-          triggerRefresh("all");
-        }, 500);
-      }
+      // Trigger global refresh to update other pages/components
+      setTimeout(() => {
+        triggerRefresh("all");
+      }, 500);
     } catch (error) {
       console.error("Erro ao adicionar carteira:", error);
       toast({
@@ -165,47 +123,16 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
     if (!user) throw new Error("User not authenticated");
 
     try {
-      if (navigator.onLine) {
-        // Online: update on server
-        await apiClient.update("wallets", walletId, updates);
-        const updatedWallet = wallets.find((w) => w.id === walletId);
-        if (updatedWallet) {
-          const finalWallet = { ...updatedWallet, ...updates };
-          await offlineStorage.saveWallet(finalWallet, true);
-        }
-        toast({ title: "Carteira atualizada!" });
-
-        // Trigger global refresh to update other pages/components
-        setTimeout(() => {
-          triggerRefresh("all");
-        }, 500);
-      } else {
-        // Offline: update locally and mark for sync
-        const updatedWallet = wallets.find((w) => w.id === walletId);
-        if (updatedWallet) {
-          const finalWallet = { ...updatedWallet, ...updates };
-          await offlineStorage.saveWallet(finalWallet, false);
-          await offlineStorage.addPendingAction({
-            type: "update",
-            collection: "wallets",
-            data: { id: walletId, ...updates },
-          });
-        }
-
-        toast({
-          title: "💾 Carteira atualizada offline",
-          description: "Será sincronizada quando você estiver online",
-        });
-
-        // Trigger global refresh to update other pages/components
-        setTimeout(() => {
-          triggerRefresh("all");
-        }, 500);
-      }
-
+      await apiClient.update("wallets", walletId, updates);
       setWallets((prev) =>
         prev.map((w) => (w.id === walletId ? { ...w, ...updates } : w))
       );
+      toast({ title: "Carteira atualizada!" });
+
+      // Trigger global refresh to update other pages/components
+      setTimeout(() => {
+        triggerRefresh("all");
+      }, 500);
     } catch (error) {
       console.error("Erro ao atualizar carteira:", error);
       toast({
@@ -220,40 +147,14 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
     if (!user) throw new Error("User not authenticated");
 
     try {
-      if (navigator.onLine) {
-        // Online: delete on server
-        await apiClient.delete("wallets", walletId);
-        await offlineStorage.deleteItem("wallets", walletId, user.uid);
-        toast({ title: "Carteira excluída." });
-
-        // Trigger global refresh to update other pages/components
-        setTimeout(() => {
-          triggerRefresh("all");
-        }, 500);
-      } else {
-        // Offline: mark as deleted locally and queue for sync
-        const walletToDelete = wallets.find((w) => w.id === walletId);
-        if (walletToDelete) {
-          await offlineStorage.deleteItem("wallets", walletId, user.uid);
-          await offlineStorage.addPendingAction({
-            type: "delete",
-            collection: "wallets",
-            data: walletToDelete,
-          });
-        }
-
-        toast({
-          title: "💾 Carteira excluída offline",
-          description: "Será sincronizada quando você estiver online",
-        });
-
-        // Trigger global refresh to update other pages/components
-        setTimeout(() => {
-          triggerRefresh("all");
-        }, 500);
-      }
-
+      await apiClient.delete("wallets", walletId);
       setWallets((prev) => prev.filter((w) => w.id !== walletId));
+      toast({ title: "Carteira excluída." });
+
+      // Trigger global refresh to update other pages/components
+      setTimeout(() => {
+        triggerRefresh("all");
+      }, 500);
     } catch (error) {
       console.error("Erro ao excluir carteira:", error);
       toast({
@@ -268,23 +169,7 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
     if (!user) return;
 
     try {
-      let fetchedWallets: Wallet[];
-
-      if (navigator.onLine) {
-        // Force fresh fetch from server, bypassing any caches
-        fetchedWallets = await apiClient.get("wallets", user.uid);
-
-        // Clear offline storage first to ensure fresh data
-        await offlineStorage.clearCollection("wallets");
-
-        // Save fresh data to offline storage
-        for (const wallet of fetchedWallets) {
-          await offlineStorage.saveWallet(wallet, true);
-        }
-      } else {
-        fetchedWallets = await offlineStorage.getWallets(user.uid);
-      }
-
+      const fetchedWallets: Wallet[] = await apiClient.get("wallets", user.uid);
       setWallets(fetchedWallets);
       console.log(
         "🔄 Carteiras atualizadas:",
@@ -292,13 +177,6 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
       );
     } catch (error) {
       console.error("Erro ao recarregar carteiras:", error);
-      // Try offline fallback
-      try {
-        const offlineWallets = await offlineStorage.getWallets(user.uid);
-        setWallets(offlineWallets);
-      } catch (offlineError) {
-        console.error("Erro ao recarregar carteiras offline:", offlineError);
-      }
     }
   };
 

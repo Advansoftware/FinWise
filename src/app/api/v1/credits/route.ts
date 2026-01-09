@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     };
 
     if (includeLogs) {
-      const logs = await db.collection("ai_credit_logs")
+      const logs = await db.collection("aiCreditLogs")
         .find({ userId: user.id })
         .sort({ timestamp: -1 })
         .limit(50)
@@ -40,9 +40,8 @@ export async function GET(request: NextRequest) {
       result.logs = logs.map(log => ({
         id: log._id.toString(),
         action: log.action,
-        creditsUsed: log.creditsUsed,
+        cost: log.cost,
         timestamp: log.timestamp,
-        isFreeAction: log.isFreeAction || false
       }));
     }
 
