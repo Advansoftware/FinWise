@@ -8,6 +8,10 @@ import '../../core/widgets/plan_badge.dart';
 import '../profile/profile_screen.dart';
 import 'settings_screen.dart';
 import '../categories/categories_screen.dart';
+import '../reports/reports_screen.dart';
+import '../budgets/budgets_screen.dart';
+import '../goals/goals_screen.dart';
+import '../family/family_screen.dart';
 
 /// Tela "Mais" - equivalente ao menu lateral do site
 /// Contém: Perfil resumido, navegação para outras telas, configurações
@@ -60,8 +64,10 @@ class MoreScreen extends StatelessWidget {
                 label: 'Orçamentos',
                 subtitle: 'Gerencie seus limites mensais',
                 onTap: () {
-                  // TODO: Navegar para Orçamentos
-                  _showComingSoon(context, 'Orçamentos');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const BudgetsScreen()),
+                  );
                 },
               ),
               const Divider(color: AppTheme.border, height: 1),
@@ -70,8 +76,10 @@ class MoreScreen extends StatelessWidget {
                 label: 'Metas',
                 subtitle: 'Acompanhe seus objetivos',
                 onTap: () {
-                  // TODO: Navegar para Metas
-                  _showComingSoon(context, 'Metas');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const GoalsScreen()),
+                  );
                 },
               ),
               const Divider(color: AppTheme.border, height: 1),
@@ -92,8 +100,22 @@ class MoreScreen extends StatelessWidget {
                 label: 'Relatórios',
                 subtitle: 'Análises e gráficos',
                 onTap: () {
-                  // TODO: Navegar para Relatórios
-                  _showComingSoon(context, 'Relatórios');
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const ReportsScreen()),
+                  );
+                },
+              ),
+              const Divider(color: AppTheme.border, height: 1),
+              _MenuItem(
+                icon: Icons.people_outline,
+                label: 'Modo Família',
+                subtitle: 'Compartilhe com sua família',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const FamilyScreen()),
+                  );
                 },
               ),
             ],

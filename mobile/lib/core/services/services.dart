@@ -10,3 +10,5 @@ export 'local_storage_service.dart';
 export 'sync_service.dart';
 export 'security_service.dart';
 export 'installment_service.dart';
+export 'report_service.dart';
+export 'family_service.dart';

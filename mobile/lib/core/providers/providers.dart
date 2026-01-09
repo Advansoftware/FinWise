@@ -6,3 +6,5 @@ export 'installment_provider.dart';
 export 'transaction_provider.dart';
 export 'wallet_provider.dart';
 export 'category_provider.dart';
+export 'report_provider.dart';
+export 'family_provider.dart';

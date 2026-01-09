@@ -306,6 +306,22 @@ class ApiService {
     );
   }
 
+  /// PATCH genérico
+  Future<ApiResult<T>> patch<T>(
+    String endpoint,
+    Map<String, dynamic> body,
+    T Function(Map<String, dynamic>) parser,
+  ) async {
+    return _authenticatedRequest<T>(
+      () => http.patch(
+        Uri.parse('$baseUrl$endpoint'),
+        headers: _authHeaders,
+        body: jsonEncode(body),
+      ),
+      parser,
+    );
+  }
+
   /// DELETE genérico
   Future<ApiResult<bool>> delete(String endpoint) async {
     try {

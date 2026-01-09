@@ -4,3 +4,6 @@ export 'transaction_model.dart';
 export 'wallet_model.dart';
 export 'installment_model.dart';
 export 'budget_goal_model.dart';
+export 'report_model.dart';
+export 'gamification_model.dart';
+export 'family_model.dart';
