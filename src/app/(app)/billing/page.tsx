@@ -29,6 +29,7 @@ import { useToast } from "@/hooks/use-toast";
 import { UpgradeCelebration } from "@/components/billing/upgrade-celebration";
 import { CancelFeedback } from "@/components/billing/cancel-feedback";
 import { BillingPortalButton } from "@/components/billing/billing-portal-button";
+import { SubscriptionManager } from "@/components/billing/subscription-manager";
 
 const plans = [
   {
@@ -366,6 +367,9 @@ function BillingPageContent() {
           );
         })}
       </Grid>
+
+      {/* Gerenciamento de assinatura */}
+      <SubscriptionManager />
 
       <Card>
         <CardHeader

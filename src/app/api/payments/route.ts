@@ -1,7 +1,13 @@
 // src/app/api/payments/route.ts
 
-import {NextRequest, NextResponse} from 'next/server';
-import {createCheckoutSessionAction, createPortalSessionAction} from '@/core/actions/payment.actions';
+import { NextRequest, NextResponse } from 'next/server';
+import {
+  createCheckoutSessionAction,
+  createPortalSessionAction,
+  getSubscriptionAction,
+  cancelSubscriptionAction,
+  reactivateSubscriptionAction
+} from '@/core/actions/payment.actions';
 
 export async function POST(req: NextRequest) {
   try {
@@ -17,6 +23,18 @@ export async function POST(req: NextRequest) {
       case 'createPortalSession':
         const portalResult = await createPortalSessionAction(body);
         return NextResponse.json(portalResult);
+
+      case 'getSubscription':
+        const subscriptionResult = await getSubscriptionAction(body.userId);
+        return NextResponse.json(subscriptionResult);
+
+      case 'cancelSubscription':
+        const cancelResult = await cancelSubscriptionAction(body);
+        return NextResponse.json(cancelResult);
+
+      case 'reactivateSubscription':
+        const reactivateResult = await reactivateSubscriptionAction(body);
+        return NextResponse.json(reactivateResult);
 
       default:
         return NextResponse.json(

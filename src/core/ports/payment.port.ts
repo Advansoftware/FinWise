@@ -39,12 +39,61 @@ export interface SubscriptionData {
   cancelAtPeriodEnd: boolean;
 }
 
+export interface SubscriptionDetails {
+  id: string;
+  status: string;
+  plan: UserPlan;
+  currentPeriodStart: Date;
+  currentPeriodEnd: Date;
+  cancelAtPeriodEnd: boolean;
+  cancelAt: Date | null;
+  priceAmount: number;
+  currency: string;
+  interval: string;
+  nextInvoiceDate: Date | null;
+  paymentMethod?: {
+    type: string;
+    last4?: string;
+    brand?: string;
+    expMonth?: number;
+    expYear?: number;
+  };
+}
+
+export interface GetSubscriptionOutput {
+  subscription: SubscriptionDetails | null;
+  error?: string;
+}
+
+export interface CancelSubscriptionInput {
+  userId: string;
+  immediate?: boolean; // Se true, cancela imediatamente. Se false, cancela no fim do período
+}
+
+export interface CancelSubscriptionOutput {
+  success: boolean;
+  cancelAt?: Date;
+  error?: string;
+}
+
+export interface ReactivateSubscriptionInput {
+  userId: string;
+}
+
+export interface ReactivateSubscriptionOutput {
+  success: boolean;
+  error?: string;
+}
+
 // Main payment service interface (The "Port")
 export interface IPaymentService {
   createCheckoutSession(input: CreateCheckoutSessionInput): Promise<CreateCheckoutSessionOutput>;
   createPortalSession(input: CreatePortalSessionInput): Promise<CreatePortalSessionOutput>;
   processWebhook(event: WebhookEvent): Promise<void>;
   validateWebhookSignature(signature: string, rawBody: string): boolean;
+  getSubscription(userId: string): Promise<GetSubscriptionOutput>;
+  cancelSubscription(input: CancelSubscriptionInput): Promise<CancelSubscriptionOutput>;
+  reactivateSubscription(input: ReactivateSubscriptionInput): Promise<ReactivateSubscriptionOutput>;
 }
 
 // Payment repository for managing payment-related data

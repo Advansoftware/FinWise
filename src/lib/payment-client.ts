@@ -1,6 +1,16 @@
 // src/lib/payment-client.ts
 
-import {CreateCheckoutSessionInput, CreateCheckoutSessionOutput, CreatePortalSessionInput, CreatePortalSessionOutput} from '@/core/ports/payment.port';
+import {
+  CreateCheckoutSessionInput,
+  CreateCheckoutSessionOutput,
+  CreatePortalSessionInput,
+  CreatePortalSessionOutput,
+  GetSubscriptionOutput,
+  CancelSubscriptionInput,
+  CancelSubscriptionOutput,
+  ReactivateSubscriptionInput,
+  ReactivateSubscriptionOutput
+} from '@/core/ports/payment.port';
 
 export class PaymentClient {
   private baseUrl = '/api/payments';
@@ -34,6 +44,57 @@ export class PaymentClient {
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Failed to create portal session');
+    }
+
+    return response.json();
+  }
+
+  async getSubscription(userId: string): Promise<GetSubscriptionOutput> {
+    const response = await fetch(`${this.baseUrl}?action=getSubscription`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to get subscription');
+    }
+
+    return response.json();
+  }
+
+  async cancelSubscription(input: CancelSubscriptionInput): Promise<CancelSubscriptionOutput> {
+    const response = await fetch(`${this.baseUrl}?action=cancelSubscription`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(input),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to cancel subscription');
+    }
+
+    return response.json();
+  }
+
+  async reactivateSubscription(input: ReactivateSubscriptionInput): Promise<ReactivateSubscriptionOutput> {
+    const response = await fetch(`${this.baseUrl}?action=reactivateSubscription`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(input),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to reactivate subscription');
     }
 
     return response.json();

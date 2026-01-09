@@ -1,6 +1,6 @@
 // src/core/adapters/stripe/stripe-payment.adapter.ts
 
-import { IPaymentService, CreateCheckoutSessionInput, CreateCheckoutSessionOutput, CreatePortalSessionInput, CreatePortalSessionOutput, WebhookEvent, SubscriptionData, IPaymentRepository } from '@/core/ports/payment.port';
+import { IPaymentService, CreateCheckoutSessionInput, CreateCheckoutSessionOutput, CreatePortalSessionInput, CreatePortalSessionOutput, WebhookEvent, SubscriptionData, IPaymentRepository, GetSubscriptionOutput, CancelSubscriptionInput, CancelSubscriptionOutput, ReactivateSubscriptionInput, ReactivateSubscriptionOutput, SubscriptionDetails } from '@/core/ports/payment.port';
 import { UserPlan } from '@/lib/types';
 import Stripe from 'stripe';
 
@@ -301,5 +301,164 @@ export class StripePaymentAdapter implements IPaymentService {
     }
 
     console.log(`[StripePaymentAdapter] Successfully processed invoice ${invoice.id} for user ${userId}. New period end: ${new Date(subscription.current_period_end * 1000).toISOString()}`);
+  }
+
+  async getSubscription(userId: string): Promise<GetSubscriptionOutput> {
+    try {
+      const user = await this.paymentRepository.getUserByUserId(userId);
+
+      if (!user || !user.stripeCustomerId) {
+        return { subscription: null };
+      }
+
+      // Buscar assinaturas ativas do cliente
+      const subscriptions = await this.stripe.subscriptions.list({
+        customer: user.stripeCustomerId,
+        status: 'all',
+        limit: 1,
+        expand: ['data.default_payment_method'],
+      });
+
+      if (subscriptions.data.length === 0) {
+        return { subscription: null };
+      }
+
+      const subscription = subscriptions.data[0];
+      const priceData = subscription.items.data[0]?.price;
+      const plan = subscription.metadata.plan as UserPlan || 'Pro';
+
+      let paymentMethod: SubscriptionDetails['paymentMethod'];
+      if (subscription.default_payment_method && typeof subscription.default_payment_method === 'object') {
+        const pm = subscription.default_payment_method as Stripe.PaymentMethod;
+        if (pm.card) {
+          paymentMethod = {
+            type: 'card',
+            last4: pm.card.last4,
+            brand: pm.card.brand,
+            expMonth: pm.card.exp_month,
+            expYear: pm.card.exp_year,
+          };
+        }
+      }
+
+      const subscriptionDetails: SubscriptionDetails = {
+        id: subscription.id,
+        status: subscription.status,
+        plan,
+        currentPeriodStart: new Date(subscription.current_period_start * 1000),
+        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        cancelAtPeriodEnd: subscription.cancel_at_period_end,
+        cancelAt: subscription.cancel_at ? new Date(subscription.cancel_at * 1000) : null,
+        priceAmount: priceData?.unit_amount || 0,
+        currency: priceData?.currency || 'brl',
+        interval: priceData?.recurring?.interval || 'month',
+        nextInvoiceDate: subscription.current_period_end ? new Date(subscription.current_period_end * 1000) : null,
+        paymentMethod,
+      };
+
+      return { subscription: subscriptionDetails };
+
+    } catch (error) {
+      console.error('[StripePaymentAdapter] Error getting subscription:', error);
+      const errorMessage = error instanceof Stripe.errors.StripeError
+        ? error.message
+        : 'Não foi possível buscar informações da assinatura';
+      return { subscription: null, error: errorMessage };
+    }
+  }
+
+  async cancelSubscription(input: CancelSubscriptionInput): Promise<CancelSubscriptionOutput> {
+    const { userId, immediate = false } = input;
+
+    try {
+      const user = await this.paymentRepository.getUserByUserId(userId);
+
+      if (!user || !user.stripeCustomerId) {
+        return { success: false, error: 'Assinatura não encontrada' };
+      }
+
+      // Buscar assinatura ativa
+      const subscriptions = await this.stripe.subscriptions.list({
+        customer: user.stripeCustomerId,
+        status: 'active',
+        limit: 1,
+      });
+
+      if (subscriptions.data.length === 0) {
+        return { success: false, error: 'Nenhuma assinatura ativa encontrada' };
+      }
+
+      const subscription = subscriptions.data[0];
+
+      if (immediate) {
+        // Cancela imediatamente
+        await this.stripe.subscriptions.cancel(subscription.id);
+        return { success: true };
+      } else {
+        // Cancela no fim do período
+        const updated = await this.stripe.subscriptions.update(subscription.id, {
+          cancel_at_period_end: true,
+        });
+        return {
+          success: true,
+          cancelAt: new Date(updated.current_period_end * 1000),
+        };
+      }
+
+    } catch (error) {
+      console.error('[StripePaymentAdapter] Error canceling subscription:', error);
+      const errorMessage = error instanceof Stripe.errors.StripeError
+        ? error.message
+        : 'Não foi possível cancelar a assinatura';
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  async reactivateSubscription(input: ReactivateSubscriptionInput): Promise<ReactivateSubscriptionOutput> {
+    const { userId } = input;
+
+    try {
+      const user = await this.paymentRepository.getUserByUserId(userId);
+
+      if (!user || !user.stripeCustomerId) {
+        return { success: false, error: 'Assinatura não encontrada' };
+      }
+
+      // Buscar assinatura que está marcada para cancelar
+      const subscriptions = await this.stripe.subscriptions.list({
+        customer: user.stripeCustomerId,
+        status: 'active',
+        limit: 1,
+      });
+
+      if (subscriptions.data.length === 0) {
+        return { success: false, error: 'Nenhuma assinatura encontrada' };
+      }
+
+      const subscription = subscriptions.data[0];
+
+      if (!subscription.cancel_at_period_end) {
+        return { success: false, error: 'A assinatura não está marcada para cancelamento' };
+      }
+
+      // Reativa a assinatura
+      await this.stripe.subscriptions.update(subscription.id, {
+        cancel_at_period_end: false,
+      });
+
+      // Atualiza o banco
+      await this.paymentRepository.updateUserSubscription(userId, {
+        cancelAtPeriodEnd: false,
+      });
+
+      return { success: true };
+
+    } catch (error) {
+      console.error('[StripePaymentAdapter] Error reactivating subscription:', error);
+      const errorMessage = error instanceof Stripe.errors.StripeError
+        ? error.message
+        : 'Não foi possível reativar a assinatura';
+      return { success: false, error: errorMessage };
+    }
   }
 }

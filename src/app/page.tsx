@@ -844,6 +844,14 @@ export default function Page() {
                 <Button
                   variant="text"
                   component={Link}
+                  href="/calculadoras"
+                  sx={{ display: { xs: "none", sm: "inline-flex" } }}
+                >
+                  Calculadoras
+                </Button>
+                <Button
+                  variant="text"
+                  component={Link}
                   href="/docs"
                   sx={{ display: { xs: "none", sm: "inline-flex" } }}
                 >
