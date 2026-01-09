@@ -1,7 +1,9 @@
+
 // src/services/wallet-balance-service.ts
 
 import { Transaction } from '@/lib/types';
-import { apiClient } from '@/lib/api-client';
+import { connectToDatabase } from '@/lib/mongodb';
+import { ObjectId } from 'mongodb';
 
 export class WalletBalanceService {
   /**
@@ -19,17 +21,26 @@ export class WalletBalanceService {
     try {
       let balanceChange = 0;
 
+      // Ensure amount is a number
+      const amount = Number(transaction.amount);
+      if (isNaN(amount)) {
+        console.error('Invalid amount for transaction:', transaction.amount);
+        return;
+      }
+
       switch (transaction.type) {
         case 'income':
-          balanceChange = transaction.amount;
+          balanceChange = amount;
           break;
         case 'expense':
-          balanceChange = -transaction.amount;
+          balanceChange = -amount;
           break;
         case 'transfer':
-          balanceChange = -transaction.amount;
+          balanceChange = -amount;
           break;
       }
+
+      console.log(`Updating balance for wallet ${transaction.walletId}: ${balanceChange}`);
 
       if (balanceChange !== 0) {
         // Update main wallet
@@ -38,7 +49,10 @@ export class WalletBalanceService {
 
       // For transfers, also update destination wallet
       if (transaction.type === 'transfer' && transaction.toWalletId) {
-        await this.updateWalletBalance(transaction.toWalletId, transaction.amount, effectiveUserId);
+        const toAmount = amount;
+        if (toAmount !== 0) {
+          await this.updateWalletBalance(transaction.toWalletId, toAmount, effectiveUserId);
+        }
       }
     } catch (error) {
       console.error('Error updating wallet balance:', error);
@@ -60,16 +74,17 @@ export class WalletBalanceService {
 
     try {
       let balanceChange = 0;
+      const amount = Number(transaction.amount);
 
       switch (transaction.type) {
         case 'income':
-          balanceChange = -transaction.amount; // Reverter receita
+          balanceChange = -amount; // Reverter receita
           break;
         case 'expense':
-          balanceChange = transaction.amount; // Reverter despesa
+          balanceChange = amount; // Reverter despesa
           break;
         case 'transfer':
-          balanceChange = transaction.amount; // Reverter transferência
+          balanceChange = amount; // Reverter transferência
           break;
       }
 
@@ -80,7 +95,7 @@ export class WalletBalanceService {
 
       // For transfers, also revert destination wallet
       if (transaction.type === 'transfer' && transaction.toWalletId) {
-        await this.updateWalletBalance(transaction.toWalletId, -transaction.amount, effectiveUserId);
+        await this.updateWalletBalance(transaction.toWalletId, -amount, effectiveUserId);
       }
     } catch (error) {
       console.error('Error reverting wallet balance:', error);
@@ -93,17 +108,17 @@ export class WalletBalanceService {
    */
   private static async updateWalletBalance(walletId: string, balanceChange: number, userId: string): Promise<void> {
     try {
-      // Get current wallet from MongoDB
-      const currentWallet = await apiClient.get('wallets', userId, walletId);
-      if (currentWallet) {
-        const newBalance = currentWallet.balance + balanceChange;
+      const { db } = await connectToDatabase();
 
-        // Update MongoDB
-        await apiClient.update('wallets', walletId, {
-          balance: newBalance
-        });
+      const result = await db.collection('wallets').updateOne(
+        { _id: new ObjectId(walletId), userId },
+        { $inc: { balance: balanceChange } }
+      );
 
-        console.log(`Saldo da carteira ${walletId} atualizado: R$ ${newBalance.toFixed(2)} (${balanceChange > 0 ? '+' : ''}${balanceChange.toFixed(2)})`);
+      if (result.matchedCount === 0) {
+        console.warn(`Wallet ${walletId} not found for balance update`);
+      } else {
+        console.log(`Saldo da carteira ${walletId} atualizado: ${balanceChange > 0 ? '+' : ''}${balanceChange.toFixed(2)}`);
       }
     } catch (error) {
       console.error(`Error updating wallet ${walletId} balance:`, error);
@@ -116,40 +131,50 @@ export class WalletBalanceService {
    */
   static async recalculateWalletBalance(walletId: string, userId: string): Promise<void> {
     try {
-      // Get all transactions for this wallet
-      const allTransactions = await apiClient.get('transactions', userId);
-      const walletTransactions = allTransactions.filter(
-        (t: Transaction) => t.walletId === walletId || t.toWalletId === walletId
-      );
+      const { db } = await connectToDatabase();
+
+      // Busca todas as transações que envolvem esta carteira
+      const walletTransactions = await db.collection('transactions').find({
+        userId,
+        $or: [
+          { walletId: walletId },
+          { toWalletId: walletId }
+        ]
+      }).toArray();
 
       let calculatedBalance = 0;
 
       for (const transaction of walletTransactions) {
+        // Cast manual para evitar problemas de tipagem com MongoDB
+        const type = transaction.type as 'income' | 'expense' | 'transfer';
+        const amount = Number(transaction.amount);
+
         if (transaction.walletId === walletId) {
           // Transação onde esta carteira é a origem
-          switch (transaction.type) {
+          switch (type) {
             case 'income':
-              calculatedBalance += transaction.amount;
+              calculatedBalance += amount;
               break;
             case 'expense':
-              calculatedBalance -= transaction.amount;
+              calculatedBalance -= amount;
               break;
             case 'transfer':
-              calculatedBalance -= transaction.amount;
+              calculatedBalance -= amount;
               break;
           }
         }
 
-        if (transaction.toWalletId === walletId && transaction.type === 'transfer') {
+        if (transaction.toWalletId === walletId && type === 'transfer') {
           // Transação onde esta carteira é o destino de uma transferência
-          calculatedBalance += transaction.amount;
+          calculatedBalance += amount;
         }
       }
 
       // Update wallet with calculated balance
-      await apiClient.update('wallets', walletId, {
-        balance: calculatedBalance
-      });
+      await db.collection('wallets').updateOne(
+        { _id: new ObjectId(walletId), userId },
+        { $set: { balance: calculatedBalance } }
+      );
 
       console.log(`Saldo da carteira ${walletId} recalculado: R$ ${calculatedBalance.toFixed(2)}`);
     } catch (error) {
