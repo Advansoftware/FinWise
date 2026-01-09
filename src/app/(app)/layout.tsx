@@ -21,6 +21,7 @@ import { GamificationGlobalUI } from "@/components/gamification";
 import { ResponsiveLayout } from "@/components/layout";
 import { PlanFeaturesProvider } from "@/hooks/use-plan-features";
 import { UpgradeModal } from "@/components/subscription/upgrade-modal";
+import { SmartTransactionsProvider } from "@/hooks/use-smart-transactions";
 
 import { WalletOnboarding } from "@/components/onboarding/wallet-onboarding";
 
@@ -53,23 +54,25 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
       <CreditsProvider>
         <WalletsProvider>
           <TransactionsProvider>
-            <ReportsProvider>
-              <GamificationProvider>
-                <InstallmentsProvider>
-                  <BudgetsProvider>
-                    <GoalsProvider>
-                      <BankPaymentProvider>
-                        <PlanFeaturesProvider>
-                          <PaymentConfirmationProvider />
-                          <UpgradeModal />
-                          <AppLayoutContent>{children}</AppLayoutContent>
-                        </PlanFeaturesProvider>
-                      </BankPaymentProvider>
-                    </GoalsProvider>
-                  </BudgetsProvider>
-                </InstallmentsProvider>
-              </GamificationProvider>
-            </ReportsProvider>
+            <SmartTransactionsProvider>
+              <ReportsProvider>
+                <GamificationProvider>
+                  <InstallmentsProvider>
+                    <BudgetsProvider>
+                      <GoalsProvider>
+                        <BankPaymentProvider>
+                          <PlanFeaturesProvider>
+                            <PaymentConfirmationProvider />
+                            <UpgradeModal />
+                            <AppLayoutContent>{children}</AppLayoutContent>
+                          </PlanFeaturesProvider>
+                        </BankPaymentProvider>
+                      </GoalsProvider>
+                    </BudgetsProvider>
+                  </InstallmentsProvider>
+                </GamificationProvider>
+              </ReportsProvider>
+            </SmartTransactionsProvider>
           </TransactionsProvider>
         </WalletsProvider>
       </CreditsProvider>
