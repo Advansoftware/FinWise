@@ -164,9 +164,12 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
   }, []);
 
   const handleCardClick = () => {
-    // Só abre ao clicar no card se já tiver filhos
+    // Se for agrupada, abre subitens
     if (transaction.hasChildren && (transaction.childrenCount || 0) > 0) {
       handleOpenSubitems();
+    } else {
+      // Se for transação comum, abre edição
+      setIsEditSheetOpen(true);
     }
   };
 
@@ -230,7 +233,7 @@ function TransactionCard({ transaction }: { transaction: Transaction }) {
       <Card
         sx={{
           transition: "all 0.2s",
-          cursor: isGrouped ? "pointer" : "default",
+          cursor: "pointer",
           "&:hover": {
             bgcolor: "action.hover",
             ...(isGrouped && {
