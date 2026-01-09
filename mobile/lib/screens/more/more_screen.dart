@@ -6,7 +6,6 @@ import '../../core/providers/gamification_provider.dart';
 import '../../core/models/gamification_model.dart';
 import '../../core/widgets/plan_badge.dart';
 import '../profile/profile_screen.dart';
-import 'settings_screen.dart';
 import '../categories/categories_screen.dart';
 import '../reports/reports_screen.dart';
 import '../budgets/budgets_screen.dart';
@@ -128,16 +127,6 @@ class MoreScreen extends StatelessWidget {
           const SizedBox(height: 8),
           _MenuCard(
             children: [
-              _MenuItem(
-                icon: Icons.settings_outlined,
-                label: 'Configurações',
-                subtitle: 'Biometria, tema e mais',
-                onTap: () => Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SettingsScreen()),
-                ),
-              ),
-              const Divider(color: AppTheme.border, height: 1),
               _MenuItem(
                 icon: Icons.diamond_outlined,
                 label: 'Assinatura',
