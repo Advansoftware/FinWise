@@ -1776,16 +1776,19 @@ export default function Page() {
                     <Card
                       sx={{
                         p: 2,
-                        bgcolor: "info.dark",
+                        bgcolor: "rgba(79, 195, 247, 0.12)",
                         border: "1px solid",
-                        borderColor: "info.main",
+                        borderColor: "rgba(79, 195, 247, 0.3)",
                         mb: 4,
                       }}
                     >
                       <Stack direction="row" spacing={2} alignItems="center">
                         <Sparkles size={24} style={{ color: "#4fc3f7" }} />
-                        <Typography variant="body2">
-                          Clientes <strong>Gastometria Infinity</strong>{" "}
+                        <Typography variant="body2" sx={{ color: "#E4E4E7" }}>
+                          Clientes{" "}
+                          <strong style={{ color: "#4fc3f7" }}>
+                            Gastometria Infinity
+                          </strong>{" "}
                           integram o controle financeiro ao WhatsApp usando seus
                           próprios créditos de IA, sem custo adicional!
                         </Typography>
@@ -1883,13 +1886,30 @@ export default function Page() {
                         </Box>
                         <Box sx={{ flex: 1 }}>
                           <Typography
-                            sx={{ color: "#FFFFFF", fontWeight: 600, fontSize: "0.95rem" }}
+                            sx={{
+                              color: "#FFFFFF",
+                              fontWeight: 600,
+                              fontSize: "0.95rem",
+                            }}
                           >
                             Gastometria
                           </Typography>
-                          <Stack direction="row" alignItems="center" spacing={0.5}>
-                            <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#00A67E" }} />
-                            <Typography sx={{ color: "#00A67E", fontSize: "0.75rem" }}>
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            spacing={0.5}
+                          >
+                            <Box
+                              sx={{
+                                width: 6,
+                                height: 6,
+                                borderRadius: "50%",
+                                bgcolor: "#00A67E",
+                              }}
+                            />
+                            <Typography
+                              sx={{ color: "#00A67E", fontSize: "0.75rem" }}
+                            >
                               Respondendo agora...
                             </Typography>
                           </Stack>
@@ -1900,14 +1920,14 @@ export default function Page() {
                       <Box
                         sx={{
                           p: 2,
-                          minHeight: 340,
+                          minHeight: 380,
                           bgcolor: "#111316",
                           display: "flex",
                           flexDirection: "column",
                           gap: 1.5,
                         }}
                       >
-                        {/* User message */}
+                        {/* User sends receipt image */}
                         <Box
                           component={m.div}
                           initial={{ opacity: 0, y: 10 }}
@@ -1916,25 +1936,224 @@ export default function Page() {
                           sx={{
                             alignSelf: "flex-end",
                             bgcolor: "#00A67E",
-                            py: 1.25,
-                            px: 1.5,
+                            p: 0.5,
                             borderRadius: "12px",
                             borderBottomRightRadius: "4px",
-                            maxWidth: "75%",
+                            maxWidth: "65%",
                           }}
                         >
-                          <Typography sx={{ color: "#FFFFFF", fontSize: "0.9rem", lineHeight: 1.45 }}>
-                            Gastei 89,90 no mercado hoje
-                          </Typography>
-                          <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={0.5} sx={{ mt: 0.5 }}>
-                            <Typography sx={{ color: "rgba(255,255,255,0.7)", fontSize: "0.7rem" }}>
+                          {/* Fake receipt image */}
+                          <Box
+                            sx={{
+                              bgcolor: "#FFFFFF",
+                              borderRadius: "8px",
+                              p: 1.5,
+                              mb: 0.5,
+                            }}
+                          >
+                            <Typography
+                              sx={{
+                                color: "#1A1D21",
+                                fontSize: "0.65rem",
+                                fontWeight: 700,
+                                textAlign: "center",
+                                mb: 0.5,
+                                fontFamily: "monospace",
+                              }}
+                            >
+                              SUPERMERCADO BOM PREÇO
+                            </Typography>
+                            <Typography
+                              sx={{
+                                color: "#666",
+                                fontSize: "0.55rem",
+                                textAlign: "center",
+                                fontFamily: "monospace",
+                                mb: 1,
+                              }}
+                            >
+                              CNPJ: 12.345.678/0001-90
+                            </Typography>
+                            <Box
+                              sx={{
+                                borderTop: "1px dashed #ccc",
+                                borderBottom: "1px dashed #ccc",
+                                py: 0.5,
+                                my: 0.5,
+                              }}
+                            >
+                              <Stack spacing={0.25}>
+                                <Stack
+                                  direction="row"
+                                  justifyContent="space-between"
+                                >
+                                  <Typography
+                                    sx={{
+                                      color: "#333",
+                                      fontSize: "0.55rem",
+                                      fontFamily: "monospace",
+                                    }}
+                                  >
+                                    Arroz 5kg
+                                  </Typography>
+                                  <Typography
+                                    sx={{
+                                      color: "#333",
+                                      fontSize: "0.55rem",
+                                      fontFamily: "monospace",
+                                    }}
+                                  >
+                                    29,90
+                                  </Typography>
+                                </Stack>
+                                <Stack
+                                  direction="row"
+                                  justifyContent="space-between"
+                                >
+                                  <Typography
+                                    sx={{
+                                      color: "#333",
+                                      fontSize: "0.55rem",
+                                      fontFamily: "monospace",
+                                    }}
+                                  >
+                                    Feijão 1kg
+                                  </Typography>
+                                  <Typography
+                                    sx={{
+                                      color: "#333",
+                                      fontSize: "0.55rem",
+                                      fontFamily: "monospace",
+                                    }}
+                                  >
+                                    8,50
+                                  </Typography>
+                                </Stack>
+                                <Stack
+                                  direction="row"
+                                  justifyContent="space-between"
+                                >
+                                  <Typography
+                                    sx={{
+                                      color: "#333",
+                                      fontSize: "0.55rem",
+                                      fontFamily: "monospace",
+                                    }}
+                                  >
+                                    Óleo Soja
+                                  </Typography>
+                                  <Typography
+                                    sx={{
+                                      color: "#333",
+                                      fontSize: "0.55rem",
+                                      fontFamily: "monospace",
+                                    }}
+                                  >
+                                    7,90
+                                  </Typography>
+                                </Stack>
+                                <Stack
+                                  direction="row"
+                                  justifyContent="space-between"
+                                >
+                                  <Typography
+                                    sx={{
+                                      color: "#333",
+                                      fontSize: "0.55rem",
+                                      fontFamily: "monospace",
+                                    }}
+                                  >
+                                    Leite 1L x3
+                                  </Typography>
+                                  <Typography
+                                    sx={{
+                                      color: "#333",
+                                      fontSize: "0.55rem",
+                                      fontFamily: "monospace",
+                                    }}
+                                  >
+                                    15,60
+                                  </Typography>
+                                </Stack>
+                                <Stack
+                                  direction="row"
+                                  justifyContent="space-between"
+                                >
+                                  <Typography
+                                    sx={{
+                                      color: "#333",
+                                      fontSize: "0.55rem",
+                                      fontFamily: "monospace",
+                                    }}
+                                  >
+                                    Pão Forma
+                                  </Typography>
+                                  <Typography
+                                    sx={{
+                                      color: "#333",
+                                      fontSize: "0.55rem",
+                                      fontFamily: "monospace",
+                                    }}
+                                  >
+                                    8,90
+                                  </Typography>
+                                </Stack>
+                              </Stack>
+                            </Box>
+                            <Stack
+                              direction="row"
+                              justifyContent="space-between"
+                              sx={{ mt: 0.5 }}
+                            >
+                              <Typography
+                                sx={{
+                                  color: "#1A1D21",
+                                  fontSize: "0.65rem",
+                                  fontWeight: 700,
+                                  fontFamily: "monospace",
+                                }}
+                              >
+                                TOTAL
+                              </Typography>
+                              <Typography
+                                sx={{
+                                  color: "#1A1D21",
+                                  fontSize: "0.65rem",
+                                  fontWeight: 700,
+                                  fontFamily: "monospace",
+                                }}
+                              >
+                                R$ 70,80
+                              </Typography>
+                            </Stack>
+                          </Box>
+                          <Stack
+                            direction="row"
+                            justifyContent="flex-end"
+                            alignItems="center"
+                            spacing={0.5}
+                            sx={{ px: 1, pb: 0.5 }}
+                          >
+                            <Typography
+                              sx={{
+                                color: "rgba(255,255,255,0.7)",
+                                fontSize: "0.7rem",
+                              }}
+                            >
                               10:42
                             </Typography>
-                            <Typography sx={{ color: "rgba(255,255,255,0.7)", fontSize: "0.7rem" }}>✓</Typography>
+                            <Typography
+                              sx={{
+                                color: "rgba(255,255,255,0.7)",
+                                fontSize: "0.7rem",
+                              }}
+                            >
+                              ✓
+                            </Typography>
                           </Stack>
                         </Box>
 
-                        {/* Bot response 1 */}
+                        {/* Bot response - analyzing */}
                         <Box
                           component={m.div}
                           initial={{ opacity: 0, y: 10 }}
@@ -1950,15 +2169,28 @@ export default function Page() {
                             maxWidth: "85%",
                           }}
                         >
-                          <Typography sx={{ color: "#E4E4E7", fontSize: "0.9rem", lineHeight: 1.45 }}>
-                            Olá! 👋 Deixa eu registrar isso...
+                          <Typography
+                            sx={{
+                              color: "#E4E4E7",
+                              fontSize: "0.9rem",
+                              lineHeight: 1.45,
+                            }}
+                          >
+                            📸 Analisando sua nota fiscal...
                           </Typography>
-                          <Typography sx={{ color: "rgba(255,255,255,0.4)", fontSize: "0.7rem", textAlign: "right", mt: 0.5 }}>
+                          <Typography
+                            sx={{
+                              color: "rgba(255,255,255,0.4)",
+                              fontSize: "0.7rem",
+                              textAlign: "right",
+                              mt: 0.5,
+                            }}
+                          >
                             10:42
                           </Typography>
                         </Box>
 
-                        {/* Bot response 2 with card */}
+                        {/* Bot response - result with items */}
                         <Box
                           component={m.div}
                           initial={{ opacity: 0, y: 10 }}
@@ -1971,43 +2203,190 @@ export default function Page() {
                             px: 1.5,
                             borderRadius: "12px",
                             borderBottomLeftRadius: "4px",
-                            maxWidth: "85%",
+                            maxWidth: "90%",
                           }}
                         >
-                          <Typography sx={{ color: "#E4E4E7", fontSize: "0.9rem", lineHeight: 1.45, mb: 1 }}>
-                            ✅ <strong>Registrado!</strong>
-                          </Typography>
-                          <Typography sx={{ color: "#E4E4E7", fontSize: "0.9rem", mb: 1 }}>
-                            Agendei para você:
+                          <Typography
+                            sx={{
+                              color: "#E4E4E7",
+                              fontSize: "0.9rem",
+                              lineHeight: 1.45,
+                              mb: 1,
+                            }}
+                          >
+                            ✅ <strong>5 itens identificados!</strong>
                           </Typography>
 
-                          {/* Embedded card - RespondIA style */}
+                          {/* Items extracted */}
                           <Box
                             sx={{
-                              bgcolor: "rgba(0, 166, 126, 0.15)",
+                              bgcolor: "rgba(0, 166, 126, 0.12)",
                               borderRadius: "8px",
                               p: 1.25,
                               mb: 1,
                             }}
                           >
-                            <Stack direction="row" alignItems="center" spacing={1}>
-                              <Typography sx={{ fontSize: "1rem" }}>💰</Typography>
-                              <Box>
-                                <Typography sx={{ color: "#00A67E", fontWeight: 600, fontSize: "0.9rem" }}>
-                                  R$ 89,90
+                            <Stack spacing={0.75}>
+                              <Stack
+                                direction="row"
+                                justifyContent="space-between"
+                                alignItems="center"
+                              >
+                                <Typography
+                                  sx={{ color: "#E4E4E7", fontSize: "0.8rem" }}
+                                >
+                                  🍚 Arroz 5kg
                                 </Typography>
-                                <Typography sx={{ color: "rgba(255,255,255,0.5)", fontSize: "0.75rem" }}>
-                                  Supermercado • Hoje
+                                <Typography
+                                  sx={{
+                                    color: "#00A67E",
+                                    fontSize: "0.8rem",
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  R$ 29,90
                                 </Typography>
+                              </Stack>
+                              <Stack
+                                direction="row"
+                                justifyContent="space-between"
+                                alignItems="center"
+                              >
+                                <Typography
+                                  sx={{ color: "#E4E4E7", fontSize: "0.8rem" }}
+                                >
+                                  🫘 Feijão 1kg
+                                </Typography>
+                                <Typography
+                                  sx={{
+                                    color: "#00A67E",
+                                    fontSize: "0.8rem",
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  R$ 8,50
+                                </Typography>
+                              </Stack>
+                              <Stack
+                                direction="row"
+                                justifyContent="space-between"
+                                alignItems="center"
+                              >
+                                <Typography
+                                  sx={{ color: "#E4E4E7", fontSize: "0.8rem" }}
+                                >
+                                  🛢️ Óleo Soja
+                                </Typography>
+                                <Typography
+                                  sx={{
+                                    color: "#00A67E",
+                                    fontSize: "0.8rem",
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  R$ 7,90
+                                </Typography>
+                              </Stack>
+                              <Stack
+                                direction="row"
+                                justifyContent="space-between"
+                                alignItems="center"
+                              >
+                                <Typography
+                                  sx={{ color: "#E4E4E7", fontSize: "0.8rem" }}
+                                >
+                                  🥛 Leite 1L x3
+                                </Typography>
+                                <Typography
+                                  sx={{
+                                    color: "#00A67E",
+                                    fontSize: "0.8rem",
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  R$ 15,60
+                                </Typography>
+                              </Stack>
+                              <Stack
+                                direction="row"
+                                justifyContent="space-between"
+                                alignItems="center"
+                              >
+                                <Typography
+                                  sx={{ color: "#E4E4E7", fontSize: "0.8rem" }}
+                                >
+                                  🍞 Pão Forma
+                                </Typography>
+                                <Typography
+                                  sx={{
+                                    color: "#00A67E",
+                                    fontSize: "0.8rem",
+                                    fontWeight: 600,
+                                  }}
+                                >
+                                  R$ 8,90
+                                </Typography>
+                              </Stack>
+                              <Box
+                                sx={{
+                                  borderTop: "1px solid rgba(255,255,255,0.1)",
+                                  pt: 0.75,
+                                  mt: 0.5,
+                                }}
+                              >
+                                <Stack
+                                  direction="row"
+                                  justifyContent="space-between"
+                                  alignItems="center"
+                                >
+                                  <Typography
+                                    sx={{
+                                      color: "#FFFFFF",
+                                      fontSize: "0.85rem",
+                                      fontWeight: 600,
+                                    }}
+                                  >
+                                    Total
+                                  </Typography>
+                                  <Typography
+                                    sx={{
+                                      color: "#00A67E",
+                                      fontSize: "0.9rem",
+                                      fontWeight: 700,
+                                    }}
+                                  >
+                                    R$ 70,80
+                                  </Typography>
+                                </Stack>
                               </Box>
                             </Stack>
                           </Box>
 
-                          <Typography sx={{ color: "rgba(255,255,255,0.6)", fontSize: "0.85rem", lineHeight: 1.45 }}>
-                            Posso ajudar em mais alguma coisa?
+                          <Typography
+                            sx={{
+                              color: "#E4E4E7",
+                              fontSize: "0.85rem",
+                              mb: 0.5,
+                            }}
+                          >
+                            📁 Categoria: <strong>Supermercado</strong>
                           </Typography>
-
-                          <Typography sx={{ color: "rgba(255,255,255,0.4)", fontSize: "0.7rem", textAlign: "right", mt: 0.75 }}>
+                          <Typography
+                            sx={{
+                              color: "rgba(255,255,255,0.5)",
+                              fontSize: "0.8rem",
+                            }}
+                          >
+                            💡 Você gastou R$ 284 em mercado este mês
+                          </Typography>
+                          <Typography
+                            sx={{
+                              color: "rgba(255,255,255,0.4)",
+                              fontSize: "0.7rem",
+                              textAlign: "right",
+                              mt: 0.75,
+                            }}
+                          >
                             10:43
                           </Typography>
                         </Box>
@@ -2024,9 +2403,20 @@ export default function Page() {
                           borderTop: "1px solid rgba(255,255,255,0.06)",
                         }}
                       >
-                        <Box sx={{ color: "#6B7280", display: "flex", alignItems: "center", gap: 1 }}>
-                          <Box sx={{ fontSize: "1.25rem", cursor: "pointer" }}>😊</Box>
-                          <Box sx={{ fontSize: "1.25rem", cursor: "pointer" }}>📎</Box>
+                        <Box
+                          sx={{
+                            color: "#6B7280",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                          }}
+                        >
+                          <Box sx={{ fontSize: "1.25rem", cursor: "pointer" }}>
+                            😊
+                          </Box>
+                          <Box sx={{ fontSize: "1.25rem", cursor: "pointer" }}>
+                            📎
+                          </Box>
                         </Box>
                         <Box
                           sx={{
@@ -2037,11 +2427,21 @@ export default function Page() {
                             px: 2,
                           }}
                         >
-                          <Typography sx={{ color: "#6B7280", fontSize: "0.9rem" }}>
+                          <Typography
+                            sx={{ color: "#6B7280", fontSize: "0.9rem" }}
+                          >
                             Mensagem
                           </Typography>
                         </Box>
-                        <Box sx={{ color: "#6B7280", fontSize: "1.25rem", cursor: "pointer" }}>🎤</Box>
+                        <Box
+                          sx={{
+                            color: "#6B7280",
+                            fontSize: "1.25rem",
+                            cursor: "pointer",
+                          }}
+                        >
+                          🎤
+                        </Box>
                       </Box>
                     </Paper>
 
