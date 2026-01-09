@@ -12,6 +12,7 @@ import { ReportsProvider } from "@/hooks/use-reports";
 import { InstallmentsProvider } from "@/hooks/use-installments";
 import { PlanProvider } from "@/hooks/use-plan";
 import { CreditsProvider } from "@/hooks/use-credits";
+import { FamilyProvider } from "@/hooks/use-family";
 import { GoalCompletionCelebration } from "@/components/goals/goal-celebration";
 import { useGoals } from "@/hooks/use-goals";
 import { GamificationProvider } from "@/hooks/use-gamification";
@@ -52,29 +53,31 @@ function InnerLayout({ children }: { children: React.ReactNode }) {
   return (
     <PlanProvider>
       <CreditsProvider>
-        <WalletsProvider>
-          <TransactionsProvider>
-            <SmartTransactionsProvider>
-              <ReportsProvider>
-                <GamificationProvider>
-                  <InstallmentsProvider>
-                    <BudgetsProvider>
-                      <GoalsProvider>
-                        <BankPaymentProvider>
-                          <PlanFeaturesProvider>
-                            <PaymentConfirmationProvider />
-                            <UpgradeModal />
-                            <AppLayoutContent>{children}</AppLayoutContent>
-                          </PlanFeaturesProvider>
-                        </BankPaymentProvider>
-                      </GoalsProvider>
-                    </BudgetsProvider>
-                  </InstallmentsProvider>
-                </GamificationProvider>
-              </ReportsProvider>
-            </SmartTransactionsProvider>
-          </TransactionsProvider>
-        </WalletsProvider>
+        <FamilyProvider>
+          <WalletsProvider>
+            <TransactionsProvider>
+              <SmartTransactionsProvider>
+                <ReportsProvider>
+                  <GamificationProvider>
+                    <InstallmentsProvider>
+                      <BudgetsProvider>
+                        <GoalsProvider>
+                          <BankPaymentProvider>
+                            <PlanFeaturesProvider>
+                              <PaymentConfirmationProvider />
+                              <UpgradeModal />
+                              <AppLayoutContent>{children}</AppLayoutContent>
+                            </PlanFeaturesProvider>
+                          </BankPaymentProvider>
+                        </GoalsProvider>
+                      </BudgetsProvider>
+                    </InstallmentsProvider>
+                  </GamificationProvider>
+                </ReportsProvider>
+              </SmartTransactionsProvider>
+            </TransactionsProvider>
+          </WalletsProvider>
+        </FamilyProvider>
       </CreditsProvider>
     </PlanProvider>
   );

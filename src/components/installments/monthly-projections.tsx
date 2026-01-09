@@ -1,6 +1,6 @@
 // src/components/installments/monthly-projections.tsx
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Box,
   Stack,
@@ -62,6 +62,10 @@ export function MonthlyProjections() {
   const { getMonthlyProjections } = useInstallments();
   const { payrollData } = usePayroll();
   const theme = useTheme();
+
+  // Ref para evitar loops de requisição
+  const getMonthlyProjectionsRef = useRef(getMonthlyProjections);
+  getMonthlyProjectionsRef.current = getMonthlyProjections;
 
   // Separar projeções por tipo
   const getProjectionsByType = (type: "fixed" | "variable") => {

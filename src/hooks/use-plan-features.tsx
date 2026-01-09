@@ -1,73 +1,95 @@
 // src/hooks/use-plan-features.tsx
 "use client";
 
-import { createContext, useContext, useState, useCallback, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  ReactNode,
+} from "react";
 import { usePlan } from "@/hooks/use-plan";
 import { UserPlan } from "@/lib/types";
 
 // Features that require specific plans
-export type PremiumFeature = 
-  | 'open-finance'
-  | 'pluggy-connect'
-  | 'pix-payment'
-  | 'auto-sync'
-  | 'advanced-reports';
+export type PremiumFeature =
+  | "open-finance"
+  | "pluggy-connect"
+  | "pix-payment"
+  | "auto-sync"
+  | "advanced-reports"
+  | "family-mode";
 
 // Plan requirements for features
 const FEATURE_REQUIREMENTS: Record<PremiumFeature, UserPlan[]> = {
-  'open-finance': ['Plus', 'Infinity'],
-  'pluggy-connect': ['Plus', 'Infinity'],
-  'pix-payment': ['Plus', 'Infinity'],
-  'auto-sync': ['Plus', 'Infinity'],
-  'advanced-reports': ['Pro', 'Plus', 'Infinity'],
+  "open-finance": ["Plus", "Infinity"],
+  "pluggy-connect": ["Plus", "Infinity"],
+  "pix-payment": ["Plus", "Infinity"],
+  "auto-sync": ["Plus", "Infinity"],
+  "advanced-reports": ["Pro", "Plus", "Infinity"],
+  "family-mode": ["Infinity"],
 };
 
 // Feature display info
-export const FEATURE_INFO: Record<PremiumFeature, { title: string; description: string; benefits: string[] }> = {
-  'open-finance': {
-    title: 'Open Finance',
-    description: 'Conecte suas contas bancárias e cartões automaticamente.',
+export const FEATURE_INFO: Record<
+  PremiumFeature,
+  { title: string; description: string; benefits: string[] }
+> = {
+  "open-finance": {
+    title: "Open Finance",
+    description: "Conecte suas contas bancárias e cartões automaticamente.",
     benefits: [
-      'Importe transações automaticamente',
-      'Sincronização em tempo real',
-      'Suporte a mais de 100 bancos',
-      'Categorização automática',
+      "Importe transações automaticamente",
+      "Sincronização em tempo real",
+      "Suporte a mais de 100 bancos",
+      "Categorização automática",
     ],
   },
-  'pluggy-connect': {
-    title: 'Conexão Bancária',
-    description: 'Conecte-se ao seu banco de forma segura e automatizada.',
+  "pluggy-connect": {
+    title: "Conexão Bancária",
+    description: "Conecte-se ao seu banco de forma segura e automatizada.",
     benefits: [
-      'Conexão segura via Open Finance',
-      'Dados criptografados',
-      'Regulado pelo Banco Central',
+      "Conexão segura via Open Finance",
+      "Dados criptografados",
+      "Regulado pelo Banco Central",
     ],
   },
-  'pix-payment': {
-    title: 'Pagamento PIX',
-    description: 'Pague suas contas e parcelas diretamente pelo app.',
+  "pix-payment": {
+    title: "Pagamento PIX",
+    description: "Pague suas contas e parcelas diretamente pelo app.",
     benefits: [
-      'Pagamento direto via PIX',
-      'Baixa automática de parcelas',
-      'Histórico de pagamentos',
+      "Pagamento direto via PIX",
+      "Baixa automática de parcelas",
+      "Histórico de pagamentos",
     ],
   },
-  'auto-sync': {
-    title: 'Sincronização Automática',
-    description: 'Suas transações são importadas automaticamente.',
+  "auto-sync": {
+    title: "Sincronização Automática",
+    description: "Suas transações são importadas automaticamente.",
     benefits: [
-      'Atualização em tempo real',
-      'Sem necessidade de importar manualmente',
-      'Notificações de novas transações',
+      "Atualização em tempo real",
+      "Sem necessidade de importar manualmente",
+      "Notificações de novas transações",
     ],
   },
-  'advanced-reports': {
-    title: 'Relatórios Avançados',
-    description: 'Análises detalhadas das suas finanças.',
+  "advanced-reports": {
+    title: "Relatórios Avançados",
+    description: "Análises detalhadas das suas finanças.",
     benefits: [
-      'Gráficos interativos',
-      'Previsões de gastos',
-      'Comparação mensal',
+      "Gráficos interativos",
+      "Previsões de gastos",
+      "Comparação mensal",
+    ],
+  },
+  "family-mode": {
+    title: "Modo Família",
+    description: "Compartilhe suas finanças com pessoas de confiança.",
+    benefits: [
+      "Até 5 membros por família",
+      "Controle individual de privacidade",
+      "Compartilhamento seletivo de recursos",
+      "Metas e carteiras compartilhadas",
+      "Relatórios consolidados",
     ],
   },
 };
@@ -81,19 +103,26 @@ interface PlanFeaturesContextType {
   closeUpgradeModal: () => void;
 }
 
-const PlanFeaturesContext = createContext<PlanFeaturesContextType | undefined>(undefined);
+const PlanFeaturesContext = createContext<PlanFeaturesContextType | undefined>(
+  undefined
+);
 
 export function PlanFeaturesProvider({ children }: { children: ReactNode }) {
   const { plan } = usePlan();
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
-  const [currentFeature, setCurrentFeature] = useState<PremiumFeature | null>(null);
+  const [currentFeature, setCurrentFeature] = useState<PremiumFeature | null>(
+    null
+  );
 
-  const userPlan: UserPlan = plan || 'Básico';
+  const userPlan: UserPlan = plan || "Básico";
 
-  const canUseFeature = useCallback((feature: PremiumFeature): boolean => {
-    const requiredPlans = FEATURE_REQUIREMENTS[feature];
-    return requiredPlans.includes(userPlan);
-  }, [userPlan]);
+  const canUseFeature = useCallback(
+    (feature: PremiumFeature): boolean => {
+      const requiredPlans = FEATURE_REQUIREMENTS[feature];
+      return requiredPlans.includes(userPlan);
+    },
+    [userPlan]
+  );
 
   const requireUpgrade = useCallback((feature: PremiumFeature) => {
     setCurrentFeature(feature);
@@ -124,13 +153,18 @@ export function PlanFeaturesProvider({ children }: { children: ReactNode }) {
 export function usePlanFeatures() {
   const context = useContext(PlanFeaturesContext);
   if (context === undefined) {
-    throw new Error("usePlanFeatures must be used within a PlanFeaturesProvider");
+    throw new Error(
+      "usePlanFeatures must be used within a PlanFeaturesProvider"
+    );
   }
   return context;
 }
 
 // Standalone function for checking without context (for initial renders)
-export function checkPlanAccess(plan: UserPlan, feature: PremiumFeature): boolean {
+export function checkPlanAccess(
+  plan: UserPlan,
+  feature: PremiumFeature
+): boolean {
   const requiredPlans = FEATURE_REQUIREMENTS[feature];
   return requiredPlans.includes(plan);
 }

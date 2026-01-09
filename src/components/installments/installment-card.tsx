@@ -553,23 +553,25 @@ export function InstallmentCard({
                     )}
                   </Grid>
 
-                  {nextPayment.status === "overdue" && (
-                    <Button
-                      onClick={() => setIsMarkAsPaidOpen(true)}
-                      variant="outlined"
-                      size="small"
-                      fullWidth
-                    >
-                      <CheckCircle2
-                        style={{
-                          width: "1rem",
-                          height: "1rem",
-                          marginRight: "0.5rem",
-                        }}
-                      />
-                      Marcar como Pago
-                    </Button>
-                  )}
+                  {/* Botão Marcar como Pago - aparece sempre, não apenas quando vencido */}
+                  <Button
+                    onClick={() => setIsMarkAsPaidOpen(true)}
+                    variant="outlined"
+                    size="small"
+                    fullWidth
+                    color={
+                      nextPayment.status === "overdue" ? "error" : "primary"
+                    }
+                  >
+                    <CheckCircle2
+                      style={{
+                        width: "1rem",
+                        height: "1rem",
+                        marginRight: "0.5rem",
+                      }}
+                    />
+                    Marcar como Pago
+                  </Button>
                 </Stack>
               )}
             </Box>

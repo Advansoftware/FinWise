@@ -36,6 +36,10 @@ export function PaymentSchedule() {
   const { getUpcomingPayments, getOverduePayments, installments } =
     useInstallments();
 
+  // Use installments.length as dependency instead of the entire array
+  // to avoid re-fetching when installment objects update internally
+  const installmentsCount = installments.length;
+
   useEffect(() => {
     const loadPayments = async () => {
       setIsLoading(true);
@@ -50,7 +54,8 @@ export function PaymentSchedule() {
     };
 
     loadPayments();
-  }, [getUpcomingPayments, getOverduePayments, installments]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [installmentsCount]);
 
   const getInstallmentName = (payment: InstallmentPayment) => {
     const installment = installments.find(
