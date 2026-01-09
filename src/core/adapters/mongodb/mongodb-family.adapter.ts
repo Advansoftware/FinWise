@@ -97,6 +97,16 @@ export class MongoDBFamilyService implements IFamilyService {
     return Math.random().toString(36).substring(2) + Date.now().toString(36);
   }
 
+  private generateToken(): string {
+    // Gera token seguro para links de convite
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+    let token = '';
+    for (let i = 0; i < 32; i++) {
+      token += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return token;
+  }
+
   // ==========================================
   // Gerenciamento de Família
   // ==========================================
@@ -296,14 +306,17 @@ export class MongoDBFamilyService implements IFamilyService {
 
     const now = new Date();
     const expiresAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000); // 7 dias
+    const token = this.generateToken();
 
     const inviteDoc: Omit<FamilyInviteDocument, '_id'> = {
       familyId: data.familyId,
+      familyName: family.name,
       email: data.email.toLowerCase(),
       invitedBy: userId,
       invitedByName: inviter?.displayName || inviter?.email || 'Membro',
       role: data.role || 'member',
       message: data.message,
+      token,
       expiresAt: expiresAt.toISOString(),
       createdAt: now.toISOString(),
       status: 'pending',
@@ -311,7 +324,7 @@ export class MongoDBFamilyService implements IFamilyService {
 
     const result = await this.inviteCollection.insertOne(inviteDoc as FamilyInviteDocument);
 
-    // TODO: Enviar email de convite
+    // O email será enviado pela API route após criação
 
     return this.docToInvite({ ...inviteDoc, _id: result.insertedId });
   }
@@ -339,11 +352,27 @@ export class MongoDBFamilyService implements IFamilyService {
       const family = await this.getFamily(doc.familyId);
       invites.push({
         ...this.docToInvite(doc),
-        // Adicionar nome da família se necessário
+        familyName: family?.name || doc.familyName,
       });
     }
 
     return invites;
+  }
+
+  async getInviteByToken(token: string): Promise<FamilyInvite | null> {
+    const doc = await this.inviteCollection.findOne({
+      token,
+      status: 'pending',
+      expiresAt: { $gt: new Date().toISOString() },
+    });
+
+    if (!doc) return null;
+
+    const family = await this.getFamily(doc.familyId);
+    return {
+      ...this.docToInvite(doc),
+      familyName: family?.name || doc.familyName,
+    };
   }
 
   async acceptInvite(userId: string, data: AcceptInviteInput): Promise<Family> {

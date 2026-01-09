@@ -13,6 +13,7 @@ import { connectToDatabase } from '@/lib/mongodb';
 import { createFamilyService } from '@/core/adapters/mongodb/mongodb-family.adapter';
 import { InviteMemberInput } from '@/lib/family-types';
 import { FamilyError } from '@/core/ports/family.port';
+import { sendFamilyInviteEmail } from '@/lib/email';
 
 async function getFamilyService() {
   const { db } = await connectToDatabase();
@@ -85,6 +86,20 @@ export async function POST(request: NextRequest) {
 
     const familyService = await getFamilyService();
     const invite = await familyService.inviteMember(userId, body);
+
+    // Enviar email de convite
+    try {
+      await sendFamilyInviteEmail({
+        inviteeEmail: invite.email,
+        inviterName: invite.invitedByName,
+        familyName: invite.familyName || 'Família',
+        inviteToken: invite.token,
+        role: invite.role,
+      });
+    } catch (emailError) {
+      console.error('Erro ao enviar email de convite:', emailError);
+      // Não falha a criação do convite se o email falhar
+    }
 
     return NextResponse.json({ invite }, { status: 201 });
   } catch (error) {

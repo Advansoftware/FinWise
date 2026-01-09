@@ -74,6 +74,11 @@ export interface IFamilyService {
   getUserPendingInvites(email: string): Promise<FamilyInvite[]>;
 
   /**
+   * Obtém um convite pelo token (para aceitar via link)
+   */
+  getInviteByToken(token: string): Promise<FamilyInvite | null>;
+
+  /**
    * Aceita um convite
    */
   acceptInvite(userId: string, data: AcceptInviteInput): Promise<Family>;

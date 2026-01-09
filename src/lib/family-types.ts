@@ -84,11 +84,13 @@ export interface FamilyMember {
 export interface FamilyInvite {
   id: string;
   familyId: string;
+  familyName?: string;      // Nome da família (para exibição)
   email: string;
   invitedBy: string;
   invitedByName: string;
   role: FamilyMemberRole;
   message?: string;         // Mensagem personalizada
+  token: string;            // Token único para aceitar convite via link
   expiresAt: string;
   createdAt: string;
   status: 'pending' | 'accepted' | 'declined' | 'expired';

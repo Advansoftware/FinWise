@@ -27,6 +27,7 @@ import {
   X,
   Landmark,
   Users,
+  UsersRound,
 } from "lucide-react";
 import { getFeatureFlags } from "@/lib/feature-flags";
 
@@ -49,6 +50,7 @@ const menuItems = [
   ...baseMenuItems,
   ...openFinanceItems,
   { href: "/reports", label: "Relatórios", icon: FileText },
+  { href: "/family", label: "Família", icon: UsersRound },
   { href: "/tools", label: "Ferramentas", icon: Calculator },
   { href: "/import", label: "Importar", icon: Upload },
 ];

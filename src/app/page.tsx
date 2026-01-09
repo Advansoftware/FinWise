@@ -110,14 +110,13 @@ const plans = [
     name: "Plus",
     price: "R$ 29,90",
     period: "/mês",
-    description: "Poder completo da IA + Ollama",
+    description: "Poder completo da IA",
     features: [
       "Tudo do Pro",
       "300 créditos IA/mês",
       ...(isOpenFinanceEnabled ? ["Open Finance"] : []),
       "OCR de notas fiscais",
       "Importação CSV/OFX",
-      "Ollama local (ilimitado)",
       "Metas financeiras",
       "Análises preditivas",
       "Suporte prioritário",
@@ -131,15 +130,15 @@ const plans = [
     name: "Infinity",
     price: "R$ 49,90",
     period: "/mês",
-    description: "Liberdade total com qualquer IA",
+    description: "Para famílias e desenvolvedores",
     features: [
       "Tudo do Plus",
       "500 créditos IA/mês",
-      "OpenAI (sua chave)",
-      "Google AI (sua chave)",
-      "Qualquer provedor IA",
-      "Uso ilimitado c/ suas chaves",
-      "API access",
+      "Modo Família (até 6 pessoas)",
+      "Compartilhamento seletivo",
+      "Metas compartilhadas",
+      "Relatórios consolidados",
+      "API para desenvolvedores",
       "Suporte 24/7",
     ],
     cta: "Assinar Infinity",
@@ -213,7 +212,7 @@ const faqs = [
   {
     question: "Como funcionam os créditos de IA?",
     answer:
-      "Cada plano oferece créditos mensais para usar a Gastometria IA. Ações simples custam 1-2 créditos, complexas 5-10. Você pode usar Ollama (Plus) ou suas próprias chaves de IA (Infinity) ilimitadamente.",
+      "Cada plano oferece créditos mensais para usar a Gastometria IA. Ações simples custam 1-2 créditos, complexas 5-10. Os créditos são renovados mensalmente e não acumulam.",
   },
 ];
 

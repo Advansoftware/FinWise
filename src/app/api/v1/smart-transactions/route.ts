@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
           updateWallet === true
         );
 
-        return NextResponse.json({ success: true, ...result });
+        return NextResponse.json(result);
       }
 
       default:
