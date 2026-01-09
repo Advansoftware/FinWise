@@ -38,6 +38,7 @@ interface DataTableProps<TData, TValue> {
   hasNextPage?: boolean;
   isFetchingNextPage?: boolean;
   fetchNextPage?: () => void;
+  enableWindowScroll?: boolean;
 }
 
 export function DataTable<TData, TValue>({
@@ -46,6 +47,7 @@ export function DataTable<TData, TValue>({
   hasNextPage,
   isFetchingNextPage,
   fetchNextPage,
+  enableWindowScroll = false,
 }: DataTableProps<TData, TValue>) {
   const [sorting, setSorting] = useState<SortingState>([
     { id: "date", desc: true }, // Ordenação inicial por data decrescente
@@ -70,8 +72,23 @@ export function DataTable<TData, TValue>({
     },
   });
 
-  // Scroll infinito para desktop
+  // Scroll infinito
   const handleScroll = useCallback(() => {
+    // Modo Window Scroll
+    if (enableWindowScroll) {
+      if (!fetchNextPage || !hasNextPage || isFetchingNextPage) return;
+
+      const scrolledToBottom =
+        window.innerHeight + window.scrollY >=
+        document.documentElement.scrollHeight - 500; // 500px threshold
+
+      if (scrolledToBottom) {
+        fetchNextPage();
+      }
+      return;
+    }
+
+    // Modo Container Scroll
     if (!tableContainerRef.current || !fetchNextPage) return;
 
     const { scrollTop, scrollHeight, clientHeight } = tableContainerRef.current;
@@ -83,15 +100,20 @@ export function DataTable<TData, TValue>({
     ) {
       fetchNextPage();
     }
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, enableWindowScroll]);
 
   useEffect(() => {
-    const container = tableContainerRef.current;
-    if (!container) return;
+    if (enableWindowScroll) {
+      window.addEventListener("scroll", handleScroll);
+      return () => window.removeEventListener("scroll", handleScroll);
+    } else {
+      const container = tableContainerRef.current;
+      if (!container) return;
 
-    container.addEventListener("scroll", handleScroll);
-    return () => container.removeEventListener("scroll", handleScroll);
-  }, [handleScroll]);
+      container.addEventListener("scroll", handleScroll);
+      return () => container.removeEventListener("scroll", handleScroll);
+    }
+  }, [handleScroll, enableWindowScroll]);
 
   const selectedRows = table
     .getFilteredSelectedRowModel()
@@ -142,7 +164,10 @@ export function DataTable<TData, TValue>({
           <AnalyzeTransactionsDialog transactions={selectedRows as any} />
         )}
       </Stack>
-      <TableContainer ref={tableContainerRef} sx={{ maxHeight: 600 }}>
+      <TableContainer 
+        ref={tableContainerRef} 
+        sx={{ maxHeight: enableWindowScroll ? undefined : 600 }}
+      >
         <Table stickyHeader>
           <TableHead>
             {table.getHeaderGroups().map((headerGroup) => (

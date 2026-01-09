@@ -183,6 +183,7 @@ export default function TransactionsPage() {
               hasNextPage={hasNextPage}
               isFetchingNextPage={isFetchingNextPage}
               fetchNextPage={fetchNextPage}
+              enableWindowScroll={true}
             />
           )}
         </Grid>
