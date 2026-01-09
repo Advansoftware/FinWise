@@ -9,6 +9,7 @@ import {
   useContext,
   ReactNode,
   useCallback,
+  useRef,
 } from "react";
 import { startOfMonth, endOfDay } from "date-fns";
 import { Transaction, TransactionCategory, DateRange } from "@/lib/types";
@@ -117,11 +118,15 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
     }
   }, [user?.uid]);
 
-  // Load transactions only when needed (lazy loading)
+  // Use ref to track hasLoaded to avoid recreating loadTransactions
+  const hasLoadedRef = useRef(hasLoaded);
+  hasLoadedRef.current = hasLoaded;
+
+  // Load transactions only when needed (lazy loading) - stable reference
   const loadTransactions = useCallback(async () => {
-    if (!user || hasLoaded) return;
+    if (!user || hasLoadedRef.current) return;
     await refreshDataInternal();
-  }, [user, hasLoaded, refreshDataInternal]);
+  }, [user?.uid, refreshDataInternal]);
 
   // Expose refreshData that forces reload
   const refreshData = useCallback(async () => {

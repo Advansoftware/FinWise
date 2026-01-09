@@ -6,6 +6,7 @@ import React, {
   useState,
   useEffect,
   useCallback,
+  useRef,
 } from "react";
 import {
   Installment,
@@ -74,6 +75,10 @@ export function InstallmentsProvider({
   const [isOnline, setIsOnline] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
 
+  // Use ref to track hasLoaded to avoid recreating loadInstallments
+  const hasLoadedRef = useRef(hasLoaded);
+  hasLoadedRef.current = hasLoaded;
+
   const { user } = useAuth();
   const { toast } = useToast();
   const { registerRefreshHandler, unregisterRefreshHandler, triggerRefresh } =
@@ -140,9 +145,9 @@ export function InstallmentsProvider({
 
   // Load installments only when needed (lazy loading)
   const loadInstallments = useCallback(async () => {
-    if (!user?.uid || hasLoaded) return;
+    if (!user?.uid || hasLoadedRef.current) return;
     await refreshDataInternal();
-  }, [user?.uid, hasLoaded, refreshDataInternal]);
+  }, [user?.uid, refreshDataInternal]);
 
   // Expose refreshData that forces reload
   const refreshData = useCallback(async () => {

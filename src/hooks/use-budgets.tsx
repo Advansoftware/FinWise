@@ -9,6 +9,7 @@ import {
   useContext,
   ReactNode,
   useCallback,
+  useRef,
 } from "react";
 import { startOfMonth, endOfMonth } from "date-fns";
 import { Budget } from "@/lib/types";
@@ -45,6 +46,10 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
   const [isOnline, setIsOnline] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
 
+  // Use ref to track hasLoaded to avoid recreating loadBudgets
+  const hasLoadedRef = useRef(hasLoaded);
+  hasLoadedRef.current = hasLoaded;
+
   // Monitor online/offline status
   useEffect(() => {
     const updateOnlineStatus = () => {
@@ -62,7 +67,7 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
 
   // Load budgets only when needed (lazy loading)
   const loadBudgets = useCallback(async () => {
-    if (!user || hasLoaded) return;
+    if (!user || hasLoadedRef.current) return;
 
     setIsLoading(true);
     try {
@@ -77,7 +82,7 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [user, hasLoaded]);
+  }, [user?.uid]);
 
   // Force refresh (ignores hasLoaded)
   const refreshBudgetsInternal = useCallback(async () => {

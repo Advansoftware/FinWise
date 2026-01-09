@@ -88,9 +88,13 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
   // Track if data has been loaded
   const [hasLoaded, setHasLoaded] = useState(false);
 
+  // Use ref to track hasLoaded to avoid recreating loadGoals
+  const hasLoadedRef = useRef(hasLoaded);
+  hasLoadedRef.current = hasLoaded;
+
   // Load goals only when needed (lazy loading)
   const loadGoals = useCallback(async () => {
-    if (!user || hasLoaded) return;
+    if (!user || hasLoadedRef.current) return;
 
     setIsLoading(true);
     try {
@@ -103,7 +107,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [user, hasLoaded]);
+  }, [user?.uid]);
 
   // Force refresh (ignores hasLoaded)
   const refreshGoals = useCallback(async () => {

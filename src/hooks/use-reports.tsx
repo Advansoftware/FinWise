@@ -8,6 +8,7 @@ import {
   useContext,
   ReactNode,
   useCallback,
+  useRef,
 } from "react";
 import { useToast } from "./use-toast";
 import { useAuth } from "./use-auth";
@@ -58,6 +59,10 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
   const [isLoading, setIsLoading] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const [hasLoaded, setHasLoaded] = useState(false);
+
+  // Use ref to track hasLoaded to avoid recreating loadReports
+  const hasLoadedRef = useRef(hasLoaded);
+  hasLoadedRef.current = hasLoaded;
 
   // Monitor online/offline status
   useEffect(() => {
@@ -128,7 +133,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
 
   // Load reports only when needed (lazy loading)
   const loadReports = useCallback(async () => {
-    if (!user || hasLoaded) return;
+    if (!user || hasLoadedRef.current) return;
 
     setIsLoading(true);
     try {
@@ -138,7 +143,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, [user, hasLoaded, fetchData]);
+  }, [user?.uid, fetchData]);
 
   // Force refresh (ignores hasLoaded)
   const refreshReportsInternal = useCallback(async () => {

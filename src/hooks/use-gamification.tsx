@@ -255,6 +255,10 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
 
+  // Use ref to track hasLoaded to avoid recreating loadGamification
+  const hasLoadedRef = useRef(hasLoaded);
+  hasLoadedRef.current = hasLoaded;
+
   // Notificações
   const [xpNotifications, setXpNotifications] = useState<XpNotification[]>([]);
   const [levelUpEvent, setLevelUpEvent] = useState<LevelUpEvent | null>(null);
@@ -408,9 +412,9 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
 
   // Load gamification data only when needed (lazy loading)
   const loadGamification = useCallback(async () => {
-    if (!user?.uid || hasLoaded) return;
+    if (!user?.uid || hasLoadedRef.current) return;
     await fetchGamificationData();
-  }, [user?.uid, hasLoaded, fetchGamificationData]);
+  }, [user?.uid, fetchGamificationData]);
 
   // Register refresh handler (but don't load immediately)
   useEffect(() => {
