@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/providers/auth_provider.dart';
+import '../../core/theme/app_theme.dart';
+import '../../core/widgets/gastometria_logo.dart';
 
 /// Tela de splash com validação biométrica
 class SplashScreen extends StatefulWidget {
@@ -72,14 +74,16 @@ class _SplashScreenState extends State<SplashScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Theme.of(context).colorScheme.primary,
-              Theme.of(context).colorScheme.primaryContainer,
+              Color(0xFF1a0a30), // Roxo muito escuro
+              Color(0xFF0d1b2a), // Azul muito escuro
+              Color(0xFF030712), // Preto do tema
             ],
+            stops: [0.0, 0.5, 1.0],
           ),
         ),
         child: SafeArea(
@@ -87,40 +91,14 @@ class _SplashScreenState extends State<SplashScreen> {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // Logo
-                Container(
-                  padding: const EdgeInsets.all(24),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  child: const Icon(
-                    Icons.account_balance_wallet,
-                    size: 80,
-                    color: Colors.white,
-                  ),
+                // Logo Gastometria (igual ao site)
+                const GastometriaLogo(
+                  size: 80,
+                  showText: false,
                 ),
-                const SizedBox(height: 24),
-                const Text(
-                  'FinWise',
-                  style: TextStyle(
-                    fontSize: 36,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Controle financeiro inteligente',
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white.withValues(alpha: 0.8),
-                  ),
-                ),
-                const SizedBox(height: 48),
+                const SizedBox(height: 32),
                 
-                // Biometric prompt ou loading
+                // Biometric prompt ou loading spinner
                 if (_showBiometricPrompt)
                   _BiometricPrompt(
                     isAuthenticating: _isAuthenticating,
@@ -130,20 +108,15 @@ class _SplashScreenState extends State<SplashScreen> {
                     onSkip: _skipBiometric,
                   )
                 else
-                  Column(
-                    children: [
-                      const CircularProgressIndicator(
-                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                  SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        AppColors.primaryDark.withValues(alpha: 0.8),
                       ),
-                      const SizedBox(height: 16),
-                      Text(
-                        'Carregando...',
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.8),
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
+                      strokeWidth: 2.5,
+                    ),
                   ),
               ],
             ),

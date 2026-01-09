@@ -49,38 +49,54 @@ class InstallmentModel {
   });
 
   factory InstallmentModel.fromJson(Map<String, dynamic> json) {
+    // Parseia payments primeiro para calcular campos derivados
+    final payments = (json['payments'] as List<dynamic>?)
+            ?.map((p) => InstallmentPayment.fromJson(p as Map<String, dynamic>))
+            .toList() ??
+        [];
+    
+    final totalInstallments = json['totalInstallments'] as int? ?? 0;
+    final installmentAmount = (json['installmentAmount'] as num?)?.toDouble() ?? 0;
+    
+    // Calcula campos derivados baseado nos payments - conta apenas os que estão PAGOS
+    final paidPayments = payments.where((p) => p.isPaid).toList();
+    final paidInstallmentsCount = paidPayments.length;
+    final paidInstallments = paidInstallmentsCount;
+    final remainingInstallments = totalInstallments > 0 ? (totalInstallments - paidInstallmentsCount) : 0;
+    final totalPaid = paidPayments.fold<double>(0, (sum, p) => sum + (p.paidAmount ?? p.scheduledAmount));
+    final totalAmount = (json['totalAmount'] as num?)?.toDouble() ?? (installmentAmount * totalInstallments);
+    final remainingAmount = totalAmount - totalPaid;
+    final isCompleted = paidInstallmentsCount >= totalInstallments && totalInstallments > 0;
+
     return InstallmentModel(
       id: json['id'] as String? ?? json['_id'] as String? ?? '',
       name: json['name'] as String? ?? '',
       description: json['description'] as String?,
-      totalAmount: (json['totalAmount'] as num?)?.toDouble() ?? 0,
-      totalInstallments: json['totalInstallments'] as int? ?? 0,
-      installmentAmount: (json['installmentAmount'] as num?)?.toDouble() ?? 0,
+      totalAmount: totalAmount,
+      totalInstallments: totalInstallments,
+      installmentAmount: installmentAmount,
       category: json['category'] as String? ?? 'Outros',
       subcategory: json['subcategory'] as String?,
       establishment: json['establishment'] as String?,
       startDate: json['startDate'] != null
           ? DateTime.parse(json['startDate'] as String)
           : DateTime.now(),
-      sourceWalletId: json['sourceWalletId'] as String? ?? '',
+      sourceWalletId: json['sourceWalletId'] as String? ?? json['walletId'] as String? ?? '',
       isActive: json['isActive'] as bool? ?? true,
       isRecurring: json['isRecurring'] as bool? ?? false,
       recurringType: json['recurringType'] as String?,
       endDate: json['endDate'] != null
           ? DateTime.parse(json['endDate'] as String)
           : null,
-      paidInstallments: json['paidInstallments'] as int? ?? 0,
-      remainingInstallments: json['remainingInstallments'] as int? ?? 0,
-      totalPaid: (json['totalPaid'] as num?)?.toDouble() ?? 0,
-      remainingAmount: (json['remainingAmount'] as num?)?.toDouble() ?? 0,
+      paidInstallments: paidInstallments,
+      remainingInstallments: remainingInstallments,
+      totalPaid: totalPaid,
+      remainingAmount: remainingAmount,
       nextDueDate: json['nextDueDate'] != null
           ? DateTime.parse(json['nextDueDate'] as String)
           : null,
-      isCompleted: json['isCompleted'] as bool? ?? false,
-      payments: (json['payments'] as List<dynamic>?)
-              ?.map((p) => InstallmentPayment.fromJson(p as Map<String, dynamic>))
-              .toList() ??
-          [],
+      isCompleted: isCompleted,
+      payments: payments,
     );
   }
 

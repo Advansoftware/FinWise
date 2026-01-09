@@ -44,9 +44,11 @@ export async function POST(
       return NextResponse.json({ error: "Installment not found" }, { status: 404 });
     }
 
-    // Check if already paid
+    // Check if already paid - only count entries with status 'paid'
     const payments = installment.payments || [];
-    const alreadyPaid = payments.some((p: any) => p.installmentNumber === installmentNumber);
+    const alreadyPaid = payments.some((p: any) =>
+      p.installmentNumber === installmentNumber && p.status === 'paid'
+    );
 
     if (alreadyPaid) {
       return NextResponse.json({ error: "This installment is already paid" }, { status: 400 });
@@ -59,21 +61,48 @@ export async function POST(
       status: "paid"
     };
 
-    await db.collection("installments").updateOne(
-      { _id: new ObjectId(id) },
-      { $push: { payments: newPayment } as any }
+    // Check if there's an existing pending entry for this installmentNumber
+    const existingPendingIndex = payments.findIndex((p: any) =>
+      p.installmentNumber === installmentNumber && p.status !== 'paid'
     );
+
+    if (existingPendingIndex >= 0) {
+      // Update existing entry to paid
+      await db.collection("installments").updateOne(
+        { _id: new ObjectId(id), "payments.installmentNumber": installmentNumber },
+        {
+          $set: {
+            [`payments.${existingPendingIndex}.status`]: "paid",
+            [`payments.${existingPendingIndex}.paidAmount`]: newPayment.paidAmount,
+            [`payments.${existingPendingIndex}.paidDate`]: newPayment.paidDate,
+          }
+        }
+      );
+    } else {
+      // Add new payment entry
+      await db.collection("installments").updateOne(
+        { _id: new ObjectId(id) },
+        { $push: { payments: newPayment } as any }
+      );
+    }
+
+    // Fetch the updated installment to return complete data
+    const updatedInstallment = await db.collection("installments").findOne({
+      _id: new ObjectId(id),
+      userId: user.id
+    });
 
     return NextResponse.json({
       success: true,
-      id,
-      payment: newPayment,
-      paidCount: payments.length + 1,
-      totalInstallments: installment.totalInstallments,
-      remaining: installment.totalInstallments - (payments.length + 1)
+      installment: {
+        ...updatedInstallment,
+        id: updatedInstallment?._id.toString(),
+        _id: undefined,
+      }
     });
 
   } catch (error) {
+    console.error("Error marking installment as paid:", error);
     return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }

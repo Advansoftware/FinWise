@@ -21,7 +21,7 @@ class ApiResult<T> {
   bool get isForbidden => statusCode == 403;
 }
 
-/// Serviço de API base do FinWise
+/// Serviço de API base do Gastometria
 class ApiService {
   static final ApiService _instance = ApiService._internal();
   factory ApiService() => _instance;

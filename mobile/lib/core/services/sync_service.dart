@@ -3,6 +3,7 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart';
 import 'local_storage_service.dart';
 import 'api_service.dart';
+import '../constants/api_constants.dart';
 import '../models/models.dart';
 
 /// Serviço de sincronização inteligente em background
@@ -145,7 +146,7 @@ class SyncService {
     switch (op.type) {
       case OperationType.create:
         await _apiService.post<Map<String, dynamic>>(
-          '/api/v1/transactions',
+          ApiConstants.transactions,
           op.data,
           (data) => data,
         );
@@ -153,14 +154,14 @@ class SyncService {
       case OperationType.update:
         final id = op.data['id'] as String;
         await _apiService.put<Map<String, dynamic>>(
-          '/api/v1/transactions/$id',
+          '${ApiConstants.transactions}/$id',
           op.data,
           (data) => data,
         );
         break;
       case OperationType.delete:
         final id = op.data['id'] as String;
-        await _apiService.delete('/api/v1/transactions/$id');
+        await _apiService.delete('${ApiConstants.transactions}/$id');
         break;
     }
   }
@@ -169,7 +170,7 @@ class SyncService {
     switch (op.type) {
       case OperationType.create:
         await _apiService.post<Map<String, dynamic>>(
-          '/api/v1/wallets',
+          ApiConstants.wallets,
           op.data,
           (data) => data,
         );
@@ -177,14 +178,14 @@ class SyncService {
       case OperationType.update:
         final id = op.data['id'] as String;
         await _apiService.put<Map<String, dynamic>>(
-          '/api/v1/wallets/$id',
+          '${ApiConstants.wallets}/$id',
           op.data,
           (data) => data,
         );
         break;
       case OperationType.delete:
         final id = op.data['id'] as String;
-        await _apiService.delete('/api/v1/wallets/$id');
+        await _apiService.delete('${ApiConstants.wallets}/$id');
         break;
     }
   }
@@ -204,9 +205,9 @@ class SyncService {
 
       // Busca transações
       final transactionsResult = await _apiService.getList<TransactionModel>(
-        '/api/v1/transactions',
+        ApiConstants.transactions,
         TransactionModel.fromJson,
-        listKey: 'transactions',
+        // API returns array directly, no wrapper
       );
       if (transactionsResult.isSuccess && transactionsResult.data != null) {
         final remoteTransactions = transactionsResult.data!;
@@ -228,9 +229,9 @@ class SyncService {
 
       // Busca carteiras
       final walletsResult = await _apiService.getList<WalletModel>(
-        '/api/v1/wallets',
+        ApiConstants.wallets,
         WalletModel.fromJson,
-        listKey: 'wallets',
+        // API returns array directly, no wrapper
       );
       if (walletsResult.isSuccess && walletsResult.data != null) {
         final wallets = walletsResult.data!;
@@ -424,9 +425,9 @@ class SyncService {
     if (_isOnline && forceRefresh) {
       try {
         final result = await _apiService.getList<TransactionModel>(
-          '/api/v1/transactions',
+          ApiConstants.transactions,
           TransactionModel.fromJson,
-          listKey: 'transactions',
+          // API returns array directly, no wrapper
         );
         if (result.isSuccess && result.data != null) {
           await _localStorage.cacheTransactions(result.data!);

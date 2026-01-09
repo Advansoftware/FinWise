@@ -8,6 +8,7 @@ class LocalStorageService {
   static const String _pendingOperationsKey = 'pending_operations';
   static const String _lastSyncKey = 'last_sync_timestamp';
   static const String _walletsKey = 'cached_wallets';
+  static const String _installmentsKey = 'cached_installments';
   static const String _userKey = 'cached_user';
 
   SharedPreferences? _prefs;
@@ -142,6 +143,45 @@ class LocalStorageService {
     }
   }
 
+  // ==================== PARCELAMENTOS ====================
+
+  /// Salva parcelamentos no cache local
+  Future<void> cacheInstallments(List<InstallmentModel> installments) async {
+    await init();
+    final jsonList = installments.map((i) => i.toJson()).toList();
+    await prefs.setString(_installmentsKey, jsonEncode(jsonList));
+  }
+
+  /// Recupera parcelamentos do cache local
+  Future<List<InstallmentModel>> getCachedInstallments() async {
+    await init();
+    final jsonString = prefs.getString(_installmentsKey);
+    if (jsonString == null || jsonString.isEmpty) return [];
+
+    try {
+      final jsonList = jsonDecode(jsonString) as List<dynamic>;
+      return jsonList
+          .map((json) => InstallmentModel.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  /// Atualiza um parcelamento no cache local
+  Future<void> updateInstallmentInCache(InstallmentModel installment) async {
+    final installments = await getCachedInstallments();
+    final index = installments.indexWhere((i) => i.id == installment.id);
+    if (index != -1) {
+      installments[index] = installment;
+      await cacheInstallments(installments);
+    } else {
+      // Se não existe, adiciona
+      installments.insert(0, installment);
+      await cacheInstallments(installments);
+    }
+  }
+
   // ==================== USUÁRIO ====================
 
   /// Salva dados do usuário no cache local
@@ -186,6 +226,7 @@ class LocalStorageService {
     await prefs.remove(_pendingOperationsKey);
     await prefs.remove(_lastSyncKey);
     await prefs.remove(_walletsKey);
+    await prefs.remove(_installmentsKey);
     await prefs.remove(_userKey);
   }
 }

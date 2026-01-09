@@ -1,4 +1,4 @@
-/// Modelo de usuário do FinWise
+/// Modelo de usuário do Gastometria
 class UserModel {
   final String id;
   final String email;
