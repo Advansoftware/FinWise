@@ -21,7 +21,6 @@ class BudgetService {
       ApiConstants.budgets,
       BudgetModel.fromJson,
       queryParams: queryParams,
-      listKey: 'budgets',
     );
   }
 

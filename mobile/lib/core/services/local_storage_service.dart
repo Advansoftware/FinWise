@@ -9,6 +9,8 @@ class LocalStorageService {
   static const String _lastSyncKey = 'last_sync_timestamp';
   static const String _walletsKey = 'cached_wallets';
   static const String _installmentsKey = 'cached_installments';
+  static const String _budgetsKey = 'cached_budgets';
+  static const String _goalsKey = 'cached_goals';
   static const String _userKey = 'cached_user';
 
   SharedPreferences? _prefs;
@@ -179,6 +181,56 @@ class LocalStorageService {
       // Se não existe, adiciona
       installments.insert(0, installment);
       await cacheInstallments(installments);
+    }
+  }
+
+  // ==================== ORÇAMENTOS ====================
+
+  /// Salva orçamentos no cache local
+  Future<void> cacheBudgets(List<BudgetModel> budgets) async {
+    await init();
+    final jsonList = budgets.map((b) => b.toJson()).toList();
+    await prefs.setString(_budgetsKey, jsonEncode(jsonList));
+  }
+
+  /// Recupera orçamentos do cache local
+  Future<List<BudgetModel>> getCachedBudgets() async {
+    await init();
+    final jsonString = prefs.getString(_budgetsKey);
+    if (jsonString == null || jsonString.isEmpty) return [];
+
+    try {
+      final jsonList = jsonDecode(jsonString) as List<dynamic>;
+      return jsonList
+          .map((json) => BudgetModel.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      return [];
+    }
+  }
+
+  // ==================== METAS ====================
+
+  /// Salva metas no cache local
+  Future<void> cacheGoals(List<GoalModel> goals) async {
+    await init();
+    final jsonList = goals.map((g) => g.toJson()).toList();
+    await prefs.setString(_goalsKey, jsonEncode(jsonList));
+  }
+
+  /// Recupera metas do cache local
+  Future<List<GoalModel>> getCachedGoals() async {
+    await init();
+    final jsonString = prefs.getString(_goalsKey);
+    if (jsonString == null || jsonString.isEmpty) return [];
+
+    try {
+      final jsonList = jsonDecode(jsonString) as List<dynamic>;
+      return jsonList
+          .map((json) => GoalModel.fromJson(json as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      return [];
     }
   }
 

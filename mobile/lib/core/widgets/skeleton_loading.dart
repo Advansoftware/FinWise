@@ -222,3 +222,180 @@ class SkeletonDashboard extends StatelessWidget {
     );
   }
 }
+
+/// Card de Skeleton para orçamentos
+class SkeletonBudgetCard extends StatelessWidget {
+  const SkeletonBudgetCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const SkeletonLoading(width: 40, height: 40, borderRadius: 10),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonLoading(width: 100, height: 16, borderRadius: 4),
+                    const SizedBox(height: 6),
+                    SkeletonLoading(width: 70, height: 12, borderRadius: 4),
+                  ],
+                ),
+              ),
+              SkeletonLoading(width: 60, height: 16, borderRadius: 4),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SkeletonLoading(width: double.infinity, height: 8, borderRadius: 4),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              SkeletonLoading(width: 80, height: 12, borderRadius: 4),
+              SkeletonLoading(width: 80, height: 12, borderRadius: 4),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Card de Skeleton para metas
+class SkeletonGoalCard extends StatelessWidget {
+  const SkeletonGoalCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const SkeletonLoading(width: 48, height: 48, borderRadius: 12),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonLoading(width: 120, height: 16, borderRadius: 4),
+                    const SizedBox(height: 6),
+                    SkeletonLoading(width: 80, height: 12, borderRadius: 4),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SkeletonLoading(width: double.infinity, height: 8, borderRadius: 4),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              SkeletonLoading(width: 100, height: 14, borderRadius: 4),
+              SkeletonLoading(width: 100, height: 14, borderRadius: 4),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Lista de Skeleton para orçamentos
+class SkeletonBudgetList extends StatelessWidget {
+  final int itemCount;
+  const SkeletonBudgetList({super.key, this.itemCount = 5});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: itemCount,
+      itemBuilder: (context, index) => const SkeletonBudgetCard(),
+    );
+  }
+}
+
+/// Lista de Skeleton para metas
+class SkeletonGoalList extends StatelessWidget {
+  final int itemCount;
+  const SkeletonGoalList({super.key, this.itemCount = 5});
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: itemCount,
+      itemBuilder: (context, index) => const SkeletonGoalCard(),
+    );
+  }
+}
+
+/// Card de Skeleton para parcelamentos
+class SkeletonInstallmentCard extends StatelessWidget {
+  const SkeletonInstallmentCard({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.03),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const SkeletonLoading(width: 44, height: 44, borderRadius: 12),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    SkeletonLoading(width: 140, height: 16, borderRadius: 4),
+                    const SizedBox(height: 6),
+                    SkeletonLoading(width: 90, height: 12, borderRadius: 4),
+                  ],
+                ),
+              ),
+              SkeletonLoading(width: 70, height: 18, borderRadius: 4),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SkeletonLoading(width: double.infinity, height: 6, borderRadius: 3),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              SkeletonLoading(width: 60, height: 12, borderRadius: 4),
+              SkeletonLoading(width: 80, height: 12, borderRadius: 4),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+

@@ -5,6 +5,7 @@ import '../../core/models/models.dart';
 import '../../core/providers/goal_provider.dart';
 import 'goal_form_screen.dart';
 import 'widgets/widgets.dart';
+import '../../core/widgets/skeleton_loading.dart';
 
 class GoalsScreen extends StatefulWidget {
   const GoalsScreen({super.key});
@@ -65,9 +66,7 @@ class _GoalsScreenState extends State<GoalsScreen>
       body: Consumer<GoalProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading && provider.goals.isEmpty) {
-            return const Center(
-              child: CircularProgressIndicator(color: AppTheme.primary),
-            );
+            return const SkeletonGoalList();
           }
 
           return TabBarView(

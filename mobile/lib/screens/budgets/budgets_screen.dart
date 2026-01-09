@@ -5,6 +5,7 @@ import '../../core/models/models.dart';
 import '../../core/providers/budget_provider.dart';
 import 'budget_form_screen.dart';
 import 'widgets/widgets.dart';
+import '../../core/widgets/skeleton_loading.dart';
 
 class BudgetsScreen extends StatefulWidget {
   const BudgetsScreen({super.key});
@@ -65,9 +66,7 @@ class _BudgetsScreenState extends State<BudgetsScreen> {
       body: Consumer<BudgetProvider>(
         builder: (context, provider, _) {
           if (provider.isLoading && provider.budgets.isEmpty) {
-            return const Center(
-              child: CircularProgressIndicator(color: AppTheme.primary),
-            );
+            return const SkeletonBudgetList();
           }
 
           return RefreshIndicator(

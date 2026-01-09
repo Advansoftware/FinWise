@@ -2,17 +2,22 @@ import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../services/services.dart';
 
-/// Provider para gerenciamento de orçamentos
+/// Provider para gerenciamento de orçamentos com suporte offline-first
 class BudgetProvider extends ChangeNotifier {
   final BudgetService _budgetService = BudgetService();
+  late final LocalStorageService _localStorage;
 
   List<BudgetModel> _budgets = [];
   bool _isLoading = false;
+  bool _isRefreshing = false;
   String? _error;
+  bool _isOfflineMode = false;
 
   List<BudgetModel> get budgets => _budgets;
   bool get isLoading => _isLoading;
+  bool get isRefreshing => _isRefreshing;
   String? get error => _error;
+  bool get isOfflineMode => _isOfflineMode;
 
   // Resumo dos orçamentos
   BudgetSummary get summary {
@@ -40,11 +45,33 @@ class BudgetProvider extends ChangeNotifier {
     );
   }
 
-  /// Carrega os orçamentos
+  BudgetProvider() {
+    _localStorage = LocalStorageService();
+    _initOfflineSupport();
+  }
+
+  Future<void> _initOfflineSupport() async {
+    await _localStorage.init();
+    // Carrega orçamentos do cache local primeiro (instantâneo)
+    final cached = await _localStorage.getCachedBudgets();
+    if (cached.isNotEmpty) {
+      _budgets = cached;
+      notifyListeners();
+    }
+  }
+
+  /// Carrega os orçamentos - offline first
   Future<void> loadBudgets({int? month, int? year}) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+    // Se não temos dados, mostra loading
+    if (_budgets.isEmpty) {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+    } else {
+      // Se já temos dados do cache, mostra refresh indicator sutil
+      _isRefreshing = true;
+      notifyListeners();
+    }
 
     try {
       final result = await _budgetService.getBudgets(
@@ -54,14 +81,34 @@ class BudgetProvider extends ChangeNotifier {
 
       if (result.isSuccess && result.data != null) {
         _budgets = result.data!;
+        _isOfflineMode = false;
+        
+        // Salva no cache local
+        await _localStorage.cacheBudgets(_budgets);
       } else {
-        _error = result.error ?? 'Erro ao carregar orçamentos';
+        // Fallback para cache local se offline
+        if (_budgets.isEmpty) {
+          final cached = await _localStorage.getCachedBudgets();
+          if (cached.isNotEmpty) {
+            _budgets = cached;
+            _isOfflineMode = true;
+            _error = null;
+          } else {
+            _error = result.error ?? 'Erro ao carregar orçamentos';
+          }
+        } else {
+          _isOfflineMode = true;
+        }
       }
     } catch (e) {
-      _error = 'Erro ao carregar orçamentos: $e';
+      if (_budgets.isEmpty) {
+        _error = 'Erro ao carregar orçamentos: $e';
+      }
+      _isOfflineMode = true;
       debugPrint(_error);
     } finally {
       _isLoading = false;
+      _isRefreshing = false;
       notifyListeners();
     }
   }
@@ -76,6 +123,10 @@ class BudgetProvider extends ChangeNotifier {
 
       if (result.isSuccess && result.data != null) {
         _budgets.insert(0, result.data!);
+        
+        // Atualiza cache
+        await _localStorage.cacheBudgets(_budgets);
+        
         notifyListeners();
         return true;
       }
@@ -101,6 +152,10 @@ class BudgetProvider extends ChangeNotifier {
         final index = _budgets.indexWhere((b) => b.id == id);
         if (index >= 0) {
           _budgets[index] = result.data!;
+          
+          // Atualiza cache
+          await _localStorage.cacheBudgets(_budgets);
+          
           notifyListeners();
         }
         return true;
@@ -122,6 +177,10 @@ class BudgetProvider extends ChangeNotifier {
 
       if (result.isSuccess) {
         _budgets.removeWhere((b) => b.id == id);
+        
+        // Atualiza cache
+        await _localStorage.cacheBudgets(_budgets);
+        
         notifyListeners();
         return true;
       }
@@ -141,5 +200,3 @@ class BudgetProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
-
-

@@ -2,17 +2,22 @@ import 'package:flutter/material.dart';
 import '../models/models.dart';
 import '../services/services.dart';
 
-/// Provider para gerenciamento de metas financeiras
+/// Provider para gerenciamento de metas financeiras com suporte offline-first
 class GoalProvider extends ChangeNotifier {
   final GoalService _goalService = GoalService();
+  late final LocalStorageService _localStorage;
 
   List<GoalModel> _goals = [];
   bool _isLoading = false;
+  bool _isRefreshing = false;
   String? _error;
+  bool _isOfflineMode = false;
 
   List<GoalModel> get goals => _goals;
   bool get isLoading => _isLoading;
+  bool get isRefreshing => _isRefreshing;
   String? get error => _error;
+  bool get isOfflineMode => _isOfflineMode;
 
   // Metas ativas (não concluídas)
   List<GoalModel> get activeGoals =>
@@ -26,18 +31,10 @@ class GoalProvider extends ChangeNotifier {
   GoalsSummary get summary {
     double totalTarget = 0;
     double totalCurrent = 0;
-    int completedCount = 0;
-    int inProgressCount = 0;
 
     for (final goal in _goals) {
       totalTarget += goal.targetAmount;
       totalCurrent += goal.currentAmount;
-
-      if (goal.currentAmount >= goal.targetAmount) {
-        completedCount++;
-      } else {
-        inProgressCount++;
-      }
     }
 
     return GoalsSummary(
@@ -46,25 +43,67 @@ class GoalProvider extends ChangeNotifier {
     );
   }
 
-  /// Carrega as metas
+  GoalProvider() {
+    _localStorage = LocalStorageService();
+    _initOfflineSupport();
+  }
+
+  Future<void> _initOfflineSupport() async {
+    await _localStorage.init();
+    // Carrega metas do cache local primeiro (instantâneo)
+    final cached = await _localStorage.getCachedGoals();
+    if (cached.isNotEmpty) {
+      _goals = cached;
+      notifyListeners();
+    }
+  }
+
+  /// Carrega as metas - offline first
   Future<void> loadGoals({bool activeOnly = false}) async {
-    _isLoading = true;
-    _error = null;
-    notifyListeners();
+    // Se não temos dados, mostra loading
+    if (_goals.isEmpty) {
+      _isLoading = true;
+      _error = null;
+      notifyListeners();
+    } else {
+      // Se já temos dados do cache, mostra refresh indicator sutil
+      _isRefreshing = true;
+      notifyListeners();
+    }
 
     try {
       final result = await _goalService.getGoals(activeOnly: activeOnly);
 
       if (result.isSuccess && result.data != null) {
         _goals = result.data!;
+        _isOfflineMode = false;
+        
+        // Salva no cache local
+        await _localStorage.cacheGoals(_goals);
       } else {
-        _error = result.error ?? 'Erro ao carregar metas';
+        // Fallback para cache local se offline
+        if (_goals.isEmpty) {
+          final cached = await _localStorage.getCachedGoals();
+          if (cached.isNotEmpty) {
+            _goals = cached;
+            _isOfflineMode = true;
+            _error = null;
+          } else {
+            _error = result.error ?? 'Erro ao carregar metas';
+          }
+        } else {
+          _isOfflineMode = true;
+        }
       }
     } catch (e) {
-      _error = 'Erro ao carregar metas: $e';
+      if (_goals.isEmpty) {
+        _error = 'Erro ao carregar metas: $e';
+      }
+      _isOfflineMode = true;
       debugPrint(_error);
     } finally {
       _isLoading = false;
+      _isRefreshing = false;
       notifyListeners();
     }
   }
@@ -79,6 +118,10 @@ class GoalProvider extends ChangeNotifier {
 
       if (result.isSuccess && result.data != null) {
         _goals.insert(0, result.data!);
+        
+        // Atualiza cache
+        await _localStorage.cacheGoals(_goals);
+        
         notifyListeners();
         return true;
       }
@@ -104,6 +147,10 @@ class GoalProvider extends ChangeNotifier {
         final index = _goals.indexWhere((g) => g.id == id);
         if (index >= 0) {
           _goals[index] = result.data!;
+          
+          // Atualiza cache
+          await _localStorage.cacheGoals(_goals);
+          
           notifyListeners();
         }
         return true;
@@ -127,6 +174,10 @@ class GoalProvider extends ChangeNotifier {
         final index = _goals.indexWhere((g) => g.id == id);
         if (index >= 0) {
           _goals[index] = result.data!;
+          
+          // Atualiza cache
+          await _localStorage.cacheGoals(_goals);
+          
           notifyListeners();
         }
         return true;
@@ -148,6 +199,10 @@ class GoalProvider extends ChangeNotifier {
 
       if (result.isSuccess) {
         _goals.removeWhere((g) => g.id == id);
+        
+        // Atualiza cache
+        await _localStorage.cacheGoals(_goals);
+        
         notifyListeners();
         return true;
       }
@@ -167,5 +222,3 @@ class GoalProvider extends ChangeNotifier {
     notifyListeners();
   }
 }
-
-

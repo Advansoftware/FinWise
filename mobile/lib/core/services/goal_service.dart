@@ -18,7 +18,6 @@ class GoalService {
       ApiConstants.goals,
       GoalModel.fromJson,
       queryParams: queryParams.isNotEmpty ? queryParams : null,
-      listKey: 'goals',
     );
   }
 

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/providers/providers.dart';
+import '../../core/services/local_storage_service.dart';
 
 /// Tela de Configurações
 /// Contém: Biometria, tema, notificações, etc.
@@ -15,11 +17,28 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   bool _biometricAvailable = false;
   String _biometricDescription = 'Biometria';
+  bool _pushNotificationsEnabled = true;
+  bool _installmentRemindersEnabled = true;
+  final LocalStorageService _localStorage = LocalStorageService();
 
   @override
   void initState() {
     super.initState();
     _checkBiometric();
+    _loadNotificationSettings();
+  }
+
+  Future<void> _loadNotificationSettings() async {
+    await _localStorage.init();
+    // Load notification preferences from local storage
+    final pushEnabled = _localStorage.prefs.getBool('push_notifications_enabled') ?? true;
+    final remindersEnabled = _localStorage.prefs.getBool('installment_reminders_enabled') ?? true;
+    if (mounted) {
+      setState(() {
+        _pushNotificationsEnabled = pushEnabled;
+        _installmentRemindersEnabled = remindersEnabled;
+      });
+    }
   }
 
   Future<void> _checkBiometric() async {
@@ -96,9 +115,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 icon: Icons.notifications_outlined,
                 label: 'Notificações push',
                 trailing: Switch(
-                  value: true,
-                  onChanged: (value) {
-                    // TODO: Implementar toggle de notificações
+                  value: _pushNotificationsEnabled,
+                  onChanged: (value) async {
+                    setState(() => _pushNotificationsEnabled = value);
+                    await _localStorage.prefs.setBool('push_notifications_enabled', value);
                   },
                   activeColor: AppTheme.primary,
                 ),
@@ -108,9 +128,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 icon: Icons.calendar_today_outlined,
                 label: 'Lembrete de parcelas',
                 trailing: Switch(
-                  value: true,
-                  onChanged: (value) {
-                    // TODO: Implementar toggle de lembretes
+                  value: _installmentRemindersEnabled,
+                  onChanged: (value) async {
+                    setState(() => _installmentRemindersEnabled = value);
+                    await _localStorage.prefs.setBool('installment_reminders_enabled', value);
                   },
                   activeColor: AppTheme.primary,
                 ),
@@ -177,18 +198,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 icon: Icons.description_outlined,
                 label: 'Termos de uso',
                 subtitle: 'Leia nossos termos',
-                onTap: () {
-                  // TODO: Abrir termos
-                },
+                onTap: () => _openUrl('https://gastometria.com.br/terms'),
               ),
               const Divider(color: AppTheme.border, height: 1),
               _SettingsItemButton(
                 icon: Icons.privacy_tip_outlined,
                 label: 'Política de privacidade',
                 subtitle: 'Saiba como protegemos seus dados',
-                onTap: () {
-                  // TODO: Abrir política
-                },
+                onTap: () => _openUrl('https://gastometria.com.br/privacy'),
               ),
             ],
           ),
@@ -197,6 +214,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
         ],
       ),
     );
+  }
+
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Não foi possível abrir o link'),
+            backgroundColor: Colors.red.shade700,
+          ),
+        );
+      }
+    }
   }
 
   void _showAboutDialog(BuildContext context) {

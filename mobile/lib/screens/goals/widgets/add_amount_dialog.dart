@@ -21,68 +21,170 @@ class _AddAmountDialogState extends State<AddAmountDialog> {
     super.dispose();
   }
 
+  void _submit() {
+    final amount = double.tryParse(_controller.text.replaceAll(',', '.'));
+    if (amount != null && amount > 0) {
+      Navigator.pop(context, amount);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final remaining = widget.goal.targetAmount - widget.goal.currentAmount;
 
-    return AlertDialog(
+    return Dialog(
       backgroundColor: AppTheme.card,
-      title: const Text(
-        'Adicionar Valor',
-        style: TextStyle(color: AppTheme.textPrimary),
-      ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Faltam ${FormatUtils.formatCurrency(remaining)} para completar "${widget.goal.name}"',
-            style: const TextStyle(
-              color: AppTheme.textSecondary,
-              fontSize: 14,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header
+            Row(
+              children: [
+                Container(
+                  width: 40,
+                  height: 40,
+                  decoration: BoxDecoration(
+                    color: AppTheme.primary.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.add_circle_outline,
+                    color: AppTheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Expanded(
+                  child: Text(
+                    'Adicionar Valor',
+                    style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close, color: AppTheme.textSecondary),
+                  visualDensity: VisualDensity.compact,
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 16),
-          TextField(
-            controller: _controller,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            autofocus: true,
-            style: const TextStyle(color: AppTheme.textPrimary),
-            decoration: InputDecoration(
-              prefixText: 'R\$ ',
-              prefixStyle: const TextStyle(color: AppTheme.textPrimary),
-              hintText: '0,00',
-              hintStyle: const TextStyle(color: AppTheme.textSecondary),
-              filled: true,
-              fillColor: AppTheme.cardLight,
-              border: OutlineInputBorder(
+            const SizedBox(height: 20),
+            
+            // Info
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: AppTheme.cardLight,
                 borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide.none,
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.info_outline,
+                    color: AppTheme.textSecondary,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Faltam ${FormatUtils.formatCurrency(remaining)} para completar "${widget.goal.name}"',
+                      style: const TextStyle(
+                        color: AppTheme.textSecondary,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
-        ],
+            const SizedBox(height: 20),
+            
+            // Input
+            TextField(
+              controller: _controller,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              autofocus: true,
+              style: const TextStyle(
+                color: AppTheme.textPrimary,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+              decoration: InputDecoration(
+                prefixText: 'R\$ ',
+                prefixStyle: TextStyle(
+                  color: AppTheme.textPrimary.withOpacity(0.7),
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+                hintText: '0,00',
+                hintStyle: TextStyle(
+                  color: AppTheme.textSecondary.withOpacity(0.5),
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+                filled: true,
+                fillColor: AppTheme.cardLight,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  borderSide: BorderSide.none,
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
+                ),
+              ),
+              onSubmitted: (_) => _submit(),
+            ),
+            const SizedBox(height: 24),
+            
+            // Buttons
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () => Navigator.pop(context),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: AppTheme.textSecondary,
+                      side: const BorderSide(color: AppTheme.border),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text('Cancelar'),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: _submit,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.primary,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: const Text(
+                      'Adicionar',
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Cancelar'),
-        ),
-        ElevatedButton(
-          onPressed: () {
-            final amount =
-                double.tryParse(_controller.text.replaceAll(',', '.'));
-            if (amount != null && amount > 0) {
-              Navigator.pop(context, amount);
-            }
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppTheme.primary,
-            foregroundColor: Colors.white,
-          ),
-          child: const Text('Adicionar'),
-        ),
-      ],
     );
   }
 }
