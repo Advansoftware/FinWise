@@ -84,6 +84,7 @@ class TransactionModel {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'item': description, // Campo esperado pela API web
       'description': description,
       'amount': amount,

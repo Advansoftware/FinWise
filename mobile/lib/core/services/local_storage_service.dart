@@ -145,6 +145,30 @@ class LocalStorageService {
     }
   }
 
+  /// Adiciona uma carteira ao cache local
+  Future<void> addWalletToCache(WalletModel wallet) async {
+    final wallets = await getCachedWallets();
+    wallets.insert(0, wallet);
+    await cacheWallets(wallets);
+  }
+
+  /// Atualiza uma carteira no cache local
+  Future<void> updateWalletInCache(WalletModel wallet) async {
+    final wallets = await getCachedWallets();
+    final index = wallets.indexWhere((w) => w.id == wallet.id);
+    if (index != -1) {
+      wallets[index] = wallet;
+      await cacheWallets(wallets);
+    }
+  }
+
+  /// Remove uma carteira do cache local
+  Future<void> removeWalletFromCache(String walletId) async {
+    final wallets = await getCachedWallets();
+    wallets.removeWhere((w) => w.id == walletId);
+    await cacheWallets(wallets);
+  }
+
   // ==================== PARCELAMENTOS ====================
 
   /// Salva parcelamentos no cache local

@@ -1,10 +1,12 @@
 import 'package:flutter/foundation.dart';
 import '../models/models.dart';
 import '../services/services.dart';
+import '../services/sync_service.dart';
 
 /// Provider de carteiras
 class WalletProvider extends ChangeNotifier {
-  final WalletService _service = WalletService();
+  final WalletService _apiService = WalletService(); // Mantém para calculo de saldo se necessário, ou move lógica
+  SyncService? _syncService;
 
   List<WalletModel> _wallets = [];
   bool _isLoading = false;
@@ -17,20 +19,37 @@ class WalletProvider extends ChangeNotifier {
   String? get error => _error;
 
   /// Saldo total das carteiras ativas
-  double get totalBalance => _service.calculateTotalBalance(_wallets);
+  double get totalBalance {
+    return _wallets
+        .where((w) => w.includeInTotal && !w.isArchived)
+        .fold(0.0, (sum, w) => sum + w.balance);
+  }
+
+  void setSyncService(SyncService service) {
+    _syncService = service;
+    _syncService?.onWalletsUpdated = _onRemoteWalletsUpdated;
+    // Carrega dados iniciais do cache
+    loadWallets();
+  }
+
+  void _onRemoteWalletsUpdated(List<WalletModel> wallets) {
+    _wallets = wallets;
+    notifyListeners();
+  }
 
   /// Carrega carteiras
   Future<void> loadWallets({bool includeArchived = false}) async {
+    if (_syncService == null) return;
+
     _isLoading = true;
     _error = null;
     notifyListeners();
 
-    final result = await _service.getWallets(includeArchived: includeArchived);
-
-    if (result.isSuccess && result.data != null) {
-      _wallets = result.data!;
-    } else {
-      _error = result.error;
+    try {
+      final wallets = await _syncService!.getWallets(forceRefresh: true);
+      _wallets = wallets;
+    } catch (e) {
+      _error = e.toString();
     }
 
     _isLoading = false;
@@ -39,55 +58,61 @@ class WalletProvider extends ChangeNotifier {
 
   /// Adiciona uma carteira
   Future<bool> addWallet(WalletModel wallet) async {
+    if (_syncService == null) {
+      _error = "SyncService não inicializado";
+      notifyListeners();
+      return false;
+    }
+
     _isLoading = true;
     notifyListeners();
 
-    final result = await _service.createWallet(wallet);
-
-    if (result.isSuccess && result.data != null) {
-      _wallets = [..._wallets, result.data!];
+    try {
+      final newWallet = await _syncService!.addWallet(wallet);
+      // Atualiza lista localmente de imediato (optimistic UI já tratado no SyncService via cache, mas reforçamos)
+      _wallets = await _syncService!.getWallets();
       _isLoading = false;
       notifyListeners();
       return true;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
     }
-
-    _error = result.error;
-    _isLoading = false;
-    notifyListeners();
-    return false;
   }
 
   /// Atualiza uma carteira
   Future<bool> updateWallet(String id, WalletModel wallet) async {
-    final result = await _service.updateWallet(id, wallet);
+    if (_syncService == null) return false;
 
-    if (result.isSuccess && result.data != null) {
-      final index = _wallets.indexWhere((w) => w.id == id);
-      if (index >= 0) {
-        _wallets[index] = result.data!;
-        notifyListeners();
-      }
+    try {
+      await _syncService!.updateWallet(wallet);
+      // Recarrega do cache para garantir consistência
+      _wallets = await _syncService!.getWallets();
+      notifyListeners();
       return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
     }
-
-    _error = result.error;
-    notifyListeners();
-    return false;
   }
 
   /// Remove uma carteira
   Future<bool> deleteWallet(String id) async {
-    final result = await _service.deleteWallet(id);
+    if (_syncService == null) return false;
 
-    if (result.isSuccess) {
+    try {
+      await _syncService!.deleteWallet(id);
       _wallets = _wallets.where((w) => w.id != id).toList();
       notifyListeners();
       return true;
+    } catch (e) {
+      _error = e.toString();
+      notifyListeners();
+      return false;
     }
-
-    _error = result.error;
-    notifyListeners();
-    return false;
   }
 
   /// Busca carteira por ID

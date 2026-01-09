@@ -72,6 +72,7 @@ class WalletModel {
 
   Map<String, dynamic> toJson() {
     return {
+      'id': id,
       'name': name,
       'type': type.name,
       'balance': balance,

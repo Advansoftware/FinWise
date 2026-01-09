@@ -181,33 +181,33 @@ class _OverviewTab extends StatelessWidget {
       {
         'title': 'Transações',
         'items': [
-          {'name': 'Adicionar transação', 'xp': GamificationConstants.xpRewards['ADD_TRANSACTION']},
-          {'name': 'Categorizar transação', 'xp': GamificationConstants.xpRewards['CATEGORIZE_TRANSACTION']},
-          {'name': '1ª transação do dia', 'xp': GamificationConstants.xpRewards['FIRST_TRANSACTION_TODAY']},
+          {'name': 'Adicionar transação', 'xp': GamificationConstants.xpRewards['Nova Transação']},
+          {'name': 'Categorizar transação', 'xp': GamificationConstants.xpRewards['Categorizar']},
+          {'name': '1ª transação do dia', 'xp': GamificationConstants.xpRewards['1ª do Dia']},
         ]
       },
       {
         'title': 'Parcelamentos',
         'items': [
-          {'name': 'Pagar parcela', 'xp': GamificationConstants.xpRewards['PAY_INSTALLMENT']},
-          {'name': 'Bônus em dia', 'xp': GamificationConstants.xpRewards['PAY_ON_TIME_BONUS']},
-          {'name': 'Completar', 'xp': GamificationConstants.xpRewards['COMPLETE_INSTALLMENT']},
+          {'name': 'Pagar parcela', 'xp': GamificationConstants.xpRewards['Pagar Parcela']},
+          {'name': 'Bônus em dia', 'xp': GamificationConstants.xpRewards['Pagamento em Dia']},
+          {'name': 'Completar', 'xp': GamificationConstants.xpRewards['Completar Carnê']},
         ]
       },
       {
         'title': 'Orçamentos & Metas',
         'items': [
-          {'name': 'Criar orçamento', 'xp': GamificationConstants.xpRewards['CREATE_BUDGET']},
-          {'name': 'Dentro do orçamento', 'xp': GamificationConstants.xpRewards['STAY_WITHIN_BUDGET']},
-          {'name': 'Completar meta', 'xp': GamificationConstants.xpRewards['COMPLETE_GOAL']},
+          {'name': 'Criar orçamento', 'xp': GamificationConstants.xpRewards['Criar Orçamento']},
+          {'name': 'Dentro do orçamento', 'xp': GamificationConstants.xpRewards['Dentro da Meta']},
+          {'name': 'Completar meta', 'xp': GamificationConstants.xpRewards['Concluir Meta']},
         ]
       },
       {
         'title': 'Uso Diário',
         'items': [
-          {'name': 'Login diário', 'xp': GamificationConstants.xpRewards['DAILY_LOGIN']},
-          {'name': 'Streak semanal', 'xp': GamificationConstants.xpRewards['WEEKLY_STREAK']},
-          {'name': 'Usar IA', 'xp': GamificationConstants.xpRewards['USE_AI_ASSISTANT']},
+          {'name': 'Login diário', 'xp': GamificationConstants.xpRewards['Login Diário']},
+          {'name': 'Streak semanal', 'xp': GamificationConstants.xpRewards['Streak Semanal']},
+          {'name': 'Usar IA', 'xp': GamificationConstants.xpRewards['Usar IA']},
         ]
       },
     ];

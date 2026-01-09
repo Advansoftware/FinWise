@@ -153,6 +153,7 @@ class SyncService {
         );
         break;
       case OperationType.update:
+        if (op.data['id'] == null) throw Exception('Transaction ID is null');
         final id = op.data['id'] as String;
         await _apiService.put<Map<String, dynamic>>(
           '${ApiConstants.transactions}/$id',
@@ -161,6 +162,7 @@ class SyncService {
         );
         break;
       case OperationType.delete:
+        if (op.data['id'] == null) throw Exception('Transaction ID is null');
         final id = op.data['id'] as String;
         await _apiService.delete('${ApiConstants.transactions}/$id');
         break;
@@ -177,6 +179,7 @@ class SyncService {
         );
         break;
       case OperationType.update:
+        if (op.data['id'] == null) throw Exception('Wallet ID is null');
         final id = op.data['id'] as String;
         await _apiService.put<Map<String, dynamic>>(
           '${ApiConstants.wallets}/$id',
@@ -185,6 +188,7 @@ class SyncService {
         );
         break;
       case OperationType.delete:
+        if (op.data['id'] == null) throw Exception('Wallet ID is null');
         final id = op.data['id'] as String;
         await _apiService.delete('${ApiConstants.wallets}/$id');
         break;
@@ -381,7 +385,7 @@ class SyncService {
 
     // Tenta sincronizar imediatamente se online
     if (_isOnline) {
-      _syncPendingOperations();
+      forceSync();
     }
 
     return transactionWithId;
@@ -403,7 +407,7 @@ class SyncService {
 
     // Tenta sincronizar imediatamente se online
     if (_isOnline) {
-      _syncPendingOperations();
+      forceSync();
     }
   }
 
@@ -424,7 +428,102 @@ class SyncService {
 
       // Tenta sincronizar imediatamente se online
       if (_isOnline) {
-        _syncPendingOperations();
+        forceSync();
+      }
+    }
+  }
+
+  // ==================== CARTEIRAS (OFFLINE-FIRST) ====================
+
+  /// Obtém carteiras (do cache ou servidor)
+  Future<List<WalletModel>> getWallets({bool forceRefresh = false}) async {
+    // Se online e forceRefresh, busca do servidor
+    if (_isOnline && forceRefresh) {
+      try {
+        final result = await _apiService.getList<WalletModel>(
+          ApiConstants.wallets,
+          WalletModel.fromJson,
+        );
+        if (result.isSuccess && result.data != null) {
+          await _localStorage.cacheWallets(result.data!);
+          return result.data!;
+        }
+      } catch (e) {
+        debugPrint('[SyncService] Falha ao buscar carteiras do servidor: $e');
+      }
+    }
+
+    // Retorna do cache
+    return _localStorage.getCachedWallets();
+  }
+
+  /// Adiciona uma carteira (offline-first)
+  Future<WalletModel> addWallet(WalletModel wallet) async {
+    // Gera ID temporário se não tiver
+    final tempId = wallet.id.isEmpty
+        ? 'temp_${DateTime.now().millisecondsSinceEpoch}'
+        : wallet.id;
+    
+    final walletWithId = wallet.copyWith(id: tempId);
+
+    // Salva localmente primeiro
+    await _localStorage.addWalletToCache(walletWithId);
+
+    // Adiciona operação pendente
+    await _localStorage.addPendingOperation(PendingOperation(
+      id: 'op_${DateTime.now().millisecondsSinceEpoch}',
+      type: OperationType.create,
+      entityType: 'wallet',
+      data: walletWithId.toJson(),
+      createdAt: DateTime.now(),
+    ));
+
+    // Tenta sincronizar imediatamente se online
+    if (_isOnline) {
+      forceSync();
+    }
+
+    return walletWithId;
+  }
+
+  /// Atualiza uma carteira (offline-first)
+  Future<void> updateWallet(WalletModel wallet) async {
+    // Atualiza localmente primeiro
+    await _localStorage.updateWalletInCache(wallet);
+
+    // Adiciona operação pendente
+    await _localStorage.addPendingOperation(PendingOperation(
+      id: 'op_${DateTime.now().millisecondsSinceEpoch}',
+      type: OperationType.update,
+      entityType: 'wallet',
+      data: wallet.toJson(),
+      createdAt: DateTime.now(),
+    ));
+
+    // Tenta sincronizar imediatamente se online
+    if (_isOnline) {
+      forceSync();
+    }
+  }
+
+  /// Remove uma carteira (offline-first)
+  Future<void> deleteWallet(String walletId) async {
+    // Remove localmente primeiro
+    await _localStorage.removeWalletFromCache(walletId);
+
+    // Adiciona operação pendente (se não for ID temporário)
+    if (!walletId.startsWith('temp_')) {
+      await _localStorage.addPendingOperation(PendingOperation(
+        id: 'op_${DateTime.now().millisecondsSinceEpoch}',
+        type: OperationType.delete,
+        entityType: 'wallet',
+        data: {'id': walletId},
+        createdAt: DateTime.now(),
+      ));
+
+      // Tenta sincronizar imediatamente se online
+      if (_isOnline) {
+        forceSync();
       }
     }
   }
