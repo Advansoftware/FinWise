@@ -78,8 +78,7 @@ export function SmartRuleAction({
           borderColor: "primary.main",
           "&:hover": {
             borderStyle: "solid",
-            backgroundColor: (theme) =>
-              alpha(theme.palette.primary.main, 0.08),
+            backgroundColor: (theme) => alpha(theme.palette.primary.main, 0.08),
           },
         }}
       >
@@ -119,8 +118,7 @@ export function SmartRuleAction({
                   sx={{
                     p: 2,
                     borderRadius: 2,
-                    bgcolor: (theme) =>
-                      alpha(theme.palette.primary.main, 0.08),
+                    bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
                     border: 1,
                     borderColor: "primary.main",
                   }}
@@ -263,10 +261,14 @@ export function SmartRuleAction({
                   </Box>
                 )}
 
-                <Typography variant="body2" color="text.secondary" textAlign="center">
-                  A partir de agora, todas as transações de
-                  &quot;{merchantName}&quot; serão categorizadas automaticamente
-                  como <strong>{transaction.category}</strong>.
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  textAlign="center"
+                >
+                  A partir de agora, todas as transações de &quot;{merchantName}
+                  &quot; serão categorizadas automaticamente como{" "}
+                  <strong>{transaction.category}</strong>.
                 </Typography>
               </Stack>
             </DialogContent>
