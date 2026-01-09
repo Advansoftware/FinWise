@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../core/models/gamification_model.dart';
 import '../../../core/providers/gamification_provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../profile/gamification_rules_screen.dart';
 
 /// Widget de progresso de gamificação
 class GamificationWidget extends StatelessWidget {
@@ -466,16 +467,24 @@ class GamificationSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Consumer<GamificationProvider>(
-      builder: (context, gamification, child) {
-        return GamificationWidget(
-          level: gamification.level,
-          currentXP: gamification.points,
-          xpForNextLevel: gamification.xpToNextLevel,
-          streak: gamification.streak,
-          levelTitle: gamification.levelTitle,
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const GamificationRulesScreen()),
         );
       },
+      child: Consumer<GamificationProvider>(
+        builder: (context, gamification, child) {
+          return GamificationWidget(
+            level: gamification.level,
+            currentXP: gamification.points,
+            xpForNextLevel: gamification.xpToNextLevel,
+            streak: gamification.streak,
+            levelTitle: gamification.levelTitle,
+          );
+        },
+      ),
     );
   }
 }

@@ -255,6 +255,29 @@ class LocalStorageService {
     }
   }
 
+  // ==================== CATEGORIAS ====================
+  static const String _categoriesKey = 'cached_categories';
+
+  /// Salva categorias no cache local
+  Future<void> cacheCategories(Map<String, List<String>> categories) async {
+    await init();
+    await prefs.setString(_categoriesKey, jsonEncode(categories));
+  }
+
+  /// Recupera categorias do cache local
+  Future<Map<String, List<String>>?> getCachedCategories() async {
+    await init();
+    final jsonString = prefs.getString(_categoriesKey);
+    if (jsonString == null || jsonString.isEmpty) return null;
+
+    try {
+      final jsonMap = jsonDecode(jsonString) as Map<String, dynamic>;
+      return jsonMap.map((key, value) => MapEntry(key, List<String>.from(value)));
+    } catch (e) {
+      return null;
+    }
+  }
+
   // ==================== SINCRONIZAÇÃO ====================
 
   /// Retorna timestamp da última sincronização

@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/models/models.dart';
 import '../../core/providers/providers.dart';
+import '../../core/widgets/skeleton_loading.dart';
 
 class TransactionFormScreen extends StatefulWidget {
   final TransactionModel? transaction; // null = criar nova
@@ -242,7 +243,13 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
               _buildSectionTitle('Categoria'),
               const SizedBox(height: 8),
               if (categoryProvider.isLoading && categoryProvider.categories.isEmpty)
-                 const Center(child: CircularProgressIndicator())
+                 const Column(
+                   children: [
+                     SkeletonLoading(width: double.infinity, height: 50, borderRadius: 12),
+                     SizedBox(height: 12),
+                     // Subcategory skeleton placeholder
+                   ],
+                 )
               else
                  _buildCategorySelectors(categoryProvider.categories),
               const SizedBox(height: 24),

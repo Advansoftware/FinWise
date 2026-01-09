@@ -6,6 +6,7 @@ import '../../core/providers/providers.dart';
 import '../../core/services/local_storage_service.dart';
 import 'personal_data_screen.dart';
 import 'gamification_rules_screen.dart';
+import '../home/widgets/gamification_widgets.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -91,6 +92,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         padding: const EdgeInsets.all(16),
         children: [
           // Avatar e info do usuário
+
           Center(
             child: Column(
               children: [
@@ -117,6 +119,38 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ],
             ),
           ),
+          const SizedBox(height: 24),
+          
+          // Créditos IA
+          if (user != null)
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+              decoration: BoxDecoration(
+                color: AppTheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.primary.withOpacity(0.3)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                   const Icon(Icons.psychology, color: AppTheme.primary),
+                   const SizedBox(width: 8),
+                   Text(
+                     '${user.aiCredits} Créditos de IA',
+                     style: const TextStyle(
+                       color: Colors.white,
+                       fontWeight: FontWeight.bold,
+                       fontSize: 16
+                     ),
+                   ),
+                ],
+              ),
+            ),
+
+          const SizedBox(height: 24),
+
+          // Gamification Card
+          const GamificationSection(),
           const SizedBox(height: 32),
 
           // Menu de opções (Agora com navegação para Dados Pessoais)

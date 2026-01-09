@@ -1,13 +1,20 @@
 import 'package:flutter/foundation.dart';
 import '../constants/api_constants.dart';
 import 'api_service.dart';
+import 'local_storage_service.dart';
 
 class CategoryService {
   final ApiService _apiService;
+  final LocalStorageService _localStorage;
 
-  CategoryService(this._apiService);
+  CategoryService(this._apiService, this._localStorage);
 
-  /// Busca todas as categorias (padrão + personalizadas)
+  /// Recupera categorias do cache local
+  Future<Map<String, List<String>>> getCachedCategories() async {
+    return await _localStorage.getCachedCategories() ?? {};
+  }
+
+  /// Busca todas as categorias da API e atualiza o cache
   Future<Map<String, List<String>>> getCategories() async {
     final result = await _apiService.get<Map<String, List<String>>>(
       ApiConstants.categories,
@@ -19,8 +26,16 @@ class CategoryService {
     );
 
     if (result.isSuccess && result.data != null) {
+      await _localStorage.cacheCategories(result.data!);
       return result.data!;
     }
+    
+    // Se falhar na API, tenta retornar do cache se existir (fallback)
+    final cached = await _localStorage.getCachedCategories();
+    if (cached != null && cached.isNotEmpty) {
+      return cached;
+    }
+
     throw Exception(result.error ?? 'Falha ao carregar categorias');
   }
 

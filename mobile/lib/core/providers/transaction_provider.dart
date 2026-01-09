@@ -27,6 +27,7 @@ class TransactionProvider extends ChangeNotifier {
   int? _filterYear;
   String? _filterWalletId;
   String? _filterCategory;
+  String? _filterSubcategory;
   TransactionType? _filterType;
 
   // Getters para filtros
@@ -34,6 +35,7 @@ class TransactionProvider extends ChangeNotifier {
   int? get filterYear => _filterYear;
   String? get filterWalletId => _filterWalletId;
   String? get filterCategory => _filterCategory;
+  String? get filterSubcategory => _filterSubcategory;
   TransactionType? get filterType => _filterType;
 
   TransactionProvider() {
@@ -70,6 +72,7 @@ class TransactionProvider extends ChangeNotifier {
     int? year,
     String? walletId,
     String? category,
+    String? subcategory,
     TransactionType? type,
   }) {
     if (month != null) _filterMonth = month;
@@ -77,6 +80,7 @@ class TransactionProvider extends ChangeNotifier {
     // WalletId pode ser null para limpar filtro
     _filterWalletId = walletId; 
     _filterCategory = category;
+    _filterSubcategory = subcategory;
     _filterType = type;
     loadTransactions(refresh: true);
   }
@@ -85,6 +89,7 @@ class TransactionProvider extends ChangeNotifier {
   void clearFilters() {
     _filterWalletId = null;
     _filterCategory = null;
+    _filterSubcategory = null;
     _filterType = null;
     loadTransactions(refresh: true);
   }
@@ -116,6 +121,7 @@ class TransactionProvider extends ChangeNotifier {
       year: _filterYear,
       walletId: _filterWalletId,
       category: _filterCategory,
+      subcategory: _filterSubcategory,
       type: _filterType,
       page: _currentPage,
     );
@@ -137,7 +143,17 @@ class TransactionProvider extends ChangeNotifier {
       if (_transactions.isEmpty) {
         final cached = await _localStorage.getCachedTransactions();
         if (cached.isNotEmpty) {
-          _transactions = cached;
+          // Filtra localmente se tiver filtros ativos (Offline First real)
+          _transactions = cached.where((t) {
+             if (_filterMonth != null && t.date.month != _filterMonth) return false;
+             if (_filterYear != null && t.date.year != _filterYear) return false;
+             if (_filterWalletId != null && t.walletId != _filterWalletId) return false;
+             if (_filterCategory != null && t.category != _filterCategory) return false;
+             if (_filterSubcategory != null && t.subcategory != _filterSubcategory) return false;
+             if (_filterType != null && t.type != _filterType) return false;
+             return true;
+          }).toList();
+          
           _isOfflineMode = true;
           _error = null; // Limpa erro pois temos dados do cache
         }

@@ -15,12 +15,29 @@ class CategoryProvider extends ChangeNotifier {
   String? get error => _error;
 
   Future<void> loadCategories() async {
-    _isLoading = true;
+    // Carrega do cache primeiro (instantâneo)
+    try {
+      final cached = await _categoryService.getCachedCategories();
+      if (cached.isNotEmpty) {
+        _categories = cached;
+        _isLoading = false; // Tem dados, não mostra loading
+        notifyListeners();
+      } else {
+        _isLoading = true; // Se não tem cache, mostra loading
+        notifyListeners();
+      }
+    } catch (_) {
+      // Ignora erro de cache
+      _isLoading = true;
+      notifyListeners();
+    }
+
     _error = null;
-    notifyListeners();
 
     try {
-      _categories = await _categoryService.getCategories();
+      // Busca atualizada da API
+      final fresh = await _categoryService.getCategories();
+      _categories = fresh;
     } catch (e) {
       _error = e.toString();
     } finally {

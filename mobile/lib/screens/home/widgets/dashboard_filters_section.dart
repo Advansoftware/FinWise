@@ -59,10 +59,12 @@ class DashboardFiltersSection extends StatelessWidget {
   final DateTime? startDate;
   final DateTime? endDate;
   final String? selectedCategory;
-  final List<String> categories;
+  final String? selectedSubcategory;
+  final Map<String, List<String>> categoriesMap;
   final void Function(DateTime?) onStartDateChanged;
   final void Function(DateTime?) onEndDateChanged;
   final void Function(String?) onCategoryChanged;
+  final void Function(String?) onSubcategoryChanged;
   final VoidCallback onClear;
 
   const DashboardFiltersSection({
@@ -70,15 +72,29 @@ class DashboardFiltersSection extends StatelessWidget {
     required this.startDate,
     required this.endDate,
     required this.selectedCategory,
-    required this.categories,
+    required this.selectedSubcategory,
+    required this.categoriesMap,
     required this.onStartDateChanged,
     required this.onEndDateChanged,
     required this.onCategoryChanged,
+    required this.onSubcategoryChanged,
     required this.onClear,
   });
 
   @override
   Widget build(BuildContext context) {
+    // Lista de categories keys, sort alphabetic
+    final categoriesList = ['Todas', ...categoriesMap.keys.toList()..sort()];
+
+    // Subcategorias disponíveis para a categoria selecionada
+    List<String> subcategoriesList = [];
+    if (selectedCategory != null && selectedCategory != 'Todas') {
+      final subs = categoriesMap[selectedCategory];
+      if (subs != null && subs.isNotEmpty) {
+        subcategoriesList = ['Todas', ...subs];
+      }
+    }
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -171,35 +187,79 @@ class DashboardFiltersSection extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           // Filtro de categoria
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: AppTheme.background,
-              borderRadius: BorderRadius.circular(10),
-              border: Border.all(color: AppTheme.border),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: selectedCategory,
-                hint: const Text(
-                  'Todas as categorias',
-                  style: TextStyle(color: Colors.white54, fontSize: 13),
-                ),
-                isExpanded: true,
-                dropdownColor: AppTheme.card,
-                icon: const Icon(Icons.arrow_drop_down, color: Colors.white54),
-                items: categories.map((cat) {
-                  return DropdownMenuItem(
-                    value: cat == 'Todas' ? null : cat,
-                    child: Text(
-                      cat,
-                      style: const TextStyle(color: Colors.white, fontSize: 13),
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: AppTheme.background,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: AppTheme.border),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: selectedCategory,
+                      hint: const Text(
+                        'Categoria',
+                        style: TextStyle(color: Colors.white54, fontSize: 13),
+                      ),
+                      isExpanded: true,
+                      dropdownColor: AppTheme.card,
+                      icon: const Icon(Icons.arrow_drop_down, color: Colors.white54),
+                      items: categoriesList.map((cat) {
+                        return DropdownMenuItem(
+                          value: cat == 'Todas' ? null : cat,
+                          child: Text(
+                            cat,
+                            style: const TextStyle(color: Colors.white, fontSize: 13),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: onCategoryChanged,
                     ),
-                  );
-                }).toList(),
-                onChanged: onCategoryChanged,
+                  ),
+                ),
               ),
-            ),
+              // Subcategoria Dropdown (se aplicável)
+              if (subcategoriesList.isNotEmpty) ...[
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    decoration: BoxDecoration(
+                      color: AppTheme.background,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppTheme.border),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: selectedSubcategory,
+                        hint: const Text(
+                          'Subcategoria',
+                          style: TextStyle(color: Colors.white54, fontSize: 13),
+                        ),
+                        isExpanded: true,
+                        dropdownColor: AppTheme.card,
+                        icon: const Icon(Icons.arrow_drop_down, color: Colors.white54),
+                        items: subcategoriesList.map((sub) {
+                           return DropdownMenuItem(
+                            value: sub == 'Todas' ? null : sub,
+                            child: Text(
+                              sub,
+                              style: const TextStyle(color: Colors.white, fontSize: 13),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          );
+                        }).toList(),
+                        onChanged: onSubcategoryChanged,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ],
       ),

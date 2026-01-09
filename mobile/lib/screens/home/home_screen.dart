@@ -138,22 +138,7 @@ class _DashboardTabState extends State<_DashboardTab> {
   String? _selectedSubcategory;
   bool _showFilters = false;
 
-  final List<String> _categories = [
-    'Todas',
-    'Supermercado',
-    'Transporte',
-    'Alimentação',
-    'Entretenimento',
-    'Saúde',
-    'Educação',
-    'Moradia',
-    'Contas',
-    'Lazer',
-    'Vestuário',
-    'Salário',
-    'Investimentos',
-    'Outros',
-  ];
+
 
   @override
   void initState() {
@@ -177,12 +162,12 @@ class _DashboardTabState extends State<_DashboardTab> {
         return false;
       }
 
-      // TODO: Adicionar filtro por subcategoria quando o modelo suportar
-      // if (_selectedSubcategory != null && 
-      //     _selectedSubcategory != 'Todas' &&
-      //     t.subcategory != _selectedSubcategory) {
-      //   return false;
-      // }
+      // Filtro por subcategoria
+      if (_selectedSubcategory != null && 
+          _selectedSubcategory != 'Todas' &&
+          t.subcategory != _selectedSubcategory) {
+        return false;
+      }
 
       return true;
     }).toList();
@@ -193,11 +178,13 @@ class _DashboardTabState extends State<_DashboardTab> {
     final authProvider = context.watch<AuthProvider>();
     final transactionProvider = context.watch<TransactionProvider>();
     final walletProvider = context.watch<WalletProvider>();
+    final categoryProvider = context.watch<CategoryProvider>();
 
     final user = authProvider.user;
     final allTransactions = transactionProvider.transactions;
     final transactions = _filterTransactions(allTransactions);
     final wallets = walletProvider.wallets;
+    final categoriesMap = categoryProvider.categories;
 
     final totalBalance = wallets.fold<double>(0, (sum, w) => sum + w.balance);
     final totalIncome = transactions
@@ -281,16 +268,22 @@ class _DashboardTabState extends State<_DashboardTab> {
           // Filtros (expansíveis)
           if (_showFilters)
             SliverToBoxAdapter(
+
               child: DashboardFiltersSection(
                 startDate: _startDate,
                 endDate: _endDate,
                 selectedCategory: _selectedCategory,
-                categories: _categories,
+                selectedSubcategory: _selectedSubcategory,
+                categoriesMap: categoriesMap,
                 onStartDateChanged: (d) => setState(() => _startDate = d),
                 onEndDateChanged: (d) => setState(() => _endDate = d),
                 onCategoryChanged: (c) => setState(() {
                   _selectedCategory = c;
                   _selectedSubcategory = null;
+                  // Aplica filtro no provider se necessário (ou use _filterTransactions local)
+                }),
+                onSubcategoryChanged: (s) => setState(() {
+                  _selectedSubcategory = s;
                 }),
                 onClear: () => setState(() {
                   final now = DateTime.now();
@@ -301,6 +294,7 @@ class _DashboardTabState extends State<_DashboardTab> {
                 }),
               ),
             ),
+
           SliverPadding(
             padding: const EdgeInsets.all(16),
             sliver: SliverList(

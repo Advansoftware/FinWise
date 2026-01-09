@@ -13,6 +13,7 @@ class TransactionService {
     String? walletId,
 
     String? category,
+    String? subcategory,
     TransactionType? type,
     int page = 1,
     int limit = 50,
@@ -25,6 +26,7 @@ class TransactionService {
       if (walletId != null) 'walletId': walletId,
 
       if (category != null) 'category': category,
+      if (subcategory != null) 'subcategory': subcategory,
       if (type != null) 'type': type.name, // Suporta income, expense, transfer
     };
 
