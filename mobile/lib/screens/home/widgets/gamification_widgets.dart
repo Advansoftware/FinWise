@@ -35,6 +35,10 @@ class GamificationWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final cardColor = Theme.of(context).cardColor;
+    final borderColor = Theme.of(context).dividerColor;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -93,10 +97,10 @@ class GamificationWidget extends StatelessWidget {
                       children: [
                         Text(
                           'Nível $level',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: textColor,
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -125,7 +129,7 @@ class GamificationWidget extends StatelessWidget {
                       '$currentXP / $xpForNextLevel XP',
                       style: TextStyle(
                         fontSize: 12,
-                        color: Colors.white.withOpacity(0.6),
+                        color: textColor.withOpacity(0.6),
                       ),
                     ),
                   ],
@@ -230,18 +234,21 @@ class DailyQuestCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progressPercent = target > 0 ? progress / target : 0.0;
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final cardColor = Theme.of(context).cardColor;
+    final borderColor = Theme.of(context).dividerColor;
 
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: isCompleted
             ? AppTheme.success.withOpacity(0.1)
-            : AppTheme.card,
+            : cardColor,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: isCompleted
               ? AppTheme.success.withOpacity(0.3)
-              : AppTheme.border,
+              : borderColor,
         ),
       ),
       child: Row(
@@ -282,7 +289,7 @@ class DailyQuestCard extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     color: isCompleted
                         ? AppTheme.success
-                        : Colors.white,
+                        : textColor,
                     decoration: isCompleted
                         ? TextDecoration.lineThrough
                         : null,
@@ -293,7 +300,7 @@ class DailyQuestCard extends StatelessWidget {
                   description,
                   style: TextStyle(
                     fontSize: 11,
-                    color: Colors.white.withOpacity(0.5),
+                    color: textColor.withOpacity(0.5),
                   ),
                 ),
                 if (!isCompleted) ...[
@@ -323,6 +330,7 @@ class DailyQuestCard extends StatelessWidget {
                   ? AppTheme.success.withOpacity(0.2)
                   : const Color(0xFFF59E0B).withOpacity(0.15),
               borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: isCompleted ? Colors.transparent : const Color(0xFFF59E0B).withOpacity(0.3)),
             ),
             child: Row(
               children: [
@@ -364,13 +372,16 @@ class DailyQuestsSection extends StatelessWidget {
         final quests = gamification.dailyQuests;
         final completedCount = quests.where((q) => q.isCompleted).length;
         final totalCount = quests.length;
+        final textColor = Theme.of(context).colorScheme.onSurface;
+        final cardColor = Theme.of(context).cardColor;
+        final borderColor = Theme.of(context).dividerColor;
 
         return Container(
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppTheme.card,
+            color: cardColor,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppTheme.border),
+            border: Border.all(color: borderColor),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -386,12 +397,12 @@ class DailyQuestsSection extends StatelessWidget {
                         color: AppTheme.primary,
                       ),
                       const SizedBox(width: 8),
-                      const Text(
+                      Text(
                         'Missões Diárias',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
-                          color: Colors.white,
+                          color: textColor,
                         ),
                       ),
                     ],
@@ -433,7 +444,7 @@ class DailyQuestsSection extends StatelessWidget {
                           'Carregando missões...',
                           style: TextStyle(
                             fontSize: 13,
-                            color: Colors.white.withOpacity(0.5),
+                            color: textColor.withOpacity(0.5),
                           ),
                         ),
                       ],

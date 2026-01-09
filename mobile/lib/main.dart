@@ -74,7 +74,11 @@ class _GastometriaAppState extends State<GastometriaApp> {
         ChangeNotifierProvider(create: (_) => WalletProvider()),
         ChangeNotifierProvider(create: (_) => GamificationProvider()),
         ChangeNotifierProvider(create: (_) => InstallmentProvider()),
-        ChangeNotifierProvider(create: (_) => CategoryProvider(CategoryService(ApiService(), widget.localStorage))),
+        ChangeNotifierProvider(create: (_) {
+          final provider = CategoryProvider(CategoryService(ApiService(), widget.localStorage));
+          provider.setSyncService(_syncService);
+          return provider;
+        }),
         ChangeNotifierProvider(create: (_) => BudgetProvider()),
         ChangeNotifierProvider(create: (_) => GoalProvider()),
         ChangeNotifierProvider(create: (_) => ReportProvider()),

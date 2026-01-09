@@ -19,6 +19,7 @@ class SyncService {
   // Callbacks para notificar providers
   void Function(List<TransactionModel>)? onTransactionsUpdated;
   void Function(List<WalletModel>)? onWalletsUpdated;
+  void Function(Map<String, List<String>>)? onCategoriesUpdated;
 
   SyncService({
     required ApiService apiService,
@@ -238,6 +239,22 @@ class SyncService {
         await _localStorage.cacheWallets(wallets);
         onWalletsUpdated?.call(wallets);
       }
+
+      // Busca categorias
+      final categoriesResult = await _apiService.get<Map<String, List<String>>>(
+        ApiConstants.categories,
+        (data) => data['categories'] != null 
+            ? Map<String, List<dynamic>>.from(data['categories']).map(
+                (key, value) => MapEntry(key, List<String>.from(value)),
+              ) 
+            : {},
+      );
+      if (categoriesResult.isSuccess && categoriesResult.data != null) {
+        final categories = categoriesResult.data!;
+        await _localStorage.cacheCategories(categories);
+        onCategoriesUpdated?.call(categories);
+      }
+
     } catch (e) {
       debugPrint('[SyncService] Erro ao buscar dados: $e');
     }

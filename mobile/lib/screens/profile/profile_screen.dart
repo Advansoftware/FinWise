@@ -149,9 +149,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
           const SizedBox(height: 24),
 
-          // Gamification Card
-          const GamificationSection(),
-          const SizedBox(height: 32),
+// Gamification Card Removed
+          const SizedBox(height: 0),
 
           // Menu de opções (Agora com navegação para Dados Pessoais)
           _ProfileMenuItem(

@@ -5,18 +5,32 @@ import '../../core/constants/gamification_constants.dart';
 import '../../core/providers/gamification_provider.dart';
 import '../home/widgets/gamification_widgets.dart';
 
-class GamificationRulesScreen extends StatelessWidget {
+class GamificationRulesScreen extends StatefulWidget {
   const GamificationRulesScreen({super.key});
+
+  @override
+  State<GamificationRulesScreen> createState() => _GamificationRulesScreenState();
+}
+
+class _GamificationRulesScreenState extends State<GamificationRulesScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Garante que os dados estejam carregados
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<GamificationProvider>().loadGamification();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     return DefaultTabController(
       length: 4,
       child: Scaffold(
-        backgroundColor: AppTheme.background,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         appBar: AppBar(
           title: const Text('Gamificação'),
-          backgroundColor: AppTheme.background,
+          backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
           elevation: 0,
           bottom: const TabBar(
             isScrollable: true,
@@ -49,6 +63,9 @@ class _OverviewTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final mutedColor = Theme.of(context).colorScheme.onSurface.withOpacity(0.6);
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
@@ -58,12 +75,12 @@ class _OverviewTab extends StatelessWidget {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Padding(
-                  padding: EdgeInsets.only(bottom: 8, left: 4),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8, left: 4),
                   child: Text(
                     'Seu Status Atual',
                     style: TextStyle(
-                      color: Colors.white,
+                      color: textColor,
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                     ),
@@ -84,9 +101,9 @@ class _OverviewTab extends StatelessWidget {
         const SizedBox(height: 24),
         
         // Como Ganhar XP
-        _buildSectionTitle('Como Ganhar XP', Icons.bolt, AppTheme.success),
+        _buildSectionTitle('Como Ganhar XP', Icons.bolt, AppTheme.success, textColor),
         const SizedBox(height: 12),
-        _buildXpGrid(),
+        _buildXpGrid(context),
 
         const SizedBox(height: 24),
 
@@ -97,17 +114,17 @@ class _OverviewTab extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionTitle(String title, IconData icon, Color color) {
+  Widget _buildSectionTitle(String title, IconData icon, Color color, Color textColor) {
     return Row(
       children: [
         Icon(icon, color: color, size: 24),
         const SizedBox(width: 8),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: textColor,
           ),
         ),
       ],
@@ -115,6 +132,8 @@ class _OverviewTab extends StatelessWidget {
   }
 
   Widget _buildMotivationCard(BuildContext context) {
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
@@ -133,26 +152,30 @@ class _OverviewTab extends StatelessWidget {
         children: [
           const Icon(Icons.local_fire_department, size: 48, color: Colors.amber),
           const SizedBox(height: 16),
-          const Text(
+           Text(
             'Por que Gamificação?',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.white,
+              color: textColor,
             ),
           ),
           const SizedBox(height: 8),
-          const Text(
+           Text(
             'Estudos mostram que gamificação aumenta o engajamento em até 48%! Ao transformar tarefas financeiras em desafios, você cria hábitos positivos e duradouros. Cada XP ganho é um passo em direção à sua liberdade financeira! 🚀',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white70, height: 1.5),
+            style: TextStyle(color: textColor.withOpacity(0.7), height: 1.5),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildXpGrid() {
+  Widget _buildXpGrid(BuildContext context) {
+    final textColor = Theme.of(context).colorScheme.onSurface;
+    final cardColor = Theme.of(context).cardColor;
+    final borderColor = Theme.of(context).dividerColor;
+
     // Categories matching Web
     final categories = [
       {
@@ -197,18 +220,18 @@ class _OverviewTab extends StatelessWidget {
           width: double.infinity, // Full width on mobile looks better for list inside
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: AppTheme.card,
+            color: cardColor,
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppTheme.border),
+            border: Border.all(color: borderColor),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 cat['title'] as String,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: textColor,
                   fontSize: 15,
                 ),
               ),
@@ -222,7 +245,7 @@ class _OverviewTab extends StatelessWidget {
                     children: [
                       Text(
                         item['name'] as String,
-                        style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 13),
+                        style: TextStyle(color: textColor.withOpacity(0.7), fontSize: 13),
                       ),
                       Text(
                         '+$xp XP',

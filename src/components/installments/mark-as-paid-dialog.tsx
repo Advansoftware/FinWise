@@ -108,28 +108,26 @@ export function MarkAsPaidDialog({
         <Stack spacing={3}>
           {/* Payment Info */}
           <Box sx={{ 
-            borderRadius: 1, 
-            border: 1, 
-            borderColor: 'divider', 
-            p: 2, 
+            p: 1,
             display: 'flex', 
             flexDirection: 'column', 
-            gap: 1, 
-            bgcolor: alpha(theme.palette.action.hover, 0.5) 
+            gap: 1.5,
           }}>
-            <Stack direction="row" justifyContent="space-between">
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
               <Typography variant="body2" color="text.secondary">Parcela</Typography>
-              <Typography variant="body2" fontWeight="medium">{payment.installmentNumber}/{installment.totalInstallments}</Typography>
+              <Typography variant="body1" fontWeight="medium">{payment.installmentNumber}/{installment.totalInstallments}</Typography>
             </Stack>
-            <Stack direction="row" justifyContent="space-between">
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
               <Typography variant="body2" color="text.secondary">Vencimento Original</Typography>
-              <Typography variant="body2" fontWeight="medium">
+              <Typography variant="body1" fontWeight="medium">
                 {format(parseISO(payment.dueDate), 'dd/MM/yyyy', { locale: ptBR })}
               </Typography>
             </Stack>
-            <Stack direction="row" justifyContent="space-between">
+            <Stack direction="row" justifyContent="space-between" alignItems="center">
               <Typography variant="body2" color="text.secondary">Valor</Typography>
-              <Typography variant="body2" fontWeight="medium">{formatCurrency(payment.scheduledAmount)}</Typography>
+              <Typography variant="body1" fontWeight="bold" color="primary.main">
+                {formatCurrency(payment.scheduledAmount)}
+              </Typography>
             </Stack>
           </Box>
 

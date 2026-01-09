@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../services/category_service.dart';
+import '../services/sync_service.dart';
 
 class CategoryProvider extends ChangeNotifier {
   final CategoryService _categoryService;
@@ -13,6 +14,18 @@ class CategoryProvider extends ChangeNotifier {
   Map<String, List<String>> get categories => _categories;
   bool get isLoading => _isLoading;
   String? get error => _error;
+
+  SyncService? _syncService;
+
+  void setSyncService(SyncService syncService) {
+    _syncService = syncService;
+    _syncService!.onCategoriesUpdated = _onRemoteCategoriesUpdated;
+  }
+
+  void _onRemoteCategoriesUpdated(Map<String, List<String>> categories) {
+    _categories = categories;
+    notifyListeners();
+  }
 
   Future<void> loadCategories() async {
     // Carrega do cache primeiro (instantâneo)
