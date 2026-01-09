@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { Button, Box, Typography, Skeleton, Grid } from "@mui/material";
 import { PlusCircle, ScanLine } from "lucide-react";
 import { useTransactions } from "@/hooks/use-transactions";
+import { useGoals } from "@/hooks/use-goals";
 import { StatsCards } from "@/components/dashboard/stats-cards";
 import { ItemFilter } from "@/components/dashboard/item-filter";
 import { DateRangePicker } from "@/components/dashboard/date-range-picker";
@@ -39,9 +40,12 @@ export default function DashboardPage() {
     loadTransactions,
   } = useTransactions();
 
+  const { loadGoals } = useGoals();
+
   useEffect(() => {
     loadTransactions();
-  }, [loadTransactions]);
+    loadGoals();
+  }, [loadTransactions, loadGoals]);
 
   return (
     <Box sx={{ flexGrow: 1 }}>

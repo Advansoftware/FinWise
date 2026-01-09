@@ -434,6 +434,14 @@ class _TransactionFormScreenState extends State<TransactionFormScreen> {
       _category = null;
       _subcategory = null;
     }
+
+    // Se a subcategoria selecionada não pertencer à categoria, limpa
+    if (_category != null && _subcategory != null) {
+      final subs = categories[_category];
+      if (subs != null && !subs.contains(_subcategory)) {
+        _subcategory = null;
+      }
+    }
     
     // Lista de categorias ordenada
     final sortedCategories = categories.keys.toList()..sort();

@@ -5,6 +5,7 @@ import '../../core/theme/app_theme.dart';
 import '../../core/providers/providers.dart';
 import '../../core/services/local_storage_service.dart';
 import 'personal_data_screen.dart';
+import 'gamification_rules_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -233,6 +234,19 @@ class _ProfileScreenState extends State<ProfileScreen> {
           const SizedBox(height: 8),
           _SettingsCard(
             children: [
+              // Gamificação
+              _SettingsItemButton(
+                icon: Icons.emoji_events_outlined,
+                label: 'Como funciona o jogo?',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const GamificationRulesScreen()),
+                  );
+                },
+              ),
+              const Divider(color: AppTheme.border, height: 1),
+
               // Ajuda / Suporte
               _SettingsItemButton(
                 icon: Icons.help_outline,
