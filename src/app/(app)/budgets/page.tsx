@@ -1,7 +1,7 @@
 // src/app/(app)/budgets/page.tsx
 "use client";
 
-import { useState, MouseEvent } from "react";
+import { useState, MouseEvent, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -51,11 +51,16 @@ import { useGamification } from "@/hooks/use-gamification";
 import { useToast } from "@/hooks/use-toast";
 
 export default function BudgetsPage() {
-  const { budgets, isLoading, deleteBudget, addBudget } = useBudgets();
+  const { budgets, isLoading, deleteBudget, addBudget, loadBudgets } =
+    useBudgets();
   const { isPlus } = usePlan();
   const { gamificationData } = useGamification();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("budgets");
+
+  useEffect(() => {
+    loadBudgets();
+  }, [loadBudgets]);
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
     setActiveTab(newValue);
@@ -150,7 +155,10 @@ export default function BudgetsPage() {
               variant="contained"
               startIcon={<PlusCircle size={18} />}
               fullWidth
-              sx={{ width: { xs: "100%", md: "auto" }, flex: { xs: 1, md: "none" } }}
+              sx={{
+                width: { xs: "100%", md: "auto" },
+                flex: { xs: 1, md: "none" },
+              }}
             >
               Novo Orçamento
             </Button>

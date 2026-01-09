@@ -20,12 +20,16 @@ import { TransactionCardList } from "@/components/transactions/transaction-card-
 import { AddTransactionSheet } from "@/components/dashboard/add-transaction-sheet";
 import { GamificationGuide, DailyQuestsCard } from "@/components/gamification";
 import { PlusCircle } from "lucide-react";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { startOfMonth } from "date-fns";
 import { DateRange } from "@/lib/types";
 
 export default function TransactionsPage() {
-  const { categories, subcategories } = useTransactions();
+  const { categories, subcategories, loadTransactions } = useTransactions();
+
+  useEffect(() => {
+    loadTransactions();
+  }, [loadTransactions]);
 
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: startOfMonth(new Date()),

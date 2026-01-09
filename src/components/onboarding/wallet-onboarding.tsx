@@ -123,31 +123,17 @@ export function WalletOnboarding({ forceOpen }: WalletOnboardingProps) {
 
   const selectedType = watch("type");
 
-  // Check if onboarding was already completed (persisted)
-  const [onboardingDismissed, setOnboardingDismissed] = useState(() => {
-    if (typeof window !== "undefined") {
-      return (
-        localStorage.getItem("gastometria_onboarding_completed") === "true"
-      );
-    }
-    return false;
-  });
-
-  // Auto-open when user has no wallets AND hasn't dismissed onboarding before
+  // Auto-open when user has no wallets (first time user)
+  // If user has wallets, they already completed onboarding - no flag needed
   useEffect(() => {
-    if (
-      !isLoading &&
-      wallets.length === 0 &&
-      !isComplete &&
-      !onboardingDismissed
-    ) {
+    if (!isLoading && wallets.length === 0 && !isComplete) {
       // Small delay to let the dashboard load first
       const timer = setTimeout(() => {
         setIsOpen(true);
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [wallets.length, isLoading, isComplete, onboardingDismissed]);
+  }, [wallets.length, isLoading, isComplete]);
 
   // Force open from parent
   useEffect(() => {
@@ -165,9 +151,6 @@ export function WalletOnboarding({ forceOpen }: WalletOnboardingProps) {
       });
       setIsComplete(true);
       setStep(2);
-      // Mark onboarding as completed
-      localStorage.setItem("gastometria_onboarding_completed", "true");
-      setOnboardingDismissed(true);
       // Auto close after success animation
       setTimeout(() => {
         setIsOpen(false);
@@ -180,9 +163,8 @@ export function WalletOnboarding({ forceOpen }: WalletOnboardingProps) {
   };
 
   const handleSkipOnboarding = () => {
-    // Mark onboarding as dismissed so it doesn't show again
-    localStorage.setItem("gastometria_onboarding_completed", "true");
-    setOnboardingDismissed(true);
+    // Just close - if user has no wallets, it will show again next time
+    // This is intentional: we want users to create at least one wallet
     setIsOpen(false);
   };
 

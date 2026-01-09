@@ -8,6 +8,7 @@ import {
   createContext,
   useContext,
   ReactNode,
+  useCallback,
 } from "react";
 import { startOfMonth, endOfMonth } from "date-fns";
 import { Budget } from "@/lib/types";
@@ -21,6 +22,8 @@ interface BudgetsContextType {
   budgets: Budget[];
   isLoading: boolean;
   isOnline: boolean;
+  hasLoaded: boolean;
+  loadBudgets: () => Promise<void>;
   addBudget: (
     budget: Omit<Budget, "id" | "createdAt" | "currentSpending" | "userId">
   ) => Promise<void>;
@@ -38,8 +41,9 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
   const { registerRefreshHandler, unregisterRefreshHandler, triggerRefresh } =
     useDataRefresh();
   const [budgets, setBudgets] = useState<Budget[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   // Monitor online/offline status
   useEffect(() => {
@@ -56,35 +60,54 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Load budgets only when needed (lazy loading)
+  const loadBudgets = useCallback(async () => {
+    if (!user || hasLoaded) return;
+
+    setIsLoading(true);
+    try {
+      const fetchedBudgets: Budget[] = await apiClient.get("budgets", user.uid);
+      setBudgets(
+        fetchedBudgets.map((b: Budget) => ({ ...b, currentSpending: 0 }))
+      );
+      setHasLoaded(true);
+    } catch (error) {
+      console.error("Erro ao carregar orçamentos:", error);
+      setBudgets([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, hasLoaded]);
+
+  // Force refresh (ignores hasLoaded)
+  const refreshBudgetsInternal = useCallback(async () => {
+    if (!user) return;
+
+    setIsLoading(true);
+    try {
+      const fetchedBudgets: Budget[] = await apiClient.get("budgets", user.uid);
+      setBudgets(
+        fetchedBudgets.map((b: Budget) => ({ ...b, currentSpending: 0 }))
+      );
+      setHasLoaded(true);
+    } catch (error) {
+      console.error("Erro ao carregar orçamentos:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  // Register refresh handler (but don't load immediately)
   useEffect(() => {
     if (authLoading || !user) {
       setIsLoading(false);
       setBudgets([]);
+      setHasLoaded(false);
       return;
     }
 
-    const loadBudgets = async () => {
-      setIsLoading(true);
-      try {
-        const fetchedBudgets: Budget[] = await apiClient.get(
-          "budgets",
-          user.uid
-        );
-        setBudgets(
-          fetchedBudgets.map((b: Budget) => ({ ...b, currentSpending: 0 }))
-        );
-      } catch (error) {
-        console.error("Erro ao carregar orçamentos:", error);
-        setBudgets([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadBudgets();
-
     // Register this hook's refresh function with the global system
-    registerRefreshHandler("budgets", loadBudgets);
+    registerRefreshHandler("budgets", refreshBudgetsInternal);
 
     return () => {
       unregisterRefreshHandler("budgets");
@@ -160,7 +183,7 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
   };
 
   const refreshBudgets = async () => {
-    await loadBudgets();
+    await refreshBudgetsInternal();
   };
 
   // Calculate current spending for each budget
@@ -187,6 +210,8 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
     budgets: budgetsWithSpending,
     isLoading: isLoading || authLoading,
     isOnline,
+    hasLoaded,
+    loadBudgets,
     addBudget,
     updateBudget,
     deleteBudget,

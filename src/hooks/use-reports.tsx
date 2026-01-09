@@ -25,6 +25,8 @@ interface ReportsContextType {
   annualReports: Report[];
   isLoading: boolean;
   isOnline: boolean;
+  hasLoaded: boolean;
+  loadReports: () => Promise<void>;
   getMonthlyReport: (year: number, month: number) => Report | undefined;
   getAnnualReport: (year: number) => Report | undefined;
   generateMonthlyReport: (
@@ -53,8 +55,9 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
     useDataRefresh();
   const [monthlyReports, setMonthlyReports] = useState<Report[]>([]);
   const [annualReports, setAnnualReports] = useState<Report[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   // Monitor online/offline status
   useEffect(() => {
@@ -85,7 +88,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
     []
   );
 
-  const loadData = useCallback(async () => {
+  const fetchData = useCallback(async () => {
     if (!user?.uid) return;
 
     try {
@@ -115,6 +118,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
 
       setMonthlyReports(monthlyData);
       setAnnualReports(annualData);
+      setHasLoaded(true);
     } catch (error) {
       console.error("Erro ao carregar relatórios:", error);
       setMonthlyReports([]);
@@ -122,29 +126,46 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
     }
   }, [user?.uid]);
 
+  // Load reports only when needed (lazy loading)
+  const loadReports = useCallback(async () => {
+    if (!user || hasLoaded) return;
+
+    setIsLoading(true);
+    try {
+      await fetchData();
+    } catch (error) {
+      console.error("Erro ao carregar relatórios:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, hasLoaded, fetchData]);
+
+  // Force refresh (ignores hasLoaded)
+  const refreshReportsInternal = useCallback(async () => {
+    if (!user) return;
+
+    setIsLoading(true);
+    try {
+      await fetchData();
+    } catch (error) {
+      console.error("Erro ao carregar relatórios:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, fetchData]);
+
+  // Register refresh handler (but don't load immediately)
   useEffect(() => {
     if (authLoading || !user) {
       setIsLoading(false);
       setMonthlyReports([]);
       setAnnualReports([]);
+      setHasLoaded(false);
       return;
     }
 
-    const loadReports = async () => {
-      setIsLoading(true);
-      try {
-        await loadData();
-      } catch (error) {
-        console.error("Erro ao carregar relatórios:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadReports();
-
     // Register this hook's refresh function with the global system
-    registerRefreshHandler("reports", loadReports);
+    registerRefreshHandler("reports", refreshReportsInternal);
 
     return () => {
       unregisterRefreshHandler("reports");
@@ -395,7 +416,7 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
   );
 
   const refreshReports = async () => {
-    await loadData();
+    await refreshReportsInternal();
   };
 
   const getMonthlyReport = (year: number, month: number) => {
@@ -413,6 +434,8 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
     annualReports,
     isLoading: isLoading || authLoading || isLoadingTransactions,
     isOnline,
+    hasLoaded,
+    loadReports,
     getMonthlyReport,
     getAnnualReport,
     generateMonthlyReport,

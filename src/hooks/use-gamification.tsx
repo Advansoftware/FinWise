@@ -155,6 +155,8 @@ interface GamificationContextType {
   profileInsights: ProfileInsights | null;
   isLoading: boolean;
   error: string | null;
+  hasLoaded: boolean;
+  loadGamification: () => Promise<void>;
 
   // Notificações de XP
   xpNotifications: XpNotification[];
@@ -249,8 +251,9 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
     useState<GamificationData | null>(null);
   const [profileInsights, setProfileInsights] =
     useState<ProfileInsights | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   // Notificações
   const [xpNotifications, setXpNotifications] = useState<XpNotification[]>([]);
@@ -392,6 +395,7 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
       setProfileInsights(legacyData.profileInsights);
       previousPoints.current = adaptedData.points;
       hasInitialLoad.current = true;
+      setHasLoaded(true);
     } catch (err) {
       console.error("Erro ao buscar dados de gamificação:", err);
       setError(err instanceof Error ? err.message : "Erro desconhecido");
@@ -402,14 +406,19 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
     }
   }, [user?.uid]);
 
-  // Carrega dados iniciais e registra handler de refresh
+  // Load gamification data only when needed (lazy loading)
+  const loadGamification = useCallback(async () => {
+    if (!user?.uid || hasLoaded) return;
+    await fetchGamificationData();
+  }, [user?.uid, hasLoaded, fetchGamificationData]);
+
+  // Register refresh handler (but don't load immediately)
   useEffect(() => {
     if (authLoading || !user?.uid) {
       setIsLoading(false);
+      setHasLoaded(false);
       return;
     }
-
-    fetchGamificationData();
 
     // Register this hook's refresh function with the global system
     registerRefreshHandler("gamification", fetchGamificationData);
@@ -544,6 +553,8 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
     profileInsights,
     isLoading,
     error,
+    hasLoaded,
+    loadGamification,
     xpNotifications,
     clearXpNotification,
     levelUpEvent,

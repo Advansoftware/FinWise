@@ -1,6 +1,7 @@
 // src/app/(app)/dashboard/page.tsx
 "use client";
 
+import { useEffect } from "react";
 import { Button, Box, Typography, Skeleton, Grid } from "@mui/material";
 import { PlusCircle, ScanLine } from "lucide-react";
 import { useTransactions } from "@/hooks/use-transactions";
@@ -35,7 +36,12 @@ export default function DashboardPage() {
     availableSubcategories,
     selectedSubcategory,
     setSelectedSubcategory,
+    loadTransactions,
   } = useTransactions();
+
+  useEffect(() => {
+    loadTransactions();
+  }, [loadTransactions]);
 
   return (
     <Box sx={{ flexGrow: 1 }}>

@@ -1,6 +1,6 @@
 // src/app/(app)/reports/page.tsx
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useReports } from "@/hooks/use-reports";
 import { useTransactions } from "@/hooks/use-transactions";
 import {
@@ -67,9 +67,16 @@ const COLORS = [
 ];
 
 export default function ReportsPage() {
-  const { allTransactions, isLoading: isTransactionsLoading } =
-    useTransactions();
+  const {
+    allTransactions,
+    isLoading: isTransactionsLoading,
+    loadTransactions,
+  } = useTransactions();
   const { isPro, isLoading: isPlanLoading } = usePlan();
+
+  useEffect(() => {
+    loadTransactions();
+  }, [loadTransactions]);
 
   const availableYears = useMemo(() => {
     const years = new Set(

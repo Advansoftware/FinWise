@@ -1,7 +1,7 @@
 // src/app/(app)/installments/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -33,7 +33,12 @@ import { formatCurrency } from "@/lib/utils";
 export default function InstallmentsPage() {
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("active");
-  const { installments, summary, isLoading } = useInstallments();
+  const { installments, summary, isLoading, loadInstallments } =
+    useInstallments();
+
+  useEffect(() => {
+    loadInstallments();
+  }, [loadInstallments]);
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: string) => {
     setActiveTab(newValue);
@@ -106,14 +111,14 @@ export default function InstallmentsPage() {
               <Typography
                 variant="h5"
                 fontWeight="bold"
-                sx={{ fontSize: { xs: "1.25rem", md: "1.5rem" }, display: { xs: "none", md: "block" } }}
+                sx={{
+                  fontSize: { xs: "1.25rem", md: "1.5rem" },
+                  display: { xs: "none", md: "block" },
+                }}
               >
                 Parcelamentos
               </Typography>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-              >
+              <Typography variant="body2" color="text.secondary">
                 Gerencie suas prestações e acompanhe pagamentos.
               </Typography>
             </Grid>

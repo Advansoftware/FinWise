@@ -8,6 +8,7 @@ import {
   useContext,
   ReactNode,
   useRef,
+  useCallback,
 } from "react";
 import { Goal, Transaction } from "@/lib/types";
 import { useToast } from "./use-toast";
@@ -19,6 +20,8 @@ interface GoalsContextType {
   goals: Goal[];
   isLoading: boolean;
   isOnline: boolean;
+  hasLoaded: boolean;
+  loadGoals: () => Promise<void>;
   addGoal: (
     goal: Omit<Goal, "id" | "createdAt" | "currentAmount" | "userId">
   ) => Promise<void>;
@@ -42,7 +45,7 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
   const { registerRefreshHandler, unregisterRefreshHandler, triggerRefresh } =
     useDataRefresh();
   const [goals, setGoals] = useState<Goal[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
   const [completedGoal, setCompletedGoal] = useState<Goal | null>(null);
   const prevGoalsRef = useRef<Goal[]>([]);
@@ -82,30 +85,53 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     prevGoalsRef.current = goals;
   }, [goals]);
 
+  // Track if data has been loaded
+  const [hasLoaded, setHasLoaded] = useState(false);
+
+  // Load goals only when needed (lazy loading)
+  const loadGoals = useCallback(async () => {
+    if (!user || hasLoaded) return;
+
+    setIsLoading(true);
+    try {
+      const fetchedGoals: Goal[] = await apiClient.get("goals", user.uid);
+      setGoals(fetchedGoals);
+      setHasLoaded(true);
+    } catch (error) {
+      console.error("Erro ao carregar metas:", error);
+      setGoals([]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user, hasLoaded]);
+
+  // Force refresh (ignores hasLoaded)
+  const refreshGoals = useCallback(async () => {
+    if (!user) return;
+
+    setIsLoading(true);
+    try {
+      const fetchedGoals: Goal[] = await apiClient.get("goals", user.uid);
+      setGoals(fetchedGoals);
+      setHasLoaded(true);
+    } catch (error) {
+      console.error("Erro ao carregar metas:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [user]);
+
+  // Register refresh handler (but don't load immediately)
   useEffect(() => {
     if (authLoading || !user) {
       setIsLoading(false);
       setGoals([]);
+      setHasLoaded(false);
       return;
     }
 
-    const loadGoals = async () => {
-      setIsLoading(true);
-      try {
-        const fetchedGoals: Goal[] = await apiClient.get("goals", user.uid);
-        setGoals(fetchedGoals);
-      } catch (error) {
-        console.error("Erro ao carregar metas:", error);
-        setGoals([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadGoals();
-
     // Register this hook's refresh function with the global system
-    registerRefreshHandler("goals", loadGoals);
+    registerRefreshHandler("goals", refreshGoals);
 
     return () => {
       unregisterRefreshHandler("goals");
@@ -246,10 +272,6 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const refreshGoals = async () => {
-    await loadGoals();
-  };
-
   const clearCompletedGoal = () => {
     setCompletedGoal(null);
   };
@@ -258,6 +280,8 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     goals,
     isLoading: isLoading || authLoading,
     isOnline,
+    hasLoaded,
+    loadGoals,
     addGoal,
     updateGoal,
     deleteGoal,

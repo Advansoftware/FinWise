@@ -23,8 +23,10 @@ interface InstallmentsContextType {
   summary: InstallmentSummary | null;
   isLoading: boolean;
   isOnline: boolean;
+  hasLoaded: boolean;
 
   // Actions
+  loadInstallments: () => Promise<void>;
   createInstallment: (
     data: CreateInstallmentInput
   ) => Promise<Installment | null>;
@@ -68,8 +70,9 @@ export function InstallmentsProvider({
 }) {
   const [installments, setInstallments] = useState<Installment[]>([]);
   const [summary, setSummary] = useState<InstallmentSummary | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
   const [isOnline, setIsOnline] = useState(true);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   const { user } = useAuth();
   const { toast } = useToast();
@@ -127,22 +130,37 @@ export function InstallmentsProvider({
     }
   }, [user?.uid]);
 
-  const refreshData = useCallback(async () => {
+  // Force refresh (for internal use and refresh handler)
+  const refreshDataInternal = useCallback(async () => {
     setIsLoading(true);
     await Promise.all([fetchInstallments(), fetchSummary()]);
+    setHasLoaded(true);
     setIsLoading(false);
   }, [fetchInstallments, fetchSummary]);
 
+  // Load installments only when needed (lazy loading)
+  const loadInstallments = useCallback(async () => {
+    if (!user?.uid || hasLoaded) return;
+    await refreshDataInternal();
+  }, [user?.uid, hasLoaded, refreshDataInternal]);
+
+  // Expose refreshData that forces reload
+  const refreshData = useCallback(async () => {
+    await refreshDataInternal();
+  }, [refreshDataInternal]);
+
+  // Register refresh handler (but don't load immediately)
   useEffect(() => {
     if (!user?.uid) {
       setIsLoading(false);
+      setInstallments([]);
+      setSummary(null);
+      setHasLoaded(false);
       return;
     }
 
-    refreshData();
-
     // Register this hook's refresh function with the global system
-    registerRefreshHandler("installments", refreshData);
+    registerRefreshHandler("installments", refreshDataInternal);
 
     return () => {
       unregisterRefreshHandler("installments");
@@ -414,6 +432,8 @@ export function InstallmentsProvider({
     summary,
     isLoading,
     isOnline,
+    hasLoaded,
+    loadInstallments,
     createInstallment,
     updateInstallment,
     deleteInstallment,

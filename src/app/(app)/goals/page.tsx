@@ -1,7 +1,7 @@
 // src/app/(app)/goals/page.tsx
 "use client";
 
-import { useState, useMemo, MouseEvent } from "react";
+import { useState, useMemo, MouseEvent, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -45,9 +45,13 @@ import { GamificationGuide, DailyQuestsCard } from "@/components/gamification";
 import { formatCurrency } from "@/lib/utils";
 
 export default function GoalsPage() {
-  const { goals, isLoading, deleteGoal } = useGoals();
+  const { goals, isLoading, deleteGoal, loadGoals } = useGoals();
   const { gamificationData } = useGamification();
   const theme = useTheme();
+
+  useEffect(() => {
+    loadGoals();
+  }, [loadGoals]);
 
   // Dialog States
   const [createDialogOpen, setCreateDialogOpen] = useState(false);

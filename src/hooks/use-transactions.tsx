@@ -27,6 +27,8 @@ type CategoryMap = Partial<Record<TransactionCategory, string[]>>;
 interface TransactionsContextType {
   allTransactions: Transaction[];
   isLoading: boolean;
+  hasLoaded: boolean;
+  loadTransactions: () => Promise<void>;
   filteredTransactions: Transaction[];
   chartData: { name: string; total: number }[];
   dateRange: DateRange | undefined;
@@ -86,7 +88,8 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
     useDataRefresh();
   const [allTransactions, setAllTransactions] = useState<Transaction[]>([]);
   const [categoryMap, setCategoryMap] = useState<CategoryMap>({});
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: startOfMonth(new Date()),
     to: new Date(),
@@ -94,7 +97,8 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>("all");
 
-  const refreshData = useCallback(async () => {
+  // Force refresh (for internal use and refresh handler)
+  const refreshDataInternal = useCallback(async () => {
     if (!user) return;
     setIsLoading(true);
     try {
@@ -105,6 +109,7 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
 
       setAllTransactions(fetchedTransactions);
       setCategoryMap(settings?.categories || {});
+      setHasLoaded(true);
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
     } finally {
@@ -112,18 +117,32 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
     }
   }, [user?.uid]);
 
-  // Store refreshData in a ref to avoid re-triggering useEffect
-  const refreshDataRef = useCallback(() => refreshData(), [refreshData]);
+  // Load transactions only when needed (lazy loading)
+  const loadTransactions = useCallback(async () => {
+    if (!user || hasLoaded) return;
+    await refreshDataInternal();
+  }, [user, hasLoaded, refreshDataInternal]);
 
+  // Expose refreshData that forces reload
+  const refreshData = useCallback(async () => {
+    await refreshDataInternal();
+  }, [refreshDataInternal]);
+
+  // Store refreshData in a ref to avoid re-triggering useEffect
+  const refreshDataRef = useCallback(
+    () => refreshDataInternal(),
+    [refreshDataInternal]
+  );
+
+  // Register refresh handler (but don't load immediately)
   useEffect(() => {
     if (authLoading || !user) {
       setIsLoading(false);
       setAllTransactions([]);
       setCategoryMap({});
+      setHasLoaded(false);
       return;
     }
-
-    refreshData();
 
     // Register this hook's refresh function with the global system
     registerRefreshHandler("transactions", refreshDataRef);
@@ -440,6 +459,8 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
   const value: TransactionsContextType = {
     allTransactions,
     isLoading: isLoading || authLoading,
+    hasLoaded,
+    loadTransactions,
     filteredTransactions,
     chartData,
     dateRange,
