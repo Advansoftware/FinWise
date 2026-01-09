@@ -178,6 +178,49 @@ export function usePayment() {
     }
   };
 
+  const updateSubscriptionPlan = async (
+    newPlan: Exclude<UserPlan, "Básico">
+  ) => {
+    if (!user) {
+      throw new Error("User not authenticated");
+    }
+
+    setIsProcessing(true);
+    try {
+      const result = await paymentClient.updateSubscriptionPlan({
+        userId: user.uid,
+        newPlan,
+      });
+
+      if (result.success) {
+        toast({
+          title: "Plano atualizado!",
+          description: `Seu plano foi alterado para ${newPlan} com sucesso!`,
+        });
+        if (result.subscription) {
+          setSubscription(result.subscription);
+        } else {
+          await fetchSubscription();
+        }
+        return result;
+      } else {
+        throw new Error(result.error || "Failed to update subscription plan");
+      }
+    } catch (error: any) {
+      console.error("Update plan error:", error);
+      toast({
+        variant: "error",
+        title: "Erro",
+        description:
+          error.message ||
+          "Não foi possível alterar o plano. Tente novamente mais tarde.",
+      });
+      throw error;
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
   return {
     isProcessing,
     isLoadingSubscription,
@@ -187,5 +230,6 @@ export function usePayment() {
     fetchSubscription,
     cancelSubscription,
     reactivateSubscription,
+    updateSubscriptionPlan,
   };
 }

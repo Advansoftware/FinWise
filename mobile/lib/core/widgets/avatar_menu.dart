@@ -168,7 +168,7 @@ class _UserMenuSheet extends StatelessWidget {
               ),
               _MenuItem(
                 icon: Icons.settings_outlined,
-                label: 'Configurações de IA',
+                label: 'Configurações',
                 onTap: () {
                   Navigator.pop(context);
                   // TODO: Navegar para configurações

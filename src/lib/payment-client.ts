@@ -9,7 +9,9 @@ import {
   CancelSubscriptionInput,
   CancelSubscriptionOutput,
   ReactivateSubscriptionInput,
-  ReactivateSubscriptionOutput
+  ReactivateSubscriptionOutput,
+  UpdateSubscriptionPlanInput,
+  UpdateSubscriptionPlanOutput
 } from '@/core/ports/payment.port';
 
 export class PaymentClient {
@@ -95,6 +97,23 @@ export class PaymentClient {
     if (!response.ok) {
       const error = await response.json();
       throw new Error(error.error || 'Failed to reactivate subscription');
+    }
+
+    return response.json();
+  }
+
+  async updateSubscriptionPlan(input: UpdateSubscriptionPlanInput): Promise<UpdateSubscriptionPlanOutput> {
+    const response = await fetch(`${this.baseUrl}?action=updateSubscriptionPlan`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(input),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.error || 'Failed to update subscription plan');
     }
 
     return response.json();

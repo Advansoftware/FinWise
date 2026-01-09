@@ -85,6 +85,17 @@ export interface ReactivateSubscriptionOutput {
   error?: string;
 }
 
+export interface UpdateSubscriptionPlanInput {
+  userId: string;
+  newPlan: Exclude<UserPlan, 'Básico'>;
+}
+
+export interface UpdateSubscriptionPlanOutput {
+  success: boolean;
+  subscription?: SubscriptionDetails;
+  error?: string;
+}
+
 // Main payment service interface (The "Port")
 export interface IPaymentService {
   createCheckoutSession(input: CreateCheckoutSessionInput): Promise<CreateCheckoutSessionOutput>;
@@ -94,6 +105,7 @@ export interface IPaymentService {
   getSubscription(userId: string): Promise<GetSubscriptionOutput>;
   cancelSubscription(input: CancelSubscriptionInput): Promise<CancelSubscriptionOutput>;
   reactivateSubscription(input: ReactivateSubscriptionInput): Promise<ReactivateSubscriptionOutput>;
+  updateSubscriptionPlan(input: UpdateSubscriptionPlanInput): Promise<UpdateSubscriptionPlanOutput>;
 }
 
 // Payment repository for managing payment-related data

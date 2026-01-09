@@ -6,7 +6,8 @@ import {
   createPortalSessionAction,
   getSubscriptionAction,
   cancelSubscriptionAction,
-  reactivateSubscriptionAction
+  reactivateSubscriptionAction,
+  updateSubscriptionPlanAction
 } from '@/core/actions/payment.actions';
 
 export async function POST(req: NextRequest) {
@@ -35,6 +36,10 @@ export async function POST(req: NextRequest) {
       case 'reactivateSubscription':
         const reactivateResult = await reactivateSubscriptionAction(body);
         return NextResponse.json(reactivateResult);
+
+      case 'updateSubscriptionPlan':
+        const updateResult = await updateSubscriptionPlanAction(body);
+        return NextResponse.json(updateResult);
 
       default:
         return NextResponse.json(

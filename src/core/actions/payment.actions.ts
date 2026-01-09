@@ -11,7 +11,9 @@ import {
   CancelSubscriptionInput,
   CancelSubscriptionOutput,
   ReactivateSubscriptionInput,
-  ReactivateSubscriptionOutput
+  ReactivateSubscriptionOutput,
+  UpdateSubscriptionPlanInput,
+  UpdateSubscriptionPlanOutput
 } from '@/core/ports/payment.port';
 
 export async function createCheckoutSessionAction(input: CreateCheckoutSessionInput): Promise<CreateCheckoutSessionOutput> {
@@ -37,4 +39,9 @@ export async function cancelSubscriptionAction(input: CancelSubscriptionInput): 
 export async function reactivateSubscriptionAction(input: ReactivateSubscriptionInput): Promise<ReactivateSubscriptionOutput> {
   const paymentService = await getPaymentService();
   return paymentService.reactivateSubscription(input);
+}
+
+export async function updateSubscriptionPlanAction(input: UpdateSubscriptionPlanInput): Promise<UpdateSubscriptionPlanOutput> {
+  const paymentService = await getPaymentService();
+  return paymentService.updateSubscriptionPlan(input);
 }

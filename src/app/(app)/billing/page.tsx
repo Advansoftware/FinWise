@@ -18,6 +18,12 @@ import {
   ListItemText,
   Divider,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  Alert,
 } from "@mui/material";
 import Grid from "@mui/material/Grid";
 import { CheckCircle2, Gem, BrainCircuit, Rocket } from "lucide-react";
@@ -28,7 +34,6 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { UpgradeCelebration } from "@/components/billing/upgrade-celebration";
 import { CancelFeedback } from "@/components/billing/cancel-feedback";
-import { BillingPortalButton } from "@/components/billing/billing-portal-button";
 import { SubscriptionManager } from "@/components/billing/subscription-manager";
 
 const plans = [
@@ -102,11 +107,16 @@ function BillingPageContent() {
   const { plan: currentUserPlan, isLoading: isPlanLoading } = usePlan();
   const { user, refreshUser } = useAuth();
   const { toast } = useToast();
-  const { isProcessing, createCheckoutSession, openCustomerPortal } =
+  const { isProcessing, createCheckoutSession, updateSubscriptionPlan } =
     usePayment();
   const [showCelebration, setShowCelebration] = useState(false);
   const [showCancelFeedback, setShowCancelFeedback] = useState(false);
   const [hasProcessedSuccess, setHasProcessedSuccess] = useState(false);
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<Exclude<
+    UserPlan,
+    "Básico"
+  > | null>(null);
   const searchParams = useSearchParams();
   const router = useRouter();
   const pathname = usePathname();
@@ -115,7 +125,9 @@ function BillingPageContent() {
     const params = new URLSearchParams(searchParams.toString());
     params.delete("success");
     params.delete("canceled");
-    const newUrl = params.toString() ? `${pathname}?${params.toString()}` : pathname;
+    const newUrl = params.toString()
+      ? `${pathname}?${params.toString()}`
+      : pathname;
     window.history.replaceState(
       { ...window.history.state, as: newUrl, url: newUrl },
       "",
@@ -126,43 +138,45 @@ function BillingPageContent() {
   useEffect(() => {
     const successParam = searchParams.get("success");
     const canceledParam = searchParams.get("canceled");
-    
+
     // Evitar processamento duplicado
     if (hasProcessedSuccess) return;
-    
+
     if (successParam) {
       console.log("[Billing] Payment success detected!");
       setHasProcessedSuccess(true);
       setShowCelebration(true);
-      
+
       // Limpar URL imediatamente para evitar loops
       cleanUpUrl();
-      
+
       // Atualizar sessão após o pagamento
       const refreshSession = async () => {
         console.log("[Billing] Starting session refresh...");
-        
+
         // Aguardar um pouco para garantir que o webhook processou
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+
         // Tentar atualizar a sessão algumas vezes
         for (let i = 0; i < 5; i++) {
           console.log(`[Billing] Refresh attempt ${i + 1}/5`);
           const updatedUser = await refreshUser();
-          
-          if (updatedUser && updatedUser.plan !== 'Básico') {
-            console.log(`[Billing] Session updated successfully! Plan: ${updatedUser.plan}`);
+
+          if (updatedUser && updatedUser.plan !== "Básico") {
+            console.log(
+              `[Billing] Session updated successfully! Plan: ${updatedUser.plan}`
+            );
             toast({
               title: "Plano atualizado!",
               description: `Seu plano foi atualizado para ${updatedUser.plan}`,
             });
             return;
           }
-          
+
           // Aguardar antes da próxima tentativa
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          await new Promise((resolve) => setTimeout(resolve, 2000));
         }
-        
+
         console.log("[Billing] Session refresh attempts completed");
         toast({
           title: "Pagamento confirmado!",
@@ -170,10 +184,10 @@ function BillingPageContent() {
           variant: "default",
         });
       };
-      
+
       refreshSession();
     }
-    
+
     if (canceledParam && !hasProcessedSuccess) {
       setShowCancelFeedback(true);
       cleanUpUrl();
@@ -182,6 +196,15 @@ function BillingPageContent() {
 
   const handleUpgrade = async (newPlan: Exclude<UserPlan, "Básico">) => {
     if (!user || !user.email) return;
+
+    // Se já é assinante, abre o dialog de confirmação
+    if (isPaidPlan) {
+      setSelectedPlan(newPlan);
+      setUpgradeDialogOpen(true);
+      return;
+    }
+
+    // Se é plano básico, vai para checkout
     try {
       await createCheckoutSession(newPlan);
     } catch (error) {
@@ -189,12 +212,17 @@ function BillingPageContent() {
     }
   };
 
-  const handleManageSubscription = async () => {
-    if (!user) return;
+  const handleConfirmPlanChange = async () => {
+    if (!selectedPlan) return;
+
     try {
-      await openCustomerPortal();
+      await updateSubscriptionPlan(selectedPlan);
+      setUpgradeDialogOpen(false);
+      setSelectedPlan(null);
+      setShowCelebration(true);
+      await refreshUser();
     } catch (error) {
-      // Error handling is done in the hook
+      // Error is handled in the hook
     }
   };
 
@@ -221,27 +249,14 @@ function BillingPageContent() {
         />
       )}
 
-      <Stack
-        direction={{ xs: "column", md: "row" }}
-        alignItems={{ xs: "flex-start", md: "center" }}
-        justifyContent="space-between"
-        spacing={4}
-      >
-        <Box>
-          <Typography variant="h4" fontWeight="bold" gutterBottom>
-            Assinatura e Créditos
-          </Typography>
-          <Typography variant="body1" color="text.secondary">
-            Gerencie seu plano e seu uso de créditos de IA.
-          </Typography>
-        </Box>
-        {isPaidPlan && (
-          <BillingPortalButton size="medium">
-            <Box component={Gem} sx={{ mr: 1, height: 16, width: 16 }} />
-            Gerenciar Assinatura
-          </BillingPortalButton>
-        )}
-      </Stack>
+      <Box>
+        <Typography variant="h4" fontWeight="bold" gutterBottom>
+          Assinatura e Créditos
+        </Typography>
+        <Typography variant="body1" color="text.secondary">
+          Gerencie seu plano e seu uso de créditos de IA.
+        </Typography>
+      </Box>
 
       <Grid container spacing={3}>
         {plans.map((plan) => {
@@ -426,6 +441,55 @@ function BillingPageContent() {
           </Typography>
         </CardContent>
       </Card>
+
+      {/* Dialog de confirmação para mudança de plano */}
+      <Dialog
+        open={upgradeDialogOpen}
+        onClose={() => setUpgradeDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Alterar para o plano {selectedPlan}?</DialogTitle>
+        <DialogContent>
+          <DialogContentText component="div">
+            <Stack spacing={2}>
+              <Typography>
+                Você está prestes a alterar seu plano de{" "}
+                <strong>{currentUserPlan}</strong> para{" "}
+                <strong>{selectedPlan}</strong>.
+              </Typography>
+
+              <Alert severity="info">
+                <Typography variant="body2">
+                  A diferença de valor será cobrada proporcionalmente ao período
+                  restante da sua assinatura atual. A cobrança será feita no
+                  cartão cadastrado.
+                </Typography>
+              </Alert>
+
+              <Typography variant="body2" color="text.secondary">
+                Seus novos créditos de IA serão aplicados imediatamente.
+              </Typography>
+            </Stack>
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => setUpgradeDialogOpen(false)}
+            disabled={isProcessing}
+          >
+            Cancelar
+          </Button>
+          <Button
+            onClick={handleConfirmPlanChange}
+            variant="contained"
+            disabled={isProcessing}
+            startIcon={isProcessing ? <CircularProgress size={16} /> : null}
+          >
+            {isProcessing ? "Alterando..." : "Confirmar alteração"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Stack>
   );
 }

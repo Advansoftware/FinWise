@@ -12,6 +12,7 @@ const PUBLIC_ROUTES = [
   "/docs", // Documentation (all /docs/* routes)
   "/api-docs", // API Documentation page
   "/blog", // Blog pages (all /blog/* routes)
+  "/calculadoras", // Public calculators for SEO
   "/faq", // FAQ page
   "/privacy", // Privacy policy
   "/terms", // Terms of use

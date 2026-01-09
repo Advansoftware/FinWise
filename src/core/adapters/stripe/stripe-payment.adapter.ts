@@ -1,6 +1,6 @@
 // src/core/adapters/stripe/stripe-payment.adapter.ts
 
-import { IPaymentService, CreateCheckoutSessionInput, CreateCheckoutSessionOutput, CreatePortalSessionInput, CreatePortalSessionOutput, WebhookEvent, SubscriptionData, IPaymentRepository, GetSubscriptionOutput, CancelSubscriptionInput, CancelSubscriptionOutput, ReactivateSubscriptionInput, ReactivateSubscriptionOutput, SubscriptionDetails } from '@/core/ports/payment.port';
+import { IPaymentService, CreateCheckoutSessionInput, CreateCheckoutSessionOutput, CreatePortalSessionInput, CreatePortalSessionOutput, WebhookEvent, SubscriptionData, IPaymentRepository, GetSubscriptionOutput, CancelSubscriptionInput, CancelSubscriptionOutput, ReactivateSubscriptionInput, ReactivateSubscriptionOutput, SubscriptionDetails, UpdateSubscriptionPlanInput, UpdateSubscriptionPlanOutput } from '@/core/ports/payment.port';
 import { UserPlan } from '@/lib/types';
 import Stripe from 'stripe';
 
@@ -458,6 +458,111 @@ export class StripePaymentAdapter implements IPaymentService {
       const errorMessage = error instanceof Stripe.errors.StripeError
         ? error.message
         : 'Não foi possível reativar a assinatura';
+      return { success: false, error: errorMessage };
+    }
+  }
+
+  async updateSubscriptionPlan(input: UpdateSubscriptionPlanInput): Promise<UpdateSubscriptionPlanOutput> {
+    const { userId, newPlan } = input;
+
+    try {
+      const user = await this.paymentRepository.getUserByUserId(userId);
+
+      if (!user || !user.stripeCustomerId) {
+        return { success: false, error: 'Assinatura não encontrada' };
+      }
+
+      // Buscar assinatura ativa
+      const subscriptions = await this.stripe.subscriptions.list({
+        customer: user.stripeCustomerId,
+        status: 'active',
+        limit: 1,
+      });
+
+      if (subscriptions.data.length === 0) {
+        return { success: false, error: 'Nenhuma assinatura ativa encontrada' };
+      }
+
+      const subscription = subscriptions.data[0];
+      const newPriceId = this.getPriceId(newPlan);
+
+      // Atualiza a assinatura com o novo preço
+      // proration_behavior: 'create_prorations' - cobra a diferença proporcional
+      const updatedSubscription = await this.stripe.subscriptions.update(subscription.id, {
+        items: [{
+          id: subscription.items.data[0].id,
+          price: newPriceId,
+        }],
+        proration_behavior: 'create_prorations',
+        metadata: {
+          ...subscription.metadata,
+          plan: newPlan,
+        },
+      });
+
+      // Mapear créditos
+      const creditsMap: Record<UserPlan, number> = {
+        'Básico': 0,
+        'Pro': 100,
+        'Plus': 300,
+        'Infinity': 500,
+      };
+
+      // Atualiza o banco de dados
+      await this.paymentRepository.updateUserSubscription(userId, {
+        plan: newPlan,
+        cancelAtPeriodEnd: false,
+      });
+
+      await this.paymentRepository.updateUserPlan(userId, newPlan, creditsMap[newPlan]);
+
+      console.log(`[StripePaymentAdapter] Updated subscription ${subscription.id} to plan ${newPlan}`);
+
+      // Retorna os detalhes atualizados
+      const price = updatedSubscription.items.data[0].price;
+      const defaultPaymentMethodId = updatedSubscription.default_payment_method as string | null;
+      let paymentMethod = undefined;
+
+      if (defaultPaymentMethodId) {
+        try {
+          const pm = await this.stripe.paymentMethods.retrieve(defaultPaymentMethodId);
+          if (pm.card) {
+            paymentMethod = {
+              type: 'card',
+              last4: pm.card.last4,
+              brand: pm.card.brand,
+              expMonth: pm.card.exp_month,
+              expYear: pm.card.exp_year,
+            };
+          }
+        } catch (err) {
+          console.warn('[StripePaymentAdapter] Could not retrieve payment method:', err);
+        }
+      }
+
+      return {
+        success: true,
+        subscription: {
+          id: updatedSubscription.id,
+          status: updatedSubscription.status,
+          plan: newPlan,
+          currentPeriodStart: new Date(updatedSubscription.current_period_start * 1000),
+          currentPeriodEnd: new Date(updatedSubscription.current_period_end * 1000),
+          cancelAtPeriodEnd: updatedSubscription.cancel_at_period_end,
+          cancelAt: updatedSubscription.cancel_at ? new Date(updatedSubscription.cancel_at * 1000) : null,
+          priceAmount: price.unit_amount || 0,
+          currency: price.currency,
+          interval: (price.recurring?.interval) || 'month',
+          nextInvoiceDate: updatedSubscription.current_period_end ? new Date(updatedSubscription.current_period_end * 1000) : null,
+          paymentMethod,
+        },
+      };
+
+    } catch (error) {
+      console.error('[StripePaymentAdapter] Error updating subscription plan:', error);
+      const errorMessage = error instanceof Stripe.errors.StripeError
+        ? error.message
+        : 'Não foi possível atualizar o plano';
       return { success: false, error: errorMessage };
     }
   }

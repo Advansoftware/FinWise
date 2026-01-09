@@ -103,7 +103,7 @@ const calculadoras = [
 
 export function CalculadorasContent() {
   const theme = useTheme();
-  
+
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "background.default" }}>
       {/* Hero Section */}

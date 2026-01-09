@@ -471,7 +471,7 @@ export function UserNav({ compact = false }: UserNavProps) {
             <Settings size={18} />
           </ListItemIcon>
           <ListItemText
-            primary="Configurações de IA"
+            primary="Configurações"
             primaryTypographyProps={{ variant: "body2" }}
           />
         </MenuItem>

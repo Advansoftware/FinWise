@@ -1,7 +1,7 @@
 // src/components/billing/subscription-manager.tsx
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect } from "react";
 import {
   Box,
   Card,
@@ -21,7 +21,7 @@ import {
   DialogActions,
   CircularProgress,
   Skeleton,
-} from '@mui/material';
+} from "@mui/material";
 import {
   CreditCard,
   Calendar,
@@ -29,11 +29,10 @@ import {
   RefreshCw,
   XCircle,
   CheckCircle,
-  ExternalLink,
-} from 'lucide-react';
-import { usePayment } from '@/hooks/use-payment';
-import { usePlan } from '@/hooks/use-plan';
-import { formatCurrency } from '@/lib/utils';
+} from "lucide-react";
+import { usePayment } from "@/hooks/use-payment";
+import { usePlan } from "@/hooks/use-plan";
+import { formatCurrency } from "@/lib/utils";
 
 export function SubscriptionManager() {
   const {
@@ -43,7 +42,6 @@ export function SubscriptionManager() {
     fetchSubscription,
     cancelSubscription,
     reactivateSubscription,
-    openCustomerPortal,
   } = usePayment();
   const { plan } = usePlan();
   const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
@@ -52,7 +50,7 @@ export function SubscriptionManager() {
     fetchSubscription();
   }, [fetchSubscription]);
 
-  const isPaidPlan = plan && plan !== 'Básico';
+  const isPaidPlan = plan && plan !== "Básico";
 
   if (!isPaidPlan) {
     return null;
@@ -94,7 +92,7 @@ export function SubscriptionManager() {
     }
 
     switch (subscription.status) {
-      case 'active':
+      case "active":
         return (
           <Chip
             icon={<CheckCircle size={14} />}
@@ -103,7 +101,7 @@ export function SubscriptionManager() {
             size="small"
           />
         );
-      case 'past_due':
+      case "past_due":
         return (
           <Chip
             icon={<AlertTriangle size={14} />}
@@ -112,7 +110,7 @@ export function SubscriptionManager() {
             size="small"
           />
         );
-      case 'canceled':
+      case "canceled":
         return (
           <Chip
             icon={<XCircle size={14} />}
@@ -122,32 +120,25 @@ export function SubscriptionManager() {
           />
         );
       default:
-        return (
-          <Chip
-            label={subscription.status}
-            size="small"
-          />
-        );
+        return <Chip label={subscription.status} size="small" />;
     }
   };
 
   const formatPaymentMethod = () => {
-    if (!subscription?.paymentMethod) return 'Não configurado';
+    if (!subscription?.paymentMethod) return "Não configurado";
 
     const { brand, last4, expMonth, expYear } = subscription.paymentMethod;
-    if (!brand || !last4) return 'Cartão configurado';
-    
+    if (!brand || !last4) return "Cartão configurado";
+
     const brandName = brand.charAt(0).toUpperCase() + brand.slice(1);
-    
+
     return `${brandName} •••• ${last4} (${expMonth}/${expYear})`;
   };
 
   if (isLoadingSubscription) {
     return (
       <Card>
-        <CardHeader
-          title={<Skeleton width={200} />}
-        />
+        <CardHeader title={<Skeleton width={200} />} />
         <CardContent>
           <Stack spacing={2}>
             <Skeleton height={40} />
@@ -163,11 +154,7 @@ export function SubscriptionManager() {
     return (
       <Card>
         <CardHeader
-          title={
-            <Typography variant="h6">
-              Detalhes da Assinatura
-            </Typography>
-          }
+          title={<Typography variant="h6">Detalhes da Assinatura</Typography>}
         />
         <CardContent>
           <Alert severity="info">
@@ -177,11 +164,11 @@ export function SubscriptionManager() {
               <Button
                 variant="outlined"
                 size="small"
-                startIcon={<ExternalLink size={16} />}
-                onClick={() => openCustomerPortal()}
+                startIcon={<RefreshCw size={16} />}
+                onClick={() => fetchSubscription()}
                 disabled={isProcessing}
               >
-                Gerenciar no Portal Stripe
+                Tentar novamente
               </Button>
             </Box>
           </Alert>
@@ -195,10 +182,12 @@ export function SubscriptionManager() {
       <Card>
         <CardHeader
           title={
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <Typography variant="h6">
-                Detalhes da Assinatura
-              </Typography>
+            <Stack
+              direction="row"
+              alignItems="center"
+              justifyContent="space-between"
+            >
+              <Typography variant="h6">Detalhes da Assinatura</Typography>
               {getStatusChip()}
             </Stack>
           }
@@ -207,7 +196,7 @@ export function SubscriptionManager() {
           <Stack spacing={3}>
             {/* Alerta de cancelamento agendado */}
             {subscription.cancelAtPeriodEnd && (
-              <Alert 
+              <Alert
                 severity="warning"
                 action={
                   <Button
@@ -215,16 +204,24 @@ export function SubscriptionManager() {
                     size="small"
                     onClick={handleReactivate}
                     disabled={isProcessing}
-                    startIcon={isProcessing ? <CircularProgress size={14} /> : <RefreshCw size={14} />}
+                    startIcon={
+                      isProcessing ? (
+                        <CircularProgress size={14} />
+                      ) : (
+                        <RefreshCw size={14} />
+                      )
+                    }
                   >
                     Reativar
                   </Button>
                 }
               >
                 <AlertTitle>Cancelamento agendado</AlertTitle>
-                Sua assinatura será cancelada em{' '}
+                Sua assinatura será cancelada em{" "}
                 <strong>
-                  {new Date(subscription.currentPeriodEnd).toLocaleDateString('pt-BR')}
+                  {new Date(subscription.currentPeriodEnd).toLocaleDateString(
+                    "pt-BR"
+                  )}
                 </strong>
                 . Você pode continuar usando todos os recursos até essa data.
               </Alert>
@@ -232,7 +229,11 @@ export function SubscriptionManager() {
 
             {/* Detalhes do plano */}
             <Box>
-              <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+              <Typography
+                variant="subtitle2"
+                color="text.secondary"
+                gutterBottom
+              >
                 Plano Atual
               </Typography>
               <Stack direction="row" alignItems="baseline" spacing={1}>
@@ -240,7 +241,8 @@ export function SubscriptionManager() {
                   {subscription.plan}
                 </Typography>
                 <Typography variant="body1" color="text.secondary">
-                  {formatCurrency(subscription.priceAmount / 100)}/{subscription.interval === 'month' ? 'mês' : 'ano'}
+                  {formatCurrency(subscription.priceAmount / 100)}/
+                  {subscription.interval === "month" ? "mês" : "ano"}
                 </Typography>
               </Stack>
             </Box>
@@ -256,8 +258,13 @@ export function SubscriptionManager() {
                     Período atual
                   </Typography>
                   <Typography variant="body1">
-                    {new Date(subscription.currentPeriodStart).toLocaleDateString('pt-BR')} até{' '}
-                    {new Date(subscription.currentPeriodEnd).toLocaleDateString('pt-BR')}
+                    {new Date(
+                      subscription.currentPeriodStart
+                    ).toLocaleDateString("pt-BR")}{" "}
+                    até{" "}
+                    {new Date(subscription.currentPeriodEnd).toLocaleDateString(
+                      "pt-BR"
+                    )}
                   </Typography>
                 </Box>
               </Stack>
@@ -274,36 +281,29 @@ export function SubscriptionManager() {
                 </Box>
               </Stack>
 
-              {subscription.nextInvoiceDate && !subscription.cancelAtPeriodEnd && (
-                <Stack direction="row" alignItems="center" spacing={2}>
-                  <Calendar size={20} color="gray" />
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Próxima cobrança
-                    </Typography>
-                    <Typography variant="body1">
-                      {new Date(subscription.nextInvoiceDate).toLocaleDateString('pt-BR')} -{' '}
-                      {formatCurrency(subscription.priceAmount / 100)}
-                    </Typography>
-                  </Box>
-                </Stack>
-              )}
+              {subscription.nextInvoiceDate &&
+                !subscription.cancelAtPeriodEnd && (
+                  <Stack direction="row" alignItems="center" spacing={2}>
+                    <Calendar size={20} color="gray" />
+                    <Box>
+                      <Typography variant="body2" color="text.secondary">
+                        Próxima cobrança
+                      </Typography>
+                      <Typography variant="body1">
+                        {new Date(
+                          subscription.nextInvoiceDate
+                        ).toLocaleDateString("pt-BR")}{" "}
+                        - {formatCurrency(subscription.priceAmount / 100)}
+                      </Typography>
+                    </Box>
+                  </Stack>
+                )}
             </Stack>
 
             <Divider />
 
             {/* Ações */}
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<ExternalLink size={16} />}
-                onClick={() => openCustomerPortal()}
-                disabled={isProcessing}
-              >
-                Atualizar Pagamento
-              </Button>
-
+            <Stack direction={{ xs: "column", sm: "row" }} spacing={2}>
               {!subscription.cancelAtPeriodEnd && (
                 <Button
                   variant="outlined"
@@ -338,30 +338,34 @@ export function SubscriptionManager() {
           <DialogContentText component="div">
             <Stack spacing={2}>
               <Typography>
-                Tem certeza que deseja cancelar sua assinatura do plano <strong>{subscription?.plan}</strong>?
+                Tem certeza que deseja cancelar sua assinatura do plano{" "}
+                <strong>{subscription?.plan}</strong>?
               </Typography>
-              
+
               <Alert severity="info">
                 <Typography variant="body2">
-                  Sua assinatura permanecerá ativa até{' '}
+                  Sua assinatura permanecerá ativa até{" "}
                   <strong>
-                    {subscription?.currentPeriodEnd 
-                      ? new Date(subscription.currentPeriodEnd).toLocaleDateString('pt-BR')
-                      : 'o fim do período atual'}
-                  </strong>.
-                  Após essa data, você voltará para o plano Básico.
+                    {subscription?.currentPeriodEnd
+                      ? new Date(
+                          subscription.currentPeriodEnd
+                        ).toLocaleDateString("pt-BR")
+                      : "o fim do período atual"}
+                  </strong>
+                  . Após essa data, você voltará para o plano Básico.
                 </Typography>
               </Alert>
 
               <Typography variant="body2" color="text.secondary">
-                Você pode reativar sua assinatura a qualquer momento antes da data de cancelamento.
+                Você pode reativar sua assinatura a qualquer momento antes da
+                data de cancelamento.
               </Typography>
             </Stack>
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button 
-            onClick={() => setCancelDialogOpen(false)} 
+          <Button
+            onClick={() => setCancelDialogOpen(false)}
             disabled={isProcessing}
           >
             Manter assinatura
@@ -373,7 +377,7 @@ export function SubscriptionManager() {
             disabled={isProcessing}
             startIcon={isProcessing ? <CircularProgress size={16} /> : null}
           >
-            {isProcessing ? 'Cancelando...' : 'Confirmar cancelamento'}
+            {isProcessing ? "Cancelando..." : "Confirmar cancelamento"}
           </Button>
         </DialogActions>
       </Dialog>
