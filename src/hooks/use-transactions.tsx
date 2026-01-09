@@ -107,15 +107,13 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
       setCategoryMap(settings?.categories || {});
     } catch (error) {
       console.error("Erro ao carregar dados:", error);
-      toast({
-        variant: "error",
-        title: "Erro ao carregar transações",
-        description: "Tente novamente",
-      });
     } finally {
       setIsLoading(false);
     }
-  }, [user?.uid, toast]);
+  }, [user?.uid]);
+
+  // Store refreshData in a ref to avoid re-triggering useEffect
+  const refreshDataRef = useCallback(() => refreshData(), [refreshData]);
 
   useEffect(() => {
     if (authLoading || !user) {
@@ -128,18 +126,12 @@ export function TransactionsProvider({ children }: TransactionsProviderProps) {
     refreshData();
 
     // Register this hook's refresh function with the global system
-    registerRefreshHandler("transactions", refreshData);
+    registerRefreshHandler("transactions", refreshDataRef);
 
     return () => {
       unregisterRefreshHandler("transactions");
     };
-  }, [
-    user?.uid,
-    authLoading,
-    refreshData,
-    registerRefreshHandler,
-    unregisterRefreshHandler,
-  ]);
+  }, [user?.uid, authLoading]);
 
   const addTransaction = async (
     transaction: Omit<Transaction, "id" | "userId">

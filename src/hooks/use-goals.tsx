@@ -82,26 +82,25 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     prevGoalsRef.current = goals;
   }, [goals]);
 
-  const loadGoals = async () => {
-    if (!user) return;
-    setIsLoading(true);
-    try {
-      const fetchedGoals: Goal[] = await apiClient.get("goals", user.uid);
-      setGoals(fetchedGoals);
-    } catch (error) {
-      console.error("Erro ao carregar metas:", error);
-      setGoals([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
     if (authLoading || !user) {
       setIsLoading(false);
       setGoals([]);
       return;
     }
+
+    const loadGoals = async () => {
+      setIsLoading(true);
+      try {
+        const fetchedGoals: Goal[] = await apiClient.get("goals", user.uid);
+        setGoals(fetchedGoals);
+      } catch (error) {
+        console.error("Erro ao carregar metas:", error);
+        setGoals([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
     loadGoals();
 
@@ -111,7 +110,8 @@ export function GoalsProvider({ children }: { children: ReactNode }) {
     return () => {
       unregisterRefreshHandler("goals");
     };
-  }, [user, authLoading]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid, authLoading]);
 
   const addGoal = async (
     goal: Omit<Goal, "id" | "createdAt" | "currentAmount" | "userId">

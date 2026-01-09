@@ -402,33 +402,23 @@ export function GamificationProvider({ children }: { children: ReactNode }) {
     }
   }, [user?.uid]);
 
-  // Registra handler de refresh
+  // Carrega dados iniciais e registra handler de refresh
   useEffect(() => {
-    const refreshHandler = () => {
-      if (user?.uid && !authLoading) {
-        fetchGamificationData();
-      }
-    };
+    if (authLoading || !user?.uid) {
+      setIsLoading(false);
+      return;
+    }
 
-    registerRefreshHandler("gamification", refreshHandler);
+    fetchGamificationData();
+
+    // Register this hook's refresh function with the global system
+    registerRefreshHandler("gamification", fetchGamificationData);
 
     return () => {
       unregisterRefreshHandler("gamification");
     };
-  }, [
-    user?.uid,
-    authLoading,
-    registerRefreshHandler,
-    unregisterRefreshHandler,
-    fetchGamificationData,
-  ]);
-
-  // Carrega dados iniciais
-  useEffect(() => {
-    if (!authLoading && user?.uid) {
-      fetchGamificationData();
-    }
-  }, [user?.uid, authLoading, fetchGamificationData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid, authLoading]);
 
   // Adiciona XP e mostra notificação
   const addXp = useCallback(

@@ -56,28 +56,30 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const loadBudgets = async () => {
-    if (!user) return;
-    setIsLoading(true);
-    try {
-      const fetchedBudgets: Budget[] = await apiClient.get("budgets", user.uid);
-      setBudgets(
-        fetchedBudgets.map((b: Budget) => ({ ...b, currentSpending: 0 }))
-      );
-    } catch (error) {
-      console.error("Erro ao carregar orçamentos:", error);
-      setBudgets([]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   useEffect(() => {
     if (authLoading || !user) {
       setIsLoading(false);
       setBudgets([]);
       return;
     }
+
+    const loadBudgets = async () => {
+      setIsLoading(true);
+      try {
+        const fetchedBudgets: Budget[] = await apiClient.get(
+          "budgets",
+          user.uid
+        );
+        setBudgets(
+          fetchedBudgets.map((b: Budget) => ({ ...b, currentSpending: 0 }))
+        );
+      } catch (error) {
+        console.error("Erro ao carregar orçamentos:", error);
+        setBudgets([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
     loadBudgets();
 
@@ -87,7 +89,8 @@ export function BudgetsProvider({ children }: { children: ReactNode }) {
     return () => {
       unregisterRefreshHandler("budgets");
     };
-  }, [user, authLoading]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid, authLoading]);
 
   const addBudget = async (
     budget: Omit<Budget, "id" | "createdAt" | "currentSpending" | "userId">

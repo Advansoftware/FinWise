@@ -59,6 +59,9 @@ import {
   breadcrumbData,
   faqData,
 } from "@/lib/structured-data";
+import { getFeatureFlags } from "@/lib/feature-flags";
+
+const { openFinance: isOpenFinanceEnabled } = getFeatureFlags();
 import Head from "next/head";
 
 const fadeIn = {
@@ -111,7 +114,7 @@ const plans = [
     features: [
       "Tudo do Pro",
       "300 créditos IA/mês",
-      "Open Finance",
+      ...(isOpenFinanceEnabled ? ["Open Finance"] : []),
       "OCR de notas fiscais",
       "Importação CSV/OFX",
       "Ollama local (ilimitado)",
@@ -1505,44 +1508,50 @@ export default function Page() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {comparisonFeatures.map((category, catIndex) => (
-                      <React.Fragment key={catIndex}>
-                        <TableRow sx={{ bgcolor: "action.hover" }}>
-                          <TableCell
-                            colSpan={5}
-                            sx={{ fontWeight: 700, fontSize: "1rem", py: 2 }}
-                          >
-                            {category.category}
-                          </TableCell>
-                        </TableRow>
-                        {category.features.map((feature, featIndex) => (
-                          <TableRow
-                            key={featIndex}
-                            sx={{
-                              "&:nth-of-type(even)": {
-                                bgcolor: "action.hover",
-                              },
-                              "&:hover": { bgcolor: "action.selected" },
-                              transition: "background-color 0.2s ease",
-                            }}
-                          >
-                            <TableCell>{feature.name}</TableCell>
-                            <TableCell align="center">
-                              {renderCellValue(feature.basico)}
-                            </TableCell>
-                            <TableCell align="center">
-                              {renderCellValue(feature.pro)}
-                            </TableCell>
-                            <TableCell align="center">
-                              {renderCellValue(feature.plus)}
-                            </TableCell>
-                            <TableCell align="center">
-                              {renderCellValue(feature.infinity)}
+                    {comparisonFeatures
+                      .filter(
+                        (category) =>
+                          isOpenFinanceEnabled ||
+                          category.category !== "Open Finance & PIX"
+                      )
+                      .map((category, catIndex) => (
+                        <React.Fragment key={catIndex}>
+                          <TableRow sx={{ bgcolor: "action.hover" }}>
+                            <TableCell
+                              colSpan={5}
+                              sx={{ fontWeight: 700, fontSize: "1rem", py: 2 }}
+                            >
+                              {category.category}
                             </TableCell>
                           </TableRow>
-                        ))}
-                      </React.Fragment>
-                    ))}
+                          {category.features.map((feature, featIndex) => (
+                            <TableRow
+                              key={featIndex}
+                              sx={{
+                                "&:nth-of-type(even)": {
+                                  bgcolor: "action.hover",
+                                },
+                                "&:hover": { bgcolor: "action.selected" },
+                                transition: "background-color 0.2s ease",
+                              }}
+                            >
+                              <TableCell>{feature.name}</TableCell>
+                              <TableCell align="center">
+                                {renderCellValue(feature.basico)}
+                              </TableCell>
+                              <TableCell align="center">
+                                {renderCellValue(feature.pro)}
+                              </TableCell>
+                              <TableCell align="center">
+                                {renderCellValue(feature.plus)}
+                              </TableCell>
+                              <TableCell align="center">
+                                {renderCellValue(feature.infinity)}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </React.Fragment>
+                      ))}
                   </TableBody>
                 </Table>
               </TableContainer>

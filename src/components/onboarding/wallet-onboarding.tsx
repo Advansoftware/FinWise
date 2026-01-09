@@ -61,12 +61,36 @@ const walletSchema = z.object({
 
 type WalletFormValues = z.infer<typeof walletSchema>;
 
-const walletTypes: { type: WalletType; icon: React.ReactNode; description: string }[] = [
-  { type: "Conta Corrente", icon: <Banknote size={24} />, description: "Conta bancária principal" },
-  { type: "Cartão de Crédito", icon: <CreditCard size={24} />, description: "Cartão de crédito" },
-  { type: "Poupança", icon: <PiggyBank size={24} />, description: "Conta poupança" },
-  { type: "Investimentos", icon: <TrendingUp size={24} />, description: "Corretora ou investimentos" },
-  { type: "Dinheiro", icon: <Banknote size={24} />, description: "Dinheiro em espécie" },
+const walletTypes: {
+  type: WalletType;
+  icon: React.ReactNode;
+  description: string;
+}[] = [
+  {
+    type: "Conta Corrente",
+    icon: <Banknote size={24} />,
+    description: "Conta bancária principal",
+  },
+  {
+    type: "Cartão de Crédito",
+    icon: <CreditCard size={24} />,
+    description: "Cartão de crédito",
+  },
+  {
+    type: "Poupança",
+    icon: <PiggyBank size={24} />,
+    description: "Conta poupança",
+  },
+  {
+    type: "Investimentos",
+    icon: <TrendingUp size={24} />,
+    description: "Corretora ou investimentos",
+  },
+  {
+    type: "Dinheiro",
+    icon: <Banknote size={24} />,
+    description: "Dinheiro em espécie",
+  },
   { type: "Outros", icon: <Wallet size={24} />, description: "Outras fontes" },
 ];
 
@@ -99,16 +123,31 @@ export function WalletOnboarding({ forceOpen }: WalletOnboardingProps) {
 
   const selectedType = watch("type");
 
-  // Auto-open when user has no wallets
+  // Check if onboarding was already completed (persisted)
+  const [onboardingDismissed, setOnboardingDismissed] = useState(() => {
+    if (typeof window !== "undefined") {
+      return (
+        localStorage.getItem("gastometria_onboarding_completed") === "true"
+      );
+    }
+    return false;
+  });
+
+  // Auto-open when user has no wallets AND hasn't dismissed onboarding before
   useEffect(() => {
-    if (!isLoading && wallets.length === 0 && !isComplete) {
+    if (
+      !isLoading &&
+      wallets.length === 0 &&
+      !isComplete &&
+      !onboardingDismissed
+    ) {
       // Small delay to let the dashboard load first
       const timer = setTimeout(() => {
         setIsOpen(true);
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [wallets.length, isLoading, isComplete]);
+  }, [wallets.length, isLoading, isComplete, onboardingDismissed]);
 
   // Force open from parent
   useEffect(() => {
@@ -126,6 +165,9 @@ export function WalletOnboarding({ forceOpen }: WalletOnboardingProps) {
       });
       setIsComplete(true);
       setStep(2);
+      // Mark onboarding as completed
+      localStorage.setItem("gastometria_onboarding_completed", "true");
+      setOnboardingDismissed(true);
       // Auto close after success animation
       setTimeout(() => {
         setIsOpen(false);
@@ -135,6 +177,13 @@ export function WalletOnboarding({ forceOpen }: WalletOnboardingProps) {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleSkipOnboarding = () => {
+    // Mark onboarding as dismissed so it doesn't show again
+    localStorage.setItem("gastometria_onboarding_completed", "true");
+    setOnboardingDismissed(true);
+    setIsOpen(false);
   };
 
   const handleTypeSelect = (type: WalletType) => {
@@ -156,7 +205,10 @@ export function WalletOnboarding({ forceOpen }: WalletOnboardingProps) {
       PaperProps={{
         sx: {
           borderRadius: 4,
-          background: `linear-gradient(145deg, ${alpha(theme.palette.background.paper, 0.98)} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`,
+          background: `linear-gradient(145deg, ${alpha(
+            theme.palette.background.paper,
+            0.98
+          )} 0%, ${alpha(theme.palette.primary.main, 0.05)} 100%)`,
           backdropFilter: "blur(20px)",
           overflow: "hidden",
         },
@@ -245,8 +297,12 @@ export function WalletOnboarding({ forceOpen }: WalletOnboardingProps) {
                       p: 2,
                       borderRadius: 3,
                       border: 2,
-                      borderColor: selectedType === type ? "primary.main" : "divider",
-                      bgcolor: selectedType === type ? alpha(theme.palette.primary.main, 0.1) : "transparent",
+                      borderColor:
+                        selectedType === type ? "primary.main" : "divider",
+                      bgcolor:
+                        selectedType === type
+                          ? alpha(theme.palette.primary.main, 0.1)
+                          : "transparent",
                       cursor: "pointer",
                       transition: "all 0.2s ease",
                       "&:hover": {
@@ -284,7 +340,10 @@ export function WalletOnboarding({ forceOpen }: WalletOnboardingProps) {
               <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
                 Agora, dê um nome para sua carteira:
               </Typography>
-              <form onSubmit={handleSubmit(onSubmit)} id="onboarding-wallet-form">
+              <form
+                onSubmit={handleSubmit(onSubmit)}
+                id="onboarding-wallet-form"
+              >
                 <Stack spacing={3}>
                   <Controller
                     name="name"
@@ -311,7 +370,8 @@ export function WalletOnboarding({ forceOpen }: WalletOnboardingProps) {
                     }}
                   >
                     <Typography variant="body2" color="info.main">
-                      💡 <strong>Dica:</strong> Você pode criar mais carteiras depois nas configurações.
+                      💡 <strong>Dica:</strong> Você pode criar mais carteiras
+                      depois nas configurações.
                     </Typography>
                   </Box>
                 </Stack>
@@ -331,7 +391,12 @@ export function WalletOnboarding({ forceOpen }: WalletOnboardingProps) {
                 <motion.div
                   initial={{ scale: 0 }}
                   animate={{ scale: 1 }}
-                  transition={{ type: "spring", damping: 10, stiffness: 100, delay: 0.2 }}
+                  transition={{
+                    type: "spring",
+                    damping: 10,
+                    stiffness: 100,
+                    delay: 0.2,
+                  }}
                 >
                   <CheckCircle2 size={80} color={theme.palette.success.main} />
                 </motion.div>
@@ -339,7 +404,8 @@ export function WalletOnboarding({ forceOpen }: WalletOnboardingProps) {
                   Carteira criada com sucesso!
                 </Typography>
                 <Typography variant="body1" color="text.secondary">
-                  Agora você pode começar a registrar suas transações. Bom controle financeiro! 🚀
+                  Agora você pode começar a registrar suas transações. Bom
+                  controle financeiro! 🚀
                 </Typography>
               </Box>
             </motion.div>
@@ -348,29 +414,44 @@ export function WalletOnboarding({ forceOpen }: WalletOnboardingProps) {
       </DialogContent>
 
       {step < 2 && (
-        <DialogActions sx={{ px: 3, pb: 3 }}>
-          {step > 0 && (
-            <Button variant="outlined" onClick={() => setStep(step - 1)} disabled={isSubmitting}>
-              Voltar
-            </Button>
-          )}
-          {step === 1 && (
-            <Button
-              type="submit"
-              form="onboarding-wallet-form"
-              variant="contained"
-              disabled={isSubmitting}
-              endIcon={
-                isSubmitting ? (
-                  <CircularProgress size={16} color="inherit" />
-                ) : (
-                  <ArrowRight size={16} />
-                )
-              }
-            >
-              Criar Carteira
-            </Button>
-          )}
+        <DialogActions sx={{ px: 3, pb: 3, justifyContent: "space-between" }}>
+          <Button
+            variant="text"
+            color="inherit"
+            onClick={handleSkipOnboarding}
+            sx={{ opacity: 0.7 }}
+          >
+            Pular por agora
+          </Button>
+          <Box>
+            {step > 0 && (
+              <Button
+                variant="outlined"
+                onClick={() => setStep(step - 1)}
+                disabled={isSubmitting}
+                sx={{ mr: 1 }}
+              >
+                Voltar
+              </Button>
+            )}
+            {step === 1 && (
+              <Button
+                type="submit"
+                form="onboarding-wallet-form"
+                variant="contained"
+                disabled={isSubmitting}
+                endIcon={
+                  isSubmitting ? (
+                    <CircularProgress size={16} color="inherit" />
+                  ) : (
+                    <ArrowRight size={16} />
+                  )
+                }
+              >
+                Criar Carteira
+              </Button>
+            )}
+          </Box>
         </DialogActions>
       )}
     </Dialog>

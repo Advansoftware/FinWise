@@ -123,26 +123,6 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
   }, [user?.uid]);
 
   useEffect(() => {
-    const refreshHandler = () => {
-      if (user && !authLoading) {
-        loadData();
-      }
-    };
-
-    registerRefreshHandler("reports", refreshHandler);
-
-    return () => {
-      unregisterRefreshHandler("reports");
-    };
-  }, [
-    user,
-    authLoading,
-    registerRefreshHandler,
-    unregisterRefreshHandler,
-    loadData,
-  ]);
-
-  useEffect(() => {
     if (authLoading || !user) {
       setIsLoading(false);
       setMonthlyReports([]);
@@ -162,7 +142,15 @@ export function ReportsProvider({ children }: { children: ReactNode }) {
     };
 
     loadReports();
-  }, [user, authLoading, loadData]);
+
+    // Register this hook's refresh function with the global system
+    registerRefreshHandler("reports", loadReports);
+
+    return () => {
+      unregisterRefreshHandler("reports");
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid, authLoading]);
 
   const generateMonthlyReport = useCallback(
     async (

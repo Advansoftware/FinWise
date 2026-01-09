@@ -126,7 +126,8 @@ export function useInfiniteTransactions(
     return () => {
       unregisterRefreshHandler("infinite-transactions");
     };
-  }, [queryClient, registerRefreshHandler, unregisterRefreshHandler]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return {
     transactions: allTransactions,

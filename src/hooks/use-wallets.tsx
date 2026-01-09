@@ -86,7 +86,8 @@ export function WalletsProvider({ children }: { children: ReactNode }) {
     return () => {
       unregisterRefreshHandler("wallets");
     };
-  }, [user, authLoading]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid, authLoading]);
 
   const addWallet = async (
     wallet: Omit<Wallet, "id" | "createdAt" | "balance" | "userId">

@@ -134,29 +134,21 @@ export function InstallmentsProvider({
   }, [fetchInstallments, fetchSummary]);
 
   useEffect(() => {
-    const refreshHandler = () => {
-      if (user?.uid) {
-        refreshData();
-      }
-    };
+    if (!user?.uid) {
+      setIsLoading(false);
+      return;
+    }
 
-    registerRefreshHandler("installments", refreshHandler);
+    refreshData();
+
+    // Register this hook's refresh function with the global system
+    registerRefreshHandler("installments", refreshData);
 
     return () => {
       unregisterRefreshHandler("installments");
     };
-  }, [
-    user?.uid,
-    registerRefreshHandler,
-    unregisterRefreshHandler,
-    refreshData,
-  ]);
-
-  useEffect(() => {
-    if (user?.uid) {
-      refreshData();
-    }
-  }, [user?.uid, refreshData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid]);
 
   const createInstallment = useCallback(
     async (data: CreateInstallmentInput): Promise<Installment | null> => {

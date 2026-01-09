@@ -86,13 +86,8 @@ export function useAISettings() {
     return () => {
       unregisterRefreshHandler("ai-settings");
     };
-  }, [
-    user,
-    authLoading,
-    loadSettings,
-    registerRefreshHandler,
-    unregisterRefreshHandler,
-  ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.uid, authLoading]);
 
   const credentials = useMemo(() => settings?.credentials || [], [settings]);
   const activeCredentialId = useMemo(
