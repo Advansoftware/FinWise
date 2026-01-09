@@ -98,7 +98,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 trailing: Switch(
                   value: true, // Sempre dark por enquanto
                   onChanged: null, // Desabilitado
-                  activeColor: AppTheme.primary,
+                  activeColor: Colors.white,
+                  activeTrackColor: AppTheme.primary,
                 ),
               ),
             ],
@@ -120,7 +121,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     setState(() => _pushNotificationsEnabled = value);
                     await _localStorage.prefs.setBool('push_notifications_enabled', value);
                   },
-                  activeColor: AppTheme.primary,
+                  activeColor: Colors.white,
+                  activeTrackColor: AppTheme.primary,
                 ),
               ),
               const Divider(color: AppTheme.border, height: 1),
@@ -133,7 +135,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     setState(() => _installmentRemindersEnabled = value);
                     await _localStorage.prefs.setBool('installment_reminders_enabled', value);
                   },
-                  activeColor: AppTheme.primary,
+                  activeColor: Colors.white,
+                  activeTrackColor: AppTheme.primary,
                 ),
               ),
             ],
@@ -400,7 +403,8 @@ class _BiometricToggle extends StatelessWidget {
           Switch(
             value: enabled,
             onChanged: available ? onChanged : null,
-            activeColor: AppTheme.primary,
+            activeColor: Colors.white,
+            activeTrackColor: AppTheme.primary,
           ),
         ],
       ),
