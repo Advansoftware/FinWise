@@ -1,5 +1,7 @@
 // src/core/ports/installments.port.ts
 
+import { FamilyVisibility } from '@/lib/types';
+
 export interface InstallmentPayment {
   id: string;
   installmentId: string;
@@ -55,6 +57,9 @@ export interface Installment {
 
   // Referência aos pagamentos
   payments: InstallmentPayment[];
+
+  // Campo para visibilidade familiar
+  familyVisibility?: FamilyVisibility; // Se não definido, usa configuração geral do membro
 }
 
 export interface CreateInstallmentInput {
@@ -80,6 +85,9 @@ export interface CreateInstallmentInput {
 
   // Valores customizados por parcela (soma deve ser igual ao totalAmount)
   customInstallmentAmounts?: number[];
+
+  // Visibilidade familiar
+  familyVisibility?: FamilyVisibility;
 }
 
 export interface UpdateInstallmentInput {
@@ -101,6 +109,9 @@ export interface UpdateInstallmentInput {
   recurringType?: 'monthly' | 'yearly';
   endDate?: string;
   installmentAmount?: number; // Para permitir ajuste de valor em recorrentes
+
+  // Visibilidade familiar
+  familyVisibility?: FamilyVisibility;
 }
 
 export interface PayInstallmentInput {

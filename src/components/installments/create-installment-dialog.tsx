@@ -33,6 +33,9 @@ import {
   Alert,
   Chip,
   Divider,
+  ToggleButton,
+  ToggleButtonGroup,
+  Tooltip,
 } from "@mui/material";
 import {
   Loader2,
@@ -43,13 +46,17 @@ import {
   X,
   Settings2,
   Edit3,
+  Users,
+  User,
 } from "lucide-react";
 import { Installment } from "@/core/ports/installments.port";
+import { FamilyVisibility } from "@/lib/types";
 import { Pix as PixIcon } from "@mui/icons-material";
 import { useInstallments } from "@/hooks/use-installments";
 import { useWallets } from "@/hooks/use-wallets";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useBankPayment } from "@/hooks/use-bank-payment";
+import { useFamily } from "@/hooks/use-family";
 import { format } from "date-fns";
 import { getFeatureFlags } from "@/lib/feature-flags";
 
@@ -75,6 +82,7 @@ const installmentSchema = z
     isRecurring: z.boolean().default(false),
     recurringType: z.enum(["monthly", "yearly"]).optional(),
     endDate: z.date().optional(),
+    familyVisibility: z.enum(["private", "shared", "auto"]).default("shared"),
   })
   .superRefine((data, ctx) => {
     // Validações específicas para parcelamentos recorrentes
@@ -131,6 +139,7 @@ export function CreateInstallmentDialog({
   const { wallets } = useWallets();
   const { categories, subcategories } = useTransactions();
   const { contacts } = useBankPayment();
+  const { isInFamily } = useFamily();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
@@ -152,6 +161,7 @@ export function CreateInstallmentDialog({
       isRecurring: false,
       recurringType: "monthly",
       startDate: new Date(),
+      familyVisibility: "shared",
     },
   });
 
@@ -194,6 +204,7 @@ export function CreateInstallmentDialog({
         endDate: installment.endDate
           ? new Date(installment.endDate)
           : undefined,
+        familyVisibility: installment.familyVisibility || "shared",
       });
 
       // Initialize contact and PIX key from installment
@@ -382,6 +393,8 @@ export function CreateInstallmentDialog({
             isManualValues && customAmounts.length > 0
               ? customAmounts
               : undefined,
+          // Visibilidade familiar
+          familyVisibility: isInFamily ? data.familyVisibility : undefined,
         };
 
         const newInstallment = await createInstallment(installmentData);
@@ -1025,6 +1038,84 @@ export function CreateInstallmentDialog({
                   )}
                 />
               </Grid>
+
+              {/* Visibilidade Familiar - só mostra se está em família */}
+              {isInFamily && (
+                <Grid size={12}>
+                  <Controller
+                    name="familyVisibility"
+                    control={form.control}
+                    render={({ field }) => (
+                      <Box>
+                        <Typography
+                          variant="subtitle2"
+                          fontWeight="medium"
+                          gutterBottom
+                        >
+                          Visibilidade
+                        </Typography>
+                        <ToggleButtonGroup
+                          value={field.value}
+                          exclusive
+                          onChange={(e, value) =>
+                            value && field.onChange(value)
+                          }
+                          fullWidth
+                          size="small"
+                          sx={{
+                            "& .MuiToggleButton-root": {
+                              border: "1px solid",
+                              borderColor: "divider",
+                            },
+                            '& .MuiToggleButton-root[value="private"]': {
+                              "&.Mui-selected": {
+                                backgroundColor: "rgba(156, 163, 175, 0.15)",
+                                borderColor: "#9ca3af",
+                                color: "#6b7280",
+                                "&:hover": {
+                                  backgroundColor: "rgba(156, 163, 175, 0.25)",
+                                },
+                              },
+                            },
+                            '& .MuiToggleButton-root[value="shared"]': {
+                              "&.Mui-selected": {
+                                backgroundColor: "rgba(59, 130, 246, 0.15)",
+                                borderColor: "#3b82f6",
+                                color: "#3b82f6",
+                                "&:hover": {
+                                  backgroundColor: "rgba(59, 130, 246, 0.25)",
+                                },
+                              },
+                            },
+                          }}
+                        >
+                          <Tooltip title="Apenas você verá este parcelamento">
+                            <ToggleButton value="private">
+                              <User size={16} style={{ marginRight: 6 }} />
+                              Pessoal
+                            </ToggleButton>
+                          </Tooltip>
+                          <Tooltip title="Todos os membros da família verão este parcelamento">
+                            <ToggleButton value="shared">
+                              <Users size={16} style={{ marginRight: 6 }} />
+                              Família
+                            </ToggleButton>
+                          </Tooltip>
+                        </ToggleButtonGroup>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ mt: 1, display: "block" }}
+                        >
+                          {field.value === "private"
+                            ? "Este parcelamento ficará visível apenas para você."
+                            : "Este parcelamento será compartilhado com a família."}
+                        </Typography>
+                      </Box>
+                    )}
+                  />
+                </Grid>
+              )}
 
               {/* Optional: Contact PIX for payment - só mostra se Open Finance habilitado */}
               {isOpenFinanceEnabled && (

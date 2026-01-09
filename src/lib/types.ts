@@ -22,6 +22,12 @@ export interface Wallet {
   createdAt: string; // ISO 8601 format string
 }
 
+// Visibilidade familiar - controla compartilhamento de itens individuais
+export type FamilyVisibility =
+  | 'private'   // Só o dono vê (pessoal/individual)
+  | 'shared'    // Compartilhado com a família
+  | 'auto';     // Sistema sugere baseado em padrões
+
 export interface Transaction {
   id: string;
   userId: string;
@@ -41,6 +47,9 @@ export interface Transaction {
   hasChildren?: boolean; // Indica que esta transação tem subitens
   childrenCount?: number; // Quantidade de subitens
   groupName?: string; // Nome do grupo/nota (ex: "Compra Supermercado Extra")
+
+  // Campo para visibilidade familiar
+  familyVisibility?: FamilyVisibility; // Se não definido, usa configuração geral do membro
 }
 
 export interface Budget {

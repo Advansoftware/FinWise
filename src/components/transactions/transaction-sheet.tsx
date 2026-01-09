@@ -20,14 +20,20 @@ import {
   useTheme,
   useMediaQuery,
   Grid,
+  Tooltip,
 } from "@mui/material";
-import { Transaction, TransactionCategory } from "@/lib/types";
+import {
+  Transaction,
+  TransactionCategory,
+  FamilyVisibility,
+} from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { X, Plus, Save } from "lucide-react";
+import { X, Plus, Save, Users, User } from "lucide-react";
 import { SingleDatePicker } from "../single-date-picker";
 import { useTransactions } from "@/hooks/use-transactions";
 import { useAuth } from "@/hooks/use-auth";
 import { useWallets } from "@/hooks/use-wallets";
+import { useFamily } from "@/hooks/use-family";
 import { safeLowerCase } from "@/lib/string-utils";
 
 interface TransactionSheetProps {
@@ -60,10 +66,16 @@ export function TransactionSheet({
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const { toast } = useToast();
-  const { addTransaction, updateTransaction, categories, subcategories, allTransactions } =
-    useTransactions();
+  const {
+    addTransaction,
+    updateTransaction,
+    categories,
+    subcategories,
+    allTransactions,
+  } = useTransactions();
   const { wallets } = useWallets();
   const { user } = useAuth();
+  const { isInFamily } = useFamily();
 
   const [formState, setFormState] = useState({
     item: "",
@@ -76,6 +88,7 @@ export function TransactionSheet({
     type: "expense" as "income" | "expense" | "transfer",
     walletId: "",
     toWalletId: "",
+    familyVisibility: "shared" as FamilyVisibility,
   });
 
   const [itemInputValue, setItemInputValue] = useState("");
@@ -93,6 +106,7 @@ export function TransactionSheet({
         type: initialData.type || "expense",
         walletId: initialData.walletId,
         toWalletId: initialData.toWalletId || "",
+        familyVisibility: initialData.familyVisibility || "shared",
       });
       setItemInputValue(initialData.item);
     } else if (isOpen && !initialData) {
@@ -122,6 +136,7 @@ export function TransactionSheet({
       type: "expense",
       walletId: "",
       toWalletId: "",
+      familyVisibility: "shared",
     });
     setItemInputValue("");
   };
@@ -237,6 +252,7 @@ export function TransactionSheet({
           formState.type === "transfer"
             ? "Transferência"
             : ((formState.category || "Outros") as TransactionCategory),
+        familyVisibility: isInFamily ? formState.familyVisibility : undefined,
       };
 
       if (mode === "create") {
@@ -260,7 +276,9 @@ export function TransactionSheet({
       toast({
         variant: "error",
         title: "Erro",
-        description: `Não foi possível ${mode === "create" ? "adicionar" : "atualizar"} a transação. Tente novamente.`,
+        description: `Não foi possível ${
+          mode === "create" ? "adicionar" : "atualizar"
+        } a transação. Tente novamente.`,
       });
     } finally {
       setIsSubmitting(false);
@@ -650,6 +668,76 @@ export function TransactionSheet({
                       </Select>
                     </FormControl>
                   </Grid>
+
+                  {/* Visibilidade Familiar */}
+                  {isInFamily && (
+                    <Grid size={{ xs: 4, sm: 4, md: 4 }}>
+                      <Typography
+                        variant="subtitle2"
+                        fontWeight="medium"
+                        gutterBottom
+                      >
+                        Visibilidade
+                      </Typography>
+                      <ToggleButtonGroup
+                        value={formState.familyVisibility}
+                        exclusive
+                        onChange={(e, value) =>
+                          value && handleInputChange("familyVisibility", value)
+                        }
+                        fullWidth
+                        size="small"
+                        sx={{
+                          "& .MuiToggleButton-root": {
+                            border: "1px solid",
+                            borderColor: "divider",
+                          },
+                          '& .MuiToggleButton-root[value="private"]': {
+                            "&.Mui-selected": {
+                              backgroundColor: "rgba(156, 163, 175, 0.15)",
+                              borderColor: "#9ca3af",
+                              color: "#6b7280",
+                              "&:hover": {
+                                backgroundColor: "rgba(156, 163, 175, 0.25)",
+                              },
+                            },
+                          },
+                          '& .MuiToggleButton-root[value="shared"]': {
+                            "&.Mui-selected": {
+                              backgroundColor: "rgba(59, 130, 246, 0.15)",
+                              borderColor: "#3b82f6",
+                              color: "#3b82f6",
+                              "&:hover": {
+                                backgroundColor: "rgba(59, 130, 246, 0.25)",
+                              },
+                            },
+                          },
+                        }}
+                      >
+                        <Tooltip title="Apenas você verá esta transação">
+                          <ToggleButton value="private">
+                            <User size={16} style={{ marginRight: 6 }} />
+                            Pessoal
+                          </ToggleButton>
+                        </Tooltip>
+                        <Tooltip title="Todos os membros da família verão esta transação">
+                          <ToggleButton value="shared">
+                            <Users size={16} style={{ marginRight: 6 }} />
+                            Família
+                          </ToggleButton>
+                        </Tooltip>
+                      </ToggleButtonGroup>
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ mt: 1, display: "block" }}
+                      >
+                        {formState.familyVisibility === "private"
+                          ? "Esta transação ficará visível apenas para você."
+                          : "Esta transação será compartilhada com a família."}
+                      </Typography>
+                    </Grid>
+                  )}
                 </>
               )}
             </Grid>

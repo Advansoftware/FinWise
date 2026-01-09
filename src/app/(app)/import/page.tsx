@@ -73,6 +73,7 @@ const MAPPABLE_FIELDS: Record<keyof Omit<Transaction, "id">, string> = {
   hasChildren: "Tem Subitens",
   childrenCount: "Quantidade de Subitens",
   groupName: "Nome do Grupo",
+  familyVisibility: "Visibilidade Familiar",
 };
 
 const spin = keyframes`
@@ -107,6 +108,7 @@ export default function ImportPage() {
     hasChildren: "",
     childrenCount: "",
     groupName: "",
+    familyVisibility: "",
   });
   const [transactionsToImport, setTransactionsToImport] = useState<
     ParsedTransaction[]
@@ -420,6 +422,7 @@ export default function ImportPage() {
       hasChildren: "",
       childrenCount: "",
       groupName: "",
+      familyVisibility: "",
     });
     setTransactionsToImport([]);
     setIsParsing(false);
