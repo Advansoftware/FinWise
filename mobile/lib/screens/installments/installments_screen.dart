@@ -8,6 +8,8 @@ import '../../core/widgets/compact_add_button.dart';
 import 'installment_form_screen.dart';
 import 'widgets/widgets.dart';
 
+import 'overdue_installments_screen.dart';
+
 class InstallmentsScreen extends StatefulWidget {
   const InstallmentsScreen({super.key});
 
@@ -42,7 +44,7 @@ class _InstallmentsScreenState extends State<InstallmentsScreen>
   Widget build(BuildContext context) {
     final provider = context.watch<InstallmentProvider>();
     final summary = provider.summary;
-    final overduePayments = _getOverduePayments(provider.activeInstallments);
+    // final overduePayments = _getOverduePayments(provider.activeInstallments); // Removed usage
 
     if (_isFirstLoad && provider.isLoading) {
       return const InstallmentsSkeleton();
@@ -102,22 +104,17 @@ class _InstallmentsScreenState extends State<InstallmentsScreen>
                           value: '${summary.overdueCount}',
                           icon: Icons.warning_amber,
                           color: AppTheme.error,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const OverdueInstallmentsScreen(),
+                              ),
+                            );
+                          },
                         ),
                       ),
                     ],
-                  ),
-                ),
-              ),
-
-            // Overdue Banner
-            if (overduePayments.isNotEmpty)
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: OverdueBanner(
-                    overduePayments: overduePayments,
-                    onPayPressed: () => _showOverduePaymentDialog(context, overduePayments),
-                    onSchedulePressed: () => _tabController.animateTo(2),
                   ),
                 ),
               ),
@@ -161,38 +158,5 @@ class _InstallmentsScreenState extends State<InstallmentsScreen>
     );
   }
 
-  List<OverduePaymentInfo> _getOverduePayments(List<InstallmentModel> installments) {
-    final overdueList = <OverduePaymentInfo>[];
-    for (final installment in installments) {
-      for (final payment in installment.payments) {
-        if (payment.isOverdue) {
-          overdueList.add(OverduePaymentInfo(
-            installment: installment,
-            payment: payment,
-          ));
-        }
-      }
-    }
-    overdueList.sort((a, b) => a.payment.dueDate.compareTo(b.payment.dueDate));
-    return overdueList;
-  }
 
-  Future<void> _showOverduePaymentDialog(BuildContext context, List<OverduePaymentInfo> overduePayments) async {
-    if (overduePayments.isEmpty) return;
-
-    final firstOverdue = overduePayments.first;
-    
-    await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) => RegisterPaymentModal(
-        installment: firstOverdue.installment,
-        payment: firstOverdue.payment,
-        onSuccess: () {
-          context.read<InstallmentProvider>().loadInstallments();
-        },
-      ),
-    );
-  }
 }
