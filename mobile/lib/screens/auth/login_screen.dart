@@ -17,13 +17,10 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
-  bool _canUseBiometric = false;
-  String _biometricDescription = 'Biometria';
 
   @override
   void initState() {
     super.initState();
-    _checkBiometric();
     
     // Escuta mudanças no estado de autenticação para mostrar erros
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -51,24 +48,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> _checkBiometric() async {
-    final authProvider = context.read<AuthProvider>();
-    final canShow = await authProvider.canShowBiometricOption();
-    final description = await authProvider.getBiometricDescription();
-    
-    if (mounted) {
-      setState(() {
-        _canUseBiometric = canShow && authProvider.biometricEnabled;
-        _biometricDescription = description;
-      });
-
-      // Se biometria está disponível e habilitada, tenta login automático
-      if (_canUseBiometric) {
-        _handleBiometricLogin();
-      }
-    }
-  }
-
   @override
   void dispose() {
     // Remove o listener para evitar memory leaks
@@ -89,20 +68,6 @@ class _LoginScreenState extends State<LoginScreen> {
       _passwordController.text,
     );
     // O listener _onAuthStateChanged vai mostrar a mensagem de erro se necessário
-  }
-
-  Future<void> _handleBiometricLogin() async {
-    final authProvider = context.read<AuthProvider>();
-    final success = await authProvider.loginWithBiometric();
-
-    if (!success && mounted && authProvider.errorMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(authProvider.errorMessage!),
-          backgroundColor: AppColors.warning,
-        ),
-      );
-    }
   }
 
   @override
@@ -197,31 +162,6 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         ),
                 ),
-
-                // Botão de biometria (se disponível e habilitado)
-                if (_canUseBiometric) ...[
-                  const SizedBox(height: 16),
-                  OutlinedButton.icon(
-                    onPressed: authProvider.isLoading ? null : _handleBiometricLogin,
-                    icon: Icon(
-                      _biometricDescription.contains('Face') 
-                          ? Icons.face 
-                          : Icons.fingerprint,
-                      size: 24,
-                    ),
-                    label: Text(
-                      'Entrar com $_biometricDescription',
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    style: OutlinedButton.styleFrom(
-                      minimumSize: const Size(double.infinity, 52),
-                      side: BorderSide(color: context.primaryColor),
-                    ),
-                  ),
-                ],
 
                 const SizedBox(height: 24),
               ],

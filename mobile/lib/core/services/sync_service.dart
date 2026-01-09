@@ -194,6 +194,14 @@ class SyncService {
     if (!_isOnline) return;
 
     try {
+      // Primeiro, busca operações pendentes para não sobrescrever
+      final pendingOps = await _localStorage.getPendingOperations();
+      final pendingTransactionIds = pendingOps
+          .where((op) => op.entityType == 'transaction')
+          .map((op) => op.data['id'] as String?)
+          .whereType<String>()
+          .toSet();
+
       // Busca transações
       final transactionsResult = await _apiService.getList<TransactionModel>(
         '/api/v1/transactions',
@@ -201,13 +209,20 @@ class SyncService {
         listKey: 'transactions',
       );
       if (transactionsResult.isSuccess && transactionsResult.data != null) {
-        final transactions = transactionsResult.data!;
+        final remoteTransactions = transactionsResult.data!;
+        
+        // Faz merge inteligente preservando alterações locais pendentes
+        final mergedTransactions = await _mergeTransactions(
+          remoteTransactions, 
+          pendingTransactionIds,
+          pendingOps,
+        );
 
         // Compara com cache local para detectar mudanças
         final cachedTransactions = await _localStorage.getCachedTransactions();
-        if (_hasChanges(transactions, cachedTransactions)) {
-          await _localStorage.cacheTransactions(transactions);
-          onTransactionsUpdated?.call(transactions);
+        if (_hasChanges(mergedTransactions, cachedTransactions)) {
+          await _localStorage.cacheTransactions(mergedTransactions);
+          onTransactionsUpdated?.call(mergedTransactions);
         }
       }
 
@@ -225,6 +240,64 @@ class SyncService {
     } catch (e) {
       debugPrint('[SyncService] Erro ao buscar dados: $e');
     }
+  }
+
+  /// Faz merge inteligente de transações remotas com locais pendentes
+  Future<List<TransactionModel>> _mergeTransactions(
+    List<TransactionModel> remote,
+    Set<String> pendingIds,
+    List<PendingOperation> pendingOps,
+  ) async {
+    final localCache = await _localStorage.getCachedTransactions();
+    final result = <TransactionModel>[];
+    final processedIds = <String>{};
+
+    // Primeiro, adiciona transações locais que foram criadas offline (temp_)
+    for (final local in localCache) {
+      if (local.id.startsWith('temp_')) {
+        result.add(local);
+        processedIds.add(local.id);
+      }
+    }
+
+    // Para cada transação remota
+    for (final remoteT in remote) {
+      // Se tem operação pendente para essa transação, usa a versão local
+      if (pendingIds.contains(remoteT.id)) {
+        // Verifica se é delete pendente
+        final isDeletePending = pendingOps.any(
+          (op) => op.entityType == 'transaction' && 
+                  op.type == OperationType.delete && 
+                  op.data['id'] == remoteT.id,
+        );
+        
+        if (isDeletePending) {
+          // Não inclui - foi deletada localmente
+          continue;
+        }
+        
+        // Usa versão local (editada)
+        final localT = localCache.firstWhere(
+          (t) => t.id == remoteT.id,
+          orElse: () => remoteT,
+        );
+        if (!processedIds.contains(localT.id)) {
+          result.add(localT);
+          processedIds.add(localT.id);
+        }
+      } else {
+        // Sem operação pendente, usa versão do servidor
+        if (!processedIds.contains(remoteT.id)) {
+          result.add(remoteT);
+          processedIds.add(remoteT.id);
+        }
+      }
+    }
+
+    // Ordena por data decrescente
+    result.sort((a, b) => b.date.compareTo(a.date));
+
+    return result;
   }
 
   /// Compara duas listas de transações para detectar mudanças

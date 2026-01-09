@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
-import '../../core/widgets/gastometria_logo.dart';
+import 'package:provider/provider.dart';
+import '../../core/providers/auth_provider.dart';
 
+/// Tela de splash com validação biométrica
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
 
@@ -9,132 +10,265 @@ class SplashScreen extends StatefulWidget {
   State<SplashScreen> createState() => _SplashScreenState();
 }
 
-class _SplashScreenState extends State<SplashScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _fadeAnimation;
-  late Animation<double> _scaleAnimation;
+class _SplashScreenState extends State<SplashScreen> {
+  bool _isAuthenticating = false;
+  bool _showBiometricPrompt = false;
+  String? _errorMessage;
 
   @override
   void initState() {
     super.initState();
-    _controller = AnimationController(
-      duration: const Duration(milliseconds: 1500),
-      vsync: this,
-    );
-
-    _fadeAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.0, 0.6, curve: Curves.easeOut),
-      ),
-    );
-
-    _scaleAnimation = Tween<double>(begin: 0.8, end: 1.0).animate(
-      CurvedAnimation(
-        parent: _controller,
-        curve: const Interval(0.0, 0.6, curve: Curves.easeOutBack),
-      ),
-    );
-
-    _controller.forward();
+    _initializeAuth();
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  Future<void> _initializeAuth() async {
+    final authProvider = context.read<AuthProvider>();
+    await authProvider.initialize();
+    
+    if (mounted) {
+      _checkAuthState(authProvider);
+    }
+  }
+
+  void _checkAuthState(AuthProvider authProvider) {
+    final state = authProvider.state;
+    
+    if (state == AuthState.awaitingBiometric) {
+      setState(() {
+        _showBiometricPrompt = true;
+      });
+      // Auto-tenta biometria na primeira vez
+      _attemptBiometricAuth();
+    }
+    // Outros estados são tratados pelo AuthWrapper no main.dart
+  }
+
+  Future<void> _attemptBiometricAuth() async {
+    if (_isAuthenticating) return;
+    
+    setState(() {
+      _isAuthenticating = true;
+      _errorMessage = null;
+    });
+
+    final authProvider = context.read<AuthProvider>();
+    final success = await authProvider.authenticateWithBiometric();
+    
+    if (mounted) {
+      setState(() {
+        _isAuthenticating = false;
+        if (!success && authProvider.state == AuthState.awaitingBiometric) {
+          _errorMessage = 'Autenticação falhou. Tente novamente.';
+        }
+      });
+    }
+  }
+
+  void _skipBiometric() {
+    context.read<AuthProvider>().skipBiometric();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              AppTheme.background,
-              Color(0xFF1a1625), // Slightly lighter purple-black
+              Theme.of(context).colorScheme.primary,
+              Theme.of(context).colorScheme.primaryContainer,
             ],
           ),
         ),
         child: SafeArea(
           child: Center(
-            child: AnimatedBuilder(
-              animation: _controller,
-              builder: (context, child) {
-                return Opacity(
-                  opacity: _fadeAnimation.value,
-                  child: Transform.scale(
-                    scale: _scaleAnimation.value,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Logo oficial do Gastometria
-                        Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: AppTheme.primary.withAlpha(102),
-                                blurRadius: 40,
-                                spreadRadius: 10,
-                              ),
-                            ],
-                          ),
-                          child: const GastometriaLogo(size: 120),
-                        ),
-                        const SizedBox(height: 32),
-                        // Nome do app com gradiente
-                        ShaderMask(
-                          shaderCallback: (bounds) => const LinearGradient(
-                            colors: [
-                              AppTheme.primary,
-                              Color(0xFF7C3AED),
-                              Color(0xFF3B82F6),
-                            ],
-                          ).createShader(bounds),
-                          child: const Text(
-                            'Gastometria',
-                            style: TextStyle(
-                              fontSize: 36,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                              letterSpacing: -1,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Controle financeiro inteligente',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Colors.white.withAlpha(153),
-                          ),
-                        ),
-                        const SizedBox(height: 48),
-                        // Loading indicator
-                        SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              AppTheme.primary.withAlpha(204),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                // Logo
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(24),
                   ),
-                );
-              },
+                  child: const Icon(
+                    Icons.account_balance_wallet,
+                    size: 80,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'FinWise',
+                  style: TextStyle(
+                    fontSize: 36,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Controle financeiro inteligente',
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white.withValues(alpha: 0.8),
+                  ),
+                ),
+                const SizedBox(height: 48),
+                
+                // Biometric prompt ou loading
+                if (_showBiometricPrompt)
+                  _BiometricPrompt(
+                    isAuthenticating: _isAuthenticating,
+                    errorMessage: _errorMessage,
+                    attemptsRemaining: context.watch<AuthProvider>().biometricAttemptsRemaining,
+                    onRetry: _attemptBiometricAuth,
+                    onSkip: _skipBiometric,
+                  )
+                else
+                  Column(
+                    children: [
+                      const CircularProgressIndicator(
+                        valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Carregando...',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.8),
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+              ],
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Widget de prompt biométrico
+class _BiometricPrompt extends StatelessWidget {
+  final bool isAuthenticating;
+  final String? errorMessage;
+  final int attemptsRemaining;
+  final VoidCallback onRetry;
+  final VoidCallback onSkip;
+
+  const _BiometricPrompt({
+    required this.isAuthenticating,
+    this.errorMessage,
+    required this.attemptsRemaining,
+    required this.onRetry,
+    required this.onSkip,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        // Ícone de biometria
+        Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.15),
+            shape: BoxShape.circle,
+          ),
+          child: isAuthenticating
+              ? const SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                    strokeWidth: 3,
+                  ),
+                )
+              : const Icon(
+                  Icons.fingerprint,
+                  size: 48,
+                  color: Colors.white,
+                ),
+        ),
+        const SizedBox(height: 24),
+        
+        Text(
+          isAuthenticating 
+              ? 'Verificando...' 
+              : 'Use sua biometria para entrar',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        
+        if (errorMessage != null) ...[
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.red.withValues(alpha: 0.3),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              errorMessage!,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ],
+        
+        if (attemptsRemaining > 0 && attemptsRemaining < 3) ...[
+          const SizedBox(height: 8),
+          Text(
+            '$attemptsRemaining tentativa(s) restante(s)',
+            style: TextStyle(
+              color: Colors.white.withValues(alpha: 0.7),
+              fontSize: 12,
+            ),
+          ),
+        ],
+        
+        const SizedBox(height: 32),
+        
+        // Botões
+        if (!isAuthenticating) ...[
+          ElevatedButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.fingerprint),
+            label: const Text('Tentar novamente'),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: Theme.of(context).colorScheme.primary,
+              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          TextButton(
+            onPressed: onSkip,
+            child: Text(
+              'Usar email e senha',
+              style: TextStyle(
+                color: Colors.white.withValues(alpha: 0.9),
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 }

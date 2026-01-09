@@ -95,30 +95,19 @@ class _GastometriaAppState extends State<GastometriaApp> {
 }
 
 /// Wrapper que decide qual tela mostrar baseado no estado de autenticação
-class AuthWrapper extends StatefulWidget {
+class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
-
-  @override
-  State<AuthWrapper> createState() => _AuthWrapperState();
-}
-
-class _AuthWrapperState extends State<AuthWrapper> {
-  @override
-  void initState() {
-    super.initState();
-    // Inicializa o provider de autenticação
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<AuthProvider>().initialize();
-    });
-  }
 
   @override
   Widget build(BuildContext context) {
     final authProvider = context.watch<AuthProvider>();
+    final state = authProvider.state;
 
-    // Tela de loading inicial com splash animada
-    // Nota: Não incluir AuthState.loading aqui para não recriar a tela durante login
-    if (authProvider.state == AuthState.initial) {
+    // Estados que mostram splash screen:
+    // - initial: Inicializando
+    // - loading: Quando não tem tela anterior (primeira vez)
+    // - awaitingBiometric: Aguardando validação biométrica
+    if (state == AuthState.initial || state == AuthState.awaitingBiometric) {
       return const SplashScreen();
     }
 
@@ -127,7 +116,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
       return const HomeScreen();
     }
 
-    // Se não autenticado ou erro, mostra login
+    // Se não autenticado, biometria falhou ou erro, mostra login
     // O LoginScreen vai lidar com o estado de loading e error internamente
     return const LoginScreen();
   }
